@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="RestaurantePro.Mobile.Features.Inventory.Ingredients.Pages.IngredientesPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:RestaurantePro.Mobile.Core.Features.Inventory.Ingredients.ViewModels"
+             x:DataType="viewmodels:IngredientesViewModel"
+             Title="Ingredientes"
+             BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        
+        <!-- Header con estadísticas -->
+        <Border Grid.Row="0" 
+                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
+                StrokeShape="RoundRectangle 10"
+                Margin="10,10,10,5">
+            <Grid ColumnDefinitions="*,*,*" Padding="15">
+                <VerticalStackLayout Grid.Column="0" HorizontalOptions="Center">
+                    <Label Text="Total" 
+                           TextColor="White" 
+                           FontSize="12" 
+                           HorizontalOptions="Center"/>
+                    <Label Text="{Binding TotalIngredientes}" 
+                           TextColor="White" 
+                           FontSize="20" 
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+                
+                <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center">
+                    <Label Text="Disponibles" 
+                           TextColor="White" 
+                           FontSize="12" 
+                           HorizontalOptions="Center"/>
+                    <Label Text="{Binding IngredientesDisponibles}" 
+                           TextColor="White" 
+                           FontSize="20" 
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+                
+                <VerticalStackLayout Grid.Column="2" HorizontalOptions="Center">
+                    <Label Text="Bajo Stock" 
+                           TextColor="White" 
+                           FontSize="12" 
+                           HorizontalOptions="Center"/>
+                    <Label Text="{Binding IngredientesBajoStock}" 
+                           TextColor="White" 
+                           FontSize="20" 
+                           FontAttributes="Bold"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+        <!-- Contenido principal -->
+        <RefreshView Grid.Row="1" 
+                     IsRefreshing="{Binding EstaRefrescando}"
+                     Command="{Binding RefrescarCommand}">
+            <ScrollView>
+                <VerticalStackLayout Spacing="10" Padding="10">
+                    
+                    <!-- Filtros -->
+                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                            StrokeShape="RoundRectangle 10"
+                            Padding="15">
+                        <VerticalStackLayout Spacing="10">
+                            
+                            <!-- Búsqueda -->
+                            <Frame BackgroundColor="Transparent" 
+                                   BorderColor="Transparent" 
+                                   Padding="0">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Entry Grid.Column="0"
+                                           Placeholder="Buscar ingredientes..."
+                                           Text="{Binding Busqueda}"
+                                           ReturnCommand="{Binding BuscarIngredientesCommand}"/>
+                                    <Button Grid.Column="1"
+                                            Text="Buscar"
+                                            Command="{Binding BuscarIngredientesCommand}"
+                                            Margin="5,0,0,0"/>
+                                </Grid>
+                            </Frame>
+                            
+                            <!-- Filtros adicionales -->
+                            <Grid ColumnDefinitions="*,*">
+                                <HorizontalStackLayout Grid.Column="0">
+                                    <CheckBox IsChecked="{Binding SoloDisponibles}"
+                                             CheckedChanged="OnSoloDisponiblesChanged"/>
+                                    <Label Text="Solo disponibles"
+                                           VerticalOptions="Center"
+                                           Margin="5,0,0,0"/>
+                                </HorizontalStackLayout>
+                                
+                                <HorizontalStackLayout Grid.Column="1">
+                                    <CheckBox IsChecked="{Binding SoloBajoStock}"
+                                             CheckedChanged="OnSoloBajoStockChanged"/>
+                                    <Label Text="Solo bajo stock"
+                                           VerticalOptions="Center"
+                                           Margin="5,0,0,0"/>
+                                </HorizontalStackLayout>
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Lista de ingredientes -->
+                    <CollectionView ItemsSource="{Binding Ingredientes}"
+                                  SelectionMode="Single"
+                                  SelectedItem="{Binding IngredienteSeleccionado}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="IngredienteDto">
+                                <Border BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
+                                        StrokeShape="RoundRectangle 10"
+                                        Margin="0,0,0,10"
+                                        Padding="15">
+                                    <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                                        
+                                        <!-- Información principal -->
+                                        <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
+                                            <Label Text="{Binding Nombre}"
+                                                   FontSize="18"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
+                                            
+                                            <Label Text="{Binding Descripcion}"
+                                                   FontSize="14"
+                                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"
+                                                   LineBreakMode="TailTruncation"/>
+                                            
+                                            <HorizontalStackLayout Spacing="10">
+                                                <Label Text="{Binding StockActual, StringFormat='Stock: {0} {1}'}"
+                                                       FontSize="12"
+                                                       TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"/>
+                                                
+                                                <Label Text="{Binding Categoria, StringFormat='Categoría: {0}'}"
+                                                       FontSize="12"
+                                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"/>
+                                            </HorizontalStackLayout>
+                                            
+                                            <HorizontalStackLayout Spacing="10">
+                                                <Label Text="{Binding StockMinimo, StringFormat='Mínimo: {0} {1}'}"
+                                                       FontSize="12"
+                                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"/>
+                                                
+                                                <Label Text="{Binding PrecioUnitario, StringFormat='Precio: ${0:N2}'}"
+                                                       FontSize="12"
+                                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"/>
+                                            </HorizontalStackLayout>
+                                        </VerticalStackLayout>
+                                        
+                                        <!-- Indicador de estado -->
+                                        <Border Grid.Row="0" Grid.Column="1"
+                                                BackgroundColor="{Binding StockActual, Converter={StaticResource StockToColorConverter}, ConverterParameter={Binding StockMinimo}}"
+                                                StrokeShape="RoundRectangle 5"
+                                                WidthRequest="20"
+                                                HeightRequest="20"
+                                                VerticalOptions="Center"/>
+                                        
+                                        <!-- Acciones -->
+                                        <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                                             Spacing="10" 
+                                                             Margin="0,10,0,0">
+                                            <Button Text="Ver Detalle"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:IngredientesViewModel}}, Path=SeleccionarIngredienteCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
+                                                    TextColor="White"
+                                                    CornerRadius="20"/>
+                                            
+                                            <Button Text="Movimientos"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:IngredientesViewModel}}, Path=VerMovimientosCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
+                                                    TextColor="White"
+                                                    CornerRadius="20"/>
+                                        </HorizontalStackLayout>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </ScrollView>
+        </RefreshView>
+
+        <!-- Indicador de carga -->
+        <ActivityIndicator Grid.Row="1"
+                          IsRunning="{Binding IsBusy}"
+                          IsVisible="{Binding IsBusy}"
+                          HorizontalOptions="Center"
+                          VerticalOptions="Center"/>
+
+        <!-- Mensaje de error -->
+        <Border Grid.Row="2"
+                IsVisible="{Binding HasError}"
+                BackgroundColor="{AppThemeBinding Light={StaticResource Red100}, Dark={StaticResource Red900}}"
+                StrokeShape="RoundRectangle 10"
+                Margin="10,5,10,10">
+            <Label Text="{Binding ErrorMessage}"
+                   TextColor="{AppThemeBinding Light={StaticResource Red600}, Dark={StaticResource Red300}}"
+                   HorizontalOptions="Center"
+                   Padding="15"/>
+        </Border>
+    </Grid>
+</ContentPage> 

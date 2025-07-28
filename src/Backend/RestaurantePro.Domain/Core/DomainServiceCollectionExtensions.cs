@@ -82,10 +82,11 @@ namespace RestaurantePro.Domain.Core
             services.AddScoped<Inventario.Services.IVerificadorStock, Inventario.Services.VerificadorStock>();
             
             // Servicios de Core
-            services.AddScoped<Core.Productos.Services.IProductoService, Core.Productos.Services.ProductoService>();
-            services.AddScoped<Core.Productos.Services.ProductoCategoriaService>();
-            services.AddScoped<Core.Productos.Services.IProductoCategoriaService, Core.Productos.Services.ProductoCategoriaService>();
-            services.AddScoped<Core.Services.ICoreOperacionesIntegrationService, Core.Services.CoreOperacionesIntegrationService>();
+                    services.AddScoped<Core.Productos.Services.IProductoService, Core.Productos.Services.ProductoService>();
+        services.AddScoped<Core.Productos.Services.ProductoCategoriaService>();
+        services.AddScoped<Core.Productos.Services.IProductoCategoriaService, Core.Productos.Services.ProductoCategoriaService>();
+        services.AddScoped<Core.Services.ICoreOperacionesIntegrationService, Core.Services.CoreOperacionesIntegrationService>();
+        services.AddScoped<Core.Analytics.Interfaces.IAnalyticsService, Core.Analytics.Services.AnalyticsService>();
             
             // Servicios de Core Notificaciones
             services.AddScoped<Core.Notificaciones.Services.IServicioNotificaciones, Core.Notificaciones.Services.ServicioNotificaciones>();

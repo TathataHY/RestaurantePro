@@ -124,7 +124,8 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             var connectionString = configuration.GetConnectionString("DefaultConnection");
             var useInMemory = configuration.GetValue<bool>("UseInMemoryDatabase", false);
 
-            // Eliminar registros previos de los contextos secundarios
+            // Eliminar registros previos de TODOS los contextos
+            RemoveDbContext<RestauranteProDbContext>(services);
             RemoveDbContext<CoreDbContext>(services);
             RemoveDbContext<ComercialDbContext>(services);
             RemoveDbContext<OperacionesDbContext>(services);
@@ -135,6 +136,10 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             {
                 // Usar InMemory para tests de integración - TODOS comparten la misma base de datos
                 var inMemoryDbName = "TestRestauranteProDb";
+                
+                // 🔧 REGISTRAR CONTEXTO PRINCIPAL
+                services.AddDbContext<RestauranteProDbContext>(options =>
+                    options.UseInMemoryDatabase(inMemoryDbName));
                 
                 services.AddDbContext<CoreDbContext>(options =>
                     options.UseInMemoryDatabase(inMemoryDbName));
@@ -154,6 +159,10 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             else
             {
                 // Usar SQLite para tests unitarios
+                // 🔧 REGISTRAR CONTEXTO PRINCIPAL
+                services.AddDbContext<RestauranteProDbContext>(options =>
+                    options.UseSqlite(connectionString));
+                
                 services.AddDbContext<CoreDbContext>(options =>
                     options.UseSqlite(connectionString));
 

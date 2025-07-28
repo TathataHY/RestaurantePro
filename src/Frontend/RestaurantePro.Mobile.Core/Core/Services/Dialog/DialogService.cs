@@ -55,6 +55,12 @@ public class MockDialogService : IDialogService
         await Task.CompletedTask;
         return NextPromptResult;
     }
+
+    public async Task<bool> ShowConfirmationAsync(string title, string message, string accept = "Sí", string cancel = "No")
+    {
+        ConfirmationsShown.Add($"{title}: {message}");
+        return NextConfirmationResult;
+    }
 }
 
 /// <summary>
@@ -96,6 +102,12 @@ public class DialogService : IDialogService
     {
         // TODO: Implementar prompt real con MAUI
         return null;
+    }
+
+    public async Task<bool> ShowConfirmationAsync(string title, string message, string accept = "Sí", string cancel = "No")
+    {
+        // TODO: Implementar confirmación real con MAUI
+        return true;
     }
 }
 

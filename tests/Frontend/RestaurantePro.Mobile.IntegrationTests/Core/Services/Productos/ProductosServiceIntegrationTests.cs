@@ -3,22 +3,27 @@ using RestaurantePro.Mobile.Core.Services.Api;
 using RestaurantePro.Mobile.Core.Services.Authentication;
 using RestaurantePro.Mobile.Core.Services.Platform;
 using Microsoft.Extensions.Logging;
+using RestaurantePro.Mobile.IntegrationTests.TestBase;
+using Xunit;
 
 namespace RestaurantePro.Mobile.IntegrationTests.Core.Services.Productos;
 
-public class ProductosServiceIntegrationTests : MobileIntegrationTestBase
+public class ProductosServiceIntegrationTests : IClassFixture<MobileIntegrationTestFixture>
 {
+    private readonly MobileIntegrationTestFixture _fixture;
+    private readonly HttpClient _client;
     private IProductosService _productosService;
 
-    public ProductosServiceIntegrationTests()
+    public ProductosServiceIntegrationTests(MobileIntegrationTestFixture fixture)
     {
-        // SetupAsync se llamará en cada test individualmente
+        _fixture = fixture;
+        _client = _fixture.CreateClient();
     }
 
     private async Task SetupAsync()
     {
         // Crear servicios móviles localmente para evitar conflictos con el backend
-        var httpClient = CreateClient();
+        var httpClient = _client;
         var apiService = new ApiService(httpClient);
         var authService = new AuthService(apiService, NullLogger<AuthService>.Instance, new FakeSecureStorageService());
         _productosService = new ProductosService(apiService, authService);

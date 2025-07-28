@@ -8,6 +8,14 @@
     xmlns:mesas="clr-namespace:RestaurantePro.Mobile.Features.Operations.Mesas.Pages"
     xmlns:comandas="clr-namespace:RestaurantePro.Mobile.Features.Operations.Comandas.Pages"
     xmlns:productos="clr-namespace:RestaurantePro.Mobile.Features.Operations.Productos.Pages"
+    xmlns:preparaciones="clr-namespace:RestaurantePro.Mobile.Features.Inventory.Preparaciones.Pages"
+    xmlns:reservaciones="clr-namespace:RestaurantePro.Mobile.Features.Inventory.Reservaciones.Pages"
+    xmlns:facturas="clr-namespace:RestaurantePro.Mobile.Features.Commercial.Billing.Pages"
+    xmlns:clientes="clr-namespace:RestaurantePro.Mobile.Features.Commercial.Customers.Pages"
+    xmlns:tarjetas="clr-namespace:RestaurantePro.Mobile.Features.Commercial.Loyalty.Pages"
+    xmlns:ingredientes="clr-namespace:RestaurantePro.Mobile.Features.Inventory.Ingredients.Pages"
+    xmlns:categorias="clr-namespace:RestaurantePro.Mobile.Features.Categorias.Pages"
+    xmlns:analytics="clr-namespace:RestaurantePro.Mobile.Features.Analytics.Pages"
     Title="RestaurantePro">
 
     <!-- Shell Resources -->
@@ -55,6 +63,62 @@
             Icon="menu.png"
             ContentTemplate="{DataTemplate productos:ProductosPage}"
             Route="productos" />
+
+        <!-- Preparaciones Tab -->
+        <ShellContent
+            Title="Cocina"
+            Icon="kitchen.png"
+            ContentTemplate="{DataTemplate preparaciones:PreparacionesPage}"
+            Route="preparaciones" />
+
+        <!-- Reservaciones Tab -->
+        <ShellContent
+            Title="Reservas"
+            Icon="calendar.png"
+            ContentTemplate="{DataTemplate reservaciones:ReservacionesPage}"
+            Route="reservaciones" />
+
+        <!-- Facturas Tab -->
+        <ShellContent
+            Title="Facturar"
+            Icon="invoice.png"
+            ContentTemplate="{DataTemplate facturas:FacturasPage}"
+            Route="facturas" />
+
+        <!-- Clientes Tab -->
+        <ShellContent
+            Title="Clientes"
+            Icon="users.png"
+            ContentTemplate="{DataTemplate clientes:ClientesPage}"
+            Route="clientes" />
+
+        <!-- Tarjetas Fidelización Tab -->
+        <ShellContent
+            Title="Fidelización"
+            Icon="card.png"
+            ContentTemplate="{DataTemplate tarjetas:TarjetasFidelizacionPage}"
+            Route="tarjetasfidelizacion" />
+
+        <!-- Ingredientes Tab -->
+        <ShellContent
+            Title="Ingredientes"
+            Icon="ingredients.png"
+            ContentTemplate="{DataTemplate ingredientes:IngredientesPage}"
+            Route="ingredientes" />
+
+        <!-- Categorías Tab -->
+        <ShellContent
+            Title="Categorías"
+            Icon="category.png"
+            ContentTemplate="{DataTemplate categorias:CategoriasPage}"
+            Route="categorias" />
+
+        <!-- Analytics Tab -->
+        <ShellContent
+            Title="Analytics"
+            Icon="analytics.png"
+            ContentTemplate="{DataTemplate analytics:AnalyticsPage}"
+            Route="analytics" />
     </TabBar>
 
 </Shell>

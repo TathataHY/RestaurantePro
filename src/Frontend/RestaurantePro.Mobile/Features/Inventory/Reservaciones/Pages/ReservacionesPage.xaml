@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="RestaurantePro.Mobile.Features.Inventory.Reservaciones.Pages.ReservacionesPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             Title="Reservaciones"
+             BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Header con estadísticas -->
+        <Border Grid.Row="0" 
+                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
+                StrokeShape="RoundRectangle 10"
+                Margin="10,10,10,5">
+            <Grid ColumnDefinitions="*,*,*,*" Padding="15">
+                <VerticalStackLayout Grid.Column="0" HorizontalOptions="Center">
+                    <Label Text="{Binding Estadisticas.TotalReservaciones}" 
+                           FontSize="24" 
+                           FontAttributes="Bold" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                    <Label Text="Total" 
+                           FontSize="12" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+                
+                <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center">
+                    <Label Text="{Binding Estadisticas.ReservacionesConfirmadas}" 
+                           FontSize="24" 
+                           FontAttributes="Bold" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                    <Label Text="Confirmadas" 
+                           FontSize="12" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+                
+                <VerticalStackLayout Grid.Column="2" HorizontalOptions="Center">
+                    <Label Text="{Binding Estadisticas.ReservacionesPendientes}" 
+                           FontSize="24" 
+                           FontAttributes="Bold" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                    <Label Text="Pendientes" 
+                           FontSize="12" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+                
+                <VerticalStackLayout Grid.Column="3" HorizontalOptions="Center">
+                    <Label Text="{Binding Estadisticas.TasaOcupacionPromedio, StringFormat='{0:F1}%'}" 
+                           FontSize="24" 
+                           FontAttributes="Bold" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                    <Label Text="Ocupación" 
+                           FontSize="12" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+        <!-- Contenido principal -->
+        <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="10,5,10,5">
+            <!-- Controles de búsqueda y filtros -->
+            <Border Grid.Row="0" 
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                    StrokeShape="RoundRectangle 10"
+                    Margin="0,0,0,10">
+                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" Padding="15">
+                    <!-- Búsqueda -->
+                    <SearchBar Grid.Row="0" Grid.Column="0"
+                               Placeholder="Buscar por cliente, teléfono o email..."
+                               Text="{Binding TerminoBusqueda}"
+                               SearchCommand="{Binding BuscarReservacionesCommand}"
+                               Margin="0,0,10,0"/>
+                    
+                    <!-- Botón para cargar reservaciones de hoy -->
+                    <Button Grid.Row="0" Grid.Column="1"
+                            Text="Hoy"
+                            Command="{Binding CargarReservacionesHoyCommand}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource Success}}"
+                            TextColor="White"
+                            FontSize="12"
+                            Padding="10,5"/>
+                    
+                    <!-- Filtro de estado -->
+                    <Picker Grid.Row="1" Grid.Column="0"
+                            Title="Estado"
+                            ItemsSource="{Binding Estados}"
+                            SelectedItem="{Binding EstadoFiltro}"
+                            Margin="0,10,10,0"/>
+                    
+                    <!-- Selector de fecha -->
+                    <DatePicker Grid.Row="1" Grid.Column="1"
+                                Date="{Binding FechaSeleccionada}"
+                                Format="dd/MM/yyyy"
+                                Margin="0,10,0,0"/>
+                </Grid>
+            </Border>
+
+            <!-- Lista de reservaciones -->
+            <RefreshView Grid.Row="1" 
+                         IsRefreshing="{Binding IsLoading}"
+                         Command="{Binding CargarReservacionesCommand}">
+                <CollectionView ItemsSource="{Binding ReservacionesFiltradas}"
+                               SelectionMode="None">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,5" 
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
+                                    StrokeShape="RoundRectangle 10"
+                                    Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}">
+                                <Grid ColumnDefinitions="*,Auto" Padding="15">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="5">
+                                        <Label Text="{Binding NombreCliente}" 
+                                               FontSize="16" 
+                                               FontAttributes="Bold"/>
+                                        <HorizontalStackLayout Spacing="10">
+                                            <Label Text="{Binding Telefono}" 
+                                                   FontSize="14" 
+                                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
+                                            <Label Text="{Binding Email}" 
+                                                   FontSize="14" 
+                                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
+                                        </HorizontalStackLayout>
+                                        <HorizontalStackLayout Spacing="10">
+                                            <Label Text="{Binding FechaReservacion, StringFormat='{0:dd/MM/yyyy}'}" 
+                                                   FontSize="14" 
+                                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
+                                            <Label Text="{Binding HoraReservacion, StringFormat='{0:hh\\:mm}'}" 
+                                                   FontSize="14" 
+                                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
+                                            <Label Text="{Binding NumeroPersonas, StringFormat='{0} personas'}" 
+                                                   FontSize="14" 
+                                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
+                                        </HorizontalStackLayout>
+                                        <HorizontalStackLayout Spacing="10">
+                                            <Label Text="{Binding Estado}" 
+                                                   FontSize="12" 
+                                                   TextColor="White"
+                                                   BackgroundColor="{Binding Estado, Converter={StaticResource EstadoToColorConverter}}"
+                                                   Padding="8,4"/>
+                                            <Label Text="{Binding MesaAsignada, StringFormat='Mesa: {0}'}" 
+                                                   FontSize="12" 
+                                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
+                                                   IsVisible="{Binding MesaAsignada, Converter={StaticResource StringToBoolConverter}}"/>
+                                        </HorizontalStackLayout>
+                                        <Label Text="{Binding Comentarios}" 
+                                               FontSize="12" 
+                                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
+                                               IsVisible="{Binding Comentarios, Converter={StaticResource StringToBoolConverter}}"
+                                               MaxLines="2"/>
+                                    </VerticalStackLayout>
+                                    
+                                    <VerticalStackLayout Grid.Column="1" 
+                                                         HorizontalOptions="End" 
+                                                         VerticalOptions="Center"
+                                                         Spacing="10">
+                                        <!-- Botón para cambiar estado -->
+                                        <Button Text="Cambiar Estado"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CambiarEstadoCommand}"
+                                                CommandParameter="{Binding}"
+                                                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
+                                                TextColor="White"
+                                                FontSize="12"
+                                                Padding="10,5"/>
+                                        
+                                        <!-- Botón para asignar mesa -->
+                                        <Button Text="Asignar Mesa"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.AsignarMesaCommand}"
+                                                CommandParameter="{Binding}"
+                                                BackgroundColor="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource Success}}"
+                                                TextColor="White"
+                                                FontSize="12"
+                                                Padding="10,5"/>
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </RefreshView>
+        </Grid>
+
+        <!-- Indicador de carga -->
+        <ActivityIndicator Grid.Row="2" 
+                           IsRunning="{Binding IsLoading}"
+                           IsVisible="{Binding IsLoading}"
+                           HorizontalOptions="Center"
+                           Margin="0,10"/>
+    </Grid>
+</ContentPage> 

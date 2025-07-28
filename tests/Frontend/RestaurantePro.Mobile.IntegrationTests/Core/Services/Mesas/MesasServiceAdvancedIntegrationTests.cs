@@ -3,23 +3,29 @@ using RestaurantePro.Mobile.Core.Services.Api;
 using RestaurantePro.Mobile.Core.Services.Authentication;
 using RestaurantePro.Mobile.Core.Services.Platform;
 using Microsoft.Extensions.Logging;
+using RestaurantePro.Mobile.IntegrationTests.TestBase;
+using Xunit;
 
 namespace RestaurantePro.Mobile.IntegrationTests.Core.Services.Mesas;
 
-public class MesasServiceAdvancedIntegrationTests : MobileIntegrationTestBase
+public class MesasServiceAdvancedIntegrationTests : IClassFixture<MobileIntegrationTestFixture>
 {
+    private readonly MobileIntegrationTestFixture _fixture;
+    private readonly HttpClient _client;
     private IMesasService _mesasService;
     private IAuthService _authService;
 
-    public MesasServiceAdvancedIntegrationTests()
+    public MesasServiceAdvancedIntegrationTests(MobileIntegrationTestFixture fixture)
     {
+        _fixture = fixture;
+        _client = _fixture.CreateClient();
         Setup();
     }
 
     private void Setup()
     {
         // Crear servicios móviles localmente para evitar conflictos con el backend
-        var httpClient = CreateClient();
+        var httpClient = _client;
         var apiService = new ApiService(httpClient);
         var authService = new AuthService(apiService, NullLogger<AuthService>.Instance, new FakeSecureStorageService());
         _mesasService = new MesasService(apiService, authService);

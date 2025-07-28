@@ -1,0 +1,135 @@
+using RestaurantePro.Mobile.Core.Models.DTOs;
+using RestaurantePro.Mobile.Core.Services.Api;
+using RestaurantePro.Mobile.Core.Services.Authentication;
+
+namespace RestaurantePro.Mobile.Core.Services.Analytics;
+
+/// <summary>
+/// Implementación del servicio de analytics y métricas operativas
+/// </summary>
+public class AnalyticsService : IAnalyticsService
+{
+    private readonly IApiService _apiService;
+    private readonly IAuthService _authService;
+
+    public AnalyticsService(IApiService apiService, IAuthService authService)
+    {
+        _apiService = apiService;
+        _authService = authService;
+    }
+
+    /// <summary>
+    /// Obtener métricas operativas del día actual
+    /// </summary>
+    public async Task<ApiResponse<MetricasDiaDto>> ObtenerMetricasDiaAsync()
+    {
+        try
+        {
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.GetAsync<MetricasDiaDto>("api/analytics/metricas-dia", token);
+        }
+        catch (Exception)
+        {
+            return ApiResponse<MetricasDiaDto>.ErrorResponse("Error al obtener métricas del día", "Error al obtener métricas del día");
+        }
+    }
+
+    /// <summary>
+    /// Obtener métricas operativas por rango de fechas
+    /// </summary>
+    public async Task<ApiResponse<MetricasRangoDto>> ObtenerMetricasRangoAsync(DateTime fechaDesde, DateTime fechaHasta)
+    {
+        try
+        {
+            var token = await _authService.GetTokenAsync();
+            var endpoint = $"api/analytics/metricas-rango?fechaDesde={fechaDesde:yyyy-MM-dd}&fechaHasta={fechaHasta:yyyy-MM-dd}";
+            return await _apiService.GetAsync<MetricasRangoDto>(endpoint, token);
+        }
+        catch (Exception)
+        {
+            return ApiResponse<MetricasRangoDto>.ErrorResponse("Error al obtener métricas del rango", "Error al obtener métricas del rango");
+        }
+    }
+
+    /// <summary>
+    /// Obtener el top de productos más vendidos
+    /// </summary>
+    public async Task<ApiResponse<List<TopProductoDto>>> ObtenerTopProductosAsync(int limite, DateTime? fechaDesde = null, DateTime? fechaHasta = null)
+    {
+        try
+        {
+            var token = await _authService.GetTokenAsync();
+            var endpoint = $"api/analytics/top-productos?limite={limite}";
+            
+            if (fechaDesde.HasValue)
+                endpoint += $"&fechaDesde={fechaDesde.Value:yyyy-MM-dd}";
+            
+            if (fechaHasta.HasValue)
+                endpoint += $"&fechaHasta={fechaHasta.Value:yyyy-MM-dd}";
+            
+            return await _apiService.GetAsync<List<TopProductoDto>>(endpoint, token);
+        }
+        catch (Exception)
+        {
+            return ApiResponse<List<TopProductoDto>>.ErrorResponse("Error al obtener top productos", "Error al obtener top productos");
+        }
+    }
+
+    /// <summary>
+    /// Obtener métricas de ocupación de mesas
+    /// </summary>
+    public async Task<ApiResponse<OcupacionMesasDto>> ObtenerOcupacionMesasAsync(DateTime fecha)
+    {
+        try
+        {
+            var token = await _authService.GetTokenAsync();
+            var endpoint = $"api/analytics/ocupacion-mesas?fecha={fecha:yyyy-MM-dd}";
+            return await _apiService.GetAsync<OcupacionMesasDto>(endpoint, token);
+        }
+        catch (Exception)
+        {
+            return ApiResponse<OcupacionMesasDto>.ErrorResponse("Error al obtener ocupación de mesas", "Error al obtener ocupación de mesas");
+        }
+    }
+
+    /// <summary>
+    /// Obtener métricas de tiempo promedio de preparación
+    /// </summary>
+    public async Task<ApiResponse<TiempoPreparacionDto>> ObtenerTiempoPreparacionAsync(DateTime? fechaDesde = null, DateTime? fechaHasta = null)
+    {
+        try
+        {
+            var token = await _authService.GetTokenAsync();
+            var endpoint = "api/analytics/tiempo-preparacion";
+            
+            if (fechaDesde.HasValue)
+                endpoint += $"?fechaDesde={fechaDesde.Value:yyyy-MM-dd}";
+            
+            if (fechaHasta.HasValue)
+                endpoint += $"{(fechaDesde.HasValue ? "&" : "?")}fechaHasta={fechaHasta.Value:yyyy-MM-dd}";
+            
+            return await _apiService.GetAsync<TiempoPreparacionDto>(endpoint, token);
+        }
+        catch (Exception)
+        {
+            return ApiResponse<TiempoPreparacionDto>.ErrorResponse("Error al obtener tiempo de preparación", "Error al obtener tiempo de preparación");
+        }
+    }
+
+    /// <summary>
+    /// Obtener resumen de ventas por hora
+    /// </summary>
+    public async Task<ApiResponse<List<VentasHoraDto>>> ObtenerVentasPorHoraAsync(DateTime fecha)
+    {
+        try
+        {
+            var token = await _authService.GetTokenAsync();
+            var endpoint = $"api/analytics/ventas-hora?fecha={fecha:yyyy-MM-dd}";
+            return await _apiService.GetAsync<List<VentasHoraDto>>(endpoint, token);
+        }
+        catch (Exception)
+        {
+            return ApiResponse<List<VentasHoraDto>>.ErrorResponse("Error al obtener ventas por hora", "Error al obtener ventas por hora");
+        }
+    }
+} 

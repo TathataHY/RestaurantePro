@@ -615,6 +615,14 @@ public class ComandasViewModelTests
             return Task.FromResult(ConfirmResponse);
         }
         
+        public Task<bool> ShowConfirmationAsync(string title, string message, string accept = "Sí", string cancel = "No")
+        {
+            WasCalled = true;
+            LastTitle = title;
+            LastMessage = message;
+            return Task.FromResult(ConfirmResponse);
+        }
+        
         public Task ShowErrorAsync(string message)
         {
             WasCalled = true;

@@ -168,7 +168,7 @@ public class LoginViewModelTests
 
         // Assert
         _mockAuthService.Verify(x => x.LoginAsync(email, password), Times.Once);
-        _mockNavigationService.Verify(x => x.NavigateToAsync("//dashboard"), Times.Once);
+        _mockNavigationService.Verify(x => x.NavigateToAsync("//main/dashboard"), Times.Once);
         _viewModel.HasError.Should().BeFalse();
         _viewModel.IsLoading.Should().BeFalse();
     }
@@ -372,7 +372,7 @@ public class LoginViewModelTests
 
         // Assert
         _mockAuthService.Verify(x => x.IsAuthenticatedAsync(), Times.Once);
-        _mockNavigationService.Verify(x => x.NavigateToAsync("//dashboard"), Times.Once);
+        _mockNavigationService.Verify(x => x.NavigateToAsync("//main/dashboard"), Times.Once);
     }
 
     [Fact]
@@ -448,7 +448,7 @@ public class LoginViewModelTests
 
         // Assert - Complete flow verification
         _mockAuthService.Verify(x => x.LoginAsync(email, password), Times.Once);
-        _mockNavigationService.Verify(x => x.NavigateToAsync("//dashboard"), Times.Once);
+        _mockNavigationService.Verify(x => x.NavigateToAsync("//main/dashboard"), Times.Once);
         
         _viewModel.HasError.Should().BeFalse();
         _viewModel.IsLoading.Should().BeFalse();

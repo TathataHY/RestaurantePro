@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
 using RestaurantePro.Mobile.Config;
@@ -10,6 +11,22 @@ using RestaurantePro.Mobile.Core.Features.Operations.Productos.ViewModels;
 using RestaurantePro.Mobile.Features.Operations.Productos.Pages;
 using RestaurantePro.Mobile.Core.Features.Operations.Mesas.ViewModels;
 using RestaurantePro.Mobile.Features.Operations.Mesas.Pages;
+using RestaurantePro.Mobile.Core.Features.Inventory.Preparaciones.ViewModels;
+using RestaurantePro.Mobile.Features.Inventory.Preparaciones.Pages;
+using RestaurantePro.Mobile.Core.Features.Inventory.Reservaciones.ViewModels;
+using RestaurantePro.Mobile.Features.Inventory.Reservaciones.Pages;
+using RestaurantePro.Mobile.Core.Features.Commercial.Billing.ViewModels;
+using RestaurantePro.Mobile.Features.Commercial.Billing.Pages;
+using RestaurantePro.Mobile.Core.Features.Commercial.Customers.ViewModels;
+using RestaurantePro.Mobile.Features.Commercial.Customers.Pages;
+using RestaurantePro.Mobile.Core.Features.Commercial.Loyalty.ViewModels;
+using RestaurantePro.Mobile.Features.Commercial.Loyalty.Pages;
+using RestaurantePro.Mobile.Core.Features.Inventory.Ingredients.ViewModels;
+using RestaurantePro.Mobile.Features.Inventory.Ingredients.Pages;
+using RestaurantePro.Mobile.Core.Features.Categorias.ViewModels;
+using RestaurantePro.Mobile.Features.Categorias.Pages;
+using RestaurantePro.Mobile.Core.Features.Analytics.ViewModels;
+using RestaurantePro.Mobile.Features.Analytics.Pages;
 using RestaurantePro.Mobile.UI.Pages;
 using System;
 using System.Net.Http.Headers;
@@ -59,6 +76,9 @@ public static class MauiProgram
 		// Registrar páginas y ViewModels - V1
 		RegisterViewsAndViewModelsV1(builder.Services);
 
+		// Registrar rutas de navegación - V1
+		RegisterNavigationRoutesV1();
+
 #if DEBUG
 		builder.Logging.AddDebug();
 #endif
@@ -72,7 +92,6 @@ public static class MauiProgram
 		services.AddSingleton<INavigationService, MauiNavigationService>();
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Dialog.IDialogService, RestaurantePro.Mobile.Core.Services.Dialog.DialogService>();
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService, RestaurantePro.Mobile.Core.Services.Authentication.AuthService>();
-		// services.AddSingleton<RestaurantePro.Mobile.Core.Services.Api.IApiService, RestaurantePro.Mobile.Core.Services.Api.ApiService>();
 		
 		// Servicios de dominio V1 - Solo desde Core
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Mesas.IMesasService>(sp =>
@@ -85,6 +104,38 @@ public static class MauiProgram
 				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService>()));
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Productos.IProductosService>(sp =>
 			new RestaurantePro.Mobile.Core.Services.Productos.ProductosService(
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>(),
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService>()));
+		
+		// Servicios de Inventario V1
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Inventory.IPreparacionesService>(sp =>
+			new RestaurantePro.Mobile.Core.Services.Inventory.PreparacionesService(
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>()));
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Inventory.IReservacionesService>(sp =>
+			new RestaurantePro.Mobile.Core.Services.Inventory.ReservacionesService(
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>()));
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Inventory.IIngredientesService>(sp =>
+			new RestaurantePro.Mobile.Core.Services.Inventory.IngredientesService(
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>()));
+		
+		// Servicios Comerciales V1
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Commercial.IFacturasService>(sp =>
+			new RestaurantePro.Mobile.Core.Services.Commercial.FacturasService(
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>()));
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Commercial.IClientesService>(sp =>
+			new RestaurantePro.Mobile.Core.Services.Commercial.ClientesService(
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>()));
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Commercial.ITarjetasFidelizacionService>(sp =>
+			new RestaurantePro.Mobile.Core.Services.Commercial.TarjetasFidelizacionService(
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>()));
+		
+		// Servicios de Categorías y Analytics V1
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Categorias.ICategoriasService>(sp =>
+			new RestaurantePro.Mobile.Core.Services.Categorias.CategoriasService(
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>(),
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService>()));
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Analytics.IAnalyticsService>(sp =>
+			new RestaurantePro.Mobile.Core.Services.Analytics.AnalyticsService(
 				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>(),
 				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService>()));
 	}
@@ -101,7 +152,7 @@ public static class MauiProgram
 		// Dashboard - V1 Fundamental
 		services.AddTransient<DashboardPage>();
 
-		// ViewModels desde Mobile.Core
+		// ViewModels desde Mobile.Core - Operaciones
 		services.AddTransient<MesasViewModel>();
 		services.AddTransient<MesaDetalleViewModel>();
 		services.AddTransient<ComandasViewModel>();
@@ -109,12 +160,69 @@ public static class MauiProgram
 		services.AddTransient<ProductosViewModel>();
 		services.AddTransient<ProductoDetalleViewModel>();
 
-		// Páginas
+		// ViewModels desde Mobile.Core - Inventario
+		services.AddTransient<PreparacionesViewModel>();
+		services.AddTransient<ReservacionesViewModel>();
+		services.AddTransient<IngredientesViewModel>();
+
+		// ViewModels desde Mobile.Core - Comercial
+		services.AddTransient<FacturasViewModel>();
+		services.AddTransient<ClientesViewModel>();
+		services.AddTransient<TarjetasFidelizacionViewModel>();
+
+		// ViewModels desde Mobile.Core - Categorías y Analytics
+		services.AddTransient<CategoriasViewModel>();
+		services.AddTransient<AnalyticsViewModel>();
+
+		// Páginas - Operaciones
 		services.AddTransient<MesasPage>();
 		services.AddTransient<MesaDetallePage>();
 		services.AddTransient<ComandasPage>();
 		services.AddTransient<ComandaDetallePage>();
 		services.AddTransient<ProductosPage>();
 		services.AddTransient<ProductoDetallePage>();
+
+		// Páginas - Inventario
+		services.AddTransient<PreparacionesPage>();
+		services.AddTransient<ReservacionesPage>();
+		services.AddTransient<IngredientesPage>();
+
+		// Páginas - Comercial
+		services.AddTransient<FacturasPage>();
+		services.AddTransient<ClientesPage>();
+		services.AddTransient<TarjetasFidelizacionPage>();
+
+		// Páginas - Categorías y Analytics
+		services.AddTransient<CategoriasPage>();
+		services.AddTransient<AnalyticsPage>();
+	}
+
+	private static void RegisterNavigationRoutesV1()
+	{
+		// Rutas principales
+		Routing.RegisterRoute("login", typeof(LoginPage));
+		Routing.RegisterRoute("dashboard", typeof(DashboardPage));
+		
+		// Rutas de operaciones
+		Routing.RegisterRoute("mesas", typeof(MesasPage));
+		Routing.RegisterRoute("mesadetalle", typeof(MesaDetallePage));
+		Routing.RegisterRoute("comandas", typeof(ComandasPage));
+		Routing.RegisterRoute("comandadetalle", typeof(ComandaDetallePage));
+		Routing.RegisterRoute("productos", typeof(ProductosPage));
+		Routing.RegisterRoute("productodetalle", typeof(ProductoDetallePage));
+		
+		// Rutas de inventario
+		Routing.RegisterRoute("preparaciones", typeof(PreparacionesPage));
+		Routing.RegisterRoute("reservaciones", typeof(ReservacionesPage));
+		Routing.RegisterRoute("ingredientes", typeof(IngredientesPage));
+		
+		// Rutas comerciales
+		Routing.RegisterRoute("facturas", typeof(FacturasPage));
+		Routing.RegisterRoute("clientes", typeof(ClientesPage));
+		Routing.RegisterRoute("tarjetasfidelizacion", typeof(TarjetasFidelizacionPage));
+		
+		// Rutas de categorías y analytics
+		Routing.RegisterRoute("categorias", typeof(CategoriasPage));
+		Routing.RegisterRoute("analytics", typeof(AnalyticsPage));
 	}
 }

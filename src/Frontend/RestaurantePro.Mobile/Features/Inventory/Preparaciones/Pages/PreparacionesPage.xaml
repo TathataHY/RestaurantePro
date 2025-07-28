@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="RestaurantePro.Mobile.Features.Inventory.Preparaciones.Pages.PreparacionesPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             Title="Preparaciones"
+             BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Header con estadísticas -->
+        <Border Grid.Row="0" 
+                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
+                StrokeShape="RoundRectangle 10"
+                Margin="10,10,10,5">
+            <Grid ColumnDefinitions="*,*,*,*" Padding="15">
+                <VerticalStackLayout Grid.Column="0" HorizontalOptions="Center">
+                    <Label Text="{Binding Estadisticas.TotalPreparaciones}" 
+                           FontSize="24" 
+                           FontAttributes="Bold" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                    <Label Text="Total" 
+                           FontSize="12" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+                
+                <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center">
+                    <Label Text="{Binding Estadisticas.PreparacionesDisponibles}" 
+                           FontSize="24" 
+                           FontAttributes="Bold" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                    <Label Text="Disponibles" 
+                           FontSize="12" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+                
+                <VerticalStackLayout Grid.Column="2" HorizontalOptions="Center">
+                    <Label Text="{Binding Estadisticas.PreparacionesNoDisponibles}" 
+                           FontSize="24" 
+                           FontAttributes="Bold" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                    <Label Text="No Disponibles" 
+                           FontSize="12" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+                
+                <VerticalStackLayout Grid.Column="3" HorizontalOptions="Center">
+                    <Label Text="{Binding Estadisticas.ValorPromedioPreparacion, StringFormat='${0:F2}'}" 
+                           FontSize="24" 
+                           FontAttributes="Bold" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                    <Label Text="Precio Promedio" 
+                           FontSize="12" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+        <!-- Contenido principal -->
+        <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="10,5,10,5">
+            <!-- Controles de búsqueda y filtros -->
+            <Border Grid.Row="0" 
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                    StrokeShape="RoundRectangle 10"
+                    Margin="0,0,0,10">
+                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" Padding="15">
+                    <!-- Búsqueda -->
+                    <SearchBar Grid.Row="0" Grid.Column="0"
+                               Placeholder="Buscar preparaciones..."
+                               Text="{Binding TerminoBusqueda}"
+                               SearchCommand="{Binding BuscarPreparacionesCommand}"
+                               Margin="0,0,10,0"/>
+                    
+                    <!-- Filtro de disponibilidad -->
+                    <HorizontalStackLayout Grid.Row="0" Grid.Column="1" VerticalOptions="Center">
+                        <CheckBox IsChecked="{Binding SoloDisponibles}" 
+                                  VerticalOptions="Center"/>
+                        <Label Text="Solo Disponibles" 
+                               VerticalOptions="Center"
+                               Margin="5,0,0,0"/>
+                    </HorizontalStackLayout>
+                    
+                    <!-- Filtro de categoría -->
+                    <Picker Grid.Row="1" Grid.Column="0"
+                            Title="Categoría"
+                            ItemsSource="{Binding Categorias}"
+                            SelectedItem="{Binding CategoriaSeleccionada}"
+                            Margin="0,10,10,0"/>
+                </Grid>
+            </Border>
+
+            <!-- Lista de preparaciones -->
+            <RefreshView Grid.Row="1" 
+                         IsRefreshing="{Binding IsLoading}"
+                         Command="{Binding CargarPreparacionesCommand}">
+                <CollectionView ItemsSource="{Binding PreparacionesFiltradas}"
+                               SelectionMode="None">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,5" 
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
+                                    StrokeShape="RoundRectangle 10"
+                                    Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray700}}">
+                                <Grid ColumnDefinitions="*,Auto" Padding="15">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="5">
+                                        <Label Text="{Binding Nombre}" 
+                                               FontSize="16" 
+                                               FontAttributes="Bold"/>
+                                        <Label Text="{Binding Descripcion}" 
+                                               FontSize="14" 
+                                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
+                                               MaxLines="2"/>
+                                        <HorizontalStackLayout Spacing="10">
+                                            <Label Text="{Binding Categoria}" 
+                                                   FontSize="12" 
+                                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
+                                                   BackgroundColor="{AppThemeBinding Light={StaticResource PrimaryLight}, Dark={StaticResource PrimaryDark}}"
+                                                   Padding="8,4"/>
+                                            <Label Text="{Binding TiempoPreparacionMinutos, StringFormat='{0} min'}" 
+                                                   FontSize="12" 
+                                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
+                                        </HorizontalStackLayout>
+                                        <Label Text="{Binding Precio, StringFormat='${0:F2}'}" 
+                                               FontSize="16" 
+                                               FontAttributes="Bold"
+                                               TextColor="{AppThemeBinding Light={StaticResource Success}, Dark={StaticResource Success}}"/>
+                                    </VerticalStackLayout>
+                                    
+                                    <VerticalStackLayout Grid.Column="1" 
+                                                         HorizontalOptions="End" 
+                                                         VerticalOptions="Center"
+                                                         Spacing="10">
+                                        <!-- Estado de disponibilidad -->
+                                        <Border BackgroundColor="{Binding Disponible, Converter={StaticResource BoolToColorConverter}}"
+                                                StrokeShape="RoundRectangle 15"
+                                                WidthRequest="30"
+                                                HeightRequest="30">
+                                            <Label Text="✓" 
+                                                   TextColor="White"
+                                                   HorizontalOptions="Center"
+                                                   VerticalOptions="Center"
+                                                   FontSize="16"
+                                                   IsVisible="{Binding Disponible}"/>
+                                        </Border>
+                                        
+                                        <!-- Botón para cambiar disponibilidad -->
+                                        <Button Text="Cambiar Estado"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CambiarDisponibilidadCommand}"
+                                                CommandParameter="{Binding}"
+                                                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
+                                                TextColor="White"
+                                                FontSize="12"
+                                                Padding="10,5"/>
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </RefreshView>
+        </Grid>
+
+        <!-- Indicador de carga -->
+        <ActivityIndicator Grid.Row="2" 
+                           IsRunning="{Binding IsLoading}"
+                           IsVisible="{Binding IsLoading}"
+                           HorizontalOptions="Center"
+                           Margin="0,10"/>
+    </Grid>
+</ContentPage> 

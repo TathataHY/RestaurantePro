@@ -22,4 +22,6 @@ global using RestaurantePro.Mobile.Core.Services.Api;
 global using RestaurantePro.Mobile.Core.Services.Authentication;
 global using RestaurantePro.Mobile.Core.Services.Navigation;
 global using RestaurantePro.Mobile.Core.Services.Dialog;
+global using RestaurantePro.Mobile.Core.Services.Platform;
+global using RestaurantePro.Mobile.Core.Models.Common;
 global using RestaurantePro.Mobile.Core.Features.Authentication.ViewModels; 

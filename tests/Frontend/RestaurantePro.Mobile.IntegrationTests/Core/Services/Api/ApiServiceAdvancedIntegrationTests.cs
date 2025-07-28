@@ -5,35 +5,39 @@ using System.Text.Json;
 using RestaurantePro.Mobile.Core.Services.Api;
 using RestaurantePro.Mobile.Core.Services.Authentication;
 using RestaurantePro.Mobile.Core.Services.Platform;
+using Microsoft.Extensions.Logging;
 using RestaurantePro.Mobile.IntegrationTests.TestBase;
 using Xunit;
 
 namespace RestaurantePro.Mobile.IntegrationTests.Core.Services.Api;
 
-/// <summary>
-/// Tests de integración avanzados para ApiService
-/// Valida endpoints correctos, headers de autorización y manejo de respuestas HTTP
-/// </summary>
-public class ApiServiceAdvancedIntegrationTests : MobileIntegrationTestBase, IDisposable
+public class ApiServiceAdvancedIntegrationTests : IClassFixture<MobileIntegrationTestFixture>
 {
-    private readonly IApiService _apiService;
-    private readonly IAuthService _authService;
-    private readonly FakeSecureStorageService _secureStorage;
+    private readonly MobileIntegrationTestFixture _fixture;
+    private readonly HttpClient _client;
+    private IApiService _apiService;
+    private IAuthService _authService;
 
-    public ApiServiceAdvancedIntegrationTests()
+    public ApiServiceAdvancedIntegrationTests(MobileIntegrationTestFixture fixture)
     {
-        var httpClient = CreateClient();
-        _secureStorage = new FakeSecureStorageService();
-        _apiService = new ApiService(httpClient);
-        
-        var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<AuthService>.Instance;
-        _authService = new AuthService(_apiService, logger, _secureStorage);
+        _fixture = fixture;
+        _client = _fixture.CreateClient();
+        Setup();
+    }
+
+    private void Setup()
+    {
+        var httpClient = _client;
+        var apiService = new ApiService(httpClient);
+        var authService = new AuthService(apiService, NullLogger<AuthService>.Instance, new FakeSecureStorageService());
+        _apiService = apiService;
+        _authService = authService;
     }
 
     public void Dispose()
     {
         // Limpiar estado entre tests
-        _secureStorage.ClearAsync().Wait();
+        // _secureStorage.ClearAsync().Wait(); // This line is removed as per the new_code
     }
 
     [Fact]

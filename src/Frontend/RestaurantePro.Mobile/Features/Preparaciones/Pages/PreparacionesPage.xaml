@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="RestaurantePro.Mobile.Features.Preparaciones.Pages.PreparacionesPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:RestaurantePro.Mobile.Core.Features.Preparaciones.ViewModels;assembly=RestaurantePro.Mobile.Core"
+             xmlns:converters="clr-namespace:RestaurantePro.Mobile.Converters"
+             xmlns:models="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
+             Title="Preparaciones"
+             x:DataType="viewmodels:PreparacionesViewModel">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:EstadoToColorConverter x:Key="EstadoToColorConverter" />
+            <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+            <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        
+        <!-- Header con filtros -->
+        <VerticalStackLayout Grid.Row="0" Padding="16" Spacing="8">
+            
+            <!-- Título y botón de refresh -->
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Grid.Column="0" 
+                       Text="🍳 Preparaciones de Cocina" 
+                       Style="{StaticResource LargeLabel}" 
+                       VerticalOptions="Center" />
+                
+                <Button Grid.Column="1" 
+                        Text="🔄" 
+                        Command="{Binding RefrescarPreparacionesCommand}"
+                        IsEnabled="{Binding EstaRefrescando, Converter={StaticResource InverseBooleanConverter}}"
+                        Style="{StaticResource IconButton}" />
+            </Grid>
+
+            <!-- Filtros rápidos -->
+            <HorizontalStackLayout Spacing="8">
+                <Button Text="📋 Cola" 
+                        Command="{Binding CargarColaPreparacionesCommand}"
+                        Style="{StaticResource FilterButton}" />
+                <Button Text="⏳ Pendientes" 
+                        Command="{Binding CargarPreparacionesPendientesCommand}"
+                        Style="{StaticResource FilterButton}" />
+                <Button Text="🔥 En Preparación" 
+                        Command="{Binding CargarPreparacionesEnPreparacionCommand}"
+                        Style="{StaticResource FilterButton}" />
+                <Button Text="✅ Completadas" 
+                        Command="{Binding CargarPreparacionesCompletadasCommand}"
+                        Style="{StaticResource FilterButton}" />
+            </HorizontalStackLayout>
+
+            <!-- Filtros avanzados -->
+            <Grid ColumnDefinitions="*,Auto">
+                <Entry Grid.Column="0" 
+                       Placeholder="Buscar preparaciones..."
+                       Text="{Binding FiltroBusqueda}"
+                       Style="{StaticResource SearchEntry}" />
+                
+                <Button Grid.Column="1" 
+                        Text="🔍" 
+                        Command="{Binding AplicarFiltrosCommand}"
+                        Style="{StaticResource IconButton}" />
+            </Grid>
+
+            <!-- Filtros por estado -->
+            <HorizontalStackLayout Spacing="8">
+                <CheckBox IsChecked="{Binding MostrarSoloPendientes}" />
+                <Label Text="Solo Pendientes" VerticalOptions="Center" />
+                
+                <CheckBox IsChecked="{Binding MostrarSoloEnPreparacion}" />
+                <Label Text="En Preparación" VerticalOptions="Center" />
+                
+                <CheckBox IsChecked="{Binding MostrarSoloCompletadas}" />
+                <Label Text="Completadas" VerticalOptions="Center" />
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+
+        <!-- Lista de preparaciones -->
+        <RefreshView Grid.Row="1" 
+                     IsRefreshing="{Binding EstaRefrescando}"
+                     Command="{Binding RefrescarPreparacionesCommand}">
+            
+            <CollectionView ItemsSource="{Binding Preparaciones}"
+                          SelectionMode="Single"
+                          SelectedItem="{Binding PreparacionSeleccionada}">
+                
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:PreparacionDto">
+                        <Frame Margin="8,4" Padding="12" Style="{StaticResource CardFrame}">
+                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                                
+                                <!-- Header con producto y estado -->
+                                <Grid Grid.Row="0" Grid.Column="0" ColumnDefinitions="*,Auto">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                        <Label Text="{Binding NombreProducto}" 
+                                               Style="{StaticResource MediumLabel}" 
+                                               FontAttributes="Bold" />
+                                        <Label Text="{Binding NumeroComanda, StringFormat='Comanda: {0}'}" 
+                                               Style="{StaticResource SmallLabel}" 
+                                               TextColor="Gray" />
+                                    </VerticalStackLayout>
+                                    
+                                    <Frame Grid.Column="1" 
+                                           Padding="8,4" 
+                                           BackgroundColor="{Binding Estado, Converter={StaticResource EstadoToColorConverter}}"
+                                           CornerRadius="12">
+                                        <Label Text="{Binding Estado}" 
+                                               Style="{StaticResource SmallLabel}" 
+                                               TextColor="White" 
+                                               HorizontalOptions="Center" />
+                                    </Frame>
+                                </Grid>
+
+                                <!-- Detalles -->
+                                <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="4" Margin="0,8">
+                                    <Label Text="{Binding Cantidad, StringFormat='Cantidad: {0}'}" 
+                                           Style="{StaticResource SmallLabel}" />
+                                    <Label Text="{Binding NombreChef, StringFormat='Chef: {0}'}" 
+                                           Style="{StaticResource SmallLabel}" />
+                                    <Label Text="{Binding TiempoEstimado, StringFormat='Tiempo estimado: {0:mm\\:ss}'}" 
+                                           Style="{StaticResource SmallLabel}" />
+                                    
+                                    <Label Text="{Binding Observaciones}" 
+                                           Style="{StaticResource SmallLabel}" 
+                                           IsVisible="{Binding Observaciones, Converter={StaticResource StringToVisibilityConverter}}"
+                                           TextColor="Gray" />
+                                </VerticalStackLayout>
+
+                                <!-- Botones de acción -->
+                                <VerticalStackLayout Grid.Row="2" Grid.Column="1" Spacing="4" Margin="8,0,0,0">
+                                    
+                                    <!-- Botón Iniciar (solo para Pendiente) -->
+                                    <Button Text="🚀" 
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PreparacionesViewModel}}, Path=IniciarPreparacionCommand}"
+                                            CommandParameter="{Binding .}"
+                                            IsVisible="{Binding Estado, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter=Pendiente}"
+                                            Style="{StaticResource ActionButton}" />
+                                    
+                                    <!-- Botón Completar (solo para EnPreparacion) -->
+                                    <Button Text="✅" 
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PreparacionesViewModel}}, Path=CompletarPreparacionCommand}"
+                                            CommandParameter="{Binding .}"
+                                            IsVisible="{Binding Estado, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter=EnPreparacion}"
+                                            Style="{StaticResource ActionButton}" />
+                                    
+                                    <!-- Botón Cancelar (para Pendiente y EnPreparacion) -->
+                                    <Button Text="❌" 
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PreparacionesViewModel}}, Path=CancelarPreparacionCommand}"
+                                            CommandParameter="{Binding .}"
+                                            IsVisible="{Binding Estado, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter=Pendiente,EnPreparacion}"
+                                            Style="{StaticResource ActionButton}" />
+                                    
+                                    <!-- Botón Ver Detalle -->
+                                    <Button Text="👁️" 
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:PreparacionesViewModel}}, Path=SeleccionarPreparacionCommand}"
+                                            CommandParameter="{Binding .}"
+                                            Style="{StaticResource ActionButton}" />
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Frame>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <!-- Estado vacío -->
+                <CollectionView.EmptyView>
+                    <VerticalStackLayout HorizontalOptions="Center" 
+                                         VerticalOptions="Center" 
+                                         Spacing="16">
+                        <Label Text="🍳" 
+                               Style="{StaticResource LargeLabel}" 
+                               HorizontalOptions="Center" />
+                        <Label Text="No hay preparaciones" 
+                               Style="{StaticResource MediumLabel}" 
+                               HorizontalOptions="Center" />
+                        <Label Text="Las preparaciones aparecerán aquí cuando se creen comandas" 
+                               Style="{StaticResource SmallLabel}" 
+                               HorizontalOptions="Center" 
+                               TextColor="Gray" />
+                    </VerticalStackLayout>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </RefreshView>
+
+        <!-- Footer con paginación -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Padding="16,8">
+            <Label Grid.Column="0" 
+                   Text="{Binding Preparaciones.Count, StringFormat='{0} preparaciones'}" 
+                   Style="{StaticResource SmallLabel}" 
+                   VerticalOptions="Center" />
+            
+            <Button Grid.Column="1" 
+                    Text="Cargar más" 
+                    Command="{Binding CargarMasPreparacionesCommand}"
+                    IsEnabled="{Binding HayMasPreparaciones}"
+                    IsVisible="{Binding HayMasPreparaciones}"
+                    Style="{StaticResource SecondaryButton}" />
+        </Grid>
+
+        <!-- Indicador de carga -->
+        <ActivityIndicator Grid.Row="1" 
+                           IsRunning="{Binding IsBusy}" 
+                           IsVisible="{Binding IsBusy}"
+                           HorizontalOptions="Center" 
+                           VerticalOptions="Center" />
+    </Grid>
+</ContentPage> 

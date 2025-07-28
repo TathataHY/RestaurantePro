@@ -10,6 +10,9 @@
             <converters:EstadoColorConverter x:Key="EstadoColorConverter" />
             <converters:EstadoIconConverter x:Key="EstadoIconConverter" />
             <converters:IsNotNullConverter x:Key="IsNotNullConverter" />
+            <converters:EstadoToColorConverter x:Key="EstadoToColorConverter" />
+            <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+            <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
 
             <!-- Estilos Globales -->
             <ResourceDictionary.MergedDictionaries>

@@ -26,6 +26,16 @@ public class ApiResponse<T>
     public List<string> Errors { get; set; } = new();
     
     /// <summary>
+    /// Propiedad de conveniencia para compatibilidad con ViewModels
+    /// </summary>
+    public bool Succeeded => Success;
+    
+    /// <summary>
+    /// Propiedad de conveniencia para compatibilidad con ViewModels
+    /// </summary>
+    public string Error => Errors.FirstOrDefault() ?? string.Empty;
+    
+    /// <summary>
     /// Código de estado HTTP
     /// </summary>
     public int StatusCode { get; set; }
@@ -66,5 +76,21 @@ public class ApiResponse<T>
     public static ApiResponse<T> ErrorResponse(string error, string message = "Error en la operación", int statusCode = 400)
     {
         return ErrorResponse(new List<string> { error }, message, statusCode);
+    }
+    
+    /// <summary>
+    /// Método de conveniencia para compatibilidad con servicios
+    /// </summary>
+    public static ApiResponse<T> Failure(string error, string message = "Error en la operación", int statusCode = 400)
+    {
+        return ErrorResponse(error, message, statusCode);
+    }
+    
+    /// <summary>
+    /// Método de conveniencia para compatibilidad con servicios
+    /// </summary>
+    public static ApiResponse<T> SuccessResult(T data, string message = "Operación exitosa")
+    {
+        return SuccessResponse(data, message);
     }
 } 

@@ -69,10 +69,11 @@ namespace RestaurantePro.Api
             {
                 // En producción/desarrollo: usar Infrastructure completa
                 builder.Services.AddInfrastructureServices(builder.Configuration);
+                
+                // En producción/desarrollo: usar Application Services completa
+                builder.Services.AddApplicationServices(builder.Configuration);
             }
-            // En testing: Infrastructure será configurada por TestWebApplicationFactory
-            
-            builder.Services.AddApplicationServices(builder.Configuration);
+            // En testing: Infrastructure y Application Services serán configurados por TestWebApplicationFactory
             
             var app = builder.Build();
             

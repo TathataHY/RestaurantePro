@@ -15,17 +15,20 @@ namespace RestaurantePro.Mobile.IntegrationTests.Core.Services.Authentication;
 /// Tests de integración avanzados para AuthService
 /// Valida endpoints correctos, flujos de autenticación reales y manejo de errores
 /// </summary>
-public class AuthServiceAdvancedIntegrationTests : MobileIntegrationTestBase, IDisposable
+public class AuthServiceAdvancedIntegrationTests : IClassFixture<MobileIntegrationTestFixture>, IDisposable
 {
+    private readonly MobileIntegrationTestFixture _fixture;
+    private readonly HttpClient _client;
     private readonly IAuthService _authService;
     private readonly IApiService _apiService;
     private readonly FakeSecureStorageService _secureStorage;
 
-    public AuthServiceAdvancedIntegrationTests()
+    public AuthServiceAdvancedIntegrationTests(MobileIntegrationTestFixture fixture)
     {
-        var httpClient = CreateClient();
+        _fixture = fixture;
+        _client = _fixture.CreateClient();
         _secureStorage = new FakeSecureStorageService();
-        _apiService = new ApiService(httpClient);
+        _apiService = new ApiService(_client);
         var logger = NullLogger<AuthService>.Instance;
         _authService = new AuthService(_apiService, logger, _secureStorage);
     }
