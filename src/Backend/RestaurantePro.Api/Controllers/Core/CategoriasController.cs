@@ -13,7 +13,7 @@ namespace RestaurantePro.Api.Controllers.Core;
 /// Controlador para gestionar categorías de productos
 /// </summary>
 [ApiController]
-[Route("api/categorias")]
+[Route("api/core/categorias")]
 [Produces("application/json")]
 [Authorize]
 public class CategoriasController : ControllerBase
@@ -157,6 +157,72 @@ public class CategoriasController : ControllerBase
             _logger.LogError(ex, "❌ Error al obtener categoría: {Id}", id);
             var errorResponse = ApiResponse<CategoriaProductoDto>.ErrorResponse(
                 new List<string> { "Error interno al obtener categoría" },
+                "Error de servidor",
+                StatusCodes.Status500InternalServerError);
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
+    }
+
+    /// <summary>
+    /// Busca categorías por nombre
+    /// </summary>
+    [HttpGet("buscar")]
+    [ProducesResponseType(typeof(ApiResponse<List<CategoriaProductoDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<List<CategoriaProductoDto>>>> BuscarCategorias([FromQuery] string nombre)
+    {
+        _logger.LogInformation("🔍 GET /api/core/categorias/buscar - Nombre: {Nombre}", nombre);
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(nombre))
+            {
+                // Si no hay término de búsqueda, devolver todas las categorías activas
+                return await GetCategorias(true, true);
+            }
+
+            // Buscar categorías que contengan el nombre
+            var categorias = await _categoriaRepository.ObtenerActivasAsync();
+            var categoriasFiltradas = categorias
+                .Where(c => c.Nombre.Contains(nombre, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            // Mapear a DTOs
+            var categoriasDto = new List<CategoriaProductoDto>();
+            
+            foreach (var categoria in categoriasFiltradas)
+            {
+                var productosCategoria = await _productoRepository.ObtenerPorCategoriaAsync(
+                    categoria.Id, true);
+                
+                var categoriaDto = new CategoriaProductoDto
+                {
+                    Id = categoria.Id,
+                    Nombre = categoria.Nombre,
+                    Descripcion = categoria.Descripcion,
+                    Color = "#2196F3", // Color por defecto
+                    Icono = "🍽️", // Icono por defecto
+                    Orden = categoria.Orden,
+                    Activa = categoria.EstaActivo,
+                    CantidadProductos = productosCategoria.Count,
+                    ProductosDisponibles = productosCategoria.Count(p => p.EstaActivo),
+                    FechaCreacion = categoria.FechaCreacion
+                };
+                
+                categoriasDto.Add(categoriaDto);
+            }
+
+            // Ordenar por la propiedad Orden
+            categoriasDto = categoriasDto.OrderBy(c => c.Orden).ToList();
+
+            var response = ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(
+                categoriasDto, "Categorías encontradas exitosamente");
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error al buscar categorías: {Nombre}", nombre);
+            var errorResponse = ApiResponse<List<CategoriaProductoDto>>.ErrorResponse(
+                new List<string> { "Error interno al buscar categorías" },
                 "Error de servidor",
                 StatusCodes.Status500InternalServerError);
             return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);

@@ -102,6 +102,13 @@ public class CrearReservacionHandler : IRequestHandler<CrearReservacionCommand, 
 
     private async Task<Result<Domain.Comercial.Clientes.Entities.Cliente>> ValidarCliente(Guid clienteId, CancellationToken cancellationToken)
     {
+        // Si el ClienteId es Guid.Empty, es un cliente no registrado (válido)
+        if (clienteId == Guid.Empty)
+        {
+            _logger.LogInformation("📝 Cliente no registrado (Guid.Empty) - permitiendo reservación");
+            return Result.Success<Domain.Comercial.Clientes.Entities.Cliente>(null);
+        }
+
         var cliente = await _clienteRepository.ObtenerPorIdAsync(clienteId, cancellationToken);
         if (cliente == null)
         {

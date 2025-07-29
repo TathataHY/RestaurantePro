@@ -1,22 +1,26 @@
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Services.Api;
+using RestaurantePro.Mobile.Core.Services.Authentication;
 
 namespace RestaurantePro.Mobile.Core.Services.Commercial;
 
 public class FacturasService : IFacturasService
 {
     private readonly IApiService _apiService;
+    private readonly IAuthService _authService;
 
-    public FacturasService(IApiService apiService)
+    public FacturasService(IApiService apiService, IAuthService authService)
     {
         _apiService = apiService;
+        _authService = authService;
     }
 
     public async Task<ApiResponse<List<FacturaDto>>> ObtenerFacturasAsync(DateTime fecha)
     {
         try
         {
-            var response = await _apiService.GetAsync<List<FacturaDto>>($"api/facturas?fecha={fecha:yyyy-MM-dd}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<List<FacturaDto>>($"api/comercial/facturas?fecha={fecha:yyyy-MM-dd}", token);
             return response;
         }
         catch (Exception ex)
@@ -29,7 +33,8 @@ public class FacturasService : IFacturasService
     {
         try
         {
-            var response = await _apiService.GetAsync<FacturaDto>($"api/facturas/{id}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<FacturaDto>($"api/comercial/facturas/{id}", token);
             return response;
         }
         catch (Exception ex)
@@ -42,7 +47,8 @@ public class FacturasService : IFacturasService
     {
         try
         {
-            var response = await _apiService.GetAsync<List<FacturaDto>>($"api/facturas/buscar?busqueda={busqueda}&fecha={fecha:yyyy-MM-dd}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<List<FacturaDto>>($"api/comercial/facturas/buscar-por-termino?busqueda={busqueda}&fecha={fecha:yyyy-MM-dd}", token);
             return response;
         }
         catch (Exception ex)
@@ -55,7 +61,8 @@ public class FacturasService : IFacturasService
     {
         try
         {
-            var response = await _apiService.GetAsync<List<FacturaDto>>($"api/facturas/por-fecha?fechaDesde={fechaDesde:yyyy-MM-dd}&fechaHasta={fechaHasta:yyyy-MM-dd}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<List<FacturaDto>>($"api/comercial/facturas?fechaDesde={fechaDesde:yyyy-MM-dd}&fechaHasta={fechaHasta:yyyy-MM-dd}", token);
             return response;
         }
         catch (Exception ex)
@@ -68,7 +75,8 @@ public class FacturasService : IFacturasService
     {
         try
         {
-            var response = await _apiService.GetAsync<EstadisticasFacturasDto>($"api/facturas/estadisticas?fecha={fecha:yyyy-MM-dd}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<EstadisticasFacturasDto>($"api/comercial/facturas/estadisticas?fecha={fecha:yyyy-MM-dd}", token);
             return response;
         }
         catch (Exception ex)
@@ -81,7 +89,8 @@ public class FacturasService : IFacturasService
     {
         try
         {
-            var response = await _apiService.PostAsync<bool>($"api/facturas/{facturaId}/imprimir", null);
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.PostAsync<bool>($"api/comercial/facturas/{facturaId}/imprimir", null, token);
             return response;
         }
         catch (Exception ex)
@@ -94,8 +103,9 @@ public class FacturasService : IFacturasService
     {
         try
         {
+            var token = await _authService.GetTokenAsync();
             var request = new { Email = email };
-            var response = await _apiService.PostAsync<string>($"api/facturas/{id}/enviar-email", request);
+            var response = await _apiService.PostAsync<string>($"api/comercial/facturas/{id}/enviar-email", request, token);
             return response;
         }
         catch (Exception ex)
@@ -108,7 +118,8 @@ public class FacturasService : IFacturasService
     {
         try
         {
-            var response = await _apiService.GetAsync<List<FacturaDto>>("api/facturas/pendientes");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<List<FacturaDto>>("api/comercial/facturas/pendientes", token);
             return response;
         }
         catch (Exception ex)
@@ -121,7 +132,8 @@ public class FacturasService : IFacturasService
     {
         try
         {
-            var response = await _apiService.PostAsync<bool>($"api/facturas/{facturaId}/registrar-pago", pagoDto);
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.PostAsync<bool>($"api/comercial/facturas/{facturaId}/pagar", pagoDto, token);
             return response;
         }
         catch (Exception ex)
@@ -134,7 +146,8 @@ public class FacturasService : IFacturasService
     {
         try
         {
-            var response = await _apiService.PostAsync<bool>($"api/facturas/{facturaId}/anular", anulacionDto);
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.DeleteAsync($"api/comercial/facturas/{facturaId}", token);
             return response;
         }
         catch (Exception ex)
@@ -147,7 +160,8 @@ public class FacturasService : IFacturasService
     {
         try
         {
-            var response = await _apiService.GetAsync<string>($"api/facturas/{facturaId}/descargar-pdf");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<string>($"api/comercial/facturas/{facturaId}/pdf", token);
             return response;
         }
         catch (Exception ex)

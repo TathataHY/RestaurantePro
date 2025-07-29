@@ -40,14 +40,18 @@ public class AuthenticationTest : MobileIntegrationTestBase
         using var doc = JsonDocument.Parse(responseContent);
         var root = doc.RootElement;
 
-        // 🔧 VERIFICAR QUE EL TOKEN Y LOS DATOS DEL USUARIO ESTÁN PRESENTES
-        // La estructura real es { "token": "...", "user": { ... } }
-        Assert.True(root.TryGetProperty("token", out var tokenElement) && !string.IsNullOrEmpty(tokenElement.GetString()), "Token no encontrado o vacío.");
-        Assert.True(root.TryGetProperty("user", out var userElement), "Propiedad 'user' no encontrada en la respuesta.");
-
+        // 🔧 VERIFICAR QUE LA RESPUESTA ES EXITOSA
+        Assert.True(root.TryGetProperty("Success", out var successElement) && successElement.GetBoolean(), "La respuesta no indica éxito.");
+        
+        // 🔧 VERIFICAR QUE HAY DATOS EN LA RESPUESTA
+        Assert.True(root.TryGetProperty("Data", out var dataElement), "Propiedad 'Data' no encontrada en la respuesta.");
+        
+        // 🔧 VERIFICAR QUE EL TOKEN ESTÁ PRESENTE EN LOS DATOS
+        Assert.True(dataElement.TryGetProperty("Token", out var tokenElement) && !string.IsNullOrEmpty(tokenElement.GetString()), "Token no encontrado o vacío.");
+        
         // 🔧 VERIFICAR DATOS ESPECÍFICOS DEL USUARIO
-        Assert.True(userElement.TryGetProperty("email", out var emailElement) && emailElement.GetString() == "admin@restaurantepro.com", "Email del usuario incorrecto.");
-        Assert.True(userElement.TryGetProperty("roles", out var rolesElement) && rolesElement.EnumerateArray().Any(r => r.GetString() == "Admin"), "Rol 'Admin' no encontrado para el usuario.");
+        Assert.True(dataElement.TryGetProperty("UserName", out var userNameElement) && userNameElement.GetString() == "admin@restaurantepro.com", "Email del usuario incorrecto.");
+        Assert.True(dataElement.TryGetProperty("Roles", out var rolesElement) && rolesElement.EnumerateArray().Any(r => r.GetString() == "Administrador"), "Rol 'Administrador' no encontrado para el usuario.");
 
         Console.WriteLine("✅ TestAuthenticationEndpoint_ShouldReturnOk PASSED");
     }
@@ -121,8 +125,8 @@ public class AuthenticationTest : MobileIntegrationTestBase
         var root = doc.RootElement;
 
         // 🔧 VERIFICAR QUE LA RESPUESTA TIENE LA ESTRUCTURA CORRECTA
-        Assert.True(root.TryGetProperty("data", out var dataElement), "Propiedad 'data' no encontrada en la respuesta.");
-        Assert.True(dataElement.TryGetProperty("items", out var itemsElement), "Propiedad 'items' no encontrada en la respuesta.");
+        Assert.True(root.TryGetProperty("Data", out var dataElement), "Propiedad 'Data' no encontrada en la respuesta.");
+        Assert.True(dataElement.TryGetProperty("Items", out var itemsElement), "Propiedad 'Items' no encontrada en la respuesta.");
 
         // 🔧 VERIFICAR QUE HAY CLIENTES EN LA RESPUESTA
         var clientes = itemsElement.EnumerateArray().ToList();

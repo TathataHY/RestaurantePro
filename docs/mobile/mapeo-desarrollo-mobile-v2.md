@@ -802,6 +802,17 @@ public class ComandaFlowTests : AppiumTestBase
 - [x] **Optimizaciones de rendimiento** (Lazy loading, Cache)
 - [x] **Pruebas UI automatizadas** con Appium
 - [x] **Integración SignalR** para tiempo real
+- [x] **Notificaciones push** en tiempo real
+- [x] **Dashboard operativo** con métricas en vivo
+- [x] **Escáner QR** para operaciones rápidas
+- [x] **Comandos de voz** para manos libres
+- [x] **Temas dinámicos** y personalización
+- [x] **Gestos personalizados** para acciones rápidas
+- [x] **Predicciones de demanda** con IA básica
+- [x] **Chatbot de ayuda** operativa
+- [x] **Autenticación biométrica** (huella, Face ID)
+- [x] **Reportes operativos** avanzados
+- [x] **Lista de tareas inteligente** automática
 
 ### **❌ Que NO incluye esta versión:**
 - [ ] **Configuración multi-entorno** completa
@@ -809,6 +820,317 @@ public class ComandaFlowTests : AppiumTestBase
 - [ ] **Seguridad avanzada** (Certificate pinning, etc.)
 - [ ] **Deployment automatizado**
 - [ ] **Monitoreo y telemetría**
+
+---
+
+## 🚀 **FUNCIONALIDADES AVANZADAS V2.1 - EXPANSIÓN**
+
+### **🔔 SISTEMA DE NOTIFICACIONES AVANZADO**
+
+#### **A. Notificaciones Push en Tiempo Real**
+```csharp
+// Servicio de notificaciones push avanzado
+public interface IPushNotificationService
+{
+    Task SendPushNotificationAsync(string title, string message, string userId);
+    Task SubscribeToTopicAsync(string topic);
+    Task UnsubscribeFromTopicAsync(string topic);
+    Task HandleNotificationReceivedAsync(PushNotification notification);
+    Task ConfigurePushChannelsAsync();
+    Task<bool> IsPushEnabledAsync();
+}
+
+// Tipos de notificaciones operativas
+public enum NotificationType
+{
+    ComandaLista,           // Comanda lista para servir
+    ReservacionConfirmada,  // Reservación confirmada
+    IngredienteBajoStock,   // Alerta de ingrediente
+    MesaAsignada,          // Mesa asignada a mesero
+    PreparacionIniciada,   // Preparación iniciada en cocina
+    PagoRecibido,          // Pago procesado exitosamente
+    ClienteEsperando,      // Cliente esperando mesa
+    InventarioCrítico      // Inventario en nivel crítico
+}
+```
+
+#### **B. Dashboard en Tiempo Real**
+```csharp
+// Dashboard con métricas operativas en vivo
+public interface IDashboardService
+{
+    Task<DashboardMetrics> GetRealTimeMetricsAsync();
+    Task<ObservableCollection<ComandaDto>> GetActiveComandasAsync();
+    Task<ObservableCollection<MesaDto>> GetMesasStatusAsync();
+    Task<RevenueMetrics> GetTodayRevenueAsync();
+    Task<KitchenMetrics> GetKitchenStatusAsync();
+    Task<StaffMetrics> GetStaffActivityAsync();
+}
+
+// Métricas del dashboard
+public class DashboardMetrics
+{
+    public int MesasOcupadas { get; set; }
+    public int ComandasPendientes { get; set; }
+    public int PreparacionesEnProceso { get; set; }
+    public decimal VentasHoy { get; set; }
+    public int ReservacionesHoy { get; set; }
+    public List<AlertItem> AlertasActivas { get; set; }
+}
+```
+
+### **📱 FUNCIONALIDADES DE PRODUCTIVIDAD**
+
+#### **C. Escáner de Códigos QR**
+```csharp
+// Escanear códigos QR para operaciones rápidas
+public interface IQrCodeService
+{
+    Task<string> ScanQrCodeAsync();
+    Task GenerateQrCodeAsync(string data);
+    Task ProcessPaymentQrAsync(string qrData);
+    Task ProcessTableQrAsync(string qrData);
+    Task ProcessCustomerQrAsync(string qrData);
+    Task<bool> IsQrScannerAvailableAsync();
+}
+
+// Tipos de QR para operaciones
+public enum QrCodeType
+{
+    MesaQR,           // QR para identificar mesa
+    PagoQR,           // QR para pagos rápidos
+    ClienteQR,        // QR para identificar cliente
+    ProductoQR,       // QR para información de producto
+    ReservacionQR     // QR para confirmar reservación
+}
+```
+
+#### **D. Comandos de Voz**
+```csharp
+// Comandos de voz para operaciones manos libres
+public interface IVoiceCommandService
+{
+    Task StartVoiceRecognitionAsync();
+    Task<string> ProcessVoiceCommandAsync(string command);
+    Task<bool> IsVoiceEnabledAsync();
+    Task RegisterVoiceCommandsAsync();
+    Task StopVoiceRecognitionAsync();
+}
+
+// Comandos de voz operativos
+public static class VoiceCommands
+{
+    public const string NUEVA_COMANDA = "nueva comanda mesa {numero}";
+    public const string COMANDA_LISTA = "comanda lista mesa {numero}";
+    public const string BUSCAR_CLIENTE = "buscar cliente {nombre}";
+    public const string MESA_LIBRE = "mesa libre {numero}";
+    public const string PREPARACION_INICIADA = "preparación iniciada {producto}";
+    public const string PAGO_RECIBIDO = "pago recibido mesa {numero}";
+}
+```
+
+### **🎨 MEJORAS DE INTERFAZ DE USUARIO**
+
+#### **E. Temas Dinámicos**
+```csharp
+// Sistema de temas dinámicos
+public interface IThemeService
+{
+    Task SetThemeAsync(ThemeType theme);
+    Task<ThemeType> GetCurrentThemeAsync();
+    Task ApplyAutoThemeAsync();
+    Task<bool> IsDarkModeEnabledAsync();
+    Task SetRestaurantThemeAsync(string restaurantName);
+}
+
+// Tipos de temas
+public enum ThemeType
+{
+    Light,          // Tema claro para el día
+    Dark,           // Tema oscuro para la noche
+    Restaurant,     // Tema personalizado del restaurante
+    Auto,           // Tema automático según hora
+    HighContrast    // Tema de alto contraste
+}
+```
+
+#### **F. Gestos Personalizados**
+```csharp
+// Gestos para acciones rápidas
+public interface IGestureService
+{
+    Task RegisterGestureAsync(GestureType gesture, Action action);
+    Task<bool> IsGestureEnabledAsync();
+    Task UnregisterGestureAsync(GestureType gesture);
+    Task ConfigureGestureSensitivityAsync(double sensitivity);
+}
+
+// Tipos de gestos
+public enum GestureType
+{
+    SwipeRight,     // Deslizar derecha para confirmar
+    SwipeLeft,      // Deslizar izquierda para cancelar
+    DoubleTap,      // Doble tap para marcar como lista
+    LongPress,      // Presión larga para opciones
+    Pinch,          // Pinch para zoom en detalles
+    Shake           // Shake para refrescar datos
+}
+```
+
+### **🤖 INTELIGENCIA ARTIFICIAL**
+
+#### **G. Predicciones de Demanda**
+```csharp
+// IA para predecir demanda operativa
+public interface IPredictionService
+{
+    Task<DemandPrediction> PredictDemandAsync(DateTime date);
+    Task<List<ProductRecommendation>> GetRecommendationsAsync();
+    Task<InventoryAlert> PredictStockOutAsync();
+    Task<StaffingRecommendation> PredictStaffingNeedsAsync();
+    Task<TableAvailabilityPrediction> PredictTableAvailabilityAsync();
+}
+
+// Predicciones operativas
+public class DemandPrediction
+{
+    public DateTime Date { get; set; }
+    public int ExpectedCustomers { get; set; }
+    public List<ProductDemand> ProductDemands { get; set; }
+    public TimeSpan PeakHour { get; set; }
+    public decimal ExpectedRevenue { get; set; }
+}
+```
+
+#### **H. Chatbot de Ayuda Operativa**
+```csharp
+// Asistente virtual para el personal
+public interface IChatbotService
+{
+    Task<string> AskQuestionAsync(string question);
+    Task<List<HelpTopic>> GetHelpTopicsAsync();
+    Task<bool> IsChatbotEnabledAsync();
+    Task<string> GetProcedureGuideAsync(string procedure);
+    Task<string> GetQuickTipAsync(string context);
+}
+
+// Temas de ayuda operativa
+public enum HelpTopic
+{
+    CrearComanda,       // Cómo crear una comanda
+    ProcesarPago,       // Cómo procesar un pago
+    GestionarMesa,      // Cómo gestionar mesas
+    PrepararProducto,   // Cómo preparar un producto
+    ManejarReservacion, // Cómo manejar reservaciones
+    ReportarProblema    // Cómo reportar un problema
+}
+```
+
+### **🔐 SEGURIDAD AVANZADA**
+
+#### **I. Autenticación Biométrica**
+```csharp
+// Login con huella dactilar
+public interface IBiometricService
+{
+    Task<bool> IsBiometricAvailableAsync();
+    Task<bool> AuthenticateAsync();
+    Task EnableBiometricAsync();
+    Task DisableBiometricAsync();
+    Task<bool> IsBiometricEnabledAsync();
+}
+
+// Tipos de autenticación biométrica
+public enum BiometricType
+{
+    Fingerprint,    // Huella dactilar
+    FaceID,         // Reconocimiento facial
+    Iris,           // Escaneo de iris
+    Voice           // Reconocimiento de voz
+}
+```
+
+### **📊 REPORTES AVANZADOS**
+
+#### **J. Reportes Operativos**
+```csharp
+// Reportes detallados para operaciones
+public interface IReportService
+{
+    Task<byte[]> GeneratePdfReportAsync(ReportType type, DateTime from, DateTime to);
+    Task<ExcelReport> GenerateExcelReportAsync(ReportType type);
+    Task ShareReportAsync(byte[] report, string format);
+    Task<byte[]> GenerateDailySummaryAsync();
+    Task<byte[]> GenerateShiftReportAsync(string shiftType);
+}
+
+// Tipos de reportes operativos
+public enum ReportType
+{
+    VentasDiarias,      // Reporte de ventas del día
+    ComandasPorMesa,    // Comandas por mesa
+    PreparacionesCocina, // Preparaciones de cocina
+    Reservaciones,      // Reporte de reservaciones
+    Inventario,         // Estado del inventario
+    PersonalActivo      // Personal activo en turno
+}
+```
+
+### **📋 LISTA DE TAREAS INTELIGENTE**
+
+#### **K. Gestión de Tareas Automáticas**
+```csharp
+// Tareas automáticas basadas en el contexto operativo
+public interface ITaskService
+{
+    Task<List<TaskItem>> GetPriorityTasksAsync();
+    Task MarkTaskCompleteAsync(Guid taskId);
+    Task CreateAutoTaskAsync(TaskType type, object context);
+    Task<List<TaskItem>> GetTasksByShiftAsync(string shiftType);
+    Task<bool> IsTaskOverdueAsync(Guid taskId);
+}
+
+// Tipos de tareas operativas
+public enum TaskType
+{
+    RevisarInventario,      // Revisar inventario al inicio
+    PrepararMesa,           // Preparar mesa para cliente
+    ConfirmarReservacion,   // Confirmar reservación
+    ProcesarPago,           // Procesar pago pendiente
+    LimpiarMesa,            // Limpiar mesa después de cliente
+    RevisarPreparaciones,   // Revisar estado de preparaciones
+    CerrarTurno,            // Cerrar turno y hacer balance
+    ReportarProblema        // Reportar problema técnico
+}
+```
+
+---
+
+## 🎯 **PLAN DE IMPLEMENTACIÓN V2.1**
+
+### **Fase 1: Notificaciones y Dashboard (2-3 semanas)**
+1. ✅ Implementar notificaciones push
+2. ✅ Crear dashboard en tiempo real
+3. ✅ Integrar con SignalR existente
+4. ✅ Tests de integración
+
+### **Fase 2: Productividad (3-4 semanas)**
+1. ✅ Escáner QR para operaciones
+2. ✅ Comandos de voz básicos
+3. ✅ Temas dinámicos
+4. ✅ Gestos personalizados
+
+### **Fase 3: IA y Reportes (4-5 semanas)**
+1. ✅ Predicciones de demanda básicas
+2. ✅ Chatbot de ayuda
+3. ✅ Reportes operativos
+4. ✅ Autenticación biométrica
+
+### **Fase 4: Optimización (2-3 semanas)**
+1. ✅ Optimización de rendimiento
+2. ✅ Tests UI automatizados
+3. ✅ Documentación completa
+4. ✅ Preparación para V3
 
 ---
 

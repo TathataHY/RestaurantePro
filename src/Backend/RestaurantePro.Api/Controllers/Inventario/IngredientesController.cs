@@ -40,7 +40,7 @@ public class IngredientesController : ControllerBase
     }
 
     /// <summary>
-    /// Obtiene todos los ingredientes con filtros opcionales
+    /// Obtiene todos los ingredientes con filtros opcionales (paginado)
     /// </summary>
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<PaginatedList<IngredienteSummaryDto>>), 200)]
@@ -53,6 +53,34 @@ public class IngredientesController : ControllerBase
         if (result.Succeeded)
         {
             return Ok(ApiResponse<PaginatedList<IngredienteSummaryDto>>.SuccessResponse(result.Value, "Ingredientes obtenidos"));
+        }
+
+        return BadRequest(ApiResponse<object>.ErrorResponse(new List<string> { result.Error }, "Error al obtener ingredientes"));
+    }
+
+    /// <summary>
+    /// Obtiene todos los ingredientes como lista simple (para frontend móvil)
+    /// </summary>
+    [HttpGet("lista")]
+    [ProducesResponseType(typeof(ApiResponse<List<IngredienteSummaryDto>>), 200)]
+    [ProducesResponseType(401)]
+    public async Task<IActionResult> ObtenerIngredientesLista([FromQuery] bool soloActivos = true)
+    {
+        _logger.LogInformation("➡️ Obteniendo lista de ingredientes (soloActivos: {SoloActivos})", soloActivos);
+        
+        var query = new ObtenerIngredientesPaginadosQuery
+        {
+            PageNumber = 1,
+            PageSize = 100, // Usar el máximo permitido
+            SoloActivos = soloActivos
+        };
+        
+        var result = await _mediator.Send(query);
+        
+        if (result.Succeeded)
+        {
+            var lista = result.Value.Items.ToList();
+            return Ok(ApiResponse<List<IngredienteSummaryDto>>.SuccessResponse(lista, "Ingredientes obtenidos"));
         }
 
         return BadRequest(ApiResponse<object>.ErrorResponse(new List<string> { result.Error }, "Error al obtener ingredientes"));
@@ -324,5 +352,117 @@ public class IngredientesController : ControllerBase
         }
         
         return BadRequest(ApiResponse<object>.ErrorResponse(new List<string> { result.Error }, "Error al generar reporte de valoración"));
+    }
+
+    /// <summary>
+    /// Obtiene estadísticas de ingredientes
+    /// </summary>
+    [HttpGet("estadisticas")]
+    [ProducesResponseType(typeof(ApiResponse<EstadisticasIngredientesDto>), 200)]
+    [ProducesResponseType(401)]
+    public async Task<IActionResult> ObtenerEstadisticas()
+    {
+        _logger.LogInformation("➡️ Obteniendo estadísticas de ingredientes...");
+        
+        try
+        {
+            // Obtener todos los ingredientes para calcular estadísticas
+            var query = new ObtenerIngredientesPaginadosQuery
+            {
+                PageNumber = 1,
+                PageSize = 100,
+                SoloActivos = true
+            };
+            
+            var result = await _mediator.Send(query);
+            
+            if (result.Succeeded)
+            {
+                var ingredientes = result.Value.Items;
+                var estadisticas = new EstadisticasIngredientesDto
+                {
+                    TotalIngredientes = ingredientes.Count,
+                    IngredientesActivos = ingredientes.Count(i => i.Activo),
+                    IngredientesBajoStock = ingredientes.Count(i => i.StockActual <= i.StockMinimo),
+                    IngredientesSinStock = ingredientes.Count(i => i.StockActual <= 0),
+                    ValorTotalInventario = ingredientes.Sum(i => i.ValorStock),
+                    IngredientesPorCategoria = ingredientes.GroupBy(i => i.Categoria)
+                        .ToDictionary(g => g.Key, g => g.Count())
+                };
+                
+                return Ok(ApiResponse<EstadisticasIngredientesDto>.SuccessResponse(estadisticas, "Estadísticas obtenidas exitosamente"));
+            }
+
+            return BadRequest(ApiResponse<object>.ErrorResponse(new List<string> { result.Error }, "Error al obtener estadísticas"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener estadísticas de ingredientes");
+            return BadRequest(ApiResponse<object>.ErrorResponse(new List<string> { "Error interno del servidor" }, "Error al obtener estadísticas"));
+        }
+    }
+
+    /// <summary>
+    /// Busca ingredientes por término y filtros opcionales
+    /// </summary>
+    [HttpGet("buscar")]
+    [ProducesResponseType(typeof(ApiResponse<List<IngredienteSummaryDto>>), 200)]
+    [ProducesResponseType(401)]
+    public async Task<IActionResult> BuscarIngredientes([FromQuery] string termino, [FromQuery] string? categoria = null, [FromQuery] bool? soloDisponibles = null)
+    {
+        _logger.LogInformation("🔍 GET /api/inventario/ingredientes/buscar - Término: {Termino}, Categoría: {Categoria}, SoloDisponibles: {SoloDisponibles}", termino, categoria, soloDisponibles);
+
+        try
+        {
+            // Obtener todos los ingredientes para buscar
+            var query = new ObtenerIngredientesPaginadosQuery
+            {
+                PageNumber = 1,
+                PageSize = 100,
+                SoloActivos = true
+            };
+            
+            var result = await _mediator.Send(query);
+            
+            if (!result.Succeeded)
+            {
+                return BadRequest(ApiResponse<List<IngredienteSummaryDto>>.ErrorResponse(
+                    new List<string> { result.Error ?? "Error desconocido" }, "Error al obtener ingredientes", 400));
+            }
+
+            var ingredientes = result.Value.Items.AsEnumerable();
+
+            // Aplicar filtros
+            if (!string.IsNullOrWhiteSpace(termino))
+            {
+                ingredientes = ingredientes.Where(i => 
+                    i.Nombre.Contains(termino, StringComparison.OrdinalIgnoreCase) ||
+                    i.Categoria.Contains(termino, StringComparison.OrdinalIgnoreCase)
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(categoria))
+            {
+                ingredientes = ingredientes.Where(i => i.Categoria.Equals(categoria, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (soloDisponibles.HasValue && soloDisponibles.Value)
+            {
+                ingredientes = ingredientes.Where(i => i.StockActual > 0);
+            }
+
+            var ingredientesFiltrados = ingredientes.ToList();
+
+            var response = ApiResponse<List<IngredienteSummaryDto>>.SuccessResponse(
+                ingredientesFiltrados, "Ingredientes encontrados exitosamente");
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error al buscar ingredientes: {Termino}", termino);
+            var errorResponse = ApiResponse<List<IngredienteSummaryDto>>.ErrorResponse(
+                new List<string> { "Error interno al buscar ingredientes" }, "Error de servidor", 500);
+            return StatusCode(500, errorResponse);
+        }
     }
 } 

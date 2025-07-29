@@ -110,24 +110,30 @@ public static class MauiProgram
 		// Servicios de Inventario V1
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Inventory.IPreparacionesService>(sp =>
 			new RestaurantePro.Mobile.Core.Services.Inventory.PreparacionesService(
-				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>()));
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>(),
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService>()));
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Inventory.IReservacionesService>(sp =>
 			new RestaurantePro.Mobile.Core.Services.Inventory.ReservacionesService(
-				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>()));
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>(),
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService>()));
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Inventory.IIngredientesService>(sp =>
 			new RestaurantePro.Mobile.Core.Services.Inventory.IngredientesService(
-				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>()));
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>(),
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService>()));
 		
 		// Servicios Comerciales V1
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Commercial.IFacturasService>(sp =>
 			new RestaurantePro.Mobile.Core.Services.Commercial.FacturasService(
-				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>()));
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>(),
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService>()));
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Commercial.IClientesService>(sp =>
 			new RestaurantePro.Mobile.Core.Services.Commercial.ClientesService(
-				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>()));
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>(),
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService>()));
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Commercial.ITarjetasFidelizacionService>(sp =>
 			new RestaurantePro.Mobile.Core.Services.Commercial.TarjetasFidelizacionService(
-				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>()));
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>(),
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService>()));
 		
 		// Servicios de Categorías y Analytics V1
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Categorias.ICategoriasService>(sp =>

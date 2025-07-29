@@ -1,10 +1,9 @@
+using FluentValidation;
+
 namespace RestaurantePro.Application.Core.Productos.Queries.ObtenerProductosPaginados;
 
 public class ObtenerProductosPaginadosValidator : AbstractValidator<ObtenerProductosPaginadosQuery>
 {
-    private readonly string[] _allowedOrderFields = { "Nombre", "Precio", "FechaCreacion", "Popularidad" };
-    private readonly string[] _allowedDirections = { "asc", "desc" };
-
     public ObtenerProductosPaginadosValidator()
     {
         RuleFor(x => x.PageNumber)
@@ -13,31 +12,36 @@ public class ObtenerProductosPaginadosValidator : AbstractValidator<ObtenerProdu
 
         RuleFor(x => x.PageSize)
             .GreaterThan(0)
-            .WithMessage("El tamaño de página debe ser mayor a 0")
             .LessThanOrEqualTo(100)
-            .WithMessage("El tamaño de página no puede exceder 100 elementos");
+            .WithMessage("El tamaño de página debe estar entre 1 y 100");
 
         RuleFor(x => x.Filtro)
-            .MaximumLength(100)
-            .WithMessage("El filtro no puede exceder 100 caracteres")
-            .When(x => !string.IsNullOrEmpty(x.Filtro));
+            .MaximumLength(200)
+            .When(x => !string.IsNullOrEmpty(x.Filtro))
+            .WithMessage("El filtro no puede exceder 200 caracteres");
 
         RuleFor(x => x.OrderBy)
-            .Must(BeValidOrderField)
-            .WithMessage($"El campo de ordenamiento debe ser uno de: {string.Join(", ", _allowedOrderFields)}");
+            .Must(BeValidOrderBy)
+            .WithMessage("Campo de ordenamiento inválido. Valores válidos: Nombre, Precio, FechaCreacion, Popularidad");
 
         RuleFor(x => x.OrderDirection)
-            .Must(BeValidDirection)
-            .WithMessage($"La dirección de ordenamiento debe ser: {string.Join(" o ", _allowedDirections)}");
+            .Must(BeValidOrderDirection)
+            .WithMessage("Dirección de ordenamiento inválida. Valores válidos: asc, desc");
     }
 
-    private bool BeValidOrderField(string orderBy)
+    private static bool BeValidOrderBy(string orderBy)
     {
-        return _allowedOrderFields.Contains(orderBy, StringComparer.OrdinalIgnoreCase);
+        if (string.IsNullOrEmpty(orderBy)) return true;
+        
+        var validOrderByFields = new[] { "nombre", "precio", "fechacreacion", "popularidad" };
+        return validOrderByFields.Contains(orderBy.ToLowerInvariant());
     }
 
-    private bool BeValidDirection(string direction)
+    private static bool BeValidOrderDirection(string direction)
     {
-        return _allowedDirections.Contains(direction, StringComparer.OrdinalIgnoreCase);
+        if (string.IsNullOrEmpty(direction)) return true;
+        
+        var validDirections = new[] { "asc", "desc" };
+        return validDirections.Contains(direction.ToLowerInvariant());
     }
 } 

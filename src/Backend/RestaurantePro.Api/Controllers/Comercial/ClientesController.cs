@@ -33,7 +33,7 @@ public class ClientesController : ControllerBase
     /// Obtiene todos los clientes con paginación
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Administrador,Gerente,Empleado")]
+    [Authorize(Roles = "Administrador,Gerente,Cajero,Mesero,Cocinero,EncargadoInventario")]
     [ProducesResponseType(typeof(ApiResponse<PaginatedList<ClienteSummaryDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<PaginatedList<ClienteSummaryDto>>>> GetClientes(
@@ -84,7 +84,7 @@ public class ClientesController : ControllerBase
     /// Obtiene un cliente específico por ID
     /// </summary>
     [HttpGet("{id:guid}")]
-    [Authorize(Roles = "Administrador,Gerente,Empleado")]
+    [Authorize(Roles = "Administrador,Gerente,Cajero,Mesero,Cocinero,EncargadoInventario")]
     [ProducesResponseType(typeof(ApiResponse<ClienteDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<ClienteDto>>> GetCliente(Guid id)
@@ -110,7 +110,7 @@ public class ClientesController : ControllerBase
     /// Crea un nuevo cliente
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Administrador,Gerente,Empleado")]
+    [Authorize(Roles = "Administrador,Gerente,Cajero,Mesero,Cocinero,EncargadoInventario")]
     [ProducesResponseType(typeof(ApiResponse<ClienteDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<ClienteDto>>> CrearCliente([FromBody] CrearClienteCommand command)
@@ -139,7 +139,7 @@ public class ClientesController : ControllerBase
     /// Actualiza un cliente existente
     /// </summary>
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "Administrador,Gerente,Empleado")]
+    [Authorize(Roles = "Administrador,Gerente,Cajero,Mesero,Cocinero,EncargadoInventario")]
     [ProducesResponseType(typeof(ApiResponse<ClienteDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]

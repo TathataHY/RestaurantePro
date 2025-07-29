@@ -76,6 +76,20 @@ public class IngredientePreparacionDto
 }
 
 /// <summary>
+/// DTO para respuesta paginada de preparaciones
+/// </summary>
+public class PreparacionesPaginadasDto
+{
+    public List<PreparacionDto> Items { get; set; } = new();
+    public int PageNumber { get; set; }
+    public int PageSize { get; set; }
+    public int TotalCount { get; set; }
+    public int TotalPages { get; set; }
+    public bool HasPreviousPage { get; set; }
+    public bool HasNextPage { get; set; }
+}
+
+/// <summary>
 /// DTO para estadísticas de preparaciones
 /// </summary>
 public class EstadisticasPreparacionesDto
@@ -93,11 +107,26 @@ public class EstadisticasPreparacionesDto
 public class ReservacionDto
 {
     public Guid Id { get; set; }
+    public Guid? ClienteId { get; set; } // ID del cliente registrado (opcional)
     public string NombreCliente { get; set; } = string.Empty;
     public string Telefono { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public DateTime FechaReservacion { get; set; }
     public TimeSpan HoraReservacion { get; set; }
+    
+    /// <summary>
+    /// Fecha y hora completa de la reservación (compatibilidad con backend)
+    /// </summary>
+    public DateTime FechaHoraReservacion 
+    { 
+        get => FechaReservacion.Add(HoraReservacion);
+        set 
+        { 
+            FechaReservacion = value.Date;
+            HoraReservacion = value.TimeOfDay;
+        }
+    }
+    
     public int NumeroPersonas { get; set; }
     public string Estado { get; set; } = string.Empty; // "Confirmada", "Pendiente", "Cancelada", "Completada"
     public string? Comentarios { get; set; }

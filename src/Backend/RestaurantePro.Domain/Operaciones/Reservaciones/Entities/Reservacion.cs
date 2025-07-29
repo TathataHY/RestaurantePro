@@ -302,10 +302,8 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Entities
         /// </summary>
         private void ValidarInvariantes()
         {
-            if (ClienteId == Guid.Empty)
-            {
-                throw new InvalidOperationException("La reservación debe tener un cliente asociado");
-            }
+            // ClienteId puede ser Guid.Empty para clientes no registrados
+            // (no se valida que sea diferente de Guid.Empty)
 
             if (MesaId == Guid.Empty)
             {

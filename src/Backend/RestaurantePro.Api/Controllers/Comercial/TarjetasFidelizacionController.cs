@@ -45,6 +45,7 @@ public class TarjetasFidelizacionController : ControllerBase
     /// <param name="pageSize">Tamaño de página</param>
     /// <returns>Lista de tarjetas de fidelización</returns>
     [HttpGet]
+    [Authorize(Roles = "Administrador,Gerente,Cajero,Mesero,Cocinero,EncargadoInventario")]
     [ProducesResponseType(typeof(ApiResponse<List<TarjetaFidelizacionDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<List<TarjetaFidelizacionDto>>>> GetTarjetas(
@@ -86,6 +87,7 @@ public class TarjetasFidelizacionController : ControllerBase
     /// <param name="id">ID de la tarjeta</param>
     /// <returns>Tarjeta de fidelización</returns>
     [HttpGet("{id:guid}")]
+    [Authorize(Roles = "Administrador,Gerente,Cajero,Mesero,Cocinero,EncargadoInventario")]
     [ProducesResponseType(typeof(ApiResponse<TarjetaFidelizacionDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<TarjetaFidelizacionDto>>> GetTarjeta(Guid id)

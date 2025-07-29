@@ -24,6 +24,19 @@ public class AnalyticsController : ControllerBase
     {
         _analyticsService = analyticsService;
         _logger = logger;
+        _logger.LogInformation("🔧 AnalyticsController creado con servicio: {ServiceType}", _analyticsService.GetType().Name);
+        Console.WriteLine($"🔧 AnalyticsController creado con servicio: {_analyticsService.GetType().Name}");
+    }
+
+    /// <summary>
+    /// Endpoint de prueba sin autenticación
+    /// </summary>
+    [HttpGet("test")]
+    [AllowAnonymous]
+    public IActionResult Test()
+    {
+        Console.WriteLine("🔧 AnalyticsController.Test() llamado - Endpoint sin autenticación");
+        return Ok(ApiResponse<object>.SuccessResponse(new { message = "AnalyticsController funcionando correctamente" }, "Test exitoso"));
     }
 
     /// <summary>
@@ -36,12 +49,19 @@ public class AnalyticsController : ControllerBase
     {
         try
         {
+            _logger.LogInformation("📊 GET /api/analytics/metricas-dia - Iniciando obtención de métricas del día");
+            Console.WriteLine("🔧 AnalyticsController.ObtenerMetricasDia() llamado");
+            Console.WriteLine($"🔧 AnalyticsController.ObtenerMetricasDia() - Usando servicio: {_analyticsService.GetType().Name}");
+            
             var metricas = await _analyticsService.ObtenerMetricasDiaAsync();
-            return Ok(ApiResponse<MetricasDiaDto>.SuccessResponse(metricas));
+            
+            _logger.LogInformation("📊 GET /api/analytics/metricas-dia - Métricas obtenidas exitosamente");
+            Console.WriteLine("🔧 AnalyticsController.ObtenerMetricasDia() completado exitosamente");
+            return Ok(ApiResponse<MetricasDiaDto>.SuccessResponse(metricas, "Métricas del día obtenidas exitosamente"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al obtener métricas del día");
+            _logger.LogError(ex, "❌ Error al obtener métricas del día");
             return BadRequest(ApiResponse<object>.ErrorResponse(
                 new List<string> { "Error al obtener métricas del día" },
                 "Error interno del servidor",
@@ -59,6 +79,8 @@ public class AnalyticsController : ControllerBase
     {
         try
         {
+            _logger.LogInformation("📊 GET /api/analytics/metricas-rango - FechaDesde: {FechaDesde}, FechaHasta: {FechaHasta}", fechaDesde, fechaHasta);
+            
             if (fechaDesde > fechaHasta)
             {
                 return BadRequest(ApiResponse<object>.ErrorResponse(
@@ -68,11 +90,13 @@ public class AnalyticsController : ControllerBase
             }
 
             var metricas = await _analyticsService.ObtenerMetricasRangoAsync(fechaDesde, fechaHasta);
-            return Ok(ApiResponse<MetricasRangoDto>.SuccessResponse(metricas));
+            
+            _logger.LogInformation("📊 GET /api/analytics/metricas-rango - Métricas obtenidas exitosamente");
+            return Ok(ApiResponse<MetricasRangoDto>.SuccessResponse(metricas, "Métricas por rango obtenidas exitosamente"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al obtener métricas por rango de fechas");
+            _logger.LogError(ex, "❌ Error al obtener métricas por rango de fechas");
             return BadRequest(ApiResponse<object>.ErrorResponse(
                 new List<string> { "Error al obtener métricas por rango de fechas" },
                 "Error interno del servidor",
@@ -90,12 +114,16 @@ public class AnalyticsController : ControllerBase
     {
         try
         {
+            _logger.LogInformation("📊 GET /api/analytics/top-productos - Límite: {Limite}, FechaDesde: {FechaDesde}, FechaHasta: {FechaHasta}", limite, fechaDesde, fechaHasta);
+            
             var topProductos = await _analyticsService.ObtenerTopProductosAsync(limite ?? 10, fechaDesde, fechaHasta);
-            return Ok(ApiResponse<List<TopProductoDto>>.SuccessResponse(topProductos));
+            
+            _logger.LogInformation("📊 GET /api/analytics/top-productos - Top productos obtenidos exitosamente");
+            return Ok(ApiResponse<List<TopProductoDto>>.SuccessResponse(topProductos, "Top productos obtenidos exitosamente"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al obtener top de productos");
+            _logger.LogError(ex, "❌ Error al obtener top de productos");
             return BadRequest(ApiResponse<object>.ErrorResponse(
                 new List<string> { "Error al obtener top de productos" },
                 "Error interno del servidor",
@@ -113,12 +141,16 @@ public class AnalyticsController : ControllerBase
     {
         try
         {
+            _logger.LogInformation("📊 GET /api/analytics/ocupacion-mesas - Fecha: {Fecha}", fecha ?? DateTime.Today);
+            
             var ocupacion = await _analyticsService.ObtenerOcupacionMesasAsync(fecha ?? DateTime.Today);
-            return Ok(ApiResponse<OcupacionMesasDto>.SuccessResponse(ocupacion));
+            
+            _logger.LogInformation("📊 GET /api/analytics/ocupacion-mesas - Ocupación obtenida exitosamente");
+            return Ok(ApiResponse<OcupacionMesasDto>.SuccessResponse(ocupacion, "Ocupación de mesas obtenida exitosamente"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al obtener ocupación de mesas");
+            _logger.LogError(ex, "❌ Error al obtener ocupación de mesas");
             return BadRequest(ApiResponse<object>.ErrorResponse(
                 new List<string> { "Error al obtener ocupación de mesas" },
                 "Error interno del servidor",
@@ -136,12 +168,16 @@ public class AnalyticsController : ControllerBase
     {
         try
         {
+            _logger.LogInformation("📊 GET /api/analytics/tiempo-preparacion - FechaDesde: {FechaDesde}, FechaHasta: {FechaHasta}", fechaDesde, fechaHasta);
+            
             var tiempoPreparacion = await _analyticsService.ObtenerTiempoPreparacionAsync(fechaDesde, fechaHasta);
-            return Ok(ApiResponse<TiempoPreparacionDto>.SuccessResponse(tiempoPreparacion));
+            
+            _logger.LogInformation("📊 GET /api/analytics/tiempo-preparacion - Tiempo de preparación obtenido exitosamente");
+            return Ok(ApiResponse<TiempoPreparacionDto>.SuccessResponse(tiempoPreparacion, "Tiempo de preparación obtenido exitosamente"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al obtener tiempo de preparación");
+            _logger.LogError(ex, "❌ Error al obtener tiempo de preparación");
             return BadRequest(ApiResponse<object>.ErrorResponse(
                 new List<string> { "Error al obtener tiempo de preparación" },
                 "Error interno del servidor",
@@ -159,12 +195,16 @@ public class AnalyticsController : ControllerBase
     {
         try
         {
+            _logger.LogInformation("📊 GET /api/analytics/ventas-hora - Fecha: {Fecha}", fecha);
+            
             var ventasHora = await _analyticsService.ObtenerVentasPorHoraAsync(fecha);
-            return Ok(ApiResponse<List<VentasHoraDto>>.SuccessResponse(ventasHora));
+            
+            _logger.LogInformation("📊 GET /api/analytics/ventas-hora - Ventas por hora obtenidas exitosamente");
+            return Ok(ApiResponse<List<VentasHoraDto>>.SuccessResponse(ventasHora, "Ventas por hora obtenidas exitosamente"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al obtener ventas por hora");
+            _logger.LogError(ex, "❌ Error al obtener ventas por hora");
             return BadRequest(ApiResponse<object>.ErrorResponse(
                 new List<string> { "Error al obtener ventas por hora" },
                 "Error interno del servidor",

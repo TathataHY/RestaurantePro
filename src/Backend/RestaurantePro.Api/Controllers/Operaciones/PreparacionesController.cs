@@ -14,6 +14,7 @@ using RestaurantePro.Api.Common;
 using RestaurantePro.Application.Common.Models;
 using Microsoft.AspNetCore.Authorization;
 using RestaurantePro.Application.Operaciones.Preparaciones.Commands.MarcarComoDisponible;
+using RestaurantePro.Domain.Operaciones.Preparaciones.Enums;
 
 namespace RestaurantePro.Api.Controllers.Operaciones;
 
@@ -268,7 +269,207 @@ public class PreparacionesController : ControllerBase
                 result.Errors ?? new List<string> { result.Error ?? "Error desconocido" }, "Error al marcar como disponible", StatusCodes.Status400BadRequest);
             return BadRequest(errorResponse);
         }
-        var response = ApiResponse<object>.SuccessResponse(null, "Preparación marcada como disponible exitosamente");
+        var response = ApiResponse<object>.SuccessResponse(new object(), "Preparación marcada como disponible exitosamente");
         return Ok(response);
+    }
+
+    /// <summary>
+    /// Busca preparaciones por término
+    /// </summary>
+    [HttpGet("buscar")]
+    [ProducesResponseType(typeof(ApiResponse<List<PreparacionDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<List<PreparacionDto>>>> BuscarPreparaciones([FromQuery] string termino)
+    {
+        _logger.LogInformation("🔍 GET /api/operaciones/preparaciones/buscar - Término: {Termino}", termino);
+
+        try
+        {
+            var query = new ObtenerPreparacionesPaginadasQuery
+            {
+                PageNumber = 1,
+                PageSize = 1000 // Obtener todas para buscar
+            };
+            var result = await _mediator.Send(query);
+
+            if (!result.Succeeded)
+            {
+                var errorResponse = ApiResponse<List<PreparacionDto>>.ErrorResponse(
+                    result.Errors ?? new List<string> { result.Error ?? "Error desconocido" }, "Error al obtener preparaciones", StatusCodes.Status400BadRequest);
+                return BadRequest(errorResponse);
+            }
+
+            var preparaciones = result.Value.Items;
+
+            if (!string.IsNullOrWhiteSpace(termino))
+            {
+                preparaciones = preparaciones.Where(p => 
+                    p.NombreProducto.Contains(termino, StringComparison.OrdinalIgnoreCase) ||
+                    p.Estado.ToString().Contains(termino, StringComparison.OrdinalIgnoreCase) ||
+                    p.NumeroComanda.Contains(termino, StringComparison.OrdinalIgnoreCase)
+                ).ToList();
+            }
+
+            var response = ApiResponse<List<PreparacionDto>>.SuccessResponse(
+                preparaciones, "Preparaciones encontradas exitosamente");
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error al buscar preparaciones: {Termino}", termino);
+            var errorResponse = ApiResponse<List<PreparacionDto>>.ErrorResponse(
+                new List<string> { "Error interno al buscar preparaciones" }, "Error de servidor", StatusCodes.Status500InternalServerError);
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
+    }
+
+    /// <summary>
+    /// Obtiene estadísticas de preparaciones
+    /// </summary>
+    [HttpGet("estadisticas")]
+    [ProducesResponseType(typeof(ApiResponse<EstadisticasPreparacionesDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<EstadisticasPreparacionesDto>>> ObtenerEstadisticas()
+    {
+        _logger.LogInformation("📊 GET /api/operaciones/preparaciones/estadisticas");
+
+        try
+        {
+            var query = new ObtenerPreparacionesPaginadasQuery
+            {
+                PageNumber = 1,
+                PageSize = 10000 // Obtener todas para estadísticas
+            };
+            var result = await _mediator.Send(query);
+
+            if (!result.Succeeded)
+            {
+                var errorResponse = ApiResponse<EstadisticasPreparacionesDto>.ErrorResponse(
+                    result.Errors ?? new List<string> { result.Error ?? "Error desconocido" }, "Error al obtener preparaciones", StatusCodes.Status400BadRequest);
+                return BadRequest(errorResponse);
+            }
+
+            var preparaciones = result.Value.Items;
+
+            var estadisticas = new EstadisticasPreparacionesDto
+            {
+                TotalPreparaciones = preparaciones.Count,
+                PreparacionesDisponibles = preparaciones.Count(p => p.Estado == EstadoPreparacion.Disponible),
+                PreparacionesPorVencer = preparaciones.Count(p => p.Estado == EstadoPreparacion.PorVencer),
+                PreparacionesAgotadas = preparaciones.Count(p => p.Estado == EstadoPreparacion.Agotada),
+                PreparacionesVencidas = preparaciones.Count(p => p.Estado == EstadoPreparacion.Vencida),
+                CantidadTotalPreparada = preparaciones.Sum(p => p.Cantidad),
+                CantidadDisponible = preparaciones.Where(p => p.Estado == EstadoPreparacion.Disponible).Sum(p => p.Cantidad),
+                CantidadConsumida = preparaciones.Where(p => p.Estado == EstadoPreparacion.Agotada).Sum(p => p.Cantidad),
+                CantidadDesperdiciada = preparaciones.Where(p => p.Estado == EstadoPreparacion.Vencida).Sum(p => p.Cantidad),
+                PorcentajeEficiencia = preparaciones.Any() ? 
+                    (decimal)preparaciones.Where(p => p.Estado == EstadoPreparacion.Agotada).Sum(p => p.Cantidad) / 
+                    preparaciones.Sum(p => p.Cantidad) * 100 : 0
+            };
+
+            var response = ApiResponse<EstadisticasPreparacionesDto>.SuccessResponse(
+                estadisticas, "Estadísticas de preparaciones obtenidas exitosamente");
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error al obtener estadísticas de preparaciones");
+            var errorResponse = ApiResponse<EstadisticasPreparacionesDto>.ErrorResponse(
+                new List<string> { "Error interno al obtener estadísticas" }, "Error de servidor", StatusCodes.Status500InternalServerError);
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
+    }
+
+    /// <summary>
+    /// Obtiene preparaciones por categoría
+    /// </summary>
+    [HttpGet("por-categoria")]
+    [ProducesResponseType(typeof(ApiResponse<List<PreparacionDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<List<PreparacionDto>>>> ObtenerPreparacionesPorCategoria([FromQuery] string categoria)
+    {
+        _logger.LogInformation("🏷️ GET /api/operaciones/preparaciones/por-categoria - Categoría: {Categoria}", categoria);
+
+        try
+        {
+            var query = new ObtenerPreparacionesPaginadasQuery
+            {
+                PageNumber = 1,
+                PageSize = 1000 // Obtener todas para filtrar
+            };
+            var result = await _mediator.Send(query);
+
+            if (!result.Succeeded)
+            {
+                var errorResponse = ApiResponse<List<PreparacionDto>>.ErrorResponse(
+                    result.Errors ?? new List<string> { result.Error ?? "Error desconocido" }, "Error al obtener preparaciones", StatusCodes.Status400BadRequest);
+                return BadRequest(errorResponse);
+            }
+
+            var preparaciones = result.Value.Items;
+
+            if (!string.IsNullOrWhiteSpace(categoria))
+            {
+                // Como PreparacionDto no tiene Categoria, filtramos por nombre de producto que contenga la categoría
+                preparaciones = preparaciones.Where(p => 
+                    p.NombreProducto.Contains(categoria, StringComparison.OrdinalIgnoreCase)
+                ).ToList();
+            }
+
+            var response = ApiResponse<List<PreparacionDto>>.SuccessResponse(
+                preparaciones, "Preparaciones por categoría obtenidas exitosamente");
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error al obtener preparaciones por categoría: {Categoria}", categoria);
+            var errorResponse = ApiResponse<List<PreparacionDto>>.ErrorResponse(
+                new List<string> { "Error interno al obtener preparaciones por categoría" }, "Error de servidor", StatusCodes.Status500InternalServerError);
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
+    }
+
+    /// <summary>
+    /// Obtiene preparaciones por estado
+    /// </summary>
+    [HttpGet("por-estado")]
+    [ProducesResponseType(typeof(ApiResponse<List<PreparacionDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<List<PreparacionDto>>>> ObtenerPreparacionesPorEstado([FromQuery] string estado)
+    {
+        _logger.LogInformation("📋 GET /api/operaciones/preparaciones/por-estado - Estado: {Estado}", estado);
+
+        try
+        {
+            var query = new ObtenerPreparacionesPaginadasQuery
+            {
+                PageNumber = 1,
+                PageSize = 1000 // Obtener todas para filtrar
+            };
+            var result = await _mediator.Send(query);
+
+            if (!result.Succeeded)
+            {
+                var errorResponse = ApiResponse<List<PreparacionDto>>.ErrorResponse(
+                    result.Errors ?? new List<string> { result.Error ?? "Error desconocido" }, "Error al obtener preparaciones", StatusCodes.Status400BadRequest);
+                return BadRequest(errorResponse);
+            }
+
+            var preparaciones = result.Value.Items;
+
+            if (!string.IsNullOrWhiteSpace(estado))
+            {
+                preparaciones = preparaciones.Where(p => 
+                    p.Estado.ToString().Equals(estado, StringComparison.OrdinalIgnoreCase)
+                ).ToList();
+            }
+
+            var response = ApiResponse<List<PreparacionDto>>.SuccessResponse(
+                preparaciones, "Preparaciones por estado obtenidas exitosamente");
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error al obtener preparaciones por estado: {Estado}", estado);
+            var errorResponse = ApiResponse<List<PreparacionDto>>.ErrorResponse(
+                new List<string> { "Error interno al obtener preparaciones por estado" }, "Error de servidor", StatusCodes.Status500InternalServerError);
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
     }
 } 

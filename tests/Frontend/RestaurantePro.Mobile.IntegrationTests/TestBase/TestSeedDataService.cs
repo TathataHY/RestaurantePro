@@ -65,7 +65,7 @@ public class TestSeedDataService : ISeedDataService
 
     private async Task SeedRolesAsync()
     {
-        var roles = new[] { "Admin", "Mesero", "Cocinero", "Cajero" };
+        var roles = new[] { "Administrador", "Gerente", "Mesero", "Cocinero", "Cajero", "EncargadoInventario" };
         
         foreach (var roleName in roles)
         {
@@ -104,7 +104,7 @@ public class TestSeedDataService : ISeedDataService
             var result = await _userManager.CreateAsync(adminUser, "AdminRestaurante123!");
             if (result.Succeeded)
             {
-                await _userManager.AddToRoleAsync(adminUser, "Admin");
+                await _userManager.AddToRoleAsync(adminUser, "Administrador");
                 Console.WriteLine($"✅ Usuario admin creado: {adminUser.Email}");
             }
             else
@@ -197,25 +197,36 @@ public class TestSeedDataService : ISeedDataService
             var productos = new[]
             {
                 RestaurantePro.Domain.Core.Productos.Entities.Producto.Crear(
-                    "Pasta Carbonara", 
-                    "Pasta con salsa carbonara", 
-                    new RestaurantePro.Domain.Core.Productos.ValueObjects.PrecioProducto(15.99m), 
-                    categorias[0].Id),
+                    "Pizza Margarita",
+                    "Pizza clásica con tomate y mozzarella",
+                    new RestaurantePro.Domain.Core.Productos.ValueObjects.PrecioProducto(12.99m),
+                    categorias[0].Id,
+                    categorias[0].Nombre),
                 RestaurantePro.Domain.Core.Productos.Entities.Producto.Crear(
-                    "Ensalada César", 
-                    "Ensalada fresca estilo César", 
-                    new RestaurantePro.Domain.Core.Productos.ValueObjects.PrecioProducto(8.99m), 
-                    categorias[1].Id),
+                    "Pasta Carbonara",
+                    "Pasta con salsa carbonara y panceta",
+                    new RestaurantePro.Domain.Core.Productos.ValueObjects.PrecioProducto(10.99m),
+                    categorias[0].Id,
+                    categorias[0].Nombre),
                 RestaurantePro.Domain.Core.Productos.Entities.Producto.Crear(
-                    "Tiramisú", 
-                    "Postre italiano clásico", 
-                    new RestaurantePro.Domain.Core.Productos.ValueObjects.PrecioProducto(6.50m), 
-                    categorias[2].Id),
+                    "Ensalada César",
+                    "Ensalada con pollo, parmesano y aderezo César",
+                    new RestaurantePro.Domain.Core.Productos.ValueObjects.PrecioProducto(8.99m),
+                    categorias[1].Id,
+                    categorias[1].Nombre),
                 RestaurantePro.Domain.Core.Productos.Entities.Producto.Crear(
-                    "Café Americano", 
-                    "Café negro americano", 
-                    new RestaurantePro.Domain.Core.Productos.ValueObjects.PrecioProducto(2.50m), 
-                    categorias[3].Id)
+                    "Hamburguesa Clásica",
+                    "Hamburguesa con queso, lechuga y tomate",
+                    new RestaurantePro.Domain.Core.Productos.ValueObjects.PrecioProducto(9.99m),
+                    categorias[2].Id,
+                    categorias[2].Nombre),
+                // Producto adicional para asegurar mínimo 5
+                RestaurantePro.Domain.Core.Productos.Entities.Producto.Crear(
+                    "Sopa de Tomate",
+                    "Sopa cremosa de tomate con albahaca",
+                    new RestaurantePro.Domain.Core.Productos.ValueObjects.PrecioProducto(6.99m),
+                    categorias[3].Id,
+                    categorias[3].Nombre)
             };
 
             foreach (var producto in productos)
@@ -282,6 +293,148 @@ public class TestSeedDataService : ISeedDataService
 
             await _context.SaveChangesAsync();
             Console.WriteLine("✅ Tarjetas de fidelización creadas usando factory method");
+
+            // 🔧 CREAR RESERVACIONES USANDO EL MÉTODO DE FÁBRICA
+            var reservaciones = new[]
+            {
+                RestaurantePro.Domain.Operaciones.Reservaciones.Entities.Reservacion.Crear(
+                    mesas[0].Id,
+                    clientes[0].Id,
+                    DateTime.Today.AddDays(1),
+                    new TimeSpan(2, 0, 0), // 2 horas de duración
+                    4,
+                    "+56912345678",
+                    "juan@example.com",
+                    "Reservación para cena"),
+                RestaurantePro.Domain.Operaciones.Reservaciones.Entities.Reservacion.Crear(
+                    mesas[1].Id,
+                    clientes[1].Id,
+                    DateTime.Today.AddDays(2),
+                    new TimeSpan(2, 30, 0), // 2.5 horas de duración
+                    6,
+                    "+56987654321",
+                    "maria@example.com",
+                    "Celebración de cumpleaños"),
+                RestaurantePro.Domain.Operaciones.Reservaciones.Entities.Reservacion.Crear(
+                    mesas[2].Id,
+                    clientes[2].Id,
+                    DateTime.Today,
+                    new TimeSpan(1, 30, 0), // 1.5 horas de duración
+                    2,
+                    "+56955566677",
+                    "carlos@example.com",
+                    "Almuerzo de trabajo")
+            };
+
+            foreach (var reservacion in reservaciones)
+            {
+                _context.Reservaciones.Add(reservacion);
+            }
+
+            await _context.SaveChangesAsync();
+            Console.WriteLine("✅ Reservaciones creadas usando factory method");
+
+            // 🔧 CREAR INGREDIENTES USANDO EL MÉTODO DE FÁBRICA
+            var ingredientes = new[]
+            {
+                RestaurantePro.Domain.Inventario.Ingredientes.Entities.Ingrediente.Crear(
+                    "Tomate",
+                    "TOM-001",
+                    "Tomate fresco para ensaladas",
+                    RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
+                    10,
+                    50),
+                RestaurantePro.Domain.Inventario.Ingredientes.Entities.Ingrediente.Crear(
+                    "Lechuga",
+                    "LEC-001",
+                    "Lechuga fresca para ensaladas",
+                    RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
+                    5,
+                    30),
+                RestaurantePro.Domain.Inventario.Ingredientes.Entities.Ingrediente.Crear(
+                    "Pollo",
+                    "POL-001",
+                    "Pechuga de pollo fresca",
+                    RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
+                    5,
+                    20),
+                RestaurantePro.Domain.Inventario.Ingredientes.Entities.Ingrediente.Crear(
+                    "Arroz",
+                    "ARR-001",
+                    "Arroz blanco de grano largo",
+                    RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Kilogramo,
+                    20,
+                    100),
+                RestaurantePro.Domain.Inventario.Ingredientes.Entities.Ingrediente.Crear(
+                    "Aceite de Oliva",
+                    "ACE-001",
+                    "Aceite de oliva extra virgen",
+                    RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida.Litro,
+                    3,
+                    15)
+            };
+
+            foreach (var ingrediente in ingredientes)
+            {
+                _context.Ingredientes.Add(ingrediente);
+            }
+
+            await _context.SaveChangesAsync();
+            Console.WriteLine("✅ Ingredientes creados usando factory method");
+
+            // 🔄 RELEER productos y usuario admin para asegurar que existen antes de crear preparaciones
+            var productosDisponibles = await _context.Productos.ToListAsync();
+            var chef = await _context.Users.FirstOrDefaultAsync(u => u.UserName == "admin@restaurantepro.com");
+
+            if (productosDisponibles.Count >= 5 && chef != null)
+            {
+                var chefId = Guid.Parse(chef.Id.ToString());
+                var preparaciones = new[]
+                {
+                    RestaurantePro.Domain.Operaciones.Preparaciones.Entities.PreparacionDiaria.Crear(
+                        productosDisponibles[0].Id, // Pizza Margarita
+                        10,
+                        chefId,
+                        DateTime.Now.AddHours(4), // Vence en 4 horas
+                        "Preparación de pizza margarita"),
+                    RestaurantePro.Domain.Operaciones.Preparaciones.Entities.PreparacionDiaria.Crear(
+                        productosDisponibles[1].Id, // Pasta Carbonara
+                        8,
+                        chefId,
+                        DateTime.Now.AddHours(3), // Vence en 3 horas
+                        "Preparación de pasta carbonara"),
+                    RestaurantePro.Domain.Operaciones.Preparaciones.Entities.PreparacionDiaria.Crear(
+                        productosDisponibles[2].Id, // Ensalada César
+                        15,
+                        chefId,
+                        DateTime.Now.AddHours(2), // Vence en 2 horas
+                        "Preparación de ensalada César"),
+                    RestaurantePro.Domain.Operaciones.Preparaciones.Entities.PreparacionDiaria.Crear(
+                        productosDisponibles[3].Id, // Tiramisú
+                        12,
+                        chefId,
+                        DateTime.Now.AddHours(6), // Vence en 6 horas
+                        "Preparación de tiramisú"),
+                    RestaurantePro.Domain.Operaciones.Preparaciones.Entities.PreparacionDiaria.Crear(
+                        productosDisponibles[4].Id, // Café Americano
+                        20,
+                        chefId,
+                        DateTime.Now.AddHours(1), // Vence en 1 hora
+                        "Preparación de café americano")
+                };
+
+                foreach (var preparacion in preparaciones)
+                {
+                    _context.Preparaciones.Add(preparacion);
+                }
+
+                await _context.SaveChangesAsync();
+                Console.WriteLine("✅ Preparaciones creadas usando factory method");
+            }
+            else
+            {
+                Console.WriteLine($"❌ No se pudieron crear preparaciones: productos encontrados = {productosDisponibles.Count}, chef encontrado = {(chef != null)}");
+            }
 
         }
         catch (Exception ex)

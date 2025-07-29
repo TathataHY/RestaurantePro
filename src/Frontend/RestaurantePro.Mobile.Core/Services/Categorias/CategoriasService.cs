@@ -26,12 +26,12 @@ public class CategoriasService : ICategoriasService
         try
         {
             var token = await _authService.GetTokenAsync();
-            var endpoint = soloActivas ? "api/categorias/activas" : "api/categorias";
-            return await _apiService.GetAsync<List<CategoriaProductoDto>>(endpoint, token);
+            var response = await _apiService.GetAsync<List<CategoriaProductoDto>>($"api/core/categorias?soloActivas={soloActivas}", token);
+            return response;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return ApiResponse<List<CategoriaProductoDto>>.ErrorResponse("Error al obtener categorías", "Error al obtener categorías");
+            return ApiResponse<List<CategoriaProductoDto>>.Failure($"Error al obtener categorías: {ex.Message}");
         }
     }
 
@@ -43,11 +43,12 @@ public class CategoriasService : ICategoriasService
         try
         {
             var token = await _authService.GetTokenAsync();
-            return await _apiService.GetAsync<CategoriaProductoDto>($"api/categorias/{id}", token);
+            var response = await _apiService.GetAsync<CategoriaProductoDto>($"api/core/categorias/{id}", token);
+            return response;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return ApiResponse<CategoriaProductoDto>.ErrorResponse("Error al obtener categoría", "Error al obtener categoría");
+            return ApiResponse<CategoriaProductoDto>.Failure($"Error al obtener categoría: {ex.Message}");
         }
     }
 
@@ -59,14 +60,12 @@ public class CategoriasService : ICategoriasService
         try
         {
             var token = await _authService.GetTokenAsync();
-            var endpoint = soloActivos 
-                ? $"api/categorias/{categoriaId}/productos/activos" 
-                : $"api/categorias/{categoriaId}/productos";
-            return await _apiService.GetAsync<List<ProductoDto>>(endpoint, token);
+            var response = await _apiService.GetAsync<List<ProductoDto>>($"api/core/productos/categoria/{categoriaId}?soloActivos={soloActivos}", token);
+            return response;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return ApiResponse<List<ProductoDto>>.ErrorResponse("Error al obtener productos de categoría", "Error al obtener productos de categoría");
+            return ApiResponse<List<ProductoDto>>.Failure($"Error al obtener productos de categoría: {ex.Message}");
         }
     }
 
@@ -78,11 +77,12 @@ public class CategoriasService : ICategoriasService
         try
         {
             var token = await _authService.GetTokenAsync();
-            return await _apiService.GetAsync<List<CategoriaProductoDto>>("api/categorias/activas", token);
+            var response = await _apiService.GetAsync<List<CategoriaProductoDto>>("api/core/categorias?soloActivas=true&ocultarVacias=true", token);
+            return response;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return ApiResponse<List<CategoriaProductoDto>>.ErrorResponse("Error al obtener categorías activas", "Error al obtener categorías activas");
+            return ApiResponse<List<CategoriaProductoDto>>.Failure($"Error al obtener categorías activas: {ex.Message}");
         }
     }
 
@@ -94,12 +94,12 @@ public class CategoriasService : ICategoriasService
         try
         {
             var token = await _authService.GetTokenAsync();
-            var endpoint = $"api/categorias/buscar?nombre={Uri.EscapeDataString(nombre)}";
-            return await _apiService.GetAsync<List<CategoriaProductoDto>>(endpoint, token);
+            var response = await _apiService.GetAsync<List<CategoriaProductoDto>>($"api/core/categorias?nombre={Uri.EscapeDataString(nombre)}", token);
+            return response;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return ApiResponse<List<CategoriaProductoDto>>.ErrorResponse("Error al buscar categorías", "Error al buscar categorías");
+            return ApiResponse<List<CategoriaProductoDto>>.Failure($"Error al buscar categorías: {ex.Message}");
         }
     }
 } 

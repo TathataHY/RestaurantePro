@@ -51,6 +51,13 @@ public class IdentityUsersSeeder : ISeedData
         }
 
         logger.LogInformation("📋 Encontrados {Count} usuarios del dominio para sincronizar", usuariosDominio.Count);
+        
+        // Log detallado de usuarios encontrados
+        foreach (var usuario in usuariosDominio)
+        {
+            logger.LogInformation("👤 Usuario encontrado: {Username} ({Email}) - Rol: {Rol}", 
+                usuario.NombreUsuario, usuario.Email, usuario.Rol);
+        }
 
         var resultados = new Dictionary<SyncResult, int>
         {
@@ -316,13 +323,13 @@ public class IdentityUsersSeeder : ISeedData
         
         return rolNormalizado switch
         {
-            "administrador" => "ADMINISTRADOR",
-            "gerente" => "GERENTE",
-            "cajero" => "CAJERO",
-            "mesero" => "MESERO",
-            "cocinero" => "COCINERO",
-            "encargadoinventario" => "ENCARGADOINVENTARIO",
-            _ => "MESERO" // Rol por defecto
+            "administrador" => "Administrador",
+            "gerente" => "Gerente",
+            "cajero" => "Cajero",
+            "mesero" => "Mesero",
+            "cocinero" => "Cocinero",
+            "encargadoinventario" => "EncargadoInventario",
+            _ => "Mesero" // Rol por defecto
         };
     }
 

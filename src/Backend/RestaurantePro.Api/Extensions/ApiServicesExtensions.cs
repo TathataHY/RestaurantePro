@@ -31,6 +31,8 @@ namespace RestaurantePro.Api.Extensions
                 options.JsonSerializerOptions.PropertyNamingPolicy = null;
                 // Ignorar valores nulos
                 options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                // Convertir enums a strings
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             });
 
             // Configurar reglas de validación de modelo

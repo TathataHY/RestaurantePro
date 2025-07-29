@@ -7,7 +7,7 @@ namespace RestaurantePro.Mobile.Converters;
 /// </summary>
 public class EstadoColorConverter : IValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is not string estado)
             return Colors.Gray;
@@ -35,7 +35,7 @@ public class EstadoColorConverter : IValueConverter
         };
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }

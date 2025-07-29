@@ -26,11 +26,12 @@ public class AnalyticsService : IAnalyticsService
         try
         {
             var token = await _authService.GetTokenAsync();
-            return await _apiService.GetAsync<MetricasDiaDto>("api/analytics/metricas-dia", token);
+            var response = await _apiService.GetAsync<MetricasDiaDto>("api/analytics/metricas-dia", token);
+            return response;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return ApiResponse<MetricasDiaDto>.ErrorResponse("Error al obtener métricas del día", "Error al obtener métricas del día");
+            return ApiResponse<MetricasDiaDto>.Failure($"Error al obtener métricas del día: {ex.Message}");
         }
     }
 
@@ -43,11 +44,12 @@ public class AnalyticsService : IAnalyticsService
         {
             var token = await _authService.GetTokenAsync();
             var endpoint = $"api/analytics/metricas-rango?fechaDesde={fechaDesde:yyyy-MM-dd}&fechaHasta={fechaHasta:yyyy-MM-dd}";
-            return await _apiService.GetAsync<MetricasRangoDto>(endpoint, token);
+            var response = await _apiService.GetAsync<MetricasRangoDto>(endpoint, token);
+            return response;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return ApiResponse<MetricasRangoDto>.ErrorResponse("Error al obtener métricas del rango", "Error al obtener métricas del rango");
+            return ApiResponse<MetricasRangoDto>.Failure($"Error al obtener métricas del rango: {ex.Message}");
         }
     }
 
@@ -67,11 +69,12 @@ public class AnalyticsService : IAnalyticsService
             if (fechaHasta.HasValue)
                 endpoint += $"&fechaHasta={fechaHasta.Value:yyyy-MM-dd}";
             
-            return await _apiService.GetAsync<List<TopProductoDto>>(endpoint, token);
+            var response = await _apiService.GetAsync<List<TopProductoDto>>(endpoint, token);
+            return response;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return ApiResponse<List<TopProductoDto>>.ErrorResponse("Error al obtener top productos", "Error al obtener top productos");
+            return ApiResponse<List<TopProductoDto>>.Failure($"Error al obtener top productos: {ex.Message}");
         }
     }
 
@@ -84,11 +87,12 @@ public class AnalyticsService : IAnalyticsService
         {
             var token = await _authService.GetTokenAsync();
             var endpoint = $"api/analytics/ocupacion-mesas?fecha={fecha:yyyy-MM-dd}";
-            return await _apiService.GetAsync<OcupacionMesasDto>(endpoint, token);
+            var response = await _apiService.GetAsync<OcupacionMesasDto>(endpoint, token);
+            return response;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return ApiResponse<OcupacionMesasDto>.ErrorResponse("Error al obtener ocupación de mesas", "Error al obtener ocupación de mesas");
+            return ApiResponse<OcupacionMesasDto>.Failure($"Error al obtener ocupación de mesas: {ex.Message}");
         }
     }
 
@@ -108,11 +112,12 @@ public class AnalyticsService : IAnalyticsService
             if (fechaHasta.HasValue)
                 endpoint += $"{(fechaDesde.HasValue ? "&" : "?")}fechaHasta={fechaHasta.Value:yyyy-MM-dd}";
             
-            return await _apiService.GetAsync<TiempoPreparacionDto>(endpoint, token);
+            var response = await _apiService.GetAsync<TiempoPreparacionDto>(endpoint, token);
+            return response;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return ApiResponse<TiempoPreparacionDto>.ErrorResponse("Error al obtener tiempo de preparación", "Error al obtener tiempo de preparación");
+            return ApiResponse<TiempoPreparacionDto>.Failure($"Error al obtener tiempo de preparación: {ex.Message}");
         }
     }
 
@@ -125,11 +130,12 @@ public class AnalyticsService : IAnalyticsService
         {
             var token = await _authService.GetTokenAsync();
             var endpoint = $"api/analytics/ventas-hora?fecha={fecha:yyyy-MM-dd}";
-            return await _apiService.GetAsync<List<VentasHoraDto>>(endpoint, token);
+            var response = await _apiService.GetAsync<List<VentasHoraDto>>(endpoint, token);
+            return response;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return ApiResponse<List<VentasHoraDto>>.ErrorResponse("Error al obtener ventas por hora", "Error al obtener ventas por hora");
+            return ApiResponse<List<VentasHoraDto>>.Failure($"Error al obtener ventas por hora: {ex.Message}");
         }
     }
 } 

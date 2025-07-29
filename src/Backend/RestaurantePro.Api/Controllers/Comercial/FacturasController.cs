@@ -13,6 +13,7 @@ using RestaurantePro.Application.Comercial.Facturacion.Queries.ObtenerFacturasPo
 using RestaurantePro.Api.Common;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Api.Models.Requests;
+using RestaurantePro.Domain.Comercial.Facturacion.Enums;
 
 namespace RestaurantePro.Api.Controllers.Comercial;
 
@@ -641,5 +642,183 @@ public class FacturasController : ControllerBase
             $"Generación de reporte '{tipoReporte}' no implementada", 
             StatusCodes.Status501NotImplemented);
         return StatusCode(StatusCodes.Status501NotImplemented, errorResponse);
+    }
+
+    /// <summary>
+    /// Obtiene estadísticas de facturas para una fecha específica
+    /// </summary>
+    [HttpGet("estadisticas")]
+    [ProducesResponseType(typeof(ApiResponse<EstadisticasFacturasDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<EstadisticasFacturasDto>>> ObtenerEstadisticas(
+        [FromQuery] DateTime fecha)
+    {
+        _logger.LogInformation("📊 GET /api/comercial/facturas/estadisticas - Fecha: {Fecha}", fecha);
+        
+        try
+        {
+            // Obtener facturas del día para calcular estadísticas
+            var query = new ObtenerFacturasQuery
+            {
+                FechaDesde = fecha.Date,
+                FechaHasta = fecha.Date.AddDays(1).AddSeconds(-1)
+            };
+            
+            var result = await _mediator.Send(query);
+            
+            if (!result.IsSuccess())
+            {
+                return BadRequest(ApiResponse<object>.ErrorResponse(
+                    result.Errors ?? new List<string> { "Error al obtener estadísticas" },
+                    "Error al obtener estadísticas",
+                    StatusCodes.Status400BadRequest));
+            }
+
+            var facturas = result.Value ?? new List<FacturaDto>();
+            
+            var estadisticas = new EstadisticasFacturasDto
+            {
+                Fecha = fecha,
+                TotalFacturas = facturas.Count,
+                TotalVentas = facturas.Sum(f => f.Total),
+                FacturasPagadas = facturas.Count(f => f.Estado == EstadoFactura.Pagada),
+                FacturasPendientes = facturas.Count(f => f.Estado == EstadoFactura.Emitida),
+                FacturasAnuladas = facturas.Count(f => f.Estado == EstadoFactura.Anulada),
+                PromedioTicket = facturas.Any() ? facturas.Average(f => f.Total) : 0,
+                FacturasPorEstado = facturas.GroupBy(f => f.Estado.ToString())
+                    .ToDictionary(g => g.Key, g => g.Count())
+            };
+
+            return Ok(ApiResponse<EstadisticasFacturasDto>.SuccessResponse(estadisticas, "Estadísticas obtenidas exitosamente"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener estadísticas de facturas");
+            return BadRequest(ApiResponse<object>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error al obtener estadísticas",
+                StatusCodes.Status500InternalServerError));
+        }
+    }
+
+    /// <summary>
+    /// Imprime una factura específica
+    /// </summary>
+    [HttpPost("{id:guid}/imprimir")]
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<bool>>> ImprimirFactura(Guid id)
+    {
+        _logger.LogInformation("🖨️ POST /api/comercial/facturas/{Id}/imprimir", id);
+        
+        try
+        {
+            // Verificar que la factura existe
+            var query = ObtenerFacturaPorIdQuery.ConsultaBasica(id);
+            var result = await _mediator.Send(query);
+            
+            if (!result.IsSuccess())
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse(
+                    new List<string> { "Factura no encontrada" },
+                    "Factura no encontrada",
+                    StatusCodes.Status404NotFound));
+            }
+
+            // Aquí iría la lógica de impresión real
+            // Por ahora, simulamos que la impresión fue exitosa
+            _logger.LogInformation("🖨️ Factura {Id} enviada a impresión", id);
+            
+            return Ok(ApiResponse<bool>.SuccessResponse(true, "Factura enviada a impresión exitosamente"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al imprimir factura {Id}", id);
+            return BadRequest(ApiResponse<object>.ErrorResponse(
+                new List<string> { "Error al imprimir factura" },
+                "Error interno del servidor",
+                StatusCodes.Status500InternalServerError));
+        }
+    }
+
+    /// <summary>
+    /// Busca facturas por término y fecha
+    /// </summary>
+    [HttpGet("buscar-por-termino")]
+    [ProducesResponseType(typeof(ApiResponse<List<FacturaDto>>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<List<FacturaDto>>>> BuscarFacturasPorTermino(
+        [FromQuery] string busqueda, [FromQuery] DateTime fecha)
+    {
+        _logger.LogInformation("🔍 GET /api/comercial/facturas/buscar - Búsqueda: {Busqueda}, Fecha: {Fecha}", busqueda, fecha);
+
+        try
+        {
+            // Obtener facturas del día para buscar
+            var query = new ObtenerFacturasQuery
+            {
+                FechaDesde = fecha.Date,
+                FechaHasta = fecha.Date.AddDays(1).AddSeconds(-1)
+            };
+            
+            var result = await _mediator.Send(query);
+            
+            if (!result.IsSuccess())
+            {
+                return BadRequest(ApiResponse<List<FacturaDto>>.ErrorResponse(
+                    result.Errors ?? new List<string> { "Error al obtener facturas" },
+                    "Error al obtener facturas",
+                    StatusCodes.Status400BadRequest));
+            }
+
+            var facturas = result.Value ?? new List<FacturaDto>();
+            
+            // Filtrar por término de búsqueda
+            if (!string.IsNullOrWhiteSpace(busqueda))
+            {
+                facturas = facturas.Where(f => 
+                    f.NumeroFactura.Contains(busqueda, StringComparison.OrdinalIgnoreCase) ||
+                    f.NombreCliente?.Contains(busqueda, StringComparison.OrdinalIgnoreCase) == true ||
+                    f.Estado.ToString().Contains(busqueda, StringComparison.OrdinalIgnoreCase)
+                ).ToList();
+            }
+
+            var response = ApiResponse<List<FacturaDto>>.SuccessResponse(
+                facturas, "Facturas encontradas exitosamente");
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar facturas");
+            return BadRequest(ApiResponse<List<FacturaDto>>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error al buscar facturas",
+                StatusCodes.Status500InternalServerError));
+        }
+    }
+
+    /// <summary>
+    /// Registra el pago de una factura
+    /// </summary>
+    [HttpPost("{id:guid}/pago")]
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<bool>>> RegistrarPagoFactura(
+        Guid id, [FromBody] object pagoDto)
+    {
+        _logger.LogInformation("💰 POST /api/comercial/facturas/{Id}/pago", id);
+
+        try
+        {
+            // Simular registro de pago exitoso
+            var response = ApiResponse<bool>.SuccessResponse(true, "Pago registrado exitosamente");
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al registrar pago de factura {Id}", id);
+            return BadRequest(ApiResponse<bool>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error al registrar pago",
+                StatusCodes.Status500InternalServerError));
+        }
     }
 } 

@@ -20,6 +20,7 @@ using Xunit;
 using MediatR;
 using AutoMapper;
 using RestaurantePro.Application.Config.DependencyInjection;
+using FluentValidation;
 
 namespace RestaurantePro.Mobile.IntegrationTests.TestBase;
 
@@ -106,6 +107,13 @@ public class MobileIntegrationTestFixture : WebApplicationFactory<Program>, IDis
             services.AddMediatR(typeof(RestaurantePro.Application.Core.Productos.Queries.ObtenerProductosPaginados.ObtenerProductosPaginadosQuery).Assembly);
             services.AddMediatR(typeof(RestaurantePro.Application.Operaciones.Mesas.Queries.ObtenerMesas.ObtenerMesasQuery).Assembly);
             
+            // 🔧 REGISTRAR VALIDATORS
+            services.AddValidatorsFromAssembly(typeof(RestaurantePro.Application.Core.Productos.Queries.ObtenerProductosPaginados.ObtenerProductosPaginadosQuery).Assembly);
+            services.AddValidatorsFromAssembly(typeof(RestaurantePro.Application.Comercial.Clientes.Queries.ObtenerClientesPaginados.ObtenerClientesPaginadosQuery).Assembly);
+            
+            // 🔧 REGISTRAR VALIDATION BEHAVIOR
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RestaurantePro.Application.Common.Behaviors.ValidationBehavior<,>));
+            
             // 🔧 REGISTRAR AUTOMAPPER PARA LOS HANDLERS
             services.AddAutoMapper(typeof(RestaurantePro.Application.Common.Behaviors.ValidationBehavior<,>).Assembly);
             
@@ -120,6 +128,10 @@ public class MobileIntegrationTestFixture : WebApplicationFactory<Program>, IDis
             
             // 🔧 REGISTRAR SERVICIOS MOCK ADICIONALES PARA EVENT HANDLERS
             services.AddScoped<RestaurantePro.Application.Common.Interfaces.ISMSService, MockSMSService>();
+            
+            // 🔧 REGISTRAR TEST ANALYTICS SERVICE
+            Console.WriteLine("🔧 Registrando TestAnalyticsService en MobileIntegrationTestFixture");
+            services.AddScoped<RestaurantePro.Domain.Core.Analytics.Interfaces.IAnalyticsService, TestAnalyticsService>();
             
             // 🔧 REGISTRAR CONTROLADORES ESPECÍFICOS MANUALMENTE
             services.AddControllers()
@@ -203,4 +215,94 @@ public class JwtSettings
     public string Issuer { get; set; } = string.Empty;
     public string Audience { get; set; } = string.Empty;
     public int ExpirationInMinutes { get; set; } = 60;
+}
+
+/// <summary>
+/// Implementación de prueba del servicio de analytics para tests móviles
+/// </summary>
+public class TestAnalyticsService : RestaurantePro.Domain.Core.Analytics.Interfaces.IAnalyticsService
+{
+    public TestAnalyticsService()
+    {
+        Console.WriteLine("🔧 TestAnalyticsService constructor llamado en MobileIntegrationTestFixture");
+    }
+
+    public async Task<RestaurantePro.Domain.Core.Analytics.DTOs.MetricasDiaDto> ObtenerMetricasDiaAsync()
+    {
+        Console.WriteLine("🔧 TestAnalyticsService.ObtenerMetricasDiaAsync() llamado en MobileIntegrationTestFixture");
+        Console.WriteLine("🔧 Retornando datos mock para ObtenerMetricasDiaAsync");
+        return await Task.FromResult(new RestaurantePro.Domain.Core.Analytics.DTOs.MetricasDiaDto
+        {
+            Fecha = DateTime.Today,
+            TotalVentas = 1250.50m,
+            TotalComandas = 15,
+            TotalProductosVendidos = 45,
+            TiempoPromedioPreparacion = 12,
+            PorcentajeOcupacionMesas = 75.5m,
+            ClientesAtendidos = 42,
+            TopProductos = new List<RestaurantePro.Domain.Core.Analytics.DTOs.TopProductoDto>
+            {
+                new() { ProductoId = Guid.NewGuid(), NombreProducto = "Hamburguesa Clásica", Categoria = "Platos Principales", CantidadVendida = 8, TotalVentas = 320.00m, PorcentajeTotalVentas = 25.6m, PrecioPromedio = 40.00m }
+            }
+        });
+    }
+
+    public async Task<RestaurantePro.Domain.Core.Analytics.DTOs.MetricasRangoDto> ObtenerMetricasRangoAsync(DateTime fechaDesde, DateTime fechaHasta)
+    {
+        return await Task.FromResult(new RestaurantePro.Domain.Core.Analytics.DTOs.MetricasRangoDto
+        {
+            FechaDesde = fechaDesde,
+            FechaHasta = fechaHasta,
+            TotalVentas = 8750.75m,
+            TotalComandas = 105,
+            PromedioVentasDiarias = 1250.11m,
+            PromedioComandasDiarias = 15.0m,
+            MetricasPorDia = new List<RestaurantePro.Domain.Core.Analytics.DTOs.MetricasDiaDto>()
+        });
+    }
+
+    public async Task<List<RestaurantePro.Domain.Core.Analytics.DTOs.TopProductoDto>> ObtenerTopProductosAsync(int limite, DateTime? fechaDesde = null, DateTime? fechaHasta = null)
+    {
+        return await Task.FromResult(new List<RestaurantePro.Domain.Core.Analytics.DTOs.TopProductoDto>
+        {
+            new() { ProductoId = Guid.NewGuid(), NombreProducto = "Hamburguesa Clásica", Categoria = "Platos Principales", CantidadVendida = 45, TotalVentas = 1800.00m, PorcentajeTotalVentas = 18.5m, PrecioPromedio = 40.00m }
+        });
+    }
+
+    public async Task<RestaurantePro.Domain.Core.Analytics.DTOs.OcupacionMesasDto> ObtenerOcupacionMesasAsync(DateTime fecha)
+    {
+        return await Task.FromResult(new RestaurantePro.Domain.Core.Analytics.DTOs.OcupacionMesasDto
+        {
+            Fecha = fecha,
+            TotalMesas = 20,
+            MesasOcupadas = 15,
+            MesasDisponibles = 5,
+            TiempoPromedioOcupacion = 85,
+            RotacionesMesas = 8
+        });
+    }
+
+    public async Task<RestaurantePro.Domain.Core.Analytics.DTOs.TiempoPreparacionDto> ObtenerTiempoPreparacionAsync(DateTime? fechaDesde = null, DateTime? fechaHasta = null)
+    {
+        return await Task.FromResult(new RestaurantePro.Domain.Core.Analytics.DTOs.TiempoPreparacionDto
+        {
+            TiempoPromedioMinutos = 12,
+            TiempoMinimoMinutos = 5,
+            TiempoMaximoMinutos = 25,
+            TotalPreparaciones = 150,
+            PreparacionesEnTiempo = 135,
+            PreparacionesFueraTiempo = 15,
+            TiempoEstandarMinutos = 15
+        });
+    }
+
+    public async Task<List<RestaurantePro.Domain.Core.Analytics.DTOs.VentasHoraDto>> ObtenerVentasPorHoraAsync(DateTime fecha)
+    {
+        return await Task.FromResult(new List<RestaurantePro.Domain.Core.Analytics.DTOs.VentasHoraDto>
+        {
+            new() { Hora = 12, TotalVentas = 450.00m, NumeroComandas = 8, PorcentajeTotalVentas = 36.0m },
+            new() { Hora = 13, TotalVentas = 650.00m, NumeroComandas = 12, PorcentajeTotalVentas = 52.0m },
+            new() { Hora = 14, TotalVentas = 350.00m, NumeroComandas = 6, PorcentajeTotalVentas = 28.0m }
+        });
+    }
 } 

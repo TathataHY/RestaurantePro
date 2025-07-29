@@ -1,23 +1,36 @@
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Services.Api;
+using RestaurantePro.Mobile.Core.Services.Authentication;
 
 namespace RestaurantePro.Mobile.Core.Services.Inventory;
 
 public class PreparacionesService : IPreparacionesService
 {
     private readonly IApiService _apiService;
+    private readonly IAuthService _authService;
 
-    public PreparacionesService(IApiService apiService)
+    public PreparacionesService(IApiService apiService, IAuthService authService)
     {
         _apiService = apiService;
+        _authService = authService;
     }
 
     public async Task<ApiResponse<List<PreparacionDto>>> ObtenerPreparacionesAsync(bool soloDisponibles = true)
     {
         try
         {
-            var response = await _apiService.GetAsync<List<PreparacionDto>>($"api/preparaciones?soloDisponibles={soloDisponibles}");
-            return response;
+            var token = await _authService.GetTokenAsync();
+            // El backend devuelve una respuesta paginada, necesitamos extraer los Items
+            var response = await _apiService.GetAsync<PreparacionesPaginadasDto>("api/operaciones/preparaciones", token);
+            
+            if (response.Succeeded && response.Data != null)
+            {
+                // Extraer la lista de preparaciones de la respuesta paginada
+                var preparaciones = response.Data.Items;
+                return ApiResponse<List<PreparacionDto>>.SuccessResponse(preparaciones, response.Message);
+            }
+            
+            return ApiResponse<List<PreparacionDto>>.Failure(response.Error ?? "Error al obtener preparaciones");
         }
         catch (Exception ex)
         {
@@ -29,7 +42,8 @@ public class PreparacionesService : IPreparacionesService
     {
         try
         {
-            var response = await _apiService.GetAsync<PreparacionDto>($"api/preparaciones/{id}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<PreparacionDto>($"api/operaciones/preparaciones/{id}", token);
             return response;
         }
         catch (Exception ex)
@@ -42,7 +56,8 @@ public class PreparacionesService : IPreparacionesService
     {
         try
         {
-            var response = await _apiService.GetAsync<List<PreparacionDto>>($"api/preparaciones/buscar?termino={terminoBusqueda}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<List<PreparacionDto>>($"api/operaciones/preparaciones/buscar?termino={terminoBusqueda}", token);
             return response;
         }
         catch (Exception ex)
@@ -55,7 +70,8 @@ public class PreparacionesService : IPreparacionesService
     {
         try
         {
-            var response = await _apiService.PostAsync<PreparacionDto>("api/preparaciones", preparacion);
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.PostAsync<PreparacionDto>("api/operaciones/preparaciones", preparacion, token);
             return response;
         }
         catch (Exception ex)
@@ -68,7 +84,8 @@ public class PreparacionesService : IPreparacionesService
     {
         try
         {
-            var response = await _apiService.PutAsync<PreparacionDto>($"api/preparaciones/{id}", preparacion);
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.PutAsync<PreparacionDto>($"api/operaciones/preparaciones/{id}", preparacion, token);
             return response;
         }
         catch (Exception ex)
@@ -81,7 +98,8 @@ public class PreparacionesService : IPreparacionesService
     {
         try
         {
-            var response = await _apiService.DeleteAsync($"api/preparaciones/{id}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.DeleteAsync($"api/operaciones/preparaciones/{id}", token);
             return response;
         }
         catch (Exception ex)
@@ -94,7 +112,8 @@ public class PreparacionesService : IPreparacionesService
     {
         try
         {
-            var response = await _apiService.GetAsync<EstadisticasPreparacionesDto>("api/preparaciones/estadisticas");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<EstadisticasPreparacionesDto>("api/operaciones/preparaciones/estadisticas", token);
             return response;
         }
         catch (Exception ex)
@@ -107,7 +126,8 @@ public class PreparacionesService : IPreparacionesService
     {
         try
         {
-            var response = await _apiService.GetAsync<List<PreparacionDto>>($"api/preparaciones/por-categoria?categoria={categoria}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<List<PreparacionDto>>($"api/operaciones/preparaciones/por-categoria?categoria={categoria}", token);
             return response;
         }
         catch (Exception ex)
@@ -120,8 +140,10 @@ public class PreparacionesService : IPreparacionesService
     {
         try
         {
+            var token = await _authService.GetTokenAsync();
+            // El backend usa el endpoint /disponible, no /cambiar-disponibilidad
             var request = new { Disponible = disponible };
-            var response = await _apiService.PostAsync<PreparacionDto>($"api/preparaciones/{id}/cambiar-disponibilidad", request);
+            var response = await _apiService.PostAsync<PreparacionDto>($"api/operaciones/preparaciones/{id}/disponible", request, token);
             return response;
         }
         catch (Exception ex)
@@ -134,7 +156,8 @@ public class PreparacionesService : IPreparacionesService
     {
         try
         {
-            var response = await _apiService.PostAsync<PreparacionDto>($"api/preparaciones/{id}/iniciar", dto);
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.PostAsync<PreparacionDto>($"api/operaciones/preparaciones/{id}/iniciar", dto, token);
             return response;
         }
         catch (Exception ex)
@@ -147,7 +170,8 @@ public class PreparacionesService : IPreparacionesService
     {
         try
         {
-            var response = await _apiService.PostAsync<PreparacionDto>($"api/preparaciones/{id}/completar", new { });
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.PostAsync<PreparacionDto>($"api/operaciones/preparaciones/{id}/completar", new { }, token);
             return response;
         }
         catch (Exception ex)
@@ -160,7 +184,8 @@ public class PreparacionesService : IPreparacionesService
     {
         try
         {
-            var response = await _apiService.PostAsync<PreparacionDto>($"api/preparaciones/{id}/cancelar", dto);
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.PostAsync<PreparacionDto>($"api/operaciones/preparaciones/{id}/cancelar", dto, token);
             return response;
         }
         catch (Exception ex)
@@ -173,7 +198,8 @@ public class PreparacionesService : IPreparacionesService
     {
         try
         {
-            var response = await _apiService.GetAsync<List<PreparacionDto>>("api/preparaciones/cola");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<List<PreparacionDto>>("api/operaciones/preparaciones/cola", token);
             return response;
         }
         catch (Exception ex)
@@ -186,7 +212,9 @@ public class PreparacionesService : IPreparacionesService
     {
         try
         {
-            var response = await _apiService.GetAsync<List<PreparacionDto>>($"api/preparaciones/estado/{estado}");
+            var token = await _authService.GetTokenAsync();
+            // El backend usa el endpoint /por-estado, no /estado/{estado}
+            var response = await _apiService.GetAsync<List<PreparacionDto>>($"api/operaciones/preparaciones/por-estado?estado={estado}", token);
             return response;
         }
         catch (Exception ex)

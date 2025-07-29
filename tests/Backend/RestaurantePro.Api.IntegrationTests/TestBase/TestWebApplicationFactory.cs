@@ -275,7 +275,23 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.AddSwaggerGen();
 
             // 🔧 CONFIGURAR SERVICIOS DE APLICACIÓN PARA TESTS
-            // services.AddApplicationServices();
+            services.AddApplicationServices(config);
+            
+            // 🔧 CONFIGURAR SERVICIOS DE DOMINIO PARA TESTS
+            services.AddDomainServices();
+            
+            // 🔧 REGISTRAR SERVICIOS ESPECÍFICOS PARA TESTS
+            // Remover cualquier registro existente de IAnalyticsService
+            var analyticsServiceDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(RestaurantePro.Domain.Core.Analytics.Interfaces.IAnalyticsService));
+            if (analyticsServiceDescriptor != null)
+            {
+                Console.WriteLine($"🔧 Removiendo registro existente de IAnalyticsService: {analyticsServiceDescriptor.ImplementationType?.Name}");
+                services.Remove(analyticsServiceDescriptor);
+            }
+            
+            // Registrar el mock de AnalyticsService
+            Console.WriteLine("🔧 Registrando TestAnalyticsService como IAnalyticsService");
+            services.AddScoped<RestaurantePro.Domain.Core.Analytics.Interfaces.IAnalyticsService, TestAnalyticsService>();
             services.AddSingleton<IIdentityService, FakeIdentityService>();
             services.AddScoped<IJwtTokenService, FakeJwtTokenService>();
             services.AddScoped<IUserPermissionService, FakeUserPermissionService>();
@@ -1339,6 +1355,101 @@ public class TestNotificationService : INotificationService
     {
         _logger.LogInformation("📧 TestNotificationService: Enviando notificación: {Title} - {Message}", notification.Title, notification.Message);
         return await Task.FromResult(true);
+    }
+}
+
+/// <summary>
+/// Implementación de prueba del servicio de analytics
+/// </summary>
+public class TestAnalyticsService : RestaurantePro.Domain.Core.Analytics.Interfaces.IAnalyticsService
+{
+    public TestAnalyticsService()
+    {
+        Console.WriteLine("🔧 TestAnalyticsService constructor llamado");
+    }
+
+    public async Task<RestaurantePro.Domain.Core.Analytics.DTOs.MetricasDiaDto> ObtenerMetricasDiaAsync()
+    {
+        Console.WriteLine("🔧 TestAnalyticsService.ObtenerMetricasDiaAsync() llamado");
+        return await Task.FromResult(new RestaurantePro.Domain.Core.Analytics.DTOs.MetricasDiaDto
+        {
+            Fecha = DateTime.Today,
+            TotalVentas = 1250.50m,
+            TotalComandas = 15,
+            TotalProductosVendidos = 45,
+            TiempoPromedioPreparacion = 12,
+            PorcentajeOcupacionMesas = 75.5m,
+            ClientesAtendidos = 42,
+            TopProductos = new List<RestaurantePro.Domain.Core.Analytics.DTOs.TopProductoDto>
+            {
+                new() { ProductoId = Guid.NewGuid(), NombreProducto = "Hamburguesa Clásica", Categoria = "Platos Principales", CantidadVendida = 8, TotalVentas = 320.00m, PorcentajeTotalVentas = 25.6m, PrecioPromedio = 40.00m }
+            }
+        });
+    }
+
+    public async Task<RestaurantePro.Domain.Core.Analytics.DTOs.MetricasRangoDto> ObtenerMetricasRangoAsync(DateTime fechaDesde, DateTime fechaHasta)
+    {
+        return await Task.FromResult(new RestaurantePro.Domain.Core.Analytics.DTOs.MetricasRangoDto
+        {
+            FechaDesde = fechaDesde,
+            FechaHasta = fechaHasta,
+            TotalVentas = 8750.75m,
+            TotalComandas = 105,
+            PromedioVentasDiarias = 1250.11m,
+            PromedioComandasDiarias = 15.0m,
+            MetricasPorDia = new List<RestaurantePro.Domain.Core.Analytics.DTOs.MetricasDiaDto>()
+        });
+    }
+
+    public async Task<List<RestaurantePro.Domain.Core.Analytics.DTOs.TopProductoDto>> ObtenerTopProductosAsync(int limite, DateTime? fechaDesde = null, DateTime? fechaHasta = null)
+    {
+        return await Task.FromResult(new List<RestaurantePro.Domain.Core.Analytics.DTOs.TopProductoDto>
+        {
+            new() { ProductoId = Guid.NewGuid(), NombreProducto = "Hamburguesa Clásica", Categoria = "Platos Principales", CantidadVendida = 45, TotalVentas = 1800.00m, PorcentajeTotalVentas = 18.5m, PrecioPromedio = 40.00m }
+        });
+    }
+
+    public async Task<RestaurantePro.Domain.Core.Analytics.DTOs.OcupacionMesasDto> ObtenerOcupacionMesasAsync(DateTime fecha)
+    {
+        return await Task.FromResult(new RestaurantePro.Domain.Core.Analytics.DTOs.OcupacionMesasDto
+        {
+            Fecha = fecha,
+            TotalMesas = 20,
+            MesasOcupadas = 15,
+            MesasDisponibles = 5,
+            PorcentajeOcupacion = 75.0m,
+            MesasPorEstado = new Dictionary<string, int>
+            {
+                { "Ocupada", 15 },
+                { "Disponible", 5 }
+            }
+        });
+    }
+
+    public async Task<RestaurantePro.Domain.Core.Analytics.DTOs.TiempoPreparacionDto> ObtenerTiempoPreparacionAsync(DateTime? fechaDesde = null, DateTime? fechaHasta = null)
+    {
+        return await Task.FromResult(new RestaurantePro.Domain.Core.Analytics.DTOs.TiempoPreparacionDto
+        {
+            TiempoPromedio = 12.5m,
+            TiempoMinimo = 5.0m,
+            TiempoMaximo = 25.0m,
+            TotalPreparaciones = 45,
+            PreparacionesPorCategoria = new Dictionary<string, decimal>
+            {
+                { "Platos Principales", 15.0m },
+                { "Bebidas", 3.0m }
+            }
+        });
+    }
+
+    public async Task<List<RestaurantePro.Domain.Core.Analytics.DTOs.VentasHoraDto>> ObtenerVentasPorHoraAsync(DateTime fecha)
+    {
+        return await Task.FromResult(new List<RestaurantePro.Domain.Core.Analytics.DTOs.VentasHoraDto>
+        {
+            new() { Hora = 12, TotalVentas = 450.00m, CantidadComandas = 8 },
+            new() { Hora = 13, TotalVentas = 650.00m, CantidadComandas = 12 },
+            new() { Hora = 14, TotalVentas = 350.00m, CantidadComandas = 6 }
+        });
     }
 }
 

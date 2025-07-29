@@ -6,17 +6,20 @@ namespace RestaurantePro.Mobile.Core.Services.Commercial;
 public class ClientesService : IClientesService
 {
     private readonly IApiService _apiService;
+    private readonly IAuthService _authService;
 
-    public ClientesService(IApiService apiService)
+    public ClientesService(IApiService apiService, IAuthService authService)
     {
         _apiService = apiService;
+        _authService = authService;
     }
 
     public async Task<ApiResponse<List<ClienteSummaryDto>>> ObtenerClientesAsync(bool soloActivos = true)
     {
         try
         {
-            var response = await _apiService.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?soloActivos={soloActivos}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?soloActivos={soloActivos}", token);
             if (response.Succeeded && response.Data != null)
             {
                 return ApiResponse<List<ClienteSummaryDto>>.SuccessResponse(response.Data.Items.ToList(), "Clientes obtenidos exitosamente");
@@ -33,7 +36,8 @@ public class ClientesService : IClientesService
     {
         try
         {
-            var response = await _apiService.GetAsync<ClienteDto>($"api/comercial/clientes/{id}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<ClienteDto>($"api/comercial/clientes/{id}", token);
             return response;
         }
         catch (Exception ex)
@@ -46,7 +50,8 @@ public class ClientesService : IClientesService
     {
         try
         {
-            var response = await _apiService.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?filtroTexto={terminoBusqueda}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?filtroTexto={terminoBusqueda}", token);
             if (response.Succeeded && response.Data != null)
             {
                 return ApiResponse<List<ClienteSummaryDto>>.SuccessResponse(response.Data.Items.ToList(), "Clientes encontrados");
@@ -115,7 +120,8 @@ public class ClientesService : IClientesService
     {
         try
         {
-            var response = await _apiService.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?soloClientesFrecuentes=true&pageSize={cantidad}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?soloClientesFrecuentes=true&pageSize={cantidad}", token);
             if (response.Succeeded && response.Data != null)
             {
                 return ApiResponse<List<ClienteSummaryDto>>.SuccessResponse(response.Data.Items.ToList(), "Clientes frecuentes obtenidos");
@@ -143,7 +149,8 @@ public class ClientesService : IClientesService
             if (filtro.FechaRegistroHasta.HasValue) queryParams.Add($"fechaRegistroHasta={filtro.FechaRegistroHasta:yyyy-MM-dd}");
             
             var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
-            var response = await _apiService.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes{queryString}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes{queryString}", token);
             if (response.Succeeded && response.Data != null)
             {
                 return ApiResponse<List<ClienteSummaryDto>>.SuccessResponse(response.Data.Items.ToList(), "Clientes obtenidos");
@@ -160,7 +167,8 @@ public class ClientesService : IClientesService
     {
         try
         {
-            var response = await _apiService.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?segmento={segmento}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?segmento={segmento}", token);
             if (response.Succeeded && response.Data != null)
             {
                 return ApiResponse<List<ClienteSummaryDto>>.SuccessResponse(response.Data.Items.ToList(), "Clientes obtenidos");
@@ -177,7 +185,8 @@ public class ClientesService : IClientesService
     {
         try
         {
-            var response = await _apiService.GetAsync<PaginatedList<ClienteSummaryDto>>("api/comercial/clientes?soloConTarjetaFidelizacion=true");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<PaginatedList<ClienteSummaryDto>>("api/comercial/clientes?soloConTarjetaFidelizacion=true", token);
             if (response.Succeeded && response.Data != null)
             {
                 return ApiResponse<List<ClienteSummaryDto>>.SuccessResponse(response.Data.Items.ToList(), "Clientes obtenidos");

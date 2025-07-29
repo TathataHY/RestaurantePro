@@ -6,10 +6,12 @@ namespace RestaurantePro.Mobile.Core.Services.Commercial;
 public class TarjetasFidelizacionService : ITarjetasFidelizacionService
 {
     private readonly IApiService _apiService;
+    private readonly IAuthService _authService;
 
-    public TarjetasFidelizacionService(IApiService apiService)
+    public TarjetasFidelizacionService(IApiService apiService, IAuthService authService)
     {
         _apiService = apiService;
+        _authService = authService;
     }
 
     public async Task<ApiResponse<TarjetaFidelizacionDto>> BuscarTarjetaAsync(string numeroTarjeta)
@@ -172,7 +174,17 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
     {
         try
         {
-            var response = await _apiService.GetAsync<List<TarjetaFidelizacionDto>>("api/comercial/tarjetas-fidelizacion?estado=Activa");
+            // Obtener el token de autenticación
+            var token = await _authService.GetTokenAsync();
+            
+            // Primero intentamos obtener todas las tarjetas sin filtro
+            var response = await _apiService.GetAsync<List<TarjetaFidelizacionDto>>("api/comercial/tarjetas-fidelizacion", token);
+            if (response.Succeeded && response.Data != null)
+            {
+                // Filtramos las activas en el cliente
+                var tarjetasActivas = response.Data.Where(t => t.Estado == "Activa").ToList();
+                return ApiResponse<List<TarjetaFidelizacionDto>>.SuccessResponse(tarjetasActivas, "Tarjetas activas obtenidas");
+            }
             return response;
         }
         catch (Exception ex)

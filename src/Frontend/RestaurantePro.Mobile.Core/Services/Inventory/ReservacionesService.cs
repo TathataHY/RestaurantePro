@@ -1,22 +1,26 @@
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Services.Api;
+using RestaurantePro.Mobile.Core.Services.Authentication;
 
 namespace RestaurantePro.Mobile.Core.Services.Inventory;
 
 public class ReservacionesService : IReservacionesService
 {
     private readonly IApiService _apiService;
+    private readonly IAuthService _authService;
 
-    public ReservacionesService(IApiService apiService)
+    public ReservacionesService(IApiService apiService, IAuthService authService)
     {
         _apiService = apiService;
+        _authService = authService;
     }
 
     public async Task<ApiResponse<List<ReservacionDto>>> ObtenerReservacionesAsync()
     {
         try
         {
-            var response = await _apiService.GetAsync<List<ReservacionDto>>("api/reservaciones");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<List<ReservacionDto>>("api/operaciones/reservaciones", token);
             return response;
         }
         catch (Exception ex)
@@ -29,7 +33,8 @@ public class ReservacionesService : IReservacionesService
     {
         try
         {
-            var response = await _apiService.GetAsync<ReservacionDto>($"api/reservaciones/{id}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<ReservacionDto>($"api/operaciones/reservaciones/{id}", token);
             return response;
         }
         catch (Exception ex)
@@ -42,7 +47,8 @@ public class ReservacionesService : IReservacionesService
     {
         try
         {
-            var response = await _apiService.GetAsync<List<ReservacionDto>>($"api/reservaciones/buscar?termino={terminoBusqueda}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<List<ReservacionDto>>($"api/operaciones/reservaciones/buscar?termino={terminoBusqueda}", token);
             return response;
         }
         catch (Exception ex)
@@ -55,7 +61,8 @@ public class ReservacionesService : IReservacionesService
     {
         try
         {
-            var response = await _apiService.PostAsync<ReservacionDto>("api/reservaciones", reservacion);
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.PostAsync<ReservacionDto>("api/operaciones/reservaciones", reservacion, token);
             return response;
         }
         catch (Exception ex)
@@ -68,7 +75,8 @@ public class ReservacionesService : IReservacionesService
     {
         try
         {
-            var response = await _apiService.PutAsync<ReservacionDto>($"api/reservaciones/{id}", reservacion);
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.PutAsync<ReservacionDto>($"api/operaciones/reservaciones/{id}", reservacion, token);
             return response;
         }
         catch (Exception ex)
@@ -81,7 +89,8 @@ public class ReservacionesService : IReservacionesService
     {
         try
         {
-            var response = await _apiService.DeleteAsync($"api/reservaciones/{id}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.DeleteAsync($"api/operaciones/reservaciones/{id}", token);
             return response;
         }
         catch (Exception ex)
@@ -94,7 +103,8 @@ public class ReservacionesService : IReservacionesService
     {
         try
         {
-            var response = await _apiService.GetAsync<EstadisticasReservacionesDto>("api/reservaciones/estadisticas");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<EstadisticasReservacionesDto>("api/operaciones/reservaciones/estadisticas", token);
             return response;
         }
         catch (Exception ex)
@@ -107,7 +117,8 @@ public class ReservacionesService : IReservacionesService
     {
         try
         {
-            var response = await _apiService.GetAsync<List<ReservacionDto>>($"api/reservaciones/por-fecha?fecha={fecha:yyyy-MM-dd}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<List<ReservacionDto>>($"api/operaciones/reservaciones?fecha={fecha:yyyy-MM-dd}", token);
             return response;
         }
         catch (Exception ex)
@@ -120,7 +131,8 @@ public class ReservacionesService : IReservacionesService
     {
         try
         {
-            var response = await _apiService.GetAsync<List<ReservacionDto>>("api/reservaciones/hoy");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<List<ReservacionDto>>("api/operaciones/reservaciones/hoy", token);
             return response;
         }
         catch (Exception ex)
@@ -133,8 +145,9 @@ public class ReservacionesService : IReservacionesService
     {
         try
         {
+            var token = await _authService.GetTokenAsync();
             var request = new { NuevoEstado = nuevoEstado };
-            var response = await _apiService.PostAsync<ReservacionDto>($"api/reservaciones/{id}/cambiar-estado", request);
+            var response = await _apiService.PostAsync<ReservacionDto>($"api/operaciones/reservaciones/{id}/cambiar-estado", request, token);
             return response;
         }
         catch (Exception ex)
@@ -147,8 +160,9 @@ public class ReservacionesService : IReservacionesService
     {
         try
         {
+            var token = await _authService.GetTokenAsync();
             var request = new { Mesa = mesa };
-            var response = await _apiService.PostAsync<ReservacionDto>($"api/reservaciones/{id}/asignar-mesa", request);
+            var response = await _apiService.PostAsync<ReservacionDto>($"api/operaciones/reservaciones/{id}/asignar-mesa", request, token);
             return response;
         }
         catch (Exception ex)

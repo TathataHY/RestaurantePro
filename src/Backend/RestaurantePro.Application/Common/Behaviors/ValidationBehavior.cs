@@ -56,11 +56,11 @@ namespace RestaurantePro.Application.Common.Behaviors
                 var genericType = typeof(TResponse).GetGenericArguments()[0];
                 var resultType = typeof(Result);
                 var failureMethod = resultType.GetMethods()
-                    .FirstOrDefault(m => m.Name == "Failure" && m.IsGenericMethod && m.GetParameters().Length == 1 && m.GetParameters()[0].ParameterType == typeof(string));
+                    .FirstOrDefault(m => m.Name == "Failure" && m.IsGenericMethod && m.GetParameters().Length == 0);
                 if (failureMethod != null)
                 {
                     var genericFailure = failureMethod.MakeGenericMethod(genericType);
-                    return (TResponse)genericFailure.Invoke(null, new object[] { errorMessage })!;
+                    return (TResponse)genericFailure.Invoke(null, null)!;
                 }
             }
             throw new RestaurantePro.Application.Common.Exceptions.ValidationException(errorMessage, "Validation", errorMessage);
