@@ -103,8 +103,9 @@ public class UsuarioAdminSeeder : ISeedData
         );
 
         // Establecer password hash (en producción, usar un servicio de hash seguro)
-        var (passwordHash, salt) = GenerarPasswordHash(DefaultAdminPassword);
-        usuario.EstablecerPassword(passwordHash, salt);
+        // var (passwordHash, salt) = GenerarPasswordHash(DefaultAdminPassword);
+        // usuario.EstablecerPassword(passwordHash, salt);
+        // COMENTADO: El password será manejado por IdentityUsersSeeder
 
         // Agregar permisos específicos de administrador
         await AgregarPermisosAdministrador(usuario, logger);

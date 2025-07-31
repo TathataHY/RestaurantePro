@@ -113,6 +113,26 @@ public class IdentityUsersSeeder : ISeedData
                        u.Email == "admin@restaurantepro.com")
             .ToListAsync(cancellationToken);
         
+        // Si no existe el usuario admin en el dominio, crearlo
+        if (!usuariosCriticos.Any())
+        {
+            logger.LogInformation("🔧 Usuario admin no existe en dominio, creándolo...");
+            var usuarioAdmin = Usuario.Crear(
+                nombreUsuario: "admin",
+                nombreCompleto: "Administrador del Sistema",
+                email: "admin@restaurantepro.com",
+                rol: RolUsuario.Administrador
+            );
+            usuarioAdmin.ConfirmarCuenta();
+            usuarioAdmin.Activar();
+            
+            context.Usuarios.Add(usuarioAdmin);
+            await context.SaveChangesAsync(cancellationToken);
+            
+            usuariosCriticos.Add(usuarioAdmin);
+            logger.LogInformation("✅ Usuario admin creado en dominio");
+        }
+        
         usuarios.AddRange(usuariosCriticos);
         if (logger != null)
             logger.LogDebug("🔐 Usuarios críticos encontrados: {Count}", usuariosCriticos.Count);
