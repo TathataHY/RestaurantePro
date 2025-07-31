@@ -48,7 +48,7 @@ public class PreparacionesControllerTests : ApiIntegrationTestBase, IDisposable
         apiResponse.Data!.Items.Should().BeEmpty();
         
         // Verificar que realmente no hay preparaciones en BD
-        var preparacionesEnBD = await DbContext.Preparaciones.ToListAsync();
+        var preparacionesEnBD = await DbContext.PreparacionesDiarias.ToListAsync();
         preparacionesEnBD.Should().BeEmpty();
         
         Logger.LogInformation("✅ Test COMPLETO finalizado: GetPreparaciones_SinPreparacionesEnBD_DebeRetornarListaVacia");
@@ -79,7 +79,7 @@ public class PreparacionesControllerTests : ApiIntegrationTestBase, IDisposable
         apiResponse.Data!.Items.Should().HaveCount(2);
         
         // Verificar que los datos coinciden con la BD
-        var preparacionesEnBD = await DbContext.Preparaciones.ToListAsync();
+        var preparacionesEnBD = await DbContext.PreparacionesDiarias.ToListAsync();
         preparacionesEnBD.Should().HaveCount(2);
         preparacionesEnBD.Should().Contain(p => p.Id == preparacion1.Id);
         preparacionesEnBD.Should().Contain(p => p.Id == preparacion2.Id);
@@ -123,7 +123,7 @@ public class PreparacionesControllerTests : ApiIntegrationTestBase, IDisposable
         apiResponse.Data.Observaciones.Should().Be("Preparación específica");
         
         // Verificar que los datos coinciden con la BD
-        var preparacionEnBD = await DbContext.Preparaciones.FindAsync(preparacion.Id);
+        var preparacionEnBD = await DbContext.PreparacionesDiarias.FindAsync(preparacion.Id);
         preparacionEnBD.Should().NotBeNull();
         preparacionEnBD!.Id.Should().Be(apiResponse.Data.Id);
         preparacionEnBD.ProductoId.Should().Be(producto.Id);
@@ -150,7 +150,7 @@ public class PreparacionesControllerTests : ApiIntegrationTestBase, IDisposable
         var idInexistente = Guid.NewGuid();
         
         // Verificar que el ID realmente no existe en la BD
-        var preparacionEnBD = await DbContext.Preparaciones.FindAsync(idInexistente);
+        var preparacionEnBD = await DbContext.PreparacionesDiarias.FindAsync(idInexistente);
         preparacionEnBD.Should().BeNull();
 
         // Act
@@ -163,7 +163,7 @@ public class PreparacionesControllerTests : ApiIntegrationTestBase, IDisposable
         apiResponse!.Success.Should().BeFalse();
         
         // Verificar que la preparación real sigue existiendo en la BD
-        var preparacionReal = await DbContext.Preparaciones.FindAsync(preparacion.Id);
+        var preparacionReal = await DbContext.PreparacionesDiarias.FindAsync(preparacion.Id);
         preparacionReal.Should().NotBeNull();
         preparacionReal!.Id.Should().Be(preparacion.Id);
         
@@ -215,7 +215,7 @@ public class PreparacionesControllerTests : ApiIntegrationTestBase, IDisposable
         apiResponse.Data.Observaciones.Should().Be(observaciones);
         
         // Verificar que la preparación se creó en la BD
-        var preparacionEnBD = await DbContext.Preparaciones.FindAsync(apiResponse.Data.Id);
+        var preparacionEnBD = await DbContext.PreparacionesDiarias.FindAsync(apiResponse.Data.Id);
         preparacionEnBD.Should().NotBeNull();
         preparacionEnBD!.ProductoId.Should().Be(producto.Id);
         preparacionEnBD.ChefId.Should().Be(chef.Id);
@@ -273,7 +273,7 @@ public class PreparacionesControllerTests : ApiIntegrationTestBase, IDisposable
         apiResponse.Data.Observaciones.Should().Be(nuevasObservaciones);
         
         // Verificar que la preparación se actualizó en la BD
-        var preparacionActualizada = await DbContext.Preparaciones.FindAsync(preparacion.Id);
+        var preparacionActualizada = await DbContext.PreparacionesDiarias.FindAsync(preparacion.Id);
         preparacionActualizada.Should().NotBeNull();
         await DbContext.Entry(preparacionActualizada!).ReloadAsync();
         preparacionActualizada.Id.Should().Be(preparacion.Id);
@@ -318,7 +318,7 @@ public class PreparacionesControllerTests : ApiIntegrationTestBase, IDisposable
         apiResponse.Data!.Id.Should().Be(preparacion.Id);
         
         // Verificar que la preparación se inició en la BD
-        var preparacionIniciada = await DbContext.Preparaciones.FindAsync(preparacion.Id);
+        var preparacionIniciada = await DbContext.PreparacionesDiarias.FindAsync(preparacion.Id);
         preparacionIniciada.Should().NotBeNull();
         await DbContext.Entry(preparacionIniciada!).ReloadAsync();
         preparacionIniciada.Id.Should().Be(preparacion.Id);
@@ -375,7 +375,7 @@ public class PreparacionesControllerTests : ApiIntegrationTestBase, IDisposable
         apiResponse.Data!.Id.Should().Be(preparacion.Id);
         
         // Verificar que la preparación se completó en la BD
-        var preparacionCompletada = await DbContext.Preparaciones.FindAsync(preparacion.Id);
+        var preparacionCompletada = await DbContext.PreparacionesDiarias.FindAsync(preparacion.Id);
         preparacionCompletada.Should().NotBeNull();
         await DbContext.Entry(preparacionCompletada!).ReloadAsync();
         preparacionCompletada.Id.Should().Be(preparacion.Id);
@@ -431,7 +431,7 @@ public class PreparacionesControllerTests : ApiIntegrationTestBase, IDisposable
         apiResponse.Data!.Id.Should().Be(preparacion.Id);
         
         // Verificar que la preparación se canceló en la BD
-        var preparacionCancelada = await DbContext.Preparaciones.FindAsync(preparacion.Id);
+        var preparacionCancelada = await DbContext.PreparacionesDiarias.FindAsync(preparacion.Id);
         preparacionCancelada.Should().NotBeNull();
         await DbContext.Entry(preparacionCancelada!).ReloadAsync();
         preparacionCancelada.Id.Should().Be(preparacion.Id);
@@ -518,8 +518,8 @@ public class PreparacionesControllerTests : ApiIntegrationTestBase, IDisposable
 
     private async Task LimpiarTablaPreparaciones()
     {
-        var preparaciones = await DbContext.Preparaciones.ToListAsync();
-        DbContext.Preparaciones.RemoveRange(preparaciones);
+        var preparaciones = await DbContext.PreparacionesDiarias.ToListAsync();
+        DbContext.PreparacionesDiarias.RemoveRange(preparaciones);
         await DbContext.SaveChangesAsync();
     }
 
@@ -533,7 +533,7 @@ public class PreparacionesControllerTests : ApiIntegrationTestBase, IDisposable
             observaciones
         );
         
-        DbContext.Preparaciones.Add(preparacion);
+        DbContext.PreparacionesDiarias.Add(preparacion);
         await DbContext.SaveChangesAsync();
         
         return preparacion;

@@ -2,7 +2,8 @@
 <ContentPage x:Class="RestaurantePro.Mobile.Features.Commercial.Loyalty.Pages.TarjetasFidelizacionPage"
              xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:viewmodels="clr-namespace:RestaurantePro.Mobile.Core.Features.Commercial.Loyalty.ViewModels"
+             xmlns:viewmodels="clr-namespace:RestaurantePro.Mobile.Core.Features.Commercial.Loyalty.ViewModels;assembly=RestaurantePro.Mobile.Core"
+             xmlns:dtos="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
              x:DataType="viewmodels:TarjetasFidelizacionViewModel"
              Title="Fidelización"
              BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}">
@@ -109,7 +110,7 @@
                                    FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
                             
-                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" Spacing="10">
+                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
                                 <Button Grid.Row="0" Grid.Column="0"
                                         Text="Aplicar Descuento"
                                         Command="{Binding AplicarDescuentoCommand}"
@@ -156,7 +157,7 @@
                             <CollectionView ItemsSource="{Binding Historial}"
                                           HeightRequest="200">
                                 <CollectionView.ItemTemplate>
-                                    <DataTemplate x:DataType="TransaccionPuntosDto">
+                                    <DataTemplate x:DataType="dtos:TransaccionPuntosDto">
                                         <Grid ColumnDefinitions="*,Auto,Auto" Padding="5">
                                             <VerticalStackLayout Grid.Column="0" Spacing="2">
                                                 <Label Text="{Binding TipoTransaccion}"

@@ -248,7 +248,7 @@ public class FlujoAtencionClienteCompletoTests : ApiIntegrationTestBase
         responseCompletarPreparacion.StatusCode.Should().Be(HttpStatusCode.OK);
         
         // Verificar que la preparación se completó
-        var preparacionCompletada = await DbContext.Preparaciones.FindAsync(preparacion.Id);
+                    var preparacionCompletada = await DbContext.PreparacionesDiarias.FindAsync(preparacion.Id);
         preparacionCompletada!.Estado.Should().Be(EstadoPreparacion.Agotada);
         
         Logger.LogInformation("✅ Preparación completada");
@@ -428,7 +428,7 @@ public class FlujoAtencionClienteCompletoTests : ApiIntegrationTestBase
         var mesaFinal = await DbContext.Mesas.FindAsync(mesa.Id);
         mesaFinal!.Estado.Should().Be(EstadoMesa.Disponible);
         
-        var preparacionFinal = await DbContext.Preparaciones.FindAsync(preparacion.Id);
+                    var preparacionFinal = await DbContext.PreparacionesDiarias.FindAsync(preparacion.Id);
         preparacionFinal!.Estado.Should().Be(EstadoPreparacion.Agotada);
         
         Logger.LogInformation("🎉 FLUJO COMPLETO de Atención al Cliente EXITOSO");
@@ -614,8 +614,8 @@ public class FlujoAtencionClienteCompletoTests : ApiIntegrationTestBase
 
     private async Task LimpiarTablaPreparaciones()
     {
-        var preparaciones = await DbContext.Preparaciones.ToListAsync();
-        DbContext.Preparaciones.RemoveRange(preparaciones);
+                    var preparaciones = await DbContext.PreparacionesDiarias.ToListAsync();
+            DbContext.PreparacionesDiarias.RemoveRange(preparaciones);
         await DbContext.SaveChangesAsync();
     }
 

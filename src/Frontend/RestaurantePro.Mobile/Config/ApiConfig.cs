@@ -8,7 +8,7 @@ public static class ApiConfig
     /// <summary>
     /// URL base del backend (local)
     /// </summary>
-    public const string BaseUrl = "http://192.168.8.101:5243/";
+    public const string BaseUrl = "https://192.168.1.84:7038/";
     
     /// <summary>
     /// Timeout para las peticiones HTTP

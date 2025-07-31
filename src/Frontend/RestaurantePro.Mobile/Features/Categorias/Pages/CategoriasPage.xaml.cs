@@ -21,4 +21,10 @@ public partial class CategoriasPage : ContentPage
         base.OnAppearing();
         await _viewModel.CargarCategoriasCommand.ExecuteAsync(null);
     }
+
+    private void OnMostrarSoloActivasChanged(object sender, CheckedChangedEventArgs e)
+    {
+        // El ViewModel maneja la lógica del filtro
+        // Este método solo existe para satisfacer el binding del XAML
+    }
 } 

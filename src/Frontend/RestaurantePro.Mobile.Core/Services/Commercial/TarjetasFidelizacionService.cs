@@ -18,8 +18,9 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
     {
         try
         {
+            var token = await _authService.GetTokenAsync();
             // Como no hay endpoint específico de búsqueda, usamos el endpoint principal con filtros
-            var response = await _apiService.GetAsync<List<TarjetaFidelizacionDto>>($"api/comercial/tarjetas-fidelizacion?pageSize=100");
+            var response = await _apiService.GetAsync<List<TarjetaFidelizacionDto>>($"api/comercial/tarjetas-fidelizacion?pageSize=100", token);
             if (response.Succeeded && response.Data != null)
             {
                 var tarjeta = response.Data.FirstOrDefault(t => t.NumeroTarjeta == numeroTarjeta);
@@ -40,6 +41,7 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
     {
         try
         {
+            var token = await _authService.GetTokenAsync();
             // Primero necesitamos encontrar la tarjeta por número
             var buscarResponse = await BuscarTarjetaAsync(numeroTarjeta);
             if (!buscarResponse.Succeeded)
@@ -48,7 +50,7 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
             }
 
             var tarjetaId = buscarResponse.Data.Id;
-            var response = await _apiService.PostAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/activar", new { });
+            var response = await _apiService.PostAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/activar", new { }, token);
             return response;
         }
         catch (Exception ex)
@@ -61,8 +63,9 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
     {
         try
         {
+            var token = await _authService.GetTokenAsync();
             // Como no hay endpoint específico por código, usamos el endpoint principal
-            var response = await _apiService.GetAsync<List<TarjetaFidelizacionDto>>($"api/comercial/tarjetas-fidelizacion?pageSize=100");
+            var response = await _apiService.GetAsync<List<TarjetaFidelizacionDto>>($"api/comercial/tarjetas-fidelizacion?pageSize=100", token);
             if (response.Succeeded && response.Data != null)
             {
                 // Buscar por cualquier propiedad que pueda contener el código
@@ -84,7 +87,8 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
     {
         try
         {
-            var response = await _apiService.GetAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{id}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{id}", token);
             return response;
         }
         catch (Exception ex)
@@ -97,8 +101,9 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
     {
         try
         {
+            var token = await _authService.GetTokenAsync();
             // Usamos el endpoint de historial que existe
-            var response = await _apiService.GetAsync<List<HistorialPuntosDto>>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/historial");
+            var response = await _apiService.GetAsync<List<HistorialPuntosDto>>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/historial", token);
             if (response.Succeeded && response.Data != null)
             {
                 // Convertir HistorialPuntosDto a TransaccionPuntosDto si es necesario
@@ -126,13 +131,14 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
     {
         try
         {
+            var token = await _authService.GetTokenAsync();
             var request = new { MontoCompra = montoCompra };
             // Usar object en lugar de AgregarPuntosResponse si no está disponible
-            var response = await _apiService.PostAsync<object>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/puntos", request);
+            var response = await _apiService.PostAsync<object>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/puntos", request, token);
             if (response.Succeeded)
             {
                 // Obtener la tarjeta actualizada
-                var tarjetaResponse = await _apiService.GetAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}");
+                var tarjetaResponse = await _apiService.GetAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}", token);
                 if (tarjetaResponse.Succeeded)
                 {
                     return ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(tarjetaResponse.Data, "Puntos acumulados exitosamente");
@@ -150,13 +156,14 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
     {
         try
         {
+            var token = await _authService.GetTokenAsync();
             var request = new { PuntosACanjear = puntosACanjear, Descuento = descuento };
             // Usar object en lugar de CanjearPuntosTarjetaResponse si no está disponible
-            var response = await _apiService.PostAsync<object>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/canjear", request);
+            var response = await _apiService.PostAsync<object>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/canjear", request, token);
             if (response.Succeeded)
             {
                 // Obtener la tarjeta actualizada
-                var tarjetaResponse = await _apiService.GetAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}");
+                var tarjetaResponse = await _apiService.GetAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}", token);
                 if (tarjetaResponse.Succeeded)
                 {
                     return ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(tarjetaResponse.Data, "Puntos canjeados exitosamente");
@@ -197,7 +204,8 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
     {
         try
         {
-            var response = await _apiService.PostAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{id}/desactivar", new { });
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.PostAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{id}/desactivar", new { }, token);
             return ApiResponse<bool>.SuccessResponse(response.Succeeded, "Tarjeta desactivada exitosamente");
         }
         catch (Exception ex)
@@ -211,6 +219,7 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
     {
         try
         {
+            var token = await _authService.GetTokenAsync();
             // Usamos el endpoint principal con parámetros de consulta
             var queryParams = new List<string>();
             if (!string.IsNullOrEmpty(filtro.Estado)) queryParams.Add($"estado={filtro.Estado}");
@@ -218,7 +227,7 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
             if (filtro.ClienteId.HasValue) queryParams.Add($"clienteId={filtro.ClienteId}");
             
             var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
-            var response = await _apiService.GetAsync<List<TarjetaFidelizacionDto>>($"api/comercial/tarjetas-fidelizacion{queryString}");
+            var response = await _apiService.GetAsync<List<TarjetaFidelizacionDto>>($"api/comercial/tarjetas-fidelizacion{queryString}", token);
             return response;
         }
         catch (Exception ex)
@@ -231,7 +240,8 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
     {
         try
         {
-            var response = await _apiService.GetAsync<List<HistorialPuntosDto>>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/historial");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<List<HistorialPuntosDto>>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/historial", token);
             if (response.Succeeded && response.Data != null)
             {
                 // Convertir HistorialPuntosDto a TransaccionPuntosDto
@@ -259,8 +269,9 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
     {
         try
         {
+            var token = await _authService.GetTokenAsync();
             // Como no hay endpoint específico de bloquear, usamos desactivar
-            var response = await _apiService.PostAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/desactivar", new { });
+            var response = await _apiService.PostAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/desactivar", new { }, token);
             return ApiResponse<bool>.SuccessResponse(response.Succeeded, "Tarjeta bloqueada exitosamente");
         }
         catch (Exception ex)
@@ -273,7 +284,8 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
     {
         try
         {
-            var response = await _apiService.GetAsync<List<HistorialPuntosDto>>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/historial");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<List<HistorialPuntosDto>>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/historial", token);
             if (response.Succeeded && response.Data != null && response.Data.Any())
             {
                 // Retornamos el primer elemento del historial como ejemplo
@@ -291,7 +303,8 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
     {
         try
         {
-            var response = await _apiService.GetAsync<EstadisticasTarjetaDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/estadisticas");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<EstadisticasTarjetaDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/estadisticas", token);
             return response;
         }
         catch (Exception ex)
@@ -304,7 +317,8 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
     {
         try
         {
-            var response = await _apiService.DeleteAsync($"api/comercial/tarjetas-fidelizacion/{tarjetaId}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.DeleteAsync($"api/comercial/tarjetas-fidelizacion/{tarjetaId}", token);
             return response;
         }
         catch (Exception ex)

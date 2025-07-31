@@ -48,7 +48,7 @@ public class TestDbContext : DbContext, IApplicationDbContext
     public DbSet<OrdenCompra> OrdenesCompra { get; set; }
     public DbSet<Proveedor> Proveedores { get; set; }
     public DbSet<ContactoProveedor> ContactosProveedor { get; set; }
-    public DbSet<PreparacionDiaria> Preparaciones { get; set; }
+    public DbSet<PreparacionDiaria> PreparacionesDiarias { get; set; }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

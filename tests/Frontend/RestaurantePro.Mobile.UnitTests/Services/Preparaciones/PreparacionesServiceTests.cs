@@ -3,6 +3,7 @@ using Moq;
 using RestaurantePro.Mobile.Core.Models.Common;
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Services.Api;
+using RestaurantePro.Mobile.Core.Services.Authentication;
 using RestaurantePro.Mobile.Core.Services.Inventory;
 
 namespace RestaurantePro.Mobile.UnitTests.Services.Preparaciones;
@@ -13,12 +14,19 @@ namespace RestaurantePro.Mobile.UnitTests.Services.Preparaciones;
 public class PreparacionesServiceTests
 {
     private readonly Mock<IApiService> _mockApiService;
+    private readonly Mock<IAuthService> _mockAuthService;
     private readonly PreparacionesService _service;
 
     public PreparacionesServiceTests()
     {
         _mockApiService = new Mock<IApiService>();
-        _service = new PreparacionesService(_mockApiService.Object);
+        _mockAuthService = new Mock<IAuthService>();
+        
+        // Configurar el mock de autenticación para devolver un token válido
+        _mockAuthService.Setup(x => x.GetTokenAsync())
+                       .ReturnsAsync("test-token");
+        
+        _service = new PreparacionesService(_mockApiService.Object, _mockAuthService.Object);
     }
 
     [Fact]
@@ -41,9 +49,17 @@ public class PreparacionesServiceTests
             }
         };
 
-        var apiResponse = ApiResponse<List<PreparacionDto>>.SuccessResponse(preparaciones);
+        var preparacionesPaginadas = new PreparacionesPaginadasDto
+        {
+            Items = preparaciones,
+            TotalCount = preparaciones.Count,
+            PageNumber = 1,
+            PageSize = 10
+        };
 
-        _mockApiService.Setup(x => x.GetAsync<List<PreparacionDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        var apiResponse = ApiResponse<PreparacionesPaginadasDto>.SuccessResponse(preparacionesPaginadas);
+
+        _mockApiService.Setup(x => x.GetAsync<PreparacionesPaginadasDto>(It.IsAny<string>(), It.IsAny<string>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -283,9 +299,9 @@ public class PreparacionesServiceTests
     public async Task ObtenerPreparacionesAsync_ConErrorDeApi_DebeRetornarError()
     {
         // Arrange
-        var apiResponse = ApiResponse<List<PreparacionDto>>.ErrorResponse(new List<string> { "Error de conexión" });
+        var apiResponse = ApiResponse<PreparacionesPaginadasDto>.ErrorResponse(new List<string> { "Error de conexión" });
 
-        _mockApiService.Setup(x => x.GetAsync<List<PreparacionDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<PreparacionesPaginadasDto>(It.IsAny<string>(), It.IsAny<string>()))
                       .ReturnsAsync(apiResponse);
 
         // Act

@@ -15,4 +15,10 @@ public partial class AnalyticsPage : ContentPage
         _viewModel = viewModel;
         BindingContext = _viewModel;
     }
+
+    private void OnPeriodoChanged(object sender, EventArgs e)
+    {
+        // El ViewModel maneja la lógica del cambio de período
+        // Este método solo existe para satisfacer el binding del XAML
+    }
 } 

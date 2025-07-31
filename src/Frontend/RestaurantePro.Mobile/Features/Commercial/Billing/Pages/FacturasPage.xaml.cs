@@ -21,4 +21,10 @@ public partial class FacturasPage : ContentPage
         base.OnAppearing();
         await _viewModel.CargarFacturasCommand.ExecuteAsync(null);
     }
+
+    private void OnFechaChanged(object sender, DateChangedEventArgs e)
+    {
+        // El ViewModel maneja la lógica del cambio de fecha
+        // Este método solo existe para satisfacer el binding del XAML
+    }
 } 

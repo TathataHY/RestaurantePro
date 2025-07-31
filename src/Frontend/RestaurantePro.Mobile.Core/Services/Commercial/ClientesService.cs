@@ -203,7 +203,8 @@ public class ClientesService : IClientesService
     {
         try
         {
-            var response = await _apiService.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?fechaRegistroDesde={fechaDesde:yyyy-MM-dd}&fechaRegistroHasta={fechaHasta:yyyy-MM-dd}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?fechaRegistroDesde={fechaDesde:yyyy-MM-dd}&fechaRegistroHasta={fechaHasta:yyyy-MM-dd}", token);
             if (response.Succeeded && response.Data != null)
             {
                 return ApiResponse<List<ClienteSummaryDto>>.SuccessResponse(response.Data.Items.ToList(), "Clientes obtenidos");
@@ -220,7 +221,8 @@ public class ClientesService : IClientesService
     {
         try
         {
-            var response = await _apiService.DeleteAsync($"api/comercial/clientes/{clienteId}");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.DeleteAsync($"api/comercial/clientes/{clienteId}", token);
             return response;
         }
         catch (Exception ex)

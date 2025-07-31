@@ -2,7 +2,8 @@
 <ContentPage x:Class="RestaurantePro.Mobile.Features.Inventory.Ingredients.Pages.IngredientesPage"
              xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:viewmodels="clr-namespace:RestaurantePro.Mobile.Core.Features.Inventory.Ingredients.ViewModels"
+             xmlns:viewmodels="clr-namespace:RestaurantePro.Mobile.Core.Features.Inventory.Ingredients.ViewModels;assembly=RestaurantePro.Mobile.Core"
+             xmlns:dtos="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
              x:DataType="viewmodels:IngredientesViewModel"
              Title="Ingredientes"
              BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}">
@@ -108,7 +109,7 @@
                                   SelectionMode="Single"
                                   SelectedItem="{Binding IngredienteSeleccionado}">
                         <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="IngredienteDto">
+                            <DataTemplate x:DataType="dtos:IngredienteDto">
                                 <Border BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
                                         StrokeShape="RoundRectangle 10"
                                         Margin="0,0,0,10"

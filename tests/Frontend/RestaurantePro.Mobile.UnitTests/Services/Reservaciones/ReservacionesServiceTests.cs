@@ -3,6 +3,7 @@ using Moq;
 using RestaurantePro.Mobile.Core.Models.Common;
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Services.Api;
+using RestaurantePro.Mobile.Core.Services.Authentication;
 using RestaurantePro.Mobile.Core.Services.Inventory;
 
 namespace RestaurantePro.Mobile.UnitTests.Services.Reservaciones;
@@ -10,12 +11,14 @@ namespace RestaurantePro.Mobile.UnitTests.Services.Reservaciones;
 public class ReservacionesServiceTests
 {
     private Mock<IApiService> _mockApiService;
+    private Mock<IAuthService> _mockAuthService;
     private ReservacionesService _reservacionesService;
 
     public ReservacionesServiceTests()
     {
         _mockApiService = new Mock<IApiService>();
-        _reservacionesService = new ReservacionesService(_mockApiService.Object);
+        _mockAuthService = new Mock<IAuthService>();
+        _reservacionesService = new ReservacionesService(_mockApiService.Object, _mockAuthService.Object);
     }
 
     [Fact]

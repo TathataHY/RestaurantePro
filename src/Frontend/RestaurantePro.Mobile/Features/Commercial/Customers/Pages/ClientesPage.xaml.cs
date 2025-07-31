@@ -21,4 +21,10 @@ public partial class ClientesPage : ContentPage
         base.OnAppearing();
         await _viewModel.CargarClientesCommand.ExecuteAsync(null);
     }
+
+    private void OnSoloActivosChanged(object sender, CheckedChangedEventArgs e)
+    {
+        // El ViewModel maneja la lógica del filtro
+        // Este método solo existe para satisfacer el binding del XAML
+    }
 } 

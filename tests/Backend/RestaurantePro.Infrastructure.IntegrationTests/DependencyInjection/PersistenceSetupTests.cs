@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
+using System.Collections.Generic;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Domain.Core.Notificaciones.Interfaces;
 using RestaurantePro.Domain.Core.Productos.Interfaces;
@@ -32,22 +33,22 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.DependencyInjection
         public PersistenceSetupTests()
         {
             var services = new ServiceCollection();
-            var configuration = new ConfigurationBuilder().Build();
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string>
+                {
+                    {"UseInMemoryDatabase", "true"}
+                })
+                .Build();
 
             // Mocks de dependencias
             services.AddSingleton(Substitute.For<IDomainEventDispatcher>());
             services.AddSingleton(Substitute.For<ICurrentUserService>());
             services.AddSingleton(Substitute.For<IDateTimeService>());
 
-            // Configurar logging y un DbContext en memoria para las pruebas
+            // Configurar logging
             services.AddLogging();
-            services.AddDbContext<RestauranteProDbContext>(options =>
-                options.UseInMemoryDatabase("TestPersistenceDb"));
 
-            // Registrar RestauranteProDbContext también como DbContext para que los repositorios genéricos lo encuentren
-            services.AddScoped<DbContext>(provider => provider.GetRequiredService<RestauranteProDbContext>());
-
-            // Llamar al método de configuración de persistencia
+            // Llamar al método de configuración de persistencia (esto registrará todos los DbContexts)
             services.AddPersistenceServices(configuration, isTestEnvironment: true);
 
             _serviceProvider = services.BuildServiceProvider();

@@ -67,7 +67,7 @@ namespace RestaurantePro.Application.UnitTests.Operaciones.Preparaciones.Queries
 
             // Configurar el DbSet mock
             var mockDbSet = preparaciones.AsQueryable().BuildMockDbSet();
-            _contextMock.Setup(c => c.Preparaciones).Returns(mockDbSet.Object);
+            _contextMock.Setup(c => c.PreparacionesDiarias).Returns(mockDbSet.Object);
 
             // Act
             var result = await _handler.Handle(query, cancellationToken);

@@ -30,7 +30,7 @@ namespace RestaurantePro.Application.UnitTests.Operaciones.Preparaciones.Command
 
             // Configurar el DbSet mock
             var dbSetMock = new Mock<DbSet<PreparacionDiaria>>();
-            _contextMock.Setup(c => c.Preparaciones).Returns(dbSetMock.Object);
+            _contextMock.Setup(c => c.PreparacionesDiarias).Returns(dbSetMock.Object);
 
             // Configurar el servicio de fecha/hora
             _dateTimeServiceMock.Setup(s => s.Now).Returns(DateTime.UtcNow);
@@ -61,7 +61,7 @@ namespace RestaurantePro.Application.UnitTests.Operaciones.Preparaciones.Command
             // Assert
             Assert.NotNull(result);
             Assert.True(result.Succeeded);
-            _contextMock.Verify(c => c.Preparaciones.AddAsync(It.IsAny<PreparacionDiaria>(), It.IsAny<CancellationToken>()), Times.Once);
+            _contextMock.Verify(c => c.PreparacionesDiarias.AddAsync(It.IsAny<PreparacionDiaria>(), It.IsAny<CancellationToken>()), Times.Once);
             _contextMock.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
     }

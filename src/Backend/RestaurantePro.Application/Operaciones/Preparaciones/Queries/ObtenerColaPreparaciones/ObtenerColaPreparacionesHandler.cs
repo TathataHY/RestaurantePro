@@ -37,7 +37,7 @@ public class ObtenerColaPreparacionesHandler : IRequestHandler<ObtenerColaPrepar
         try
         {
             // Construir la consulta base
-            var query = _context.Preparaciones.AsQueryable();
+            var query = _context.PreparacionesDiarias.AsQueryable();
 
             // Aplicar filtros
             if (request.Estado.HasValue)

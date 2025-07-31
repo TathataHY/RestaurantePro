@@ -259,5 +259,61 @@ namespace RestaurantePro.Domain.Operaciones.Preparaciones.Entities
             
             AddDomainEvent(new ChefPreparacionActualizado(Id, ProductoId, chefAnterior, nuevoChefId));
         }
+
+        /// <summary>
+        /// Actualiza todos los campos de la preparación diaria
+        /// </summary>
+        public void Actualizar(Guid productoId, int cantidadPreparada, int cantidadDisponible, Guid chefId, DateTime fechaVencimiento, string observaciones)
+        {
+            if (productoId == Guid.Empty)
+                throw new ArgumentException("El ID del producto no puede estar vacío", nameof(productoId));
+
+            if (cantidadPreparada <= 0)
+                throw new ArgumentException("La cantidad preparada debe ser mayor que cero", nameof(cantidadPreparada));
+
+            if (cantidadDisponible < 0)
+                throw new ArgumentException("La cantidad disponible no puede ser negativa", nameof(cantidadDisponible));
+
+            if (cantidadDisponible > cantidadPreparada)
+                throw new ArgumentException("La cantidad disponible no puede ser mayor que la cantidad preparada", nameof(cantidadDisponible));
+
+            if (chefId == Guid.Empty)
+                throw new ArgumentException("El ID del chef no puede estar vacío", nameof(chefId));
+
+            if (fechaVencimiento <= DateTime.Now)
+                throw new ArgumentException("La fecha de vencimiento debe ser futura", nameof(fechaVencimiento));
+
+            ProductoId = productoId;
+            CantidadPreparada = cantidadPreparada;
+            CantidadDisponible = cantidadDisponible;
+            ChefId = chefId;
+            FechaVencimiento = fechaVencimiento;
+            Observaciones = observaciones?.Trim() ?? string.Empty;
+
+            // Actualizar estado basado en la cantidad disponible
+            if (CantidadDisponible == 0)
+            {
+                Estado = EstadoPreparacion.Agotada;
+            }
+            else if (Estado == EstadoPreparacion.Agotada && CantidadDisponible > 0)
+            {
+                Estado = EstadoPreparacion.Disponible;
+            }
+
+            AddDomainEvent(new PreparacionDiariaActualizada(Id, productoId, cantidadPreparada, cantidadDisponible, chefId, fechaVencimiento));
+        }
+
+        /// <summary>
+        /// Consume una cantidad específica de la preparación con observaciones
+        /// </summary>
+        public void Consumir(int cantidad, string? observaciones = null)
+        {
+            ConsumirCantidad(cantidad);
+            
+            if (!string.IsNullOrWhiteSpace(observaciones))
+            {
+                ActualizarObservaciones(observaciones);
+            }
+        }
     }
 }

@@ -28,9 +28,12 @@ using RestaurantePro.Mobile.Features.Categorias.Pages;
 using RestaurantePro.Mobile.Core.Features.Analytics.ViewModels;
 using RestaurantePro.Mobile.Features.Analytics.Pages;
 using RestaurantePro.Mobile.UI.Pages;
+using RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels;
+using RestaurantePro.Mobile.Views;
 using System;
 using System.Net.Http.Headers;
 using RestaurantePro.Mobile.Core.Services.Navigation;
+using System.Net.Http;
 
 namespace RestaurantePro.Mobile;
 
@@ -57,6 +60,13 @@ public static class MauiProgram
 			// Configurar autenticación básica para el hosting
 			var credentials = ApiConfig.HostingCredentials.GetEncodedCredentials();
 			client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credentials);
+		})
+		.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+		{
+			// Ignorar errores de certificado SSL en desarrollo (necesario para WSA)
+#if DEBUG
+			ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
+#endif
 		});
 
 		// Configurar HttpClient para AuthService
@@ -68,6 +78,13 @@ public static class MauiProgram
 			// Configurar autenticación básica para el hosting
 			var credentials = ApiConfig.HostingCredentials.GetEncodedCredentials();
 			client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credentials);
+		})
+		.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+		{
+			// Ignorar errores de certificado SSL en desarrollo (necesario para WSA)
+#if DEBUG
+			ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
+#endif
 		});
 
 		// Registrar servicios fundamentales - V1
@@ -91,6 +108,7 @@ public static class MauiProgram
 		// Servicios fundamentales V1 - Solo desde Core
 		services.AddSingleton<INavigationService, MauiNavigationService>();
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Dialog.IDialogService, RestaurantePro.Mobile.Core.Services.Dialog.DialogService>();
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Platform.ISecureStorageService, RestaurantePro.Mobile.Core.Services.Platform.SecureStorageService>();
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService, RestaurantePro.Mobile.Core.Services.Authentication.AuthService>();
 		
 		// Servicios de dominio V1 - Solo desde Core
@@ -112,6 +130,13 @@ public static class MauiProgram
 			new RestaurantePro.Mobile.Core.Services.Inventory.PreparacionesService(
 				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>(),
 				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService>()));
+		
+		// Servicio de Preparaciones Diarias V1
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.IDailyPreparationsService>(sp =>
+			new RestaurantePro.Mobile.Core.Services.DailyPreparationsService(
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>(),
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService>(),
+				sp.GetRequiredService<ILogger<RestaurantePro.Mobile.Core.Services.DailyPreparationsService>>()));
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Inventory.IReservacionesService>(sp =>
 			new RestaurantePro.Mobile.Core.Services.Inventory.ReservacionesService(
 				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>(),
@@ -170,6 +195,9 @@ public static class MauiProgram
 		services.AddTransient<PreparacionesViewModel>();
 		services.AddTransient<ReservacionesViewModel>();
 		services.AddTransient<IngredientesViewModel>();
+		
+		// ViewModel de Preparaciones Diarias V1
+		services.AddTransient<DailyPreparationsViewModel>();
 
 		// ViewModels desde Mobile.Core - Comercial
 		services.AddTransient<FacturasViewModel>();
@@ -192,6 +220,9 @@ public static class MauiProgram
 		services.AddTransient<PreparacionesPage>();
 		services.AddTransient<ReservacionesPage>();
 		services.AddTransient<IngredientesPage>();
+		
+		// Página de Preparaciones Diarias V1
+		services.AddTransient<DailyPreparationsPage>();
 
 		// Páginas - Comercial
 		services.AddTransient<FacturasPage>();
@@ -221,6 +252,9 @@ public static class MauiProgram
 		Routing.RegisterRoute("preparaciones", typeof(PreparacionesPage));
 		Routing.RegisterRoute("reservaciones", typeof(ReservacionesPage));
 		Routing.RegisterRoute("ingredientes", typeof(IngredientesPage));
+		
+		// Ruta de Preparaciones Diarias V1
+		Routing.RegisterRoute("dailypreparations", typeof(DailyPreparationsPage));
 		
 		// Rutas comerciales
 		Routing.RegisterRoute("facturas", typeof(FacturasPage));

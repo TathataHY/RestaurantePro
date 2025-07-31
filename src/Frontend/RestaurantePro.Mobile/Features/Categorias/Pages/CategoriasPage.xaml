@@ -2,7 +2,8 @@
 <ContentPage x:Class="RestaurantePro.Mobile.Features.Categorias.Pages.CategoriasPage"
              xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:viewmodels="clr-namespace:RestaurantePro.Mobile.Core.Features.Categorias.ViewModels"
+             xmlns:viewmodels="clr-namespace:RestaurantePro.Mobile.Core.Features.Categorias.ViewModels;assembly=RestaurantePro.Mobile.Core"
+             xmlns:dtos="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
              x:DataType="viewmodels:CategoriasViewModel"
              Title="Categorías"
              BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}">
@@ -98,7 +99,7 @@
                                   SelectionMode="Single"
                                   SelectedItem="{Binding CategoriaSeleccionada}">
                         <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="CategoriaProductoDto">
+                            <DataTemplate x:DataType="dtos:CategoriaProductoDto">
                                 <Border BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
                                         StrokeShape="RoundRectangle 10"
                                         Margin="0,0,0,10"

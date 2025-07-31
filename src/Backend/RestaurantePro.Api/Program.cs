@@ -95,7 +95,7 @@ namespace RestaurantePro.Api
             // Middleware global para manejo de excepciones
             app.UseMiddleware<ExceptionMiddleware>();
             
-            app.UseHttpsRedirection();
+            // app.UseHttpsRedirection(); // Comentado para permitir HTTP en desarrollo
             
             app.UseRouting();
             

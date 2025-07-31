@@ -2,7 +2,8 @@
 <ContentPage x:Class="RestaurantePro.Mobile.Features.Analytics.Pages.AnalyticsPage"
              xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:viewmodels="clr-namespace:RestaurantePro.Mobile.Core.Features.Analytics.ViewModels"
+             xmlns:viewmodels="clr-namespace:RestaurantePro.Mobile.Core.Features.Analytics.ViewModels;assembly=RestaurantePro.Mobile.Core"
+             xmlns:dtos="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
              x:DataType="viewmodels:AnalyticsViewModel"
              Title="Analytics"
              BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}">
@@ -117,7 +118,7 @@
                             <CollectionView ItemsSource="{Binding TopProductos}"
                                           HeightRequest="200">
                                 <CollectionView.ItemTemplate>
-                                    <DataTemplate x:DataType="TopProductoDto">
+                                    <DataTemplate x:DataType="dtos:TopProductoDto">
                                         <Grid ColumnDefinitions="Auto,*,Auto" Padding="5">
                                             <Label Grid.Column="0" 
                                                    Text="{Binding Posicion, StringFormat='#{0}'}"

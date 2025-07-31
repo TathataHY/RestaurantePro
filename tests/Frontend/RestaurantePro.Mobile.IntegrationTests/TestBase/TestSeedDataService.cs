@@ -425,7 +425,7 @@ public class TestSeedDataService : ISeedDataService
 
                 foreach (var preparacion in preparaciones)
                 {
-                    _context.Preparaciones.Add(preparacion);
+                    _context.PreparacionesDiarias.Add(preparacion);
                 }
 
                 await _context.SaveChangesAsync();

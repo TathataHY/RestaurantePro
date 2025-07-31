@@ -264,14 +264,14 @@ public class FlujoReportesOperativosTiempoRealTests : ApiIntegrationTestBase
             "Preparación de prueba para reportes"
         );
 
-        DbContext.Preparaciones.Add(preparacion);
+                    DbContext.PreparacionesDiarias.Add(preparacion);
         await DbContext.SaveChangesAsync();
         return preparacion;
     }
 
     private async Task CompletarPreparacion(Guid preparacionId, TimeSpan tiempoPreparacion)
     {
-        var preparacion = await DbContext.Preparaciones.FindAsync(preparacionId);
+                    var preparacion = await DbContext.PreparacionesDiarias.FindAsync(preparacionId);
         if (preparacion != null)
         {
             preparacion.MarcarComoDisponible();

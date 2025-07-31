@@ -21,4 +21,16 @@ public partial class IngredientesPage : ContentPage
         base.OnAppearing();
         await _viewModel.CargarIngredientesCommand.ExecuteAsync(null);
     }
+
+    private void OnSoloDisponiblesChanged(object sender, CheckedChangedEventArgs e)
+    {
+        // El ViewModel maneja la lógica del filtro
+        // Este método solo existe para satisfacer el binding del XAML
+    }
+
+    private void OnSoloBajoStockChanged(object sender, CheckedChangedEventArgs e)
+    {
+        // El ViewModel maneja la lógica del filtro
+        // Este método solo existe para satisfacer el binding del XAML
+    }
 } 

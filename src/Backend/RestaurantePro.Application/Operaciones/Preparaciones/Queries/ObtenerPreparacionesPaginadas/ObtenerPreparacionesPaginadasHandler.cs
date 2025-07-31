@@ -38,7 +38,7 @@ public class ObtenerPreparacionesPaginadasHandler : IRequestHandler<ObtenerPrepa
         try
         {
             // Construir la consulta base
-            var query = _context.Preparaciones.AsQueryable();
+            var query = _context.PreparacionesDiarias.AsQueryable();
 
             // Aplicar filtros
             query = AplicarFiltros(query, request);

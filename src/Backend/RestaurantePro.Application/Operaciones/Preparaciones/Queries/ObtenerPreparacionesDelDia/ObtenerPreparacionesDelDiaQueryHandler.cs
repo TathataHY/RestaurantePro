@@ -45,9 +45,9 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerPr
 
             // Obtener las preparaciones creadas el día actual
             var preparaciones = await Task.FromResult(
-                _context.Preparaciones
-                .Where(p => p.FechaCreacion.Date == fechaHoy)
-                .OrderByDescending(p => p.FechaCreacion)
+                _context.PreparacionesDiarias
+                .Where(p => p.FechaPreparacion.Date == fechaHoy)
+                .OrderByDescending(p => p.FechaPreparacion)
                 .ToList());
 
             // Mapear a DTOs

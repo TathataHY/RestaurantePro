@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="RestaurantePro.Mobile.Views.DailyPreparationsPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels;assembly=RestaurantePro.Mobile.Core"
+             xmlns:models="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
+             Title="Preparaciones Diarias"
+             x:DataType="viewmodels:DailyPreparationsViewModel">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        
+        <!-- Header con estadísticas -->
+        <Grid Grid.Row="0" 
+              BackgroundColor="{StaticResource Primary}"
+              Padding="16"
+              IsVisible="{Binding MostrarEstadisticas}">
+            
+            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                
+                <!-- Título -->
+                <Label Grid.Row="0" Grid.Column="0"
+                       Text="📊 Estadísticas del Día"
+                       TextColor="White"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center"/>
+                
+                <!-- Botón para ocultar/mostrar estadísticas -->
+                <Button Grid.Row="0" Grid.Column="1"
+                        Text="👁️"
+                        BackgroundColor="Transparent"
+                        TextColor="White"
+                        FontSize="16"
+                        Command="{Binding ToggleEstadisticasCommand}"/>
+                
+                <!-- Estadísticas -->
+                <Grid Grid.Row="1" Grid.ColumnSpan="2" 
+                      ColumnDefinitions="*,*,*,*"
+                      Margin="0,8,0,0">
+                    
+                    <!-- Total Preparaciones -->
+                    <StackLayout Grid.Column="0" HorizontalOptions="Center">
+                        <Label Text="{Binding Estadisticas.TotalPreparaciones}"
+                               TextColor="White"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Center"/>
+                        <Label Text="Total"
+                               TextColor="White"
+                               FontSize="12"
+                               HorizontalOptions="Center"/>
+                    </StackLayout>
+                    
+                    <!-- Disponibles -->
+                    <StackLayout Grid.Column="1" HorizontalOptions="Center">
+                        <Label Text="{Binding Estadisticas.PreparacionesDisponibles}"
+                               TextColor="White"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Center"/>
+                        <Label Text="Disponibles"
+                               TextColor="White"
+                               FontSize="12"
+                               HorizontalOptions="Center"/>
+                    </StackLayout>
+                    
+                    <!-- Por Vencer -->
+                    <StackLayout Grid.Column="2" HorizontalOptions="Center">
+                        <Label Text="{Binding Estadisticas.PreparacionesPorVencer}"
+                               TextColor="White"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Center"/>
+                        <Label Text="Por Vencer"
+                               TextColor="White"
+                               FontSize="12"
+                               HorizontalOptions="Center"/>
+                    </StackLayout>
+                    
+                    <!-- Eficiencia -->
+                    <StackLayout Grid.Column="3" HorizontalOptions="Center">
+                        <Label Text="{Binding Estadisticas.EficienciaFormateada}"
+                               TextColor="White"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               HorizontalOptions="Center"/>
+                        <Label Text="Eficiencia"
+                               TextColor="White"
+                               FontSize="12"
+                               HorizontalOptions="Center"/>
+                    </StackLayout>
+                </Grid>
+            </Grid>
+        </Grid>
+        
+        <!-- Contenido principal -->
+        <Grid Grid.Row="1" RowDefinitions="Auto,*">
+            
+            <!-- Barra de herramientas -->
+            <Grid Grid.Row="0" 
+                  BackgroundColor="{StaticResource Surface}"
+                  Padding="16"
+                  ColumnDefinitions="*,Auto,Auto">
+                
+                <!-- Barra de búsqueda -->
+                <Grid Grid.Column="0" ColumnDefinitions="*,Auto">
+                    <Entry Grid.Column="0"
+                           Placeholder="🔍 Buscar preparaciones..."
+                           Text="{Binding TextoBusqueda}"
+                           ReturnCommand="{Binding BuscarPreparacionesCommand}"/>
+                    
+                    <Button Grid.Column="1"
+                            Text="❌"
+                            BackgroundColor="Transparent"
+                            TextColor="{StaticResource OnSurface}"
+                            Command="{Binding LimpiarBusquedaCommand}"
+                            IsVisible="{Binding TextoBusqueda, Converter={StaticResource StringToBoolConverter}}"/>
+                </Grid>
+                
+                <!-- Botón de filtro -->
+                <Button Grid.Column="1"
+                        Text="🔽"
+                        BackgroundColor="Transparent"
+                        TextColor="{StaticResource OnSurface}"
+                        Command="{Binding ShowFiltrosCommand}"
+                        Margin="8,0,0,0"/>
+                
+                <!-- Botón de refresh -->
+                <Button Grid.Column="2"
+                        Text="🔄"
+                        BackgroundColor="Transparent"
+                        TextColor="{StaticResource OnSurface}"
+                        Command="{Binding RefreshCommand}"
+                        Margin="8,0,0,0"/>
+            </Grid>
+            
+            <!-- Lista de preparaciones -->
+            <RefreshView Grid.Row="1"
+                         IsRefreshing="{Binding IsBusy}"
+                         Command="{Binding RefreshCommand}">
+                
+                <CollectionView ItemsSource="{Binding PreparacionesDiarias}"
+                               SelectionMode="Single"
+                               SelectedItem="{Binding SelectedPreparacion}">
+                    
+                    <CollectionView.EmptyView>
+                        <StackLayout HorizontalOptions="Center" 
+                                     VerticalOptions="Center"
+                                     Margin="20">
+                            <Label Text="🍽️"
+                                   FontSize="48"
+                                   HorizontalOptions="Center"/>
+                            <Label Text="No hay preparaciones diarias"
+                                   FontSize="16"
+                                   HorizontalOptions="Center"
+                                   Margin="0,8,0,0"/>
+                            <Label Text="Toca el botón + para crear una nueva preparación"
+                                   FontSize="14"
+                                   TextColor="{StaticResource OnSurfaceVariant}"
+                                   HorizontalOptions="Center"
+                                   Margin="0,4,0,0"/>
+                        </StackLayout>
+                    </CollectionView.EmptyView>
+                    
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:PreparacionDiariaDto">
+                            
+                            <Grid Padding="16" 
+                                  BackgroundColor="{StaticResource Surface}"
+                                  Margin="8,4"
+                                  RowDefinitions="Auto,Auto,Auto"
+                                  ColumnDefinitions="*,Auto">
+                                
+                                <!-- Header con nombre y estado -->
+                                <Grid Grid.Row="0" Grid.ColumnSpan="2" 
+                                      ColumnDefinitions="*,Auto,Auto">
+                                    
+                                    <Label Grid.Column="0"
+                                           Text="{Binding NombreProducto}"
+                                           FontSize="16"
+                                           FontAttributes="Bold"
+                                           TextColor="{StaticResource OnSurface}"
+                                           VerticalOptions="Center"/>
+                                    
+                                    <Label Grid.Column="1"
+                                           Text="{Binding IconoEstado}"
+                                           FontSize="16"
+                                           Margin="8,0,0,0"
+                                           VerticalOptions="Center"/>
+                                    
+                                    <Label Grid.Column="2"
+                                           Text="{Binding TextoEstado}"
+                                           FontSize="12"
+                                           TextColor="{Binding ColorEstado}"
+                                           VerticalOptions="Center"/>
+                                </Grid>
+                                
+                                <!-- Información de cantidades -->
+                                <Grid Grid.Row="1" Grid.ColumnSpan="2" 
+                                      ColumnDefinitions="*,*,*"
+                                      Margin="0,8,0,0">
+                                    
+                                    <StackLayout Grid.Column="0" HorizontalOptions="Center">
+                                        <Label Text="{Binding CantidadPreparada}"
+                                               FontSize="18"
+                                               FontAttributes="Bold"
+                                               HorizontalOptions="Center"/>
+                                        <Label Text="Preparada"
+                                               FontSize="12"
+                                               TextColor="{StaticResource OnSurfaceVariant}"
+                                               HorizontalOptions="Center"/>
+                                    </StackLayout>
+                                    
+                                    <StackLayout Grid.Column="1" HorizontalOptions="Center">
+                                        <Label Text="{Binding CantidadDisponible}"
+                                               FontSize="18"
+                                               FontAttributes="Bold"
+                                               TextColor="{Binding ColorEstado}"
+                                               HorizontalOptions="Center"/>
+                                        <Label Text="Disponible"
+                                               FontSize="12"
+                                               TextColor="{StaticResource OnSurfaceVariant}"
+                                               HorizontalOptions="Center"/>
+                                    </StackLayout>
+                                    
+                                    <StackLayout Grid.Column="2" HorizontalOptions="Center">
+                                        <Label Text="{Binding CantidadConsumida}"
+                                               FontSize="18"
+                                               FontAttributes="Bold"
+                                               HorizontalOptions="Center"/>
+                                        <Label Text="Consumida"
+                                               FontSize="12"
+                                               TextColor="{StaticResource OnSurfaceVariant}"
+                                               HorizontalOptions="Center"/>
+                                    </StackLayout>
+                                </Grid>
+                                
+                                <!-- Información adicional y botones -->
+                                <Grid Grid.Row="2" Grid.ColumnSpan="2" 
+                                      ColumnDefinitions="*,Auto"
+                                      Margin="0,8,0,0">
+                                    
+                                    <!-- Información adicional -->
+                                    <StackLayout Grid.Column="0">
+                                        <Label Text="{Binding NombreChef, StringFormat='Chef: {0}'}"
+                                               FontSize="12"
+                                               TextColor="{StaticResource OnSurfaceVariant}"/>
+                                        
+                                        <Label Text="{Binding FechaVencimiento, StringFormat='Vence: {0:dd/MM/yyyy HH:mm}'}"
+                                               FontSize="12"
+                                               TextColor="{Binding EstaPorVencer, Converter={StaticResource BoolToColorConverter}}"/>
+                                        
+                                        <Label Text="{Binding Observaciones}"
+                                               FontSize="12"
+                                               TextColor="{StaticResource OnSurfaceVariant}"
+                                               IsVisible="{Binding Observaciones, Converter={StaticResource StringToBoolConverter}}"/>
+                                    </StackLayout>
+                                    
+                                    <!-- Botones de acción -->
+                                    <StackLayout Grid.Column="1" 
+                                                 Orientation="Horizontal"
+                                                 HorizontalOptions="End">
+                                        
+                                        <!-- Botón consumir -->
+                                        <Button Text="🍽️"
+                                                BackgroundColor="{StaticResource Primary}"
+                                                TextColor="White"
+                                                FontSize="12"
+                                                Padding="8,4"
+                                                Margin="4,0,0,0"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:DailyPreparationsViewModel}}, Path=ConsumirPreparacionCommand}"
+                                                CommandParameter="{Binding}"
+                                                IsEnabled="{Binding EstaDisponible}"/>
+                                        
+                                        <!-- Botón disponible -->
+                                        <Button Text="✅"
+                                                BackgroundColor="{StaticResource Secondary}"
+                                                TextColor="White"
+                                                FontSize="12"
+                                                Padding="8,4"
+                                                Margin="4,0,0,0"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:DailyPreparationsViewModel}}, Path=MarcarComoDisponibleCommand}"
+                                                CommandParameter="{Binding}"
+                                                IsVisible="{Binding Estado, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter=Preparando}"/>
+                                        
+                                        <!-- Botón eliminar -->
+                                        <Button Text="🗑️"
+                                                BackgroundColor="{StaticResource Error}"
+                                                TextColor="White"
+                                                FontSize="12"
+                                                Padding="8,4"
+                                                Margin="4,0,0,0"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:DailyPreparationsViewModel}}, Path=EliminarPreparacionCommand}"
+                                                CommandParameter="{Binding}"/>
+                                    </StackLayout>
+                                </Grid>
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </RefreshView>
+        </Grid>
+        
+        <!-- Botón flotante para crear nueva preparación -->
+        <Button Grid.Row="2"
+                Text="+"
+                FontSize="24"
+                FontAttributes="Bold"
+                BackgroundColor="{StaticResource Primary}"
+                TextColor="White"
+                WidthRequest="56"
+                HeightRequest="56"
+                CornerRadius="28"
+                HorizontalOptions="End"
+                VerticalOptions="End"
+                Margin="16"
+                Command="{Binding CrearNuevaPreparacionCommand}"/>
+    </Grid>
+</ContentPage> 

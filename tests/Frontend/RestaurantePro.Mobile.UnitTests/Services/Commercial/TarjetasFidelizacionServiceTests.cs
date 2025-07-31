@@ -1,6 +1,7 @@
 using Moq;
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Services.Api;
+using RestaurantePro.Mobile.Core.Services.Authentication;
 using RestaurantePro.Mobile.Core.Services.Commercial;
 using Xunit;
 
@@ -9,12 +10,19 @@ namespace RestaurantePro.Mobile.UnitTests.Services.Commercial;
 public class TarjetasFidelizacionServiceTests
 {
     private readonly Mock<IApiService> _mockApiService;
+    private readonly Mock<IAuthService> _mockAuthService;
     private readonly TarjetasFidelizacionService _tarjetasService;
 
     public TarjetasFidelizacionServiceTests()
     {
         _mockApiService = new Mock<IApiService>();
-        _tarjetasService = new TarjetasFidelizacionService(_mockApiService.Object);
+        _mockAuthService = new Mock<IAuthService>();
+        
+        // Configurar el mock de autenticación para devolver un token válido
+        _mockAuthService.Setup(x => x.GetTokenAsync())
+                       .ReturnsAsync("test-token");
+        
+        _tarjetasService = new TarjetasFidelizacionService(_mockApiService.Object, _mockAuthService.Object);
     }
 
     [Fact]
@@ -31,8 +39,9 @@ public class TarjetasFidelizacionServiceTests
             Estado = "Activa"
         };
 
-        var apiResponse = ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(tarjeta);
-        _mockApiService.Setup(x => x.GetAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<string>()))
+        var tarjetas = new List<TarjetaFidelizacionDto> { tarjeta };
+        var apiResponse = ApiResponse<List<TarjetaFidelizacionDto>>.SuccessResponse(tarjetas);
+        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -42,7 +51,7 @@ public class TarjetasFidelizacionServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(numeroTarjeta, result.Data.NumeroTarjeta);
-        _mockApiService.Verify(x => x.GetAsync<TarjetaFidelizacionDto>($"api/tarjetas-fidelizacion/buscar?numero={numeroTarjeta}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<TarjetaFidelizacionDto>>($"api/comercial/tarjetas-fidelizacion?pageSize=100", It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -51,18 +60,27 @@ public class TarjetasFidelizacionServiceTests
         // Arrange
         var numeroTarjeta = "987654321";
         var nombreCliente = "María García";
+        var tarjetaId = Guid.NewGuid();
         var tarjeta = new TarjetaFidelizacionDto
         {
-            Id = Guid.NewGuid(),
+            Id = tarjetaId,
             NumeroTarjeta = numeroTarjeta,
             ClienteNombre = nombreCliente,
             PuntosDisponibles = 0,
             Estado = "Activa"
         };
 
-        var apiResponse = ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(tarjeta);
+        // Mock para BuscarTarjetaAsync (primera llamada)
+        var tarjetas = new List<TarjetaFidelizacionDto> { tarjeta };
+        var buscarResponse = ApiResponse<List<TarjetaFidelizacionDto>>.SuccessResponse(tarjetas);
+        
+        // Mock para PostAsync (segunda llamada)
+        var activarResponse = ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(tarjeta);
+        
+        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>()))
+                      .ReturnsAsync(buscarResponse);
         _mockApiService.Setup(x => x.PostAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
-                      .ReturnsAsync(apiResponse);
+                      .ReturnsAsync(activarResponse);
 
         // Act
         var result = await _tarjetasService.ActivarTarjetaAsync(numeroTarjeta, nombreCliente);
@@ -71,7 +89,8 @@ public class TarjetasFidelizacionServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(numeroTarjeta, result.Data.NumeroTarjeta);
-        _mockApiService.Verify(x => x.PostAsync<TarjetaFidelizacionDto>("api/tarjetas-fidelizacion/activar", It.Is<object>(data => data.ToString().Contains(numeroTarjeta)), It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<TarjetaFidelizacionDto>>($"api/comercial/tarjetas-fidelizacion?pageSize=100", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.PostAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/activar", It.IsAny<object>(), It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -82,14 +101,15 @@ public class TarjetasFidelizacionServiceTests
         var tarjeta = new TarjetaFidelizacionDto
         {
             Id = Guid.NewGuid(),
-            CodigoTarjeta = codigo,
+            NumeroTarjeta = codigo,
             ClienteNombre = "María García",
             PuntosDisponibles = 200,
             Estado = "Activa"
         };
 
-        var apiResponse = ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(tarjeta);
-        _mockApiService.Setup(x => x.GetAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<string>()))
+        var tarjetas = new List<TarjetaFidelizacionDto> { tarjeta };
+        var apiResponse = ApiResponse<List<TarjetaFidelizacionDto>>.SuccessResponse(tarjetas);
+        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -98,8 +118,8 @@ public class TarjetasFidelizacionServiceTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
-        Assert.Equal(codigo, result.Data.CodigoTarjeta);
-        _mockApiService.Verify(x => x.GetAsync<TarjetaFidelizacionDto>($"api/tarjetas-fidelizacion/codigo/{codigo}", It.IsAny<string>()), Times.Once);
+        Assert.Equal(codigo, result.Data.NumeroTarjeta);
+        _mockApiService.Verify(x => x.GetAsync<List<TarjetaFidelizacionDto>>($"api/comercial/tarjetas-fidelizacion?pageSize=100", It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -127,7 +147,7 @@ public class TarjetasFidelizacionServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(tarjetaId, result.Data.Id);
-        _mockApiService.Verify(x => x.GetAsync<TarjetaFidelizacionDto>($"api/tarjetas-fidelizacion/{tarjetaId}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}", It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -135,14 +155,13 @@ public class TarjetasFidelizacionServiceTests
     {
         // Arrange
         var tarjetaId = Guid.NewGuid();
-        var transacciones = new List<TransaccionPuntosDto>
+        var historialPuntos = new List<HistorialPuntosDto>
         {
-            new() { Id = Guid.NewGuid(), TipoTransaccion = "Acumulación", Puntos = 50, FechaTransaccion = DateTime.Now },
-            new() { Id = Guid.NewGuid(), TipoTransaccion = "Canje", Puntos = -20, FechaTransaccion = DateTime.Now.AddDays(-1) }
+            new() { Id = Guid.NewGuid(), CodigoTarjeta = "123456", PuntosAcumulados = 50, PuntosCanjeados = 0, PuntosDisponibles = 50, FechaUltimaTransaccion = DateTime.Now }
         };
 
-        var apiResponse = ApiResponse<List<TransaccionPuntosDto>>.SuccessResponse(transacciones);
-        _mockApiService.Setup(x => x.GetAsync<List<TransaccionPuntosDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        var apiResponse = ApiResponse<List<HistorialPuntosDto>>.SuccessResponse(historialPuntos);
+        _mockApiService.Setup(x => x.GetAsync<List<HistorialPuntosDto>>(It.IsAny<string>(), It.IsAny<string>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -151,8 +170,8 @@ public class TarjetasFidelizacionServiceTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
-        Assert.Equal(2, result.Data.Count);
-        _mockApiService.Verify(x => x.GetAsync<List<TransaccionPuntosDto>>($"api/tarjetas-fidelizacion/{tarjetaId}/transacciones", It.IsAny<string>()), Times.Once);
+        Assert.Equal(1, result.Data.Count);
+        _mockApiService.Verify(x => x.GetAsync<List<HistorialPuntosDto>>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/historial", It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -160,7 +179,7 @@ public class TarjetasFidelizacionServiceTests
     {
         // Arrange
         var tarjetaId = Guid.NewGuid();
-        var puntos = 25;
+        var montoCompra = 25.0m;
         var tarjeta = new TarjetaFidelizacionDto
         {
             Id = tarjetaId,
@@ -170,18 +189,25 @@ public class TarjetasFidelizacionServiceTests
             Estado = "Activa"
         };
 
-        var apiResponse = ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(tarjeta);
-        _mockApiService.Setup(x => x.PostAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
-                      .ReturnsAsync(apiResponse);
+        // Mock para la primera llamada (acumular puntos)
+        var acumularResponse = ApiResponse<object>.SuccessResponse(new { });
+        _mockApiService.Setup(x => x.PostAsync<object>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+                      .ReturnsAsync(acumularResponse);
+
+        // Mock para la segunda llamada (obtener tarjeta actualizada)
+        var tarjetaResponse = ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(tarjeta);
+        _mockApiService.Setup(x => x.GetAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<string>()))
+                      .ReturnsAsync(tarjetaResponse);
 
         // Act
-        var result = await _tarjetasService.AcumularPuntosAsync(tarjetaId, puntos);
+        var result = await _tarjetasService.AcumularPuntosAsync(tarjetaId, montoCompra);
 
         // Assert
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(175, result.Data.PuntosDisponibles);
-        _mockApiService.Verify(x => x.PostAsync<TarjetaFidelizacionDto>($"api/tarjetas-fidelizacion/{tarjetaId}/acumular-puntos", It.Is<object>(data => data.ToString().Contains(puntos.ToString())), It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.PostAsync<object>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/puntos", It.Is<object>(data => data.ToString().Contains(montoCompra.ToString())), It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}", It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -189,7 +215,8 @@ public class TarjetasFidelizacionServiceTests
     {
         // Arrange
         var tarjetaId = Guid.NewGuid();
-        var puntos = 30;
+        var puntosACanjear = 30;
+        var descuento = 10.0m;
         var tarjeta = new TarjetaFidelizacionDto
         {
             Id = tarjetaId,
@@ -199,18 +226,25 @@ public class TarjetasFidelizacionServiceTests
             Estado = "Activa"
         };
 
-        var apiResponse = ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(tarjeta);
-        _mockApiService.Setup(x => x.PostAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
-                      .ReturnsAsync(apiResponse);
+        // Mock para la primera llamada (canjear puntos)
+        var canjearResponse = ApiResponse<object>.SuccessResponse(new { });
+        _mockApiService.Setup(x => x.PostAsync<object>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+                      .ReturnsAsync(canjearResponse);
+
+        // Mock para la segunda llamada (obtener tarjeta actualizada)
+        var tarjetaResponse = ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(tarjeta);
+        _mockApiService.Setup(x => x.GetAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<string>()))
+                      .ReturnsAsync(tarjetaResponse);
 
         // Act
-        var result = await _tarjetasService.CanjearPuntosAsync(tarjetaId, puntos, 10.0m);
+        var result = await _tarjetasService.CanjearPuntosAsync(tarjetaId, puntosACanjear, descuento);
 
         // Assert
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(120, result.Data.PuntosDisponibles);
-        _mockApiService.Verify(x => x.PostAsync<TarjetaFidelizacionDto>($"api/tarjetas-fidelizacion/{tarjetaId}/canjear-puntos", It.Is<object>(data => data.ToString().Contains(puntos.ToString())), It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.PostAsync<object>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/canjear", It.Is<object>(data => data.ToString().Contains(puntosACanjear.ToString())), It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}", It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -224,7 +258,7 @@ public class TarjetasFidelizacionServiceTests
         };
 
         var apiResponse = ApiResponse<List<TarjetaFidelizacionDto>>.SuccessResponse(tarjetas);
-        _mockApiService.Setup(x => x.PostAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -234,7 +268,7 @@ public class TarjetasFidelizacionServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(2, result.Data.Count);
-        _mockApiService.Verify(x => x.PostAsync<List<TarjetaFidelizacionDto>>("api/tarjetas-fidelizacion/buscar", It.IsAny<object>(), It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<TarjetaFidelizacionDto>>("api/comercial/tarjetas-fidelizacion", It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -242,9 +276,9 @@ public class TarjetasFidelizacionServiceTests
     {
         // Arrange
         var tarjetaId = Guid.NewGuid();
-        var apiResponse = ApiResponse<bool>.SuccessResponse(true);
+        var apiResponse = ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(new TarjetaFidelizacionDto());
         
-        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -253,7 +287,7 @@ public class TarjetasFidelizacionServiceTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.True(result.Data);
-        _mockApiService.Verify(x => x.DeleteAsync($"api/tarjetas-fidelizacion/{tarjetaId}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.PostAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/desactivar", It.IsAny<object>(), It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -276,7 +310,7 @@ public class TarjetasFidelizacionServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Single(result.Data);
-        _mockApiService.Verify(x => x.GetAsync<List<TarjetaFidelizacionDto>>("api/tarjetas-fidelizacion/activas", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<TarjetaFidelizacionDto>>("api/comercial/tarjetas-fidelizacion", It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -297,8 +331,9 @@ public class TarjetasFidelizacionServiceTests
             }
         };
 
-        var apiResponse = ApiResponse<HistorialPuntosDto>.SuccessResponse(historial);
-        _mockApiService.Setup(x => x.GetAsync<HistorialPuntosDto>(It.IsAny<string>(), It.IsAny<string>()))
+        var historialList = new List<HistorialPuntosDto> { historial };
+        var apiResponse = ApiResponse<List<HistorialPuntosDto>>.SuccessResponse(historialList);
+        _mockApiService.Setup(x => x.GetAsync<List<HistorialPuntosDto>>(It.IsAny<string>(), It.IsAny<string>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -308,7 +343,7 @@ public class TarjetasFidelizacionServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(2, result.Data.Transacciones.Count);
-        _mockApiService.Verify(x => x.GetAsync<HistorialPuntosDto>($"api/tarjetas-fidelizacion/{tarjetaId}/historial-puntos", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<HistorialPuntosDto>>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/historial", It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -316,9 +351,9 @@ public class TarjetasFidelizacionServiceTests
     {
         // Arrange
         var tarjetaId = Guid.NewGuid();
-        var apiResponse = ApiResponse<bool>.SuccessResponse(true);
+        var apiResponse = ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(new TarjetaFidelizacionDto());
         
-        _mockApiService.Setup(x => x.PostAsync<bool>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -327,7 +362,7 @@ public class TarjetasFidelizacionServiceTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.True(result.Data);
-        _mockApiService.Verify(x => x.PostAsync<bool>($"api/tarjetas-fidelizacion/{tarjetaId}/bloquear", It.IsAny<object>(), It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.PostAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/desactivar", It.IsAny<object>(), It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -344,8 +379,9 @@ public class TarjetasFidelizacionServiceTests
             Transacciones = new List<TransaccionPuntosDto>()
         };
 
-        var apiResponse = ApiResponse<HistorialPuntosDto>.SuccessResponse(historial);
-        _mockApiService.Setup(x => x.GetAsync<HistorialPuntosDto>(It.IsAny<string>(), It.IsAny<string>()))
+        var historialList = new List<HistorialPuntosDto> { historial };
+        var apiResponse = ApiResponse<List<HistorialPuntosDto>>.SuccessResponse(historialList);
+        _mockApiService.Setup(x => x.GetAsync<List<HistorialPuntosDto>>(It.IsAny<string>(), It.IsAny<string>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -356,7 +392,7 @@ public class TarjetasFidelizacionServiceTests
         Assert.NotNull(result.Data);
         Assert.Equal(tarjetaId, result.Data.Id);
         Assert.Equal(300, result.Data.PuntosDisponibles);
-        _mockApiService.Verify(x => x.GetAsync<HistorialPuntosDto>($"api/tarjetas-fidelizacion/{tarjetaId}/historial-puntos", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<HistorialPuntosDto>>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/historial", It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -384,7 +420,7 @@ public class TarjetasFidelizacionServiceTests
         Assert.NotNull(result.Data);
         Assert.Equal(tarjetaId, result.Data.TarjetaId);
         Assert.Equal(1000, result.Data.PuntosAcumulados);
-        _mockApiService.Verify(x => x.GetAsync<EstadisticasTarjetaDto>($"api/tarjetas-fidelizacion/{tarjetaId}/estadisticas", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<EstadisticasTarjetaDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/estadisticas", It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -403,7 +439,7 @@ public class TarjetasFidelizacionServiceTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.True(result.Data);
-        _mockApiService.Verify(x => x.DeleteAsync($"api/tarjetas-fidelizacion/{tarjetaId}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.DeleteAsync($"api/comercial/tarjetas-fidelizacion/{tarjetaId}", It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -411,8 +447,8 @@ public class TarjetasFidelizacionServiceTests
     {
         // Arrange
         var numeroTarjeta = "123456789";
-        var errorResponse = ApiResponse<TarjetaFidelizacionDto>.ErrorResponse(new List<string> { "Tarjeta no encontrada" }, "Tarjeta no encontrada", 404);
-        _mockApiService.Setup(x => x.GetAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<string>()))
+        var errorResponse = ApiResponse<List<TarjetaFidelizacionDto>>.ErrorResponse(new List<string> { "Tarjeta no encontrada" }, "Tarjeta no encontrada", 404);
+        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>()))
                       .ReturnsAsync(errorResponse);
 
         // Act
@@ -428,7 +464,7 @@ public class TarjetasFidelizacionServiceTests
     {
         // Arrange
         var numeroTarjeta = "123456789";
-        _mockApiService.Setup(x => x.GetAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act
@@ -445,6 +481,23 @@ public class TarjetasFidelizacionServiceTests
         // Arrange
         var numeroTarjeta = "987654321";
         var nombreCliente = "María García";
+        var tarjetaId = Guid.NewGuid();
+        var tarjeta = new TarjetaFidelizacionDto
+        {
+            Id = tarjetaId,
+            NumeroTarjeta = numeroTarjeta,
+            ClienteNombre = nombreCliente,
+            PuntosDisponibles = 0,
+            Estado = "Inactiva"
+        };
+
+        // Mock para la primera llamada (BuscarTarjetaAsync) - exitosa
+        var tarjetas = new List<TarjetaFidelizacionDto> { tarjeta };
+        var buscarResponse = ApiResponse<List<TarjetaFidelizacionDto>>.SuccessResponse(tarjetas);
+        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>()))
+                      .ReturnsAsync(buscarResponse);
+
+        // Mock para la segunda llamada (PostAsync) - lanza excepción
         _mockApiService.Setup(x => x.PostAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
@@ -453,7 +506,7 @@ public class TarjetasFidelizacionServiceTests
 
         // Assert
         Assert.False(result.Succeeded);
-        Assert.Contains("Error de red", result.Error);
+        Assert.Contains("Error al activar tarjeta: Error de red", result.Error);
     }
 
     [Fact]
@@ -461,12 +514,12 @@ public class TarjetasFidelizacionServiceTests
     {
         // Arrange
         var tarjetaId = Guid.NewGuid();
-        var puntos = 25;
-        _mockApiService.Setup(x => x.PostAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        var montoCompra = 25.0m;
+        _mockApiService.Setup(x => x.PostAsync<object>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act
-        var result = await _tarjetasService.AcumularPuntosAsync(tarjetaId, puntos);
+        var result = await _tarjetasService.AcumularPuntosAsync(tarjetaId, montoCompra);
 
         // Assert
         Assert.False(result.Succeeded);
@@ -478,12 +531,13 @@ public class TarjetasFidelizacionServiceTests
     {
         // Arrange
         var tarjetaId = Guid.NewGuid();
-        var puntos = 30;
-        _mockApiService.Setup(x => x.PostAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        var puntosACanjear = 30;
+        var descuento = 10.0m;
+        _mockApiService.Setup(x => x.PostAsync<object>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act
-        var result = await _tarjetasService.CanjearPuntosAsync(tarjetaId, puntos, 10.0m);
+        var result = await _tarjetasService.CanjearPuntosAsync(tarjetaId, puntosACanjear, descuento);
 
         // Assert
         Assert.False(result.Succeeded);

@@ -221,7 +221,7 @@ namespace RestaurantePro.Infrastructure.IntegrationTests.TestBase;
         // 2. Limpiar entidades intermedias
         DbContext.Comandas.RemoveRange(DbContext.Comandas);
         DbContext.Reservaciones.RemoveRange(DbContext.Reservaciones);
-        DbContext.Preparaciones.RemoveRange(DbContext.Preparaciones);
+                    DbContext.PreparacionesDiarias.RemoveRange(DbContext.PreparacionesDiarias);
         DbContext.Facturas.RemoveRange(DbContext.Facturas);
         DbContext.TarjetasFidelizacion.RemoveRange(DbContext.TarjetasFidelizacion);
         DbContext.Promociones.RemoveRange(DbContext.Promociones);

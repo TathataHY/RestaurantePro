@@ -39,7 +39,7 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerEs
             var fechaActual = _dateTimeService.Now;
             
             // Obtenemos todas las preparaciones
-            var preparaciones = await Task.FromResult(_context.Preparaciones.ToList());
+            var preparaciones = await Task.FromResult(_context.PreparacionesDiarias.ToList());
             
             // Calculamos estadísticas a partir de los datos reales
             var totalPreparaciones = preparaciones.Count;

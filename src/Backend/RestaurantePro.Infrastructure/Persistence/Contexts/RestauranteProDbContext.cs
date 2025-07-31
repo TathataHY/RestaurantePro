@@ -59,7 +59,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
         public DbSet<Domain.Operaciones.Comandas.Entities.ItemComanda> ItemsComanda { get; set; }
         public DbSet<Domain.Operaciones.Reservaciones.Entities.Reservacion> Reservaciones { get; set; }
         public DbSet<Domain.Operaciones.Reservaciones.Mesas.Entities.Mesa> Mesas { get; set; }
-        public DbSet<Domain.Operaciones.Preparaciones.Entities.PreparacionDiaria> Preparaciones { get; set; }
+        public DbSet<Domain.Operaciones.Preparaciones.Entities.PreparacionDiaria> PreparacionesDiarias { get; set; }
         public DbSet<Domain.Inventario.Ingredientes.Entities.Ingrediente> Ingredientes { get; set; }
         public DbSet<Domain.Inventario.Ingredientes.Movimientos.Entities.MovimientoInventario> MovimientosInventario { get; set; }
         public DbSet<Domain.Inventario.Compras.OrdenesCompra.Entities.OrdenCompra> OrdenesCompra { get; set; }

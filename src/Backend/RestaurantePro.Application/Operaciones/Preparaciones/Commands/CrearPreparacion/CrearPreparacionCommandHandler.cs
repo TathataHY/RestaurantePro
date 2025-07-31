@@ -49,7 +49,7 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Commands.CrearPre
                     request.Observaciones,
                     _dateTimeService.Now);
 
-                await _context.Preparaciones.AddAsync(preparacion, cancellationToken);
+                await _context.PreparacionesDiarias.AddAsync(preparacion, cancellationToken);
                 await _context.SaveChangesAsync(cancellationToken);
 
                 var preparacionDto = _mapper.Map<PreparacionDto>(preparacion);

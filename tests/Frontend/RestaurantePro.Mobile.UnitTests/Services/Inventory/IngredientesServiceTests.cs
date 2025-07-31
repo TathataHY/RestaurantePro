@@ -1,6 +1,7 @@
 using Moq;
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Services.Api;
+using RestaurantePro.Mobile.Core.Services.Authentication;
 using RestaurantePro.Mobile.Core.Services.Inventory;
 using Xunit;
 
@@ -9,12 +10,19 @@ namespace RestaurantePro.Mobile.UnitTests.Services.Inventory;
 public class IngredientesServiceTests
 {
     private readonly Mock<IApiService> _mockApiService;
+    private readonly Mock<IAuthService> _mockAuthService;
     private readonly IngredientesService _ingredientesService;
 
     public IngredientesServiceTests()
     {
         _mockApiService = new Mock<IApiService>();
-        _ingredientesService = new IngredientesService(_mockApiService.Object);
+        _mockAuthService = new Mock<IAuthService>();
+        
+        // Configurar el mock de autenticación para devolver un token válido
+        _mockAuthService.Setup(x => x.GetTokenAsync())
+                       .ReturnsAsync("test-token");
+        
+        _ingredientesService = new IngredientesService(_mockApiService.Object, _mockAuthService.Object);
     }
 
     [Fact]
@@ -38,7 +46,7 @@ public class IngredientesServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(2, result.Data.Count);
-        _mockApiService.Verify(x => x.GetAsync<List<IngredienteSummaryDto>>("api/ingredientes?soloActivos=True", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<IngredienteSummaryDto>>("api/inventario/ingredientes/lista?soloActivos=True", It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -75,7 +83,7 @@ public class IngredientesServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(ingredienteId, result.Data.Id);
-        _mockApiService.Verify(x => x.GetAsync<IngredienteDto>($"api/ingredientes/{ingredienteId}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<IngredienteDto>($"api/inventario/ingredientes/{ingredienteId}", It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -99,7 +107,7 @@ public class IngredientesServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Single(result.Data);
-        _mockApiService.Verify(x => x.GetAsync<List<IngredienteSummaryDto>>($"api/ingredientes/buscar?termino={termino}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<IngredienteSummaryDto>>($"api/inventario/ingredientes/buscar?termino={termino}", It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -120,7 +128,7 @@ public class IngredientesServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal("Nuevo Ingrediente", result.Data.Nombre);
-        _mockApiService.Verify(x => x.PostAsync<IngredienteDto>("api/ingredientes", ingrediente, It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.PostAsync<IngredienteDto>("api/inventario/ingredientes", ingrediente, It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -141,7 +149,7 @@ public class IngredientesServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal("Ingrediente Actualizado", result.Data.Nombre);
-        _mockApiService.Verify(x => x.PutAsync<IngredienteDto>($"api/ingredientes/{ingredienteId}", ingrediente, It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.PutAsync<IngredienteDto>($"api/inventario/ingredientes/{ingredienteId}", ingrediente, It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -160,7 +168,7 @@ public class IngredientesServiceTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.True(result.Data);
-        _mockApiService.Verify(x => x.DeleteAsync($"api/ingredientes/{ingredienteId}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.DeleteAsync($"api/inventario/ingredientes/{ingredienteId}", It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -188,7 +196,7 @@ public class IngredientesServiceTests
         Assert.NotNull(result.Data);
         Assert.Equal(150, result.Data.TotalIngredientes);
         Assert.Equal(140, result.Data.IngredientesDisponibles);
-        _mockApiService.Verify(x => x.GetAsync<EstadisticasIngredientesDto>("api/ingredientes/estadisticas", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<EstadisticasIngredientesDto>("api/inventario/ingredientes/estadisticas", It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -211,7 +219,7 @@ public class IngredientesServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Single(result.Data);
-        _mockApiService.Verify(x => x.GetAsync<List<IngredienteSummaryDto>>("api/ingredientes/bajo-stock?stockMinimo=10", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<IngredienteSummaryDto>>("api/inventario/ingredientes/bajo-stock?stockMinimo=10", It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -234,7 +242,7 @@ public class IngredientesServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Single(result.Data);
-        _mockApiService.Verify(x => x.GetAsync<List<IngredienteSummaryDto>>("api/ingredientes?soloActivos=False", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<IngredienteSummaryDto>>("api/inventario/ingredientes/lista?soloActivos=False", It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -259,7 +267,7 @@ public class IngredientesServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(2, result.Data.Count);
-        _mockApiService.Verify(x => x.GetAsync<List<MovimientoInventarioDto>>($"api/ingredientes/{ingredienteId}/movimientos", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<MovimientoInventarioDto>>($"api/inventario/ingredientes/{ingredienteId}/movimientos", It.IsAny<string>()), Times.Once);
     }
 
     [Fact]

@@ -43,7 +43,7 @@ public interface IApplicationDbContext
     DbSet<Mesa> Mesas { get; }
     
     // Operaciones - Preparaciones
-    DbSet<PreparacionDiaria> Preparaciones { get; }
+    DbSet<PreparacionDiaria> PreparacionesDiarias { get; }
     
     // Inventario - Ingredientes
     DbSet<Ingrediente> Ingredientes { get; }

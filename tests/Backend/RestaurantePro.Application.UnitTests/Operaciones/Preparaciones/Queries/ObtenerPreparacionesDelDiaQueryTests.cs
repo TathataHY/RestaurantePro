@@ -79,7 +79,7 @@ namespace RestaurantePro.Application.UnitTests.Operaciones.Preparaciones.Queries
 
             // Configurar el DbSet mock con los datos de prueba
             var mockDbSet = preparaciones.AsQueryable().BuildMockDbSet();
-            _contextMock.Setup(c => c.Preparaciones).Returns(mockDbSet.Object);
+            _contextMock.Setup(c => c.PreparacionesDiarias).Returns(mockDbSet.Object);
 
             // Preparar los datos filtrados para el mapeo (simulando el filtro de la consulta)
             var preparacionesDelDia = preparaciones
@@ -109,7 +109,7 @@ namespace RestaurantePro.Application.UnitTests.Operaciones.Preparaciones.Queries
             // Assert
             Assert.NotNull(result);
             Assert.Equal(2, result.Count); // Solo 2 preparaciones fueron creadas hoy
-            _contextMock.Verify(c => c.Preparaciones, Times.AtLeastOnce);
+            _contextMock.Verify(c => c.PreparacionesDiarias, Times.AtLeastOnce);
             _mapperMock.Verify(m => m.Map<List<PreparacionDto>>(It.IsAny<List<PreparacionDiaria>>()), Times.Once);
         }
 

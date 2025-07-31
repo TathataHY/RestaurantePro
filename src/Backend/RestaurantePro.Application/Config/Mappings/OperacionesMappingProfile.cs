@@ -181,6 +181,20 @@ public class OperacionesMappingProfile : Profile
             .ForMember(dest => dest.NombreProducto, opt => opt.Ignore())
             .ForMember(dest => dest.NombreChef, opt => opt.Ignore())
             .ForMember(dest => dest.NumeroComanda, opt => opt.Ignore());
+
+        // PreparacionDiaria → PreparacionDiariaDto
+        CreateMap<RestaurantePro.Domain.Operaciones.Preparaciones.Entities.PreparacionDiaria, RestaurantePro.Application.Operaciones.Preparaciones.DTOs.PreparacionDiariaDto>()
+            .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.ProductoId, opt => opt.MapFrom(src => src.ProductoId))
+            .ForMember(dest => dest.ChefId, opt => opt.MapFrom(src => src.ChefId))
+            .ForMember(dest => dest.CantidadPreparada, opt => opt.MapFrom(src => src.CantidadPreparada))
+            .ForMember(dest => dest.CantidadDisponible, opt => opt.MapFrom(src => src.CantidadDisponible))
+            .ForMember(dest => dest.FechaVencimiento, opt => opt.MapFrom(src => src.FechaVencimiento))
+            .ForMember(dest => dest.Observaciones, opt => opt.MapFrom(src => src.Observaciones))
+            .ForMember(dest => dest.FechaPreparacion, opt => opt.MapFrom(src => src.FechaPreparacion))
+            .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado))
+            .ForMember(dest => dest.NombreProducto, opt => opt.Ignore()) // Se asigna en el handler
+            .ForMember(dest => dest.NombreChef, opt => opt.Ignore()); // Se asigna en el handler
     }
 
     /// <summary>
