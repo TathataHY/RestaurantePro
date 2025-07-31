@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
+             x:Class="RestaurantePro.Mobile.Views.ModernOnboardingPage"
+             BackgroundColor="{StaticResource SurfacePrimary}">
+
+    <Grid RowDefinitions="*,Auto">
+        
+        <!-- Carrusel de Onboarding Moderno -->
+        <CarouselView Grid.Row="0"
+                      x:Name="OnboardingCarousel"
+                      ItemsSource="{Binding OnboardingItems}"
+                      IndicatorView="{x:Reference OnboardingIndicator}">
+            
+            <CarouselView.ItemTemplate>
+                <DataTemplate>
+                    <Grid RowDefinitions="Auto,*,Auto" 
+                          Padding="24">
+                        
+                        <!-- Header con Skip y Progress -->
+                        <Grid Grid.Row="0" 
+                              ColumnDefinitions="*,Auto"
+                              Margin="0,20,0,0">
+                            
+                            <!-- Indicador de Progreso -->
+                            <VerticalStackLayout Grid.Column="0" 
+                                                 Spacing="4">
+                                <Label Text="Paso {Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CurrentStep} de {Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.TotalSteps}"
+                                       Style="{StaticResource CaptionStyle}"
+                                       TextColor="{StaticResource TextSecondary}" />
+                                
+                                <ProgressBar Progress="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.Progress}"
+                                             ProgressColor="{StaticResource PrimaryColor}"
+                                             BackgroundColor="{StaticResource SurfaceSecondary}"
+                                             HeightRequest="4" />
+                            </VerticalStackLayout>
+                            
+                            <!-- Botón Skip -->
+                            <Button Grid.Column="1"
+                                    Text="Saltar"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SkipCommand}"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    HeightRequest="36"
+                                    Padding="16,8" />
+                        </Grid>
+                        
+                        <!-- Contenido Principal -->
+                        <VerticalStackLayout Grid.Row="1"
+                                             Spacing="40"
+                                             VerticalOptions="Center"
+                                             HorizontalOptions="Center">
+                            
+                            <!-- Icono/Ilustración con Animación -->
+                            <Border BackgroundColor="{Binding AccentColor}"
+                                    StrokeShape="Ellipse"
+                                    WidthRequest="180"
+                                    HeightRequest="180"
+                                    HorizontalOptions="Center">
+                                
+                                <Border.Shadow>
+                                    <Shadow Brush="{StaticResource ShadowColor}" 
+                                            Offset="0,12" Radius="20" Opacity="0.3" />
+                                </Border.Shadow>
+                                
+                                <Label Text="{Binding Icon}"
+                                       FontSize="90"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center" />
+                            </Border>
+                            
+                            <!-- Título -->
+                            <Label Text="{Binding Title}"
+                                   Style="{StaticResource H1Style}"
+                                   HorizontalOptions="Center"
+                                   HorizontalTextAlignment="Center" />
+                            
+                            <!-- Descripción -->
+                            <Label Text="{Binding Description}"
+                                   Style="{StaticResource BodyStyle}"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   HorizontalOptions="Center"
+                                   HorizontalTextAlignment="Center"
+                                   LineBreakMode="WordWrap" />
+                            
+                            <!-- Características Destacadas -->
+                            <controls:ModernCard Padding="20" 
+                                                IsVisible="{Binding ShowFeatures}">
+                                <VerticalStackLayout Spacing="12">
+                                    <Label Text="Características Principales"
+                                           Style="{StaticResource H2Style}"
+                                           HorizontalOptions="Center" />
+                                    
+                                    <VerticalStackLayout Spacing="8">
+                                        <HorizontalStackLayout Spacing="12">
+                                            <Label Text="✅"
+                                                   FontSize="16"
+                                                   VerticalOptions="Center" />
+                                            <Label Text="Gestión completa de mesas"
+                                                   Style="{StaticResource BodyStyle}"
+                                                   VerticalOptions="Center" />
+                                        </HorizontalStackLayout>
+                                        
+                                        <HorizontalStackLayout Spacing="12">
+                                            <Label Text="✅"
+                                                   FontSize="16"
+                                                   VerticalOptions="Center" />
+                                            <Label Text="Comandas en tiempo real"
+                                                   Style="{StaticResource BodyStyle}"
+                                                   VerticalOptions="Center" />
+                                        </HorizontalStackLayout>
+                                        
+                                        <HorizontalStackLayout Spacing="12">
+                                            <Label Text="✅"
+                                                   FontSize="16"
+                                                   VerticalOptions="Center" />
+                                            <Label Text="Inventario automatizado"
+                                                   Style="{StaticResource BodyStyle}"
+                                                   VerticalOptions="Center" />
+                                        </HorizontalStackLayout>
+                                    </VerticalStackLayout>
+                                </VerticalStackLayout>
+                            </controls:ModernCard>
+                        </VerticalStackLayout>
+                        
+                        <!-- Botón de Acción -->
+                        <VerticalStackLayout Grid.Row="2"
+                                             Spacing="20"
+                                             Margin="0,40,0,0">
+                            
+                            <Button Text="{Binding ActionText}"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.NextCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    HeightRequest="56" />
+                            
+                            <!-- Información Adicional -->
+                            <VerticalStackLayout Spacing="8" 
+                                                 IsVisible="{Binding ShowAdditionalInfo}">
+                                
+                                <Label Text="¿Necesitas ayuda?"
+                                       Style="{StaticResource BodyStyle}"
+                                       HorizontalOptions="Center" />
+                                
+                                <HorizontalStackLayout Spacing="16" 
+                                                       HorizontalOptions="Center">
+                                    
+                                    <Button Text="📧 Soporte"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            HeightRequest="36"
+                                            Padding="12,8" />
+                                    
+                                    <Button Text="📖 Manual"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            HeightRequest="36"
+                                            Padding="12,8" />
+                                </HorizontalStackLayout>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </Grid>
+                </DataTemplate>
+            </CarouselView.ItemTemplate>
+        </CarouselView>
+        
+        <!-- Indicadores de Página Modernos -->
+        <Grid Grid.Row="1" 
+              RowDefinitions="Auto,Auto"
+              Padding="24,0,24,24">
+            
+            <!-- Indicadores de Página -->
+            <IndicatorView Grid.Row="0"
+                           x:Name="OnboardingIndicator"
+                           IndicatorColor="{StaticResource BorderColor}"
+                           SelectedIndicatorColor="{StaticResource PrimaryColor}"
+                           IndicatorSize="10"
+                           MaximumVisible="5"
+                           Margin="0,0,0,16" />
+            
+            <!-- Información de Versión -->
+            <VerticalStackLayout Grid.Row="1" 
+                                 Spacing="4"
+                                 HorizontalOptions="Center">
+                
+                <Label Text="RestaurantePro v4.0"
+                       Style="{StaticResource CaptionStyle}"
+                       TextColor="{StaticResource TextSecondary}"
+                       HorizontalOptions="Center" />
+                
+                <Label Text="Modernización Visual - Diciembre 2024"
+                       Style="{StaticResource CaptionStyle}"
+                       TextColor="{StaticResource AccentColor}"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+
+</ContentPage> 

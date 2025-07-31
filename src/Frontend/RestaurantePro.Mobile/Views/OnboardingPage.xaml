@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RestaurantePro.Mobile.Views.OnboardingPage"
+             BackgroundColor="{StaticResource SurfacePrimary}">
+
+    <Grid RowDefinitions="*,Auto">
+        
+        <!-- Carrusel de Onboarding -->
+        <CarouselView Grid.Row="0"
+                      x:Name="OnboardingCarousel"
+                      ItemsSource="{Binding OnboardingItems}"
+                      IndicatorView="{x:Reference OnboardingIndicator}">
+            
+            <CarouselView.ItemTemplate>
+                <DataTemplate>
+                    <Grid RowDefinitions="Auto,*,Auto" 
+                          Padding="24">
+                        
+                        <!-- Header con Skip -->
+                        <HorizontalStackLayout Grid.Row="0"
+                                               HorizontalOptions="End"
+                                               Margin="0,20,0,0">
+                            <Button Text="Saltar"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SkipCommand}"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    HeightRequest="36"
+                                    Padding="16,8" />
+                        </HorizontalStackLayout>
+                        
+                        <!-- Contenido Principal -->
+                        <VerticalStackLayout Grid.Row="1"
+                                             Spacing="32"
+                                             VerticalOptions="Center"
+                                             HorizontalOptions="Center">
+                            
+                            <!-- Icono/Ilustración -->
+                            <Border BackgroundColor="{Binding AccentColor}"
+                                    StrokeShape="Ellipse"
+                                    WidthRequest="160"
+                                    HeightRequest="160"
+                                    HorizontalOptions="Center">
+                                
+                                <Border.Shadow>
+                                    <Shadow Brush="{StaticResource ShadowColor}" 
+                                            Offset="0,8" Radius="16" Opacity="0.2" />
+                                </Border.Shadow>
+                                
+                                <Label Text="{Binding Icon}"
+                                       FontSize="80"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center" />
+                            </Border>
+                            
+                            <!-- Título -->
+                            <Label Text="{Binding Title}"
+                                   Style="{StaticResource H1Style}"
+                                   HorizontalOptions="Center"
+                                   HorizontalTextAlignment="Center" />
+                            
+                            <!-- Descripción -->
+                            <Label Text="{Binding Description}"
+                                   Style="{StaticResource BodyStyle}"
+                                   TextColor="{StaticResource TextSecondary}"
+                                   HorizontalOptions="Center"
+                                   HorizontalTextAlignment="Center"
+                                   LineBreakMode="WordWrap" />
+                        </VerticalStackLayout>
+                        
+                        <!-- Botón de Acción -->
+                        <VerticalStackLayout Grid.Row="2"
+                                             Spacing="16"
+                                             Margin="0,32,0,0">
+                            
+                            <Button Text="{Binding ActionText}"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.NextCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    HeightRequest="56" />
+                            
+                            <!-- Indicador de Progreso -->
+                            <ProgressBar Progress="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.Progress}"
+                                         ProgressColor="{StaticResource PrimaryColor}"
+                                         BackgroundColor="{StaticResource SurfaceSecondary}"
+                                         HeightRequest="4" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </DataTemplate>
+            </CarouselView.ItemTemplate>
+        </CarouselView>
+        
+        <!-- Indicadores de Página -->
+        <IndicatorView Grid.Row="1"
+                       x:Name="OnboardingIndicator"
+                       IndicatorColor="{StaticResource BorderColor}"
+                       SelectedIndicatorColor="{StaticResource PrimaryColor}"
+                       IndicatorSize="8"
+                       MaximumVisible="5"
+                       Margin="0,0,0,24" />
+    </Grid>
+
+</ContentPage> 

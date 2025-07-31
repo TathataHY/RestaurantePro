@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
+             x:Class="RestaurantePro.Mobile.Views.ModernComponentsDemoPage"
+             Title="Componentes Modernos V4"
+             BackgroundColor="{StaticResource SurfacePrimary}">
+
+    <Grid RowDefinitions="*,Auto">
+        <ScrollView Grid.Row="0">
+            <VerticalStackLayout Spacing="24" Padding="16">
+                
+                <!-- Header -->
+                <Label Text="🎨 Componentes Modernos V4" 
+                       Style="{StaticResource H1Style}" 
+                       HorizontalOptions="Center" />
+                
+                <Label Text="Demostración de la nueva experiencia visual" 
+                       Style="{StaticResource BodyStyle}" 
+                       HorizontalOptions="Center" />
+
+                <!-- Modern Cards Section -->
+                <VerticalStackLayout Spacing="16">
+                    <Label Text="📱 Modern Cards" Style="{StaticResource H2Style}" />
+                    
+                    <controls:ModernCard>
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Card Básica" Style="{StaticResource H3Style}" />
+                            <Label Text="Esta es una card moderna con sombras y bordes redondeados" 
+                                   Style="{StaticResource BodyStyle}" />
+                        </VerticalStackLayout>
+                    </controls:ModernCard>
+
+                    <controls:ModernCard>
+                        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                            <Label Grid.Row="0" Grid.Column="0" 
+                                   Text="Mesa #5" 
+                                   Style="{StaticResource H3Style}" />
+                            <Label Grid.Row="0" Grid.Column="1" 
+                                   Text="Disponible" 
+                                   Style="{StaticResource CaptionStyle}" />
+                            <Label Grid.Row="1" Grid.Column="0" 
+                                   Text="Capacidad: 4 personas" 
+                                   Style="{StaticResource BodyStyle}" />
+                            <Label Grid.Row="1" Grid.Column="1" 
+                                   Text="Terraza" 
+                                   Style="{StaticResource BodySmallStyle}" />
+                        </Grid>
+                    </controls:ModernCard>
+                </VerticalStackLayout>
+
+                <!-- Modern Buttons Section -->
+                <VerticalStackLayout Spacing="16">
+                    <Label Text="🔘 Modern Buttons" Style="{StaticResource H2Style}" />
+                    
+                    <VerticalStackLayout Spacing="12">
+                        <Button Text="Botón Primario" 
+                                Style="{StaticResource PrimaryButtonStyle}" />
+                        
+                        <Button Text="Botón Secundario" 
+                                Style="{StaticResource SecondaryButtonStyle}" />
+                        
+                        <Button Text="Botón de Éxito" 
+                                Style="{StaticResource SuccessButtonStyle}" />
+                        
+                        <Button Text="Botón de Advertencia" 
+                                Style="{StaticResource WarningButtonStyle}" />
+                        
+                        <Button Text="Botón de Peligro" 
+                                Style="{StaticResource DangerButtonStyle}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
+                <!-- Modern Input Fields Section -->
+                <VerticalStackLayout Spacing="16">
+                    <Label Text="📝 Modern Input Fields" Style="{StaticResource H2Style}" />
+                    
+                    <VerticalStackLayout Spacing="12">
+                        <controls:ModernEntry Placeholder="Ingrese su nombre" />
+                        
+                        <controls:ModernEntry Placeholder="Ingrese su email" 
+                                             Icon="📧" />
+                        
+                        <controls:ModernEntry Placeholder="Ingrese su contraseña" 
+                                             IsPassword="True" 
+                                             Icon="🔒" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
+                <!-- Tab Navigation Section -->
+                <VerticalStackLayout Spacing="16">
+                    <Label Text="📑 Tab Navigation" Style="{StaticResource H2Style}" />
+                    
+                    <controls:TabNavigation x:Name="DemoTabNavigation" />
+                    
+                    <Label x:Name="TabStatusLabel" 
+                           Text="Tab seleccionado: 0" 
+                           Style="{StaticResource BodyStyle}" />
+                </VerticalStackLayout>
+
+                <!-- Skeleton Loaders Section -->
+                <VerticalStackLayout Spacing="16">
+                    <Label Text="⚡ Skeleton Loaders" Style="{StaticResource H2Style}" />
+                    
+                    <controls:TabNavigation x:Name="SkeletonTabNavigation" />
+                    
+                    <controls:SkeletonLoader x:Name="DemoSkeletonLoader" 
+                                           SkeletonType="Card" />
+                </VerticalStackLayout>
+
+                <!-- Typography Section -->
+                <VerticalStackLayout Spacing="16">
+                    <Label Text="📝 Typography" Style="{StaticResource H2Style}" />
+                    
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="H1 - Título Principal" Style="{StaticResource H1Style}" />
+                        <Label Text="H2 - Subtítulo" Style="{StaticResource H2Style}" />
+                        <Label Text="H3 - Título de Sección" Style="{StaticResource H3Style}" />
+                        <Label Text="Body - Texto normal del cuerpo" Style="{StaticResource BodyStyle}" />
+                        <Label Text="Body Small - Texto pequeño" Style="{StaticResource BodySmallStyle}" />
+                        <Label Text="Caption - Texto de ayuda" Style="{StaticResource CaptionStyle}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
+                <!-- Color Palette Section -->
+                <VerticalStackLayout Spacing="16">
+                    <Label Text="🎨 Color Palette" Style="{StaticResource H2Style}" />
+                    
+                    <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto,Auto" 
+                          ColumnSpacing="8" RowSpacing="8">
+                        
+                        <Frame Grid.Column="0" Grid.Row="0" 
+                               BackgroundColor="{StaticResource PrimaryColor}" 
+                               CornerRadius="8" HeightRequest="60">
+                            <Label Text="Primary" 
+                                   TextColor="White" 
+                                   HorizontalOptions="Center" 
+                                   VerticalOptions="Center" />
+                        </Frame>
+                        
+                        <Frame Grid.Column="1" Grid.Row="0" 
+                               BackgroundColor="{StaticResource SecondaryColor}" 
+                               CornerRadius="8" HeightRequest="60">
+                            <Label Text="Secondary" 
+                                   TextColor="White" 
+                                   HorizontalOptions="Center" 
+                                   VerticalOptions="Center" />
+                        </Frame>
+                        
+                        <Frame Grid.Column="2" Grid.Row="0" 
+                               BackgroundColor="{StaticResource AccentColor}" 
+                               CornerRadius="8" HeightRequest="60">
+                            <Label Text="Accent" 
+                                   TextColor="White" 
+                                   HorizontalOptions="Center" 
+                                   VerticalOptions="Center" />
+                        </Frame>
+                        
+                        <Frame Grid.Column="0" Grid.Row="1" 
+                               BackgroundColor="{StaticResource SuccessColor}" 
+                               CornerRadius="8" HeightRequest="60">
+                            <Label Text="Success" 
+                                   TextColor="White" 
+                                   HorizontalOptions="Center" 
+                                   VerticalOptions="Center" />
+                        </Frame>
+                        
+                        <Frame Grid.Column="1" Grid.Row="1" 
+                               BackgroundColor="{StaticResource WarningColor}" 
+                               CornerRadius="8" HeightRequest="60">
+                            <Label Text="Warning" 
+                                   TextColor="White" 
+                                   HorizontalOptions="Center" 
+                                   VerticalOptions="Center" />
+                        </Frame>
+                        
+                        <Frame Grid.Column="2" Grid.Row="1" 
+                               BackgroundColor="{StaticResource ErrorColor}" 
+                               CornerRadius="8" HeightRequest="60">
+                            <Label Text="Error" 
+                                   TextColor="White" 
+                                   HorizontalOptions="Center" 
+                                   VerticalOptions="Center" />
+                        </Frame>
+                    </Grid>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+        
+        <!-- Bottom Navigation -->
+        <controls:ModernTabBar Grid.Row="1" x:Name="DemoBottomNavigation" />
+        
+        <!-- Floating Action Button -->
+        <controls:FloatingActionButton Grid.Row="1" 
+                                      Text="+" 
+                                      HorizontalOptions="End" 
+                                      VerticalOptions="End" 
+                                      Margin="16,0,16,80" />
+    </Grid>
+
+</ContentPage> 

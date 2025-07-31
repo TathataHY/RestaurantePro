@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RestaurantePro.Mobile.Controls.AccessibleNavigationItem"
+             x:Name="NavigationItemControl">
+    
+    <Border x:Name="ItemBorder"
+            StrokeShape="RoundRectangle 8"
+            BackgroundColor="{Binding Source={x:Reference NavigationItemControl}, Path=BackgroundColor}"
+            Stroke="{Binding Source={x:Reference NavigationItemControl}, Path=BorderColor}"
+            StrokeThickness="{Binding Source={x:Reference NavigationItemControl}, Path=BorderWidth}"
+            AutomationProperties.Name="{Binding Source={x:Reference NavigationItemControl}, Path=AccessibilityName}"
+            AutomationProperties.HelpText="{Binding Source={x:Reference NavigationItemControl}, Path=AccessibilityHelpText}"
+            AutomationProperties.IsInAccessibleTree="True"
+            AutomationProperties.Role="Button">
+        
+        <Grid ColumnDefinitions="Auto,*" 
+              Padding="16,12"
+              HeightRequest="48">
+            
+            <!-- Icono -->
+            <Label x:Name="ItemIcon"
+                   Grid.Column="0"
+                   Text="{Binding Source={x:Reference NavigationItemControl}, Path=Icon}"
+                   FontSize="20"
+                   TextColor="{Binding Source={x:Reference NavigationItemControl}, Path=IconColor}"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Center"
+                   Margin="0,0,12,0"
+                   AutomationProperties.Name="{Binding Source={x:Reference NavigationItemControl}, Path=IconDescription}"
+                   AutomationProperties.HelpText="Icono descriptivo del elemento de navegación" />
+            
+            <!-- Texto -->
+            <Label x:Name="ItemText"
+                   Grid.Column="1"
+                   Text="{Binding Source={x:Reference NavigationItemControl}, Path=Text}"
+                   TextColor="{Binding Source={x:Reference NavigationItemControl}, Path=TextColor}"
+                   FontSize="16"
+                   FontAttributes="{Binding Source={x:Reference NavigationItemControl}, Path=FontAttributes}"
+                   VerticalOptions="Center"
+                   AutomationProperties.Name="{Binding Source={x:Reference NavigationItemControl}, Path=Text}"
+                   AutomationProperties.HelpText="Texto del elemento de navegación" />
+            
+        </Grid>
+        
+    </Border>
+    
+</ContentView> 

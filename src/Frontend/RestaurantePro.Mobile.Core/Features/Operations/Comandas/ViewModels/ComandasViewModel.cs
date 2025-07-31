@@ -438,6 +438,21 @@ public partial class ComandasViewModel : BaseViewModel
     }
 
     /// <summary>
+    /// Buscar comanda específica
+    /// </summary>
+    [RelayCommand]
+    private async Task BuscarComandaAsync()
+    {
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            await _dialogService.ShowAlertAsync("Información", "Ingrese un término de búsqueda");
+            return;
+        }
+
+        await LoadComandasAsync();
+    }
+
+    /// <summary>
     /// Limpiar todos los filtros
     /// </summary>
     [RelayCommand]

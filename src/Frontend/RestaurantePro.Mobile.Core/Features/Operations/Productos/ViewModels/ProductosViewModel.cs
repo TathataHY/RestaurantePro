@@ -48,6 +48,9 @@ public partial class ProductosViewModel : BaseViewModel
     [ObservableProperty]
     private int productosAgotados;
 
+    [ObservableProperty]
+    private int totalCategorias;
+
     // ========================================
     // CONSTRUCTOR
     // ========================================
@@ -93,6 +96,17 @@ public partial class ProductosViewModel : BaseViewModel
     public double PorcentajeDisponibilidad => TotalProductos > 0 
         ? (double)ProductosDisponibles / TotalProductos * 100 
         : 0;
+
+    /// <summary>
+    /// Estadísticas de productos para la UI
+    /// </summary>
+    public object Estadisticas => new
+    {
+        TotalProductos,
+        ProductosDisponibles,
+        ProductosAgotados,
+        TotalCategorias
+    };
 
     // ========================================
     // COMANDOS PRINCIPALES
@@ -336,6 +350,102 @@ public partial class ProductosViewModel : BaseViewModel
         }
     }
 
+    /// <summary>
+    /// Refrescar productos
+    /// </summary>
+    [RelayCommand]
+    private async Task RefreshProductosAsync()
+    {
+        await LoadProductosAsync();
+    }
+
+    /// <summary>
+    /// Cargar productos disponibles
+    /// </summary>
+    [RelayCommand]
+    private async Task LoadProductosDisponiblesAsync()
+    {
+        MostrarSoloDisponibles = true;
+        await LoadProductosAsync();
+    }
+
+    /// <summary>
+    /// Crear nuevo producto
+    /// </summary>
+    [RelayCommand]
+    private async Task CrearProductoAsync()
+    {
+        try
+        {
+            await _navigationService.NavigateToAsync("producto-crear");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowErrorAsync($"Error al navegar: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Ver producto
+    /// </summary>
+    [RelayCommand]
+    private async Task VerProductoAsync(ProductoDto? producto)
+    {
+        if (producto == null) return;
+
+        try
+        {
+            await _navigationService.NavigateToAsync("producto-detalle", new Dictionary<string, object>
+            {
+                ["productoId"] = producto.Id.ToString()
+            });
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowErrorAsync($"Error al ver producto: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Editar producto
+    /// </summary>
+    [RelayCommand]
+    private async Task EditarProductoAsync(ProductoDto? producto)
+    {
+        if (producto == null) return;
+
+        try
+        {
+            await _navigationService.NavigateToAsync("producto-editar", new Dictionary<string, object>
+            {
+                ["productoId"] = producto.Id.ToString()
+            });
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowErrorAsync($"Error al editar producto: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Eliminar producto (temporalmente deshabilitado - requiere implementación en backend)
+    /// </summary>
+    [RelayCommand]
+    private async Task EliminarProductoAsync(ProductoDto? producto)
+    {
+        if (producto == null) return;
+
+        try
+        {
+            await _dialogService.ShowAlertAsync("Función no disponible", 
+                "La eliminación de productos no está disponible en esta versión. Contacta al administrador.");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowErrorAsync($"Error: {ex.Message}");
+        }
+    }
+
     // ========================================
     // MÉTODOS PRIVADOS
     // ========================================
@@ -348,11 +458,13 @@ public partial class ProductosViewModel : BaseViewModel
         TotalProductos = Productos.Count;
         ProductosDisponibles = Productos.Count(p => p.PuedeAgregarAComanda);
         ProductosAgotados = TotalProductos - ProductosDisponibles;
+        TotalCategorias = Categorias.Count;
 
         // Notificar cambios en propiedades calculadas
         OnPropertyChanged(nameof(TieneProductos));
         OnPropertyChanged(nameof(PorcentajeDisponibilidad));
         OnPropertyChanged(nameof(MensajeSinProductos));
+        OnPropertyChanged(nameof(Estadisticas));
     }
 
     /// <summary>

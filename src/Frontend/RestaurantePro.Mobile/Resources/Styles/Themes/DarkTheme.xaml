@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- ===== DARK THEME COLORS ===== -->
+    
+    <!-- Brand Colors (mantienen su identidad) -->
+    <Color x:Key="PrimaryColor">#FF6B35</Color>      <!-- Naranja restaurante -->
+    <Color x:Key="SecondaryColor">#2ECC71</Color>    <!-- Verde éxito -->
+    <Color x:Key="AccentColor">#3498DB</Color>       <!-- Azul información -->
+
+    <!-- Semantic Colors -->
+    <Color x:Key="SuccessColor">#27AE60</Color>      <!-- Verde éxito -->
+    <Color x:Key="WarningColor">#F39C12</Color>      <!-- Amarillo alerta -->
+    <Color x:Key="ErrorColor">#E74C3C</Color>        <!-- Rojo error -->
+    <Color x:Key="InfoColor">#3498DB</Color>         <!-- Azul información -->
+
+    <!-- Dark Theme Neutral Colors -->
+    <Color x:Key="SurfacePrimary">#121212</Color>    <!-- Superficie principal oscura -->
+    <Color x:Key="SurfaceSecondary">#1E1E1E</Color>  <!-- Superficie secundaria -->
+    <Color x:Key="SurfaceTertiary">#2D2D2D</Color>   <!-- Superficie terciaria -->
+    <Color x:Key="TextPrimary">#FFFFFF</Color>       <!-- Texto principal blanco -->
+    <Color x:Key="TextSecondary">#AAAAAA</Color>     <!-- Texto secundario gris claro -->
+    <Color x:Key="TextTertiary">#666666</Color>      <!-- Texto terciario gris medio -->
+    <Color x:Key="BorderColor">#333333</Color>       <!-- Bordes oscuros -->
+    <Color x:Key="ShadowColor">#000000</Color>       <!-- Sombras negras -->
+
+    <!-- Estados específicos para Dark Theme -->
+    <Color x:Key="TableAvailable">#2ECC71</Color>    <!-- Verde - Disponible -->
+    <Color x:Key="TableOccupied">#E74C3C</Color>     <!-- Rojo - Ocupada -->
+    <Color x:Key="TableReserved">#F39C12</Color>     <!-- Amarillo - Reservada -->
+
+    <Color x:Key="OrderPending">#F39C12</Color>      <!-- Amarillo - Pendiente -->
+    <Color x:Key="OrderInProgress">#3498DB</Color>   <!-- Azul - En progreso -->
+    <Color x:Key="OrderReady">#27AE60</Color>        <!-- Verde - Lista -->
+
+    <!-- Overlay Colors -->
+    <Color x:Key="OverlayColor">#80000000</Color>    <!-- Overlay negro con opacidad -->
+
+    <!-- ===== DARK THEME STYLES ===== -->
+
+    <!-- Page Background -->
+    <Style x:Key="DarkPageStyle" TargetType="ContentPage">
+        <Setter Property="BackgroundColor" Value="{StaticResource SurfacePrimary}" />
+    </Style>
+
+    <!-- Card Styles -->
+    <Style x:Key="DarkCardStyle" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource SurfaceSecondary}" />
+        <Setter Property="Stroke" Value="{StaticResource BorderColor}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="StrokeShape" Value="RoundRectangle 12" />
+        <Setter Property="Shadow">
+            <Setter.Value>
+                <Shadow Brush="{StaticResource ShadowColor}" 
+                        Offset="0,4" 
+                        Radius="8" 
+                        Opacity="0.3" />
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Label Styles -->
+    <Style x:Key="DarkH1Style" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}" />
+        <Setter Property="FontSize" Value="32" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+    </Style>
+
+    <Style x:Key="DarkH2Style" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}" />
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+    </Style>
+
+    <Style x:Key="DarkBodyStyle" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="LineHeight" Value="1.5" />
+        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+    </Style>
+
+    <Style x:Key="DarkCaptionStyle" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="TextColor" Value="{StaticResource TextSecondary}" />
+    </Style>
+
+    <!-- Button Styles -->
+    <Style x:Key="DarkPrimaryButtonStyle" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource PrimaryColor}" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="HeightRequest" Value="44" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="Padding" Value="24,12" />
+        <Setter Property="Shadow">
+            <Setter.Value>
+                <Shadow Brush="{StaticResource ShadowColor}" 
+                        Offset="0,2" 
+                        Radius="4" 
+                        Opacity="0.3" />
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="DarkSecondaryButtonStyle" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource PrimaryColor}" />
+        <Setter Property="CornerRadius" Value="8" />
+        <Setter Property="HeightRequest" Value="44" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="Padding" Value="24,12" />
+        <Setter Property="BorderColor" Value="{StaticResource PrimaryColor}" />
+        <Setter Property="BorderWidth" Value="2" />
+    </Style>
+
+    <!-- Entry Styles -->
+    <Style x:Key="DarkEntryStyle" TargetType="Entry">
+        <Setter Property="BackgroundColor" Value="{StaticResource SurfaceSecondary}" />
+        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+        <Setter Property="PlaceholderColor" Value="{StaticResource TextSecondary}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="Margin" Value="16,12" />
+    </Style>
+
+    <!-- CollectionView Styles -->
+    <Style x:Key="DarkCollectionViewStyle" TargetType="CollectionView">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="SelectionMode" Value="None" />
+    </Style>
+
+    <!-- Tab Bar Styles -->
+    <Style x:Key="DarkTabBarStyle" TargetType="ContentView">
+        <Setter Property="BackgroundColor" Value="{StaticResource SurfaceSecondary}" />
+    </Style>
+
+    <!-- Loading Indicator Styles -->
+    <Style x:Key="DarkLoadingStyle" TargetType="ActivityIndicator">
+        <Setter Property="Color" Value="{StaticResource PrimaryColor}" />
+    </Style>
+
+    <!-- Progress Bar Styles -->
+    <Style x:Key="DarkProgressBarStyle" TargetType="ProgressBar">
+        <Setter Property="ProgressColor" Value="{StaticResource PrimaryColor}" />
+        <Setter Property="BackgroundColor" Value="{StaticResource SurfaceTertiary}" />
+    </Style>
+
+</ResourceDictionary> 

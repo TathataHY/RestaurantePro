@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RestaurantePro.Mobile.Controls.ModernTabBar"
+             x:Name="ModernTabBarControl">
+    
+    <Grid RowDefinitions="Auto,Auto,Auto">
+        <!-- Separador superior -->
+        <BoxView Grid.Row="0" 
+                 BackgroundColor="{StaticResource BorderColor}" 
+                 HeightRequest="1" />
+        
+        <!-- Contenedor de tabs -->
+        <HorizontalStackLayout x:Name="TabContainer" 
+                               Grid.Row="1" 
+                               BackgroundColor="{StaticResource SurfacePrimary}"
+                               Spacing="0" 
+                               HorizontalOptions="FillAndExpand"
+                               Padding="0,8,0,4">
+            <!-- Los tabs se agregarán dinámicamente -->
+        </HorizontalStackLayout>
+        
+        <!-- Indicador de selección -->
+        <BoxView x:Name="SelectionIndicator"
+                 Grid.Row="2"
+                 BackgroundColor="{StaticResource PrimaryColor}"
+                 HeightRequest="3"
+                 HorizontalOptions="Start"
+                 WidthRequest="40"
+                 Margin="0,4,0,0" />
+    </Grid>
+</ContentView> 

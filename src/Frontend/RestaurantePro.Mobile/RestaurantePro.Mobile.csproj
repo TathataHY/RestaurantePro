@@ -20,6 +20,20 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 
+		<!-- Performance Optimizations - V4 -->
+		<MauiEnableXamlCBindingWithSourceCompilation>true</MauiEnableXamlCBindingWithSourceCompilation>
+		<MauiEnableXamlCompilation>true</MauiEnableXamlCompilation>
+		<MauiEnableXamlHotReload>true</MauiEnableXamlHotReload>
+		<MauiEnableXamlHotReloadOnSave>true</MauiEnableXamlHotReloadOnSave>
+		
+		<!-- Memory Optimizations -->
+		<MauiEnableCompiledBindings>true</MauiEnableCompiledBindings>
+		<MauiEnableCompiledConverters>true</MauiEnableCompiledConverters>
+		
+		<!-- Startup Performance -->
+		<MauiEnableStartupTracing>true</MauiEnableStartupTracing>
+		<MauiEnableStartupProfiling>true</MauiEnableStartupProfiling>
+
 		<!-- Display name -->
 		<ApplicationTitle>RestaurantePro.Mobile</ApplicationTitle>
 

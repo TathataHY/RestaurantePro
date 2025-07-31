@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?xaml-comp compile="true" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- ========================================
+         BASE BUTTON STYLE
+         ======================================== -->
+    <Style x:Key="BaseButtonStyle" TargetType="Button">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="HeightRequest" Value="44" />
+        <Setter Property="CornerRadius" Value="{StaticResource BorderRadiusS}" />
+        <Setter Property="Padding" Value="24,12" />
+    </Style>
+
+    <!-- ========================================
+         PRIMARY BUTTON STYLE
+         ======================================== -->
+    <Style x:Key="PrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+        <Setter Property="BackgroundColor" Value="{StaticResource PrimaryColor}" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="Shadow">
+            <Shadow Brush="{StaticResource ShadowColor}" 
+                    Offset="0,2" 
+                    Radius="4" 
+                    Opacity="0.2" />
+        </Setter>
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Scale" Value="0.96" />
+                            <Setter Property="Opacity" Value="0.8" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Disabled">
+                        <VisualState.Setters>
+                            <Setter Property="Opacity" Value="0.5" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <!-- ========================================
+         SECONDARY BUTTON STYLE
+         ======================================== -->
+    <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="TextColor" Value="{StaticResource PrimaryColor}" />
+        <Setter Property="BorderColor" Value="{StaticResource PrimaryColor}" />
+        <Setter Property="BorderWidth" Value="2" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="CommonStates">
+                    <VisualState x:Name="Normal" />
+                    <VisualState x:Name="Pressed">
+                        <VisualState.Setters>
+                            <Setter Property="Scale" Value="0.96" />
+                            <Setter Property="BackgroundColor" Value="{StaticResource SurfaceSecondary}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Disabled">
+                        <VisualState.Setters>
+                            <Setter Property="Opacity" Value="0.5" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+
+    <!-- ========================================
+         SUCCESS BUTTON STYLE
+         ======================================== -->
+    <Style x:Key="SuccessButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+        <Setter Property="BackgroundColor" Value="{StaticResource SuccessColor}" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="Shadow">
+            <Shadow Brush="{StaticResource ShadowColor}" 
+                    Offset="0,2" 
+                    Radius="4" 
+                    Opacity="0.2" />
+        </Setter>
+    </Style>
+
+    <!-- ========================================
+         WARNING BUTTON STYLE
+         ======================================== -->
+    <Style x:Key="WarningButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+        <Setter Property="BackgroundColor" Value="{StaticResource WarningColor}" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="Shadow">
+            <Shadow Brush="{StaticResource ShadowColor}" 
+                    Offset="0,2" 
+                    Radius="4" 
+                    Opacity="0.2" />
+        </Setter>
+    </Style>
+
+    <!-- ========================================
+         DANGER BUTTON STYLE
+         ======================================== -->
+    <Style x:Key="DangerButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+        <Setter Property="BackgroundColor" Value="{StaticResource ErrorColor}" />
+        <Setter Property="TextColor" Value="White" />
+        <Setter Property="Shadow">
+            <Shadow Brush="{StaticResource ShadowColor}" 
+                    Offset="0,2" 
+                    Radius="4" 
+                    Opacity="0.2" />
+        </Setter>
+    </Style>
+
+    <!-- ========================================
+         SMALL BUTTON STYLE
+         ======================================== -->
+    <Style x:Key="SmallButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+        <Setter Property="HeightRequest" Value="36" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Padding" Value="16,8" />
+    </Style>
+
+    <!-- ========================================
+         LARGE BUTTON STYLE
+         ======================================== -->
+    <Style x:Key="LargeButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
+        <Setter Property="HeightRequest" Value="56" />
+        <Setter Property="FontSize" Value="18" />
+        <Setter Property="Padding" Value="32,16" />
+    </Style>
+
+</ResourceDictionary> 

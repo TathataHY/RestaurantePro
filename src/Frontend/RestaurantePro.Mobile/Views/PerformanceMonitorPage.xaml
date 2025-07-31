@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
+             x:Class="RestaurantePro.Mobile.Views.PerformanceMonitorPage"
+             Title="Monitor de Performance"
+             BackgroundColor="{StaticResource SurfacePrimary}">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        
+        <!-- Header -->
+        <VerticalStackLayout Grid.Row="0" 
+                            Padding="24,16"
+                            BackgroundColor="{StaticResource SurfaceSecondary}">
+            
+            <Label Text="Monitor de Performance V4"
+                   Style="{StaticResource HeadlineStyle}"
+                   HorizontalOptions="Center" />
+            
+            <Label Text="Optimización y monitoreo en tiempo real"
+                   Style="{StaticResource BodyStyle}"
+                   HorizontalOptions="Center"
+                   TextColor="{StaticResource OnSurfaceSecondary}" />
+        </VerticalStackLayout>
+
+        <!-- Contenido Principal -->
+        <ScrollView Grid.Row="1" 
+                    VerticalScrollBarVisibility="Never"
+                    Padding="24">
+            
+            <VerticalStackLayout Spacing="24">
+                
+                <!-- Métricas de Memoria -->
+                <controls:ModernCard>
+                    <VerticalStackLayout Spacing="16">
+                        <Label Text="Memoria del Sistema"
+                               Style="{StaticResource TitleStyle}" />
+                        
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="16">
+                            <VerticalStackLayout Grid.Column="0" Spacing="8">
+                                <Label Text="Working Set"
+                                       Style="{StaticResource CaptionStyle}"
+                                       TextColor="{StaticResource OnSurfaceSecondary}" />
+                                <Label Text="{Binding MemoryInfo.WorkingSetMB, StringFormat='{0:F1} MB'}"
+                                       Style="{StaticResource BodyStyle}" />
+                            </VerticalStackLayout>
+                            
+                            <VerticalStackLayout Grid.Column="1" Spacing="8">
+                                <Label Text="Private Memory"
+                                       Style="{StaticResource CaptionStyle}"
+                                       TextColor="{StaticResource OnSurfaceSecondary}" />
+                                <Label Text="{Binding MemoryInfo.PrivateMemoryMB, StringFormat='{0:F1} MB'}"
+                                       Style="{StaticResource BodyStyle}" />
+                            </VerticalStackLayout>
+                            
+                            <VerticalStackLayout Grid.Column="2" Spacing="8">
+                                <Label Text="Virtual Memory"
+                                       Style="{StaticResource CaptionStyle}"
+                                       TextColor="{StaticResource OnSurfaceSecondary}" />
+                                <Label Text="{Binding MemoryInfo.VirtualMemoryMB, StringFormat='{0:F1} MB'}"
+                                       Style="{StaticResource BodyStyle}" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </VerticalStackLayout>
+                </controls:ModernCard>
+
+                <!-- Estadísticas de Cache -->
+                <controls:ModernCard>
+                    <VerticalStackLayout Spacing="16">
+                        <Label Text="Estadísticas de Cache"
+                               Style="{StaticResource TitleStyle}" />
+                        
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="16">
+                            <VerticalStackLayout Grid.Column="0" Spacing="8">
+                                <Label Text="Total Items"
+                                       Style="{StaticResource CaptionStyle}"
+                                       TextColor="{StaticResource OnSurfaceSecondary}" />
+                                <Label Text="{Binding CacheStats.TotalItems}"
+                                       Style="{StaticResource BodyStyle}" />
+                            </VerticalStackLayout>
+                            
+                            <VerticalStackLayout Grid.Column="1" Spacing="8">
+                                <Label Text="Valid Items"
+                                       Style="{StaticResource CaptionStyle}"
+                                       TextColor="{StaticResource OnSurfaceSecondary}" />
+                                <Label Text="{Binding CacheStats.ValidItems}"
+                                       Style="{StaticResource BodyStyle}" />
+                            </VerticalStackLayout>
+                            
+                            <VerticalStackLayout Grid.Column="2" Spacing="8">
+                                <Label Text="Memory Usage"
+                                       Style="{StaticResource CaptionStyle}"
+                                       TextColor="{StaticResource OnSurfaceSecondary}" />
+                                <Label Text="{Binding CacheStats.MemoryUsageKB, StringFormat='{0:F1} KB'}"
+                                       Style="{StaticResource BodyStyle}" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </VerticalStackLayout>
+                </controls:ModernCard>
+
+                <!-- Operaciones Lentas -->
+                <controls:ModernCard>
+                    <VerticalStackLayout Spacing="16">
+                        <Label Text="Operaciones Lentas"
+                               Style="{StaticResource TitleStyle}" />
+                        
+                        <CollectionView ItemsSource="{Binding SlowOperations}"
+                                      HeightRequest="200">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="0,8" ColumnDefinitions="*,Auto">
+                                        <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                            <Label Text="{Binding Name}"
+                                                   Style="{StaticResource BodyStyle}" />
+                                            <Label Text="{Binding AverageTime, StringFormat='Promedio: {0:F0}ms'}"
+                                                   Style="{StaticResource CaptionStyle}"
+                                                   TextColor="{StaticResource OnSurfaceSecondary}" />
+                                        </VerticalStackLayout>
+                                        
+                                        <VerticalStackLayout Grid.Column="1" Spacing="4" HorizontalOptions="End">
+                                            <Label Text="{Binding MaxTime, StringFormat='Max: {0}ms'}"
+                                                   Style="{StaticResource CaptionStyle}"
+                                                   TextColor="{StaticResource Error}" />
+                                            <Label Text="{Binding Count, StringFormat='{0} veces'}"
+                                                   Style="{StaticResource CaptionStyle}"
+                                                   TextColor="{StaticResource OnSurfaceSecondary}" />
+                                        </VerticalStackLayout>
+                                    </Grid>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </VerticalStackLayout>
+                </controls:ModernCard>
+
+                <!-- Lazy Loading Stats -->
+                <controls:ModernCard>
+                    <VerticalStackLayout Spacing="16">
+                        <Label Text="Lazy Loading"
+                               Style="{StaticResource TitleStyle}" />
+                        
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="16">
+                            <VerticalStackLayout Grid.Column="0" Spacing="8">
+                                <Label Text="Total Items"
+                                       Style="{StaticResource CaptionStyle}"
+                                       TextColor="{StaticResource OnSurfaceSecondary}" />
+                                <Label Text="{Binding LazyLoadingStats.TotalItems}"
+                                       Style="{StaticResource BodyStyle}" />
+                            </VerticalStackLayout>
+                            
+                            <VerticalStackLayout Grid.Column="1" Spacing="8">
+                                <Label Text="Valid Items"
+                                       Style="{StaticResource CaptionStyle}"
+                                       TextColor="{StaticResource OnSurfaceSecondary}" />
+                                <Label Text="{Binding LazyLoadingStats.ValidItems}"
+                                       Style="{StaticResource BodyStyle}" />
+                            </VerticalStackLayout>
+                            
+                            <VerticalStackLayout Grid.Column="2" Spacing="8">
+                                <Label Text="Available Slots"
+                                       Style="{StaticResource CaptionStyle}"
+                                       TextColor="{StaticResource OnSurfaceSecondary}" />
+                                <Label Text="{Binding LazyLoadingStats.AvailableSemaphoreCount}"
+                                       Style="{StaticResource BodyStyle}" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </VerticalStackLayout>
+                </controls:ModernCard>
+
+                <!-- Acciones -->
+                <controls:ModernCard>
+                    <VerticalStackLayout Spacing="16">
+                        <Label Text="Acciones"
+                               Style="{StaticResource TitleStyle}" />
+                        
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="16">
+                            <Button Text="Limpiar Cache"
+                                    Command="{Binding ClearCacheCommand}"
+                                    Style="{StaticResource ModernButtonStyle}" />
+                            
+                            <Button Text="Limpiar Lazy Loading"
+                                    Command="{Binding ClearLazyLoadingCommand}"
+                                    Style="{StaticResource ModernButtonStyle}" />
+                        </Grid>
+                        
+                        <Button Text="Generar Reporte"
+                                Command="{Binding GenerateReportCommand}"
+                                Style="{StaticResource ModernButtonStyle}" />
+                    </VerticalStackLayout>
+                </controls:ModernCard>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Bottom Tab Bar - Simplified for now -->
+        <Grid Grid.Row="2" 
+              BackgroundColor="{StaticResource SurfaceSecondary}">
+            
+            <BoxView Grid.Row="0" 
+                     BackgroundColor="{StaticResource Outline}"
+                     HeightRequest="1"
+                     VerticalOptions="Start" />
+            
+            <Label Text="Monitor de Performance V4"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   Style="{StaticResource BodyStyle}" />
+        </Grid>
+    </Grid>
+</ContentPage> 

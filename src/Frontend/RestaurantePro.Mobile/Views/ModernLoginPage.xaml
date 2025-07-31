@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
+             x:Class="RestaurantePro.Mobile.Views.ModernLoginPage"
+             Title="Iniciar Sesión"
+             BackgroundColor="{StaticResource SurfacePrimary}">
+
+    <Grid RowDefinitions="*,Auto">
+        
+        <!-- Contenido Principal -->
+        <ScrollView Grid.Row="0" 
+                    VerticalScrollBarVisibility="Never"
+                    Padding="24">
+            
+            <VerticalStackLayout Spacing="40" 
+                                VerticalOptions="Center">
+                
+                <!-- Header con Logo Animado -->
+                <VerticalStackLayout Spacing="20" 
+                                    HorizontalOptions="Center"
+                                    Margin="0,40,0,20">
+                    
+                    <!-- Logo/Icono con Animación -->
+                    <Border BackgroundColor="{StaticResource PrimaryColor}"
+                            StrokeShape="Ellipse"
+                            WidthRequest="100"
+                            HeightRequest="100"
+                            HorizontalOptions="Center"
+                            AutomationProperties.Name="Logo de RestaurantePro"
+                            AutomationProperties.HelpText="Logo principal de la aplicación RestaurantePro">
+                        
+                        <Border.Shadow>
+                            <Shadow Brush="{StaticResource ShadowColor}" 
+                                    Offset="0,8" Radius="16" Opacity="0.3" />
+                        </Border.Shadow>
+                        
+                        <Label Text="🍽️"
+                               FontSize="50"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               AutomationProperties.Name="Icono de restaurante" />
+                    </Border>
+                    
+                    <!-- Título con Gradiente -->
+                    <Label Text="RestaurantePro"
+                           Style="{StaticResource H1Style}"
+                           HorizontalOptions="Center"
+                           AutomationProperties.Name="Título de la aplicación"
+                           AutomationProperties.HelpText="Nombre de la aplicación RestaurantePro" />
+                    
+                    <!-- Subtítulo -->
+                    <Label Text="Sistema de Gestión Restaurante"
+                           Style="{StaticResource BodyStyle}"
+                           HorizontalOptions="Center"
+                           TextColor="{StaticResource TextSecondary}"
+                           AutomationProperties.Name="Descripción del sistema"
+                           AutomationProperties.HelpText="Sistema de gestión integral para restaurantes" />
+                    
+                    <!-- Versión -->
+                    <Label Text="Versión 4.0 - Modernización Visual"
+                           Style="{StaticResource CaptionStyle}"
+                           HorizontalOptions="Center"
+                           TextColor="{StaticResource AccentColor}"
+                           AutomationProperties.Name="Versión de la aplicación"
+                           AutomationProperties.HelpText="Versión 4.0 con modernización visual" />
+                </VerticalStackLayout>
+
+                <!-- Formulario de Login Moderno -->
+                <controls:ModernCard Padding="24">
+                    <VerticalStackLayout Spacing="24">
+                        
+                        <!-- Título del Formulario -->
+                        <Label Text="Iniciar Sesión"
+                               Style="{StaticResource H2Style}"
+                               HorizontalOptions="Center"
+                               Margin="0,0,0,8"
+                               AutomationProperties.Name="Título del formulario de login"
+                               AutomationProperties.HelpText="Formulario para iniciar sesión en el sistema" />
+                        
+                        <!-- Campo Email -->
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Correo Electrónico"
+                                   Style="{StaticResource BodyStyle}"
+                                   FontAttributes="Bold"
+                                   AutomationProperties.Name="Etiqueta del campo de correo electrónico" />
+                            
+                            <controls:ModernEntry Text="{Binding Email}"
+                                                 Placeholder="ejemplo@restaurantepro.com"
+                                                 Icon="📧"
+                                                 Keyboard="Email"
+                                                 AccessibilityName="Campo de correo electrónico"
+                                                 AccessibilityHelpText="Ingrese su dirección de correo electrónico para iniciar sesión" />
+                        </VerticalStackLayout>
+
+                        <!-- Campo Contraseña -->
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Contraseña"
+                                   Style="{StaticResource BodyStyle}"
+                                   FontAttributes="Bold"
+                                   AutomationProperties.Name="Etiqueta del campo de contraseña" />
+                            
+                            <controls:ModernEntry Text="{Binding Password}"
+                                                 Placeholder="Ingrese su contraseña"
+                                                 Icon="🔒"
+                                                 IsPassword="True"
+                                                 AccessibilityName="Campo de contraseña"
+                                                 AccessibilityHelpText="Ingrese su contraseña de forma segura" />
+                        </VerticalStackLayout>
+
+                        <!-- Opciones Adicionales -->
+                        <HorizontalStackLayout Spacing="16" 
+                                               HorizontalOptions="FillAndExpand">
+                            
+                            <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                                <CheckBox IsChecked="{Binding RememberMe}"
+                                         AutomationProperties.Name="Recordar sesión"
+                                         AutomationProperties.HelpText="Marcar para recordar la sesión en este dispositivo" />
+                                <Label Text="Recordar sesión" 
+                                       VerticalOptions="Center"
+                                       Style="{StaticResource BodyStyle}"
+                                       AutomationProperties.Name="Texto de recordar sesión" />
+                            </HorizontalStackLayout>
+                            
+                            <controls:ModernButton Text="¿Olvidaste tu contraseña?"
+                                                  Style="{StaticResource SecondaryButtonStyle}"
+                                                  HeightRequest="36"
+                                                  Padding="12,8"
+                                                  AccessibilityName="Enlace de contraseña olvidada"
+                                                  AccessibilityHelpText="Toque para recuperar su contraseña si la ha olvidado" />
+                        </HorizontalStackLayout>
+
+                        <!-- Mensaje de Error -->
+                        <Border BackgroundColor="{StaticResource ErrorColor}"
+                                StrokeShape="RoundRectangle 8"
+                                Padding="16"
+                                IsVisible="{Binding HasError}"
+                                AutomationProperties.Name="Mensaje de error"
+                                AutomationProperties.HelpText="Mensaje informativo sobre errores en el formulario">
+                            
+                            <HorizontalStackLayout Spacing="12">
+                                <Label Text="⚠️"
+                                       FontSize="20"
+                                       VerticalOptions="Center"
+                                       AutomationProperties.Name="Icono de advertencia" />
+                                
+                                <Label Text="{Binding ErrorMessage}"
+                                       TextColor="White"
+                                       FontSize="14"
+                                       VerticalOptions="Center"
+                                       LineBreakMode="WordWrap"
+                                       AutomationProperties.Name="Texto del mensaje de error" />
+                            </HorizontalStackLayout>
+                        </Border>
+                    </VerticalStackLayout>
+                </controls:ModernCard>
+
+                <!-- Botón de Login -->
+                <controls:ModernButton Text="Iniciar Sesión"
+                                       Command="{Binding LoginCommand}"
+                                       IsEnabled="{Binding IsNotBusy}"
+                                       Style="{StaticResource PrimaryButtonStyle}"
+                                       HeightRequest="56"
+                                       Margin="0,16,0,0"
+                                       AccessibilityName="Botón de iniciar sesión"
+                                       AccessibilityHelpText="Toque para iniciar sesión con las credenciales ingresadas" />
+
+                <!-- Indicador de Carga -->
+                <VerticalStackLayout Spacing="12"
+                                    IsVisible="{Binding IsBusy}"
+                                    HorizontalOptions="Center"
+                                    AutomationProperties.Name="Indicador de carga"
+                                    AutomationProperties.HelpText="Indicador que muestra que el sistema está procesando el inicio de sesión">
+                    
+                    <ActivityIndicator IsRunning="True"
+                                      Color="{StaticResource PrimaryColor}"
+                                      WidthRequest="32"
+                                      HeightRequest="32"
+                                      AutomationProperties.Name="Spinner de carga" />
+                    
+                    <Label Text="Iniciando sesión..."
+                           Style="{StaticResource CaptionStyle}"
+                           TextColor="{StaticResource TextSecondary}"
+                           HorizontalOptions="Center"
+                           AutomationProperties.Name="Texto de estado de carga" />
+                </VerticalStackLayout>
+
+                <!-- Información de Seguridad -->
+                <controls:ModernCard Padding="16" 
+                                    BackgroundColor="{StaticResource InfoColor}"
+                                    Opacity="0.1"
+                                    AutomationProperties.Name="Información de seguridad"
+                                    AutomationProperties.HelpText="Información sobre la seguridad de la conexión">
+                    <HorizontalStackLayout Spacing="12">
+                        <Label Text="🔒"
+                               FontSize="20"
+                               VerticalOptions="Center"
+                               AutomationProperties.Name="Icono de seguridad" />
+                        
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="Conexión Segura"
+                                   Style="{StaticResource BodyStyle}"
+                                   FontAttributes="Bold"
+                                   TextColor="{StaticResource InfoColor}"
+                                   AutomationProperties.Name="Título de conexión segura" />
+                            
+                            <Label Text="Todos los datos se transmiten de forma encriptada"
+                                   Style="{StaticResource CaptionStyle}"
+                                   TextColor="{StaticResource InfoColor}"
+                                   AutomationProperties.Name="Descripción de seguridad" />
+                        </VerticalStackLayout>
+                    </HorizontalStackLayout>
+                </controls:ModernCard>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- Footer Moderno -->
+        <Border Grid.Row="1"
+                BackgroundColor="{StaticResource SurfaceSecondary}"
+                StrokeShape="RoundRectangle 20 20 0 0"
+                Padding="24,24"
+                AutomationProperties.Name="Pie de página"
+                AutomationProperties.HelpText="Información de contacto y ayuda">
+            
+            <VerticalStackLayout Spacing="12" 
+                                HorizontalOptions="Center">
+                
+                <Label Text="¿Primera vez usando RestaurantePro?"
+                       Style="{StaticResource BodyStyle}"
+                       HorizontalOptions="Center"
+                       AutomationProperties.Name="Pregunta de primera vez" />
+                
+                <Label Text="Contacta al administrador para obtener acceso"
+                       Style="{StaticResource CaptionStyle}"
+                       TextColor="{StaticResource TextSecondary}"
+                       HorizontalOptions="Center"
+                       AutomationProperties.Name="Instrucciones de contacto" />
+                
+                <!-- Información de Contacto -->
+                <HorizontalStackLayout Spacing="16" 
+                                       HorizontalOptions="Center"
+                                       Margin="0,8,0,0">
+                    
+                    <controls:ModernButton Text="📧 Email"
+                                          Style="{StaticResource SecondaryButtonStyle}"
+                                          HeightRequest="36"
+                                          Padding="12,8"
+                                          AccessibilityName="Botón de contacto por email"
+                                          AccessibilityHelpText="Toque para contactar por correo electrónico" />
+                    
+                    <controls:ModernButton Text="📞 Teléfono"
+                                          Style="{StaticResource SecondaryButtonStyle}"
+                                          HeightRequest="36"
+                                          Padding="12,8"
+                                          AccessibilityName="Botón de contacto por teléfono"
+                                          AccessibilityHelpText="Toque para contactar por teléfono" />
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+        </Border>
+
+    </Grid>
+
+</ContentPage> 

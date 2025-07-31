@@ -16,6 +16,7 @@
     xmlns:ingredientes="clr-namespace:RestaurantePro.Mobile.Features.Inventory.Ingredients.Pages"
     xmlns:categorias="clr-namespace:RestaurantePro.Mobile.Features.Categorias.Pages"
     xmlns:analytics="clr-namespace:RestaurantePro.Mobile.Features.Analytics.Pages"
+    xmlns:views="clr-namespace:RestaurantePro.Mobile.Views"
     Title="RestaurantePro">
 
     <!-- Shell Resources -->
@@ -31,8 +32,14 @@
     <!-- Login Page - Página inicial por defecto -->
     <ShellContent
         Title="Login"
-        ContentTemplate="{DataTemplate local:LoginPage}"
+        ContentTemplate="{DataTemplate views:ModernLoginPage}"
         Route="login" />
+
+    <!-- Onboarding Page -->
+    <ShellContent
+        Title="Onboarding"
+        ContentTemplate="{DataTemplate views:ModernOnboardingPage}"
+        Route="onboarding" />
 
     <!-- Main App - Con navegación por tabs -->
     <TabBar Route="main">
@@ -47,49 +54,49 @@
         <ShellContent
             Title="Mesas"
             Icon="table.png"
-            ContentTemplate="{DataTemplate mesas:MesasPage}"
+            ContentTemplate="{DataTemplate mesas:ModernMesasPage}"
             Route="mesas" />
 
         <!-- Comandas Tab -->
         <ShellContent
             Title="Comandas"
             Icon="order.png"
-            ContentTemplate="{DataTemplate comandas:ComandasPage}"
+            ContentTemplate="{DataTemplate comandas:ModernComandasPage}"
             Route="comandas" />
 
         <!-- Productos Tab -->
         <ShellContent
             Title="Productos"
             Icon="menu.png"
-            ContentTemplate="{DataTemplate productos:ProductosPage}"
+            ContentTemplate="{DataTemplate productos:ModernProductosPage}"
             Route="productos" />
 
         <!-- Preparaciones Tab -->
         <ShellContent
             Title="Cocina"
             Icon="kitchen.png"
-            ContentTemplate="{DataTemplate preparaciones:PreparacionesPage}"
+            ContentTemplate="{DataTemplate preparaciones:ModernPreparacionesPage}"
             Route="preparaciones" />
 
         <!-- Reservaciones Tab -->
         <ShellContent
             Title="Reservas"
             Icon="calendar.png"
-            ContentTemplate="{DataTemplate reservaciones:ReservacionesPage}"
+            ContentTemplate="{DataTemplate reservaciones:ModernReservacionesPage}"
             Route="reservaciones" />
 
         <!-- Facturas Tab -->
         <ShellContent
             Title="Facturar"
             Icon="invoice.png"
-            ContentTemplate="{DataTemplate facturas:FacturasPage}"
+            ContentTemplate="{DataTemplate facturas:ModernFacturasPage}"
             Route="facturas" />
 
         <!-- Clientes Tab -->
         <ShellContent
             Title="Clientes"
             Icon="users.png"
-            ContentTemplate="{DataTemplate clientes:ClientesPage}"
+            ContentTemplate="{DataTemplate clientes:ModernClientesPage}"
             Route="clientes" />
 
         <!-- Tarjetas Fidelización Tab -->
@@ -103,7 +110,7 @@
         <ShellContent
             Title="Ingredientes"
             Icon="ingredients.png"
-            ContentTemplate="{DataTemplate ingredientes:IngredientesPage}"
+            ContentTemplate="{DataTemplate ingredientes:ModernIngredientesPage}"
             Route="ingredientes" />
 
         <!-- Categorías Tab -->
@@ -119,6 +126,20 @@
             Icon="analytics.png"
             ContentTemplate="{DataTemplate analytics:AnalyticsPage}"
             Route="analytics" />
+
+        <!-- Configuración Tab -->
+        <ShellContent
+            Title="Configuración"
+            Icon="settings.png"
+            ContentTemplate="{DataTemplate views:ModernConfiguracionPage}"
+            Route="configuracion" />
+
+        <!-- Perfil Tab -->
+        <ShellContent
+            Title="Perfil"
+            Icon="profile.png"
+            ContentTemplate="{DataTemplate views:ModernPerfilPage}"
+            Route="perfil" />
     </TabBar>
 
 </Shell>

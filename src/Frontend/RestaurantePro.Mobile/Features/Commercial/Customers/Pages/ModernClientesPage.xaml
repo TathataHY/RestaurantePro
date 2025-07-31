@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
+             xmlns:converters="clr-namespace:RestaurantePro.Mobile.Converters"
+             xmlns:vm="clr-namespace:RestaurantePro.Mobile.Core.Features.Commercial.Customers.ViewModels;assembly=RestaurantePro.Mobile.Core"
+             x:Class="RestaurantePro.Mobile.Features.Commercial.Customers.Pages.ModernClientesPage"
+             x:DataType="vm:ClientesViewModel"
+             Title="{Binding Title}"
+             BackgroundColor="{StaticResource SurfacePrimary}">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        
+        <!-- Header con Estadísticas -->
+        <ScrollView Grid.Row="0" 
+                    HorizontalScrollBarVisibility="Never"
+                    Padding="16,8">
+            <HorizontalStackLayout Spacing="12">
+                
+                <!-- Card Total Clientes -->
+                <controls:ModernCard Padding="16" WidthRequest="120">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="👥" 
+                               FontSize="24" 
+                               HorizontalOptions="Center" />
+                        <Label Text="Total" 
+                               Style="{StaticResource CaptionStyle}" 
+                               HorizontalOptions="Center" />
+                        <Label Text="{Binding Estadisticas.TotalClientes}" 
+                               Style="{StaticResource H2Style}" 
+                               TextColor="{StaticResource TextPrimary}"
+                               HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </controls:ModernCard>
+
+                <!-- Card Activos -->
+                <controls:ModernCard Padding="16" WidthRequest="120">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="✅" 
+                               FontSize="24" 
+                               HorizontalOptions="Center" />
+                        <Label Text="Activos" 
+                               Style="{StaticResource CaptionStyle}" 
+                               HorizontalOptions="Center" />
+                        <Label Text="{Binding Estadisticas.ClientesActivos}" 
+                               Style="{StaticResource H2Style}" 
+                               TextColor="{StaticResource SuccessColor}"
+                               HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </controls:ModernCard>
+
+                <!-- Card Nuevos -->
+                <controls:ModernCard Padding="16" WidthRequest="120">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="🆕" 
+                               FontSize="24" 
+                               HorizontalOptions="Center" />
+                        <Label Text="Nuevos" 
+                               Style="{StaticResource CaptionStyle}" 
+                               HorizontalOptions="Center" />
+                        <Label Text="{Binding Estadisticas.ClientesNuevos}" 
+                               Style="{StaticResource H2Style}" 
+                               TextColor="{StaticResource InfoColor}"
+                               HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </controls:ModernCard>
+
+                <!-- Card VIP -->
+                <controls:ModernCard Padding="16" WidthRequest="120">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="👑" 
+                               FontSize="24" 
+                               HorizontalOptions="Center" />
+                        <Label Text="VIP" 
+                               Style="{StaticResource CaptionStyle}" 
+                               HorizontalOptions="Center" />
+                        <Label Text="{Binding Estadisticas.ClientesVIP}" 
+                               Style="{StaticResource H2Style}" 
+                               TextColor="{StaticResource PrimaryColor}"
+                               HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </controls:ModernCard>
+
+            </HorizontalStackLayout>
+        </ScrollView>
+
+        <!-- Contenido Principal -->
+        <Grid Grid.Row="1" RowDefinitions="Auto,*">
+            
+            <!-- Barra de Búsqueda y Filtros -->
+            <controls:ModernCard Grid.Row="0" Margin="16,8">
+                <VerticalStackLayout Spacing="16">
+                    
+                    <!-- Búsqueda -->
+                    <controls:ModernEntry Placeholder="Buscar clientes por nombre, email o teléfono..."
+                                         Text="{Binding TextoBusqueda}"
+                                         Icon="🔍" />
+                    
+                    <!-- Tabs de Filtro -->
+                    <controls:TabNavigation x:Name="FilterTabNavigation" />
+                    
+                    <!-- Botones de Acción -->
+                    <Grid ColumnDefinitions="*,*,*" RowDefinitions="*,*" 
+                          ColumnSpacing="8" RowSpacing="8">
+                        
+                        <Button Grid.Column="0" Grid.Row="0"
+                                Text="🔄 Refrescar"
+                                Command="{Binding RefreshClientesCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}" />
+                        
+                        <Button Grid.Column="1" Grid.Row="0"
+                                Text="📊 Estadísticas"
+                                Command="{Binding LoadEstadisticasCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}" />
+                        
+                        <Button Grid.Column="2" Grid.Row="0"
+                                Text="👑 VIP"
+                                Command="{Binding FiltrarVIPCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}" />
+                        
+                        <Button Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="3"
+                                Text="➕ Nuevo Cliente"
+                                Command="{Binding CrearClienteCommand}"
+                                Style="{StaticResource PrimaryButtonStyle}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </controls:ModernCard>
+
+            <!-- Lista de Clientes -->
+            <RefreshView Grid.Row="1"
+                         IsRefreshing="{Binding IsRefreshing}"
+                         Command="{Binding RefreshClientesCommand}">
+                
+                <CollectionView ItemsSource="{Binding Clientes}"
+                               SelectionMode="Single"
+                               SelectedItem="{Binding SelectedCliente}">
+                    
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical" />
+                    </CollectionView.ItemsLayout>
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <controls:ModernCard Margin="8">
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" 
+                                      ColumnDefinitions="*,Auto">
+                                    
+                                    <!-- Header de Cliente -->
+                                    <StackLayout Grid.Row="0" Grid.Column="0" 
+                                                 Orientation="Horizontal" 
+                                                 VerticalOptions="Center">
+                                        <Label Text="{Binding NombreCompleto}" 
+                                               Style="{StaticResource H3Style}" />
+                                        <Label Text="{Binding EsVIP, Converter={StaticResource VIPIconConverter}}" 
+                                               FontSize="16" 
+                                               Margin="8,0,0,0" />
+                                    </StackLayout>
+
+                                    <!-- Estado Badge -->
+                                    <Border Grid.Row="0" Grid.Column="1"
+                                            BackgroundColor="{Binding Estado, Converter={StaticResource EstadoColorConverter}}"
+                                            StrokeShape="RoundRectangle 12"
+                                            Padding="8,4">
+                                        <Label Text="{Binding Estado}" 
+                                               Style="{StaticResource CaptionStyle}"
+                                               TextColor="White"
+                                               HorizontalOptions="Center" />
+                                    </Border>
+
+                                    <!-- Información de Cliente -->
+                                    <VerticalStackLayout Grid.Row="1" Grid.ColumnSpan="2" 
+                                                         Spacing="4" Margin="0,12,0,0">
+                                        <Label Text="{Binding Email, StringFormat='📧 {0}'}" 
+                                               Style="{StaticResource BodyStyle}" />
+                                        <Label Text="{Binding Telefono, StringFormat='📞 {0}'}" 
+                                               Style="{StaticResource BodyStyle}" />
+                                        <Label Text="{Binding FechaRegistro, StringFormat='📅 Registro: {0:dd/MM/yyyy}'}" 
+                                               Style="{StaticResource BodyStyle}" />
+                                    </VerticalStackLayout>
+
+                                    <!-- Información Adicional -->
+                                    <VerticalStackLayout Grid.Row="2" Grid.ColumnSpan="2" 
+                                                         Spacing="2" Margin="0,8,0,0"
+                                                         IsVisible="{Binding Direccion, Converter={StaticResource IsNotNullConverter}}">
+                                        <Label Text="{Binding Direccion, StringFormat='📍 {0}'}" 
+                                               Style="{StaticResource CaptionStyle}" />
+                                        <Label Text="{Binding DocumentoIdentidad, StringFormat='🆔 {0}'}" 
+                                               Style="{StaticResource CaptionStyle}"
+                                               IsVisible="{Binding DocumentoIdentidad, Converter={StaticResource IsNotNullConverter}}" />
+                                    </VerticalStackLayout>
+
+                                    <!-- Estadísticas del Cliente -->
+                                    <VerticalStackLayout Grid.Row="3" Grid.ColumnSpan="2" 
+                                                         Spacing="2" Margin="0,8,0,0">
+                                        <Label Text="📊 Estadísticas:" 
+                                               Style="{StaticResource CaptionStyle}"
+                                               FontAttributes="Bold" />
+                                        <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto">
+                                            <Label Grid.Column="0" Grid.Row="0"
+                                                   Text="{Binding TotalVisitas, StringFormat='Visitas: {0}'}"
+                                                   Style="{StaticResource CaptionStyle}" />
+                                            <Label Grid.Column="1" Grid.Row="0"
+                                                   Text="{Binding TotalGastado, StringFormat='Gastado: {0:C}'}"
+                                                   Style="{StaticResource CaptionStyle}" />
+                                            <Label Grid.Column="2" Grid.Row="0"
+                                                   Text="{Binding UltimaVisita, StringFormat='Última: {0:dd/MM}'}"
+                                                   Style="{StaticResource CaptionStyle}" />
+                                        </Grid>
+                                    </VerticalStackLayout>
+
+                                    <!-- Botones de Acción -->
+                                    <HorizontalStackLayout Grid.Row="4" Grid.ColumnSpan="2" 
+                                                           Spacing="8" Margin="0,12,0,0">
+                                        
+                                        <Button Text="👁️ Ver"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.VerClienteCommand}"
+                                                CommandParameter="{Binding .}"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                HorizontalOptions="FillAndExpand" />
+                                        
+                                        <Button Text="✏️ Editar"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditarClienteCommand}"
+                                                CommandParameter="{Binding .}"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                HorizontalOptions="FillAndExpand" />
+                                        
+                                        <Button Text="👑 VIP"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ToggleVIPCommand}"
+                                                CommandParameter="{Binding .}"
+                                                Style="{StaticResource PrimaryButtonStyle}"
+                                                HorizontalOptions="FillAndExpand" />
+                                    </HorizontalStackLayout>
+                                </Grid>
+                            </controls:ModernCard>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+
+                    <!-- Estado Vacío -->
+                    <CollectionView.EmptyView>
+                        <VerticalStackLayout Spacing="16" 
+                                             VerticalOptions="Center"
+                                             HorizontalOptions="Center"
+                                             Padding="32">
+                            <Label Text="👥" 
+                                   FontSize="64" 
+                                   HorizontalOptions="Center" />
+                            <Label Text="No hay clientes registrados" 
+                                   Style="{StaticResource H2Style}" 
+                                   HorizontalOptions="Center" />
+                            <Label Text="Agrega clientes para gestionar tu base de datos" 
+                                   Style="{StaticResource BodyStyle}" 
+                                   TextColor="{StaticResource TextSecondary}"
+                                   HorizontalOptions="Center" />
+                            <Button Text="Agregar Primer Cliente"
+                                    Command="{Binding CrearClienteCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </CollectionView.EmptyView>
+                </CollectionView>
+            </RefreshView>
+        </Grid>
+
+        <!-- Bottom Navigation -->
+        <controls:ModernTabBar Grid.Row="2" x:Name="BottomTabBar" />
+    </Grid>
+
+    <!-- Floating Action Button -->
+    <controls:FloatingActionButton x:Name="MainFab"
+                                   Text="+"
+                                   Command="{Binding CrearClienteCommand}"
+                                   HorizontalOptions="End"
+                                   VerticalOptions="End"
+                                   Margin="16,0,16,80" />
+
+</ContentPage> 

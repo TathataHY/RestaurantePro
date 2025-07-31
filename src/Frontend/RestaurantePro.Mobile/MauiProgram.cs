@@ -30,6 +30,8 @@ using RestaurantePro.Mobile.Features.Analytics.Pages;
 using RestaurantePro.Mobile.UI.Pages;
 using RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels;
 using RestaurantePro.Mobile.Views;
+using RestaurantePro.Mobile.Core.Features.Onboarding.ViewModels;
+using RestaurantePro.Mobile.ViewModels;
 using System;
 using System.Net.Http.Headers;
 using RestaurantePro.Mobile.Core.Services.Navigation;
@@ -109,6 +111,22 @@ public static class MauiProgram
 		services.AddSingleton<INavigationService, MauiNavigationService>();
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Dialog.IDialogService, RestaurantePro.Mobile.Core.Services.Dialog.DialogService>();
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Platform.ISecureStorageService, RestaurantePro.Mobile.Core.Services.Platform.SecureStorageService>();
+		
+		// Servicios V4 - Sistema de Temas
+		services.AddSingleton<RestaurantePro.Mobile.Services.ThemeService>();
+		
+		// Servicios V4 - Optimización de Performance
+		services.AddSingleton<RestaurantePro.Mobile.Services.ImageOptimizationService>();
+		services.AddSingleton<RestaurantePro.Mobile.Services.AnimationOptimizationService>();
+		services.AddSingleton<RestaurantePro.Mobile.Services.PerformanceService>();
+		services.AddSingleton<RestaurantePro.Mobile.Services.CacheService>();
+		services.AddSingleton<RestaurantePro.Mobile.Services.LazyLoadingService>();
+		
+		// Servicios V4 - Accesibilidad
+		services.AddSingleton<RestaurantePro.Mobile.Services.AccessibilityService>();
+		
+		// Servicios V4 - Internacionalización
+		services.AddSingleton<RestaurantePro.Mobile.Services.LocalizationService>();
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService, RestaurantePro.Mobile.Core.Services.Authentication.AuthService>();
 		
 		// Servicios de dominio V1 - Solo desde Core
@@ -169,6 +187,9 @@ public static class MauiProgram
 			new RestaurantePro.Mobile.Core.Services.Analytics.AnalyticsService(
 				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>(),
 				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService>()));
+		
+		// Servicios V4 - Modernización Visual
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Preferences.IPreferencesService, RestaurantePro.Mobile.Core.Services.Preferences.PreferencesService>();
 	}
 
 	private static void RegisterViewsAndViewModelsV1(IServiceCollection services)
@@ -232,6 +253,29 @@ public static class MauiProgram
 		// Páginas - Categorías y Analytics
 		services.AddTransient<CategoriasPage>();
 		services.AddTransient<AnalyticsPage>();
+		
+		// ViewModels y Páginas V4 - Modernización Visual
+		services.AddTransient<RestaurantePro.Mobile.Core.Features.Onboarding.ViewModels.OnboardingViewModel>();
+		services.AddTransient<OnboardingPage>();
+		services.AddTransient<SplashPage>();
+		
+		// Páginas Modernas V4 - Operaciones
+		services.AddTransient<ModernMesasPage>();
+		services.AddTransient<ModernComandasPage>();
+		services.AddTransient<ModernProductosPage>();
+		services.AddTransient<ModernPreparacionesPage>();
+		services.AddTransient<ModernIngredientesPage>();
+		services.AddTransient<ModernReservacionesPage>();
+		services.AddTransient<ModernFacturasPage>();
+		services.AddTransient<ModernClientesPage>();
+		
+		// Páginas V4 - Configuración
+		services.AddTransient<ConfiguracionPage>();
+		services.AddTransient<RestaurantePro.Mobile.ViewModels.ConfiguracionViewModel>();
+		
+		// Páginas V4 - Performance Monitor
+		services.AddTransient<PerformanceMonitorViewModel>();
+		services.AddTransient<PerformanceMonitorPage>();
 	}
 
 	private static void RegisterNavigationRoutesV1()
@@ -264,5 +308,21 @@ public static class MauiProgram
 		// Rutas de categorías y analytics
 		Routing.RegisterRoute("categorias", typeof(CategoriasPage));
 		Routing.RegisterRoute("analytics", typeof(AnalyticsPage));
+		
+		// Rutas V4 - Modernización Visual
+		Routing.RegisterRoute("onboarding", typeof(OnboardingPage));
+		Routing.RegisterRoute("splash", typeof(SplashPage));
+		
+		// Rutas Modernas V4 - Operaciones
+		Routing.RegisterRoute("modernmesas", typeof(ModernMesasPage));
+		Routing.RegisterRoute("moderncomandas", typeof(ModernComandasPage));
+		Routing.RegisterRoute("modernproductos", typeof(ModernProductosPage));
+		Routing.RegisterRoute("modernpreparaciones", typeof(ModernPreparacionesPage));
+		Routing.RegisterRoute("moderningredientes", typeof(ModernIngredientesPage));
+		Routing.RegisterRoute("modernreservaciones", typeof(ModernReservacionesPage));
+		Routing.RegisterRoute("modernfacturas", typeof(ModernFacturasPage));
+		Routing.RegisterRoute("modernclientes", typeof(ModernClientesPage));
+		Routing.RegisterRoute("configuracion", typeof(ConfiguracionPage));
+		Routing.RegisterRoute("performancemonitor", typeof(PerformanceMonitorPage));
 	}
 }

@@ -1,45 +1,53 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
 <?xaml-comp compile="true" ?>
-<ResourceDictionary 
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
-    <!-- Note: For Android please see also Platforms\Android\Resources\values\colors.xml -->
+    <!-- ========================================
+         BRAND COLORS - Vibrantes y atractivos
+         ======================================== -->
+    <Color x:Key="PrimaryColor">#FF6B35</Color>      <!-- Naranja restaurante - VIBRANTE -->
+    <Color x:Key="SecondaryColor">#2ECC71</Color>    <!-- Verde éxito - FRESCO -->
+    <Color x:Key="AccentColor">#3498DB</Color>       <!-- Azul información - PROFESIONAL -->
 
-    <Color x:Key="Primary">#512BD4</Color>
-    <Color x:Key="PrimaryDark">#ac99ea</Color>
-    <Color x:Key="PrimaryDarkText">#242424</Color>
-    <Color x:Key="Secondary">#DFD8F7</Color>
-    <Color x:Key="SecondaryDarkText">#9880e5</Color>
-    <Color x:Key="Tertiary">#2B0B98</Color>
+    <!-- ========================================
+         SEMANTIC COLORS
+         ======================================== -->
+    <Color x:Key="SuccessColor">#27AE60</Color>      <!-- Verde éxito -->
+    <Color x:Key="WarningColor">#F39C12</Color>      <!-- Amarillo alerta -->
+    <Color x:Key="ErrorColor">#E74C3C</Color>        <!-- Rojo error -->
+    <Color x:Key="InfoColor">#3498DB</Color>         <!-- Azul información -->
 
-    <Color x:Key="White">White</Color>
-    <Color x:Key="Black">Black</Color>
-    <Color x:Key="Magenta">#D600AA</Color>
-    <Color x:Key="MidnightBlue">#190649</Color>
-    <Color x:Key="OffBlack">#1f1f1f</Color>
+    <!-- ========================================
+         NEUTRAL COLORS (Light Theme)
+         ======================================== -->
+    <Color x:Key="SurfacePrimary">#FFFFFF</Color>    <!-- Superficie principal -->
+    <Color x:Key="SurfaceSecondary">#F8F9FA</Color>  <!-- Superficie secundaria -->
+    <Color x:Key="TextPrimary">#212529</Color>       <!-- Texto principal -->
+    <Color x:Key="TextSecondary">#6C757D</Color>     <!-- Texto secundario -->
+    <Color x:Key="BorderColor">#E9ECEF</Color>       <!-- Bordes suaves -->
+    <Color x:Key="ShadowColor">#000000</Color>       <!-- Sombras -->
 
-    <Color x:Key="Gray100">#E1E1E1</Color>
-    <Color x:Key="Gray200">#C8C8C8</Color>
-    <Color x:Key="Gray300">#ACACAC</Color>
-    <Color x:Key="Gray400">#919191</Color>
-    <Color x:Key="Gray500">#6E6E6E</Color>
-    <Color x:Key="Gray600">#404040</Color>
-    <Color x:Key="Gray900">#212121</Color>
-    <Color x:Key="Gray950">#141414</Color>
+    <!-- ========================================
+         NEUTRAL COLORS (Dark Theme)
+         ======================================== -->
+    <Color x:Key="DarkSurfacePrimary">#121212</Color>
+    <Color x:Key="DarkSurfaceSecondary">#1E1E1E</Color>
+    <Color x:Key="DarkTextPrimary">#FFFFFF</Color>
+    <Color x:Key="DarkTextSecondary">#AAAAAA</Color>
 
-    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource Primary}"/>
-    <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource Secondary}"/>
-    <SolidColorBrush x:Key="TertiaryBrush" Color="{StaticResource Tertiary}"/>
-    <SolidColorBrush x:Key="WhiteBrush" Color="{StaticResource White}"/>
-    <SolidColorBrush x:Key="BlackBrush" Color="{StaticResource Black}"/>
+    <!-- ========================================
+         ESTADOS ESPECÍFICOS - MESAS
+         ======================================== -->
+    <Color x:Key="TableAvailable">#2ECC71</Color>    <!-- Verde - Disponible -->
+    <Color x:Key="TableOccupied">#E74C3C</Color>     <!-- Rojo - Ocupada -->
+    <Color x:Key="TableReserved">#F39C12</Color>     <!-- Amarillo - Reservada -->
 
-    <SolidColorBrush x:Key="Gray100Brush" Color="{StaticResource Gray100}"/>
-    <SolidColorBrush x:Key="Gray200Brush" Color="{StaticResource Gray200}"/>
-    <SolidColorBrush x:Key="Gray300Brush" Color="{StaticResource Gray300}"/>
-    <SolidColorBrush x:Key="Gray400Brush" Color="{StaticResource Gray400}"/>
-    <SolidColorBrush x:Key="Gray500Brush" Color="{StaticResource Gray500}"/>
-    <SolidColorBrush x:Key="Gray600Brush" Color="{StaticResource Gray600}"/>
-    <SolidColorBrush x:Key="Gray900Brush" Color="{StaticResource Gray900}"/>
-    <SolidColorBrush x:Key="Gray950Brush" Color="{StaticResource Gray950}"/>
+    <!-- ========================================
+         ESTADOS ESPECÍFICOS - COMANDAS
+         ======================================== -->
+    <Color x:Key="OrderPending">#F39C12</Color>      <!-- Amarillo - Pendiente -->
+    <Color x:Key="OrderInProgress">#3498DB</Color>   <!-- Azul - En progreso -->
+    <Color x:Key="OrderReady">#27AE60</Color>        <!-- Verde - Lista -->
+
 </ResourceDictionary>

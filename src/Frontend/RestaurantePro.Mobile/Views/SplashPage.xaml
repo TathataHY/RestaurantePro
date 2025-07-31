@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RestaurantePro.Mobile.Views.SplashPage"
+             BackgroundColor="{StaticResource SurfacePrimary}">
+
+    <Grid RowDefinitions="*,Auto">
+        
+        <!-- Contenido Principal Centrado -->
+        <VerticalStackLayout Grid.Row="0"
+                             Spacing="32"
+                             VerticalOptions="Center"
+                             HorizontalOptions="Center"
+                             Padding="24">
+            
+            <!-- Logo Animado -->
+            <Border BackgroundColor="{StaticResource PrimaryColor}"
+                    StrokeShape="Ellipse"
+                    WidthRequest="120"
+                    HeightRequest="120"
+                    HorizontalOptions="Center"
+                    x:Name="LogoContainer">
+                
+                <Border.Shadow>
+                    <Shadow Brush="{StaticResource ShadowColor}" 
+                            Offset="0,8" Radius="16" Opacity="0.3" />
+                </Border.Shadow>
+                
+                <Label Text="🍽️"
+                       FontSize="60"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       x:Name="LogoIcon" />
+            </Border>
+            
+            <!-- Título Principal -->
+            <VerticalStackLayout Spacing="8" 
+                                HorizontalOptions="Center">
+                
+                <Label Text="RestaurantePro"
+                       Style="{StaticResource H1Style}"
+                       HorizontalOptions="Center"
+                       x:Name="AppTitle" />
+                
+                <Label Text="Sistema de Gestión Restaurante"
+                       Style="{StaticResource BodyStyle}"
+                       TextColor="{StaticResource TextSecondary}"
+                       HorizontalOptions="Center"
+                       x:Name="AppSubtitle" />
+            </VerticalStackLayout>
+            
+            <!-- Versión -->
+            <Label Text="Versión 4.0 - Modernización Visual"
+                   Style="{StaticResource CaptionStyle}"
+                   TextColor="{StaticResource TextSecondary}"
+                   HorizontalOptions="Center"
+                   x:Name="VersionLabel" />
+        </VerticalStackLayout>
+        
+        <!-- Footer con Loading -->
+        <VerticalStackLayout Grid.Row="1"
+                             Spacing="16"
+                             Padding="24,32"
+                             HorizontalOptions="Center">
+            
+            <!-- Loading Indicator -->
+            <ActivityIndicator IsRunning="True"
+                              Color="{StaticResource PrimaryColor}"
+                              WidthRequest="32"
+                              HeightRequest="32"
+                              x:Name="LoadingIndicator" />
+            
+            <!-- Loading Text -->
+            <Label Text="Inicializando..."
+                   Style="{StaticResource BodyStyle}"
+                   TextColor="{StaticResource TextSecondary}"
+                   HorizontalOptions="Center"
+                   x:Name="LoadingText" />
+            
+            <!-- Progress Bar -->
+            <ProgressBar Progress="0"
+                         ProgressColor="{StaticResource PrimaryColor}"
+                         BackgroundColor="{StaticResource SurfaceSecondary}"
+                         HeightRequest="4"
+                         WidthRequest="200"
+                         x:Name="ProgressBar" />
+        </VerticalStackLayout>
+    </Grid>
+
+</ContentPage> 

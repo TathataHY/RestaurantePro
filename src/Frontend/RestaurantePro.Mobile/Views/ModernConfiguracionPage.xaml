@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
+             x:Class="RestaurantePro.Mobile.Views.ModernConfiguracionPage"
+             Title="Configuración"
+             BackgroundColor="{StaticResource SurfacePrimary}">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        
+        <!-- Header con TabNavigation -->
+        <controls:TabNavigation x:Name="FilterTabs"
+                               Grid.Row="0"
+                               Margin="16,8,16,0" />
+
+        <!-- Contenido Principal -->
+        <ScrollView Grid.Row="1" Padding="16">
+            <StackLayout Spacing="24">
+                
+                <!-- Header -->
+                <StackLayout Spacing="8">
+                    <Label Text="Configuración"
+                           Style="{StaticResource H1Style}"
+                           HorizontalOptions="Center" />
+                    <Label Text="Personaliza tu experiencia"
+                           Style="{StaticResource CaptionStyle}"
+                           HorizontalOptions="Center" />
+                </StackLayout>
+
+                <!-- Sección de Tema -->
+                <controls:ModernCard>
+                    <StackLayout Spacing="16">
+                        <Label Text="Apariencia"
+                               Style="{StaticResource H2Style}" />
+                        
+                        <Label Text="Elige el tema que prefieras para la aplicación"
+                               Style="{StaticResource BodyStyle}" />
+                        
+                        <!-- Opciones de Tema -->
+                        <StackLayout Spacing="12">
+                            <!-- Tema Claro -->
+                            <Border StrokeShape="RoundRectangle 8"
+                                    BackgroundColor="{StaticResource SurfaceSecondary}"
+                                    Stroke="{StaticResource BorderColor}"
+                                    StrokeThickness="1"
+                                    Padding="16">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Image Grid.Column="0"
+                                           Source="sun.png"
+                                           HeightRequest="24"
+                                           WidthRequest="24"
+                                           VerticalOptions="Center" />
+                                    <StackLayout Grid.Column="1" 
+                                               Margin="12,0,0,0">
+                                        <Label Text="Tema Claro"
+                                               Style="{StaticResource BodyStyle}"
+                                               FontAttributes="Bold" />
+                                        <Label Text="Interfaz clara y brillante"
+                                               Style="{StaticResource CaptionStyle}" />
+                                    </StackLayout>
+                                    <RadioButton Grid.Column="2"
+                                               IsChecked="{Binding IsLightTheme}"
+                                               GroupName="ThemeGroup"
+                                               VerticalOptions="Center" />
+                                </Grid>
+                            </Border>
+
+                            <!-- Tema Oscuro -->
+                            <Border StrokeShape="RoundRectangle 8"
+                                    BackgroundColor="{StaticResource SurfaceSecondary}"
+                                    Stroke="{StaticResource BorderColor}"
+                                    StrokeThickness="1"
+                                    Padding="16">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Image Grid.Column="0"
+                                           Source="moon.png"
+                                           HeightRequest="24"
+                                           WidthRequest="24"
+                                           VerticalOptions="Center" />
+                                    <StackLayout Grid.Column="1" 
+                                               Margin="12,0,0,0">
+                                        <Label Text="Tema Oscuro"
+                                               Style="{StaticResource BodyStyle}"
+                                               FontAttributes="Bold" />
+                                        <Label Text="Interfaz oscura y elegante"
+                                               Style="{StaticResource CaptionStyle}" />
+                                    </StackLayout>
+                                    <RadioButton Grid.Column="2"
+                                               IsChecked="{Binding IsDarkTheme}"
+                                               GroupName="ThemeGroup"
+                                               VerticalOptions="Center" />
+                                </Grid>
+                            </Border>
+
+                            <!-- Tema del Sistema -->
+                            <Border StrokeShape="RoundRectangle 8"
+                                    BackgroundColor="{StaticResource SurfaceSecondary}"
+                                    Stroke="{StaticResource BorderColor}"
+                                    StrokeThickness="1"
+                                    Padding="16">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <Image Grid.Column="0"
+                                           Source="settings.png"
+                                           HeightRequest="24"
+                                           WidthRequest="24"
+                                           VerticalOptions="Center" />
+                                    <StackLayout Grid.Column="1" 
+                                               Margin="12,0,0,0">
+                                        <Label Text="Tema del Sistema"
+                                               Style="{StaticResource BodyStyle}"
+                                               FontAttributes="Bold" />
+                                        <Label Text="Sigue la configuración del dispositivo"
+                                               Style="{StaticResource CaptionStyle}" />
+                                    </StackLayout>
+                                    <RadioButton Grid.Column="2"
+                                               IsChecked="{Binding IsSystemTheme}"
+                                               GroupName="ThemeGroup"
+                                               VerticalOptions="Center" />
+                                </Grid>
+                            </Border>
+                        </StackLayout>
+                    </StackLayout>
+                </controls:ModernCard>
+
+                <!-- Sección de Notificaciones -->
+                <controls:ModernCard>
+                    <StackLayout Spacing="16">
+                        <Label Text="Notificaciones"
+                               Style="{StaticResource H2Style}" />
+                        
+                        <Label Text="Configura cómo recibir notificaciones"
+                               Style="{StaticResource BodyStyle}" />
+                        
+                        <!-- Opciones de Notificaciones -->
+                        <StackLayout Spacing="12">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackLayout Grid.Column="0">
+                                    <Label Text="Notificaciones Push"
+                                           Style="{StaticResource BodyStyle}"
+                                           FontAttributes="Bold" />
+                                    <Label Text="Recibir notificaciones en tiempo real"
+                                           Style="{StaticResource CaptionStyle}" />
+                                </StackLayout>
+                                <Switch Grid.Column="1"
+                                       IsToggled="{Binding PushNotificationsEnabled}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackLayout Grid.Column="0">
+                                    <Label Text="Sonidos"
+                                           Style="{StaticResource BodyStyle}"
+                                           FontAttributes="Bold" />
+                                    <Label Text="Reproducir sonidos en notificaciones"
+                                           Style="{StaticResource CaptionStyle}" />
+                                </StackLayout>
+                                <Switch Grid.Column="1"
+                                       IsToggled="{Binding SoundEnabled}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackLayout Grid.Column="0">
+                                    <Label Text="Vibración"
+                                           Style="{StaticResource BodyStyle}"
+                                           FontAttributes="Bold" />
+                                    <Label Text="Vibrar al recibir notificaciones"
+                                           Style="{StaticResource CaptionStyle}" />
+                                </StackLayout>
+                                <Switch Grid.Column="1"
+                                       IsToggled="{Binding VibrationEnabled}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                        </StackLayout>
+                    </StackLayout>
+                </controls:ModernCard>
+
+                <!-- Sección de Performance -->
+                <controls:ModernCard>
+                    <StackLayout Spacing="16">
+                        <Label Text="Performance y Optimización"
+                               Style="{StaticResource H2Style}" />
+                        
+                        <Label Text="Configura la optimización de la aplicación"
+                               Style="{StaticResource BodyStyle}" />
+                        
+                        <!-- Opciones de Performance -->
+                        <StackLayout Spacing="12">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackLayout Grid.Column="0">
+                                    <Label Text="Animaciones"
+                                           Style="{StaticResource BodyStyle}"
+                                           FontAttributes="Bold" />
+                                    <Label Text="Habilitar animaciones fluidas"
+                                           Style="{StaticResource CaptionStyle}" />
+                                </StackLayout>
+                                <Switch Grid.Column="1"
+                                       IsToggled="{Binding AnimationsEnabled}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackLayout Grid.Column="0">
+                                    <Label Text="Optimización de Imágenes"
+                                           Style="{StaticResource BodyStyle}"
+                                           FontAttributes="Bold" />
+                                    <Label Text="Comprimir imágenes automáticamente"
+                                           Style="{StaticResource CaptionStyle}" />
+                                </StackLayout>
+                                <Switch Grid.Column="1"
+                                       IsToggled="{Binding ImageOptimizationEnabled}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackLayout Grid.Column="0">
+                                    <Label Text="Caché de Imágenes"
+                                           Style="{StaticResource BodyStyle}"
+                                           FontAttributes="Bold" />
+                                    <Label Text="Guardar imágenes en caché"
+                                           Style="{StaticResource CaptionStyle}" />
+                                </StackLayout>
+                                <Switch Grid.Column="1"
+                                       IsToggled="{Binding ImageCacheEnabled}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                        </StackLayout>
+                        
+                        <!-- Calidad de Animación -->
+                        <StackLayout Spacing="8">
+                            <Label Text="Calidad de Animación"
+                                   Style="{StaticResource BodyStyle}"
+                                   FontAttributes="Bold" />
+                            <Picker Title="Seleccionar calidad"
+                                    SelectedItem="{Binding SelectedAnimationQuality}"
+                                    ItemsSource="{Binding AnimationQualityOptions}" />
+                        </StackLayout>
+                        
+                        <!-- Botones de Performance -->
+                        <StackLayout Spacing="12">
+                            <Button Text="Limpiar Caché de Imágenes"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Command="{Binding ClearImageCacheCommand}" />
+                            
+                            <Button Text="Optimizar Rendimiento"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Command="{Binding OptimizePerformanceCommand}" />
+                        </StackLayout>
+                    </StackLayout>
+                </controls:ModernCard>
+
+                <!-- Sección de Datos -->
+                <controls:ModernCard>
+                    <StackLayout Spacing="16">
+                        <Label Text="Datos y Almacenamiento"
+                               Style="{StaticResource H2Style}" />
+                        
+                        <Label Text="Gestiona el almacenamiento y sincronización"
+                               Style="{StaticResource BodyStyle}" />
+                        
+                        <!-- Opciones de Datos -->
+                        <StackLayout Spacing="12">
+                            <Button Text="Limpiar Caché"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Command="{Binding ClearCacheCommand}" />
+                            
+                            <Button Text="Sincronizar Datos"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Command="{Binding SyncDataCommand}" />
+                            
+                            <Button Text="Exportar Datos"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Command="{Binding ExportDataCommand}" />
+                        </StackLayout>
+                    </StackLayout>
+                </controls:ModernCard>
+
+                <!-- Información de la App -->
+                <controls:ModernCard>
+                    <StackLayout Spacing="16">
+                        <Label Text="Acerca de"
+                               Style="{StaticResource H2Style}" />
+                        
+                        <StackLayout Spacing="8">
+                            <Label Text="RestaurantePro Mobile"
+                                   Style="{StaticResource BodyStyle}"
+                                   FontAttributes="Bold" />
+                            <Label Text="Versión 4.0.0"
+                                   Style="{StaticResource CaptionStyle}" />
+                            <Label Text="© 2024 RestaurantePro"
+                                   Style="{StaticResource CaptionStyle}" />
+                        </StackLayout>
+                    </StackLayout>
+                </controls:ModernCard>
+
+                <!-- Sección de Accesibilidad -->
+                <controls:ModernCard>
+                    <StackLayout Spacing="16">
+                        <Label Text="Accesibilidad Universal"
+                               Style="{StaticResource H2Style}" />
+                        
+                        <Label Text="Configura la accesibilidad para todos los usuarios"
+                               Style="{StaticResource BodyStyle}" />
+                        
+                        <!-- Opciones de Accesibilidad -->
+                        <StackLayout Spacing="12">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackLayout Grid.Column="0">
+                                    <Label Text="Lector de Pantalla"
+                                           Style="{StaticResource BodyStyle}"
+                                           FontAttributes="Bold" />
+                                    <Label Text="Anuncios de voz para navegación"
+                                           Style="{StaticResource CaptionStyle}" />
+                                </StackLayout>
+                                <Switch Grid.Column="1"
+                                       IsToggled="{Binding ScreenReaderEnabled}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                            
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackLayout Grid.Column="0">
+                                    <Label Text="Navegación por Teclado"
+                                           Style="{StaticResource BodyStyle}"
+                                           FontAttributes="Bold" />
+                                    <Label Text="Soporte para navegación con teclado"
+                                           Style="{StaticResource CaptionStyle}" />
+                                </StackLayout>
+                                <Switch Grid.Column="1"
+                                       IsToggled="{Binding KeyboardNavigationEnabled}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                            
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackLayout Grid.Column="0">
+                                    <Label Text="Contraste Alto"
+                                           Style="{StaticResource BodyStyle}"
+                                           FontAttributes="Bold" />
+                                    <Label Text="Mejorar contraste visual"
+                                           Style="{StaticResource CaptionStyle}" />
+                                </StackLayout>
+                                <Switch Grid.Column="1"
+                                       IsToggled="{Binding HighContrastEnabled}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                            
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackLayout Grid.Column="0">
+                                    <Label Text="Texto Grande"
+                                           Style="{StaticResource BodyStyle}"
+                                           FontAttributes="Bold" />
+                                    <Label Text="Aumentar tamaño de texto"
+                                           Style="{StaticResource CaptionStyle}" />
+                                </StackLayout>
+                                <Switch Grid.Column="1"
+                                       IsToggled="{Binding LargeTextEnabled}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                            
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackLayout Grid.Column="0">
+                                    <Label Text="Animaciones Reducidas"
+                                           Style="{StaticResource BodyStyle}"
+                                           FontAttributes="Bold" />
+                                    <Label Text="Reducir movimiento en pantalla"
+                                           Style="{StaticResource CaptionStyle}" />
+                                </StackLayout>
+                                <Switch Grid.Column="1"
+                                       IsToggled="{Binding ReducedMotionEnabled}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                            
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackLayout Grid.Column="0">
+                                    <Label Text="Feedback Háptico"
+                                           Style="{StaticResource BodyStyle}"
+                                           FontAttributes="Bold" />
+                                    <Label Text="Vibración al interactuar"
+                                           Style="{StaticResource CaptionStyle}" />
+                                </StackLayout>
+                                <Switch Grid.Column="1"
+                                       IsToggled="{Binding HapticFeedbackEnabled}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                        </StackLayout>
+                        
+                        <!-- Botones de Accesibilidad -->
+                        <StackLayout Spacing="12">
+                            <Button Text="Test de Accesibilidad"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Command="{Binding TestAccessibilityCommand}" />
+                            
+                            <Button Text="Restaurar Configuración"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Command="{Binding ResetAccessibilityCommand}" />
+                        </StackLayout>
+                    </StackLayout>
+                </controls:ModernCard>
+
+                <!-- Sección de Idioma -->
+                <controls:ModernCard>
+                    <StackLayout Spacing="16">
+                        <Label Text="Idioma"
+                               Style="{StaticResource H2Style}" />
+                        
+                        <Label Text="Selecciona el idioma de la aplicación"
+                               Style="{StaticResource BodyStyle}" />
+                        
+                        <!-- Opciones de Idioma -->
+                        <StackLayout Spacing="12">
+                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto" ColumnSpacing="15">
+                                <StackLayout Grid.Column="0">
+                                    <Label Text="Idioma de la Aplicación"
+                                           Style="{StaticResource BodyStyle}"
+                                           FontAttributes="Bold" />
+                                    <Label Text="Cambia el idioma de la interfaz"
+                                           Style="{StaticResource CaptionStyle}" />
+                                </StackLayout>
+                                <Picker Grid.Column="1"
+                                       Title="Seleccionar Idioma" 
+                                       SelectedItem="{Binding SelectedLanguage}"
+                                       ItemsSource="{Binding AvailableLanguages}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                            
+                            <Label Text="{Binding CurrentLanguageInfo}" 
+                                   Style="{StaticResource CaptionStyle}"
+                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
+                                   Margin="0,5,0,0" />
+                            
+                            <Button Text="Aplicar Cambios de Idioma" 
+                                    Command="{Binding ApplyLanguageCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}" />
+                        </StackLayout>
+                    </StackLayout>
+                </controls:ModernCard>
+
+            </StackLayout>
+        </ScrollView>
+
+        <!-- Bottom Navigation -->
+        <controls:ModernTabBar x:Name="BottomTabBar"
+                              Grid.Row="2"
+                              Margin="16,0,16,16" />
+
+    </Grid>
+
+</ContentPage> 

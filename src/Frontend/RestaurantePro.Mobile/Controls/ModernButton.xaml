@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RestaurantePro.Mobile.Controls.ModernButton"
+             x:Name="ModernButtonControl">
+    
+    <Border x:Name="ButtonBorder"
+            StrokeShape="RoundRectangle 8"
+            BackgroundColor="{Binding Source={x:Reference ModernButtonControl}, Path=BackgroundColor}"
+            Stroke="{Binding Source={x:Reference ModernButtonControl}, Path=BorderColor}"
+            StrokeThickness="{Binding Source={x:Reference ModernButtonControl}, Path=BorderWidth}"
+            AutomationProperties.Name="{Binding Source={x:Reference ModernButtonControl}, Path=AccessibilityName}"
+            AutomationProperties.HelpText="{Binding Source={x:Reference ModernButtonControl}, Path=AccessibilityHelpText}"
+            AutomationProperties.IsInAccessibleTree="True"
+            AutomationProperties.Role="Button">
+        
+        <Border.Shadow>
+            <Shadow Brush="{StaticResource ShadowColor}" 
+                    Offset="0,2" 
+                    Radius="4" 
+                    Opacity="0.2" />
+        </Border.Shadow>
+        
+        <Grid x:Name="ButtonContent"
+              Padding="{Binding Source={x:Reference ModernButtonControl}, Path=Padding}"
+              HeightRequest="{Binding Source={x:Reference ModernButtonControl}, Path=HeightRequest}">
+            
+            <!-- Icono (opcional) -->
+            <Image x:Name="ButtonIcon"
+                   Source="{Binding Source={x:Reference ModernButtonControl}, Path=IconSource}"
+                   WidthRequest="20"
+                   HeightRequest="20"
+                   HorizontalOptions="Start"
+                   VerticalOptions="Center"
+                   IsVisible="{Binding Source={x:Reference ModernButtonControl}, Path=ShowIcon}"
+                   AutomationProperties.Name="{Binding Source={x:Reference ModernButtonControl}, Path=IconDescription}"
+                   AutomationProperties.HelpText="Icono descriptivo del botón" />
+            
+            <!-- Texto del botón -->
+            <Label x:Name="ButtonText"
+                   Text="{Binding Source={x:Reference ModernButtonControl}, Path=Text}"
+                   TextColor="{Binding Source={x:Reference ModernButtonControl}, Path=TextColor}"
+                   FontSize="{Binding Source={x:Reference ModernButtonControl}, Path=FontSize}"
+                   FontAttributes="{Binding Source={x:Reference ModernButtonControl}, Path=FontAttributes}"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   HorizontalTextAlignment="Center"
+                   AutomationProperties.Name="{Binding Source={x:Reference ModernButtonControl}, Path=Text}"
+                   AutomationProperties.HelpText="Texto del botón" />
+            
+            <!-- Indicador de carga (opcional) -->
+            <ActivityIndicator x:Name="LoadingIndicator"
+                              IsRunning="{Binding Source={x:Reference ModernButtonControl}, Path=IsLoading}"
+                              Color="{Binding Source={x:Reference ModernButtonControl}, Path=TextColor}"
+                              WidthRequest="16"
+                              HeightRequest="16"
+                              HorizontalOptions="End"
+                              VerticalOptions="Center"
+                              IsVisible="{Binding Source={x:Reference ModernButtonControl}, Path=IsLoading}"
+                              AutomationProperties.Name="Indicador de carga"
+                              AutomationProperties.HelpText="El botón está procesando la acción" />
+            
+        </Grid>
+        
+    </Border>
+    
+</ContentView> 

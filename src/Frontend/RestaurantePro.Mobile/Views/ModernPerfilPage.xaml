@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
+             x:Class="RestaurantePro.Mobile.Views.ModernPerfilPage"
+             Title="Perfil"
+             BackgroundColor="{StaticResource SurfacePrimary}">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        
+        <!-- Header con TabNavigation -->
+        <controls:TabNavigation x:Name="FilterTabs"
+                               Grid.Row="0"
+                               Margin="16,8,16,0" />
+
+        <!-- Contenido Principal -->
+        <ScrollView Grid.Row="1" Padding="16">
+            <StackLayout Spacing="24">
+                
+                <!-- Header del Perfil -->
+                <StackLayout Spacing="16" HorizontalOptions="Center">
+                    <!-- Avatar -->
+                    <Border StrokeShape="Ellipse"
+                            BackgroundColor="{StaticResource PrimaryColor}"
+                            Stroke="{StaticResource BorderColor}"
+                            StrokeThickness="2"
+                            WidthRequest="120"
+                            HeightRequest="120">
+                        <Image Source="profile_avatar.png"
+                               WidthRequest="100"
+                               HeightRequest="100"
+                               Aspect="AspectFill" />
+                    </Border>
+                    
+                    <!-- Información del Usuario -->
+                    <StackLayout Spacing="8" HorizontalOptions="Center">
+                        <Label Text="{Binding NombreCompleto}"
+                               Style="{StaticResource H1Style}"
+                               HorizontalOptions="Center" />
+                        <Label Text="{Binding Rol}"
+                               Style="{StaticResource BodyStyle}"
+                               TextColor="{StaticResource Gray600}"
+                               HorizontalOptions="Center" />
+                        <Label Text="{Binding Email}"
+                               Style="{StaticResource CaptionStyle}"
+                               TextColor="{StaticResource Gray500}"
+                               HorizontalOptions="Center" />
+                    </StackLayout>
+                    
+                    <!-- Botón Editar Perfil -->
+                    <Button Text="Editar Perfil"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Command="{Binding EditarPerfilCommand}"
+                            HorizontalOptions="Center" />
+                </StackLayout>
+
+                <!-- Estadísticas del Usuario -->
+                <controls:ModernCard>
+                    <StackLayout Spacing="16">
+                        <Label Text="Estadísticas"
+                               Style="{StaticResource H2Style}" />
+                        
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                            <!-- Comandas Atendidas -->
+                            <StackLayout Grid.Column="0" 
+                                       HorizontalOptions="Center"
+                                       Spacing="4">
+                                <Label Text="{Binding ComandasAtendidas}"
+                                       Style="{StaticResource H2Style}"
+                                       HorizontalOptions="Center"
+                                       TextColor="{StaticResource PrimaryColor}" />
+                                <Label Text="Comandas"
+                                       Style="{StaticResource CaptionStyle}"
+                                       HorizontalOptions="Center" />
+                            </StackLayout>
+                            
+                            <!-- Horas Trabajadas -->
+                            <StackLayout Grid.Column="1" 
+                                       HorizontalOptions="Center"
+                                       Spacing="4">
+                                <Label Text="{Binding HorasTrabajadas}"
+                                       Style="{StaticResource H2Style}"
+                                       HorizontalOptions="Center"
+                                       TextColor="{StaticResource SecondaryColor}" />
+                                <Label Text="Horas"
+                                       Style="{StaticResource CaptionStyle}"
+                                       HorizontalOptions="Center" />
+                            </StackLayout>
+                            
+                            <!-- Calificación -->
+                            <StackLayout Grid.Column="2" 
+                                       HorizontalOptions="Center"
+                                       Spacing="4">
+                                <Label Text="{Binding Calificacion}"
+                                       Style="{StaticResource H2Style}"
+                                       HorizontalOptions="Center"
+                                       TextColor="{StaticResource SuccessColor}" />
+                                <Label Text="Rating"
+                                       Style="{StaticResource CaptionStyle}"
+                                       HorizontalOptions="Center" />
+                            </StackLayout>
+                        </Grid>
+                    </StackLayout>
+                </controls:ModernCard>
+
+                <!-- Información Personal -->
+                <controls:ModernCard>
+                    <StackLayout Spacing="16">
+                        <Label Text="Información Personal"
+                               Style="{StaticResource H2Style}" />
+                        
+                        <StackLayout Spacing="12">
+                            <!-- Nombre -->
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Image Grid.Column="0"
+                                       Source="user.png"
+                                       HeightRequest="20"
+                                       WidthRequest="20"
+                                       VerticalOptions="Center" />
+                                <StackLayout Grid.Column="1">
+                                    <Label Text="Nombre Completo"
+                                           Style="{StaticResource CaptionStyle}"
+                                           TextColor="{StaticResource Gray600}" />
+                                    <Label Text="{Binding NombreCompleto}"
+                                           Style="{StaticResource BodyStyle}" />
+                                </StackLayout>
+                            </Grid>
+                            
+                            <!-- Email -->
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Image Grid.Column="0"
+                                       Source="email.png"
+                                       HeightRequest="20"
+                                       WidthRequest="20"
+                                       VerticalOptions="Center" />
+                                <StackLayout Grid.Column="1">
+                                    <Label Text="Correo Electrónico"
+                                           Style="{StaticResource CaptionStyle}"
+                                           TextColor="{StaticResource Gray600}" />
+                                    <Label Text="{Binding Email}"
+                                           Style="{StaticResource BodyStyle}" />
+                                </StackLayout>
+                            </Grid>
+                            
+                            <!-- Teléfono -->
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Image Grid.Column="0"
+                                       Source="phone.png"
+                                       HeightRequest="20"
+                                       WidthRequest="20"
+                                       VerticalOptions="Center" />
+                                <StackLayout Grid.Column="1">
+                                    <Label Text="Teléfono"
+                                           Style="{StaticResource CaptionStyle}"
+                                           TextColor="{StaticResource Gray600}" />
+                                    <Label Text="{Binding Telefono}"
+                                           Style="{StaticResource BodyStyle}" />
+                                </StackLayout>
+                            </Grid>
+                            
+                            <!-- Fecha de Nacimiento -->
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Image Grid.Column="0"
+                                       Source="calendar.png"
+                                       HeightRequest="20"
+                                       WidthRequest="20"
+                                       VerticalOptions="Center" />
+                                <StackLayout Grid.Column="1">
+                                    <Label Text="Fecha de Nacimiento"
+                                           Style="{StaticResource CaptionStyle}"
+                                           TextColor="{StaticResource Gray600}" />
+                                    <Label Text="{Binding FechaNacimiento, StringFormat='{0:dd/MM/yyyy}'}"
+                                           Style="{StaticResource BodyStyle}" />
+                                </StackLayout>
+                            </Grid>
+                        </StackLayout>
+                    </StackLayout>
+                </controls:ModernCard>
+
+                <!-- Información Laboral -->
+                <controls:ModernCard>
+                    <StackLayout Spacing="16">
+                        <Label Text="Información Laboral"
+                               Style="{StaticResource H2Style}" />
+                        
+                        <StackLayout Spacing="12">
+                            <!-- Rol -->
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Image Grid.Column="0"
+                                       Source="badge.png"
+                                       HeightRequest="20"
+                                       WidthRequest="20"
+                                       VerticalOptions="Center" />
+                                <StackLayout Grid.Column="1">
+                                    <Label Text="Rol"
+                                           Style="{StaticResource CaptionStyle}"
+                                           TextColor="{StaticResource Gray600}" />
+                                    <Label Text="{Binding Rol}"
+                                           Style="{StaticResource BodyStyle}" />
+                                </StackLayout>
+                            </Grid>
+                            
+                            <!-- Departamento -->
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Image Grid.Column="0"
+                                       Source="department.png"
+                                       HeightRequest="20"
+                                       WidthRequest="20"
+                                       VerticalOptions="Center" />
+                                <StackLayout Grid.Column="1">
+                                    <Label Text="Departamento"
+                                           Style="{StaticResource CaptionStyle}"
+                                           TextColor="{StaticResource Gray600}" />
+                                    <Label Text="{Binding Departamento}"
+                                           Style="{StaticResource BodyStyle}" />
+                                </StackLayout>
+                            </Grid>
+                            
+                            <!-- Fecha de Ingreso -->
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Image Grid.Column="0"
+                                       Source="start_date.png"
+                                       HeightRequest="20"
+                                       WidthRequest="20"
+                                       VerticalOptions="Center" />
+                                <StackLayout Grid.Column="1">
+                                    <Label Text="Fecha de Ingreso"
+                                           Style="{StaticResource CaptionStyle}"
+                                           TextColor="{StaticResource Gray600}" />
+                                    <Label Text="{Binding FechaIngreso, StringFormat='{0:dd/MM/yyyy}'}"
+                                           Style="{StaticResource BodyStyle}" />
+                                </StackLayout>
+                            </Grid>
+                            
+                            <!-- Estado -->
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                <Image Grid.Column="0"
+                                       Source="status.png"
+                                       HeightRequest="20"
+                                       WidthRequest="20"
+                                       VerticalOptions="Center" />
+                                <StackLayout Grid.Column="1">
+                                    <Label Text="Estado"
+                                           Style="{StaticResource CaptionStyle}"
+                                           TextColor="{StaticResource Gray600}" />
+                                    <Label Text="{Binding Estado}"
+                                           Style="{StaticResource BodyStyle}"
+                                           TextColor="{Binding EstadoColor}" />
+                                </StackLayout>
+                            </Grid>
+                        </StackLayout>
+                    </StackLayout>
+                </controls:ModernCard>
+
+                <!-- Acciones del Perfil -->
+                <controls:ModernCard>
+                    <StackLayout Spacing="16">
+                        <Label Text="Acciones"
+                               Style="{StaticResource H2Style}" />
+                        
+                        <StackLayout Spacing="12">
+                            <Button Text="Cambiar Contraseña"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Command="{Binding CambiarContrasenaCommand}" />
+                            
+                            <Button Text="Configurar Notificaciones"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Command="{Binding ConfigurarNotificacionesCommand}" />
+                            
+                            <Button Text="Ver Historial"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Command="{Binding VerHistorialCommand}" />
+                            
+                            <Button Text="Exportar Datos"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Command="{Binding ExportarDatosCommand}" />
+                        </StackLayout>
+                    </StackLayout>
+                </controls:ModernCard>
+
+                <!-- Configuración de Privacidad -->
+                <controls:ModernCard>
+                    <StackLayout Spacing="16">
+                        <Label Text="Privacidad y Seguridad"
+                               Style="{StaticResource H2Style}" />
+                        
+                        <StackLayout Spacing="12">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackLayout Grid.Column="0">
+                                    <Label Text="Autenticación de Dos Factores"
+                                           Style="{StaticResource BodyStyle}"
+                                           FontAttributes="Bold" />
+                                    <Label Text="Añadir una capa extra de seguridad"
+                                           Style="{StaticResource CaptionStyle}" />
+                                </StackLayout>
+                                <Switch Grid.Column="1"
+                                       IsToggled="{Binding AutenticacionDosFactores}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                            
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackLayout Grid.Column="0">
+                                    <Label Text="Sincronización en la Nube"
+                                           Style="{StaticResource BodyStyle}"
+                                           FontAttributes="Bold" />
+                                    <Label Text="Mantener datos sincronizados"
+                                           Style="{StaticResource CaptionStyle}" />
+                                </StackLayout>
+                                <Switch Grid.Column="1"
+                                       IsToggled="{Binding SincronizacionNube}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                            
+                            <Grid ColumnDefinitions="*,Auto">
+                                <StackLayout Grid.Column="0">
+                                    <Label Text="Notificaciones de Seguridad"
+                                           Style="{StaticResource BodyStyle}"
+                                           FontAttributes="Bold" />
+                                    <Label Text="Alertas de actividad sospechosa"
+                                           Style="{StaticResource CaptionStyle}" />
+                                </StackLayout>
+                                <Switch Grid.Column="1"
+                                       IsToggled="{Binding NotificacionesSeguridad}"
+                                       VerticalOptions="Center" />
+                            </Grid>
+                        </StackLayout>
+                    </StackLayout>
+                </controls:ModernCard>
+
+                <!-- Botón de Cerrar Sesión -->
+                <Button Text="Cerrar Sesión"
+                        Style="{StaticResource DangerButtonStyle}"
+                        Command="{Binding CerrarSesionCommand}"
+                        Margin="0,16,0,0" />
+
+            </StackLayout>
+        </ScrollView>
+
+        <!-- Bottom Navigation -->
+        <controls:ModernTabBar x:Name="BottomTabBar"
+                              Grid.Row="2"
+                              Margin="16,0,16,16" />
+
+    </Grid>
+
+</ContentPage> 

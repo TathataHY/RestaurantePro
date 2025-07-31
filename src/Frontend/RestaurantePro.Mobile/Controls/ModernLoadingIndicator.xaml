@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RestaurantePro.Mobile.Controls.ModernLoadingIndicator"
+             x:Name="LoadingIndicator">
+    
+    <Grid x:Name="LoadingContainer" 
+          BackgroundColor="{StaticResource SurfacePrimary}"
+          Opacity="0"
+          IsVisible="False">
+        
+        <!-- Overlay semi-transparente -->
+        <BoxView BackgroundColor="{StaticResource ShadowColor}" 
+                 Opacity="0.3" />
+        
+        <!-- Contenido del loading -->
+        <StackLayout HorizontalOptions="Center" 
+                     VerticalOptions="Center" 
+                     Spacing="16">
+            
+            <!-- Spinner animado -->
+            <Border x:Name="SpinnerFrame"
+                    BackgroundColor="Transparent"
+                    Stroke="{StaticResource PrimaryColor}"
+                    StrokeThickness="2"
+                    StrokeShape="Ellipse"
+                    WidthRequest="50"
+                    HeightRequest="50">
+                
+                <Image x:Name="SpinnerImage"
+                       Source="loading_icon.png"
+                       WidthRequest="30"
+                       HeightRequest="30"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
+                
+            </Border>
+            
+            <!-- Texto de loading -->
+            <Label x:Name="LoadingText"
+                   Text="{Binding Source={x:Reference LoadingIndicator}, Path=LoadingMessage}"
+                   Style="{StaticResource BodyStyle}"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center" />
+            
+            <!-- Progress bar (opcional) -->
+            <ProgressBar x:Name="ProgressBar"
+                        Progress="{Binding Source={x:Reference LoadingIndicator}, Path=Progress}"
+                        ProgressColor="{StaticResource PrimaryColor}"
+                        BackgroundColor="{StaticResource BorderColor}"
+                        HeightRequest="4"
+                        WidthRequest="200"
+                        IsVisible="{Binding Source={x:Reference LoadingIndicator}, Path=ShowProgress}" />
+            
+        </StackLayout>
+        
+    </Grid>
+    
+</ContentView> 

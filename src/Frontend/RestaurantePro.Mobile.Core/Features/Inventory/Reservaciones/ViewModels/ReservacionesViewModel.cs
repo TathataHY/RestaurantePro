@@ -35,6 +35,8 @@ public partial class ReservacionesViewModel : ObservableObject
 
     public List<string> Estados { get; } = new() { "Todas", "Confirmada", "Pendiente", "Cancelada", "Completada" };
 
+
+
     public ReservacionesViewModel(IReservacionesService reservacionesService, IDialogService dialogService)
     {
         _reservacionesService = reservacionesService;
@@ -255,6 +257,114 @@ public partial class ReservacionesViewModel : ObservableObject
         foreach (var reservacion in reservacionesFiltradas)
         {
             ReservacionesFiltradas.Add(reservacion);
+        }
+    }
+
+    /// <summary>
+    /// Refrescar reservaciones
+    /// </summary>
+    [RelayCommand]
+    private async Task RefreshReservacionesAsync()
+    {
+        await CargarReservacionesAsync();
+    }
+
+    /// <summary>
+    /// Cargar estadísticas
+    /// </summary>
+    [RelayCommand]
+    private async Task LoadEstadisticasAsync()
+    {
+        await CargarEstadisticasAsync();
+    }
+
+    /// <summary>
+    /// Ver calendario
+    /// </summary>
+    [RelayCommand]
+    private async Task VerCalendarioAsync()
+    {
+        try
+        {
+            await _dialogService.ShowAlertAsync("Función no disponible", 
+                "La vista de calendario no está disponible en esta versión. Contacta al administrador.");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Crear nueva reservación
+    /// </summary>
+    [RelayCommand]
+    private async Task CrearReservacionAsync()
+    {
+        try
+        {
+            await _dialogService.ShowAlertAsync("Función no disponible", 
+                "La creación de reservaciones no está disponible en esta versión. Contacta al administrador.");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Ver reservación
+    /// </summary>
+    [RelayCommand]
+    private async Task VerReservacionAsync(ReservacionDto? reservacion)
+    {
+        if (reservacion == null) return;
+
+        try
+        {
+            await _dialogService.ShowAlertAsync("Detalles de Reservación", 
+                $"Cliente: {reservacion.NombreCliente}\nFecha: {reservacion.FechaReservacion:dd/MM/yyyy}\nHora: {reservacion.HoraReservacion:HH:mm}\nPersonas: {reservacion.NumeroPersonas}");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error al ver reservación: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Editar reservación
+    /// </summary>
+    [RelayCommand]
+    private async Task EditarReservacionAsync(ReservacionDto? reservacion)
+    {
+        if (reservacion == null) return;
+
+        try
+        {
+            await _dialogService.ShowAlertAsync("Función no disponible", 
+                "La edición de reservaciones no está disponible en esta versión. Contacta al administrador.");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Confirmar reservación
+    /// </summary>
+    [RelayCommand]
+    private async Task ConfirmarReservacionAsync(ReservacionDto? reservacion)
+    {
+        if (reservacion == null) return;
+
+        try
+        {
+            await CambiarEstadoAsync(reservacion);
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error al confirmar reservación: {ex.Message}");
         }
     }
 } 

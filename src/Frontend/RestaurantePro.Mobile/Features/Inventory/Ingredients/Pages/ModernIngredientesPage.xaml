@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
+             xmlns:converters="clr-namespace:RestaurantePro.Mobile.Converters"
+             xmlns:vm="clr-namespace:RestaurantePro.Mobile.Core.Features.Inventory.Ingredients.ViewModels;assembly=RestaurantePro.Mobile.Core"
+             x:Class="RestaurantePro.Mobile.Features.Inventory.Ingredients.Pages.ModernIngredientesPage"
+             x:DataType="vm:IngredientesViewModel"
+             Title="{Binding Title}"
+             BackgroundColor="{StaticResource SurfacePrimary}">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        
+        <!-- Header con Estadísticas -->
+        <ScrollView Grid.Row="0" 
+                    HorizontalScrollBarVisibility="Never"
+                    Padding="16,8">
+            <HorizontalStackLayout Spacing="12">
+                
+                <!-- Card Total Ingredientes -->
+                <controls:ModernCard Padding="16" WidthRequest="120">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="🥕" 
+                               FontSize="24" 
+                               HorizontalOptions="Center" />
+                        <Label Text="Total" 
+                               Style="{StaticResource CaptionStyle}" 
+                               HorizontalOptions="Center" />
+                        <Label Text="{Binding Estadisticas.TotalIngredientes}" 
+                               Style="{StaticResource H2Style}" 
+                               TextColor="{StaticResource TextPrimary}"
+                               HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </controls:ModernCard>
+
+                <!-- Card En Stock -->
+                <controls:ModernCard Padding="16" WidthRequest="120">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="✅" 
+                               FontSize="24" 
+                               HorizontalOptions="Center" />
+                        <Label Text="En Stock" 
+                               Style="{StaticResource CaptionStyle}" 
+                               HorizontalOptions="Center" />
+                        <Label Text="{Binding Estadisticas.IngredientesEnStock}" 
+                               Style="{StaticResource H2Style}" 
+                               TextColor="{StaticResource SuccessColor}"
+                               HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </controls:ModernCard>
+
+                <!-- Card Bajo Stock -->
+                <controls:ModernCard Padding="16" WidthRequest="120">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="⚠️" 
+                               FontSize="24" 
+                               HorizontalOptions="Center" />
+                        <Label Text="Bajo Stock" 
+                               Style="{StaticResource CaptionStyle}" 
+                               HorizontalOptions="Center" />
+                        <Label Text="{Binding Estadisticas.IngredientesBajoStock}" 
+                               Style="{StaticResource H2Style}" 
+                               TextColor="{StaticResource WarningColor}"
+                               HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </controls:ModernCard>
+
+                <!-- Card Agotados -->
+                <controls:ModernCard Padding="16" WidthRequest="120">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="❌" 
+                               FontSize="24" 
+                               HorizontalOptions="Center" />
+                        <Label Text="Agotados" 
+                               Style="{StaticResource CaptionStyle}" 
+                               HorizontalOptions="Center" />
+                        <Label Text="{Binding Estadisticas.IngredientesAgotados}" 
+                               Style="{StaticResource H2Style}" 
+                               TextColor="{StaticResource ErrorColor}"
+                               HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </controls:ModernCard>
+
+            </HorizontalStackLayout>
+        </ScrollView>
+
+        <!-- Contenido Principal -->
+        <Grid Grid.Row="1" RowDefinitions="Auto,*">
+            
+            <!-- Barra de Búsqueda y Filtros -->
+            <controls:ModernCard Grid.Row="0" Margin="16,8">
+                <VerticalStackLayout Spacing="16">
+                    
+                    <!-- Búsqueda -->
+                    <controls:ModernEntry Placeholder="Buscar ingredientes por nombre o categoría..."
+                                         Text="{Binding TextoBusqueda}"
+                                         Icon="🔍" />
+                    
+                    <!-- Tabs de Filtro -->
+                    <controls:TabNavigation x:Name="FilterTabNavigation" />
+                    
+                    <!-- Botones de Acción -->
+                    <Grid ColumnDefinitions="*,*,*" RowDefinitions="*,*" 
+                          ColumnSpacing="8" RowSpacing="8">
+                        
+                        <Button Grid.Column="0" Grid.Row="0"
+                                Text="🔄 Refrescar"
+                                Command="{Binding RefreshIngredientesCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}" />
+                        
+                        <Button Grid.Column="1" Grid.Row="0"
+                                Text="📊 Estadísticas"
+                                Command="{Binding LoadEstadisticasCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}" />
+                        
+                        <Button Grid.Column="2" Grid.Row="0"
+                                Text="⚠️ Alertas"
+                                Command="{Binding LoadAlertasStockCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}" />
+                        
+                        <Button Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="3"
+                                Text="➕ Nuevo Ingrediente"
+                                Command="{Binding CrearIngredienteCommand}"
+                                Style="{StaticResource PrimaryButtonStyle}" />
+                    </Grid>
+                </VerticalStackLayout>
+            </controls:ModernCard>
+
+            <!-- Lista de Ingredientes -->
+            <RefreshView Grid.Row="1"
+                         IsRefreshing="{Binding IsRefreshing}"
+                         Command="{Binding RefreshIngredientesCommand}">
+                
+                <CollectionView ItemsSource="{Binding Ingredientes}"
+                               SelectionMode="Single"
+                               SelectedItem="{Binding SelectedIngrediente}">
+                    
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout Orientation="Vertical" 
+                                         Span="{OnIdiom Phone=1, Tablet=2, Desktop=3}" />
+                    </CollectionView.ItemsLayout>
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <controls:ModernCard Margin="8">
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" 
+                                      ColumnDefinitions="*,Auto">
+                                    
+                                    <!-- Header de Ingrediente -->
+                                    <StackLayout Grid.Row="0" Grid.Column="0" 
+                                                 Orientation="Horizontal" 
+                                                 VerticalOptions="Center">
+                                        <Label Text="{Binding Nombre}" 
+                                               Style="{StaticResource H3Style}"
+                                               LineBreakMode="TailTruncation" />
+                                    </StackLayout>
+
+                                    <!-- Estado Badge -->
+                                    <Border Grid.Row="0" Grid.Column="1"
+                                            BackgroundColor="{Binding EstadoStock, Converter={StaticResource EstadoStockColorConverter}}"
+                                            StrokeShape="RoundRectangle 12"
+                                            Padding="8,4">
+                                        <Label Text="{Binding EstadoStock}" 
+                                               Style="{StaticResource CaptionStyle}"
+                                               TextColor="White"
+                                               HorizontalOptions="Center" />
+                                    </Border>
+
+                                    <!-- Información de Ingrediente -->
+                                    <VerticalStackLayout Grid.Row="1" Grid.ColumnSpan="2" 
+                                                         Spacing="4" Margin="0,12,0,0">
+                                        <Label Text="{Binding CategoriaNombre, StringFormat='🏷️ {0}'}" 
+                                               Style="{StaticResource BodyStyle}" />
+                                        <Label Text="{Binding StockActual, StringFormat='📦 Stock: {0} {1}'}" 
+                                               Style="{StaticResource BodyStyle}" />
+                                        <Label Text="{Binding StockMinimo, StringFormat='⚠️ Mínimo: {0} {1}'}" 
+                                               Style="{StaticResource CaptionStyle}" />
+                                    </VerticalStackLayout>
+
+                                    <!-- Información Adicional -->
+                                    <VerticalStackLayout Grid.Row="2" Grid.ColumnSpan="2" 
+                                                         Spacing="2" Margin="0,8,0,0"
+                                                         IsVisible="{Binding Descripcion, Converter={StaticResource IsNotNullConverter}}">
+                                        <Label Text="{Binding Descripcion}" 
+                                               Style="{StaticResource CaptionStyle}"
+                                               LineBreakMode="TailTruncation" />
+                                    </VerticalStackLayout>
+
+                                    <!-- Información de Precio -->
+                                    <VerticalStackLayout Grid.Row="3" Grid.ColumnSpan="2" 
+                                                         Spacing="2" Margin="0,8,0,0"
+                                                         IsVisible="{Binding PrecioUnitario, Converter={StaticResource IsNotNullConverter}}">
+                                        <Label Text="{Binding PrecioUnitario, StringFormat='💰 Precio: {0:C}'}" 
+                                               Style="{StaticResource CaptionStyle}" />
+                                        <Label Text="{Binding ProveedorNombre, StringFormat='🏪 Proveedor: {0}'}" 
+                                               Style="{StaticResource CaptionStyle}"
+                                               IsVisible="{Binding ProveedorNombre, Converter={StaticResource IsNotNullConverter}}" />
+                                    </VerticalStackLayout>
+
+                                    <!-- Botones de Acción -->
+                                    <HorizontalStackLayout Grid.Row="4" Grid.ColumnSpan="2" 
+                                                           Spacing="8" Margin="0,12,0,0">
+                                        
+                                        <Button Text="👁️ Ver"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.VerIngredienteCommand}"
+                                                CommandParameter="{Binding .}"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                HorizontalOptions="FillAndExpand" />
+                                        
+                                        <Button Text="✏️ Editar"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditarIngredienteCommand}"
+                                                CommandParameter="{Binding .}"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                HorizontalOptions="FillAndExpand" />
+                                        
+                                        <Button Text="📦 Ajustar"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.AjustarStockCommand}"
+                                                CommandParameter="{Binding .}"
+                                                Style="{StaticResource PrimaryButtonStyle}"
+                                                HorizontalOptions="FillAndExpand" />
+                                    </HorizontalStackLayout>
+                                </Grid>
+                            </controls:ModernCard>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+
+                    <!-- Estado Vacío -->
+                    <CollectionView.EmptyView>
+                        <VerticalStackLayout Spacing="16" 
+                                             VerticalOptions="Center"
+                                             HorizontalOptions="Center"
+                                             Padding="32">
+                            <Label Text="🥕" 
+                                   FontSize="64" 
+                                   HorizontalOptions="Center" />
+                            <Label Text="No hay ingredientes registrados" 
+                                   Style="{StaticResource H2Style}" 
+                                   HorizontalOptions="Center" />
+                            <Label Text="Agrega ingredientes para gestionar tu inventario" 
+                                   Style="{StaticResource BodyStyle}" 
+                                   TextColor="{StaticResource TextSecondary}"
+                                   HorizontalOptions="Center" />
+                            <Button Text="Agregar Primer Ingrediente"
+                                    Command="{Binding CrearIngredienteCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </CollectionView.EmptyView>
+                </CollectionView>
+            </RefreshView>
+        </Grid>
+
+        <!-- Bottom Navigation -->
+        <controls:ModernTabBar Grid.Row="2" x:Name="BottomTabBar" />
+    </Grid>
+
+    <!-- Floating Action Button -->
+    <controls:FloatingActionButton x:Name="MainFab"
+                                   Text="+"
+                                   Command="{Binding CrearIngredienteCommand}"
+                                   HorizontalOptions="End"
+                                   VerticalOptions="End"
+                                   Margin="16,0,16,80" />
+
+</ContentPage> 

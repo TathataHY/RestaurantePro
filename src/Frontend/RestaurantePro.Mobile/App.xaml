@@ -14,10 +14,16 @@
             <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
             <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
 
-            <!-- Estilos Globales -->
+            <!-- Estilos Globales V4 -->
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
+                <ResourceDictionary Source="Resources/Styles/Typography.xaml" />
+                <ResourceDictionary Source="Resources/Styles/Spacing.xaml" />
+                <ResourceDictionary Source="Resources/Styles/Buttons.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
+                
+                <!-- Sistema de Temas V4 -->
+                <ResourceDictionary Source="Resources/Styles/Themes/LightTheme.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

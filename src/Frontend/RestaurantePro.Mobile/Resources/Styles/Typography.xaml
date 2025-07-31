@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?xaml-comp compile="true" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- ========================================
+         FONT FAMILIES
+         ======================================== -->
+    <OnPlatform x:Key="PrimaryFont" x:TypeArguments="x:String">
+        <On Platform="iOS">SF Pro Display</On>
+        <On Platform="Android">Roboto</On>
+        <On Platform="WinUI">Segoe UI</On>
+    </OnPlatform>
+
+    <!-- ========================================
+         TEXT STYLES ESPECÍFICOS
+         ======================================== -->
+    <Style x:Key="H1Style" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}" />
+        <Setter Property="FontSize" Value="32" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+        <Setter Property="LineHeight" Value="1.2" />
+    </Style>
+
+    <Style x:Key="H2Style" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}" />
+        <Setter Property="FontSize" Value="24" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+        <Setter Property="LineHeight" Value="1.3" />
+    </Style>
+
+    <Style x:Key="H3Style" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}" />
+        <Setter Property="FontSize" Value="20" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+        <Setter Property="LineHeight" Value="1.4" />
+    </Style>
+
+    <Style x:Key="BodyStyle" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="LineHeight" Value="1.5" />
+        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+    </Style>
+
+    <Style x:Key="BodySmallStyle" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="LineHeight" Value="1.4" />
+        <Setter Property="TextColor" Value="{StaticResource TextPrimary}" />
+    </Style>
+
+    <Style x:Key="CaptionStyle" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="TextColor" Value="{StaticResource TextSecondary}" />
+        <Setter Property="LineHeight" Value="1.3" />
+    </Style>
+
+    <Style x:Key="ButtonTextStyle" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource PrimaryFont}" />
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="LineHeight" Value="1.2" />
+    </Style>
+
+</ResourceDictionary> 

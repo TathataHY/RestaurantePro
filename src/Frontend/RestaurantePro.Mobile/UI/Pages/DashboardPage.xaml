@@ -1,60 +1,112 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
              x:Class="RestaurantePro.Mobile.UI.Pages.DashboardPage"
-             Title="Dashboard">
+             Title="Dashboard"
+             BackgroundColor="{StaticResource SurfacePrimary}">
 
     <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="20">
+        <VerticalStackLayout Padding="20" Spacing="24">
             
-            <!-- Header -->
-            <Label Text="RestaurantePro - Dashboard"
-                   FontSize="24"
-                   FontAttributes="Bold"
-                   HorizontalOptions="Center" />
+            <!-- Header Moderno -->
+            <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                <Label Text="🏪 RestaurantePro"
+                       Style="{StaticResource H1Style}"
+                       HorizontalOptions="Center" />
+                <Label Text="Panel de Control"
+                       Style="{StaticResource CaptionStyle}"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
 
-            <!-- Botones principales según V1 -->
-            <VerticalStackLayout Spacing="15">
+            <!-- Cards de Estadísticas -->
+            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
                 
-                <Button Text="🏠 Gestión de Mesas"
-                        BackgroundColor="#007ACC"
-                        TextColor="White"
-                        FontSize="16"
-                        HeightRequest="60" />
+                <!-- Card: Mesas -->
+                <controls:ModernCard Grid.Column="0" Grid.Row="0">
+                    <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                        <Label Text="🏠" FontSize="32" HorizontalOptions="Center" />
+                        <Label Text="Mesas" Style="{StaticResource H2Style}" HorizontalOptions="Center" />
+                        <Label Text="8 disponibles" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </controls:ModernCard>
 
-                <Button Text="📝 Gestión de Comandas"
-                        BackgroundColor="#28A745"
-                        TextColor="White"
-                        FontSize="16"
-                        HeightRequest="60" />
+                <!-- Card: Comandas -->
+                <controls:ModernCard Grid.Column="1" Grid.Row="0">
+                    <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                        <Label Text="📝" FontSize="32" HorizontalOptions="Center" />
+                        <Label Text="Comandas" Style="{StaticResource H2Style}" HorizontalOptions="Center" />
+                        <Label Text="12 activas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </controls:ModernCard>
 
-                <Button Text="🍳 Preparaciones"
-                        BackgroundColor="#FFC107"
-                        TextColor="Black"
-                        FontSize="16"
-                        HeightRequest="60" />
+                <!-- Card: Preparaciones -->
+                <controls:ModernCard Grid.Column="0" Grid.Row="1">
+                    <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                        <Label Text="🍳" FontSize="32" HorizontalOptions="Center" />
+                        <Label Text="Cocina" Style="{StaticResource H2Style}" HorizontalOptions="Center" />
+                        <Label Text="5 pendientes" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </controls:ModernCard>
 
-                <Button Text="📊 Consultar Menú"
-                        BackgroundColor="#17A2B8"
-                        TextColor="White"
-                        FontSize="16"
-                        HeightRequest="60" />
+                <!-- Card: Ventas -->
+                <controls:ModernCard Grid.Column="1" Grid.Row="1">
+                    <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                        <Label Text="💰" FontSize="32" HorizontalOptions="Center" />
+                        <Label Text="Ventas" Style="{StaticResource H2Style}" HorizontalOptions="Center" />
+                        <Label Text="$2,450 hoy" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </controls:ModernCard>
+            </Grid>
 
-                <Button Text="💰 Facturación"
-                        BackgroundColor="#6F42C1"
-                        TextColor="White"
-                        FontSize="16"
-                        HeightRequest="60" />
+            <!-- Botones de Acción Rápida -->
+            <VerticalStackLayout Spacing="12">
+                <Label Text="Acciones Rápidas" Style="{StaticResource H2Style}" />
+                
+                <controls:ModernButton Text="🏠 Gestión de Mesas"
+                                       IconSource="table.png"
+                                       BackgroundColor="{StaticResource PrimaryColor}"
+                                       Command="{Binding NavigateToMesasCommand}"
+                                       AccessibilityName="Botón de gestión de mesas"
+                                       AccessibilityHelpText="Navegar a la gestión de mesas del restaurante" />
 
+                <controls:ModernButton Text="📝 Gestión de Comandas"
+                                       IconSource="order.png"
+                                       BackgroundColor="{StaticResource SecondaryColor}"
+                                       Command="{Binding NavigateToComandasCommand}"
+                                       AccessibilityName="Botón de gestión de comandas"
+                                       AccessibilityHelpText="Navegar a la gestión de comandas" />
+
+                <controls:ModernButton Text="🍳 Preparaciones"
+                                       IconSource="kitchen.png"
+                                       BackgroundColor="{StaticResource WarningColor}"
+                                       TextColor="Black"
+                                       Command="{Binding NavigateToPreparacionesCommand}"
+                                       AccessibilityName="Botón de preparaciones"
+                                       AccessibilityHelpText="Navegar a la gestión de preparaciones de cocina" />
+
+                <controls:ModernButton Text="📊 Consultar Menú"
+                                       IconSource="menu.png"
+                                       BackgroundColor="{StaticResource InfoColor}"
+                                       Command="{Binding NavigateToProductosCommand}"
+                                       AccessibilityName="Botón de consultar menú"
+                                       AccessibilityHelpText="Navegar al catálogo de productos del menú" />
+
+                <controls:ModernButton Text="💰 Facturación"
+                                       IconSource="invoice.png"
+                                       BackgroundColor="{StaticResource SuccessColor}"
+                                       Command="{Binding NavigateToFacturasCommand}"
+                                       AccessibilityName="Botón de facturación"
+                                       AccessibilityHelpText="Navegar al sistema de facturación" />
             </VerticalStackLayout>
 
             <!-- Botón de Logout -->
-            <Button Text="Cerrar Sesión"
-                    BackgroundColor="#DC3545"
-                    TextColor="White"
-                    FontSize="14"
-                    Margin="0,30,0,0"
-                    HeightRequest="50" />
+            <controls:ModernButton Text="Cerrar Sesión"
+                                   IconSource="logout.png"
+                                   BackgroundColor="{StaticResource ErrorColor}"
+                                   Command="{Binding LogoutCommand}"
+                                   AccessibilityName="Botón de cerrar sesión"
+                                   AccessibilityHelpText="Cerrar sesión y salir de la aplicación" />
 
         </VerticalStackLayout>
     </ScrollView>

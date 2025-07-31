@@ -43,7 +43,21 @@ public partial class IngredientesViewModel : BaseViewModel
     [ObservableProperty]
     private int _ingredientesBajoStock;
 
+    [ObservableProperty]
+    private int _ingredientesAgotados;
+
     #endregion
+
+    /// <summary>
+    /// Estadísticas de ingredientes para la UI
+    /// </summary>
+    public object Estadisticas => new
+    {
+        TotalIngredientes,
+        IngredientesEnStock = IngredientesDisponibles,
+        IngredientesBajoStock,
+        IngredientesAgotados
+    };
 
     public IngredientesViewModel(
         IIngredientesService ingredientesService,
@@ -192,4 +206,121 @@ public partial class IngredientesViewModel : BaseViewModel
     }
 
     #endregion
+
+    /// <summary>
+    /// Refrescar ingredientes
+    /// </summary>
+    [RelayCommand]
+    private async Task RefreshIngredientesAsync()
+    {
+        await CargarIngredientesAsync();
+    }
+
+    /// <summary>
+    /// Cargar estadísticas
+    /// </summary>
+    [RelayCommand]
+    private async Task LoadEstadisticasAsync()
+    {
+        await CargarEstadisticasAsync();
+    }
+
+    /// <summary>
+    /// Cargar alertas de stock
+    /// </summary>
+    [RelayCommand]
+    private async Task LoadAlertasStockAsync()
+    {
+        await ExecuteAsync(async () =>
+        {
+            var response = await _ingredientesService.ObtenerIngredientesBajoStockAsync();
+            
+            if (response.Success && response.Data != null)
+            {
+                Ingredientes.Clear();
+                foreach (var ingrediente in response.Data)
+                {
+                    Ingredientes.Add(ingrediente);
+                }
+            }
+            else
+            {
+                await _dialogService.ShowErrorAsync(response.Message ?? "Error al cargar alertas de stock");
+            }
+        });
+    }
+
+    /// <summary>
+    /// Crear nuevo ingrediente
+    /// </summary>
+    [RelayCommand]
+    private async Task CrearIngredienteAsync()
+    {
+        try
+        {
+            await _dialogService.ShowAlertAsync("Función no disponible", 
+                "La creación de ingredientes no está disponible en esta versión. Contacta al administrador.");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Ver ingrediente
+    /// </summary>
+    [RelayCommand]
+    private async Task VerIngredienteAsync(IngredienteSummaryDto? ingrediente)
+    {
+        if (ingrediente == null) return;
+
+        try
+        {
+            await _dialogService.ShowAlertAsync("Detalles de Ingrediente", 
+                $"Nombre: {ingrediente.Nombre}\nStock: {ingrediente.StockActual}");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error al ver ingrediente: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Editar ingrediente
+    /// </summary>
+    [RelayCommand]
+    private async Task EditarIngredienteAsync(IngredienteSummaryDto? ingrediente)
+    {
+        if (ingrediente == null) return;
+
+        try
+        {
+            await _dialogService.ShowAlertAsync("Función no disponible", 
+                "La edición de ingredientes no está disponible en esta versión. Contacta al administrador.");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Ajustar stock
+    /// </summary>
+    [RelayCommand]
+    private async Task AjustarStockAsync(IngredienteSummaryDto? ingrediente)
+    {
+        if (ingrediente == null) return;
+
+        try
+        {
+            await _dialogService.ShowAlertAsync("Función no disponible", 
+                "El ajuste de stock no está disponible en esta versión. Contacta al administrador.");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error: {ex.Message}");
+        }
+    }
 } 

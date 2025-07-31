@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RestaurantePro.Mobile.Controls.ModernSearchBar"
+             x:Name="ModernSearchBarControl">
+    
+    <Grid ColumnDefinitions="Auto,*,Auto" 
+          BackgroundColor="{StaticResource SurfaceSecondary}"
+          StrokeShape="RoundRectangle 12"
+          Stroke="{StaticResource BorderColor}"
+          StrokeThickness="1"
+          Padding="12,8"
+          Margin="16,8">
+        
+        <!-- Icono de búsqueda -->
+        <Image x:Name="SearchIcon"
+               Grid.Column="0"
+               Source="search.png"
+               HeightRequest="20"
+               WidthRequest="20"
+               HorizontalOptions="Center"
+               VerticalOptions="Center"
+               Opacity="0.6"
+               Margin="0,0,8,0" />
+        
+        <!-- Campo de entrada -->
+        <Entry x:Name="SearchEntry"
+               Grid.Column="1"
+               BackgroundColor="Transparent"
+               TextColor="{StaticResource TextPrimary}"
+               PlaceholderColor="{StaticResource TextSecondary}"
+               Placeholder="{Binding Source={x:Reference ModernSearchBarControl}, Path=Placeholder}"
+               Text="{Binding Source={x:Reference ModernSearchBarControl}, Path=SearchText}"
+               FontSize="16"
+               VerticalOptions="Center"
+               HorizontalOptions="FillAndExpand"
+               ReturnType="Search"
+               ReturnCommand="{Binding Source={x:Reference ModernSearchBarControl}, Path=SearchCommand}"
+               ReturnCommandParameter="{Binding Source={x:Reference ModernSearchBarControl}, Path=SearchText}" />
+        
+        <!-- Botón de limpiar -->
+        <Button x:Name="ClearButton"
+                Grid.Column="2"
+                BackgroundColor="Transparent"
+                Text="✕"
+                TextColor="{StaticResource TextSecondary}"
+                FontSize="16"
+                FontAttributes="Bold"
+                HeightRequest="32"
+                WidthRequest="32"
+                CornerRadius="16"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                Margin="8,0,0,0"
+                IsVisible="False"
+                Clicked="OnClearButtonClicked" />
+        
+    </Grid>
+    
+</ContentView> 

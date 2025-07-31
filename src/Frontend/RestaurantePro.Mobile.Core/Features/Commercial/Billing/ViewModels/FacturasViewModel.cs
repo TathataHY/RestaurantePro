@@ -42,6 +42,17 @@ public partial class FacturasViewModel : BaseViewModel
 
     #endregion
 
+    /// <summary>
+    /// Estadísticas de facturas para la UI
+    /// </summary>
+    public object Estadisticas => new
+    {
+        TotalFacturas = Facturas.Count,
+        FacturasPagadas = Facturas.Count(f => f.Estado == "Pagada"),
+        FacturasPendientes = Facturas.Count(f => f.Estado == "Pendiente"),
+        TotalVentas = Facturas.Where(f => f.Estado == "Pagada").Sum(f => f.Total)
+    };
+
     public FacturasViewModel(
         IFacturasService facturasService,
         IDialogService dialogService,
@@ -172,4 +183,121 @@ public partial class FacturasViewModel : BaseViewModel
     }
 
     #endregion
+
+    /// <summary>
+    /// Refrescar facturas
+    /// </summary>
+    [RelayCommand]
+    private async Task RefreshFacturasAsync()
+    {
+        await CargarFacturasAsync();
+    }
+
+    /// <summary>
+    /// Generar reporte
+    /// </summary>
+    [RelayCommand]
+    private async Task GenerarReporteAsync()
+    {
+        try
+        {
+            await _dialogService.ShowAlertAsync("Función no disponible", 
+                "La generación de reportes no está disponible en esta versión. Contacta al administrador.");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Enviar facturas
+    /// </summary>
+    [RelayCommand]
+    private async Task EnviarFacturasAsync()
+    {
+        try
+        {
+            await _dialogService.ShowAlertAsync("Función no disponible", 
+                "El envío masivo de facturas no está disponible en esta versión. Contacta al administrador.");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Crear nueva factura
+    /// </summary>
+    [RelayCommand]
+    private async Task CrearFacturaAsync()
+    {
+        try
+        {
+            await _dialogService.ShowAlertAsync("Función no disponible", 
+                "La creación de facturas no está disponible en esta versión. Contacta al administrador.");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Ver factura
+    /// </summary>
+    [RelayCommand]
+    private async Task VerFacturaAsync(FacturaDto? factura)
+    {
+        if (factura == null) return;
+
+        try
+        {
+            await _dialogService.ShowAlertAsync("Detalles de Factura", 
+                $"Número: {factura.NumeroFactura}\nCliente: {factura.ClienteNombre}\nTotal: {factura.Total:C}\nEstado: {factura.Estado}");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error al ver factura: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Generar PDF
+    /// </summary>
+    [RelayCommand]
+    private async Task GenerarPdfAsync(FacturaDto? factura)
+    {
+        if (factura == null) return;
+
+        try
+        {
+            await _dialogService.ShowAlertAsync("Función no disponible", 
+                "La generación de PDF no está disponible en esta versión. Contacta al administrador.");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Enviar factura
+    /// </summary>
+    [RelayCommand]
+    private async Task EnviarFacturaAsync(FacturaDto? factura)
+    {
+        if (factura == null) return;
+
+        try
+        {
+            await _dialogService.ShowAlertAsync("Función no disponible", 
+                "El envío de facturas no está disponible en esta versión. Contacta al administrador.");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error: {ex.Message}");
+        }
+    }
 } 

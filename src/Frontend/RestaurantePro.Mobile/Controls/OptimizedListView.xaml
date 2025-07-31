@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RestaurantePro.Mobile.Controls.OptimizedListView">
+    
+    <Grid RowDefinitions="Auto,*,Auto">
+        
+        <!-- Header -->
+        <StackLayout x:Name="HeaderContainer" 
+                     Grid.Row="0" 
+                     IsVisible="False"
+                     Padding="16,8">
+            <!-- Header content will be set programmatically -->
+        </StackLayout>
+        
+        <!-- Main List -->
+        <CollectionView x:Name="MainCollectionView"
+                       Grid.Row="1"
+                       ItemsSource="{Binding ItemsSource}"
+                       ItemTemplate="{Binding ItemTemplate}"
+                       SelectionMode="None"
+                       RemainingItemsThreshold="5"
+                       RemainingItemsThresholdReached="OnRemainingItemsThresholdReached">
+            
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" 
+                                 ItemSpacing="8" />
+            </CollectionView.ItemsLayout>
+            
+        </CollectionView>
+        
+        <!-- Loading Indicator -->
+        <StackLayout x:Name="LoadingIndicator"
+                     Grid.Row="2"
+                     IsVisible="False"
+                     Orientation="Horizontal"
+                     HorizontalOptions="Center"
+                     Padding="16">
+            <ActivityIndicator IsRunning="True" 
+                             Color="{StaticResource PrimaryColor}" />
+            <Label Text="Cargando más elementos..."
+                   Style="{StaticResource CaptionStyle}"
+                   VerticalOptions="Center"
+                   Margin="8,0,0,0" />
+        </StackLayout>
+        
+        <!-- Empty State -->
+        <StackLayout x:Name="EmptyStateContainer"
+                     Grid.Row="1"
+                     IsVisible="False"
+                     HorizontalOptions="Center"
+                     VerticalOptions="Center"
+                     Padding="32">
+            <Image Source="empty_list.png"
+                   HeightRequest="120"
+                   WidthRequest="120"
+                   Opacity="0.6" />
+            <Label Text="No hay elementos para mostrar"
+                   Style="{StaticResource H2Style}"
+                   HorizontalOptions="Center"
+                   Margin="0,16,0,8" />
+            <Label Text="Los elementos aparecerán aquí cuando estén disponibles"
+                   Style="{StaticResource CaptionStyle}"
+                   HorizontalOptions="Center"
+                   TextColor="{StaticResource TextSecondary}" />
+        </StackLayout>
+        
+    </Grid>
+    
+</ContentView> 

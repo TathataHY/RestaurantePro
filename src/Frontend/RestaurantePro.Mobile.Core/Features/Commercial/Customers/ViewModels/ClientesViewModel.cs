@@ -42,6 +42,17 @@ public partial class ClientesViewModel : BaseViewModel
 
     #endregion
 
+    /// <summary>
+    /// Estadísticas de clientes para la UI
+    /// </summary>
+    public object Estadisticas => new
+    {
+        TotalClientes = Clientes.Count,
+        ClientesActivos = Clientes.Count(c => c.Activo),
+        ClientesNuevos = ClientesNuevosHoy,
+        ClientesVIP = Clientes.Count(c => c.EsVIP)
+    };
+
     public ClientesViewModel(
         IClientesService clientesService,
         IDialogService dialogService,
@@ -182,4 +193,96 @@ public partial class ClientesViewModel : BaseViewModel
     }
 
     #endregion
+
+    /// <summary>
+    /// Refrescar clientes
+    /// </summary>
+    [RelayCommand]
+    private async Task RefreshClientesAsync()
+    {
+        await CargarClientesAsync();
+    }
+
+    /// <summary>
+    /// Cargar estadísticas
+    /// </summary>
+    [RelayCommand]
+    private async Task LoadEstadisticasAsync()
+    {
+        await CargarEstadisticasAsync();
+    }
+
+    /// <summary>
+    /// Filtrar VIP
+    /// </summary>
+    [RelayCommand]
+    private async Task FiltrarVIPAsync()
+    {
+        try
+        {
+            await _dialogService.ShowAlertAsync("Función no disponible", 
+                "El filtro VIP no está disponible en esta versión. Contacta al administrador.");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Ver cliente
+    /// </summary>
+    [RelayCommand]
+    private async Task VerClienteAsync(ClienteSummaryDto? cliente)
+    {
+        if (cliente == null) return;
+
+        try
+        {
+            await _dialogService.ShowAlertAsync("Detalles de Cliente", 
+                $"Nombre: {cliente.NombreCompleto}\nEmail: {cliente.Email}\nTeléfono: {cliente.Telefono}\nActivo: {(cliente.Activo ? "Sí" : "No")}");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error al ver cliente: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Editar cliente
+    /// </summary>
+    [RelayCommand]
+    private async Task EditarClienteAsync(ClienteSummaryDto? cliente)
+    {
+        if (cliente == null) return;
+
+        try
+        {
+            await _dialogService.ShowAlertAsync("Función no disponible", 
+                "La edición de clientes no está disponible en esta versión. Contacta al administrador.");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Toggle VIP
+    /// </summary>
+    [RelayCommand]
+    private async Task ToggleVIPAsync(ClienteSummaryDto? cliente)
+    {
+        if (cliente == null) return;
+
+        try
+        {
+            await _dialogService.ShowAlertAsync("Función no disponible", 
+                "El cambio de estado VIP no está disponible en esta versión. Contacta al administrador.");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error: {ex.Message}");
+        }
+    }
 } 

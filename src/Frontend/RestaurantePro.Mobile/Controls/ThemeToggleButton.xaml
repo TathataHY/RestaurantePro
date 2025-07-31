@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RestaurantePro.Mobile.Controls.ThemeToggleButton"
+             x:Name="ThemeToggleControl">
+    
+    <Border x:Name="ToggleBorder"
+            StrokeShape="RoundRectangle 20"
+            BackgroundColor="{StaticResource SurfaceSecondary}"
+            Stroke="{StaticResource BorderColor}"
+            StrokeThickness="1"
+            WidthRequest="60"
+            HeightRequest="32"
+            Padding="2">
+        
+        <Border.Shadow>
+            <Shadow Brush="{StaticResource ShadowColor}" 
+                    Offset="0,2" Radius="4" Opacity="0.1" />
+        </Border.Shadow>
+        
+        <Grid ColumnDefinitions="*,*">
+            
+            <!-- Indicador de tema actual -->
+            <Border x:Name="ThemeIndicator"
+                    Grid.Column="0"
+                    StrokeShape="RoundRectangle 18"
+                    BackgroundColor="{StaticResource PrimaryColor}"
+                    WidthRequest="28"
+                    HeightRequest="28"
+                    HorizontalOptions="Start"
+                    Margin="0,0,0,0">
+                
+                <!-- Icono del sol (tema claro) -->
+                <Image x:Name="SunIcon"
+                       Source="sun.png"
+                       WidthRequest="16"
+                       HeightRequest="16"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       Opacity="1" />
+                
+            </Border>
+            
+            <!-- Icono de la luna (tema oscuro) -->
+            <Image x:Name="MoonIcon"
+                   Grid.Column="1"
+                   Source="moon.png"
+                   WidthRequest="16"
+                   HeightRequest="16"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"
+                   Opacity="0.5" />
+            
+        </Grid>
+        
+    </Border>
+    
+</ContentView> 

@@ -1,55 +1,138 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
              x:Class="RestaurantePro.Mobile.Features.Authentication.Pages.LoginPage"
-             Title="{Binding Title}">
+             Title="{Binding Title}"
+             BackgroundColor="{StaticResource SurfacePrimary}">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="30" Spacing="25">
+    <Grid RowDefinitions="*,Auto">
+        
+        <!-- Contenido Principal -->
+        <ScrollView Grid.Row="0" 
+                    VerticalScrollBarVisibility="Never"
+                    Padding="24">
             
-            <!-- Logo/Header -->
-            <Label Text="RestaurantePro"
-                   FontSize="32"
-                   FontAttributes="Bold"
-                   HorizontalOptions="Center"
-                   Margin="0,50,0,30" />
-
-            <!-- Formulario de Login -->
-            <VerticalStackLayout Spacing="15">
+            <VerticalStackLayout Spacing="32" 
+                                VerticalOptions="Center">
                 
-                <Label Text="Email:" />
-                <Entry Text="{Binding Email}"
-                       Placeholder="Ingrese su email"
-                       Keyboard="Email" />
+                <!-- Header con Logo -->
+                <VerticalStackLayout Spacing="16" 
+                                    HorizontalOptions="Center"
+                                    Margin="0,40,0,20">
+                    
+                    <!-- Logo/Icono -->
+                    <Border BackgroundColor="{StaticResource PrimaryColor}"
+                            StrokeShape="Ellipse"
+                            WidthRequest="80"
+                            HeightRequest="80"
+                            HorizontalOptions="Center">
+                        
+                        <Label Text="🍽️"
+                               FontSize="40"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center" />
+                    </Border>
+                    
+                    <!-- Título -->
+                    <Label Text="RestaurantePro"
+                           Style="{StaticResource H1Style}"
+                           HorizontalOptions="Center" />
+                    
+                    <!-- Subtítulo -->
+                    <Label Text="Sistema de Gestión Restaurante"
+                           Style="{StaticResource BodyStyle}"
+                           HorizontalOptions="Center"
+                           TextColor="{StaticResource TextSecondary}" />
+                </VerticalStackLayout>
 
-                <Label Text="Contraseña:" />
-                <Entry Text="{Binding Password}"
-                       Placeholder="Ingrese su contraseña"
-                       IsPassword="True" />
+                <!-- Formulario de Login -->
+                <VerticalStackLayout Spacing="24">
+                    
+                    <!-- Campo Email -->
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Correo Electrónico"
+                               Style="{StaticResource BodyStyle}"
+                               FontAttributes="Bold" />
+                        
+                        <controls:ModernEntry Text="{Binding Email}"
+                                             Placeholder="ejemplo@restaurantepro.com"
+                                             Icon="📧"
+                                             Keyboard="Email" />
+                    </VerticalStackLayout>
 
-                <!-- Mensaje de Error -->
-                <Label Text="{Binding ErrorMessage}"
-                       TextColor="Red"
-                       IsVisible="{Binding HasError}"
-                       FontSize="12" />
+                    <!-- Campo Contraseña -->
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Contraseña"
+                               Style="{StaticResource BodyStyle}"
+                               FontAttributes="Bold" />
+                        
+                        <controls:ModernEntry Text="{Binding Password}"
+                                             Placeholder="Ingrese su contraseña"
+                                             Icon="🔒"
+                                             IsPassword="True" />
+                    </VerticalStackLayout>
+
+                    <!-- Mensaje de Error -->
+                    <Border BackgroundColor="{StaticResource ErrorColor}"
+                            StrokeShape="RoundRectangle 8"
+                            Padding="12"
+                            IsVisible="{Binding HasError}">
+                        
+                        <Label Text="{Binding ErrorMessage}"
+                               TextColor="White"
+                               FontSize="14"
+                               HorizontalOptions="Center" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- Botón de Login -->
+                <Button Text="Iniciar Sesión"
+                        Command="{Binding LoginCommand}"
+                        IsEnabled="{Binding IsNotBusy}"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        HeightRequest="56"
+                        Margin="0,16,0,0" />
+
+                <!-- Indicador de Carga -->
+                <VerticalStackLayout Spacing="12"
+                                    IsVisible="{Binding IsBusy}"
+                                    HorizontalOptions="Center">
+                    
+                    <ActivityIndicator IsRunning="True"
+                                      Color="{StaticResource PrimaryColor}"
+                                      WidthRequest="24"
+                                      HeightRequest="24" />
+                    
+                    <Label Text="Iniciando sesión..."
+                           Style="{StaticResource CaptionStyle}"
+                           TextColor="{StaticResource TextSecondary}"
+                           HorizontalOptions="Center" />
+                </VerticalStackLayout>
 
             </VerticalStackLayout>
+        </ScrollView>
 
-            <!-- Botón de Login -->
-            <Button Text="Iniciar Sesión"
-                    Command="{Binding LoginCommand}"
-                    IsEnabled="{Binding IsNotBusy}"
-                    BackgroundColor="#007ACC"
-                    TextColor="White"
-                    FontAttributes="Bold"
-                    Margin="0,20,0,0" />
+        <!-- Footer -->
+        <Border Grid.Row="1"
+                BackgroundColor="{StaticResource SurfaceSecondary}"
+                StrokeShape="RoundRectangle 16 16 0 0"
+                Padding="24,20">
+            
+            <VerticalStackLayout Spacing="8" 
+                                HorizontalOptions="Center">
+                
+                <Label Text="¿Primera vez usando RestaurantePro?"
+                       Style="{StaticResource BodyStyle}"
+                       HorizontalOptions="Center" />
+                
+                <Label Text="Contacta al administrador para obtener acceso"
+                       Style="{StaticResource CaptionStyle}"
+                       TextColor="{StaticResource TextSecondary}"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
+        </Border>
 
-            <!-- Indicador de Carga -->
-            <ActivityIndicator IsRunning="{Binding IsBusy}"
-                              IsVisible="{Binding IsBusy}"
-                              Color="#007ACC" />
-
-        </VerticalStackLayout>
-    </ScrollView>
+    </Grid>
 
 </ContentPage> 

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<?xaml-comp compile="true" ?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- ========================================
+         SPACING SYSTEM (8pt Grid)
+         ======================================== -->
+    <OnPlatform x:Key="SpacingXS" x:TypeArguments="x:Double">
+        <On Platform="Default">4</On>
+    </OnPlatform>
+    
+    <OnPlatform x:Key="SpacingS" x:TypeArguments="x:Double">
+        <On Platform="Default">8</On>
+    </OnPlatform>
+    
+    <OnPlatform x:Key="SpacingM" x:TypeArguments="x:Double">
+        <On Platform="Default">16</On>
+    </OnPlatform>
+    
+    <OnPlatform x:Key="SpacingL" x:TypeArguments="x:Double">
+        <On Platform="Default">24</On>
+    </OnPlatform>
+    
+    <OnPlatform x:Key="SpacingXL" x:TypeArguments="x:Double">
+        <On Platform="Default">32</On>
+    </OnPlatform>
+
+    <!-- ========================================
+         BORDER RADIUS
+         ======================================== -->
+    <OnPlatform x:Key="BorderRadiusS" x:TypeArguments="x:Double">
+        <On Platform="Default">8</On>
+    </OnPlatform>
+    
+    <OnPlatform x:Key="BorderRadiusM" x:TypeArguments="x:Double">
+        <On Platform="Default">12</On>
+    </OnPlatform>
+    
+    <OnPlatform x:Key="BorderRadiusL" x:TypeArguments="x:Double">
+        <On Platform="Default">16</On>
+    </OnPlatform>
+
+    <!-- ========================================
+         SHADOW VALUES
+         ======================================== -->
+    <OnPlatform x:Key="ShadowOffsetY" x:TypeArguments="x:Double">
+        <On Platform="Default">2</On>
+    </OnPlatform>
+    
+    <OnPlatform x:Key="ShadowRadius" x:TypeArguments="x:Double">
+        <On Platform="Default">4</On>
+    </OnPlatform>
+    
+    <OnPlatform x:Key="ShadowOpacity" x:TypeArguments="x:Double">
+        <On Platform="Default">0.1</On>
+    </OnPlatform>
+
+</ResourceDictionary> 
