@@ -116,7 +116,8 @@ public class IdentityUsersSeeder : ISeedData
         // Si no existe el usuario admin en el dominio, crearlo
         if (!usuariosCriticos.Any())
         {
-            logger.LogInformation("🔧 Usuario admin no existe en dominio, creándolo...");
+            if (logger != null)
+                logger.LogInformation("🔧 Usuario admin no existe en dominio, creándolo...");
             var usuarioAdmin = Usuario.Crear(
                 nombreUsuario: "admin",
                 nombreCompleto: "Administrador del Sistema",
@@ -130,7 +131,8 @@ public class IdentityUsersSeeder : ISeedData
             await context.SaveChangesAsync(cancellationToken);
             
             usuariosCriticos.Add(usuarioAdmin);
-            logger.LogInformation("✅ Usuario admin creado en dominio");
+            if (logger != null)
+                logger.LogInformation("✅ Usuario admin creado en dominio");
         }
         
         usuarios.AddRange(usuariosCriticos);

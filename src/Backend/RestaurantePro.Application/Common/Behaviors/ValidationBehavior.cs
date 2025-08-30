@@ -56,14 +56,48 @@ namespace RestaurantePro.Application.Common.Behaviors
                 var genericType = typeof(TResponse).GetGenericArguments()[0];
                 var resultType = typeof(Result);
                 var failureMethod = resultType.GetMethods()
-                    .FirstOrDefault(m => m.Name == "Failure" && m.IsGenericMethod && m.GetParameters().Length == 0);
+                    .FirstOrDefault(m => m.Name == "Failure" && m.IsGenericMethod && m.GetParameters().Length == 1);
                 if (failureMethod != null)
                 {
                     var genericFailure = failureMethod.MakeGenericMethod(genericType);
-                    return (TResponse)genericFailure.Invoke(null, null)!;
+                    return (TResponse)genericFailure.Invoke(null, new object[] { errorMessage })!;
                 }
             }
-            throw new RestaurantePro.Application.Common.Exceptions.ValidationException(errorMessage, "Validation", errorMessage);
+            
+            // Si no es un Result<T>, intentar crear un Result.Failure genérico
+            try
+            {
+                var resultType = typeof(Result);
+                var failureMethod = resultType.GetMethods()
+                    .FirstOrDefault(m => m.Name == "Failure" && m.IsGenericMethod && m.GetParameters().Length == 1);
+                if (failureMethod != null)
+                {
+                    var genericFailure = failureMethod.MakeGenericMethod(typeof(TResponse));
+                    return (TResponse)genericFailure.Invoke(null, new object[] { errorMessage })!;
+                }
+            }
+            catch
+            {
+                // Si falla, intentar con Result.Failure() sin parámetros
+                try
+                {
+                    var resultType = typeof(Result);
+                    var failureMethod = resultType.GetMethods()
+                        .FirstOrDefault(m => m.Name == "Failure" && m.IsGenericMethod && m.GetParameters().Length == 0);
+                    if (failureMethod != null)
+                    {
+                        var genericFailure = failureMethod.MakeGenericMethod(typeof(TResponse));
+                        return (TResponse)genericFailure.Invoke(null, null)!;
+                    }
+                }
+                catch
+                {
+                    // Último recurso: lanzar excepción pero esto no debería ocurrir
+                    throw new InvalidOperationException($"No se pudo crear un Result.Failure para el tipo {typeof(TResponse).Name}");
+                }
+            }
+            
+            throw new InvalidOperationException($"No se pudo crear un Result.Failure para el tipo {typeof(TResponse).Name}");
         }
     }
 } 

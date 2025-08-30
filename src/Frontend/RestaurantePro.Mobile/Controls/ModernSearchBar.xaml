@@ -4,13 +4,14 @@
              x:Class="RestaurantePro.Mobile.Controls.ModernSearchBar"
              x:Name="ModernSearchBarControl">
     
-    <Grid ColumnDefinitions="Auto,*,Auto" 
-          BackgroundColor="{StaticResource SurfaceSecondary}"
-          StrokeShape="RoundRectangle 12"
-          Stroke="{StaticResource BorderColor}"
-          StrokeThickness="1"
-          Padding="12,8"
-          Margin="16,8">
+    <Border StrokeShape="RoundRectangle 12"
+            BackgroundColor="{StaticResource SurfaceSecondary}"
+            Stroke="{StaticResource BorderColor}"
+            StrokeThickness="1"
+            Padding="12,8"
+            Margin="16,8">
+        
+        <Grid ColumnDefinitions="Auto,*,Auto">
         
         <!-- Icono de búsqueda -->
         <Image x:Name="SearchIcon"
@@ -55,6 +56,8 @@
                 IsVisible="False"
                 Clicked="OnClearButtonClicked" />
         
-    </Grid>
+        </Grid>
+        
+    </Border>
     
 </ContentView> 

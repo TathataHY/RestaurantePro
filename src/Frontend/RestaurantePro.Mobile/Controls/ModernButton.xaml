@@ -11,8 +11,7 @@
             StrokeThickness="{Binding Source={x:Reference ModernButtonControl}, Path=BorderWidth}"
             AutomationProperties.Name="{Binding Source={x:Reference ModernButtonControl}, Path=AccessibilityName}"
             AutomationProperties.HelpText="{Binding Source={x:Reference ModernButtonControl}, Path=AccessibilityHelpText}"
-            AutomationProperties.IsInAccessibleTree="True"
-            AutomationProperties.Role="Button">
+            AutomationProperties.IsInAccessibleTree="True">
         
         <Border.Shadow>
             <Shadow Brush="{StaticResource ShadowColor}" 

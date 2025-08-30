@@ -4,109 +4,221 @@
              xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
              x:Class="RestaurantePro.Mobile.UI.Pages.DashboardPage"
              Title="Dashboard"
-             BackgroundColor="{StaticResource SurfacePrimary}">
+             BackgroundColor="#F8F9FA">
 
     <ScrollView>
         <VerticalStackLayout Padding="20" Spacing="24">
             
-            <!-- Header Moderno -->
-            <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                <Label Text="🏪 RestaurantePro"
-                       Style="{StaticResource H1Style}"
-                       HorizontalOptions="Center" />
-                <Label Text="Panel de Control"
-                       Style="{StaticResource CaptionStyle}"
-                       HorizontalOptions="Center" />
-            </VerticalStackLayout>
+            <!-- Header Moderno con Gradiente -->
+            <Frame BackgroundColor="Transparent" 
+                   Padding="0" 
+                   CornerRadius="20"
+                   HasShadow="True">
+                <Frame.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#667eea" Offset="0.0" />
+                        <GradientStop Color="#764ba2" Offset="1.0" />
+                    </LinearGradientBrush>
+                </Frame.Background>
+                <VerticalStackLayout Padding="24" Spacing="8" HorizontalOptions="Center">
+                    <Label Text="🏪 RestaurantePro"
+                           Style="{StaticResource H1Style}"
+                           TextColor="White"
+                           HorizontalOptions="Center" />
+                    <Label Text="Panel de Control Inteligente"
+                           Style="{StaticResource CaptionStyle}"
+                           TextColor="White"
+                           Opacity="0.9"
+                           HorizontalOptions="Center" />
+                    <Label Text="Bienvenido de vuelta"
+                           Style="{StaticResource BodyStyle}"
+                           TextColor="White"
+                           Opacity="0.8"
+                           HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </Frame>
 
-            <!-- Cards de Estadísticas -->
+            <!-- Cards de Estadísticas Mejoradas -->
             <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
                 
                 <!-- Card: Mesas -->
-                <controls:ModernCard Grid.Column="0" Grid.Row="0">
+                <Frame Grid.Column="0" Grid.Row="0" 
+                       BackgroundColor="White" 
+                       CornerRadius="16"
+                       Padding="16"
+                       HasShadow="True">
                     <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                        <Label Text="🏠" FontSize="32" HorizontalOptions="Center" />
+                        <Label Text="🏠" FontSize="40" HorizontalOptions="Center" />
                         <Label Text="Mesas" Style="{StaticResource H2Style}" HorizontalOptions="Center" />
                         <Label Text="8 disponibles" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                        <Label Text="2 ocupadas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" TextColor="#28a745" />
                     </VerticalStackLayout>
-                </controls:ModernCard>
+                </Frame>
 
                 <!-- Card: Comandas -->
-                <controls:ModernCard Grid.Column="1" Grid.Row="0">
+                <Frame Grid.Column="1" Grid.Row="0" 
+                       BackgroundColor="White" 
+                       CornerRadius="16"
+                       Padding="16"
+                       HasShadow="True">
                     <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                        <Label Text="📝" FontSize="32" HorizontalOptions="Center" />
+                        <Label Text="📝" FontSize="40" HorizontalOptions="Center" />
                         <Label Text="Comandas" Style="{StaticResource H2Style}" HorizontalOptions="Center" />
                         <Label Text="12 activas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                        <Label Text="3 pendientes" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" TextColor="#ffc107" />
                     </VerticalStackLayout>
-                </controls:ModernCard>
+                </Frame>
 
                 <!-- Card: Preparaciones -->
-                <controls:ModernCard Grid.Column="0" Grid.Row="1">
+                <Frame Grid.Column="0" Grid.Row="1" 
+                       BackgroundColor="White" 
+                       CornerRadius="16"
+                       Padding="16"
+                       HasShadow="True">
                     <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                        <Label Text="🍳" FontSize="32" HorizontalOptions="Center" />
+                        <Label Text="🍳" FontSize="40" HorizontalOptions="Center" />
                         <Label Text="Cocina" Style="{StaticResource H2Style}" HorizontalOptions="Center" />
                         <Label Text="5 pendientes" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                        <Label Text="2 en preparación" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" TextColor="#17a2b8" />
                     </VerticalStackLayout>
-                </controls:ModernCard>
+                </Frame>
 
                 <!-- Card: Ventas -->
-                <controls:ModernCard Grid.Column="1" Grid.Row="1">
+                <Frame Grid.Column="1" Grid.Row="1" 
+                       BackgroundColor="White" 
+                       CornerRadius="16"
+                       Padding="16"
+                       HasShadow="True">
                     <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                        <Label Text="💰" FontSize="32" HorizontalOptions="Center" />
+                        <Label Text="💰" FontSize="40" HorizontalOptions="Center" />
                         <Label Text="Ventas" Style="{StaticResource H2Style}" HorizontalOptions="Center" />
                         <Label Text="$2,450 hoy" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                        <Label Text="+15% vs ayer" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" TextColor="#28a745" />
                     </VerticalStackLayout>
-                </controls:ModernCard>
+                </Frame>
             </Grid>
 
-            <!-- Botones de Acción Rápida -->
-            <VerticalStackLayout Spacing="12">
-                <Label Text="Acciones Rápidas" Style="{StaticResource H2Style}" />
-                
-                <controls:ModernButton Text="🏠 Gestión de Mesas"
-                                       IconSource="table.png"
-                                       BackgroundColor="{StaticResource PrimaryColor}"
-                                       Command="{Binding NavigateToMesasCommand}"
-                                       AccessibilityName="Botón de gestión de mesas"
-                                       AccessibilityHelpText="Navegar a la gestión de mesas del restaurante" />
+            <!-- Sección de Acciones Rápidas -->
+            <Frame BackgroundColor="White" 
+                   CornerRadius="16"
+                   Padding="20"
+                   HasShadow="True">
+                <VerticalStackLayout Spacing="16">
+                    <Label Text="🚀 Acciones Rápidas" 
+                           Style="{StaticResource H2Style}" 
+                           HorizontalOptions="Center" />
+                    
+                    <!-- Primera fila de botones -->
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                        <Frame Grid.Column="0" 
+                               BackgroundColor="#667eea" 
+                               CornerRadius="12"
+                               Padding="16"
+                               HasShadow="True">
+                            <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                                <Label Text="🏠" FontSize="24" HorizontalOptions="Center" />
+                                <Label Text="Mesas" Style="{StaticResource BodyStyle}" TextColor="White" HorizontalOptions="Center" />
+                            </VerticalStackLayout>
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding NavigateToMesasCommand}" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
 
-                <controls:ModernButton Text="📝 Gestión de Comandas"
-                                       IconSource="order.png"
-                                       BackgroundColor="{StaticResource SecondaryColor}"
-                                       Command="{Binding NavigateToComandasCommand}"
-                                       AccessibilityName="Botón de gestión de comandas"
-                                       AccessibilityHelpText="Navegar a la gestión de comandas" />
+                        <Frame Grid.Column="1" 
+                               BackgroundColor="#764ba2" 
+                               CornerRadius="12"
+                               Padding="16"
+                               HasShadow="True">
+                            <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                                <Label Text="📝" FontSize="24" HorizontalOptions="Center" />
+                                <Label Text="Comandas" Style="{StaticResource BodyStyle}" TextColor="White" HorizontalOptions="Center" />
+                            </VerticalStackLayout>
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding NavigateToComandasCommand}" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+                    </Grid>
 
-                <controls:ModernButton Text="🍳 Preparaciones"
-                                       IconSource="kitchen.png"
-                                       BackgroundColor="{StaticResource WarningColor}"
-                                       TextColor="Black"
-                                       Command="{Binding NavigateToPreparacionesCommand}"
-                                       AccessibilityName="Botón de preparaciones"
-                                       AccessibilityHelpText="Navegar a la gestión de preparaciones de cocina" />
+                    <!-- Segunda fila de botones -->
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                        <Frame Grid.Column="0" 
+                               BackgroundColor="#f093fb" 
+                               CornerRadius="12"
+                               Padding="16"
+                               HasShadow="True">
+                            <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                                <Label Text="🍳" FontSize="24" HorizontalOptions="Center" />
+                                <Label Text="Cocina" Style="{StaticResource BodyStyle}" TextColor="White" HorizontalOptions="Center" />
+                            </VerticalStackLayout>
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding NavigateToPreparacionesCommand}" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
 
-                <controls:ModernButton Text="📊 Consultar Menú"
-                                       IconSource="menu.png"
-                                       BackgroundColor="{StaticResource InfoColor}"
-                                       Command="{Binding NavigateToProductosCommand}"
-                                       AccessibilityName="Botón de consultar menú"
-                                       AccessibilityHelpText="Navegar al catálogo de productos del menú" />
+                        <Frame Grid.Column="1" 
+                               BackgroundColor="#4facfe" 
+                               CornerRadius="12"
+                               Padding="16"
+                               HasShadow="True">
+                            <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                                <Label Text="📊" FontSize="24" HorizontalOptions="Center" />
+                                <Label Text="Menú" Style="{StaticResource BodyStyle}" TextColor="White" HorizontalOptions="Center" />
+                            </VerticalStackLayout>
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding NavigateToProductosCommand}" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+                    </Grid>
 
-                <controls:ModernButton Text="💰 Facturación"
-                                       IconSource="invoice.png"
-                                       BackgroundColor="{StaticResource SuccessColor}"
-                                       Command="{Binding NavigateToFacturasCommand}"
-                                       AccessibilityName="Botón de facturación"
-                                       AccessibilityHelpText="Navegar al sistema de facturación" />
-            </VerticalStackLayout>
+                    <!-- Tercera fila de botones -->
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                        <Frame Grid.Column="0" 
+                               BackgroundColor="#43e97b" 
+                               CornerRadius="12"
+                               Padding="16"
+                               HasShadow="True">
+                            <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                                <Label Text="💰" FontSize="24" HorizontalOptions="Center" />
+                                <Label Text="Facturar" Style="{StaticResource BodyStyle}" TextColor="White" HorizontalOptions="Center" />
+                            </VerticalStackLayout>
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding NavigateToFacturasCommand}" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
 
-            <!-- Botón de Logout -->
-            <controls:ModernButton Text="Cerrar Sesión"
-                                   IconSource="logout.png"
-                                   BackgroundColor="{StaticResource ErrorColor}"
-                                   Command="{Binding LogoutCommand}"
-                                   AccessibilityName="Botón de cerrar sesión"
-                                   AccessibilityHelpText="Cerrar sesión y salir de la aplicación" />
+                        <Frame Grid.Column="1" 
+                               BackgroundColor="#fa709a" 
+                               CornerRadius="12"
+                               Padding="16"
+                               HasShadow="True">
+                            <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                                <Label Text="👥" FontSize="24" HorizontalOptions="Center" />
+                                <Label Text="Clientes" Style="{StaticResource BodyStyle}" TextColor="White" HorizontalOptions="Center" />
+                            </VerticalStackLayout>
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding NavigateToClientesCommand}" />
+                            </Frame.GestureRecognizers>
+                        </Frame>
+                    </Grid>
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Botón de Logout Mejorado -->
+            <Frame BackgroundColor="#dc3545" 
+                   CornerRadius="16"
+                   Padding="16"
+                   HasShadow="True">
+                <HorizontalStackLayout Spacing="12" HorizontalOptions="Center">
+                    <Label Text="🚪" FontSize="20" VerticalOptions="Center" />
+                    <Label Text="Cerrar Sesión" 
+                           Style="{StaticResource BodyStyle}" 
+                           TextColor="White" 
+                           VerticalOptions="Center" />
+                </HorizontalStackLayout>
+                <Frame.GestureRecognizers>
+                    <TapGestureRecognizer Command="{Binding LogoutCommand}" />
+                </Frame.GestureRecognizers>
+            </Frame>
 
         </VerticalStackLayout>
     </ScrollView>

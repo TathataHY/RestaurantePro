@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RestaurantePro.Mobile.Views.SimpleLoginPage"
+             Title="Iniciar Sesión"
+             BackgroundColor="White">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="20" 
+                            Padding="24"
+                            VerticalOptions="Center">
+            
+            <!-- Logo -->
+            <Border x:Name="LogoBorder"
+                    BackgroundColor="#007ACC"
+                    StrokeShape="Ellipse"
+                    WidthRequest="100"
+                    HeightRequest="100"
+                    HorizontalOptions="Center">
+                
+                <Label Text="🍽️"
+                       FontSize="50"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
+            </Border>
+            
+            <!-- Título -->
+            <Label Text="RestaurantePro"
+                   FontSize="32"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   TextColor="#007ACC" />
+            
+            <!-- Subtítulo -->
+            <Label Text="Sistema de Gestión Restaurante"
+                   FontSize="16"
+                   HorizontalOptions="Center"
+                   TextColor="Gray" />
+            
+            <!-- Formulario -->
+            <Frame BackgroundColor="LightGray"
+                   Padding="20"
+                   CornerRadius="10">
+                
+                <VerticalStackLayout Spacing="16">
+                    
+                    <!-- Email -->
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Correo Electrónico"
+                               FontAttributes="Bold" />
+                        
+                        <Entry Text="{Binding Email}"
+                               Placeholder="ejemplo@restaurantepro.com"
+                               Keyboard="Email"
+                               x:Name="EmailEntry"
+                               AutomationProperties.Name="EmailEntry" />
+                    </VerticalStackLayout>
+                    
+                    <!-- Contraseña -->
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Contraseña"
+                               FontAttributes="Bold" />
+                        
+                        <Entry Text="{Binding Password}"
+                               Placeholder="Ingrese su contraseña"
+                               IsPassword="True"
+                               x:Name="PasswordEntry"
+                               AutomationProperties.Name="PasswordEntry" />
+                    </VerticalStackLayout>
+                    
+                    <!-- Recordar sesión -->
+                    <HorizontalStackLayout Spacing="8">
+                        <CheckBox IsChecked="{Binding RememberMe}"
+                                 x:Name="RememberMeCheckBox"
+                                 AutomationProperties.Name="RememberMeCheckBox" />
+                        <Label Text="Recordar sesión" 
+                               VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                    
+                    <!-- Botón de Login -->
+                    <Button Text="Iniciar Sesión"
+                            Command="{Binding LoginCommand}"
+                            IsEnabled="{Binding IsNotBusy}"
+                            BackgroundColor="#007ACC"
+                            TextColor="White"
+                            x:Name="LoginButton"
+                            AutomationProperties.Name="LoginButton" />
+                    
+                    <!-- Indicador de carga -->
+                    <ActivityIndicator IsRunning="{Binding IsBusy}"
+                                      IsVisible="{Binding IsBusy}"
+                                      Color="#007ACC" />
+                    
+                    <!-- Mensaje de error -->
+                    <Label Text="{Binding ErrorMessage}"
+                           IsVisible="{Binding HasError}"
+                           TextColor="Red"
+                           HorizontalOptions="Center"
+                           x:Name="ErrorMessageLabel"
+                           AutomationProperties.Name="ErrorMessageLabel" />
+                </VerticalStackLayout>
+            </Frame>
+            
+            <!-- Información adicional -->
+            <Label Text="Versión 4.0 - Pruebas UI"
+                   FontSize="12"
+                   HorizontalOptions="Center"
+                   TextColor="Gray" />
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage> 

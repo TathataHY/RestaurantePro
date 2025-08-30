@@ -32,7 +32,7 @@
     <!-- Login Page - Página inicial por defecto -->
     <ShellContent
         Title="Login"
-        ContentTemplate="{DataTemplate views:ModernLoginPage}"
+        ContentTemplate="{DataTemplate views:SimpleLoginPage}"
         Route="login" />
 
     <!-- Onboarding Page -->

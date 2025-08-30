@@ -1,0 +1,14 @@
+global using Xunit;
+global using Xunit.Abstractions;
+global using FluentAssertions;
+global using OpenQA.Selenium;
+global using OpenQA.Selenium.Appium;
+global using OpenQA.Selenium.Appium.Android;
+global using OpenQA.Selenium.Appium.Android.UiAutomator;
+global using OpenQA.Selenium.Appium.iOS;
+global using OpenQA.Selenium.Appium.Enums;
+global using OpenQA.Selenium.Support.UI;
+global using Microsoft.Extensions.Configuration;
+global using Microsoft.Extensions.Logging;
+global using System.Drawing;
+global using System.Drawing.Imaging; 

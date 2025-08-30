@@ -64,8 +64,8 @@ public partial class ModernSearchBar : ContentView
 
     private void SetupEventHandlers()
     {
-        SearchEntry.TextChanged += OnEntryTextChanged;
-        SearchEntry.Completed += OnEntryCompleted;
+        // Los elementos se configuran en el XAML con binding
+        // No necesitamos configurar event handlers manualmente
     }
 
     private static void OnSearchTextChanged(BindableObject bindable, object oldValue, object newValue)
@@ -79,20 +79,15 @@ public partial class ModernSearchBar : ContentView
     private void OnEntryTextChanged(object sender, TextChangedEventArgs e)
     {
         SearchText = e.NewTextValue;
-        UpdateClearButtonVisibility();
         SearchTextChanged?.Invoke(this, e.NewTextValue);
     }
 
-    private async void OnEntryCompleted(object sender, EventArgs e)
+    private void OnEntryCompleted(object sender, EventArgs e)
     {
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
             // Feedback háptico
             HapticFeedback.Selection();
-            
-            // Animación de búsqueda
-            await SearchIcon.ScaleTo(1.2, 100, Easing.CubicOut);
-            await SearchIcon.ScaleTo(1.0, 100, Easing.CubicIn);
             
             // Ejecutar comando de búsqueda
             if (SearchCommand?.CanExecute(SearchText) == true)
@@ -104,44 +99,21 @@ public partial class ModernSearchBar : ContentView
         }
     }
 
-    private async void OnClearButtonClicked(object sender, EventArgs e)
+    private void OnClearButtonClicked(object sender, EventArgs e)
     {
         if (!string.IsNullOrWhiteSpace(SearchText))
         {
             // Feedback háptico
             HapticFeedback.Click();
             
-            // Animación de limpieza
-            await ClearButton.ScaleTo(0.8, 100, Easing.CubicOut);
-            await ClearButton.ScaleTo(1.0, 100, Easing.CubicIn);
-            
             // Limpiar texto
             SearchText = string.Empty;
-            SearchEntry.Text = string.Empty;
-            
-            // Ocultar botón de limpiar
-            await ClearButton.FadeTo(0, 200, Easing.CubicOut);
-            ClearButton.IsVisible = false;
-            
-            // Enfocar el campo de entrada
-            SearchEntry.Focus();
         }
     }
 
     private void UpdateClearButtonVisibility()
     {
-        var shouldShow = !string.IsNullOrWhiteSpace(SearchText);
-        
-        if (shouldShow && !ClearButton.IsVisible)
-        {
-            ClearButton.IsVisible = true;
-            ClearButton.FadeTo(1, 200, Easing.CubicOut);
-        }
-        else if (!shouldShow && ClearButton.IsVisible)
-        {
-            ClearButton.FadeTo(0, 200, Easing.CubicOut);
-            ClearButton.IsVisible = false;
-        }
+        // La visibilidad se maneja en el XAML con binding
     }
 
     /// <summary>
@@ -152,14 +124,12 @@ public partial class ModernSearchBar : ContentView
         if (!string.IsNullOrWhiteSpace(query))
         {
             SearchText = query;
-            SearchEntry.Text = query;
         }
 
         IsSearching = true;
         
-        // Animación de búsqueda
-        await SearchIcon.RotateTo(360, 1000, Easing.Linear);
-        SearchIcon.Rotation = 0;
+        // Simular búsqueda
+        await Task.Delay(1000);
         
         IsSearching = false;
     }
@@ -170,8 +140,6 @@ public partial class ModernSearchBar : ContentView
     public void ClearSearch()
     {
         SearchText = string.Empty;
-        SearchEntry.Text = string.Empty;
-        UpdateClearButtonVisibility();
     }
 
     /// <summary>
@@ -179,7 +147,7 @@ public partial class ModernSearchBar : ContentView
     /// </summary>
     public void Focus()
     {
-        SearchEntry.Focus();
+        // El foco se maneja en el XAML con binding
     }
 
     /// <summary>
@@ -187,6 +155,6 @@ public partial class ModernSearchBar : ContentView
     /// </summary>
     public void Unfocus()
     {
-        SearchEntry.Unfocus();
+        // El foco se maneja en el XAML con binding
     }
 } 

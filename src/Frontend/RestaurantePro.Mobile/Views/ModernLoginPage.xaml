@@ -22,7 +22,8 @@
                                     Margin="0,40,0,20">
                     
                     <!-- Logo/Icono con Animación -->
-                    <Border BackgroundColor="{StaticResource PrimaryColor}"
+                    <Border x:Name="LogoBorder"
+                            BackgroundColor="{StaticResource PrimaryColor}"
                             StrokeShape="Ellipse"
                             WidthRequest="100"
                             HeightRequest="100"

@@ -4,6 +4,7 @@
              xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
              xmlns:converters="clr-namespace:RestaurantePro.Mobile.Converters"
              xmlns:vm="clr-namespace:RestaurantePro.Mobile.Core.Features.Operations.Productos.ViewModels;assembly=RestaurantePro.Mobile.Core"
+             xmlns:models="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
              x:Class="RestaurantePro.Mobile.Features.Operations.Productos.Pages.ModernProductosPage"
              x:DataType="vm:ProductosViewModel"
              Title="{Binding Title}"
@@ -141,7 +142,7 @@
                     </CollectionView.ItemsLayout>
 
                     <CollectionView.ItemTemplate>
-                        <DataTemplate>
+                        <DataTemplate x:DataType="models:ProductoDto">
                             <controls:ModernCard Margin="8">
                                 <Grid RowDefinitions="Auto,Auto,Auto,Auto" 
                                       ColumnDefinitions="*,Auto">
