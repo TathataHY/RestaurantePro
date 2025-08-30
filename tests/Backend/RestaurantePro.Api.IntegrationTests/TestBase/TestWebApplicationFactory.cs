@@ -81,11 +81,11 @@ using RestaurantePro.Infrastructure.ExternalServices.SMS;
 using RestaurantePro.Infrastructure.Caching;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Domain.Core.SharedKernel.Services.Cache;
-using RestaurantePro.Application.Common.Models;
 using RestaurantePro.Infrastructure.Persistence;
 using RestaurantePro.Infrastructure.Identity.Configuration;
-using RestaurantePro.Infrastructure.Identity.Models;
-using RestaurantePro.Infrastructure.Services;
+// 🔧 AGREGAR IMPORTS PARA MÉTODOS DE EXTENSIÓN
+using RestaurantePro.Application.Config.DependencyInjection;
+using RestaurantePro.Domain.Core;
 
 namespace RestaurantePro.Api.IntegrationTests.TestBase;
 
@@ -281,12 +281,12 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             services.AddDomainServices();
             
             // 🔧 REGISTRAR SERVICIOS ESPECÍFICOS PARA TESTS
-            // Remover cualquier registro existente de IAnalyticsService
-            var analyticsServiceDescriptor = services.SingleOrDefault(d => d.ServiceType == typeof(RestaurantePro.Domain.Core.Analytics.Interfaces.IAnalyticsService));
-            if (analyticsServiceDescriptor != null)
+            // Remover cualquier registro existente de IAnalyticsService (puede haber múltiples)
+            var analyticsServiceDescriptors = services.Where(d => d.ServiceType == typeof(RestaurantePro.Domain.Core.Analytics.Interfaces.IAnalyticsService)).ToList();
+            foreach (var descriptor in analyticsServiceDescriptors)
             {
-                Console.WriteLine($"🔧 Removiendo registro existente de IAnalyticsService: {analyticsServiceDescriptor.ImplementationType?.Name}");
-                services.Remove(analyticsServiceDescriptor);
+                Console.WriteLine($"🔧 Removiendo registro existente de IAnalyticsService: {descriptor.ImplementationType?.Name}");
+                services.Remove(descriptor);
             }
             
             // Registrar el mock de AnalyticsService
@@ -1417,12 +1417,9 @@ public class TestAnalyticsService : RestaurantePro.Domain.Core.Analytics.Interfa
             TotalMesas = 20,
             MesasOcupadas = 15,
             MesasDisponibles = 5,
-            PorcentajeOcupacion = 75.0m,
-            MesasPorEstado = new Dictionary<string, int>
-            {
-                { "Ocupada", 15 },
-                { "Disponible", 5 }
-            }
+            // PorcentajeOcupacion es una propiedad calculada (readonly) - NO se puede asignar
+            TiempoPromedioOcupacion = 45,
+            RotacionesMesas = 3
         });
     }
 
@@ -1430,15 +1427,13 @@ public class TestAnalyticsService : RestaurantePro.Domain.Core.Analytics.Interfa
     {
         return await Task.FromResult(new RestaurantePro.Domain.Core.Analytics.DTOs.TiempoPreparacionDto
         {
-            TiempoPromedio = 12.5m,
-            TiempoMinimo = 5.0m,
-            TiempoMaximo = 25.0m,
+            TiempoPromedioMinutos = 12,
+            TiempoMinimoMinutos = 5,
+            TiempoMaximoMinutos = 25,
             TotalPreparaciones = 45,
-            PreparacionesPorCategoria = new Dictionary<string, decimal>
-            {
-                { "Platos Principales", 15.0m },
-                { "Bebidas", 3.0m }
-            }
+            PreparacionesEnTiempo = 40,
+            PreparacionesFueraTiempo = 5,
+            TiempoEstandarMinutos = 15
         });
     }
 
@@ -1446,9 +1441,9 @@ public class TestAnalyticsService : RestaurantePro.Domain.Core.Analytics.Interfa
     {
         return await Task.FromResult(new List<RestaurantePro.Domain.Core.Analytics.DTOs.VentasHoraDto>
         {
-            new() { Hora = 12, TotalVentas = 450.00m, CantidadComandas = 8 },
-            new() { Hora = 13, TotalVentas = 650.00m, CantidadComandas = 12 },
-            new() { Hora = 14, TotalVentas = 350.00m, CantidadComandas = 6 }
+            new() { Hora = 12, TotalVentas = 450.00m, NumeroComandas = 8, PorcentajeTotalVentas = 25.0m },
+            new() { Hora = 13, TotalVentas = 650.00m, NumeroComandas = 12, PorcentajeTotalVentas = 35.0m },
+            new() { Hora = 14, TotalVentas = 350.00m, NumeroComandas = 6, PorcentajeTotalVentas = 20.0m }
         });
     }
 }

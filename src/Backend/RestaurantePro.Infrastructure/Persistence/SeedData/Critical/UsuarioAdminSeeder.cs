@@ -53,6 +53,12 @@ public class UsuarioAdminSeeder : ISeedData
             var usuarioAdmin = await CrearUsuarioAdmin(logger);
             
             context.Usuarios.Add(usuarioAdmin);
+            // NO guardar aquí - esperar a que se agreguen los permisos
+            
+            // Restaurar: Agregar permisos específicos de administrador (esto modifica el usuario)
+            await AgregarPermisosAdministrador(usuarioAdmin, logger);
+            
+            // Ahora guardar todos los cambios incluyendo los permisos
             await context.SaveChangesAsync(cancellationToken);
 
             logger.LogInformation("✅ Usuario administrador creado exitosamente: {Username}", usuarioAdmin.NombreUsuario);
@@ -107,8 +113,8 @@ public class UsuarioAdminSeeder : ISeedData
         // usuario.EstablecerPassword(passwordHash, salt);
         // COMENTADO: El password será manejado por IdentityUsersSeeder
 
-        // Agregar permisos específicos de administrador
-        await AgregarPermisosAdministrador(usuario, logger);
+        // Los permisos se agregarán después de crear el usuario
+        // await AgregarPermisosAdministrador(usuario, logger);
 
         return usuario;
     }

@@ -224,11 +224,11 @@ public class UsuarioAdminSeederTests : IntegrationTestBase
         Assert.Equal("admin@restaurantepro.com", admin.Email);
         Assert.Equal("Administrador del Sistema", admin.NombreCompleto);
         
-        // Verificar que tiene password hash
-        Assert.NotNull(admin.PasswordHash);
-        Assert.NotNull(admin.Salt);
-        Assert.NotEmpty(admin.PasswordHash);
-        Assert.NotEmpty(admin.Salt);
+        // NOTA: PasswordHash y Salt son manejados por IdentityUsersSeeder, no por UsuarioAdminSeeder
+        // Assert.NotNull(admin.PasswordHash);
+        // Assert.NotNull(admin.Salt);
+        // Assert.NotEmpty(admin.PasswordHash);
+        // Assert.NotEmpty(admin.Salt);
     }
 
     [Fact]
