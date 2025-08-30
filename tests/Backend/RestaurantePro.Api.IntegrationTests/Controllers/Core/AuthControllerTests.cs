@@ -354,8 +354,7 @@ public class AuthControllerTests : AuthorizationTestBase, IAsyncLifetime
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK, "El admin debe poder acceder al endpoint protegido");
-        var content = await response.Content.ReadAsStringAsync();
-        var apiResponse = JsonSerializer.Deserialize<ApiResponse<List<UsuarioDto>>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var apiResponse = await DeserializarResponse<List<UsuarioDto>>(response);
         apiResponse.Should().NotBeNull();
         apiResponse.Success.Should().BeTrue();
         apiResponse.Data.Should().NotBeNullOrEmpty();
@@ -420,8 +419,7 @@ public class AuthControllerTests : AuthorizationTestBase, IAsyncLifetime
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var content = await response.Content.ReadAsStringAsync();
-        var apiResponse = JsonSerializer.Deserialize<ApiResponse<List<UsuarioDto>>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var apiResponse = await DeserializarResponse<List<UsuarioDto>>(response);
         apiResponse.Success.Should().BeTrue();
         apiResponse.Data.Should().NotBeNull();
         apiResponse.Data.Should().Contain(u => u.Email == "admin@restaurantepro.com");
@@ -450,11 +448,19 @@ public class AuthControllerTests : AuthorizationTestBase, IAsyncLifetime
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var content = await response.Content.ReadAsStringAsync();
-        var apiResponse = JsonSerializer.Deserialize<ApiResponse<UserDto>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var apiResponse = await DeserializarResponse<UserDto>(response);
         apiResponse.Success.Should().BeTrue();
         apiResponse.Data.Should().NotBeNull();
         apiResponse.Data.Email.Should().Be("admin@restaurantepro.com");
         apiResponse.Data.UserName.Should().Be("admin");
     }
+
+    #region Métodos Helper
+
+    private static async Task<ApiResponse<T>> DeserializarResponse<T>(HttpResponseMessage response)
+    {
+        return await response.Content.ReadFromJsonAsyncApiResponse<T>() ?? new ApiResponse<T> { Success = false, Data = default };
+    }
+
+    #endregion
 } 

@@ -650,11 +650,7 @@ public class RecetasControllerTests : ApiIntegrationTestBase, IDisposable
 
     private static async Task<ApiResponse<T>> DeserializeResponse<T>(HttpResponseMessage response)
     {
-        var content = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<ApiResponse<T>>(content, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        })!;
+        return await response.Content.ReadFromJsonAsyncApiResponse<T>()!;
     }
 
     private async Task<Guid> ObtenerUsuarioSemillaIdAsync()

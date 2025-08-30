@@ -1,4 +1,5 @@
 namespace RestaurantePro.Api.IntegrationTests.TestBase;
+using RestaurantePro.Api.IntegrationTests.TestBase;
 using RestaurantePro.Domain.Core.Usuarios;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
@@ -411,6 +412,38 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         };
         
         return JsonSerializer.Deserialize<ApiResponse<T>>(jsonContent, options)!;
+    }
+
+    /// <summary>
+    /// Deserializa HttpContent a ApiResponse<T> usando las opciones JSON correctas para enums
+    /// </summary>
+    protected async Task<ApiResponse<T>> DeserializeFromContentAsync<T>(HttpContent content)
+    {
+        var jsonContent = await content.ReadAsStringAsync();
+        
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+        };
+        
+        return JsonSerializer.Deserialize<ApiResponse<T>>(jsonContent, options)!;
+    }
+
+    /// <summary>
+    /// Deserializa HttpContent a cualquier tipo T usando las opciones JSON correctas para enums
+    /// </summary>
+    protected async Task<T> DeserializeAnyFromContentAsync<T>(HttpContent content)
+    {
+        var jsonContent = await content.ReadAsStringAsync();
+        
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+        };
+        
+        return JsonSerializer.Deserialize<T>(jsonContent, options)!;
     }
 
     /// <summary>

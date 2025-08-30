@@ -255,10 +255,7 @@ public class FlujoTransaccionesDistribuidasTests : ApiIntegrationTestBase
             var buscarTarjetaResponse = await HttpClient.GetAsync($"/api/comercial/tarjetas-fidelizacion/{tarjeta.Id}");
             if (buscarTarjetaResponse.IsSuccessStatusCode)
             {
-                var rawJson = await buscarTarjetaResponse.Content.ReadAsStringAsync();
-                Console.WriteLine($"[DEBUG][Intento {retryTarjeta+1}] Respuesta JSON tarjeta: {rawJson}");
-                
-                var apiResponseLoop = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<TarjetaFidelizacionDto>>(rawJson);
+                var apiResponseLoop = await DeserializarResponse<TarjetaFidelizacionDto>(buscarTarjetaResponse);
                 tarjetaActualizada = apiResponseLoop?.Data;
                 tarjetaActualizada.Should().NotBeNull();
                 break;
@@ -693,10 +690,7 @@ public class FlujoTransaccionesDistribuidasTests : ApiIntegrationTestBase
             var tarjetaResponseLoop = await HttpClient.GetAsync($"/api/comercial/tarjetas-fidelizacion/{tarjetaId}");
             tarjetaResponseLoop.StatusCode.Should().Be(HttpStatusCode.OK);
             
-            var rawJson = await tarjetaResponseLoop.Content.ReadAsStringAsync();
-            Console.WriteLine($"[DEBUG][Intento {i+1}] Respuesta JSON tarjeta: {rawJson}");
-            
-            var apiResponseLoop = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<TarjetaFidelizacionDto>>(rawJson);
+            var apiResponseLoop = await DeserializarResponse<TarjetaFidelizacionDto>(tarjetaResponseLoop);
             tarjetaActualizada = apiResponseLoop?.Data;
             tarjetaActualizada.Should().NotBeNull();
             
@@ -720,8 +714,7 @@ public class FlujoTransaccionesDistribuidasTests : ApiIntegrationTestBase
         var facturaResponseFinal = await HttpClient.GetAsync($"/api/comercial/facturas/{factura!.Id}");
         facturaResponseFinal.StatusCode.Should().Be(HttpStatusCode.OK);
         
-        var facturaJson = await facturaResponseFinal.Content.ReadAsStringAsync();
-        var facturaApiResponseFinal = System.Text.Json.JsonSerializer.Deserialize<ApiResponse<FacturaDto>>(facturaJson);
+        var facturaApiResponseFinal = await DeserializarResponse<FacturaDto>(facturaResponseFinal);
         var facturaActualizada = facturaApiResponseFinal?.Data;
         facturaActualizada.Should().NotBeNull();
         facturaActualizada!.Estado.Should().Be(EstadoFactura.Emitida);
@@ -887,4 +880,13 @@ public class FlujoTransaccionesDistribuidasTests : ApiIntegrationTestBase
         mesaFinal.Should().NotBeNull();
         mesaFinal!.Estado.Should().Be("Disponible");
     }
+
+    #region Métodos Helper
+
+    private static async Task<RestaurantePro.Api.Common.ApiResponse<T>> DeserializarResponse<T>(HttpResponseMessage response)
+    {
+        return await response.Content.ReadFromJsonAsyncApiResponse<T>() ?? new RestaurantePro.Api.Common.ApiResponse<T> { Success = false, Data = default };
+    }
+
+    #endregion
 } 

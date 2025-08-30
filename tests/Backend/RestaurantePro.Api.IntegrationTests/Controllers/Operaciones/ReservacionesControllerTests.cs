@@ -471,11 +471,7 @@ public class ReservacionesControllerTests : ApiIntegrationTestBase
 
     private static async Task<ApiResponse<T>> DeserializarResponse<T>(HttpResponseMessage response)
     {
-        var content = await response.Content.ReadAsStringAsync();
-        return JsonSerializer.Deserialize<ApiResponse<T>>(content, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        }) ?? new ApiResponse<T> { Success = false, Data = default };
+        return await response.Content.ReadFromJsonAsyncApiResponse<T>() ?? new ApiResponse<T> { Success = false, Data = default };
     }
 
     #endregion

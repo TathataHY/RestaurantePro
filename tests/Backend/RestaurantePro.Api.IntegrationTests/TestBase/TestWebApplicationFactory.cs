@@ -22,6 +22,7 @@ using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Application.Common.Models;
 using RestaurantePro.Infrastructure.Services;
@@ -270,7 +271,24 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             // (El registro de Identity se realiza en AddInfrastructureServices, no es necesario aquí)
 
             // 🔧 CONFIGURAR CONTROLADORES PARA TESTS
-            services.AddControllers().AddApplicationPart(typeof(RestaurantePro.Api.Controllers.Core.AuthController).Assembly);
+            services.AddControllers(options =>
+            {
+                // Agregar filtros de excepción para tests
+                // options.Filters.Add<ApiExceptionFilterAttribute>();
+            })
+            .AddJsonOptions(options =>
+            {
+                // 🔧 CONFIGURACIÓN IDÉNTICA A LA API REAL
+                // Ignorar referencias circulares en JSON
+                options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+                // Usar nombres de propiedades en camelCase
+                options.JsonSerializerOptions.PropertyNamingPolicy = null;
+                // Ignorar valores nulos
+                options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                // 🔧 CONVERTIR ENUMS A STRINGS (IGUAL QUE EN LA API REAL)
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            })
+            .AddApplicationPart(typeof(RestaurantePro.Api.Controllers.Core.AuthController).Assembly);
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
 
@@ -311,6 +329,14 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             // services.AddScoped<ISMSService, FakeSmsService>();
             // services.AddScoped<ICacheService, FakeCacheService>();
             // services.AddScoped<ISignalRService, FakeSignalRService>();
+
+            // 🔧 CONFIGURAR OPCIONES JSON GLOBALES PARA TESTS
+            // Esto asegura que todos los métodos de deserialización usen JsonStringEnumConverter
+            services.Configure<JsonSerializerOptions>(options =>
+            {
+                options.PropertyNameCaseInsensitive = true;
+                options.Converters.Add(new JsonStringEnumConverter());
+            });
 
             // 🔧 CONFIGURAR REPOSITORIOS PARA TESTS
             services.AddScoped<IProductoRepository, ProductoRepository>();
@@ -403,6 +429,17 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
                     endpoints.MapHub<ComandaHub>("/hubs/comandas");
                     endpoints.MapHub<NotificationHub>("/hubs/notifications");
                     endpoints.MapHub<InventarioHub>("/hubs/inventario");
+                });
+            });
+            
+            // 🔧 CONFIGURAR OPCIONES JSON GLOBALMENTE PARA TESTS
+            webHostBuilder.ConfigureServices(services =>
+            {
+                // Configurar opciones JSON por defecto para todos los servicios
+                services.Configure<JsonSerializerOptions>(options =>
+                {
+                    options.PropertyNameCaseInsensitive = true;
+                    options.Converters.Add(new JsonStringEnumConverter());
                 });
             });
         });
