@@ -6,10 +6,10 @@ namespace RestaurantePro.Mobile.UITests.Tests;
 
 public class ComandaFlowTests : AppiumTestBase
 {
-    private LoginPageObject _loginPage;
-    private DashboardPageObject _dashboardPage;
-    private MesasPageObject _mesasPage;
-    private ComandasPageObject _comandasPage;
+    private LoginPageObject _loginPage = null!;
+    private DashboardPageObject _dashboardPage = null!;
+    private MesasPageObject _mesasPage = null!;
+    private ComandasPageObject _comandasPage = null!;
 
     public ComandaFlowTests(ITestOutputHelper testOutput) : base(testOutput) { }
 

@@ -94,7 +94,7 @@
 		<PackageReference Include="Microsoft.Maui.Essentials" Version="$(MauiVersion)" />
 		
 		<!-- Dependency Injection - V1 Fundamental -->
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.5" />
 	</ItemGroup>
 
 	<ItemGroup>

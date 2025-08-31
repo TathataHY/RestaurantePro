@@ -99,6 +99,9 @@ namespace RestaurantePro.Api
             
             app.UseRouting();
             
+            // 🔧 CONFIGURAR CORS - PERMITIR ACCESO DESDE EMULADORES ANDROID
+            app.UseCors("AllowAll");
+            
             app.UseAuthentication();
             app.UseAuthorization();
             

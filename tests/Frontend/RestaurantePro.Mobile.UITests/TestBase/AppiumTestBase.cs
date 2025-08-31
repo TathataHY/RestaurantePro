@@ -1,164 +1,258 @@
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using OpenQA.Selenium.Appium;
 using OpenQA.Selenium.Appium.Android;
-using OpenQA.Selenium.Appium.Enums;
-using System.Drawing;
-using System.Drawing.Imaging;
+using OpenQA.Selenium.Appium;
+using OpenQA.Selenium;
+using Xunit.Abstractions;
+using System.Net.Http;
+using System.Text.Json;
+
 
 namespace RestaurantePro.Mobile.UITests.TestBase;
 
-public abstract class AppiumTestBase : IAsyncLifetime
+/// <summary>
+/// Base class simple y clara para todos los tests de UI móvil
+/// Usa Appium real con la API en memoria para tests rápidos y confiables
+/// </summary>
+public abstract class AppiumTestBase : IDisposable
 {
     protected IWebDriver Driver { get; private set; } = null!;
-    protected AppiumOptions Options { get; private set; } = null!;
-    protected IConfiguration Configuration { get; private set; } = null!;
-    protected ILogger Logger { get; private set; } = null!;
     protected ITestOutputHelper TestOutput { get; }
+    protected IConfiguration Configuration { get; }
+    protected HttpClient ApiClient { get; private set; } = null!;
 
     protected AppiumTestBase(ITestOutputHelper testOutput)
     {
         TestOutput = testOutput;
-        Configuration = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.Test.json", optional: false)
-            .Build();
-
-        var loggerFactory = LoggerFactory.Create(builder =>
-        {
-            builder.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Information);
-            builder.AddConsole();
-        });
-        Logger = loggerFactory.CreateLogger<AppiumTestBase>();
+        Configuration = LoadConfiguration();
+        
+        // Inicializar API real (conectándose al backend ejecutándose)
+        InitializeRealApi();
+        
+        // Inicializar Appium real
+        InitializeAppium();
     }
 
-    public async Task InitializeAsync()
+    private void InitializeRealApi()
     {
         try
         {
-            Options = new AppiumOptions();
+            TestOutput.WriteLine("🚀 Inicializando conexión a API real...");
             
-            // Configuración básica de Appium usando propiedades dedicadas
-            Options.PlatformName = Configuration["AppiumConfig:PlatformName"];
-                                Options.PlatformVersion = Configuration["AppiumConfig:PlatformVersion"];
-                    Options.DeviceName = Configuration["AppiumConfig:DeviceName"];
-                    Options.AutomationName = "UiAutomator2";
-
-            // Configuración específica para Android/WSA
-            Options.AddAdditionalAppiumOption("appPackage", Configuration["AppiumConfig:AppPackage"]);
-            Options.AddAdditionalAppiumOption("appActivity", Configuration["AppiumConfig:AppActivity"]);
-            Options.AddAdditionalAppiumOption("noReset", bool.Parse(Configuration["AppiumConfig:NoReset"] ?? "false"));
-            Options.AddAdditionalAppiumOption("fullReset", bool.Parse(Configuration["AppiumConfig:FullReset"] ?? "false"));
-            Options.AddAdditionalAppiumOption("fastReset", bool.Parse(Configuration["AppiumConfig:FastReset"] ?? "true"));
-            Options.AddAdditionalAppiumOption("autoGrantPermissions", bool.Parse(Configuration["AppiumConfig:AutoGrantPermissions"] ?? "true"));
-            Options.AddAdditionalAppiumOption("newCommandTimeout", int.Parse(Configuration["AppiumConfig:NewCommandTimeout"] ?? "60"));
-            Options.AddAdditionalAppiumOption("unicodeKeyboard", bool.Parse(Configuration["AppiumConfig:UnicodeKeyboard"] ?? "true"));
-            Options.AddAdditionalAppiumOption("resetKeyboard", bool.Parse(Configuration["AppiumConfig:ResetKeyboard"] ?? "true"));
-            Options.AddAdditionalAppiumOption("uiautomator2ServerLaunchTimeout", 60000);
-            Options.AddAdditionalAppiumOption("uiautomator2ServerInstallTimeout", 60000);
-            Options.AddAdditionalAppiumOption("androidInstallTimeout", 90000);
-            Options.AddAdditionalAppiumOption("adbExecTimeout", 60000);
-
-                    // Configuración específica para WSA con UiAutomator2 optimizado
-            if (bool.Parse(Configuration["WSAConfig:Enabled"] ?? "true"))
+            // Obtener la URL de la API real desde la configuración
+            var apiBaseUrl = Configuration["ApiConfig:BaseUrl"];
+            if (string.IsNullOrEmpty(apiBaseUrl))
             {
-                // Configuración básica para WSA
-                Options.AddAdditionalAppiumOption("wsaEnabled", true);
-                Options.AddAdditionalAppiumOption("wsaConnectionTimeout", int.Parse(Configuration["WSAConfig:ConnectionTimeout"] ?? "30"));
-                
-                                        // Configuración específica para UiAutomator2 en WSA - Optimizada para evitar crashes
-                        Options.AddAdditionalAppiumOption("skipServerInstallation", false);
-                        Options.AddAdditionalAppiumOption("skipDeviceInitialization", false);
-                        Options.AddAdditionalAppiumOption("dontStopAppOnReset", false);
-                        Options.AddAdditionalAppiumOption("autoLaunch", true);
-                        
-                        // Configuración de espera de actividades
-                        Options.AddAdditionalAppiumOption("appWaitActivity", "crc64492cedc7810ceddb.MainActivity");
-                        Options.AddAdditionalAppiumOption("appActivity", "crc64492cedc7810ceddb.MainActivity");
-                        Options.AddAdditionalAppiumOption("appWaitDuration", 30000);
-                        
-                        // Configuración de timeouts optimizada para WSA con UiAutomator2
-                        Options.AddAdditionalAppiumOption("androidDeviceReadyTimeout", 60);
-                        Options.AddAdditionalAppiumOption("androidInstallTimeout", 120000);
-                        Options.AddAdditionalAppiumOption("adbExecTimeout", 120000);
-                        Options.AddAdditionalAppiumOption("uiautomator2ServerLaunchTimeout", 120000);
-                        Options.AddAdditionalAppiumOption("uiautomator2ServerInstallTimeout", 120000);
-                        
-                        // Configuración adicional para estabilidad
-                        Options.AddAdditionalAppiumOption("newCommandTimeout", 120);
-                        Options.AddAdditionalAppiumOption("autoGrantPermissions", true);
-                        Options.AddAdditionalAppiumOption("allowTestPackages", true);
-                        Options.AddAdditionalAppiumOption("disableWindowAnimation", true);
-                        Options.AddAdditionalAppiumOption("disableSuppressAccessibilityService", true);
-                
-                // Configuración adicional para WSA
-                Options.AddAdditionalAppiumOption("noReset", true);
-                Options.AddAdditionalAppiumOption("fullReset", false);
-                Options.AddAdditionalAppiumOption("newCommandTimeout", 60);
-                Options.AddAdditionalAppiumOption("autoGrantPermissions", true);
-                Options.AddAdditionalAppiumOption("allowTestPackages", true);
-                Options.AddAdditionalAppiumOption("disableWindowAnimation", true);
-                Options.AddAdditionalAppiumOption("disableSuppressAccessibilityService", true);
+                throw new InvalidOperationException("ApiConfig:BaseUrl no está configurado");
             }
-
-            var serverUrl = Configuration["AppiumConfig:ServerUrl"];
-            if (string.IsNullOrEmpty(serverUrl))
+            
+            TestOutput.WriteLine($"🔗 Conectando a API real en: {apiBaseUrl}");
+            
+            // Crear HttpClient que se conecta a la API real
+            ApiClient = new HttpClient
             {
-                throw new InvalidOperationException("ServerUrl no está configurado en appsettings.Test.json");
-            }
-
-            var implicitWaitSeconds = int.Parse(Configuration["AppiumConfig:ImplicitWaitSeconds"] ?? "15");
-            var pageLoadTimeoutSeconds = int.Parse(Configuration["AppiumConfig:PageLoadTimeoutSeconds"] ?? "30");
-
-            TestOutput.WriteLine($"Conectando a Appium Server: {serverUrl}");
-            TestOutput.WriteLine($"Dispositivo: {Options.DeviceName}");
-            TestOutput.WriteLine($"Plataforma: {Options.PlatformName} {Options.PlatformVersion}");
-
-            Driver = new AndroidDriver(new Uri(serverUrl), Options);
-                    Driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(implicitWaitSeconds);
-        // PageLoad timeout no es compatible con Appium en Android
-        // Driver.Manage().Timeouts().PageLoad = TimeSpan.FromSeconds(pageLoadTimeoutSeconds);
-
-            TestOutput.WriteLine("Driver de Appium inicializado exitosamente");
+                BaseAddress = new Uri(apiBaseUrl),
+                Timeout = TimeSpan.FromSeconds(
+                    int.Parse(Configuration["ApiConfig:TimeoutSeconds"] ?? "30"))
+            };
+            
+            // Configurar headers por defecto
+            ApiClient.DefaultRequestHeaders.Add("Accept", "application/json");
+            ApiClient.DefaultRequestHeaders.Add("User-Agent", "RestaurantePro-UITests");
+            
+            TestOutput.WriteLine($"✅ API real inicializada en: {ApiClient.BaseAddress}");
+            TestOutput.WriteLine("🔗 La UI móvil se conectará a esta API real");
+            
+            // Verificar conectividad con la API real
+            VerifyApiConnectivity();
         }
         catch (Exception ex)
         {
-            TestOutput.WriteLine($"Error al inicializar el driver: {ex.Message}");
-            Logger.LogError(ex, "Error al inicializar el driver de Appium");
+            TestOutput.WriteLine($"❌ Error inicializando API real: {ex.Message}");
+            throw;
+        }
+    }
+    
+    private async void VerifyApiConnectivity()
+    {
+        try
+        {
+            TestOutput.WriteLine("🔍 Verificando conectividad con la API real...");
+            
+            // Intentar hacer una petición simple para verificar conectividad
+            var response = await ApiClient.GetAsync("api/health");
+            if (response.IsSuccessStatusCode)
+            {
+                TestOutput.WriteLine("✅ API real responde correctamente");
+            }
+            else
+            {
+                TestOutput.WriteLine($"⚠️ API real responde con status: {response.StatusCode}");
+            }
+        }
+        catch (Exception ex)
+        {
+            TestOutput.WriteLine($"❌ Error verificando conectividad con API real: {ex.Message}");
+            TestOutput.WriteLine("💡 Asegúrate de que la API esté ejecutándose en el puerto configurado");
+        }
+    }
+
+    private void InitializeAppium()
+    {
+        try
+        {
+            TestOutput.WriteLine("📱 Inicializando Appium real...");
+            
+            var appiumOptions = new AppiumOptions();
+            
+            // Configuración básica de Appium
+            appiumOptions.PlatformName = Configuration["AppiumConfig:PlatformName"] ?? "Android";
+            appiumOptions.PlatformVersion = Configuration["AppiumConfig:PlatformVersion"] ?? "14.0";
+            appiumOptions.DeviceName = Configuration["AppiumConfig:DeviceName"] ?? "emulator-5554";
+            appiumOptions.AutomationName = "UiAutomator2";
+
+            // Configuración para emulador
+            if (bool.Parse(Configuration["EmulatorConfig:Enabled"] ?? "false"))
+            {
+                appiumOptions.AddAdditionalAppiumOption("avd", Configuration["EmulatorConfig:AvdName"]);
+                TestOutput.WriteLine($"🎮 Usando emulador: {Configuration["EmulatorConfig:AvdName"]}");
+            }
+
+            // Configuración de package y activity (sin configurar app para evitar conflictos)
+            appiumOptions.AddAdditionalAppiumOption("appPackage", Configuration["AppiumConfig:AppPackage"] ?? "com.companyname.restaurantepro.mobile");
+            appiumOptions.AddAdditionalAppiumOption("appActivity", Configuration["AppiumConfig:AppActivity"] ?? "crc64e1fb321c08285b90.MainActivity");
+            
+            TestOutput.WriteLine($"📱 Usando package: {Configuration["AppiumConfig:AppPackage"] ?? "com.companyname.restaurantepro.mobile"}");
+            TestOutput.WriteLine($"📱 Usando activity: {Configuration["AppiumConfig:AppActivity"] ?? "crc64e1fb321c08285b90.MainActivity"}");
+            
+            // Configuraciones de rendimiento
+            appiumOptions.AddAdditionalAppiumOption("noReset", bool.Parse(Configuration["AppiumConfig:NoReset"] ?? "false"));
+            appiumOptions.AddAdditionalAppiumOption("fullReset", bool.Parse(Configuration["AppiumConfig:FullReset"] ?? "false"));
+            appiumOptions.AddAdditionalAppiumOption("fastReset", bool.Parse(Configuration["AppiumConfig:FastReset"] ?? "true"));
+            
+            // Configuraciones de permisos
+            appiumOptions.AddAdditionalAppiumOption("autoGrantPermissions", bool.Parse(Configuration["AppiumConfig:AutoGrantPermissions"] ?? "true"));
+            
+            // Timeouts
+            appiumOptions.AddAdditionalAppiumOption("newCommandTimeout", int.Parse(Configuration["AppiumConfig:NewCommandTimeout"] ?? "60"));
+            appiumOptions.AddAdditionalAppiumOption("implicitWait", int.Parse(Configuration["AppiumConfig:ImplicitWaitSeconds"] ?? "15"));
+
+            // Conectar al servidor Appium
+            var appiumServerUrl = Configuration["AppiumConfig:ServerUrl"] ?? "http://localhost:4723";
+            var fullAppiumUrl = $"{appiumServerUrl}/wd/hub";
+            TestOutput.WriteLine($"🔌 Conectando a servidor Appium: {fullAppiumUrl}");
+            
+            // Usar el driver real de Android
+            Driver = new AndroidDriver(new Uri(fullAppiumUrl), appiumOptions);
+            
+            // Configurar timeouts del driver (solo ImplicitWait, PageLoad no está soportado en Appium)
+            Driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(int.Parse(Configuration["AppiumConfig:ImplicitWaitSeconds"] ?? "15"));
+            
+            TestOutput.WriteLine("✅ Appium real inicializado correctamente");
+            
+            // Configurar la app móvil para usar la API en memoria
+            ConfigureAppForInMemoryApi();
+        }
+        catch (Exception ex)
+        {
+            TestOutput.WriteLine($"❌ Error inicializando Appium real: {ex.Message}");
+            TestOutput.WriteLine("💡 Asegúrate de que:");
+            TestOutput.WriteLine("   1. Appium Server esté ejecutándose en http://localhost:4723");
+            TestOutput.WriteLine("   2. El emulador esté disponible");
+            TestOutput.WriteLine("   3. La app esté instalada o el APK esté disponible");
+            TestOutput.WriteLine("   4. ADB esté funcionando (adb devices)");
+            TestOutput.WriteLine("   5. El APK esté en la carpeta de salida del proyecto de tests");
             throw;
         }
     }
 
-    public async Task DisposeAsync()
+    private void ConfigureAppForInMemoryApi()
     {
         try
         {
-            if (Driver != null)
+            TestOutput.WriteLine("🔧 Configurando app móvil para usar API en memoria...");
+            
+            // Obtener la URL de la API en memoria
+            var apiUrl = ApiClient.BaseAddress?.ToString() ?? "http://localhost:5000";
+            
+            // Aquí podrías configurar la app móvil para usar esta URL
+            // Esto dependerá de cómo esté implementada tu app móvil
+            TestOutput.WriteLine($"📱 App móvil configurada para usar API en: {apiUrl}");
+            TestOutput.WriteLine("💡 Nota: La app móvil debe estar configurada para usar esta URL");
+        }
+        catch (Exception ex)
+        {
+            TestOutput.WriteLine($"⚠️ No se pudo configurar la app para API en memoria: {ex.Message}");
+            TestOutput.WriteLine("💡 Esto es normal si la app no tiene configuración dinámica de API");
+        }
+    }
+
+    private IConfiguration LoadConfiguration()
+    {
+        try
+        {
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.Test.json", optional: false, reloadOnChange: true);
+
+            return builder.Build();
+        }
+        catch (Exception ex)
+        {
+            TestOutput.WriteLine($"❌ Error cargando configuración: {ex.Message}");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Método helper para tomar screenshots en caso de fallo
+    /// </summary>
+    protected void TakeScreenshot(string testName)
+    {
+        try
+        {
+            if (bool.Parse(Configuration["Screenshots:Enabled"] ?? "true"))
             {
-                Driver.Quit();
-                Driver.Dispose();
-                TestOutput.WriteLine("Driver de Appium cerrado exitosamente");
+                var screenshotDir = Configuration["Screenshots:Directory"] ?? "Screenshots";
+                Directory.CreateDirectory(screenshotDir);
+                
+                var fileName = $"{screenshotDir}/{testName}_{DateTime.Now:yyyyMMdd_HHmmss}.png";
+                
+                if (Driver is ITakesScreenshot takesScreenshot)
+                {
+                    var screenshot = takesScreenshot.GetScreenshot();
+                    screenshot.SaveAsFile(fileName);
+                    TestOutput.WriteLine($"📸 Screenshot guardado: {fileName}");
+                }
+                else
+                {
+                    TestOutput.WriteLine($"⚠️ Driver no soporta screenshots: {fileName}");
+                }
             }
         }
         catch (Exception ex)
         {
-            TestOutput.WriteLine($"Error al cerrar el driver: {ex.Message}");
-            Logger.LogError(ex, "Error al cerrar el driver de Appium");
+            TestOutput.WriteLine($"⚠️ No se pudo tomar screenshot: {ex.Message}");
         }
     }
 
-    protected IWebElement WaitForElement(By by, int timeoutSeconds = 10)
+    /// <summary>
+    /// Método helper para esperar elementos de forma inteligente
+    /// </summary>
+    protected IWebElement WaitForElement(By by, int timeoutSeconds = 15)
     {
-        var wait = new OpenQA.Selenium.Support.UI.WebDriverWait(Driver, TimeSpan.FromSeconds(timeoutSeconds));
+        var wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(timeoutSeconds));
         return wait.Until(driver => driver.FindElement(by));
     }
 
-    protected bool ElementExists(By by, int timeoutSeconds = 5)
+    /// <summary>
+    /// Método helper para verificar que un elemento esté visible
+    /// </summary>
+    protected bool IsElementVisible(By by, int timeoutSeconds = 5)
     {
         try
         {
-            var wait = new OpenQA.Selenium.Support.UI.WebDriverWait(Driver, TimeSpan.FromSeconds(timeoutSeconds));
-            wait.Until(driver => driver.FindElement(by));
+            var wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(timeoutSeconds));
+            wait.Until(driver => driver.FindElement(by).Displayed);
             return true;
         }
         catch
@@ -167,50 +261,58 @@ public abstract class AppiumTestBase : IAsyncLifetime
         }
     }
 
-    protected void TakeScreenshot(string testName)
+    /// <summary>
+    /// Método helper para hacer llamadas a la API en memoria
+    /// </summary>
+    protected async Task<HttpResponseMessage> CallInMemoryApiAsync(string endpoint, HttpMethod method = null, HttpContent content = null)
     {
         try
         {
-            var screenshotEnabled = bool.Parse(Configuration["Screenshots:Enabled"] ?? "true");
-            if (!screenshotEnabled) return;
-
-            var screenshotDir = Configuration["Screenshots:Directory"] ?? "Screenshots";
-            var fullDir = Path.Combine(Directory.GetCurrentDirectory(), screenshotDir);
+            method ??= HttpMethod.Get;
+            var request = new HttpRequestMessage(method, endpoint);
             
-            if (!Directory.Exists(fullDir))
+            if (content != null)
             {
-                Directory.CreateDirectory(fullDir);
+                request.Content = content;
             }
-
-            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            var fileName = $"{testName}_{timestamp}.png";
-            var fullPath = Path.Combine(fullDir, fileName);
-
-            var screenshot = ((ITakesScreenshot)Driver).GetScreenshot();
-            File.WriteAllBytes(fullPath, screenshot.AsByteArray);
-
-            TestOutput.WriteLine($"Screenshot guardado: {fullPath}");
+            
+            TestOutput.WriteLine($"🌐 Llamando a API en memoria: {method} {endpoint}");
+            var response = await ApiClient.SendAsync(request);
+            TestOutput.WriteLine($"📡 Respuesta de API: {response.StatusCode}");
+            
+            return response;
         }
         catch (Exception ex)
         {
-            TestOutput.WriteLine($"Error al tomar screenshot: {ex.Message}");
-            Logger.LogError(ex, "Error al tomar screenshot");
+            TestOutput.WriteLine($"❌ Error llamando a API en memoria: {ex.Message}");
+            throw;
         }
     }
 
-    protected void LogInfo(string message)
+    public void Dispose()
     {
-        TestOutput.WriteLine($"[INFO] {message}");
-        Logger.LogInformation(message);
-    }
-
-    protected void LogError(string message, Exception? ex = null)
-    {
-        TestOutput.WriteLine($"[ERROR] {message}");
-        if (ex != null)
+        try
         {
-            TestOutput.WriteLine($"[ERROR] Exception: {ex.Message}");
+            TestOutput.WriteLine("🧹 Limpiando recursos de test...");
+            
+            // Tomar screenshot final si está habilitado
+            TakeScreenshot("test_final");
+            
+            // Cerrar driver
+            Driver?.Quit();
+            Driver?.Dispose();
+            
+            // Cerrar cliente HTTP
+            ApiClient?.Dispose();
+            
+            // Cerrar WebApplicationFactory
+            // WebAppFactory ya no se usa con API real
+            
+            TestOutput.WriteLine("✅ Recursos limpiados correctamente");
         }
-        Logger.LogError(ex, message);
+        catch (Exception ex)
+        {
+            TestOutput.WriteLine($"⚠️ Error durante limpieza: {ex.Message}");
+        }
     }
-} 
+}

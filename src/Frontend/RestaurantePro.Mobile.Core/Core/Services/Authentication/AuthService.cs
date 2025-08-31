@@ -34,6 +34,9 @@ public class AuthService : IAuthService
     {
         try
         {
+            // DEBUG: Comentado para flujo normal - descomentar solo si hay problemas
+            // ShowDebugPopup("🔐 Iniciando Login", $"Email: {email}\nPassword: {new string('*', password.Length)}");
+            
             // Validar parámetros
             if (string.IsNullOrWhiteSpace(email))
             {
@@ -53,7 +56,16 @@ public class AuthService : IAuthService
                 Password = password
             };
 
+            // DEBUG: Comentado para flujo normal - descomentar solo si hay problemas
+            // ShowDebugPopup("📡 Llamando endpoint", "api/auth/login");
+
             var apiResponse = await _apiService.PostAsync<AuthResponse>("api/auth/login", loginRequest);
+
+            // DEBUG: Comentado para flujo normal - descomentar solo si hay problemas
+            // if (apiResponse != null)
+            // {
+            //     ShowDebugPopup("📥 Respuesta API", $"Success: {apiResponse.Success}\nMessage: {apiResponse.Message}\nErrors: {string.Join(", ", apiResponse.Errors ?? new List<string>())}");
+            // }
 
             if (apiResponse != null && apiResponse.Success && apiResponse.Data != null)
             {
@@ -78,6 +90,9 @@ public class AuthService : IAuthService
         }
         catch (Exception ex)
         {
+            // DEBUG: Comentado para flujo normal - descomentar solo si hay problemas
+            // ShowDebugPopup("💥 EXCEPCIÓN en Login", $"Tipo: {ex.GetType().Name}\nMensaje: {ex.Message}\nStackTrace: {ex.StackTrace}");
+            
             _logger.LogError(ex, "Error durante el proceso de login para usuario: {Email}", email);
             return ApiResponse<AuthResponse>.ErrorResponse(ex.Message, "Error interno del servidor", 500);
         }
@@ -213,5 +228,26 @@ public class AuthService : IAuthService
         {
             _logger.LogError(ex, "Error al guardar usuario");
         }
+    }
+
+    /// <summary>
+    /// Muestra un popup de debug con información detallada
+    /// </summary>
+    private void ShowDebugPopup(string title, string message)
+    {
+#if DEBUG
+        try
+        {
+            // Llamar al DebugService usando reflection ya que está en otro proyecto
+            var debugServiceType = Type.GetType("RestaurantePro.Mobile.Services.DebugService, RestaurantePro.Mobile");
+            if (debugServiceType != null)
+            {
+                var method = debugServiceType.GetMethod("ShowDebugPopup", 
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                method?.Invoke(null, new object[] { title, message });
+            }
+        }
+        catch { /* Ignorar errores si no está disponible */ }
+#endif
     }
 } 

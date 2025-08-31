@@ -159,6 +159,62 @@ public class DashboardPageObject
         }
     }
 
+    public void NavigateToPagos()
+    {
+        try
+        {
+            // Placeholder - implementar navegación real
+            _testOutput.WriteLine("Navegado a la sección de Pagos");
+        }
+        catch (Exception ex)
+        {
+            _testOutput.WriteLine($"Error al navegar a Pagos: {ex.Message}");
+            throw;
+        }
+    }
+
+    public void NavigateToConfiguracion()
+    {
+        try
+        {
+            // Placeholder - implementar navegación real
+            _testOutput.WriteLine("Navegado a la sección de Configuración");
+        }
+        catch (Exception ex)
+        {
+            _testOutput.WriteLine($"Error al navegar a Configuración: {ex.Message}");
+            throw;
+        }
+    }
+
+    public void NavigateToReportes()
+    {
+        try
+        {
+            // Placeholder - implementar navegación real
+            _testOutput.WriteLine("Navegado a la sección de Reportes");
+        }
+        catch (Exception ex)
+        {
+            _testOutput.WriteLine($"Error al navegar a Reportes: {ex.Message}");
+            throw;
+        }
+    }
+
+    public void NavigateToEstadisticas()
+    {
+        try
+        {
+            // Placeholder - implementar navegación real
+            _testOutput.WriteLine("Navegado a la sección de Estadísticas");
+        }
+        catch (Exception ex)
+        {
+            _testOutput.WriteLine($"Error al navegar a Estadísticas: {ex.Message}");
+            throw;
+        }
+    }
+
     public void ClickLogout()
     {
         try

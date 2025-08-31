@@ -15,18 +15,26 @@ public class ApiService : IApiService
     public ApiService(HttpClient httpClient)
     {
         _httpClient = httpClient;
-        // Mostrar popup con la BaseAddress al iniciar la app (solo para depuración)
+        
+        // DEBUG: Mostrar información completa del HttpClient
         var baseAddress = _httpClient.BaseAddress?.ToString() ?? "NULL";
-#if ANDROID || IOS || WINDOWS
-        try
-        {
-            Microsoft.Maui.Controls.Application.Current?.Dispatcher.Dispatch(() =>
-            {
-                Microsoft.Maui.Controls.Application.Current?.MainPage?.DisplayAlert("BaseAddress", baseAddress, "OK");
-            });
-        }
-        catch { /* Ignorar errores si no hay MainPage aún */ }
-#endif
+        var timeout = _httpClient.Timeout.ToString();
+        var defaultHeaders = string.Join(", ", _httpClient.DefaultRequestHeaders.Select(h => $"{h.Key}: {string.Join(", ", h.Value)}"));
+        
+        // DEBUG: Comentado para flujo normal - descomentar solo si hay problemas
+        // Usar el DebugService del proyecto Mobile
+        // try
+        // {
+        //     // Llamar al DebugService usando reflection ya que está en otro proyecto
+        //     var debugServiceType = Type.GetType("RestaurantePro.Mobile.Services.DebugService, RestaurantePro.Mobile");
+        //     if (debugServiceType != null)
+        //     {
+        //         var method = debugServiceType.GetMethod("ShowHttpClientInfo", 
+        //             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+        //     method?.Invoke(null, new object[] { baseAddress, timeout, defaultHeaders });
+        //     }
+        // }
+        // catch { /* Ignorar errores si no está disponible */ }
     }
 
     public async Task<ApiResponse<T>> GetAsync<T>(string endpoint, string? token = null)
@@ -61,11 +69,23 @@ public class ApiService : IApiService
     {
         try
         {
+            // DEBUG: Mostrar información detallada
+            var fullUrl = _httpClient.BaseAddress + endpoint;
+            var requestJson = JsonSerializer.Serialize(data, GetJsonOptions());
+            
+            // DEBUG: Comentado para flujo normal - descomentar solo si hay problemas
+            // ShowDebugPopup("🚀 POST Request", $"URL: {fullUrl}\nData: {requestJson}");
+            
             AddAuthHeader(token);
-            var json = JsonSerializer.Serialize(data, GetJsonOptions());
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var content = new StringContent(requestJson, Encoding.UTF8, "application/json");
+            
+            // DEBUG: Comentado para flujo normal - descomentar solo si hay problemas
+            // ShowDebugPopup("📤 Enviando petición", $"URL: {fullUrl}");
             
             var response = await _httpClient.PostAsync(endpoint, content);
+            
+            // DEBUG: Comentado para flujo normal - descomentar solo si hay problemas
+            // ShowDebugPopup("📥 Respuesta recibida", $"Status: {response.StatusCode}\nContent: {responseJson}");
             
             if (response.IsSuccessStatusCode)
             {
@@ -74,13 +94,17 @@ public class ApiService : IApiService
                 return result ?? ApiResponse<T>.ErrorResponse("Respuesta vacía del servidor");
             }
             
+            var errorResponseJson = await response.Content.ReadAsStringAsync();
             return ApiResponse<T>.ErrorResponse(
-                new List<string> { "Error en la comunicación con el servidor" },
+                new List<string> { $"Error HTTP: {response.StatusCode} - {errorResponseJson}" },
                 "Error de conexión", 
                 (int)response.StatusCode);
         }
         catch (Exception ex)
         {
+            // DEBUG: Comentado para flujo normal - descomentar solo si hay problemas
+            // ShowDebugPopup("❌ EXCEPCIÓN", $"Tipo: {ex.GetType().Name}\nMensaje: {ex.Message}\nStackTrace: {ex.StackTrace}");
+            
             return ApiResponse<T>.ErrorResponse(
                 new List<string> { ex.Message },
                 "Error inesperado", 
@@ -165,5 +189,26 @@ public class ApiService : IApiService
             PropertyNameCaseInsensitive = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
+    }
+
+    /// <summary>
+    /// Muestra un popup de debug con información detallada
+    /// </summary>
+    private void ShowDebugPopup(string title, string message)
+    {
+#if DEBUG
+        try
+        {
+            // Llamar al DebugService usando reflection ya que está en otro proyecto
+            var debugServiceType = Type.GetType("RestaurantePro.Mobile.Services.DebugService, RestaurantePro.Mobile");
+            if (debugServiceType != null)
+            {
+                var method = debugServiceType.GetMethod("ShowDebugPopup", 
+                    System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                method?.Invoke(null, new object[] { title, message });
+            }
+        }
+        catch { /* Ignorar errores si no está disponible */ }
+#endif
     }
 } 
