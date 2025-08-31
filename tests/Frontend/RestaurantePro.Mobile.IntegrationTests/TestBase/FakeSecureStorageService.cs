@@ -9,7 +9,8 @@ namespace RestaurantePro.Mobile.IntegrationTests.TestBase;
 /// </summary>
 public class FakeSecureStorageService : ISecureStorageService
 {
-    private static readonly ConcurrentDictionary<string, string> _store = new();
+    // Cambiar de estático a instancia para evitar problemas de estado compartido
+    private readonly ConcurrentDictionary<string, string> _store = new();
 
     public Task SetAsync(string key, string value)
     {
