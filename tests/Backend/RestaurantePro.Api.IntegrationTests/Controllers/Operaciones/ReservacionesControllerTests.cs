@@ -17,6 +17,7 @@ using RestaurantePro.Application.Operaciones.Reservaciones.DTOs;
 using RestaurantePro.Application.Operaciones.Reservaciones.Queries.VerificarDisponibilidad;
 using RestaurantePro.Application.Common.Models;
 using System.Text.Json;
+using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
 using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
 using System.Threading;
@@ -39,10 +40,20 @@ public class ReservacionesControllerTests : ApiIntegrationTestBase
     [Fact]
     public async Task GetReservaciones_ConDatosExistentes_RetornaListaPaginada()
     {
-        // Arrange
-        await using var context = CreateNewDbContext();
-        
+        // Arrange: Login como admin para obtener token de autenticación
+        var loginRequest = new
+        {
+            Email = "admin@restaurantepro.com",
+            Password = "AdminRestaurante123!"
+        };
+        var loginResponse = await HttpClient.PostAsJsonAsync("/api/auth/login", loginRequest);
+        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var loginContent = await loginResponse.Content.ReadAsStringAsync();
+        var loginApiResponse = JsonSerializer.Deserialize<ApiResponse<AuthResponse>>(loginContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var token = loginApiResponse.Data.Token;
+
         // Crear datos de prueba
+        await using var context = CreateNewDbContext();
         var cliente = CrearClienteTest("reservaciones");
         var mesa = CrearMesaTest("reservaciones");
         var reservacion = CrearReservacionTest(cliente.Id, mesa.Id, "reservaciones");
@@ -52,16 +63,20 @@ public class ReservacionesControllerTests : ApiIntegrationTestBase
         context.Reservaciones.Add(reservacion);
         await context.SaveChangesAsync();
 
-        // Act
-        var response = await HttpClient.GetAsync("/api/operaciones/reservaciones");
+        // Act: Llamar endpoint protegido con token de autenticación
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/operaciones/reservaciones");
+        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+        var response = await HttpClient.SendAsync(request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var apiResponse = await DeserializarResponse<PaginatedList<ReservacionDto>>(response);
+        
+        var apiResponse = await DeserializarResponse<List<ReservacionDto>>(response);
+        
         apiResponse.Success.Should().BeTrue();
         apiResponse.Data.Should().NotBeNull();
-        apiResponse.Data!.Items.Should().NotBeEmpty();
-        apiResponse.Data.Items.Should().Contain(r => r.Id == reservacion.Id);
+        apiResponse.Data!.Should().NotBeEmpty();
+        apiResponse.Data.Should().Contain(r => r.Id == reservacion.Id);
     }
 
     [Fact]
