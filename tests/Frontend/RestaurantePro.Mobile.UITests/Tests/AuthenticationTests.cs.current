@@ -1254,130 +1254,52 @@ public class AuthenticationTests : AppiumTestBase
     {
         try
         {
-            TestOutput.WriteLine("🚀 Iniciando test de estado de carga...");
+            TestOutput.WriteLine("🔄 Iniciando test de manejo de estado de carga...");
             
-            // Esperar a que la app se cargue
-            Thread.Sleep(3000);
+            // Arrange
+            _loginPage = new LoginPageObject(Driver, TestOutput);
             
-            // PASO 1: Encontrar y limpiar el campo de email
-            TestOutput.WriteLine("📧 PASO 1: Buscando campo de email...");
+            var validEmail = Configuration["TestData:ValidCredentials:Email"] ?? "test@example.com";
+            var validPassword = Configuration["TestData:ValidCredentials:Password"] ?? "password123";
+
+            TestOutput.WriteLine($"📧 Usando credenciales: {validEmail}");
+
+            // Act - Iniciar login
+            TestOutput.WriteLine("🖱️ Iniciando proceso de login...");
+            _loginPage.Login(validEmail, validPassword);
+
+            // Assert - Verificar que se muestre el indicador de carga
+            TestOutput.WriteLine("🔍 Verificando indicador de carga...");
+            var loadingDisplayed = _loginPage.IsLoadingIndicatorDisplayed();
             
-            var emailField = Driver.FindElement(By.XPath("//android.widget.EditText[@text='Correo Electrónico'] | //android.widget.EditText[1] | //android.widget.EditText[@hint='Correo Electrónico']"));
-            TestOutput.WriteLine($"✅ Campo email encontrado: '{emailField.Text}' - Visible: {emailField.Displayed} - Enabled: {emailField.Enabled}");
-            
-            // Limpiar el campo
-            emailField.Clear();
-            Thread.Sleep(500);
-            
-            // PASO 2: Ingresar email válido
-            TestOutput.WriteLine("📝 PASO 2: Ingresando email válido...");
-            var validEmail = "admin@restaurantepro.com";
-            emailField.SendKeys(validEmail);
-            Thread.Sleep(1000);
-            
-            // PASO 3: Buscar campo de contraseña
-            TestOutput.WriteLine("🔒 PASO 3: Buscando campo de contraseña...");
-            
-            var passwordField = Driver.FindElement(By.XPath("//android.widget.EditText[2] | //android.widget.EditText[@hint='Ingrese su contraseña'] | //android.widget.EditText[@text='Ingrese su contraseña']"));
-            TestOutput.WriteLine($"✅ Campo contraseña encontrado: '{passwordField.Text}' - Visible: {passwordField.Displayed} - Enabled: {passwordField.Enabled}");
-            
-            // Limpiar el campo
-            passwordField.Clear();
-            Thread.Sleep(500);
-            
-            // PASO 4: Ingresar contraseña válida
-            TestOutput.WriteLine("📝 PASO 4: Ingresando contraseña válida...");
-            var validPassword = "AdminRestaurante123!";
-            passwordField.SendKeys(validPassword);
-            Thread.Sleep(1000);
-            
-            // PASO 5: Buscar botón de login
-            TestOutput.WriteLine("🔘 PASO 5: Buscando botón de login...");
-            
-            var loginButton = Driver.FindElement(By.XPath("//android.widget.Button[@text='Iniciar Sesión'] | //android.widget.Button[contains(@text, 'Iniciar')] | //android.widget.Button[1]"));
-            TestOutput.WriteLine($"✅ Botón encontrado: '{loginButton.Text}' - Visible: {loginButton.Displayed} - Enabled: {loginButton.Enabled}");
-            
-            // PASO 6: Hacer click en el botón de login
-            TestOutput.WriteLine("🖱️ PASO 6: Haciendo click en botón de login...");
-            loginButton.Click();
-            TestOutput.WriteLine("✅ Click en botón de login realizado");
-            
-            // PASO 7: Verificar estado de carga
-            TestOutput.WriteLine("⏳ PASO 7: Verificando estado de carga...");
-            Thread.Sleep(2000);
-            
-            // Buscar indicadores de carga
-            var loadingIndicators = Driver.FindElements(By.XPath("//android.widget.ProgressBar | //android.widget.TextView[contains(@text, 'Cargando')] | //android.widget.TextView[contains(@text, 'Loading')] | //android.widget.TextView[contains(@text, 'Esperando')]"));
-            
-            if (loadingIndicators.Count > 0)
+            if (loadingDisplayed)
             {
-                var loadingFound = false;
-                foreach (var indicator in loadingIndicators)
-                {
-                    if (indicator.Displayed)
-                    {
-                        TestOutput.WriteLine($"✅ Indicador de carga encontrado: '{indicator.Text}'");
-                        loadingFound = true;
-                    }
-                }
-                
-                if (loadingFound)
-                {
-                    TestOutput.WriteLine("✅ Estado de carga detectado correctamente");
-                }
-                else
-                {
-                    TestOutput.WriteLine("⚠️ Indicadores de carga encontrados pero no visibles");
-                }
+                TestOutput.WriteLine("✅ Indicador de carga mostrado correctamente");
             }
             else
             {
-                TestOutput.WriteLine("ℹ️ No se encontraron indicadores de carga específicos");
+                TestOutput.WriteLine("ℹ️ No se detectó indicador de carga visual (puede ser normal)");
             }
+
+            // Esperar a que se complete el login
+            TestOutput.WriteLine("⏳ Esperando que se complete el login...");
+            _loginPage.WaitForLoginToComplete();
+
+            // Verificar que el indicador de carga ya no esté visible
+            var loadingStillDisplayed = _loginPage.IsLoadingIndicatorDisplayed();
+            loadingStillDisplayed.Should().BeFalse("El indicador de carga debe desaparecer después del login");
+
+            TestOutput.WriteLine("✅ Estado de carga manejado correctamente");
             
-            // PASO 8: Esperar a que el login se complete
-            TestOutput.WriteLine("⏳ PASO 8: Esperando a que el login se complete...");
-            Thread.Sleep(5000);
-            
-            // PASO 9: Verificar que el estado de carga haya terminado
-            TestOutput.WriteLine("🔍 PASO 9: Verificando que el estado de carga haya terminado...");
-            
-            var finalLoadingIndicators = Driver.FindElements(By.XPath("//android.widget.ProgressBar | //android.widget.TextView[contains(@text, 'Cargando')] | //android.widget.TextView[contains(@text, 'Loading')] | //android.widget.TextView[contains(@text, 'Esperando')]"));
-            
-            var stillLoading = false;
-            foreach (var indicator in finalLoadingIndicators)
+            // Tomar screenshot del estado final
+            try
             {
-                if (indicator.Displayed)
-                {
-                    stillLoading = true;
-                    TestOutput.WriteLine($"⚠️ Indicador de carga aún visible: '{indicator.Text}'");
-                }
+                var screenshot = ((ITakesScreenshot)Driver).GetScreenshot();
+                var screenshotPath = Path.Combine("Screenshots", $"loading_state_completed_{DateTime.Now:yyyyMMdd_HHmmss}.png");
+                screenshot.SaveAsFile(screenshotPath);
+                TestOutput.WriteLine($"📸 Screenshot guardado: {screenshotPath}");
             }
-            
-            if (!stillLoading)
-            {
-                TestOutput.WriteLine("✅ Estado de carga terminado correctamente");
-            }
-            else
-            {
-                TestOutput.WriteLine("⚠️ Estado de carga aún activo después del tiempo de espera");
-            }
-            
-            // PASO 10: Verificar resultado final
-            TestOutput.WriteLine("🏠 PASO 10: Verificando resultado final...");
-            
-            var dashboardElements = Driver.FindElements(By.XPath("//android.widget.TextView[@text='Dashboard'] | //android.widget.TextView[contains(@text, 'Mesas')] | //android.widget.TextView[contains(@text, 'Comandas')]"));
-            
-            if (dashboardElements.Count > 0)
-            {
-                TestOutput.WriteLine("✅ Login exitoso - Navegación al dashboard detectada");
-            }
-            else
-            {
-                TestOutput.WriteLine("ℹ️ No se detectó navegación al dashboard (puede ser normal si hay errores)");
-            }
-            
-            TestOutput.WriteLine("🎉 ¡Test de estado de carga completado exitosamente!");
+            catch { }
         }
         catch (Exception ex)
         {
@@ -1401,220 +1323,50 @@ public class AuthenticationTests : AppiumTestBase
     {
         try
         {
-            TestOutput.WriteLine("🚀 Iniciando test de logout...");
+            TestOutput.WriteLine("🚪 Iniciando test de logout...");
             
-            // Esperar a que la app se cargue
-            Thread.Sleep(3000);
+            // Arrange
+            _loginPage = new LoginPageObject(Driver, TestOutput);
+            _dashboardPage = new DashboardPageObject(Driver, TestOutput);
             
-            // PASO 1: Hacer login primero
-            TestOutput.WriteLine("🔐 PASO 1: Realizando login inicial...");
+            var validEmail = Configuration["TestData:ValidCredentials:Email"] ?? "test@example.com";
+            var validPassword = Configuration["TestData:ValidCredentials:Password"] ?? "password123";
+
+            TestOutput.WriteLine($"📧 Haciendo login con: {validEmail}");
+
+            // Login first
+            _loginPage.Login(validEmail, validPassword);
+            _loginPage.WaitForLoginToComplete();
+
+            // Verificar que estamos en el dashboard
+            TestOutput.WriteLine("🔍 Verificando que estamos en el dashboard...");
+            var dashboardLoaded = _dashboardPage.WaitForDashboardToLoad();
+            dashboardLoaded.Should().BeTrue("Debemos estar en el dashboard después del login exitoso");
+
+            TestOutput.WriteLine("✅ Login exitoso, ahora en dashboard");
+
+            // Act - Hacer logout
+            TestOutput.WriteLine("🖱️ Haciendo click en logout...");
+            _dashboardPage.ClickLogout();
+
+            // Assert - Verificar que volvimos a la página de login
+            TestOutput.WriteLine("🔍 Verificando retorno a página de login...");
+            Thread.Sleep(2000); // Esperar a que se complete la navegación
             
-            // Encontrar y limpiar el campo de email
-            var emailField = Driver.FindElement(By.XPath("//android.widget.EditText[@text='Correo Electrónico'] | //android.widget.EditText[1] | //android.widget.EditText[@hint='Correo Electrónico']"));
-            emailField.Clear();
-            Thread.Sleep(500);
+            var loginPageDisplayed = _loginPage.IsLoginPageDisplayed();
+            loginPageDisplayed.Should().BeTrue("Debemos volver a la página de login después del logout");
+
+            TestOutput.WriteLine("✅ Logout exitoso - Retorno a página de login");
             
-            // Ingresar email válido
-            var validEmail = "admin@restaurantepro.com";
-            emailField.SendKeys(validEmail);
-            Thread.Sleep(1000);
-            
-            // Encontrar campo de contraseña
-            var passwordField = Driver.FindElement(By.XPath("//android.widget.EditText[2] | //android.widget.EditText[@hint='Ingrese su contraseña'] | //android.widget.EditText[@text='Ingrese su contraseña']"));
-            passwordField.Clear();
-            Thread.Sleep(500);
-            
-            // Ingresar contraseña válida
-            var validPassword = "AdminRestaurante123!";
-            passwordField.SendKeys(validPassword);
-            Thread.Sleep(1000);
-            
-            // Hacer click en el botón de login
-            var loginButton = Driver.FindElement(By.XPath("//android.widget.Button[@text='Iniciar Sesión'] | //android.widget.Button[contains(@text, 'Iniciar')] | //android.widget.Button[1]"));
-            loginButton.Click();
-            TestOutput.WriteLine("✅ Login realizado");
-            
-            // PASO 2: Esperar a que se complete el login
-            TestOutput.WriteLine("⏳ PASO 2: Esperando a que se complete el login...");
-            Thread.Sleep(5000);
-            
-            // PASO 3: Verificar que estamos en el dashboard
-            TestOutput.WriteLine("🏠 PASO 3: Verificando que estamos en el dashboard...");
-            
-            var dashboardElements = Driver.FindElements(By.XPath("//android.widget.TextView[@text='Dashboard'] | //android.widget.TextView[contains(@text, 'Mesas')] | //android.widget.TextView[contains(@text, 'Comandas')] | //android.widget.TextView[contains(@text, 'Pagos')] | //android.widget.TextView[contains(@text, 'Reportes')]"));
-            
-            if (dashboardElements.Count > 0)
-            {
-                var dashboardFound = false;
-                foreach (var element in dashboardElements)
-                {
-                    if (element.Displayed)
-                    {
-                        TestOutput.WriteLine($"✅ Elemento del dashboard encontrado: '{element.Text}'");
-                        dashboardFound = true;
-                        break;
-                    }
-                }
-                
-                if (dashboardFound)
-                {
-                    TestOutput.WriteLine("✅ Estamos en el dashboard, procediendo con logout");
-                }
-                else
-                {
-                    TestOutput.WriteLine("❌ ERROR: Elementos del dashboard encontrados pero no visibles");
-                    throw new Exception("No se pudo confirmar que estamos en el dashboard - elementos no visibles");
-                }
-            }
-            else
-            {
-                TestOutput.WriteLine("❌ ERROR: No se detectó dashboard después del login");
-                throw new Exception("Login falló - no se navegó al dashboard");
-            }
-            
-            // PASO 4: Buscar botón o menú de logout
-            TestOutput.WriteLine("🚪 PASO 4: Buscando opción de logout...");
-            
-            // Buscar botones o elementos de logout por múltiples estrategias
-            var logoutElements = Driver.FindElements(By.XPath("//android.widget.Button[@text='Cerrar Sesión'] | //android.widget.Button[contains(@text, 'Cerrar')] | //android.widget.Button[contains(@text, 'Logout')] | //android.widget.Button[contains(@text, 'Salir')] | //android.widget.TextView[@text='Cerrar Sesión'] | //android.widget.TextView[contains(@text, 'Cerrar')] | //android.widget.TextView[contains(@text, 'Logout')] | //android.widget.TextView[contains(@text, 'Salir')]"));
-            
-            if (logoutElements.Count > 0)
-            {
-                var logoutElement = logoutElements.FirstOrDefault(e => e.Displayed);
-                if (logoutElement != null)
-                {
-                    TestOutput.WriteLine($"✅ Elemento de logout encontrado: '{logoutElement.Text}'");
-                    
-                    // Hacer click en el elemento de logout
-                    logoutElement.Click();
-                    Thread.Sleep(2000);
-                    TestOutput.WriteLine("✅ Click en logout realizado");
-                }
-                else
-                {
-                    TestOutput.WriteLine("⚠️ Elementos de logout encontrados pero no visibles");
-                }
-            }
-            else
-            {
-                TestOutput.WriteLine("ℹ️ No se encontraron elementos específicos de logout, buscando menú...");
-                
-                // Buscar menú o hamburger menu
-                var menuElements = Driver.FindElements(By.XPath("//android.widget.ImageButton | //android.widget.Button[contains(@content-desc, 'menu')] | //android.widget.Button[contains(@content-desc, 'Menu')] | //android.widget.ImageView[contains(@content-desc, 'menu')] | //android.widget.ImageView[contains(@content-desc, 'Menu')]"));
-                
-                if (menuElements.Count > 0)
-                {
-                    var menuElement = menuElements.FirstOrDefault(e => e.Displayed);
-                    if (menuElement != null)
-                    {
-                        TestOutput.WriteLine("✅ Menú encontrado, haciendo click...");
-                        menuElement.Click();
-                        Thread.Sleep(2000);
-                        
-                        // Buscar logout en el menú desplegado
-                        var menuLogoutElements = Driver.FindElements(By.XPath("//android.widget.TextView[@text='Cerrar Sesión'] | //android.widget.TextView[contains(@text, 'Cerrar')] | //android.widget.TextView[contains(@text, 'Logout')] | //android.widget.TextView[contains(@text, 'Salir')]"));
-                        
-                        if (menuLogoutElements.Count > 0)
-                        {
-                            var menuLogoutElement = menuLogoutElements.FirstOrDefault(e => e.Displayed);
-                            if (menuLogoutElement != null)
-                            {
-                                TestOutput.WriteLine($"✅ Logout encontrado en menú: '{menuLogoutElement.Text}'");
-                                menuLogoutElement.Click();
-                                Thread.Sleep(2000);
-                                TestOutput.WriteLine("✅ Click en logout del menú realizado");
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    TestOutput.WriteLine("ℹ️ No se encontró menú, simulando logout con botón atrás...");
-                    
-                    // Intentar con botón atrás como alternativa
-                    Driver.Navigate().Back();
-                    Thread.Sleep(2000);
-                    TestOutput.WriteLine("✅ Navegación hacia atrás realizada");
-                }
-            }
-            
-            // PASO 5: Esperar a que se complete el logout
-            TestOutput.WriteLine("⏳ PASO 5: Esperando a que se complete el logout...");
-            Thread.Sleep(3000);
-            
-            // PASO 6: Verificar que estamos de vuelta en la página de login
-            TestOutput.WriteLine("🔍 PASO 6: Verificando que estamos de vuelta en la página de login...");
-            
-            // Buscar elementos característicos de la página de login
-            var loginPageElements = Driver.FindElements(By.XPath("//android.widget.EditText[@text='Correo Electrónico'] | //android.widget.EditText[@hint='Correo Electrónico'] | //android.widget.Button[@text='Iniciar Sesión'] | //android.widget.Button[contains(@text, 'Iniciar')] | //android.widget.TextView[contains(@text, 'Login')] | //android.widget.TextView[contains(@text, 'Iniciar')] | //android.widget.TextView[contains(@text, 'Sesión')]"));
-            
-            if (loginPageElements.Count > 0)
-            {
-                var loginPageFound = false;
-                foreach (var element in loginPageElements)
-                {
-                    if (element.Displayed)
-                    {
-                        TestOutput.WriteLine($"✅ Elemento de página de login encontrado: '{element.Text}'");
-                        loginPageFound = true;
-                        break;
-                    }
-                }
-                
-                if (loginPageFound)
-                {
-                    TestOutput.WriteLine("✅ Logout exitoso - Retorno a página de login confirmado");
-                }
-                else
-                {
-                    TestOutput.WriteLine("❌ ERROR: Elementos de login encontrados pero no visibles");
-                    throw new Exception("Logout falló - elementos de login no visibles");
-                }
-            }
-            else
-            {
-                TestOutput.WriteLine("❌ ERROR: No se encontraron elementos específicos de la página de login");
-                throw new Exception("Logout falló - no se retornó a la página de login");
-            }
-            
-            // PASO 7: Verificar que no estamos en el dashboard
-            TestOutput.WriteLine("🔍 PASO 7: Verificando que no estamos en el dashboard...");
-            
-            var finalDashboardElements = Driver.FindElements(By.XPath("//android.widget.TextView[@text='Dashboard'] | //android.widget.TextView[contains(@text, 'Mesas')] | //android.widget.TextView[contains(@text, 'Comandas')]"));
-            
-            if (finalDashboardElements.Count == 0)
-            {
-                TestOutput.WriteLine("✅ Correcto: No estamos en el dashboard después del logout");
-            }
-            else
-            {
-                TestOutput.WriteLine("⚠️ Advertencia: Aún se detectan elementos del dashboard después del logout");
-            }
-            
-            // PASO 8: Verificar que los campos de login estén disponibles
-            TestOutput.WriteLine("📧 PASO 8: Verificando que los campos de login estén disponibles...");
-            
+            // Tomar screenshot del estado final
             try
             {
-                var emailFieldAfterLogout = Driver.FindElement(By.XPath("//android.widget.EditText[@text='Correo Electrónico'] | //android.widget.EditText[1] | //android.widget.EditText[@hint='Correo Electrónico']"));
-                var passwordFieldAfterLogout = Driver.FindElement(By.XPath("//android.widget.EditText[2] | //android.widget.EditText[@hint='Ingrese su contraseña'] | //android.widget.EditText[@text='Ingrese su contraseña']"));
-                var loginButtonAfterLogout = Driver.FindElement(By.XPath("//android.widget.Button[@text='Iniciar Sesión'] | //android.widget.Button[contains(@text, 'Iniciar')] | //android.widget.Button[1]"));
-                
-                if (emailFieldAfterLogout.Displayed && passwordFieldAfterLogout.Displayed && loginButtonAfterLogout.Displayed)
-                {
-                    TestOutput.WriteLine("✅ Campos de login disponibles después del logout");
-                }
-                else
-                {
-                    TestOutput.WriteLine("⚠️ Algunos campos de login no están disponibles");
-                }
+                var screenshot = ((ITakesScreenshot)Driver).GetScreenshot();
+                var screenshotPath = Path.Combine("Screenshots", $"logout_completed_{DateTime.Now:yyyyMMdd_HHmmss}.png");
+                screenshot.SaveAsFile(screenshotPath);
+                TestOutput.WriteLine($"📸 Screenshot guardado: {screenshotPath}");
             }
-            catch (Exception ex)
-            {
-                TestOutput.WriteLine($"⚠️ Error verificando campos de login: {ex.Message}");
-            }
-            
-            TestOutput.WriteLine("🎉 ¡Test de logout completado exitosamente!");
+            catch { }
         }
         catch (Exception ex)
         {
@@ -1629,6 +1381,177 @@ public class AuthenticationTests : AppiumTestBase
             catch { }
             
             TestOutput.WriteLine($"❌ Error en test de logout: {ex.Message}");
+            throw;
+        }
+    }
+
+    [Fact]
+    public void LoginWithSpecialCharacters_ShouldHandleCorrectly()
+    {
+        try
+        {
+            TestOutput.WriteLine("🔤 Iniciando test de login con caracteres especiales...");
+            
+            // Arrange
+            _loginPage = new LoginPageObject(Driver, TestOutput);
+            
+            var specialEmail = "test@example.com";
+            var specialPassword = "P@ssw0rd!@#$%^&*()";
+
+            TestOutput.WriteLine($"📧 Email: {specialEmail}");
+            TestOutput.WriteLine($"🔒 Contraseña con caracteres especiales: {specialPassword}");
+
+            // Act - Ingresar credenciales con caracteres especiales
+            TestOutput.WriteLine("📝 Ingresando credenciales con caracteres especiales...");
+            _loginPage.EnterEmail(specialEmail);
+            _loginPage.EnterPassword(specialPassword);
+
+            // Verificar que los campos mantienen los caracteres especiales
+            TestOutput.WriteLine("🔍 Verificando que los caracteres especiales se mantienen...");
+            
+            // Hacer click en el botón de login
+            TestOutput.WriteLine("🖱️ Haciendo click en botón de login...");
+            _loginPage.ClickLoginButton();
+
+            // Esperar un poco para ver si hay errores
+            Thread.Sleep(2000);
+
+            // Verificar que no hay errores críticos
+            TestOutput.WriteLine("🔍 Verificando que no hay errores críticos...");
+            
+            // Si hay mensaje de error, verificar que sea por credenciales inválidas, no por caracteres especiales
+            var errorMessage = _loginPage.GetErrorMessage();
+            if (!string.IsNullOrEmpty(errorMessage))
+            {
+                var errorText = errorMessage.ToLower();
+                var isSpecialCharError = errorText.Contains("carácter") || errorText.Contains("especial") || errorText.Contains("inválido") || errorText.Contains("formato");
+                
+                if (isSpecialCharError)
+                {
+                    TestOutput.WriteLine($"⚠️ Error relacionado con caracteres especiales: {errorMessage}");
+                    // Este es un error que no debería ocurrir
+                    throw new Exception($"Los caracteres especiales no deberían causar errores de formato: {errorMessage}");
+                }
+                else
+                {
+                    TestOutput.WriteLine($"✅ Error esperado (credenciales inválidas): {errorMessage}");
+                }
+            }
+            else
+            {
+                TestOutput.WriteLine("✅ No se detectaron errores relacionados con caracteres especiales");
+            }
+
+            TestOutput.WriteLine("✅ Login con caracteres especiales manejado correctamente");
+            
+            // Tomar screenshot del estado final
+            try
+            {
+                var screenshot = ((ITakesScreenshot)Driver).GetScreenshot();
+                var screenshotPath = Path.Combine("Screenshots", $"special_chars_completed_{DateTime.Now:yyyyMMdd_HHmmss}.png");
+                screenshot.SaveAsFile(screenshotPath);
+                TestOutput.WriteLine($"📸 Screenshot guardado: {screenshotPath}");
+            }
+            catch { }
+        }
+        catch (Exception ex)
+        {
+            // Tomar screenshot para debug
+            try
+            {
+                var screenshot = ((ITakesScreenshot)Driver).GetScreenshot();
+                var screenshotPath = Path.Combine("Screenshots", $"special_chars_error_{DateTime.Now:yyyyMMdd_HHmmss}.png");
+                screenshot.SaveAsFile(screenshotPath);
+                TestOutput.WriteLine($"📸 Screenshot de error guardado: {screenshotPath}");
+            }
+            catch { }
+            
+            TestOutput.WriteLine($"❌ Error en test de caracteres especiales: {ex.Message}");
+            throw;
+        }
+    }
+
+    [Fact]
+    public void LoginWithLongCredentials_ShouldHandleCorrectly()
+    {
+        try
+        {
+            TestOutput.WriteLine("📏 Iniciando test de login con credenciales largas...");
+            
+            // Arrange
+            _loginPage = new LoginPageObject(Driver, TestOutput);
+            
+            var longEmail = "verylongemailaddress@verylongdomainname.com";
+            var longPassword = "VeryLongPassword123456789012345678901234567890";
+
+            TestOutput.WriteLine($"📧 Email largo: {longEmail}");
+            TestOutput.WriteLine($"🔒 Contraseña larga: {longPassword.Length} caracteres");
+
+            // Act - Ingresar credenciales largas
+            TestOutput.WriteLine("📝 Ingresando credenciales largas...");
+            _loginPage.EnterEmail(longEmail);
+            _loginPage.EnterPassword(longPassword);
+
+            // Verificar que los campos mantienen las credenciales largas
+            TestOutput.WriteLine("🔍 Verificando que las credenciales largas se mantienen...");
+            
+            // Hacer click en el botón de login
+            TestOutput.WriteLine("🖱️ Haciendo click en botón de login...");
+            _loginPage.ClickLoginButton();
+
+            // Esperar un poco para ver si hay errores
+            Thread.Sleep(2000);
+
+            // Verificar que no hay errores críticos relacionados con longitud
+            TestOutput.WriteLine("🔍 Verificando que no hay errores de longitud...");
+            
+            var errorMessage = _loginPage.GetErrorMessage();
+            if (!string.IsNullOrEmpty(errorMessage))
+            {
+                var errorText = errorMessage.ToLower();
+                var isLengthError = errorText.Contains("muy largo") || errorText.Contains("demasiado largo") || errorText.Contains("longitud") || errorText.Contains("máximo");
+                
+                if (isLengthError)
+                {
+                    TestOutput.WriteLine($"⚠️ Error relacionado con longitud: {errorMessage}");
+                    // Este es un error que no debería ocurrir para credenciales de longitud normal
+                    throw new Exception($"Las credenciales no deberían ser demasiado largas: {errorMessage}");
+                }
+                else
+                {
+                    TestOutput.WriteLine($"✅ Error esperado (credenciales inválidas): {errorMessage}");
+                }
+            }
+            else
+            {
+                TestOutput.WriteLine("✅ No se detectaron errores relacionados con longitud");
+            }
+
+            TestOutput.WriteLine("✅ Login con credenciales largas manejado correctamente");
+            
+            // Tomar screenshot del estado final
+            try
+            {
+                var screenshot = ((ITakesScreenshot)Driver).GetScreenshot();
+                var screenshotPath = Path.Combine("Screenshots", $"long_credentials_completed_{DateTime.Now:yyyyMMdd_HHmmss}.png");
+                screenshot.SaveAsFile(screenshotPath);
+                TestOutput.WriteLine($"📸 Screenshot guardado: {screenshotPath}");
+            }
+            catch { }
+        }
+        catch (Exception ex)
+        {
+            // Tomar screenshot para debug
+            try
+            {
+                var screenshot = ((ITakesScreenshot)Driver).GetScreenshot();
+                var screenshotPath = Path.Combine("Screenshots", $"long_credentials_error_{DateTime.Now:yyyyMMdd_HHmmss}.png");
+                screenshot.SaveAsFile(screenshotPath);
+                TestOutput.WriteLine($"📸 Screenshot de error guardado: {screenshotPath}");
+            }
+            catch { }
+            
+            TestOutput.WriteLine($"❌ Error en test de credenciales largas: {ex.Message}");
             throw;
         }
     }

@@ -33,6 +33,9 @@
 		<!-- Startup Performance -->
 		<MauiEnableStartupTracing>true</MauiEnableStartupTracing>
 		<MauiEnableStartupProfiling>true</MauiEnableStartupProfiling>
+		
+		<!-- Fast Deployment - Deshabilitado para tests -->
+		<AndroidUseAapt2>true</AndroidUseAapt2>
 
 		<!-- Display name -->
 		<ApplicationTitle>RestaurantePro.Mobile</ApplicationTitle>

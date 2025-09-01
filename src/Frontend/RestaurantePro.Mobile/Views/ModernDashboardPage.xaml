@@ -8,10 +8,25 @@
 
     <Grid RowDefinitions="Auto,*,Auto">
         
+        <!-- Header con título y botón de logout -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="16,8,16,0">
+            <Label Grid.Column="0" 
+                   Text="Dashboard" 
+                   Style="{StaticResource H1Style}" 
+                   VerticalOptions="Center" />
+            <Button Grid.Column="1" 
+                    Text="Cerrar Sesión"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Command="{Binding LogoutCommand}"
+                    VerticalOptions="Center"
+                    Padding="12,8" />
+        </Grid>
+        
         <!-- Header con estadísticas -->
         <ScrollView Grid.Row="0" 
                     HorizontalScrollBarVisibility="Never"
-                    Padding="16,8">
+                    Padding="16,8"
+                    Margin="0,60,0,0">
             <HorizontalStackLayout Spacing="12">
                 
                 <!-- Card de Ventas Hoy -->

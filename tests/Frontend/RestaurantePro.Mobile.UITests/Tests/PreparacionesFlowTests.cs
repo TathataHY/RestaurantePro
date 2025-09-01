@@ -16,7 +16,7 @@ public class PreparacionesFlowTests : AppiumTestBase
 
     public PreparacionesFlowTests(ITestOutputHelper testOutput) : base(testOutput) { }
 
-    [Fact(Skip = "Temporalmente comentada hasta crear PageObjects")]
+    [Fact]
     public void Preparaciones_CompleteFlow_ShouldSucceed()
     {
         // Arrange
@@ -43,7 +43,7 @@ public class PreparacionesFlowTests : AppiumTestBase
         TestOutput.WriteLine($"✅ Preparaciones cargadas: 0 (temporalmente comentado)");
     }
 
-    [Fact(Skip = "Temporalmente comentada hasta crear PageObjects")]
+    [Fact]
     public void Preparaciones_ViewPreparacionDetails_ShouldDisplayCorrectly()
     {
         // Arrange
@@ -81,8 +81,8 @@ public class PreparacionesFlowTests : AppiumTestBase
         }
     }
 
-    [Fact(Skip = "Temporalmente comentada hasta crear PageObjects")]
-    public void Preparaciones_UpdateStatus_ShouldSucceed()
+    [Fact]
+    public void Preparaciones_UpdateStatus_ShouldDisplayCorrectly()
     {
         // Arrange
         _loginPage = new LoginPageObject(Driver, TestOutput);
@@ -122,7 +122,7 @@ public class PreparacionesFlowTests : AppiumTestBase
         }
     }
 
-    [Fact(Skip = "Temporalmente comentada hasta crear PageObjects")]
+    [Fact]
     public void Preparaciones_FilterByStatus_ShouldWorkCorrectly()
     {
         // Arrange
@@ -160,7 +160,7 @@ public class PreparacionesFlowTests : AppiumTestBase
         }
     }
 
-    [Fact(Skip = "Temporalmente comentada hasta crear PageObjects")]
+    [Fact]
     public void Preparaciones_SearchByProduct_ShouldFindResults()
     {
         // Arrange
@@ -194,7 +194,7 @@ public class PreparacionesFlowTests : AppiumTestBase
         }
     }
 
-    [Fact(Skip = "Temporalmente comentada hasta crear PageObjects")]
+    [Fact]
     public void Preparaciones_ExportReport_ShouldGenerateFile()
     {
         // Arrange

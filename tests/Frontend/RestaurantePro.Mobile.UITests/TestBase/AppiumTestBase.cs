@@ -117,9 +117,35 @@ public abstract class AppiumTestBase : IDisposable
                 TestOutput.WriteLine($"🎮 Usando emulador: {Configuration["EmulatorConfig:AvdName"]}");
             }
 
-            // Configuración de package y activity (sin configurar app para evitar conflictos)
+            // Configuración para conectarse a la app que ya está ejecutándose
             appiumOptions.AddAdditionalAppiumOption("appPackage", Configuration["AppiumConfig:AppPackage"] ?? "com.companyname.restaurantepro.mobile");
-            appiumOptions.AddAdditionalAppiumOption("appActivity", Configuration["AppiumConfig:AppActivity"] ?? "crc64e1fb321c08285b90.MainActivity");
+            appiumOptions.AddAdditionalAppiumOption("appActivity", Configuration["AppiumConfig:AppActivity"] ?? "crc64492cedc7810ceddb.MainActivity");
+            
+            // Configuración para NO lanzar la app (ya la lanzamos con ADB)
+            appiumOptions.AddAdditionalAppiumOption("autoLaunch", false);
+            appiumOptions.AddAdditionalAppiumOption("skipUnlock", true);
+            appiumOptions.AddAdditionalAppiumOption("skipServerInstallation", false);
+            appiumOptions.AddAdditionalAppiumOption("skipDeviceInitialization", false);
+            
+            // Configuración para conectarse a la app existente
+            appiumOptions.AddAdditionalAppiumOption("noReset", true);
+            appiumOptions.AddAdditionalAppiumOption("fullReset", false);
+            appiumOptions.AddAdditionalAppiumOption("fastReset", false);
+            
+            // Configuración CRÍTICA para forzar la conexión a la app específica
+            appiumOptions.AddAdditionalAppiumOption("appWaitPackage", Configuration["AppiumConfig:AppPackage"] ?? "com.companyname.restaurantepro.mobile");
+            appiumOptions.AddAdditionalAppiumOption("appWaitActivity", Configuration["AppiumConfig:AppActivity"] ?? "crc64492cedc7810ceddb.MainActivity");
+            appiumOptions.AddAdditionalAppiumOption("appWaitDuration", 30000);
+            appiumOptions.AddAdditionalAppiumOption("appWaitForLaunch", true);
+            
+            // Configuración para forzar la conexión a la app específica
+            appiumOptions.AddAdditionalAppiumOption("forceAppLaunch", false);
+            appiumOptions.AddAdditionalAppiumOption("shouldTerminateApp", false);
+            appiumOptions.AddAdditionalAppiumOption("dontStopAppOnReset", true);
+            
+            // Configuración de permisos
+            appiumOptions.AddAdditionalAppiumOption("autoGrantPermissions", true);
+            appiumOptions.AddAdditionalAppiumOption("allowTestPackages", true);
             
             TestOutput.WriteLine($"📱 Usando package: {Configuration["AppiumConfig:AppPackage"] ?? "com.companyname.restaurantepro.mobile"}");
             TestOutput.WriteLine($"📱 Usando activity: {Configuration["AppiumConfig:AppActivity"] ?? "crc64e1fb321c08285b90.MainActivity"}");
@@ -136,6 +162,9 @@ public abstract class AppiumTestBase : IDisposable
             appiumOptions.AddAdditionalAppiumOption("newCommandTimeout", int.Parse(Configuration["AppiumConfig:NewCommandTimeout"] ?? "60"));
             appiumOptions.AddAdditionalAppiumOption("implicitWait", int.Parse(Configuration["AppiumConfig:ImplicitWaitSeconds"] ?? "15"));
 
+            // Lanzar la app directamente con ADB antes de conectar Appium
+            LaunchAppWithAdb();
+            
             // Conectar al servidor Appium
             var appiumServerUrl = Configuration["AppiumConfig:ServerUrl"] ?? "http://localhost:4723";
             var fullAppiumUrl = $"{appiumServerUrl}/wd/hub";
@@ -151,6 +180,9 @@ public abstract class AppiumTestBase : IDisposable
             
             // Configurar la app móvil para usar la API en memoria
             ConfigureAppForInMemoryApi();
+            
+            // Esperar a que la app se cargue completamente
+            WaitForAppToLoad();
         }
         catch (Exception ex)
         {
@@ -162,6 +194,142 @@ public abstract class AppiumTestBase : IDisposable
             TestOutput.WriteLine("   4. ADB esté funcionando (adb devices)");
             TestOutput.WriteLine("   5. El APK esté en la carpeta de salida del proyecto de tests");
             throw;
+        }
+    }
+
+    private void LaunchAppWithAdb()
+    {
+        try
+        {
+            TestOutput.WriteLine("🚀 Lanzando app directamente con ADB...");
+            
+            var appPackage = Configuration["AppiumConfig:AppPackage"] ?? "com.companyname.restaurantepro.mobile";
+            var appActivity = Configuration["AppiumConfig:AppActivity"] ?? "crc64492cedc7810ceddb.MainActivity";
+            
+            // Lanzar la app con ADB
+            var startAppCommand = $"adb -s emulator-5554 shell am start -n {appPackage}/{appActivity}";
+            TestOutput.WriteLine($"🔧 Comando ADB: {startAppCommand}");
+            
+            // Ejecutar el comando
+            var process = new System.Diagnostics.Process();
+            process.StartInfo.FileName = "cmd.exe";
+            process.StartInfo.Arguments = $"/c {startAppCommand}";
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.RedirectStandardError = true;
+            process.StartInfo.CreateNoWindow = true;
+            
+            process.Start();
+            process.WaitForExit();
+            
+            var output = process.StandardOutput.ReadToEnd();
+            var error = process.StandardError.ReadToEnd();
+            
+            TestOutput.WriteLine($"📱 Output ADB: {output}");
+            if (!string.IsNullOrEmpty(error))
+            {
+                TestOutput.WriteLine($"⚠️ Error ADB: {error}");
+            }
+            
+            // Esperar a que la app se cargue
+            Thread.Sleep(5000);
+            
+            TestOutput.WriteLine("✅ App lanzada con ADB");
+        }
+        catch (Exception ex)
+        {
+            TestOutput.WriteLine($"⚠️ No se pudo lanzar la app con ADB: {ex.Message}");
+            TestOutput.WriteLine("💡 Continuando con Appium...");
+        }
+    }
+
+    private void WaitForAppToLoad()
+    {
+        try
+        {
+            TestOutput.WriteLine("⏳ Esperando a que la app se cargue completamente...");
+            
+            // Esperar un poco para que la app se inicialice
+            Thread.Sleep(8000);
+            
+            // Verificar que estamos en la app correcta
+            if (Driver is AndroidDriver androidDriver)
+            {
+                var currentPackage = androidDriver.CurrentPackage;
+                TestOutput.WriteLine($"📱 Package actual: {currentPackage}");
+                
+                // Verificar que estamos en la app correcta
+                var expectedPackage = Configuration["AppiumConfig:AppPackage"] ?? "com.companyname.restaurantepro.mobile";
+                if (currentPackage == expectedPackage)
+                {
+                    TestOutput.WriteLine("✅ Estamos en la app correcta");
+                }
+                else
+                {
+                    TestOutput.WriteLine($"⚠️ Estamos en package: {currentPackage}, esperado: {expectedPackage}");
+                    
+                    // FORZAR el switch a la app correcta
+                    TestOutput.WriteLine("🔄 Forzando switch a la app correcta...");
+                    try
+                    {
+                        // Intentar hacer switch de contexto a la app correcta
+                        var appPackage = Configuration["AppiumConfig:AppPackage"] ?? "com.companyname.restaurantepro.mobile";
+                        var appActivity = Configuration["AppiumConfig:AppActivity"] ?? "crc64492cedc7810ceddb.MainActivity";
+                        
+                        // Usar StartActivity para forzar el switch
+                        androidDriver.StartActivity(appPackage, appActivity);
+                        TestOutput.WriteLine("✅ Switch forzado a la app correcta");
+                        
+                        // Esperar a que se complete el switch
+                        Thread.Sleep(5000);
+                        
+                        // Verificar el package después del switch
+                        var newPackage = androidDriver.CurrentPackage;
+                        TestOutput.WriteLine($"📱 Package después del switch: {newPackage}");
+                        
+                        if (newPackage == expectedPackage)
+                        {
+                            TestOutput.WriteLine("✅ Switch exitoso - estamos en la app correcta");
+                        }
+                        else
+                        {
+                            TestOutput.WriteLine($"⚠️ Switch falló - seguimos en: {newPackage}");
+                        }
+                    }
+                    catch (Exception switchEx)
+                    {
+                        TestOutput.WriteLine($"❌ Error en switch forzado: {switchEx.Message}");
+                        TestOutput.WriteLine("💡 Continuando con el test...");
+                    }
+                }
+            }
+            
+            // Esperar a que aparezcan elementos de la UI
+            var wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(30));
+            
+            // Buscar elementos que indiquen que la app está cargada
+            var elements = wait.Until(driver => 
+            {
+                try
+                {
+                    var editTexts = driver.FindElements(By.XPath("//android.widget.EditText"));
+                    var textViews = driver.FindElements(By.XPath("//android.widget.TextView"));
+                    
+                    // Si encontramos elementos de UI, la app está cargada
+                    return editTexts.Count > 0 || textViews.Count > 10;
+                }
+                catch
+                {
+                    return false;
+                }
+            });
+            
+            TestOutput.WriteLine("✅ App cargada correctamente");
+        }
+        catch (Exception ex)
+        {
+            TestOutput.WriteLine($"⚠️ No se pudo verificar que la app esté cargada: {ex.Message}");
+            TestOutput.WriteLine("💡 Continuando con el test...");
         }
     }
 

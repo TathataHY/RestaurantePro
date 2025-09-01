@@ -28,6 +28,7 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
     public ICommand AssignTableCommand { get; }
     public ICommand ViewInventoryCommand { get; }
     public ICommand ViewReportsCommand { get; }
+    public ICommand LogoutCommand { get; }
 
     public ModernDashboardViewModel()
     {
@@ -35,6 +36,7 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
         AssignTableCommand = new Command(async () => await AssignTable());
         ViewInventoryCommand = new Command(async () => await ViewInventory());
         ViewReportsCommand = new Command(async () => await ViewReports());
+        LogoutCommand = new Command(async () => await Logout());
 
         LoadData();
     }
@@ -107,6 +109,41 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
     {
         // Implementar navegación a reportes
         await Application.Current.MainPage.DisplayAlert("Acción", "Ver reportes", "OK");
+    }
+
+    private async Task Logout()
+    {
+        try
+        {
+            // Mostrar confirmación
+            var result = await Application.Current.MainPage.DisplayAlert(
+                "Cerrar Sesión", 
+                "¿Estás seguro de que quieres cerrar sesión?", 
+                "Sí", 
+                "Cancelar");
+
+            if (result)
+            {
+                // Aquí implementarías la lógica real de logout
+                // Por ejemplo: limpiar tokens, datos de usuario, etc.
+                
+                // Por ahora, navegar de vuelta a la página de login
+                await Shell.Current.GoToAsync("//login");
+                
+                // Mostrar mensaje de confirmación
+                await Application.Current.MainPage.DisplayAlert(
+                    "Sesión Cerrada", 
+                    "Has cerrado sesión exitosamente", 
+                    "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await Application.Current.MainPage.DisplayAlert(
+                "Error", 
+                $"Error al cerrar sesión: {ex.Message}", 
+                "OK");
+        }
     }
 
     #region INotifyPropertyChanged

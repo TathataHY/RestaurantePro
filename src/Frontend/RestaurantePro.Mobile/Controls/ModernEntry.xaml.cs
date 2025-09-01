@@ -6,7 +6,8 @@ namespace RestaurantePro.Mobile.Controls;
 public partial class ModernEntry : ContentView, INotifyPropertyChanged
 {
     public static readonly BindableProperty TextProperty =
-        BindableProperty.Create(nameof(Text), typeof(string), typeof(ModernEntry), string.Empty, propertyChanged: OnTextChanged);
+        BindableProperty.Create(nameof(Text), typeof(string), typeof(ModernEntry), string.Empty, 
+            BindingMode.TwoWay, propertyChanged: OnTextChanged);
 
     public static readonly BindableProperty PlaceholderProperty =
         BindableProperty.Create(nameof(Placeholder), typeof(string), typeof(ModernEntry), string.Empty, propertyChanged: OnPlaceholderChanged);
@@ -102,9 +103,6 @@ public partial class ModernEntry : ContentView, INotifyPropertyChanged
     public ModernEntry()
     {
         InitializeComponent();
-        InnerEntry.TextChanged += OnEntryTextChanged;
-        InnerEntry.Focused += OnEntryFocused;
-        InnerEntry.Unfocused += OnEntryUnfocused;
         
         // Configurar accesibilidad por defecto
         SetupDefaultAccessibility();
@@ -140,7 +138,8 @@ public partial class ModernEntry : ContentView, INotifyPropertyChanged
     {
         if (bindable is ModernEntry modernEntry)
         {
-            modernEntry.InnerEntry.Text = newValue?.ToString() ?? string.Empty;
+            var newText = newValue?.ToString() ?? string.Empty;
+            modernEntry.InnerEntry.Text = newText;
         }
     }
 
@@ -218,47 +217,6 @@ public partial class ModernEntry : ContentView, INotifyPropertyChanged
                 Application.Current?.Resources["BorderColor"] as Color ?? Colors.Gray : 
                 Application.Current?.Resources["ErrorColor"] as Color ?? Colors.Red;
             border.Stroke = borderColor;
-        }
-    }
-
-    private void OnEntryTextChanged(object? sender, TextChangedEventArgs e)
-    {
-        Text = e.NewTextValue;
-        OnPropertyChanged(nameof(Text));
-        
-        // Proporcionar feedback háptico para cambios de texto
-        if (!string.IsNullOrEmpty(e.NewTextValue))
-        {
-            HapticFeedback.Click();
-        }
-    }
-
-    private void OnEntryFocused(object? sender, FocusEventArgs e)
-    {
-        // Feedback visual cuando el campo obtiene foco
-        var border = this.FindByName<Border>("ButtonBorder");
-        if (border != null)
-        {
-            var primaryColor = Application.Current?.Resources["PrimaryColor"] as Color ?? Colors.Blue;
-            border.Stroke = primaryColor;
-            border.StrokeThickness = 2;
-        }
-        
-        // Feedback háptico
-        HapticFeedback.Click();
-    }
-
-    private void OnEntryUnfocused(object? sender, FocusEventArgs e)
-    {
-        // Restaurar estado visual cuando el campo pierde foco
-        var border = this.FindByName<Border>("ButtonBorder");
-        if (border != null)
-        {
-            var borderColor = IsValid ? 
-                Application.Current?.Resources["BorderColor"] as Color ?? Colors.Gray : 
-                Application.Current?.Resources["ErrorColor"] as Color ?? Colors.Red;
-            border.Stroke = borderColor;
-            border.StrokeThickness = 1;
         }
     }
 

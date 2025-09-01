@@ -27,6 +27,7 @@
                    PlaceholderColor="{StaticResource TextSecondary}"
                    FontSize="16"
                    VerticalOptions="Center"
+                   Text="{Binding Source={x:Reference ModernEntryControl}, Path=Text, Mode=TwoWay}"
                    AutomationProperties.Name="{Binding Source={x:Reference ModernEntryControl}, Path=AccessibilityName}"
                    AutomationProperties.HelpText="{Binding Source={x:Reference ModernEntryControl}, Path=AccessibilityHelpText}"
                    AutomationProperties.IsInAccessibleTree="True"
