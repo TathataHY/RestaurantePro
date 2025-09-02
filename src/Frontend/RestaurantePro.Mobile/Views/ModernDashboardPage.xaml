@@ -6,7 +6,7 @@
              Title="Dashboard"
              BackgroundColor="{StaticResource SurfacePrimary}">
 
-    <Grid RowDefinitions="Auto,*,Auto">
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
         
         <!-- Header con título y botón de logout -->
         <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="16,8,16,0">
@@ -23,10 +23,9 @@
         </Grid>
         
         <!-- Header con estadísticas -->
-        <ScrollView Grid.Row="0" 
+        <ScrollView Grid.Row="1" 
                     HorizontalScrollBarVisibility="Never"
-                    Padding="16,8"
-                    Margin="0,60,0,0">
+                    Padding="16,8">
             <HorizontalStackLayout Spacing="12">
                 
                 <!-- Card de Ventas Hoy -->
@@ -93,7 +92,7 @@
         </ScrollView>
 
         <!-- Contenido principal -->
-        <ScrollView Grid.Row="1" Padding="16">
+        <ScrollView Grid.Row="2" Padding="16">
             <VerticalStackLayout Spacing="24">
 
                 <!-- Sección de Acciones Rápidas -->
@@ -251,7 +250,7 @@
         </ScrollView>
 
         <!-- Bottom Navigation -->
-        <controls:ModernTabBar Grid.Row="2" x:Name="BottomTabBar" />
+        <controls:ModernTabBar Grid.Row="3" x:Name="BottomTabBar" />
 
     </Grid>
 
