@@ -203,6 +203,10 @@ public static class MauiProgram
 		
 		// Dashboard - V1 Fundamental
 		services.AddTransient<DashboardPage>();
+		
+		// Modern Dashboard - V4 Modernización Visual
+		services.AddTransient<ModernDashboardViewModel>();
+		services.AddTransient<ModernDashboardPage>();
 
 		// ViewModels desde Mobile.Core - Operaciones
 		services.AddTransient<MesasViewModel>();
@@ -282,7 +286,7 @@ public static class MauiProgram
 	{
 		// Rutas principales
 		Routing.RegisterRoute("login", typeof(LoginPage));
-		Routing.RegisterRoute("dashboard", typeof(DashboardPage));
+		Routing.RegisterRoute("dashboard", typeof(ModernDashboardPage));
 		
 		// Rutas de operaciones
 		Routing.RegisterRoute("mesas", typeof(MesasPage));

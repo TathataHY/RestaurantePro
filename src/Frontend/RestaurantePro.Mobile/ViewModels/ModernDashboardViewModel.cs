@@ -136,6 +136,7 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
                     "Has cerrado sesión exitosamente", 
                     "OK");
             }
+
         }
         catch (Exception ex)
         {

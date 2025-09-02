@@ -9,10 +9,10 @@ public partial class ModernDashboardPage : ContentPage
 {
     private ModernDashboardViewModel _viewModel;
 
-    public ModernDashboardPage()
+    public ModernDashboardPage(ModernDashboardViewModel viewModel)
     {
         InitializeComponent();
-        _viewModel = new ModernDashboardViewModel();
+        _viewModel = viewModel;
         BindingContext = _viewModel;
         
         SetupBottomNavigation();
@@ -116,4 +116,6 @@ public partial class ModernDashboardPage : ContentPage
             // _viewModel.RefreshData();
         }
     }
+
+
 } 

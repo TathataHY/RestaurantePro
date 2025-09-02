@@ -249,17 +249,18 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- Bottom Navigation -->
+                <!-- Bottom Navigation -->
         <controls:ModernTabBar Grid.Row="3" x:Name="BottomTabBar" />
 
-    </Grid>
+        <!-- Floating Action Button -->
+        <controls:FloatingActionButton Grid.RowSpan="4"
+                                       x:Name="MainFab"
+                                       Text="+"
+                                       Command="{Binding CreateOrderCommand}"
+                                       HorizontalOptions="End"
+                                       VerticalOptions="End"
+                                       Margin="16,0,16,80" />
 
-    <!-- Floating Action Button -->
-    <controls:FloatingActionButton x:Name="MainFab"
-                                   Text="+"
-                                   Command="{Binding CreateOrderCommand}"
-                                   HorizontalOptions="End"
-                                   VerticalOptions="End"
-                                   Margin="16,0,16,80" />
+    </Grid>
 
 </ContentPage> 

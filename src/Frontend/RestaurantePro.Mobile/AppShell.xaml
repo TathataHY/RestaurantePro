@@ -47,7 +47,7 @@
         <ShellContent
             Title="Dashboard"
             Icon="home.png"
-            ContentTemplate="{DataTemplate ui:DashboardPage}"
+            ContentTemplate="{DataTemplate views:ModernDashboardPage}"
             Route="dashboard" />
 
         <!-- Mesas Tab -->
