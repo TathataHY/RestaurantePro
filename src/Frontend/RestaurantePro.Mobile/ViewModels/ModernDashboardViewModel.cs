@@ -2,13 +2,25 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
+using RestaurantePro.Mobile.Core.Services.Authentication;
+using RestaurantePro.Mobile.Core.Services.Dashboard;
+using RestaurantePro.Mobile.Core.Models.DTOs;
 
 namespace RestaurantePro.Mobile.ViewModels;
 
 public class ModernDashboardViewModel : INotifyPropertyChanged
 {
+    private readonly IAuthService _authService;
+    private readonly IDashboardService _dashboardService;
     private bool _isLoading;
-    private ObservableCollection<OrderItem> _recentOrders;
+    private ObservableCollection<RestaurantePro.Mobile.Core.Models.DTOs.OrderItem> _recentOrders;
+    
+    // Propiedades para datos reales
+    private decimal _todaySales;
+    private decimal _salesChangePercentage;
+    private int _activeOrdersCount;
+    private int _pendingOrdersCount;
+    private EstadoMesasDto _tableStatus;
 
     public bool IsLoading
     {
@@ -18,10 +30,40 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
 
     public bool IsNotLoading => !IsLoading;
 
-    public ObservableCollection<OrderItem> RecentOrders
+    public ObservableCollection<RestaurantePro.Mobile.Core.Models.DTOs.OrderItem> RecentOrders
     {
         get => _recentOrders;
         set => SetProperty(ref _recentOrders, value);
+    }
+    
+    public decimal TodaySales
+    {
+        get => _todaySales;
+        set => SetProperty(ref _todaySales, value);
+    }
+    
+    public decimal SalesChangePercentage
+    {
+        get => _salesChangePercentage;
+        set => SetProperty(ref _salesChangePercentage, value);
+    }
+    
+    public int ActiveOrdersCount
+    {
+        get => _activeOrdersCount;
+        set => SetProperty(ref _activeOrdersCount, value);
+    }
+    
+    public int PendingOrdersCount
+    {
+        get => _pendingOrdersCount;
+        set => SetProperty(ref _pendingOrdersCount, value);
+    }
+
+    public EstadoMesasDto TableStatus
+    {
+        get => _tableStatus;
+        set => SetProperty(ref _tableStatus, value);
     }
 
     public ICommand CreateOrderCommand { get; }
@@ -30,8 +72,10 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
     public ICommand ViewReportsCommand { get; }
     public ICommand LogoutCommand { get; }
 
-    public ModernDashboardViewModel()
+    public ModernDashboardViewModel(IAuthService authService, IDashboardService dashboardService)
     {
+        _authService = authService;
+        _dashboardService = dashboardService;
         CreateOrderCommand = new Command(async () => await CreateOrder());
         AssignTableCommand = new Command(async () => await AssignTable());
         ViewInventoryCommand = new Command(async () => await ViewInventory());
@@ -45,70 +89,96 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
     {
         IsLoading = true;
 
-        // Simular carga de datos
-        await Task.Delay(2000);
-
-        RecentOrders = new ObservableCollection<OrderItem>
+        try
         {
-            new OrderItem 
-            { 
-                OrderNumber = "ORD-001", 
-                CustomerName = "Juan Pérez", 
-                Status = "En Progreso", 
-                Total = 45.50m,
-                StatusColor = Color.FromArgb("#3498DB")
-            },
-            new OrderItem 
-            { 
-                OrderNumber = "ORD-002", 
-                CustomerName = "María García", 
-                Status = "Pendiente", 
-                Total = 32.75m,
-                StatusColor = Color.FromArgb("#F39C12")
-            },
-            new OrderItem 
-            { 
-                OrderNumber = "ORD-003", 
-                CustomerName = "Carlos López", 
-                Status = "Lista", 
-                Total = 28.90m,
-                StatusColor = Color.FromArgb("#27AE60")
-            },
-            new OrderItem 
-            { 
-                OrderNumber = "ORD-004", 
-                CustomerName = "Ana Martínez", 
-                Status = "En Progreso", 
-                Total = 67.25m,
-                StatusColor = Color.FromArgb("#3498DB")
-            }
-        };
+            // Cargar datos reales del dashboard
+            var todaySalesTask = _dashboardService.GetTodaySalesAsync();
+            var salesChangeTask = _dashboardService.GetSalesChangePercentageAsync();
+            var activeOrdersTask = _dashboardService.GetActiveOrdersCountAsync();
+            var pendingOrdersTask = _dashboardService.GetPendingOrdersCountAsync();
+            var recentOrdersTask = _dashboardService.GetRecentOrdersAsync();
+            var tableStatusTask = _dashboardService.GetTableStatusAsync();
+
+            // Esperar a que todas las tareas se completen
+            await Task.WhenAll(todaySalesTask, salesChangeTask, activeOrdersTask, pendingOrdersTask, recentOrdersTask, tableStatusTask);
+
+            // Asignar los datos obtenidos
+            TodaySales = await todaySalesTask;
+            SalesChangePercentage = await salesChangeTask;
+            ActiveOrdersCount = await activeOrdersTask;
+            PendingOrdersCount = await pendingOrdersTask;
+            TableStatus = await tableStatusTask;
+            
+            var recentOrders = await recentOrdersTask;
+            RecentOrders = new ObservableCollection<RestaurantePro.Mobile.Core.Models.DTOs.OrderItem>(recentOrders);
+        }
+        catch (Exception ex)
+        {
+            // En caso de error, mostrar datos por defecto
+            TodaySales = 0m;
+            SalesChangePercentage = 0m;
+            ActiveOrdersCount = 0;
+            PendingOrdersCount = 0;
+            TableStatus = new EstadoMesasDto();
+            RecentOrders = new ObservableCollection<RestaurantePro.Mobile.Core.Models.DTOs.OrderItem>();
+            
+            // Log del error (en una app real, usarías un logger)
+            System.Diagnostics.Debug.WriteLine($"Error cargando datos del dashboard: {ex.Message}");
+        }
 
         IsLoading = false;
     }
 
     private async Task CreateOrder()
     {
-        // Implementar navegación a crear comanda
-        await Application.Current.MainPage.DisplayAlert("Acción", "Crear nueva comanda", "OK");
+        try
+        {
+            // Navegar a la página de Comandas
+            await Shell.Current.GoToAsync("//comandas");
+        }
+        catch (Exception ex)
+        {
+            await Application.Current.MainPage.DisplayAlert("Error", $"Error al navegar a comandas: {ex.Message}", "OK");
+        }
     }
 
     private async Task AssignTable()
     {
-        // Implementar navegación a asignar mesa
-        await Application.Current.MainPage.DisplayAlert("Acción", "Asignar mesa", "OK");
+        try
+        {
+            // Navegar a la página de Mesas
+            await Shell.Current.GoToAsync("//mesas");
+        }
+        catch (Exception ex)
+        {
+            await Application.Current.MainPage.DisplayAlert("Error", $"Error al navegar a mesas: {ex.Message}", "OK");
+        }
     }
 
     private async Task ViewInventory()
     {
-        // Implementar navegación a inventario
-        await Application.Current.MainPage.DisplayAlert("Acción", "Ver inventario", "OK");
+        try
+        {
+            // Navegar a la página de Productos (inventario)
+            await Shell.Current.GoToAsync("//productos");
+        }
+        catch (Exception ex)
+        {
+            await Application.Current.MainPage.DisplayAlert("Error", $"Error al navegar a productos: {ex.Message}", "OK");
+        }
     }
 
     private async Task ViewReports()
     {
-        // Implementar navegación a reportes
-        await Application.Current.MainPage.DisplayAlert("Acción", "Ver reportes", "OK");
+        try
+        {
+            // Navegar a la página de Analytics (reportes)
+            await Shell.Current.GoToAsync("//analytics");
+        }
+        catch (Exception ex)
+        {
+            await Application.Current.MainPage.DisplayAlert("Error", $"Error al navegar a analytics: {ex.Message}", "OK");
+        }
     }
 
     private async Task Logout()
@@ -124,10 +194,10 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
 
             if (result)
             {
-                // Aquí implementarías la lógica real de logout
-                // Por ejemplo: limpiar tokens, datos de usuario, etc.
+                // Limpiar la sesión usando el AuthService
+                await _authService.LogoutAsync();
                 
-                // Por ahora, navegar de vuelta a la página de login
+                // Navegar de vuelta a la página de login
                 await Shell.Current.GoToAsync("//login");
                 
                 // Mostrar mensaje de confirmación

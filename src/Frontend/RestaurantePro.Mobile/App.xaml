@@ -13,6 +13,8 @@
             <converters:EstadoToColorConverter x:Key="EstadoToColorConverter" />
             <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
             <converters:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+            <converters:PercentageChangeColorConverter x:Key="PercentageChangeColorConverter" />
+            <converters:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter" />
 
             <!-- Estilos Globales V4 -->
             <ResourceDictionary.MergedDictionaries>

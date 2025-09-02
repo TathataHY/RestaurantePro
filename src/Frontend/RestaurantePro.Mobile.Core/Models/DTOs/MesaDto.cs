@@ -1,7 +1,7 @@
 namespace RestaurantePro.Mobile.Core.Models.DTOs;
 
 /// <summary>
-/// DTO con información de una mesa para la aplicación móvil
+/// DTO con información de una mesa
 /// </summary>
 public class MesaDto
 {
@@ -51,46 +51,47 @@ public class MesaDto
     public DateTime UltimaActualizacion { get; set; }
 
     /// <summary>
-    /// Fecha de creación
+    /// Color para mostrar en la UI según el estado
     /// </summary>
-    public DateTime FechaCreacion { get; set; }
-    
+    public Microsoft.Maui.Graphics.Color EstadoColor => Estado.ToLowerInvariant() switch
+    {
+        "disponible" => Microsoft.Maui.Graphics.Color.FromArgb("#4CAF50"), // Verde
+        "ocupada" => Microsoft.Maui.Graphics.Color.FromArgb("#F44336"),    // Rojo
+        "reservada" => Microsoft.Maui.Graphics.Color.FromArgb("#FF9800"),  // Naranja
+        "fuera_de_servicio" => Microsoft.Maui.Graphics.Color.FromArgb("#9E9E9E"), // Gris
+        _ => Microsoft.Maui.Graphics.Color.FromArgb("#607D8B") // Gris azulado por defecto
+    };
+
     /// <summary>
-    /// Indica si la mesa está disponible para ser reservada
+    /// Descripción amigable del estado
     /// </summary>
-    public bool Disponible => Estado.Equals("Disponible", StringComparison.OrdinalIgnoreCase);
+    public string EstadoDescripcion => Estado.ToLowerInvariant() switch
+    {
+        "disponible" => "Disponible",
+        "ocupada" => "Ocupada",
+        "reservada" => "Reservada",
+        "fuera_de_servicio" => "Fuera de Servicio",
+        _ => Estado
+    };
+
+    /// <summary>
+    /// Indica si la mesa está disponible
+    /// </summary>
+    public bool Disponible => Estado.ToLowerInvariant() == "disponible";
 
     /// <summary>
     /// Indica si la mesa está ocupada
     /// </summary>
-    public bool Ocupada => Estado.Equals("Ocupada", StringComparison.OrdinalIgnoreCase);
+    public bool Ocupada => Estado.ToLowerInvariant() == "ocupada";
 
     /// <summary>
     /// Indica si la mesa está reservada
     /// </summary>
-    public bool Reservada => Estado.Equals("Reservada", StringComparison.OrdinalIgnoreCase);
+    public bool Reservada => Estado.ToLowerInvariant() == "reservada";
 
     /// <summary>
-    /// Obtiene el color asociado al estado para la UI
+    /// Indica si la mesa está fuera de servicio
     /// </summary>
-    public string ColorEstado => Estado.ToLowerInvariant() switch
-    {
-        "disponible" => "#4CAF50", // Verde
-        "ocupada" => "#F44336",    // Rojo
-        "reservada" => "#FF9800",  // Naranja
-        "fuera de servicio" => "#9E9E9E", // Gris
-        _ => "#2196F3" // Azul por defecto
-    };
+    public bool FueraDeServicio => Estado.ToLowerInvariant() == "fuera_de_servicio";
+}
 
-    /// <summary>
-    /// Descripción amigable del estado para la UI móvil
-    /// </summary>
-    public string EstadoDescripcion => Estado.ToLowerInvariant() switch
-    {
-        "disponible" => "Libre",
-        "ocupada" => "Ocupada",
-        "reservada" => "Reservada",
-        "fuera de servicio" => "Fuera de servicio",
-        _ => Estado
-    };
-} 

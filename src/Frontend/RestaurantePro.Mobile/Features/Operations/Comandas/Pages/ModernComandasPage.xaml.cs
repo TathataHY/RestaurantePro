@@ -61,6 +61,8 @@ public partial class ModernComandasPage : ContentPage
     /// </summary>
     private void SetupBottomTabBar()
     {
+        // COMENTADO PARA USAR TABS NATIVOS
+        /*
         if (BottomTabBar != null)
         {
             // Configurar tabs de navegación inferior
@@ -74,6 +76,7 @@ public partial class ModernComandasPage : ContentPage
             BottomTabBar.Tabs = tabs;
             BottomTabBar.TabSelected += OnBottomTabChanged;
         }
+        */
     }
 
     /// <summary>
@@ -172,9 +175,12 @@ public partial class ModernComandasPage : ContentPage
             FilterTabNavigation.TabSelectedCommand = null;
         }
         
+        // COMENTADO PARA USAR TABS NATIVOS
+        /*
         if (BottomTabBar != null)
         {
             BottomTabBar.TabSelected -= OnBottomTabChanged;
         }
+        */
     }
 } 

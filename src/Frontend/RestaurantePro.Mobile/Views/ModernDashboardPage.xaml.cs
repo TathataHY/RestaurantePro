@@ -33,8 +33,8 @@ public partial class ModernDashboardPage : ContentPage
             new TabItem("Perfil", "👤", "profile")
         };
 
-        BottomTabBar.Tabs = tabs;
-        BottomTabBar.TabSelected += OnBottomTabSelected;
+        // BottomTabBar.Tabs = tabs;
+        // BottomTabBar.TabSelected += OnBottomTabSelected;
     }
 
     private void SetupOrdersTabNavigation()
@@ -89,8 +89,8 @@ public partial class ModernDashboardPage : ContentPage
         await this.FadeTo(0, 150);
         
         // Aquí implementarías la navegación real
-        var selectedTab = BottomTabBar.Tabs[tabIndex];
-        await Application.Current.MainPage.DisplayAlert("Navegación", $"Navegando a: {selectedTab.Title}", "OK");
+        // var selectedTab = BottomTabBar.Tabs[tabIndex];
+        await Application.Current.MainPage.DisplayAlert("Navegación", $"Navegando a tab: {tabIndex}", "OK");
         
         await this.FadeTo(1, 150);
     }

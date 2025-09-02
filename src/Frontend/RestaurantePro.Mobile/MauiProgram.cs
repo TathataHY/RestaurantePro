@@ -5,6 +5,7 @@ using Microsoft.Maui.Hosting;
 using RestaurantePro.Mobile.Config;
 using RestaurantePro.Mobile.Core.Features.Authentication.ViewModels;
 using RestaurantePro.Mobile.Features.Authentication.Pages;
+using RestaurantePro.Mobile.Views;
 using RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;
 using RestaurantePro.Mobile.Features.Operations.Comandas.Pages;
 using RestaurantePro.Mobile.Core.Features.Operations.Productos.ViewModels;
@@ -35,6 +36,8 @@ using RestaurantePro.Mobile.ViewModels;
 using System;
 using System.Net.Http.Headers;
 using RestaurantePro.Mobile.Core.Services.Navigation;
+using RestaurantePro.Mobile.Core.Services.Dashboard;
+using RestaurantePro.Mobile.Services;
 using System.Net.Http;
 
 namespace RestaurantePro.Mobile;
@@ -109,7 +112,7 @@ public static class MauiProgram
 	{
 		// Servicios fundamentales V1 - Solo desde Core
 		services.AddSingleton<INavigationService, MauiNavigationService>();
-		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Dialog.IDialogService, RestaurantePro.Mobile.Core.Services.Dialog.DialogService>();
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Dialog.IDialogService, RestaurantePro.Mobile.Services.DialogService>();
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Platform.ISecureStorageService, RestaurantePro.Mobile.Core.Services.Platform.SecureStorageService>();
 		
 		// Servicios V4 - Sistema de Temas
@@ -207,6 +210,9 @@ public static class MauiProgram
 		// Modern Dashboard - V4 Modernización Visual
 		services.AddTransient<ModernDashboardViewModel>();
 		services.AddTransient<ModernDashboardPage>();
+		
+		// Dashboard Service
+		services.AddTransient<IDashboardService, DashboardService>();
 
 		// ViewModels desde Mobile.Core - Operaciones
 		services.AddTransient<MesasViewModel>();
@@ -285,7 +291,7 @@ public static class MauiProgram
 	private static void RegisterNavigationRoutesV1()
 	{
 		// Rutas principales
-		Routing.RegisterRoute("login", typeof(LoginPage));
+		Routing.RegisterRoute("login", typeof(SimpleLoginPage));
 		Routing.RegisterRoute("dashboard", typeof(ModernDashboardPage));
 		
 		// Rutas de operaciones

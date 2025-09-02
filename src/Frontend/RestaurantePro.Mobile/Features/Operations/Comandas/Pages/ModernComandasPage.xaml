@@ -272,13 +272,15 @@
             </RefreshView>
         </Grid>
 
-        <!-- Bottom Navigation -->
+        <!-- Bottom Navigation - COMENTADO PARA USAR TABS NATIVOS -->
+        <!--
         <controls:ModernTabBar Grid.Row="2" x:Name="BottomTabBar" />
+        -->
 
         <!-- Floating Action Button -->
         <controls:FloatingActionButton Grid.RowSpan="3"
                                        x:Name="MainFab"
-                                       Text="+"
+                                       Text="➕"
                                        Command="{Binding CrearComandaCommand}"
                                        HorizontalOptions="End"
                                        VerticalOptions="End"

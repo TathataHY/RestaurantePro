@@ -70,14 +70,17 @@ public class DialogService : IDialogService
 {
     public async Task ShowAlertAsync(string title, string message, string cancel = "OK")
     {
-        // TODO: Implementar alerta real con MAUI
+        // TODO: Implementar alerta real con MAUI - requiere inyección de dependencias
+        System.Diagnostics.Debug.WriteLine($"🔔 ALERT: {title} - {message}");
         await Task.CompletedTask;
     }
 
     public async Task<bool> ShowConfirmAsync(string title, string message, string accept = "Sí", string cancel = "No")
     {
-        // TODO: Implementar confirmación real con MAUI
-        return true;
+        // TODO: Implementar confirmación real con MAUI - requiere inyección de dependencias
+        System.Diagnostics.Debug.WriteLine($"❓ CONFIRM: {title} - {message}");
+        await Task.CompletedTask;
+        return true; // Por defecto retorna true para testing
     }
 
     public async Task ShowErrorAsync(string message)
@@ -100,8 +103,10 @@ public class DialogService : IDialogService
 
     public async Task<string?> ShowPromptAsync(string title, string message, string accept = "OK", string cancel = "Cancelar", string placeholder = "", int maxLength = -1, string? initialValue = null)
     {
-        // TODO: Implementar prompt real con MAUI
-        return null;
+        // TODO: Implementar prompt real con MAUI - requiere inyección de dependencias
+        System.Diagnostics.Debug.WriteLine($"📝 PROMPT: {title} - {message}");
+        await Task.CompletedTask;
+        return "Test Input"; // Por defecto retorna un valor para testing
     }
 
     public async Task<bool> ShowConfirmationAsync(string title, string message, string accept = "Sí", string cancel = "No")

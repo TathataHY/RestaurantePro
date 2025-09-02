@@ -17,7 +17,7 @@ public partial class ModernProductosPage : ContentPage
         _viewModel = viewModel;
         BindingContext = _viewModel;
         
-        SetupBottomNavigation();
+        // SetupBottomNavigation(); // Comentado porque ahora usamos tabs nativos
         SetupFilterTabs();
         
         // Configurar animaciones de entrada
@@ -35,9 +35,9 @@ public partial class ModernProductosPage : ContentPage
             new TabItem("Perfil", "👤", "profile")
         };
 
-        BottomTabBar.Tabs = tabs;
-        BottomTabBar.SelectedIndex = 3; // Seleccionar tab de Productos
-        BottomTabBar.TabSelected += OnBottomTabSelected;
+        // BottomTabBar.Tabs = tabs; // Comentado porque ahora usamos tabs nativos
+        // BottomTabBar.SelectedIndex = 3; // Seleccionar tab de Productos  
+        // BottomTabBar.TabSelected += OnBottomTabSelected;
     }
 
     private void SetupFilterTabs()
@@ -84,9 +84,9 @@ public partial class ModernProductosPage : ContentPage
         // Animación de transición
         await this.FadeTo(0, 150);
         
-        // Aquí implementarías la navegación real
-        var selectedTab = BottomTabBar.Tabs[tabIndex];
-        await Application.Current.MainPage.DisplayAlert("Navegación", $"Navegando a: {selectedTab.Title}", "OK");
+        // Aquí implementarías la navegación real (comentado porque ahora usamos tabs nativos)
+        // var selectedTab = BottomTabBar.Tabs[tabIndex];
+        await Application.Current.MainPage.DisplayAlert("Navegación", $"Navegando a tab {tabIndex}", "OK");
         
         await this.FadeTo(1, 150);
     }
@@ -129,7 +129,7 @@ public partial class ModernProductosPage : ContentPage
     {
         base.OnDisappearing();
         
-        // Limpiar recursos si es necesario
-        BottomTabBar.TabSelected -= OnBottomTabSelected;
+        // Limpiar recursos si es necesario (comentado porque ahora usamos tabs nativos)
+        // BottomTabBar.TabSelected -= OnBottomTabSelected;
     }
 } 

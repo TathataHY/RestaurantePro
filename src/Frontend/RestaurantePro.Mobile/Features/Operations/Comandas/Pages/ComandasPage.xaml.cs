@@ -148,6 +148,12 @@ public partial class ComandasPage : ContentPage
         {
             await _viewModel.LoadComandasCommand.ExecuteAsync(null);
         }
+        
+        // Cargar estadísticas en background
+        if (_viewModel.LoadEstadisticasCommand.CanExecute(null))
+        {
+            _ = _viewModel.LoadEstadisticasCommand.ExecuteAsync(null);
+        }
     }
 
     /// <summary>

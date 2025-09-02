@@ -196,7 +196,7 @@ public class ProductosService : IProductosService
         try
         {
             var token = await _authService.GetTokenAsync();
-            return await _apiService.GetAsync<List<CategoriaProductoDto>>("api/categorias", token);
+            return await _apiService.GetAsync<List<CategoriaProductoDto>>("api/core/categorias", token);
         }
         catch (Exception)
         {

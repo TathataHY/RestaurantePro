@@ -79,6 +79,7 @@ public partial class ComandasViewModel : BaseViewModel
         
         // Cargar datos iniciales
         _ = LoadComandasAsync();
+        _ = LoadEstadisticasAsync();
     }
 
     #endregion
@@ -102,7 +103,8 @@ public partial class ComandasViewModel : BaseViewModel
                 estado: string.IsNullOrWhiteSpace(FiltroEstado) || FiltroEstado == "Todos" ? null : FiltroEstado,
                 mesaId: FiltroMesaId,
                 fechaDesde: FiltroFecha,
-                fechaHasta: FiltroFecha?.AddDays(1));
+                fechaHasta: FiltroFecha?.AddDays(1),
+                clienteNombre: string.IsNullOrWhiteSpace(SearchText) ? null : SearchText);
 
             if (response.Success)
             {
@@ -151,7 +153,7 @@ public partial class ComandasViewModel : BaseViewModel
     /// Cargar estadísticas de comandas
     /// </summary>
     [RelayCommand]
-    private async Task LoadEstadisticasAsync()
+    public async Task LoadEstadisticasAsync()
     {
         if (IsBusy) return;
 
@@ -449,7 +451,24 @@ public partial class ComandasViewModel : BaseViewModel
             return;
         }
 
+        // Primero intentar buscar por cliente
         await LoadComandasAsync();
+        
+        // Si no se encontraron resultados y el texto parece ser un número, buscar por número de comanda
+        if (!Comandas.Any() && int.TryParse(SearchText, out var numeroComanda))
+        {
+            // Buscar en todas las comandas por número
+            var response = await _comandasService.BuscarComandasAsync();
+            if (response.Success && response.Data != null)
+            {
+                var comandaEncontrada = response.Data.FirstOrDefault(c => c.Numero.ToString() == numeroComanda.ToString());
+                if (comandaEncontrada != null)
+                {
+                    Comandas.Clear();
+                    Comandas.Add(comandaEncontrada);
+                }
+            }
+        }
     }
 
     /// <summary>

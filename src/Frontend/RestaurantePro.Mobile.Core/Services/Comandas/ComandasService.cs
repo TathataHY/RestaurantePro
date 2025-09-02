@@ -1,4 +1,5 @@
 using RestaurantePro.Mobile.Core.Models.DTOs;
+using RestaurantePro.Mobile.Core.Models.Common;
 using RestaurantePro.Mobile.Core.Services.Api;
 using RestaurantePro.Mobile.Core.Services.Authentication;
 using System.Text.Json;
@@ -12,7 +13,7 @@ public class ComandasService : IComandasService
 {
     private readonly IApiService _apiService;
     private readonly IAuthService _authService;
-    private const string BaseEndpoint = "api/comandas";
+    private const string BaseEndpoint = "api/operaciones/comandas";
 
     public ComandasService(IApiService apiService, IAuthService authService)
     {
@@ -249,8 +250,31 @@ public class ComandasService : IComandasService
     {
         try
         {
-            var token = await _authService.GetTokenAsync();
-            return await _apiService.GetAsync<EstadisticasComandasDto>($"{BaseEndpoint}/estadisticas", token);
+            // Por ahora, calculamos las estadísticas basándonos en las comandas existentes
+            var response = await BuscarComandasAsync();
+            
+            if (!response.Success || response.Data == null)
+            {
+                return ApiResponse<EstadisticasComandasDto>.ErrorResponse("Error al obtener comandas para calcular estadísticas");
+            }
+
+            var comandas = response.Data;
+            var estadisticas = new EstadisticasComandasDto
+            {
+                TotalComandasActivas = comandas.Count(c => c.EstaActiva),
+                ComandasPendientes = comandas.Count(c => c.Estado.ToLowerInvariant() == "pendiente"),
+                ComandasEnPreparacion = comandas.Count(c => c.Estado.ToLowerInvariant() == "en_preparacion"),
+                ComandasListas = comandas.Count(c => c.Estado.ToLowerInvariant() == "lista"),
+                ComandasCompletadasHoy = comandas.Count(c => c.Estado.ToLowerInvariant() == "finalizada" && c.FechaCreacion.Date == DateTime.Today),
+                ComandasCanceladasHoy = comandas.Count(c => c.Estado.ToLowerInvariant() == "cancelada" && c.FechaCreacion.Date == DateTime.Today),
+                TiempoPromedioPreparacion = 0, // No tenemos esta información en el DTO actual
+                VentasTotalDia = comandas.Where(c => c.Estado.ToLowerInvariant() == "finalizada" && c.FechaCreacion.Date == DateTime.Today).Sum(c => c.Total),
+                ValorPromedioPorComanda = comandas.Where(c => c.Estado.ToLowerInvariant() == "finalizada").Any() 
+                    ? comandas.Where(c => c.Estado.ToLowerInvariant() == "finalizada").Average(c => c.Total)
+                    : 0
+            };
+
+            return ApiResponse<EstadisticasComandasDto>.SuccessResponse(estadisticas, "Estadísticas calculadas exitosamente");
         }
         catch (Exception ex)
         {
@@ -287,9 +311,22 @@ public class ComandasService : IComandasService
             if (!string.IsNullOrWhiteSpace(clienteNombre))
                 queryParams.Add($"clienteNombre={Uri.EscapeDataString(clienteNombre)}");
 
+            // Agregar parámetros de paginación por defecto
+            queryParams.Add("pageNumber=1");
+            queryParams.Add("pageSize=100");
+
             var queryString = queryParams.Count > 0 ? $"?{string.Join("&", queryParams)}" : string.Empty;
             var token = await _authService.GetTokenAsync();
-            return await _apiService.GetAsync<List<ComandaDto>>($"{BaseEndpoint}/buscar{queryString}", token);
+            
+            // El endpoint devuelve una PaginatedList, necesitamos extraer los items
+            var response = await _apiService.GetAsync<PaginatedList<ComandaDto>>($"{BaseEndpoint}{queryString}", token);
+            
+            if (response.Success && response.Data != null)
+            {
+                return ApiResponse<List<ComandaDto>>.SuccessResponse(response.Data.Items, response.Message);
+            }
+            
+            return ApiResponse<List<ComandaDto>>.ErrorResponse(response.Message ?? "Error al buscar comandas");
         }
         catch (Exception ex)
         {

@@ -33,10 +33,40 @@ public partial class ModernMesasPage : ContentPage
     {
         base.OnAppearing();
         
+        System.Diagnostics.Debug.WriteLine("🔍 ModernMesasPage.OnAppearing - Iniciando");
+        
         // Refrescar datos cuando la página aparece
         if (_viewModel != null)
         {
-            _viewModel.RefreshMesasCommand?.Execute(null);
+            System.Diagnostics.Debug.WriteLine("🔍 Ejecutando LoadMesasCommand");
+            _viewModel.LoadMesasCommand?.Execute(null);
+            
+            // Solo cargar estadísticas en background, sin mostrar diálogo
+            System.Diagnostics.Debug.WriteLine("🔍 Cargando estadísticas en background");
+            _ = _viewModel.LoadEstadisticasAsync();
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine("❌ _viewModel es null");
+        }
+    }
+
+    private void OnEstadoFilterChanged(object sender, EventArgs e)
+    {
+        if (sender is Picker picker && _viewModel != null)
+        {
+            _viewModel.FiltroEstado = picker.SelectedItem?.ToString() ?? string.Empty;
+            _viewModel.ApplyFiltersCommand?.Execute(null);
+        }
+    }
+
+    private void OnCapacidadFilterChanged(object sender, EventArgs e)
+    {
+        if (sender is Picker picker && _viewModel != null)
+        {
+            var capacidadStr = picker.SelectedItem?.ToString() ?? string.Empty;
+            _viewModel.FiltroCapacidad = capacidadStr;
+            _viewModel.ApplyFiltersCommand?.Execute(null);
         }
     }
 } 

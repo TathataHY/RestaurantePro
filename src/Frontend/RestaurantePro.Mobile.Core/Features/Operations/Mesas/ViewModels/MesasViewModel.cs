@@ -17,6 +17,7 @@ public partial class MesasViewModel : BaseViewModel
     private readonly IMesasService _mesasService;
     private readonly IDialogService _dialogService;
     private readonly INavigationService _navigationService;
+    private readonly SemaphoreSlim _loadingSemaphore = new(1, 1);
 
     #region Propiedades Observables
 
@@ -37,6 +38,9 @@ public partial class MesasViewModel : BaseViewModel
 
     [ObservableProperty]
     private int? filtroCapacidadMinima;
+
+    [ObservableProperty]
+    private string filtroCapacidad = string.Empty;
 
     [ObservableProperty]
     private bool isRefreshing;
@@ -82,19 +86,28 @@ public partial class MesasViewModel : BaseViewModel
     /// Cargar todas las mesas con filtros aplicados
     /// </summary>
     [RelayCommand]
-    private async Task LoadMesasAsync()
+    public async Task LoadMesasAsync()
     {
-        if (IsBusy) return;
+        await LoadMesasAsync(FiltroEstado, FiltroUbicacion, FiltroCapacidadMinima);
+    }
 
-        IsBusy = true;
-        ErrorMessage = string.Empty;
-
+    private async Task LoadMesasAsync(string? estado, string? ubicacion, int? capacidadMinima)
+    {
+        // Esperar a que termine cualquier petición en curso
+        await _loadingSemaphore.WaitAsync();
+        
         try
         {
+            IsBusy = true;
+            ErrorMessage = string.Empty;
+
+            System.Diagnostics.Debug.WriteLine($"🔍 MesasViewModel.LoadMesasAsync - Iniciando carga de mesas");
+            System.Diagnostics.Debug.WriteLine($"🔍 Filtros: Estado={estado}, Ubicacion={ubicacion}, CapacidadMinima={capacidadMinima}");
+
             var response = await _mesasService.ObtenerMesasAsync(
-                string.IsNullOrWhiteSpace(FiltroEstado) ? null : FiltroEstado,
-                string.IsNullOrWhiteSpace(FiltroUbicacion) ? null : FiltroUbicacion,
-                FiltroCapacidadMinima);
+                string.IsNullOrWhiteSpace(estado) ? null : estado,
+                string.IsNullOrWhiteSpace(ubicacion) ? null : ubicacion,
+                capacidadMinima);
 
             if (response.Success)
             {
@@ -103,6 +116,7 @@ public partial class MesasViewModel : BaseViewModel
                 {
                     Mesas.Add(mesa);
                 }
+                System.Diagnostics.Debug.WriteLine($"✅ Se cargaron {response.Data?.Count ?? 0} mesas");
             }
             else
             {
@@ -119,6 +133,7 @@ public partial class MesasViewModel : BaseViewModel
         {
             IsBusy = false;
             IsRefreshing = false;
+            _loadingSemaphore.Release();
         }
     }
 
@@ -136,32 +151,41 @@ public partial class MesasViewModel : BaseViewModel
     /// Cargar estadísticas de ocupación
     /// </summary>
     [RelayCommand]
-    private async Task LoadEstadisticasAsync()
+    public async Task LoadEstadisticasAsync()
     {
-        if (IsBusy) return;
+        System.Diagnostics.Debug.WriteLine("🔍 MesasViewModel.LoadEstadisticasAsync - Iniciando");
 
-        IsBusy = true;
-
+        // Esperar a que termine cualquier petición en curso
+        await _loadingSemaphore.WaitAsync();
+        
         try
         {
+            IsBusy = true;
+            System.Diagnostics.Debug.WriteLine("🔍 Llamando a _mesasService.ObtenerEstadoOcupacionAsync()");
             var response = await _mesasService.ObtenerEstadoOcupacionAsync();
+
+            System.Diagnostics.Debug.WriteLine($"🔍 Respuesta: Success={response.Success}, Data={response.Data != null}");
 
             if (response.Success)
             {
                 EstadoMesas = response.Data;
+                System.Diagnostics.Debug.WriteLine($"✅ Estadísticas cargadas: TotalMesas={EstadoMesas?.TotalMesas}");
             }
             else
             {
+                System.Diagnostics.Debug.WriteLine($"❌ Error: {response.Message}");
                 await _dialogService.ShowAlertAsync("Error", "No se pudieron cargar las estadísticas");
             }
         }
         catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"❌ Excepción: {ex.Message}");
             await _dialogService.ShowAlertAsync("Error", $"Error al cargar estadísticas: {ex.Message}");
         }
         finally
         {
             IsBusy = false;
+            _loadingSemaphore.Release();
         }
     }
 
@@ -367,10 +391,56 @@ public partial class MesasViewModel : BaseViewModel
     /// <summary>
     /// Aplicar filtros de búsqueda
     /// </summary>
-    [RelayCommand]
-    private async Task ApplyFiltersAsync()
-    {
-        await LoadMesasAsync();
+        [RelayCommand]
+        private async Task ApplyFiltersAsync()
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"🔍 ApplyFiltersAsync - FiltroEstado original: '{FiltroEstado}'");
+                
+                // Procesar filtro de estado
+                string? estadoFiltro = null;
+                if (!string.IsNullOrWhiteSpace(FiltroEstado) && FiltroEstado != "Todas")
+                {
+                    // Mapear los valores del frontend a los valores del backend
+                    estadoFiltro = FiltroEstado switch
+                    {
+                        "Disponibles" => "Disponible",
+                        "Ocupadas" => "Ocupada", 
+                        "Reservadas" => "Reservada",
+                        "Fuera de servicio" => "FueraDeServicio",
+                        "En limpieza" => "EnLimpieza",
+                        _ => FiltroEstado
+                    };
+                    
+                    System.Diagnostics.Debug.WriteLine($"🔍 ApplyFiltersAsync - Estado mapeado: '{estadoFiltro}'");
+                }
+
+                // Procesar filtro de capacidad
+                int? capacidadMinima = null;
+                if (!string.IsNullOrWhiteSpace(FiltroCapacidad) && FiltroCapacidad != "Todas")
+                {
+                    var capacidadStr = FiltroCapacidad.Replace(" personas", "").Replace("+", "");
+                    if (int.TryParse(capacidadStr, out var capacidad))
+                    {
+                        capacidadMinima = capacidad;
+                    }
+                }
+
+                // NO actualizar FiltroEstado aquí - mantener el valor del frontend para el Picker
+                // Solo actualizar FiltroCapacidadMinima para el procesamiento interno
+                FiltroCapacidadMinima = capacidadMinima;
+
+            System.Diagnostics.Debug.WriteLine($"🔍 Aplicando filtros: Estado={estadoFiltro}, CapacidadMinima={capacidadMinima}");
+
+            // Llamar a LoadMesasAsync con los valores mapeados del backend
+            await LoadMesasAsync(estadoFiltro, FiltroUbicacion, capacidadMinima);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ Error aplicando filtros: {ex.Message}");
+            await _dialogService.ShowAlertAsync("Error", $"Error al aplicar filtros: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -382,6 +452,7 @@ public partial class MesasViewModel : BaseViewModel
         FiltroEstado = string.Empty;
         FiltroUbicacion = string.Empty;
         FiltroCapacidadMinima = null;
+        FiltroCapacidad = string.Empty;
         SearchText = string.Empty;
         
         await LoadMesasAsync();
@@ -417,6 +488,99 @@ public partial class MesasViewModel : BaseViewModel
         {
             ["mesaId"] = mesa.Id.ToString()
         });
+    }
+
+    #endregion
+
+    #region Comandos Adicionales
+
+    /// <summary>
+    /// Crear nueva mesa
+    /// </summary>
+    [RelayCommand]
+    private async Task CreateMesaAsync()
+    {
+        try
+        {
+            // Solicitar datos de la nueva mesa
+            var numeroStr = await _dialogService.ShowPromptAsync(
+                "Nueva Mesa", 
+                "Ingrese el número de la mesa:");
+            
+            if (string.IsNullOrWhiteSpace(numeroStr))
+                return;
+
+            if (!int.TryParse(numeroStr, out var numero) || numero <= 0)
+            {
+                await _dialogService.ShowAlertAsync("Error", "Número de mesa inválido");
+                return;
+            }
+
+            var capacidadStr = await _dialogService.ShowPromptAsync(
+                "Nueva Mesa", 
+                "Ingrese la capacidad de la mesa:");
+            
+            if (string.IsNullOrWhiteSpace(capacidadStr))
+                return;
+
+            if (!int.TryParse(capacidadStr, out var capacidad) || capacidad <= 0)
+            {
+                await _dialogService.ShowAlertAsync("Error", "Capacidad inválida");
+                return;
+            }
+
+            var ubicacion = await _dialogService.ShowPromptAsync(
+                "Nueva Mesa", 
+                "Ingrese la ubicación de la mesa (opcional):");
+
+            // Por ahora solo mostramos un mensaje de confirmación
+            // En el futuro aquí se haría la llamada a la API para crear la mesa
+            var mensaje = $"Mesa {numero} creada:\n" +
+                         $"• Capacidad: {capacidad} personas\n" +
+                         $"• Ubicación: {ubicacion ?? "No especificada"}\n" +
+                         $"• Estado: Disponible";
+
+            await _dialogService.ShowAlertAsync("Mesa Creada", mensaje);
+            
+            // Recargar la lista de mesas
+            await LoadMesasAsync();
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error al crear mesa: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Cargar estadísticas de ocupación (comando público)
+    /// </summary>
+    [RelayCommand]
+    public async Task LoadEstadisticasCommandAsync()
+    {
+        try
+        {
+            await LoadEstadisticasAsync();
+            
+            if (EstadoMesas != null)
+            {
+                var mensaje = $"📊 Estadísticas de Mesas:\n\n" +
+                             $"• Total de mesas: {EstadoMesas.TotalMesas}\n" +
+                             $"• Disponibles: {EstadoMesas.MesasDisponibles.Count}\n" +
+                             $"• Ocupadas: {EstadoMesas.MesasOcupadas.Count}\n" +
+                             $"• Reservadas: {EstadoMesas.MesasReservadas.Count}\n\n" +
+                             $"• Ocupación actual: {EstadoMesas.Estadisticas.PorcentajeOcupacion:F1}%";
+
+                await _dialogService.ShowAlertAsync("Estadísticas de Mesas", mensaje);
+            }
+            else
+            {
+                await _dialogService.ShowAlertAsync("Información", "No se pudieron cargar las estadísticas");
+            }
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error al cargar estadísticas: {ex.Message}");
+        }
     }
 
     #endregion

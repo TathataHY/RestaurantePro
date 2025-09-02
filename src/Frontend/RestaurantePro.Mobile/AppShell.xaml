@@ -46,98 +46,98 @@
         <!-- Dashboard Tab -->
         <ShellContent
             Title="Dashboard"
-            Icon="home.png"
+            Icon="🏠"
             ContentTemplate="{DataTemplate views:ModernDashboardPage}"
             Route="dashboard" />
 
         <!-- Mesas Tab -->
         <ShellContent
             Title="Mesas"
-            Icon="table.png"
+            Icon="🪑"
             ContentTemplate="{DataTemplate mesas:ModernMesasPage}"
             Route="mesas" />
 
         <!-- Comandas Tab -->
         <ShellContent
             Title="Comandas"
-            Icon="order.png"
+            Icon="🍽️"
             ContentTemplate="{DataTemplate comandas:ModernComandasPage}"
             Route="comandas" />
 
         <!-- Productos Tab -->
         <ShellContent
             Title="Productos"
-            Icon="menu.png"
+            Icon="📦"
             ContentTemplate="{DataTemplate productos:ModernProductosPage}"
             Route="productos" />
 
         <!-- Preparaciones Tab -->
         <ShellContent
             Title="Cocina"
-            Icon="kitchen.png"
+            Icon="👨‍🍳"
             ContentTemplate="{DataTemplate preparaciones:ModernPreparacionesPage}"
             Route="preparaciones" />
 
         <!-- Reservaciones Tab -->
         <ShellContent
             Title="Reservas"
-            Icon="calendar.png"
+            Icon="📅"
             ContentTemplate="{DataTemplate reservaciones:ModernReservacionesPage}"
             Route="reservaciones" />
 
         <!-- Facturas Tab -->
         <ShellContent
             Title="Facturar"
-            Icon="invoice.png"
+            Icon="🧾"
             ContentTemplate="{DataTemplate facturas:ModernFacturasPage}"
             Route="facturas" />
 
         <!-- Clientes Tab -->
         <ShellContent
             Title="Clientes"
-            Icon="users.png"
+            Icon="👥"
             ContentTemplate="{DataTemplate clientes:ModernClientesPage}"
             Route="clientes" />
 
         <!-- Tarjetas Fidelización Tab -->
         <ShellContent
             Title="Fidelización"
-            Icon="card.png"
+            Icon="💳"
             ContentTemplate="{DataTemplate tarjetas:TarjetasFidelizacionPage}"
             Route="tarjetasfidelizacion" />
 
         <!-- Ingredientes Tab -->
         <ShellContent
             Title="Ingredientes"
-            Icon="ingredients.png"
+            Icon="🥕"
             ContentTemplate="{DataTemplate ingredientes:ModernIngredientesPage}"
             Route="ingredientes" />
 
         <!-- Categorías Tab -->
         <ShellContent
             Title="Categorías"
-            Icon="category.png"
+            Icon="🏷️"
             ContentTemplate="{DataTemplate categorias:CategoriasPage}"
             Route="categorias" />
 
         <!-- Analytics Tab -->
         <ShellContent
             Title="Analytics"
-            Icon="analytics.png"
+            Icon="📊"
             ContentTemplate="{DataTemplate analytics:AnalyticsPage}"
             Route="analytics" />
 
         <!-- Configuración Tab -->
         <ShellContent
             Title="Configuración"
-            Icon="settings.png"
+            Icon="⚙️"
             ContentTemplate="{DataTemplate views:ModernConfiguracionPage}"
             Route="configuracion" />
 
         <!-- Perfil Tab -->
         <ShellContent
             Title="Perfil"
-            Icon="profile.png"
+            Icon="👤"
             ContentTemplate="{DataTemplate views:ModernPerfilPage}"
             Route="perfil" />
     </TabBar>

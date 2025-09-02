@@ -10,6 +10,7 @@
         <!-- Header con Estadísticas -->
         <ScrollView Grid.Row="0" 
                     HorizontalScrollBarVisibility="Never"
+                    Orientation="Horizontal"
                     Padding="16,8">
             <HorizontalStackLayout Spacing="12">
                 
@@ -21,7 +22,7 @@
                     <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
                         <Label Text="🏠" FontSize="24" HorizontalOptions="Center" />
                         <Label Text="Total Mesas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
-                        <Label Text="12" Style="{StaticResource H2Style}" HorizontalOptions="Center" />
+                        <Label Text="{Binding EstadoMesas.TotalMesas}" Style="{StaticResource H2Style}" HorizontalOptions="Center" />
                     </VerticalStackLayout>
                 </Frame>
 
@@ -33,7 +34,7 @@
                     <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
                         <Label Text="✅" FontSize="24" HorizontalOptions="Center" />
                         <Label Text="Disponibles" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
-                        <Label Text="8" Style="{StaticResource H2Style}" HorizontalOptions="Center" TextColor="#4CAF50" />
+                        <Label Text="{Binding EstadoMesas.MesasDisponibles.Count}" Style="{StaticResource H2Style}" HorizontalOptions="Center" TextColor="#4CAF50" />
                     </VerticalStackLayout>
                 </Frame>
 
@@ -45,7 +46,7 @@
                     <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
                         <Label Text="👥" FontSize="24" HorizontalOptions="Center" />
                         <Label Text="Ocupadas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
-                        <Label Text="4" Style="{StaticResource H2Style}" HorizontalOptions="Center" TextColor="#FF9800" />
+                        <Label Text="{Binding EstadoMesas.MesasOcupadas.Count}" Style="{StaticResource H2Style}" HorizontalOptions="Center" TextColor="#FF9800" />
                     </VerticalStackLayout>
                 </Frame>
 
@@ -57,7 +58,7 @@
                     <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
                         <Label Text="📅" FontSize="24" HorizontalOptions="Center" />
                         <Label Text="Reservadas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
-                        <Label Text="2" Style="{StaticResource H2Style}" HorizontalOptions="Center" TextColor="#2196F3" />
+                        <Label Text="{Binding EstadoMesas.MesasReservadas.Count}" Style="{StaticResource H2Style}" HorizontalOptions="Center" TextColor="#2196F3" />
                     </VerticalStackLayout>
                 </Frame>
             </HorizontalStackLayout>
@@ -78,18 +79,22 @@
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
                             <Picker Grid.Column="0" 
                                     Title="Estado"
-                                    SelectedIndex="0">
+                                    SelectedItem="{Binding FiltroEstado}"
+                                    SelectedIndexChanged="OnEstadoFilterChanged">
                                 <Picker.Items>
                                     <x:String>Todas</x:String>
                                     <x:String>Disponibles</x:String>
                                     <x:String>Ocupadas</x:String>
                                     <x:String>Reservadas</x:String>
+                                    <x:String>Fuera de servicio</x:String>
+                                    <x:String>En limpieza</x:String>
                                 </Picker.Items>
                             </Picker>
                             
                             <Picker Grid.Column="1" 
                                     Title="Capacidad"
-                                    SelectedIndex="0">
+                                    SelectedItem="{Binding FiltroCapacidad}"
+                                    SelectedIndexChanged="OnCapacidadFilterChanged">
                                 <Picker.Items>
                                     <x:String>Todas</x:String>
                                     <x:String>2 personas</x:String>
@@ -102,178 +107,40 @@
                     </VerticalStackLayout>
                 </Frame>
 
-                <!-- Grid de Mesas -->
-                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" 
-                      ColumnSpacing="12" RowSpacing="12">
-                    
-                    <!-- Mesa 1 -->
-                    <Frame Grid.Column="0" Grid.Row="0" 
-                           BackgroundColor="#4CAF50" 
-                           CornerRadius="12"
-                           Padding="16"
-                           HasShadow="True">
-                        <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                            <Label Text="🍽️" FontSize="32" HorizontalOptions="Center" />
-                            <Label Text="Mesa 1" Style="{StaticResource H3Style}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="4 personas" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="Disponible" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                        </VerticalStackLayout>
-                    </Frame>
-
-                    <!-- Mesa 2 -->
-                    <Frame Grid.Column="1" Grid.Row="0" 
-                           BackgroundColor="#FF9800" 
-                           CornerRadius="12"
-                           Padding="16"
-                           HasShadow="True">
-                        <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                            <Label Text="🍽️" FontSize="32" HorizontalOptions="Center" />
-                            <Label Text="Mesa 2" Style="{StaticResource H3Style}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="6 personas" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="Ocupada" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                        </VerticalStackLayout>
-                    </Frame>
-
-                    <!-- Mesa 3 -->
-                    <Frame Grid.Column="0" Grid.Row="1" 
-                           BackgroundColor="#4CAF50" 
-                           CornerRadius="12"
-                           Padding="16"
-                           HasShadow="True">
-                        <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                            <Label Text="🍽️" FontSize="32" HorizontalOptions="Center" />
-                            <Label Text="Mesa 3" Style="{StaticResource H3Style}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="2 personas" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="Disponible" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                        </VerticalStackLayout>
-                    </Frame>
-
-                    <!-- Mesa 4 -->
-                    <Frame Grid.Column="1" Grid.Row="1" 
-                           BackgroundColor="#2196F3" 
-                           CornerRadius="12"
-                           Padding="16"
-                           HasShadow="True">
-                        <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                            <Label Text="🍽️" FontSize="32" HorizontalOptions="Center" />
-                            <Label Text="Mesa 4" Style="{StaticResource H3Style}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="8 personas" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="Reservada" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                        </VerticalStackLayout>
-                    </Frame>
-
-                    <!-- Mesa 5 -->
-                    <Frame Grid.Column="0" Grid.Row="2" 
-                           BackgroundColor="#4CAF50" 
-                           CornerRadius="12"
-                           Padding="16"
-                           HasShadow="True">
-                        <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                            <Label Text="🍽️" FontSize="32" HorizontalOptions="Center" />
-                            <Label Text="Mesa 5" Style="{StaticResource H3Style}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="4 personas" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="Disponible" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                        </VerticalStackLayout>
-                    </Frame>
-
-                    <!-- Mesa 6 -->
-                    <Frame Grid.Column="1" Grid.Row="2" 
-                           BackgroundColor="#FF9800" 
-                           CornerRadius="12"
-                           Padding="16"
-                           HasShadow="True">
-                        <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                            <Label Text="🍽️" FontSize="32" HorizontalOptions="Center" />
-                            <Label Text="Mesa 6" Style="{StaticResource H3Style}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="6 personas" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="Ocupada" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                        </VerticalStackLayout>
-                    </Frame>
-
-                    <!-- Mesa 7 -->
-                    <Frame Grid.Column="0" Grid.Row="3" 
-                           BackgroundColor="#4CAF50" 
-                           CornerRadius="12"
-                           Padding="16"
-                           HasShadow="True">
-                        <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                            <Label Text="🍽️" FontSize="32" HorizontalOptions="Center" />
-                            <Label Text="Mesa 7" Style="{StaticResource H3Style}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="2 personas" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="Disponible" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                        </VerticalStackLayout>
-                    </Frame>
-
-                    <!-- Mesa 8 -->
-                    <Frame Grid.Column="1" Grid.Row="3" 
-                           BackgroundColor="#9C27B0" 
-                           CornerRadius="12"
-                           Padding="16"
-                           HasShadow="True">
-                        <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                            <Label Text="🍽️" FontSize="32" HorizontalOptions="Center" />
-                            <Label Text="Mesa 8" Style="{StaticResource H3Style}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="10 personas" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="Reservada" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                        </VerticalStackLayout>
-                    </Frame>
-
-                    <!-- Mesa 9 -->
-                    <Frame Grid.Column="0" Grid.Row="4" 
-                           BackgroundColor="#FF5722" 
-                           CornerRadius="12"
-                           Padding="16"
-                           HasShadow="True">
-                        <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                            <Label Text="🍽️" FontSize="32" HorizontalOptions="Center" />
-                            <Label Text="Mesa 9" Style="{StaticResource H3Style}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="4 personas" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="Ocupada" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                        </VerticalStackLayout>
-                    </Frame>
-
-                    <!-- Mesa 10 -->
-                    <Frame Grid.Column="1" Grid.Row="4" 
-                           BackgroundColor="#4CAF50" 
-                           CornerRadius="12"
-                           Padding="16"
-                           HasShadow="True">
-                        <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                            <Label Text="🍽️" FontSize="32" HorizontalOptions="Center" />
-                            <Label Text="Mesa 10" Style="{StaticResource H3Style}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="6 personas" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="Disponible" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                        </VerticalStackLayout>
-                    </Frame>
-
-                    <!-- Mesa 11 -->
-                    <Frame Grid.Column="0" Grid.Row="5" 
-                           BackgroundColor="#9C27B0" 
-                           CornerRadius="12"
-                           Padding="16"
-                           HasShadow="True">
-                        <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                            <Label Text="🍽️" FontSize="32" HorizontalOptions="Center" />
-                            <Label Text="Mesa 11" Style="{StaticResource H3Style}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="8 personas" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="Ocupada" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                        </VerticalStackLayout>
-                    </Frame>
-
-                    <!-- Mesa 12 -->
-                    <Frame Grid.Column="1" Grid.Row="5" 
-                           BackgroundColor="#FF5722" 
-                           CornerRadius="12"
-                           Padding="16"
-                           HasShadow="True">
-                        <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                            <Label Text="🍽️" FontSize="32" HorizontalOptions="Center" />
-                            <Label Text="Mesa 12" Style="{StaticResource H3Style}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="4 personas" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                            <Label Text="Ocupada" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
-                        </VerticalStackLayout>
-                    </Frame>
-                </Grid>
+                <!-- Grid de Mesas Dinámico -->
+                <CollectionView ItemsSource="{Binding Mesas}"
+                               ItemsLayout="VerticalGrid, 2"
+                               ItemSizingStrategy="MeasureAllItems">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Frame BackgroundColor="{Binding EstadoColor}"
+                                   CornerRadius="12"
+                                   Padding="16"
+                                   Margin="6"
+                                   HasShadow="True">
+                                <Frame.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.NavigateToMesaDetailCommand}"
+                                                         CommandParameter="{Binding .}" />
+                                </Frame.GestureRecognizers>
+                                <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                                    <Label Text="🍽️" FontSize="32" HorizontalOptions="Center" />
+                                    <Label Text="{Binding Numero, StringFormat='Mesa {0}'}" 
+                                           Style="{StaticResource H3Style}" 
+                                           TextColor="White" 
+                                           HorizontalOptions="Center" />
+                                    <Label Text="{Binding Capacidad, StringFormat='{0} personas'}" 
+                                           Style="{StaticResource CaptionStyle}" 
+                                           TextColor="White" 
+                                           HorizontalOptions="Center" />
+                                    <Label Text="{Binding EstadoDescripcion}" 
+                                           Style="{StaticResource CaptionStyle}" 
+                                           TextColor="White" 
+                                           HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
             </VerticalStackLayout>
         </ScrollView>
 
@@ -289,13 +156,15 @@
                         Text="➕ Nueva Mesa"
                         BackgroundColor="#4CAF50"
                         TextColor="White"
-                        CornerRadius="8" />
+                        CornerRadius="8"
+                        Command="{Binding CreateMesaCommand}" />
                 
                 <Button Grid.Column="1" 
                         Text="📊 Estadísticas"
                         BackgroundColor="#2196F3"
                         TextColor="White"
-                        CornerRadius="8" />
+                        CornerRadius="8"
+                        Command="{Binding LoadEstadisticasCommandCommand}" />
             </Grid>
         </Frame>
     </Grid>

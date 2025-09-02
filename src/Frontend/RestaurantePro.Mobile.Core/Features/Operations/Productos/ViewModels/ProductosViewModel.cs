@@ -31,6 +31,9 @@ public partial class ProductosViewModel : BaseViewModel
     private CategoriaProductoDto? selectedCategoria;
 
     [ObservableProperty]
+    private CategoriaProductoDto? categoriaSeleccionada;
+
+    [ObservableProperty]
     private string textoBusqueda = string.Empty;
 
     [ObservableProperty]
@@ -38,6 +41,12 @@ public partial class ProductosViewModel : BaseViewModel
 
     [ObservableProperty]
     private bool mostrarFiltros;
+
+    [ObservableProperty]
+    private bool mostrarEstadisticas = true;
+
+    [ObservableProperty]
+    private bool isRefreshing;
 
     [ObservableProperty]
     private int totalProductos;
@@ -163,6 +172,8 @@ public partial class ProductosViewModel : BaseViewModel
                     Productos.Add(producto);
                 }
 
+
+
                 ActualizarEstadisticas();
             }
             else
@@ -224,6 +235,7 @@ public partial class ProductosViewModel : BaseViewModel
     {
         TextoBusqueda = string.Empty;
         SelectedCategoria = null;
+        CategoriaSeleccionada = null;
         await LoadProductosAsync();
     }
 
@@ -286,6 +298,7 @@ public partial class ProductosViewModel : BaseViewModel
     private async Task FiltrarPorCategoriaAsync(CategoriaProductoDto? categoria)
     {
         SelectedCategoria = categoria;
+        CategoriaSeleccionada = categoria;
         TextoBusqueda = string.Empty; // Limpiar búsqueda al filtrar por categoría
         await LoadProductosAsync();
     }
@@ -356,7 +369,15 @@ public partial class ProductosViewModel : BaseViewModel
     [RelayCommand]
     private async Task RefreshProductosAsync()
     {
-        await LoadProductosAsync();
+        IsRefreshing = true;
+        try
+        {
+            await LoadProductosAsync();
+        }
+        finally
+        {
+            IsRefreshing = false;
+        }
     }
 
     /// <summary>
@@ -366,6 +387,15 @@ public partial class ProductosViewModel : BaseViewModel
     private async Task LoadProductosDisponiblesAsync()
     {
         MostrarSoloDisponibles = true;
+        await LoadProductosAsync();
+    }
+
+    /// <summary>
+    /// Cargar estadísticas
+    /// </summary>
+    [RelayCommand]
+    private async Task LoadEstadisticasAsync()
+    {
         await LoadProductosAsync();
     }
 
@@ -459,6 +489,8 @@ public partial class ProductosViewModel : BaseViewModel
         ProductosDisponibles = Productos.Count(p => p.PuedeAgregarAComanda);
         ProductosAgotados = TotalProductos - ProductosDisponibles;
         TotalCategorias = Categorias.Count;
+
+
 
         // Notificar cambios en propiedades calculadas
         OnPropertyChanged(nameof(TieneProductos));

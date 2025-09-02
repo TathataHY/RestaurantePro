@@ -23,8 +23,9 @@
         </Grid>
         
         <!-- Header con estadísticas -->
-        <ScrollView Grid.Row="1" 
+        <ScrollView Grid.Row="1"
                     HorizontalScrollBarVisibility="Never"
+                    Orientation="Horizontal"
                     Padding="16,8">
             <HorizontalStackLayout Spacing="12">
                 
@@ -37,13 +38,13 @@
                         <Label Text="Ventas Hoy" 
                                Style="{StaticResource CaptionStyle}" 
                                HorizontalOptions="Center" />
-                        <Label Text="$2,450" 
+                        <Label Text="{Binding TodaySales, StringFormat='${0:F2}'}" 
                                Style="{StaticResource H2Style}" 
                                TextColor="{StaticResource SuccessColor}"
                                HorizontalOptions="Center" />
-                        <Label Text="+12% vs ayer" 
+                        <Label Text="{Binding SalesChangePercentage, StringFormat='{0:+0.0;-0.0;0}% vs ayer'}" 
                                Style="{StaticResource CaptionStyle}" 
-                               TextColor="{StaticResource SuccessColor}"
+                               TextColor="{Binding SalesChangePercentage, Converter={StaticResource PercentageChangeColorConverter}}"
                                HorizontalOptions="Center" />
                     </VerticalStackLayout>
                 </controls:ModernCard>
@@ -57,11 +58,11 @@
                         <Label Text="Comandas Activas" 
                                Style="{StaticResource CaptionStyle}" 
                                HorizontalOptions="Center" />
-                        <Label Text="8" 
+                        <Label Text="{Binding ActiveOrdersCount}" 
                                Style="{StaticResource H2Style}" 
                                TextColor="{StaticResource WarningColor}"
                                HorizontalOptions="Center" />
-                        <Label Text="3 pendientes" 
+                        <Label Text="{Binding PendingOrdersCount, StringFormat='{0} pendientes'}" 
                                Style="{StaticResource CaptionStyle}" 
                                TextColor="{StaticResource TextSecondary}"
                                HorizontalOptions="Center" />
@@ -169,93 +170,40 @@
                     <Label Text="🪑 Estado de Mesas" 
                            Style="{StaticResource H2Style}" />
                     
+                    <!-- Grid de Mesas Dinámico -->
                     <Grid ColumnDefinitions="*,*,*,*" RowDefinitions="*,*" 
                           ColumnSpacing="8" RowSpacing="8">
-                        
-                        <controls:ModernCard Grid.Column="0" Grid.Row="0" 
-                                            BackgroundColor="{StaticResource TableAvailable}"
-                                            Padding="12">
-                            <Label Text="1" 
-                                   Style="{StaticResource H2Style}" 
-                                   TextColor="White"
-                                   HorizontalOptions="Center" />
-                        </controls:ModernCard>
-                        
-                        <controls:ModernCard Grid.Column="1" Grid.Row="0" 
-                                            BackgroundColor="{StaticResource TableOccupied}"
-                                            Padding="12">
-                            <Label Text="2" 
-                                   Style="{StaticResource H2Style}" 
-                                   TextColor="White"
-                                   HorizontalOptions="Center" />
-                        </controls:ModernCard>
-                        
-                        <controls:ModernCard Grid.Column="2" Grid.Row="0" 
-                                            BackgroundColor="{StaticResource TableReserved}"
-                                            Padding="12">
-                            <Label Text="3" 
-                                   Style="{StaticResource H2Style}" 
-                                   TextColor="White"
-                                   HorizontalOptions="Center" />
-                        </controls:ModernCard>
-                        
-                        <controls:ModernCard Grid.Column="3" Grid.Row="0" 
-                                            BackgroundColor="{StaticResource TableAvailable}"
-                                            Padding="12">
-                            <Label Text="4" 
-                                   Style="{StaticResource H2Style}" 
-                                   TextColor="White"
-                                   HorizontalOptions="Center" />
-                        </controls:ModernCard>
-                        
-                        <controls:ModernCard Grid.Column="0" Grid.Row="1" 
-                                            BackgroundColor="{StaticResource TableAvailable}"
-                                            Padding="12">
-                            <Label Text="5" 
-                                   Style="{StaticResource H2Style}" 
-                                   TextColor="White"
-                                   HorizontalOptions="Center" />
-                        </controls:ModernCard>
-                        
-                        <controls:ModernCard Grid.Column="1" Grid.Row="1" 
-                                            BackgroundColor="{StaticResource TableOccupied}"
-                                            Padding="12">
-                            <Label Text="6" 
-                                   Style="{StaticResource H2Style}" 
-                                   TextColor="White"
-                                   HorizontalOptions="Center" />
-                        </controls:ModernCard>
-                        
-                        <controls:ModernCard Grid.Column="2" Grid.Row="1" 
-                                            BackgroundColor="{StaticResource TableAvailable}"
-                                            Padding="12">
-                            <Label Text="7" 
-                                   Style="{StaticResource H2Style}" 
-                                   TextColor="White"
-                                   HorizontalOptions="Center" />
-                        </controls:ModernCard>
-                        
-                        <controls:ModernCard Grid.Column="3" Grid.Row="1" 
-                                            BackgroundColor="{StaticResource TableReserved}"
-                                            Padding="12">
-                            <Label Text="8" 
-                                   Style="{StaticResource H2Style}" 
-                                   TextColor="White"
-                                   HorizontalOptions="Center" />
-                        </controls:ModernCard>
+                        <CollectionView ItemsSource="{Binding TableStatus.Mesas}"
+                                        Grid.ColumnSpan="4" Grid.RowSpan="2"
+                                        ItemsLayout="VerticalGrid, 4">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <controls:ModernCard BackgroundColor="{Binding EstadoColor}"
+                                                        Padding="12"
+                                                        Margin="2">
+                                        <Label Text="{Binding Numero}" 
+                                               Style="{StaticResource H2Style}" 
+                                               TextColor="White"
+                                               HorizontalOptions="Center" />
+                                    </controls:ModernCard>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
                     </Grid>
                 </VerticalStackLayout>
 
             </VerticalStackLayout>
         </ScrollView>
 
-                <!-- Bottom Navigation -->
+                <!-- Bottom Navigation - COMENTADO PARA USAR TABS NATIVOS -->
+        <!--
         <controls:ModernTabBar Grid.Row="3" x:Name="BottomTabBar" />
+        -->
 
         <!-- Floating Action Button -->
         <controls:FloatingActionButton Grid.RowSpan="4"
                                        x:Name="MainFab"
-                                       Text="+"
+                                       Text="➕"
                                        Command="{Binding CreateOrderCommand}"
                                        HorizontalOptions="End"
                                        VerticalOptions="End"
