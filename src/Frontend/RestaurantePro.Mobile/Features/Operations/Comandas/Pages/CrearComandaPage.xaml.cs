@@ -16,9 +16,9 @@ public partial class CrearComandaPage : ContentPage
         
         if (BindingContext is CrearComandaViewModel viewModel)
         {
-            // Obtener el ID de la mesa desde los parámetros de navegación
-            var parameters = Shell.Current.CurrentState.Location;
-            var mesaId = parameters.Segments.LastOrDefault()?.ToString();
+            // Obtener el ID de la mesa desde los parámetros de query
+            var query = Shell.Current.CurrentState.Location.Query;
+            var mesaId = System.Web.HttpUtility.ParseQueryString(query)["mesaId"];
             
             if (!string.IsNullOrEmpty(mesaId))
             {

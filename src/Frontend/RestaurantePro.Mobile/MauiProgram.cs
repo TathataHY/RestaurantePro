@@ -111,7 +111,7 @@ public static class MauiProgram
 	private static void RegisterCoreServicesV1(IServiceCollection services)
 	{
 		// Servicios fundamentales V1 - Solo desde Core
-		services.AddSingleton<INavigationService, MauiNavigationService>();
+		services.AddSingleton<INavigationService, RestaurantePro.Mobile.Services.NavigationService>();
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Dialog.IDialogService, RestaurantePro.Mobile.Services.DialogService>();
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Platform.ISecureStorageService, RestaurantePro.Mobile.Core.Services.Platform.SecureStorageService>();
 		

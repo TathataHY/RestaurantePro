@@ -52,8 +52,8 @@ public partial class MesaDetalleViewModel : BaseViewModel
     /// <summary>
     /// Propiedades calculadas para la UI
     /// </summary>
-    public bool PuedeAsignar => Mesa?.Estado == "disponible";
-    public bool PuedeLiberar => Mesa?.Estado == "ocupada";
+    public bool PuedeAsignar => Mesa?.Estado?.ToLowerInvariant() == "disponible";
+    public bool PuedeLiberar => Mesa?.Estado?.ToLowerInvariant() == "ocupada";
     public bool TieneComandasActivas => ComandasActivas?.Any() == true;
 
     /// <summary>
@@ -386,16 +386,13 @@ public partial class MesaDetalleViewModel : BaseViewModel
     {
         try
         {
-            if (Mesa?.Estado != "ocupada")
-            {
-                await _dialogService.ShowAlertAsync("Error", "La mesa debe estar ocupada para crear una comanda");
-                return;
-            }
+                    if (Mesa?.Estado?.ToLowerInvariant() != "ocupada")
+        {
+            await _dialogService.ShowAlertAsync("Error", "La mesa debe estar ocupada para crear una comanda");
+            return;
+        }
 
-            await _navigationService.NavigateToAsync("comandas/crear", new Dictionary<string, object>
-            {
-                ["mesaId"] = MesaId.ToString()
-            });
+            await _navigationService.NavigateToAsync($"crear-comanda?mesaId={MesaId}");
         }
         catch (Exception ex)
         {

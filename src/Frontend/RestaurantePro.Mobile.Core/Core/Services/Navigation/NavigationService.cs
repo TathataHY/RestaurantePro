@@ -60,32 +60,38 @@ public class MockNavigationService : NavigationServiceBase
 
 /// <summary>
 /// Implementación real del servicio de navegación para producción
+/// Esta implementación se encuentra en el proyecto Mobile para tener acceso a Shell
 /// </summary>
 public class NavigationService : NavigationServiceBase
 {
     public override async Task NavigateToAsync(string route)
     {
         await Task.CompletedTask;
+        System.Diagnostics.Debug.WriteLine($"[NavigationService] Mock navigation to {route}");
     }
 
     public override async Task NavigateToAsync(string route, IDictionary<string, object> parameters)
     {
         await Task.CompletedTask;
+        System.Diagnostics.Debug.WriteLine($"[NavigationService] Mock navigation to {route} with parameters");
     }
 
     public override async Task GoBackAsync()
     {
         await Task.CompletedTask;
+        System.Diagnostics.Debug.WriteLine($"[NavigationService] Mock go back");
     }
 
     public override async Task GoBackAsync(IDictionary<string, object> parameters)
     {
         await Task.CompletedTask;
+        System.Diagnostics.Debug.WriteLine($"[NavigationService] Mock go back with parameters");
     }
 
     public override async Task GoToRootAsync()
     {
         await Task.CompletedTask;
+        System.Diagnostics.Debug.WriteLine($"[NavigationService] Mock go to root");
     }
 }
 
