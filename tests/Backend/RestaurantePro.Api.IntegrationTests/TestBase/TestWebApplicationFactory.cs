@@ -1185,7 +1185,7 @@ public class FakeIdentityService : IIdentityService
         return Task.FromResult(Result.Success());
     }
     
-    public Task<Result<AuthResponse>> AuthenticateAsync(string email, string password)
+    public Task<Result<AuthResponse>> AuthenticateAsync(string email, string password, bool recordarme = false)
     {
         // Validar credenciales para tests
         if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
@@ -1197,11 +1197,14 @@ public class FakeIdentityService : IIdentityService
         if (_users.TryGetValue(email, out var user) && user.Password == password)
         {
             var token = GenerateJwtToken(user.UserId, user.UserName, email, user.Roles);
+            var refreshToken = recordarme ? Guid.NewGuid().ToString() : null;
+            
             return Task.FromResult(Result.Success(new AuthResponse 
             { 
                 Success = true, 
                 Message = "Login exitoso", 
                 Token = token, 
+                RefreshToken = refreshToken,
                 Expiration = DateTime.UtcNow.AddHours(1), 
                 UserId = user.UserId, 
                 UserName = user.UserName, 
@@ -1214,7 +1217,35 @@ public class FakeIdentityService : IIdentityService
     }
     
     public Task<Result<AuthResponse>> RefreshTokenAsync(string token, string refreshToken)
-        => Task.FromResult(Result.Success(new AuthResponse { Success = true, Message = "OK", Token = "fake-token", Expiration = DateTime.UtcNow.AddHours(1), UserId = "fake-user-id", UserName = "FakeUser", Roles = new List<string> { "Admin" } }));
+    {
+        // Para tests, simular refresh token válido
+        if (string.IsNullOrEmpty(refreshToken))
+        {
+            return Task.FromResult(Result.Failure<AuthResponse>("Refresh token inválido o expirado"));
+        }
+
+        // Simular refresh token expirado para tests específicos
+        if (refreshToken.Contains("expired") || refreshToken == "invalid-refresh-token")
+        {
+            return Task.FromResult(Result.Failure<AuthResponse>("Refresh token inválido o expirado"));
+        }
+
+        // Generar nuevo token y refresh token
+        var newToken = GenerateJwtToken("fake-user-id", "FakeUser", "fake@test.com", new List<string> { "Admin" });
+        var newRefreshToken = Guid.NewGuid().ToString();
+        
+        return Task.FromResult(Result.Success(new AuthResponse 
+        { 
+            Success = true, 
+            Message = "Token renovado exitosamente", 
+            Token = newToken, 
+            RefreshToken = newRefreshToken,
+            Expiration = DateTime.UtcNow.AddHours(1), 
+            UserId = "fake-user-id", 
+            UserName = "FakeUser", 
+            Roles = new List<string> { "Admin" } 
+        }));
+    }
 }
 
 // Fake para IJwtTokenService

@@ -7,7 +7,7 @@ namespace RestaurantePro.Mobile.Core.Services.Authentication;
 /// </summary>
 public interface IAuthService
 {
-    Task<ApiResponse<AuthResponse>> LoginAsync(string email, string password);
+    Task<ApiResponse<AuthResponse>> LoginAsync(string email, string password, bool recordarme = false);
     Task<string?> GetTokenAsync();
     Task<AuthUser?> GetCurrentUserAsync();
     Task<bool> IsAuthenticatedAsync();

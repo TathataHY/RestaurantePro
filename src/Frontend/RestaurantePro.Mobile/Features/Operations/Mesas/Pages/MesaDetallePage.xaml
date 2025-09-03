@@ -41,7 +41,7 @@
                 <Label Grid.Row="0" Grid.Column="1" 
                        Text="{Binding Mesa.EstadoDescripcion}" 
                        FontSize="16" FontAttributes="Bold" 
-                       TextColor="{Binding Mesa.ColorEstado}" 
+                       TextColor="{Binding Mesa.EstadoColor}" 
                        HorizontalOptions="End" />
 
                 <Label Grid.Row="1" Grid.Column="0" 
@@ -131,37 +131,57 @@
             </CollectionView>
         </RefreshView>
 
-        <!-- Botones de Acción -->
-        <StackLayout Grid.Row="2" 
-                     Orientation="Horizontal" 
-                     HorizontalOptions="Center" 
-                     Padding="16">
-            <Button Text="🏠 Liberar Mesa" 
-                    Command="{Binding LiberarMesaCommand}" 
-                    BackgroundColor="#dc3545" 
-                    TextColor="White" 
-                    CornerRadius="6" 
-                    Padding="16,8" 
-                    FontSize="14" 
-                    Margin="4" />
+        <!-- Botones de Acción con Scroll Horizontal -->
+        <ScrollView Grid.Row="2" 
+                    Orientation="Horizontal" 
+                    HorizontalScrollBarVisibility="Never"
+                    Padding="16">
+            <StackLayout Orientation="Horizontal" 
+                         Spacing="8">
+                
+                <!-- Botón Liberar Mesa - Solo visible si la mesa está ocupada -->
+                <Button Text="🏠 Liberar Mesa" 
+                        Command="{Binding LiberarMesaCommand}" 
+                        BackgroundColor="#dc3545" 
+                        TextColor="White" 
+                        CornerRadius="6" 
+                        Padding="16,8" 
+                        FontSize="14" 
+                        MinimumWidthRequest="120"
+                        IsVisible="{Binding PuedeLiberar}" />
 
-            <Button Text="👥 Asignar Mesa" 
-                    Command="{Binding AsignarMesaCommand}" 
-                    BackgroundColor="#28a745" 
-                    TextColor="White" 
-                    CornerRadius="6" 
-                    Padding="16,8" 
-                    FontSize="14" 
-                    Margin="4" />
+                <!-- Botón Asignar Mesa - Solo visible si la mesa está disponible -->
+                <Button Text="👥 Asignar Mesa" 
+                        Command="{Binding AsignarMesaCommand}" 
+                        BackgroundColor="#28a745" 
+                        TextColor="White" 
+                        CornerRadius="6" 
+                        Padding="16,8" 
+                        FontSize="14" 
+                        MinimumWidthRequest="120"
+                        IsVisible="{Binding PuedeAsignar}" />
 
-            <Button Text="📝 Nueva Comanda" 
-                    Command="{Binding CrearComandaCommand}" 
-                    BackgroundColor="#007bff" 
-                    TextColor="White" 
-                    CornerRadius="6" 
-                    Padding="16,8" 
-                    FontSize="14" 
-                    Margin="4" />
-        </StackLayout>
+                <!-- Botón Nueva Comanda - Solo visible si la mesa está ocupada -->
+                <Button Text="📝 Nueva Comanda" 
+                        Command="{Binding CrearComandaCommand}" 
+                        BackgroundColor="#007bff" 
+                        TextColor="White" 
+                        CornerRadius="6" 
+                        Padding="16,8" 
+                        FontSize="14" 
+                        MinimumWidthRequest="120"
+                        IsVisible="{Binding PuedeAsignar, Converter={StaticResource InverseBooleanConverter}}" />
+
+                <!-- Botón Cambiar Estado - Siempre visible -->
+                <Button Text="⚙️ Cambiar Estado" 
+                        Command="{Binding CambiarEstadoCommand}" 
+                        BackgroundColor="#6c757d" 
+                        TextColor="White" 
+                        CornerRadius="6" 
+                        Padding="16,8" 
+                        FontSize="14" 
+                        MinimumWidthRequest="120" />
+            </StackLayout>
+        </ScrollView>
     </Grid>
 </ContentPage> 

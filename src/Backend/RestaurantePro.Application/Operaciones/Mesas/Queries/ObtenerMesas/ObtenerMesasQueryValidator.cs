@@ -14,7 +14,9 @@ public class ObtenerMesasQueryValidator : AbstractValidator<ObtenerMesasQuery>
         RuleFor(x => x.Estado)
             .MaximumLength(30).When(x => !string.IsNullOrWhiteSpace(x.Estado))
             .WithMessage("El estado no debe superar los 30 caracteres.")
-            .Must(estado => string.IsNullOrWhiteSpace(estado) || Enum.TryParse<EstadoMesa>(estado, true, out _))
+            .Must(estado => string.IsNullOrWhiteSpace(estado) || 
+                           estado.Equals("Todas", StringComparison.OrdinalIgnoreCase) ||
+                           Enum.TryParse<EstadoMesa>(estado, true, out _))
             .WithMessage("El estado especificado no es válido.");
 
         RuleFor(x => x.Ubicacion)

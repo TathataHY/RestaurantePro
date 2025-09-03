@@ -83,8 +83,9 @@ public interface IIdentityService
     /// </summary>
     /// <param name="email">Email del usuario</param>
     /// <param name="password">Contraseña</param>
+    /// <param name="recordarme">Indica si el usuario quiere que se recuerde su sesión</param>
     /// <returns>Resultado de la autenticación</returns>
-    Task<Result<AuthResponse>> AuthenticateAsync(string email, string password);
+    Task<Result<AuthResponse>> AuthenticateAsync(string email, string password, bool recordarme = false);
 
     /// <summary>
     /// Actualiza el token de autenticación de un usuario
@@ -114,6 +115,11 @@ public class AuthResponse
     /// Token JWT generado
     /// </summary>
     public string Token { get; set; }
+    
+    /// <summary>
+    /// Refresh token para renovar el token principal
+    /// </summary>
+    public string? RefreshToken { get; set; }
     
     /// <summary>
     /// Fecha y hora de expiración del token

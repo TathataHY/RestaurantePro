@@ -70,7 +70,7 @@
                     
                     <!-- Recordar sesión -->
                     <HorizontalStackLayout Spacing="8">
-                        <CheckBox IsChecked="{Binding RememberMe}"
+                        <CheckBox IsChecked="{Binding Recordarme}"
                                  x:Name="RememberMeCheckBox"
                                  AutomationProperties.Name="RememberMeCheckBox" />
                         <Label Text="Recordar sesión" 

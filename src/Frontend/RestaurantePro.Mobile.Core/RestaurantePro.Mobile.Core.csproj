@@ -25,6 +25,9 @@
     
     <!-- MAUI Essentials (para interfaces) -->
     <PackageReference Include="Microsoft.Maui.Essentials" Version="9.0.10" />
+    
+    <!-- JWT Token handling -->
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.1" />
   </ItemGroup>
 
 </Project>

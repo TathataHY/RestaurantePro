@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Application.Common.Models;
 using RestaurantePro.Domain.Core.SharedKernel.Results;
@@ -18,17 +19,20 @@ namespace RestaurantePro.Infrastructure.Identity.Services
         private readonly SignInManager<IdentityApplicationUser> _signInManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IJwtTokenService _jwtTokenService;
+        private readonly ILogger<IdentityService> _logger;
 
         public IdentityService(
             UserManager<IdentityApplicationUser> userManager,
             SignInManager<IdentityApplicationUser> signInManager,
             RoleManager<ApplicationRole> roleManager,
-            IJwtTokenService jwtTokenService)
+            IJwtTokenService jwtTokenService,
+            ILogger<IdentityService> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
             _jwtTokenService = jwtTokenService;
+            _logger = logger;
         }
 
         public async Task<Result<string>> RegisterAsync(string nombre, string apellidos, string email, string username, string password, string rol)
@@ -169,7 +173,7 @@ namespace RestaurantePro.Infrastructure.Identity.Services
             return authResult.Value;
         }
 
-        public async Task<Result<AuthResponse>> AuthenticateAsync(string email, string password)
+        public async Task<Result<AuthResponse>> AuthenticateAsync(string email, string password, bool recordarme = false)
         {
             var user = await _userManager.FindByEmailAsync(email);
             if (user == null || !user.Activo)
@@ -186,21 +190,68 @@ namespace RestaurantePro.Infrastructure.Identity.Services
             var roles = await _userManager.GetRolesAsync(user);
             var tokenResponse = _jwtTokenService.GenerateToken(user.Id.ToString(), user.UserName, user.Email, roles);
             
+            // Si el usuario quiere que se recuerde, generar un refresh token
+            if (recordarme)
+            {
+                var refreshToken = Guid.NewGuid().ToString();
+                user.RefreshToken = refreshToken;
+                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); // 7 días para el refresh token
+                await _userManager.UpdateAsync(user);
+            }
+            
             return Result.Success(new AuthResponse
             {
                 Success = true,
                 UserId = user.Id.ToString(),
                 UserName = user.UserName,
                 Token = tokenResponse.AccessToken,
+                RefreshToken = recordarme ? user.RefreshToken : null,
                 Expiration = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn),
                 Roles = roles.ToList(),
                 Message = "Autenticación exitosa"
             });
         }
         
-        public Task<Result<AuthResponse>> RefreshTokenAsync(string token, string refreshToken)
+        public async Task<Result<AuthResponse>> RefreshTokenAsync(string token, string refreshToken)
         {
-            throw new NotImplementedException();
+            try
+            {
+                // Buscar usuario por refresh token
+                var user = await _userManager.Users
+                    .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken && u.RefreshTokenExpiryTime > DateTime.UtcNow);
+
+                if (user == null || !user.Activo)
+                {
+                    return Result.Failure<AuthResponse>("Refresh token inválido o expirado");
+                }
+
+                // Generar nuevo token
+                var roles = await _userManager.GetRolesAsync(user);
+                var tokenResponse = _jwtTokenService.GenerateToken(user.Id.ToString(), user.UserName, user.Email, roles);
+
+                // Generar nuevo refresh token
+                var newRefreshToken = Guid.NewGuid().ToString();
+                user.RefreshToken = newRefreshToken;
+                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+                await _userManager.UpdateAsync(user);
+
+                return Result.Success(new AuthResponse
+                {
+                    Success = true,
+                    UserId = user.Id.ToString(),
+                    UserName = user.UserName,
+                    Token = tokenResponse.AccessToken,
+                    RefreshToken = newRefreshToken,
+                    Expiration = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn),
+                    Roles = roles.ToList(),
+                    Message = "Token renovado exitosamente"
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error renovando token para usuario");
+                return Result.Failure<AuthResponse>("Error interno durante la renovación del token");
+            }
         }
         
         public async Task<Result> UpdateUserAsync(string id, string nombre, string apellidos, string email, string username)

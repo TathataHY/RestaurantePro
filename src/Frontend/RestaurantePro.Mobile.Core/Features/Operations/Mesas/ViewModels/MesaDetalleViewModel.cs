@@ -7,6 +7,7 @@ using RestaurantePro.Mobile.Core.Services.Comandas;
 using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Navigation;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace RestaurantePro.Mobile.Core.Features.Operations.Mesas.ViewModels;
 
@@ -99,21 +100,35 @@ public partial class MesaDetalleViewModel : BaseViewModel
     {
         try
         {
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Cargando mesa con ID: {MesaId}");
             var result = await _mesasService.ObtenerMesaAsync(MesaId);
             
             if (result.Success)
             {
                 Mesa = result.Data ?? new MesaDto();
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Mesa cargada - Estado: {Mesa.Estado}, EstadoDescripcion: {Mesa.EstadoDescripcion}, PuedeAsignar: {PuedeAsignar}, PuedeLiberar: {PuedeLiberar}");
+                
+                // Forzar actualización de todas las propiedades de la mesa
+                OnPropertyChanged(nameof(Mesa));
                 OnPropertyChanged(nameof(PuedeAsignar));
                 OnPropertyChanged(nameof(PuedeLiberar));
+                OnPropertyChanged(nameof(TieneComandasActivas));
+                
+                // Notificar cambios específicos de la mesa
+                OnPropertyChanged(nameof(Mesa.Estado));
+                OnPropertyChanged(nameof(Mesa.EstadoDescripcion));
+                OnPropertyChanged(nameof(Mesa.Numero));
+                OnPropertyChanged(nameof(Mesa.Capacidad));
             }
             else
             {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Error al cargar mesa: {result.Message}");
                 await _dialogService.ShowAlertAsync("Error", result.Message);
             }
         }
         catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Excepción al cargar mesa: {ex.Message}");
             await _dialogService.ShowAlertAsync("Error", $"Error al cargar mesa: {ex.Message}");
         }
     }
@@ -256,22 +271,75 @@ public partial class MesaDetalleViewModel : BaseViewModel
     {
         try
         {
+            // Forzar recarga de la mesa antes del cambio para sincronizar con el backend
+            await LoadMesaAsync();
+            
+            // Obtener estados disponibles (excluyendo el estado actual)
+            var estadosDisponibles = new List<string> { "Disponible", "Ocupada", "Reservada", "Mantenimiento" };
+            var estadoActual = Mesa?.EstadoDescripcion ?? "Desconocido";
+            
+            // Filtrar el estado actual de las opciones
+            var opciones = estadosDisponibles.Where(e => e != estadoActual).ToArray();
+            
+            if (opciones.Length == 0)
+            {
+                await _dialogService.ShowAlertAsync("Información", "La mesa ya está en todos los estados posibles");
+                return;
+            }
+
             var nuevoEstado = await _dialogService.ShowActionSheetAsync(
-                "Cambiar Estado",
+                $"Cambiar Estado (Actual: {estadoActual})",
                 "Seleccione el nuevo estado:",
                 "Cancelar",
-                "Disponible", "Ocupada", "Reservada", "Mantenimiento");
+                opciones);
 
             if (string.IsNullOrWhiteSpace(nuevoEstado) || nuevoEstado == "Cancelar")
                 return;
 
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Cambiando estado de mesa {MesaId} de {estadoActual} a: {nuevoEstado}");
+
             IsBusy = true;
             var result = await _mesasService.CambiarEstadoMesaAsync(MesaId, nuevoEstado);
 
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Resultado del cambio de estado: Success={result.Success}, Message={result.Message}");
+
             if (result.Success)
             {
-                await _dialogService.ShowAlertAsync("Éxito", $"Estado cambiado a {nuevoEstado}");
-                await LoadMesaAsync();
+                await _dialogService.ShowAlertAsync("Éxito", $"Estado cambiado de {estadoActual} a {nuevoEstado}");
+                
+                // Usar directamente la mesa actualizada que retorna el servicio
+                if (result.Data != null)
+                {
+                    Mesa = result.Data;
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Mesa actualizada - Estado: {Mesa.Estado}, EstadoDescripcion: {Mesa.EstadoDescripcion}");
+                }
+                else
+                {
+                    // Si no hay datos, recargar la mesa
+                    await LoadMesaAsync();
+                }
+                
+                // Forzar actualización inmediata de la UI
+                // Notificar cambios en todas las propiedades relacionadas
+                OnPropertyChanged(nameof(Mesa));
+                OnPropertyChanged(nameof(PuedeAsignar));
+                OnPropertyChanged(nameof(PuedeLiberar));
+                OnPropertyChanged(nameof(TieneComandasActivas));
+                
+                // Forzar actualización de propiedades específicas de la mesa
+                if (Mesa != null)
+                {
+                    OnPropertyChanged(nameof(Mesa.Estado));
+                    OnPropertyChanged(nameof(Mesa.EstadoDescripcion));
+                    OnPropertyChanged(nameof(Mesa.EstadoColor));
+                    OnPropertyChanged(nameof(Mesa.Disponible));
+                    OnPropertyChanged(nameof(Mesa.Ocupada));
+                    OnPropertyChanged(nameof(Mesa.Reservada));
+                    OnPropertyChanged(nameof(Mesa.FueraDeServicio));
+                }
+                
+                // Pequeña pausa para asegurar que la UI se actualice
+                await Task.Delay(100);
             }
             else
             {
@@ -280,6 +348,7 @@ public partial class MesaDetalleViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Error al cambiar estado: {ex.Message}");
             await _dialogService.ShowAlertAsync("Error", $"Error al cambiar estado: {ex.Message}");
         }
         finally
@@ -298,6 +367,40 @@ public partial class MesaDetalleViewModel : BaseViewModel
         {
             ["mesaId"] = MesaId.ToString()
         });
+    }
+
+    /// <summary>
+    /// Comando para refrescar datos
+    /// </summary>
+    [RelayCommand]
+    private async Task RefreshAsync()
+    {
+        await InitializeAsync();
+    }
+
+    /// <summary>
+    /// Crear nueva comanda para la mesa
+    /// </summary>
+    [RelayCommand]
+    private async Task CrearComandaAsync()
+    {
+        try
+        {
+            if (Mesa?.Estado != "ocupada")
+            {
+                await _dialogService.ShowAlertAsync("Error", "La mesa debe estar ocupada para crear una comanda");
+                return;
+            }
+
+            await _navigationService.NavigateToAsync("comandas/crear", new Dictionary<string, object>
+            {
+                ["mesaId"] = MesaId.ToString()
+            });
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error al crear comanda: {ex.Message}");
+        }
     }
 
     /// <summary>

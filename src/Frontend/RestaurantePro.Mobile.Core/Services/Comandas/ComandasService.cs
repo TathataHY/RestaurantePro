@@ -2,6 +2,7 @@ using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Models.Common;
 using RestaurantePro.Mobile.Core.Services.Api;
 using RestaurantePro.Mobile.Core.Services.Authentication;
+using ComandaModels = RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models;
 using System.Text.Json;
 
 namespace RestaurantePro.Mobile.Core.Services.Comandas;
@@ -72,14 +73,20 @@ public class ComandasService : IComandasService
     /// <summary>
     /// Crear una nueva comanda
     /// </summary>
-    public async Task<ApiResponse<ComandaDto>> CrearComandaAsync(CrearComandaRequest request)
+    public async Task<ApiResponse<ComandaDto>> CrearComandaAsync(ComandaModels.CrearComandaRequest request)
     {
         try
         {
-            if (request.MesaId == Guid.Empty)
+            if (string.IsNullOrEmpty(request.MesaId))
             {
                 return ApiResponse<ComandaDto>.ErrorResponse("La mesa es requerida", "La mesa es requerida");
             }
+            
+            if (request.Productos == null || request.Productos.Count == 0)
+            {
+                return ApiResponse<ComandaDto>.ErrorResponse("Se requiere al menos un producto", "Se requiere al menos un producto");
+            }
+            
             var token = await _authService.GetTokenAsync();
             return await _apiService.PostAsync<ComandaDto>(BaseEndpoint, request, token);
         }

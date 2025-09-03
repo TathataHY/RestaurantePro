@@ -127,16 +127,22 @@ public partial class MesasPage : ContentPage
     {
         base.OnAppearing();
         
+        System.Diagnostics.Debug.WriteLine("🔄 MesasPage.OnAppearing() - Recargando datos al regresar a la página");
+        
         // Cargar datos al aparecer
         if (_viewModel.LoadMesasCommand.CanExecute(null))
         {
+            System.Diagnostics.Debug.WriteLine("🔄 Ejecutando LoadMesasCommand");
             await _viewModel.LoadMesasCommand.ExecuteAsync(null);
         }
         
         if (_viewModel.LoadEstadisticasCommand.CanExecute(null))
         {
+            System.Diagnostics.Debug.WriteLine("🔄 Ejecutando LoadEstadisticasCommand");
             await _viewModel.LoadEstadisticasCommand.ExecuteAsync(null);
         }
+        
+        System.Diagnostics.Debug.WriteLine("✅ MesasPage.OnAppearing() - Datos recargados");
     }
 
     /// <summary>

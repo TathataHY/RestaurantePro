@@ -219,6 +219,7 @@ public static class MauiProgram
 		services.AddTransient<MesaDetalleViewModel>();
 		services.AddTransient<ComandasViewModel>();
 		services.AddTransient<ComandaDetalleViewModel>();
+		services.AddTransient<CrearComandaViewModel>();
 		services.AddTransient<ProductosViewModel>();
 		services.AddTransient<ProductoDetalleViewModel>();
 
@@ -244,6 +245,7 @@ public static class MauiProgram
 		services.AddTransient<MesaDetallePage>();
 		services.AddTransient<ComandasPage>();
 		services.AddTransient<ComandaDetallePage>();
+		services.AddTransient<CrearComandaPage>();
 		services.AddTransient<ProductosPage>();
 		services.AddTransient<ProductoDetallePage>();
 

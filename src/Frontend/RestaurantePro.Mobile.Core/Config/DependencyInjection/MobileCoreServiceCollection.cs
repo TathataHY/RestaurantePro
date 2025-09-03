@@ -11,6 +11,7 @@ using RestaurantePro.Mobile.Core.Services.Categorias;
 using RestaurantePro.Mobile.Core.Services.Commercial;
 using RestaurantePro.Mobile.Core.Services.Analytics;
 using RestaurantePro.Mobile.Core.Services.Inventory;
+using RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;
 
 namespace RestaurantePro.Mobile.Core.Config.DependencyInjection;
 
@@ -52,6 +53,9 @@ public static class MobileCoreServiceCollectionExtensions
 
         // Servicios de analytics
         services.AddScoped<IAnalyticsService, AnalyticsService>();
+
+        // ViewModels
+        services.AddTransient<CrearComandaViewModel>();
 
         return services;
     }

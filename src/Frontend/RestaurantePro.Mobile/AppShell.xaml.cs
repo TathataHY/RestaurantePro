@@ -24,6 +24,9 @@ public partial class AppShell : Shell
 		Routing.RegisterRoute("comanda-detalle", typeof(ComandaDetallePage));
 		Routing.RegisterRoute("producto-detalle", typeof(ProductoDetallePage));
 		
+		// Páginas de creación
+		Routing.RegisterRoute("comandas/crear", typeof(CrearComandaPage));
+		
 		// Futuras páginas de detalle
 		// Routing.RegisterRoute("producto-detalle", typeof(ProductoDetallePage));
 	}

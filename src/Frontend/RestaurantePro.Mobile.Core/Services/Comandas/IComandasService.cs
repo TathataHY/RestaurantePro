@@ -1,4 +1,5 @@
 using RestaurantePro.Mobile.Core.Models.DTOs;
+using ComandaModels = RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models;
 
 namespace RestaurantePro.Mobile.Core.Services.Comandas;
 
@@ -25,7 +26,7 @@ public interface IComandasService
     /// <summary>
     /// Crear una nueva comanda
     /// </summary>
-    Task<ApiResponse<ComandaDto>> CrearComandaAsync(CrearComandaRequest request);
+    Task<ApiResponse<ComandaDto>> CrearComandaAsync(ComandaModels.CrearComandaRequest request);
 
     /// <summary>
     /// Agregar productos a una comanda existente

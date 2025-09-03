@@ -6,6 +6,7 @@ using RestaurantePro.Mobile.Core.Services.Comandas;
 using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Navigation;
 using RestaurantePro.Mobile.Core.Models.ViewModels;
+using ComandaModels = RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models;
 
 namespace RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;
 
@@ -213,10 +214,11 @@ public partial class ComandasViewModel : BaseViewModel
 
         try
         {
-            var request = new CrearComandaRequest
+            var request = new ComandaModels.CrearComandaRequest
             {
-                MesaId = mesaGuid,
-                Observaciones = observaciones
+                MesaId = mesaGuid.ToString(),
+                Observaciones = observaciones,
+                Productos = new List<ComandaModels.ProductoComandaRequest>() // Lista vacía por ahora
             };
 
             var response = await _comandasService.CrearComandaAsync(request);

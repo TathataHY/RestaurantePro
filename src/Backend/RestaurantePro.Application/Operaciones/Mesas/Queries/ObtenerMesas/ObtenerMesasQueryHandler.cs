@@ -42,7 +42,7 @@ public class ObtenerMesasQueryHandler : IRequestHandler<ObtenerMesasQuery, Resul
             var mesas = await _mesaRepository.ObtenerTodasAsync();
 
             // Aplicar filtros
-            if (!string.IsNullOrWhiteSpace(request.Estado))
+            if (!string.IsNullOrWhiteSpace(request.Estado) && !request.Estado.Equals("Todas", StringComparison.OrdinalIgnoreCase))
             {
                 if (Enum.TryParse<EstadoMesa>(request.Estado, true, out var estadoEnum))
                 {

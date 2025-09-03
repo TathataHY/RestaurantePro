@@ -73,6 +73,22 @@
                                              IsPassword="True" />
                     </VerticalStackLayout>
 
+                    <!-- Checkbox Recordarme -->
+                    <HorizontalStackLayout Spacing="12" 
+                                           VerticalOptions="Center">
+                        <CheckBox IsChecked="{Binding Recordarme}"
+                                  Color="{StaticResource PrimaryColor}" />
+                        
+                        <Label Text="Recordarme"
+                               Style="{StaticResource BodyStyle}"
+                               VerticalOptions="Center"
+                               TextColor="{StaticResource TextPrimary}">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ToggleRecordarmeCommand}" />
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </HorizontalStackLayout>
+
                     <!-- Mensaje de Error -->
                     <Border BackgroundColor="{StaticResource ErrorColor}"
                             StrokeShape="RoundRectangle 8"

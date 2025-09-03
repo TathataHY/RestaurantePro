@@ -39,7 +39,7 @@ public class AuthController : ControllerBase
 
         try
         {
-            var result = await _identityService.AuthenticateAsync(request.Email, request.Password);
+            var result = await _identityService.AuthenticateAsync(request.Email, request.Password, request.Recordarme);
 
             if (!result.Succeeded)
             {
@@ -198,6 +198,44 @@ public class AuthController : ControllerBase
             return StatusCode(500, ApiResponse<object>.ErrorResponse(
                 "Error interno del servidor", 
                 "Error durante el cambio de contraseña",
+                StatusCodes.Status500InternalServerError));
+        }
+    }
+
+    /// <summary>
+    /// Renueva el token de acceso usando el refresh token
+    /// </summary>
+    [HttpPost("refresh")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<AuthResponse>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ApiResponse<AuthResponse>>> RefreshToken([FromBody] RefreshTokenRequest request)
+    {
+        _logger.LogInformation("🔄 POST /api/auth/refresh - Renovando token");
+
+        try
+        {
+            var result = await _identityService.RefreshTokenAsync(request.Token, request.RefreshToken);
+
+            if (!result.Succeeded)
+            {
+                _logger.LogWarning("❌ Refresh token fallido: {Error}", result.Error);
+                return Unauthorized(ApiResponse<object>.ErrorResponse(
+                    "Token de renovación inválido", 
+                    "El refresh token ha expirado o es inválido",
+                    StatusCodes.Status401Unauthorized));
+            }
+
+            _logger.LogInformation("✅ Token renovado exitosamente");
+            var response = ApiResponse<AuthResponse>.SuccessResponse(result.Value, "Token renovado exitosamente");
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error inesperado durante renovación de token");
+            return StatusCode(500, ApiResponse<object>.ErrorResponse(
+                "Error interno del servidor", 
+                "Error durante la renovación del token",
                 StatusCodes.Status500InternalServerError));
         }
     }

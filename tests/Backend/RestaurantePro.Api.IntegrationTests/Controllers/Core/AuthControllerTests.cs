@@ -455,6 +455,288 @@ public class AuthControllerTests : AuthorizationTestBase, IAsyncLifetime
         apiResponse.Data.UserName.Should().Be("admin");
     }
 
+    #region Refresh Token Tests
+
+    [Fact(DisplayName = "Login_ConRecordarme_DebeDevolverRefreshToken")]
+    public async Task Login_ConRecordarme_DebeDevolverRefreshToken()
+    {
+        // Arrange - Crear un usuario de prueba
+        var registerRequest = new
+        {
+            Nombre = "Refresh",
+            Apellidos = "Test",
+            Email = "refresh@test.com",
+            Username = "refreshtest",
+            Password = "Test123!",
+            Rol = "Empleado"
+        };
+
+        var registerContent = new StringContent(JsonSerializer.Serialize(registerRequest), Encoding.UTF8, "application/json");
+        var registerResponse = await HttpClient.PostAsync("/api/auth/register", registerContent);
+        registerResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        // Act - Login con Recordarme activado
+        var loginRequest = new
+        {
+            Email = "refresh@test.com",
+            Password = "Test123!",
+            Recordarme = true
+        };
+
+        var loginContent = new StringContent(JsonSerializer.Serialize(loginRequest), Encoding.UTF8, "application/json");
+        var loginResponse = await HttpClient.PostAsync("/api/auth/login", loginContent);
+
+        // Assert
+        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var loginResult = await loginResponse.Content.ReadAsStringAsync();
+        loginResult.Should().Contain("Success");
+        loginResult.Should().Contain("Token");
+        loginResult.Should().Contain("RefreshToken");
+    }
+
+    [Fact(DisplayName = "Login_SinRecordarme_NoDebeDevolverRefreshToken")]
+    public async Task Login_SinRecordarme_NoDebeDevolverRefreshToken()
+    {
+        // Arrange - Crear un usuario de prueba
+        var registerRequest = new
+        {
+            Nombre = "NoRefresh",
+            Apellidos = "Test",
+            Email = "norefresh@test.com",
+            Username = "norefreshtest",
+            Password = "Test123!",
+            Rol = "Empleado"
+        };
+
+        var registerContent = new StringContent(JsonSerializer.Serialize(registerRequest), Encoding.UTF8, "application/json");
+        var registerResponse = await HttpClient.PostAsync("/api/auth/register", registerContent);
+        registerResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        // Act - Login sin Recordarme
+        var loginRequest = new
+        {
+            Email = "norefresh@test.com",
+            Password = "Test123!",
+            Recordarme = false
+        };
+
+        var loginContent = new StringContent(JsonSerializer.Serialize(loginRequest), Encoding.UTF8, "application/json");
+        var loginResponse = await HttpClient.PostAsync("/api/auth/login", loginContent);
+
+        // Assert
+        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var loginResult = await loginResponse.Content.ReadAsStringAsync();
+        loginResult.Should().Contain("Success");
+        loginResult.Should().Contain("Token");
+        loginResult.Should().NotContain("RefreshToken");
+    }
+
+    [Fact(DisplayName = "RefreshToken_ConTokenValido_DebeRenovarToken")]
+    public async Task RefreshToken_ConTokenValido_DebeRenovarToken()
+    {
+        // Arrange - Crear usuario y hacer login con Recordarme
+        var registerRequest = new
+        {
+            Nombre = "RefreshValid",
+            Apellidos = "Test",
+            Email = "refreshvalid@test.com",
+            Username = "refreshvalidtest",
+            Password = "Test123!",
+            Rol = "Empleado"
+        };
+
+        var registerContent = new StringContent(JsonSerializer.Serialize(registerRequest), Encoding.UTF8, "application/json");
+        var registerResponse = await HttpClient.PostAsync("/api/auth/register", registerContent);
+        registerResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        // Login con Recordarme
+        var loginRequest = new
+        {
+            Email = "refreshvalid@test.com",
+            Password = "Test123!",
+            Recordarme = true
+        };
+
+        var loginContent = new StringContent(JsonSerializer.Serialize(loginRequest), Encoding.UTF8, "application/json");
+        var loginResponse = await HttpClient.PostAsync("/api/auth/login", loginContent);
+        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var loginResult = await loginResponse.Content.ReadAsStringAsync();
+        var loginApiResponse = JsonSerializer.Deserialize<ApiResponse<AuthResponse>>(loginResult, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var originalToken = loginApiResponse.Data.Token;
+        var refreshToken = loginApiResponse.Data.RefreshToken;
+
+        // Act - Usar refresh token para renovar
+        var refreshRequest = new
+        {
+            Token = originalToken,
+            RefreshToken = refreshToken
+        };
+
+        var refreshContent = new StringContent(JsonSerializer.Serialize(refreshRequest), Encoding.UTF8, "application/json");
+        var refreshResponse = await HttpClient.PostAsync("/api/auth/refresh", refreshContent);
+
+        // Assert
+        refreshResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var refreshResult = await refreshResponse.Content.ReadAsStringAsync();
+        refreshResult.Should().Contain("Success");
+        refreshResult.Should().Contain("Token");
+        refreshResult.Should().Contain("RefreshToken");
+
+        // Verificar que el nuevo token es diferente al original
+        var refreshApiResponse = JsonSerializer.Deserialize<ApiResponse<AuthResponse>>(refreshResult, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        refreshApiResponse.Data.Token.Should().NotBe(originalToken);
+        refreshApiResponse.Data.RefreshToken.Should().NotBe(refreshToken);
+    }
+
+    [Fact(DisplayName = "RefreshToken_ConTokenInvalido_DebeDevolver401")]
+    public async Task RefreshToken_ConTokenInvalido_DebeDevolver401()
+    {
+        // Act - Intentar refresh con token inválido
+        var refreshRequest = new
+        {
+            Token = "token_invalido",
+            RefreshToken = "invalid-refresh-token"
+        };
+
+        var refreshContent = new StringContent(JsonSerializer.Serialize(refreshRequest), Encoding.UTF8, "application/json");
+        var refreshResponse = await HttpClient.PostAsync("/api/auth/refresh", refreshContent);
+
+        // Assert
+        refreshResponse.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact(DisplayName = "RefreshToken_ConRefreshTokenExpirado_DebeDevolver401")]
+    public async Task RefreshToken_ConRefreshTokenExpirado_DebeDevolver401()
+    {
+        // Arrange - Crear usuario y hacer login con Recordarme
+        var registerRequest = new
+        {
+            Nombre = "RefreshExpired",
+            Apellidos = "Test",
+            Email = "refreshexpired@test.com",
+            Username = "refreshexpiredtest",
+            Password = "Test123!",
+            Rol = "Empleado"
+        };
+
+        var registerContent = new StringContent(JsonSerializer.Serialize(registerRequest), Encoding.UTF8, "application/json");
+        var registerResponse = await HttpClient.PostAsync("/api/auth/register", registerContent);
+        registerResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        // Login con Recordarme
+        var loginRequest = new
+        {
+            Email = "refreshexpired@test.com",
+            Password = "Test123!",
+            Recordarme = true
+        };
+
+        var loginContent = new StringContent(JsonSerializer.Serialize(loginRequest), Encoding.UTF8, "application/json");
+        var loginResponse = await HttpClient.PostAsync("/api/auth/login", loginContent);
+        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var loginResult = await loginResponse.Content.ReadAsStringAsync();
+        var loginApiResponse = JsonSerializer.Deserialize<ApiResponse<AuthResponse>>(loginResult, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var originalToken = loginApiResponse.Data.Token;
+        var refreshToken = loginApiResponse.Data.RefreshToken;
+
+        // Simular refresh token expirado modificando la base de datos
+        using var scope = Factory.Services.CreateScope();
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var user = await userManager.FindByEmailAsync("refreshexpired@test.com");
+        if (user != null)
+        {
+            user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(-1); // Hacer que expire ayer
+            await userManager.UpdateAsync(user);
+        }
+
+        // Act - Intentar refresh con token expirado
+        var refreshRequest = new
+        {
+            Token = originalToken,
+            RefreshToken = "expired-refresh-token"
+        };
+
+        var refreshContent = new StringContent(JsonSerializer.Serialize(refreshRequest), Encoding.UTF8, "application/json");
+        var refreshResponse = await HttpClient.PostAsync("/api/auth/refresh", refreshContent);
+
+        // Assert
+        refreshResponse.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact(DisplayName = "FlujoCompleto_LoginConRecordarmeYRefresh_DebeFuncionarCorrectamente")]
+    public async Task FlujoCompleto_LoginConRecordarmeYRefresh_DebeFuncionarCorrectamente()
+    {
+        // Arrange - Crear usuario
+        var registerRequest = new
+        {
+            Nombre = "FlujoCompleto",
+            Apellidos = "Test",
+            Email = "flujocompleto@test.com",
+            Username = "flujocompletotest",
+            Password = "Test123!",
+            Rol = "Empleado"
+        };
+
+        var registerContent = new StringContent(JsonSerializer.Serialize(registerRequest), Encoding.UTF8, "application/json");
+        var registerResponse = await HttpClient.PostAsync("/api/auth/register", registerContent);
+        registerResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        // Act 1 - Login con Recordarme
+        var loginRequest = new
+        {
+            Email = "flujocompleto@test.com",
+            Password = "Test123!",
+            Recordarme = true
+        };
+
+        var loginContent = new StringContent(JsonSerializer.Serialize(loginRequest), Encoding.UTF8, "application/json");
+        var loginResponse = await HttpClient.PostAsync("/api/auth/login", loginContent);
+        loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var loginResult = await loginResponse.Content.ReadAsStringAsync();
+        var loginApiResponse = JsonSerializer.Deserialize<ApiResponse<AuthResponse>>(loginResult, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var token1 = loginApiResponse.Data.Token;
+        var refreshToken1 = loginApiResponse.Data.RefreshToken;
+
+        // Act 2 - Usar el token para acceder a endpoint protegido
+        var request1 = new HttpRequestMessage(HttpMethod.Get, "/api/auth/profile");
+        request1.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token1);
+        var profileResponse1 = await HttpClient.SendAsync(request1);
+        profileResponse1.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Act 3 - Refresh del token
+        var refreshRequest = new
+        {
+            Token = token1,
+            RefreshToken = refreshToken1
+        };
+
+        var refreshContent = new StringContent(JsonSerializer.Serialize(refreshRequest), Encoding.UTF8, "application/json");
+        var refreshResponse = await HttpClient.PostAsync("/api/auth/refresh", refreshContent);
+        refreshResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var refreshResult = await refreshResponse.Content.ReadAsStringAsync();
+        var refreshApiResponse = JsonSerializer.Deserialize<ApiResponse<AuthResponse>>(refreshResult, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var token2 = refreshApiResponse.Data.Token;
+        var refreshToken2 = refreshApiResponse.Data.RefreshToken;
+
+        // Act 4 - Usar el nuevo token para acceder a endpoint protegido
+        var request2 = new HttpRequestMessage(HttpMethod.Get, "/api/auth/profile");
+        request2.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token2);
+        var profileResponse2 = await HttpClient.SendAsync(request2);
+        profileResponse2.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Assert
+        token2.Should().NotBe(token1, "El nuevo token debe ser diferente al original");
+        refreshToken2.Should().NotBe(refreshToken1, "El nuevo refresh token debe ser diferente al original");
+        profileResponse1.StatusCode.Should().Be(HttpStatusCode.OK, "El token original debe funcionar");
+        profileResponse2.StatusCode.Should().Be(HttpStatusCode.OK, "El token renovado debe funcionar");
+    }
+
+    #endregion
+
     #region Métodos Helper
 
     private static async Task<ApiResponse<T>> DeserializarResponse<T>(HttpResponseMessage response)

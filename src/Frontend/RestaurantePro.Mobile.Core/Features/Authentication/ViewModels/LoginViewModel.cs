@@ -23,6 +23,9 @@ public partial class LoginViewModel : BaseViewModel
     [ObservableProperty]
     private bool isLoading;
 
+    [ObservableProperty]
+    private bool recordarme;
+
     public LoginViewModel(IAuthService authService, INavigationService navigationService)
     {
         _authService = authService;
@@ -57,7 +60,7 @@ public partial class LoginViewModel : BaseViewModel
             ClearError();
 
             // Realizar login
-            var result = await _authService.LoginAsync(Email, Password);
+            var result = await _authService.LoginAsync(Email, Password, Recordarme);
 
             if (result.Success)
             {
@@ -88,6 +91,7 @@ public partial class LoginViewModel : BaseViewModel
     {
         Email = string.Empty;
         Password = string.Empty;
+        Recordarme = false;
         ClearError();
     }
 
@@ -100,5 +104,14 @@ public partial class LoginViewModel : BaseViewModel
         {
             await _navigationService.NavigateToAsync("//main/dashboard");
         }
+    }
+
+    /// <summary>
+    /// Comando para alternar el estado de "Recordarme"
+    /// </summary>
+    [RelayCommand]
+    private void ToggleRecordarme()
+    {
+        Recordarme = !Recordarme;
     }
 } 

@@ -52,6 +52,11 @@ public class AuthResponse
     public string Token { get; set; } = string.Empty;
     
     /// <summary>
+    /// Refresh token para renovar el token principal
+    /// </summary>
+    public string? RefreshToken { get; set; }
+    
+    /// <summary>
     /// Usuario autenticado
     /// </summary>
     public AuthUser User { get; set; } = new();
@@ -76,4 +81,9 @@ public class LoginRequest
     /// Contraseña del usuario
     /// </summary>
     public string Password { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Indica si el usuario quiere que se recuerde su sesión
+    /// </summary>
+    public bool Recordarme { get; set; } = false;
 } 
