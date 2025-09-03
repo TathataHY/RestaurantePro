@@ -392,7 +392,10 @@ public partial class MesaDetalleViewModel : BaseViewModel
             return;
         }
 
-            await _navigationService.NavigateToAsync($"crear-comanda?mesaId={MesaId}");
+            await _navigationService.NavigateToAsync("crear-comanda", new Dictionary<string, object>
+            {
+                ["mesaId"] = MesaId.ToString()
+            });
         }
         catch (Exception ex)
         {

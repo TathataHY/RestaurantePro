@@ -72,7 +72,19 @@ public partial class CrearComandaViewModel : BaseViewModel
         {
             IsLoading = true;
             
-            var result = await _productosService.BuscarProductosAsync(TextoBusqueda);
+            ApiResponse<List<ProductoDto>> result;
+            
+            // Si hay texto de búsqueda, usar el método de búsqueda
+            if (!string.IsNullOrWhiteSpace(TextoBusqueda))
+            {
+                result = await _productosService.BuscarProductosAsync(TextoBusqueda);
+            }
+            else
+            {
+                // Si no hay texto de búsqueda, cargar todos los productos paginados (solo activos)
+                result = await _productosService.ObtenerProductosPaginadosAsync(1, 100, null, true);
+            }
+            
             if (result.Success && result.Data != null)
             {
                 ProductosDisponibles.Clear();
@@ -285,6 +297,9 @@ public partial class CrearComandaViewModel : BaseViewModel
             if (result.Success && result.Data != null)
             {
                 Mesa = result.Data;
+                // Notificar a la UI que la propiedad Mesa cambió
+                OnPropertyChanged(nameof(Mesa));
+                OnPropertyChanged(nameof(MesaInfo));
             }
             else
             {

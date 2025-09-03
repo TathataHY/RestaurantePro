@@ -2,28 +2,39 @@ using RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;
 
 namespace RestaurantePro.Mobile.Features.Operations.Comandas.Pages;
 
-public partial class CrearComandaPage : ContentPage
+/// <summary>
+/// Página para crear una nueva comanda
+/// </summary>
+public partial class CrearComandaPage : ContentPage, IQueryAttributable
 {
+    private readonly CrearComandaViewModel _viewModel;
+
     public CrearComandaPage(CrearComandaViewModel viewModel)
     {
         InitializeComponent();
-        BindingContext = viewModel;
+        _viewModel = viewModel;
+        BindingContext = _viewModel;
     }
 
+    /// <summary>
+    /// Implementación de IQueryAttributable para recibir parámetros de navegación
+    /// </summary>
+    public async void ApplyQueryAttributes(IDictionary<string, object> query)
+    {
+        if (query.TryGetValue("mesaId", out var mesaIdObj) && 
+            !string.IsNullOrEmpty(mesaIdObj?.ToString()))
+        {
+            var mesaId = mesaIdObj.ToString();
+            await _viewModel.InitializeAsync(mesaId);
+        }
+    }
+
+    /// <summary>
+    /// Se ejecuta cuando la página aparece
+    /// </summary>
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        
-        if (BindingContext is CrearComandaViewModel viewModel)
-        {
-            // Obtener el ID de la mesa desde los parámetros de query
-            var query = Shell.Current.CurrentState.Location.Query;
-            var mesaId = System.Web.HttpUtility.ParseQueryString(query)["mesaId"];
-            
-            if (!string.IsNullOrEmpty(mesaId))
-            {
-                await viewModel.InitializeAsync(mesaId);
-            }
-        }
+        // La inicialización se maneja en ApplyQueryAttributes
     }
 }
