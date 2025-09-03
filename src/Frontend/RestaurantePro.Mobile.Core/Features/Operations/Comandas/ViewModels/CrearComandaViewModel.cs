@@ -162,6 +162,10 @@ public partial class CrearComandaViewModel : BaseViewModel
             
             // Resetear la cantidad en la lista de productos disponibles
             producto.Cantidad = 0;
+            
+            // Notificar cambios en las propiedades calculadas
+            OnPropertyChanged(nameof(TotalCarrito));
+            OnPropertyChanged(nameof(PuedeCrearComanda));
         }
     }
 
@@ -171,6 +175,7 @@ public partial class CrearComandaViewModel : BaseViewModel
         if (producto != null)
         {
             producto.Cantidad++;
+            OnPropertyChanged(nameof(TotalCarrito));
         }
     }
 
@@ -180,6 +185,7 @@ public partial class CrearComandaViewModel : BaseViewModel
         if (producto != null && producto.Cantidad > 1)
         {
             producto.Cantidad--;
+            OnPropertyChanged(nameof(TotalCarrito));
         }
     }
 
@@ -189,6 +195,8 @@ public partial class CrearComandaViewModel : BaseViewModel
         if (producto != null)
         {
             ProductosCarrito.Remove(producto);
+            OnPropertyChanged(nameof(TotalCarrito));
+            OnPropertyChanged(nameof(PuedeCrearComanda));
         }
     }
 
@@ -212,16 +220,22 @@ public partial class CrearComandaViewModel : BaseViewModel
 
             IsLoading = true;
 
+            // Crear la lista de productos para la comanda
+            var productosComanda = ProductosCarrito.Select(p => new ComandaModels.ProductoComandaRequest
+            {
+                ProductoId = p.Id,
+                Cantidad = p.Cantidad,
+                Precio = p.Precio
+            }).ToList();
+
             var comandaRequest = new ComandaModels.CrearComandaRequest
             {
+                MeseroId = "11111111-1111-1111-1111-111111111111", // Usuario administrador por defecto
                 MesaId = Mesa.Id.ToString(),
+                ClienteId = null, // Opcional
                 Observaciones = Observaciones,
-                Productos = ProductosCarrito.Select(p => new ComandaModels.ProductoComandaRequest
-                {
-                    ProductoId = p.Id,
-                    Cantidad = p.Cantidad,
-                    Precio = p.Precio
-                }).ToList()
+                ProductosIniciales = productosComanda,
+                Items = productosComanda // El backend parece esperar ambos campos
             };
 
             var result = await _comandasService.CrearComandaAsync(comandaRequest);

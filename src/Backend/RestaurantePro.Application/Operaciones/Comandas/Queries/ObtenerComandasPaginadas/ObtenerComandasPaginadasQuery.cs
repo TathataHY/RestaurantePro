@@ -35,6 +35,11 @@ public class ObtenerComandasPaginadasQuery : FilterRequest, IRequest<Result<Pagi
     public bool SoloActivas { get; set; } = false;
 
     /// <summary>
+    /// Incluir items de comanda (por defecto false para mejor rendimiento)
+    /// </summary>
+    public bool IncluirItems { get; set; } = false;
+
+    /// <summary>
     /// Fecha desde para filtrar comandas
     /// </summary>
     public DateTime? FechaDesde { get; set; }

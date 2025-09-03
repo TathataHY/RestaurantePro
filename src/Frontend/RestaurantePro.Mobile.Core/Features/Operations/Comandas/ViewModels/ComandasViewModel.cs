@@ -216,9 +216,12 @@ public partial class ComandasViewModel : BaseViewModel
         {
             var request = new ComandaModels.CrearComandaRequest
             {
+                MeseroId = "11111111-1111-1111-1111-111111111111", // Usuario administrador por defecto
                 MesaId = mesaGuid.ToString(),
+                ClienteId = null,
                 Observaciones = observaciones,
-                Productos = new List<ComandaModels.ProductoComandaRequest>() // Lista vacía por ahora
+                ProductosIniciales = new List<ComandaModels.ProductoComandaRequest>(), // Lista vacía por ahora
+                Items = new List<ComandaModels.ProductoComandaRequest>() // Lista vacía por ahora
             };
 
             var response = await _comandasService.CrearComandaAsync(request);

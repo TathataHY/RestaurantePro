@@ -46,7 +46,18 @@ public class ComandasService : IComandasService
         try
         {
             var token = await _authService.GetTokenAsync();
-            return await _apiService.GetAsync<List<ComandaDto>>($"{BaseEndpoint}/mesa/{mesaId}", token);
+            // Usar el endpoint principal con parámetros de consulta
+            var queryParams = $"mesaId={mesaId}&soloActivas=true&pageSize=100";
+            var result = await _apiService.GetAsync<PaginatedList<ComandaDto>>($"{BaseEndpoint}?{queryParams}", token);
+            
+            if (result.Success && result.Data != null)
+            {
+                return ApiResponse<List<ComandaDto>>.SuccessResponse(result.Data.Items, result.Message);
+            }
+            else
+            {
+                return ApiResponse<List<ComandaDto>>.ErrorResponse(result.Message ?? "Error al obtener comandas por mesa");
+            }
         }
         catch (Exception ex)
         {
@@ -82,7 +93,7 @@ public class ComandasService : IComandasService
                 return ApiResponse<ComandaDto>.ErrorResponse("La mesa es requerida", "La mesa es requerida");
             }
             
-            if (request.Productos == null || request.Productos.Count == 0)
+            if (request.ProductosIniciales == null || request.ProductosIniciales.Count == 0)
             {
                 return ApiResponse<ComandaDto>.ErrorResponse("Se requiere al menos un producto", "Se requiere al menos un producto");
             }

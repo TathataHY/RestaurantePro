@@ -141,22 +141,48 @@ public partial class MesaDetalleViewModel : BaseViewModel
     {
         try
         {
+            IsLoading = true;
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Cargando comandas para mesa: {MesaId}");
             var result = await _comandasService.ObtenerComandasPorMesaAsync(MesaId);
+            
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Resultado de comandas - Success: {result.Success}, Count: {result.Data?.Count ?? 0}");
             
             if (result.Success)
             {
                 ComandasActivas.Clear();
-                var comandasActivas = result.Data?.Where(c => c.Estado != "finalizada" && c.Estado != "cancelada") ?? [];
-                foreach (var comanda in comandasActivas)
+                
+                if (result.Data != null)
                 {
-                    ComandasActivas.Add(comanda);
+                    foreach (var comanda in result.Data)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[DEBUG] Comanda encontrada - ID: {comanda.Id}, Estado: {comanda.Estado}");
+                    }
+                    
+                    var comandasActivas = result.Data.Where(c => c.Estado != "finalizada" && c.Estado != "cancelada").ToList();
+                    System.Diagnostics.Debug.WriteLine($"[DEBUG] Comandas activas después del filtro: {comandasActivas.Count}");
+                    
+                    foreach (var comanda in comandasActivas)
+                    {
+                        ComandasActivas.Add(comanda);
+                    }
                 }
+                
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] ComandasActivas collection count: {ComandasActivas.Count}");
                 OnPropertyChanged(nameof(TieneComandasActivas));
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"[DEBUG] Error al cargar comandas: {result.Message}");
             }
         }
         catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Excepción al cargar comandas: {ex.Message}");
             await _dialogService.ShowAlertAsync("Error", $"Error al cargar comandas: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
         }
     }
 

@@ -34,12 +34,12 @@ public class ObtenerComandasPaginadasQueryHandler : IRequestHandler<ObtenerComan
             _logger.LogInformation("🔍 Obteniendo comandas paginadas - Página: {PageNumber}, Tamaño: {PageSize}, Filtros: Estado={Estado}, Mesa={MesaId}, Mesero={MeseroId}",
                 request.PageNumber, request.PageSize, request.Estado, request.MesaId, request.MeseroId);
 
-            // Construir query base con includes y convertir a IQueryable
+            // Construir query base con includes optimizados - solo lo necesario
             var query = _context.Comandas
-                .Include(c => c.Items)
-                .Include(c => c.Mesa)
-                .Include(c => c.Mesero)
-                .Include(c => c.Cliente)
+                .Include(c => c.Mesa)      // Necesario para mostrar número de mesa
+                .Include(c => c.Mesero)    // Necesario para mostrar nombre del mesero
+                .Include(c => c.Cliente)   // Necesario para mostrar nombre del cliente
+                // Removido: .Include(c => c.Items) - se carga bajo demanda si es necesario
                 .AsQueryable();
 
             // Aplicar filtros
@@ -109,8 +109,29 @@ public class ObtenerComandasPaginadasQueryHandler : IRequestHandler<ObtenerComan
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);
 
-            // Mapear a DTOs
+            // Mapear a DTOs (sin items para mejor rendimiento)
             var comandasDto = _mapper.Map<List<ComandaDto>>(comandas);
+            
+            // Si se necesitan los items, cargarlos por separado (bajo demanda)
+            if (request.IncluirItems)
+            {
+                var comandaIds = comandas.Select(c => c.Id).ToList();
+                var items = await _context.ItemsComanda
+                    .Where(i => comandaIds.Contains(i.ComandaId))
+                    .ToListAsync(cancellationToken);
+                
+                // Agrupar items por comanda
+                var itemsPorComanda = items.GroupBy(i => i.ComandaId).ToDictionary(g => g.Key, g => g.ToList());
+                
+                // Asignar items a cada comanda
+                foreach (var comandaDto in comandasDto)
+                {
+                    if (itemsPorComanda.TryGetValue(comandaDto.Id, out var itemsComanda))
+                    {
+                        comandaDto.Items = _mapper.Map<List<ItemComandaDto>>(itemsComanda);
+                    }
+                }
+            }
 
             // Crear resultado paginado
             var resultado = new PaginatedList<ComandaDto>

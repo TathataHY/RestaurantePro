@@ -90,6 +90,11 @@ namespace RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Invalidation
             RegisterInvalidationRule<DomainEvent>("ObtenerMesasQuery_"); // Invalidar cache de mesas
             RegisterInvalidationRule<DomainEvent>("ObtenerMesaPorIdQuery_"); // Invalidar cache de mesa individual
             
+            // Invalidación específica para comandas - eventos que afectan el cache
+            RegisterInvalidationRule<DomainEvent>("ObtenerComandasPaginadasQuery_"); // Invalidar cache de comandas paginadas
+            RegisterInvalidationRule<DomainEvent>("ObtenerComandaPorIdQuery_"); // Invalidar cache de comanda individual
+            RegisterInvalidationRule<DomainEvent>("ObtenerComandasPorMesaQuery_"); // Invalidar cache de comandas por mesa
+            
             // En una implementación completa, cada evento de dominio específico
             // se registraría con el patrón de caché correspondiente para una
             // invalidación más granular y eficiente.

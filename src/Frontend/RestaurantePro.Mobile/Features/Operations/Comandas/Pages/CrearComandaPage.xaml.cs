@@ -1,4 +1,5 @@
 using RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;
+using RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models;
 
 namespace RestaurantePro.Mobile.Features.Operations.Comandas.Pages;
 
@@ -37,4 +38,60 @@ public partial class CrearComandaPage : ContentPage, IQueryAttributable
         base.OnAppearing();
         // La inicialización se maneja en ApplyQueryAttributes
     }
+
+    #region Event Handlers para botones de productos disponibles
+
+    private void OnDecrementarCantidadClicked(object sender, EventArgs e)
+    {
+        if (sender is Button button && button.BindingContext is ProductoCarritoDto producto)
+        {
+            _viewModel.DecrementarCantidadCommand.Execute(producto);
+        }
+    }
+
+    private void OnIncrementarCantidadClicked(object sender, EventArgs e)
+    {
+        if (sender is Button button && button.BindingContext is ProductoCarritoDto producto)
+        {
+            _viewModel.IncrementarCantidadCommand.Execute(producto);
+        }
+    }
+
+    private void OnAgregarAlCarritoClicked(object sender, EventArgs e)
+    {
+        if (sender is Button button && button.BindingContext is ProductoCarritoDto producto)
+        {
+            _viewModel.AgregarAlCarritoCommand.Execute(producto);
+        }
+    }
+
+    #endregion
+
+    #region Event Handlers para botones del carrito
+
+    private void OnDecrementarCantidadCarritoClicked(object sender, EventArgs e)
+    {
+        if (sender is Button button && button.BindingContext is ProductoCarritoDto producto)
+        {
+            _viewModel.DecrementarCantidadCarritoCommand.Execute(producto);
+        }
+    }
+
+    private void OnIncrementarCantidadCarritoClicked(object sender, EventArgs e)
+    {
+        if (sender is Button button && button.BindingContext is ProductoCarritoDto producto)
+        {
+            _viewModel.IncrementarCantidadCarritoCommand.Execute(producto);
+        }
+    }
+
+    private void OnEliminarDelCarritoClicked(object sender, EventArgs e)
+    {
+        if (sender is Button button && button.BindingContext is ProductoCarritoDto producto)
+        {
+            _viewModel.EliminarDelCarritoCommand.Execute(producto);
+        }
+    }
+
+    #endregion
 }

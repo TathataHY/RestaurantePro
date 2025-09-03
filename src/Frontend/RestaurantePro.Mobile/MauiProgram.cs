@@ -98,8 +98,8 @@ public static class MauiProgram
 		// Registrar páginas y ViewModels - V1
 		RegisterViewsAndViewModelsV1(builder.Services);
 
-		// Registrar rutas de navegación - V1
-		RegisterNavigationRoutesV1();
+		// COMENTADO: Las rutas se registran ahora en AppShell.xaml.cs para evitar duplicados
+		// RegisterNavigationRoutesV1();
 
 #if DEBUG
 		builder.Logging.AddDebug();
@@ -290,6 +290,8 @@ public static class MauiProgram
 		services.AddTransient<PerformanceMonitorPage>();
 	}
 
+	// COMENTADO: Todas las rutas se registran ahora en AppShell.xaml.cs para evitar duplicados
+	/*
 	private static void RegisterNavigationRoutesV1()
 	{
 		// Rutas principales
@@ -298,7 +300,7 @@ public static class MauiProgram
 		
 		// Rutas de operaciones
 		Routing.RegisterRoute("mesas", typeof(MesasPage));
-		Routing.RegisterRoute("mesadetalle", typeof(MesaDetallePage));
+		// Routing.RegisterRoute("mesadetalle", typeof(MesaDetallePage)); // Duplicada - ya registrada en AppShell.xaml.cs
 		Routing.RegisterRoute("comandas", typeof(ComandasPage));
 		Routing.RegisterRoute("comandadetalle", typeof(ComandaDetallePage));
 		Routing.RegisterRoute("productos", typeof(ProductosPage));
@@ -337,4 +339,5 @@ public static class MauiProgram
 		Routing.RegisterRoute("configuracion", typeof(ConfiguracionPage));
 		Routing.RegisterRoute("performancemonitor", typeof(PerformanceMonitorPage));
 	}
+	*/
 }
