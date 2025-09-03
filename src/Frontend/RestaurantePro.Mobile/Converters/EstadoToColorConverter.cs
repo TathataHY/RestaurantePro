@@ -3,30 +3,31 @@ using System.Globalization;
 namespace RestaurantePro.Mobile.Converters;
 
 /// <summary>
-/// Convertidor para mostrar colores según el estado de la reservación
+/// Convertidor para cambiar el color según el estado de la comanda
 /// </summary>
 public class EstadoToColorConverter : IValueConverter
 {
-    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         if (value is string estado)
         {
-            return estado.ToLowerInvariant() switch
+            return estado.ToLower() switch
             {
-                "pendiente" => Colors.Orange,      // Naranja
-                "confirmada" => Colors.Green,      // Verde
-                "cancelada" => Colors.Red,         // Rojo
-                "completada" => Colors.Blue,       // Azul
-                "reprogramada" => Colors.Purple,   // Púrpura
-                _ => Colors.Gray                   // Gris por defecto
+                "creada" => Color.FromArgb("#FF6B6B"), // Rojo - Nueva comanda
+                "enproceso" => Color.FromArgb("#4ECDC4"), // Verde azulado - En preparación
+                "lista" => Color.FromArgb("#45B7D1"), // Azul - Lista para entregar
+                "entregada" => Color.FromArgb("#96CEB4"), // Verde - Entregada
+                "finalizada" => Color.FromArgb("#FFEAA7"), // Amarillo - Finalizada
+                "cancelada" => Color.FromArgb("#DDA0DD"), // Púrpura - Cancelada
+                _ => Color.FromArgb("#95A5A6") // Gris - Estado desconocido
             };
         }
-
-        return Colors.Gray; // Gris por defecto
+        
+        return Color.FromArgb("#95A5A6"); // Gris por defecto
     }
 
-    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }
-} 
+}

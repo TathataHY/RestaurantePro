@@ -8,7 +8,7 @@
     xmlns:mesas="clr-namespace:RestaurantePro.Mobile.Features.Operations.Mesas.Pages"
     xmlns:comandas="clr-namespace:RestaurantePro.Mobile.Features.Operations.Comandas.Pages"
     xmlns:productos="clr-namespace:RestaurantePro.Mobile.Features.Operations.Productos.Pages"
-    xmlns:preparaciones="clr-namespace:RestaurantePro.Mobile.Features.Inventory.Preparaciones.Pages"
+    xmlns:cocina="clr-namespace:RestaurantePro.Mobile.Features.Operations.Cocina.Pages"
     xmlns:reservaciones="clr-namespace:RestaurantePro.Mobile.Features.Inventory.Reservaciones.Pages"
     xmlns:facturas="clr-namespace:RestaurantePro.Mobile.Features.Commercial.Billing.Pages"
     xmlns:clientes="clr-namespace:RestaurantePro.Mobile.Features.Commercial.Customers.Pages"
@@ -71,12 +71,12 @@
             ContentTemplate="{DataTemplate productos:ModernProductosPage}"
             Route="productos" />
 
-        <!-- Preparaciones Tab -->
+        <!-- Cocina Tab -->
         <ShellContent
             Title="Cocina"
             Icon="cocina.png"
-            ContentTemplate="{DataTemplate preparaciones:ModernPreparacionesPage}"
-            Route="preparaciones" />
+            ContentTemplate="{DataTemplate cocina:ModernCocinaPage}"
+            Route="cocina" />
 
         <!-- Reservaciones Tab -->
         <ShellContent

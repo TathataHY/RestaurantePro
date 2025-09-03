@@ -113,6 +113,32 @@ public class OperacionesMappingProfile : Profile
             //.ForMember(dest => dest.NombreProducto, opt => opt.MapFrom(src => src.Producto != null ? src.Producto.Nombre : string.Empty))
             //.ForMember(dest => dest.DescripcionProducto, opt => opt.MapFrom(src => src.Producto != null ? src.Producto.Descripcion : null));
 
+        // ItemComanda (Domain) → ComandaProductoDto (para el frontend)
+        CreateMap<ItemComanda, ComandaProductoDto>()
+            .ForMember(dest => dest.ProductoId, opt => opt.MapFrom(src => src.ProductoId))
+            .ForMember(dest => dest.Nombre, opt => opt.Ignore()) // Se llenará manualmente si es necesario
+            .ForMember(dest => dest.Descripcion, opt => opt.Ignore()) // Se llenará manualmente si es necesario
+            .ForMember(dest => dest.PrecioUnitario, opt => opt.MapFrom(src => src.PrecioUnitario))
+            .ForMember(dest => dest.Cantidad, opt => opt.MapFrom(src => src.Cantidad))
+            .ForMember(dest => dest.Observaciones, opt => opt.MapFrom(src => src.Observaciones))
+            .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado.ToString()))
+            .ForMember(dest => dest.FechaAgregado, opt => opt.MapFrom(src => src.FechaCreacion))
+            .ForMember(dest => dest.Categoria, opt => opt.Ignore()) // No hay categoría en ItemComanda
+            .ForMember(dest => dest.Descuento, opt => opt.Ignore()); // No hay descuento en ItemComanda
+
+        // ItemComandaDto → ComandaProductoDto (para el frontend)
+        CreateMap<ItemComandaDto, ComandaProductoDto>()
+            .ForMember(dest => dest.ProductoId, opt => opt.MapFrom(src => src.ProductoId))
+            .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.NombreProducto))
+            .ForMember(dest => dest.Descripcion, opt => opt.MapFrom(src => src.DescripcionProducto))
+            .ForMember(dest => dest.PrecioUnitario, opt => opt.MapFrom(src => src.PrecioUnitario))
+            .ForMember(dest => dest.Cantidad, opt => opt.MapFrom(src => src.Cantidad))
+            .ForMember(dest => dest.Observaciones, opt => opt.MapFrom(src => src.Observaciones))
+            .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado))
+            .ForMember(dest => dest.FechaAgregado, opt => opt.MapFrom(src => src.FechaCreacion))
+            .ForMember(dest => dest.Categoria, opt => opt.Ignore()) // No hay categoría en ItemComandaDto
+            .ForMember(dest => dest.Descuento, opt => opt.Ignore()); // No hay descuento en ItemComandaDto
+
         // PersonalizacionItem (Domain) → PersonalizacionDto (Application)
         // Usando namespace completo para evitar ambigüedad
         CreateMap<RestaurantePro.Domain.Operaciones.Comandas.ValueObjects.PersonalizacionItem, PersonalizacionDto>()

@@ -64,7 +64,7 @@ public class ComandaDto : BaseDto
     /// <summary>
     /// Lista de items de la comanda
     /// </summary>
-    public List<ItemComandaDto> Items { get; set; } = new();
+    public List<ComandaProductoDto> Items { get; set; } = new();
 
     /// <summary>
     /// Subtotal de la comanda (sin impuestos ni descuentos)

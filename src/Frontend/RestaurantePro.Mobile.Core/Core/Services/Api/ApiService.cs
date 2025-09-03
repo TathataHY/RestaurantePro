@@ -143,6 +143,37 @@ public class ApiService : IApiService
         }
     }
 
+    public async Task<ApiResponse<T>> PatchAsync<T>(string endpoint, object data, string? token = null)
+    {
+        try
+        {
+            AddAuthHeader(token);
+            var json = JsonSerializer.Serialize(data, GetJsonOptions());
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            
+            var response = await _httpClient.PatchAsync(endpoint, content);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var responseJson = await response.Content.ReadAsStringAsync();
+                var result = JsonSerializer.Deserialize<ApiResponse<T>>(responseJson, GetJsonOptions());
+                return result ?? ApiResponse<T>.ErrorResponse("Respuesta vacía del servidor");
+            }
+            
+            return ApiResponse<T>.ErrorResponse(
+                new List<string> { "Error en la comunicación con el servidor" },
+                "Error de conexión", 
+                (int)response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse<T>.ErrorResponse(
+                new List<string> { ex.Message },
+                "Error inesperado", 
+                500);
+        }
+    }
+
     public async Task<ApiResponse<bool>> DeleteAsync(string endpoint, string? token = null)
     {
         try

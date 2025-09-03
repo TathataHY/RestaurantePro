@@ -59,6 +59,11 @@ public class ComandaDto
     /// Productos incluidos en la comanda
     /// </summary>
     public List<ComandaProductoDto> Productos { get; set; } = new List<ComandaProductoDto>();
+    
+    /// <summary>
+    /// Items de la comanda (propiedad que viene del backend)
+    /// </summary>
+    public List<ComandaProductoDto> Items { get; set; } = new List<ComandaProductoDto>();
 
     /// <summary>
     /// Total de la comanda
@@ -133,4 +138,66 @@ public class ComandaDto
         "finalizada" => "Finalizada",
         _ => Estado
     };
+
+    /// <summary>
+    /// Información de la mesa asociada
+    /// </summary>
+    public MesaDto? Mesa { get; set; }
+
+    /// <summary>
+    /// Resumen de productos para mostrar en la lista
+    /// </summary>
+    public string ProductosResumen
+    {
+        get
+        {
+            // Usar Items si está disponible, sino usar Productos
+            var productosLista = Items.Any() ? Items : Productos;
+            
+            if (!productosLista.Any()) return "Sin productos";
+            
+            var productos = productosLista.Take(3).Select(p => $"{p.Cantidad}x {p.Nombre}");
+            var resumen = string.Join(", ", productos);
+            
+            if (productosLista.Count > 3)
+                resumen += $" y {productosLista.Count - 3} más";
+                
+            return resumen;
+        }
+    }
+
+    /// <summary>
+    /// Tiempo transcurrido desde la creación
+    /// </summary>
+    public string TiempoTranscurrido
+    {
+        get
+        {
+            var timeSpan = DateTime.Now - FechaCreacion;
+            
+            if (timeSpan.TotalMinutes < 1)
+                return "un momento";
+            else if (timeSpan.TotalMinutes < 60)
+                return $"{timeSpan.Minutes} min";
+            else if (timeSpan.TotalHours < 24)
+                return $"{timeSpan.Hours}h {timeSpan.Minutes}m";
+            else
+                return $"{timeSpan.Days} días";
+        }
+    }
+
+    /// <summary>
+    /// Indica si la comanda puede ser tomada por cocina
+    /// </summary>
+    public bool PuedeTomar => Estado.ToLowerInvariant() == "creada";
+
+    /// <summary>
+    /// Indica si la comanda puede ser marcada como lista
+    /// </summary>
+    public bool PuedeMarcarLista => Estado.ToLowerInvariant() == "enproceso";
+
+    /// <summary>
+    /// Indica si la comanda tiene observaciones
+    /// </summary>
+    public bool TieneObservaciones => !string.IsNullOrWhiteSpace(Observaciones);
 } 

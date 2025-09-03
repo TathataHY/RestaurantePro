@@ -103,7 +103,7 @@ public partial class ProductoDetalleViewModel : BaseViewModel
                 Producto = result.Data;
                 
                 // Actualizar título con información del producto
-                Title = $"Producto: {producto.Nombre} - {producto.CategoriaNombre}";
+                Title = $"Producto: {Producto?.Nombre} - {Producto?.CategoriaNombre}";
                 
                 // Cargar categorías para edición
                 await LoadCategoriasAsync();

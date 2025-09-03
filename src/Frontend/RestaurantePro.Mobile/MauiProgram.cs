@@ -222,6 +222,7 @@ public static class MauiProgram
 		services.AddTransient<CrearComandaViewModel>();
 		services.AddTransient<ProductosViewModel>();
 		services.AddTransient<ProductoDetalleViewModel>();
+		services.AddTransient<RestaurantePro.Mobile.Core.Features.Operations.Cocina.ViewModels.ModernCocinaViewModel>();
 
 		// ViewModels desde Mobile.Core - Inventario
 		services.AddTransient<PreparacionesViewModel>();
@@ -275,7 +276,7 @@ public static class MauiProgram
 		services.AddTransient<ModernMesasPage>();
 		services.AddTransient<ModernComandasPage>();
 		services.AddTransient<ModernProductosPage>();
-		services.AddTransient<ModernPreparacionesPage>();
+		services.AddTransient<RestaurantePro.Mobile.Features.Operations.Cocina.Pages.ModernCocinaPage>();
 		services.AddTransient<ModernIngredientesPage>();
 		services.AddTransient<ModernReservacionesPage>();
 		services.AddTransient<ModernFacturasPage>();

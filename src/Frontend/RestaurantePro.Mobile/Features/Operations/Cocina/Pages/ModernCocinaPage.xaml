@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="RestaurantePro.Mobile.Features.Operations.Cocina.Pages.ModernCocinaPage"
+             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             Title="Cocina"
+             BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Header con estadísticas de cocina -->
+        <Border Grid.Row="0" 
+                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
+                StrokeShape="RoundRectangle 10"
+                Margin="10,10,10,5">
+            <Grid ColumnDefinitions="*,*,*,*" Padding="15">
+                <VerticalStackLayout Grid.Column="0" HorizontalOptions="Center">
+                    <Label Text="{Binding Estadisticas.ComandasCreadas}" 
+                           FontSize="24" 
+                           FontAttributes="Bold" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                    <Label Text="Nuevas" 
+                           FontSize="12" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+                
+                <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center">
+                    <Label Text="{Binding Estadisticas.ComandasEnProceso}" 
+                           FontSize="24" 
+                           FontAttributes="Bold" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                    <Label Text="En Proceso" 
+                           FontSize="12" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+                
+                <VerticalStackLayout Grid.Column="2" HorizontalOptions="Center">
+                    <Label Text="{Binding Estadisticas.ComandasListas}" 
+                           FontSize="24" 
+                           FontAttributes="Bold" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                    <Label Text="Listas" 
+                           FontSize="12" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+                
+                <VerticalStackLayout Grid.Column="3" HorizontalOptions="Center">
+                    <Label Text="{Binding Estadisticas.TiempoPromedio, StringFormat='{0} min'}" 
+                           FontSize="24" 
+                           FontAttributes="Bold" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                    <Label Text="Tiempo Promedio" 
+                           FontSize="12" 
+                           TextColor="White"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+        <!-- Contenido principal -->
+        <Grid Grid.Row="1" RowDefinitions="Auto,*" Margin="10,5,10,5">
+            <!-- Controles de filtros -->
+            <Border Grid.Row="0" 
+                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
+                    StrokeShape="RoundRectangle 10"
+                    Margin="0,0,0,10">
+                <Grid ColumnDefinitions="*,Auto" Padding="15">
+                    <!-- Filtro de estado -->
+                    <Picker Grid.Column="0"
+                            Title="Estado de Comanda"
+                            ItemsSource="{Binding EstadosDisponibles}"
+                            SelectedItem="{Binding FiltroEstado}"
+                            Margin="0,0,10,0"/>
+                    
+                    <!-- Botón de actualizar -->
+                    <Button Grid.Column="1"
+                            Text="🔄"
+                            FontSize="20"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
+                            TextColor="White"
+                            WidthRequest="50"
+                            HeightRequest="50"
+                            CornerRadius="25"
+                            Command="{Binding RefreshComandasCommand}"/>
+                </Grid>
+            </Border>
+
+            <!-- Lista de comandas -->
+            <RefreshView Grid.Row="1" 
+                         IsRefreshing="{Binding IsRefreshing}"
+                         Command="{Binding LoadComandasCommand}">
+                <CollectionView ItemsSource="{Binding ComandasFiltradas}"
+                               SelectionMode="None">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,5" 
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
+                                    StrokeShape="RoundRectangle 10"
+                                    Stroke="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray600}}">
+                                <Grid ColumnDefinitions="*,Auto" Padding="15">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="5">
+                                        <!-- Información de la comanda -->
+                                        <HorizontalStackLayout Spacing="10">
+                                            <Label Text="{Binding Numero, StringFormat='#{0}'}" 
+                                                   FontSize="18" 
+                                                   FontAttributes="Bold"
+                                                   TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"/>
+                                            <Label Text="{Binding Mesa.Numero, StringFormat='Mesa {0}'}" 
+                                                   FontSize="14" 
+                                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
+                                            <Label Text="{Binding Estado}" 
+                                                   FontSize="12" 
+                                                   TextColor="White"
+                                                   BackgroundColor="{Binding Estado, Converter={StaticResource EstadoToColorConverter}}"
+                                                   Padding="8,4"/>
+                                        </HorizontalStackLayout>
+                                        
+                                        <!-- Tiempo transcurrido -->
+                                        <Label Text="{Binding TiempoTranscurrido, StringFormat='Hace {0}'}" 
+                                               FontSize="12" 
+                                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
+                                        
+                                        <!-- Productos -->
+                                        <Label Text="{Binding ProductosResumen}" 
+                                               FontSize="14" 
+                                               TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"
+                                               MaxLines="2"/>
+                                        
+                                        <!-- Observaciones si las hay -->
+                                        <Label Text="{Binding Observaciones}" 
+                                               FontSize="12" 
+                                                                                               TextColor="{AppThemeBinding Light={StaticResource WarningColor}, Dark={StaticResource WarningColor}}"
+                                               IsVisible="{Binding TieneObservaciones}"
+                                               MaxLines="1"/>
+                                    </VerticalStackLayout>
+                                    
+                                    <!-- Botones de acción -->
+                                    <VerticalStackLayout Grid.Column="1" 
+                                                         HorizontalOptions="End" 
+                                                         VerticalOptions="Center"
+                                                         Spacing="8">
+                                        
+                                        <!-- Botón para tomar comanda (solo si está Creada) -->
+                                        <Button Text="🍳 Tomar"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.TomarComandaCommand}"
+                                                CommandParameter="{Binding}"
+                                                BackgroundColor="{AppThemeBinding Light={StaticResource SuccessColor}, Dark={StaticResource SuccessColor}}"
+                                                TextColor="White"
+                                                FontSize="12"
+                                                Padding="12,8"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding PuedeTomar}"/>
+                                        
+                                        <!-- Botón para marcar como lista (solo si está EnProceso) -->
+                                        <Button Text="✅ Lista"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MarcarListaCommand}"
+                                                CommandParameter="{Binding}"
+                                                BackgroundColor="{AppThemeBinding Light={StaticResource InfoColor}, Dark={StaticResource InfoColor}}"
+                                                TextColor="White"
+                                                FontSize="12"
+                                                Padding="12,8"
+                                                CornerRadius="8"
+                                                IsVisible="{Binding PuedeMarcarLista}"/>
+                                        
+                                        <!-- Botón para ver detalle -->
+                                        <Button Text="👁️ Ver"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.VerDetalleCommand}"
+                                                CommandParameter="{Binding}"
+                                                BackgroundColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray600}}"
+                                                TextColor="White"
+                                                FontSize="12"
+                                                Padding="12,8"
+                                                CornerRadius="8"/>
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </RefreshView>
+        </Grid>
+
+        <!-- El RefreshView ya maneja su propio indicador de carga -->
+    </Grid>
+</ContentPage>

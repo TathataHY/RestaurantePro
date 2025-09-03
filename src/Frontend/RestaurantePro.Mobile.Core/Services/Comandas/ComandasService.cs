@@ -30,11 +30,22 @@ public class ComandasService : IComandasService
         try
         {
             var token = await _authService.GetTokenAsync();
-            return await _apiService.GetAsync<List<ComandaDto>>($"{BaseEndpoint}/activas", token);
+            // Usar el endpoint principal con parámetros para obtener comandas activas
+            var queryParams = "pageNumber=1&pageSize=100&soloActivas=true&incluirItems=true";
+            var result = await _apiService.GetAsync<PaginatedList<ComandaDto>>($"{BaseEndpoint}?{queryParams}", token);
+            
+            if (result.Success && result.Data != null)
+            {
+                return ApiResponse<List<ComandaDto>>.SuccessResponse(result.Data.Items, result.Message);
+            }
+            else
+            {
+                return ApiResponse<List<ComandaDto>>.ErrorResponse(result.Message ?? "Error al obtener comandas activas");
+            }
         }
         catch (Exception ex)
         {
-            return ApiResponse<List<ComandaDto>>.ErrorResponse("Error al obtener comandas activas", "Error al obtener comandas activas");
+            return ApiResponse<List<ComandaDto>>.ErrorResponse($"Error al obtener comandas activas: {ex.Message}");
         }
     }
 
@@ -47,7 +58,7 @@ public class ComandasService : IComandasService
         {
             var token = await _authService.GetTokenAsync();
             // Usar el endpoint principal con parámetros de consulta
-            var queryParams = $"mesaId={mesaId}&soloActivas=true&pageSize=100";
+            var queryParams = $"mesaId={mesaId}&soloActivas=true&pageSize=100&incluirItems=true";
             var result = await _apiService.GetAsync<PaginatedList<ComandaDto>>($"{BaseEndpoint}?{queryParams}", token);
             
             if (result.Success && result.Data != null)
@@ -197,9 +208,9 @@ public class ComandasService : IComandasService
                 return ApiResponse<ComandaDto>.ErrorResponse("El nuevo estado es requerido", "El nuevo estado es requerido");
             }
 
-            var request = new { Estado = nuevoEstado, Observaciones = observaciones };
+            var request = new { NuevoEstado = nuevoEstado, Observaciones = observaciones };
             var token = await _authService.GetTokenAsync();
-            return await _apiService.PutAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}/estado", request, token);
+            return await _apiService.PatchAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}/estado", request, token);
         }
         catch (Exception ex)
         {

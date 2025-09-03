@@ -123,12 +123,35 @@ public class ObtenerComandasPaginadasQueryHandler : IRequestHandler<ObtenerComan
                 // Agrupar items por comanda
                 var itemsPorComanda = items.GroupBy(i => i.ComandaId).ToDictionary(g => g.Key, g => g.ToList());
                 
+                // Obtener IDs de productos únicos para cargar sus nombres
+                var productoIds = items.Select(i => i.ProductoId).Distinct().ToList();
+                var productos = await _context.Productos
+                    .Where(p => productoIds.Contains(p.Id))
+                    .ToDictionaryAsync(p => p.Id, p => p, cancellationToken);
+                
                 // Asignar items a cada comanda
                 foreach (var comandaDto in comandasDto)
                 {
                     if (itemsPorComanda.TryGetValue(comandaDto.Id, out var itemsComanda))
                     {
-                        comandaDto.Items = _mapper.Map<List<ItemComandaDto>>(itemsComanda);
+                        var itemsDto = _mapper.Map<List<ItemComandaDto>>(itemsComanda);
+                        
+                        // Mapear nombres de productos manualmente
+                        foreach (var itemDto in itemsDto)
+                        {
+                            if (productos.TryGetValue(itemDto.ProductoId, out var producto))
+                            {
+                                itemDto.NombreProducto = producto.Nombre;
+                                itemDto.DescripcionProducto = producto.Descripcion;
+                            }
+                            else
+                            {
+                                itemDto.NombreProducto = $"Producto {itemDto.ProductoId}";
+                            }
+                        }
+                        
+                        // Mapear ItemComandaDto a ComandaProductoDto para el frontend
+                        comandaDto.Items = _mapper.Map<List<ComandaProductoDto>>(itemsDto);
                     }
                 }
             }
