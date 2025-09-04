@@ -118,8 +118,7 @@
         <Frame Grid.Row="1" 
                BackgroundColor="#E8F5E8" 
                Padding="12" 
-               Margin="8,0"
-               IsVisible="{Binding Estadisticas, Converter={StaticResource IsNotNullConverter}}">
+               Margin="8,0">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -185,9 +184,9 @@
 
                                 <!-- Encabezado de Comanda -->
                                 <StackLayout Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
-                                    <Label Text="{Binding Numero, StringFormat='Comanda {0}'}" 
+                                    <Label Text="{Binding NumeroDisplay, StringFormat='Comanda {0}'}" 
                                            FontSize="18" FontAttributes="Bold" TextColor="#333" />
-                                    <Label Text="{Binding MesaNumero, StringFormat='Mesa {0}'}" 
+                                    <Label Text="{Binding MesaNumeroDisplay, StringFormat='Mesa {0}'}" 
                                            FontSize="14" TextColor="#666" />
                                 </StackLayout>
 

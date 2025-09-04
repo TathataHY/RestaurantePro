@@ -86,46 +86,94 @@ public class MesaDto : INotifyPropertyChanged
     /// <summary>
     /// Color para mostrar en la UI según el estado
     /// </summary>
-    public Microsoft.Maui.Graphics.Color EstadoColor => Estado.ToLowerInvariant() switch
+    public Microsoft.Maui.Graphics.Color EstadoColor
     {
-        "disponible" => Microsoft.Maui.Graphics.Color.FromArgb("#4CAF50"), // Verde
-        "ocupada" => Microsoft.Maui.Graphics.Color.FromArgb("#F44336"),    // Rojo
-        "reservada" => Microsoft.Maui.Graphics.Color.FromArgb("#FF9800"),  // Naranja
-        "fuera_de_servicio" => Microsoft.Maui.Graphics.Color.FromArgb("#9E9E9E"), // Gris
-        _ => Microsoft.Maui.Graphics.Color.FromArgb("#607D8B") // Gris azulado por defecto
-    };
+        get
+        {
+            var normalized = new string((Estado ?? string.Empty)
+                .ToLowerInvariant()
+                .Where(char.IsLetter)
+                .ToArray());
+            return normalized switch
+            {
+                "disponible" => Microsoft.Maui.Graphics.Color.FromArgb("#4CAF50"), // Verde
+                "ocupada" => Microsoft.Maui.Graphics.Color.FromArgb("#F44336"),    // Rojo
+                "reservada" => Microsoft.Maui.Graphics.Color.FromArgb("#FF9800"),  // Naranja
+                "fueradeservicio" => Microsoft.Maui.Graphics.Color.FromArgb("#9E9E9E"), // Gris
+                _ => Microsoft.Maui.Graphics.Color.FromArgb("#607D8B") // Gris azulado por defecto
+            };
+        }
+    }
 
     /// <summary>
     /// Descripción amigable del estado
     /// </summary>
-    public string EstadoDescripcion => Estado.ToLowerInvariant() switch
+    public string EstadoDescripcion
     {
-        "disponible" => "Disponible",
-        "ocupada" => "Ocupada",
-        "reservada" => "Reservada",
-        "fuera_de_servicio" => "Fuera de Servicio",
-        _ => Estado
-    };
+        get
+        {
+            var normalized = new string((Estado ?? string.Empty)
+                .ToLowerInvariant()
+                .Where(char.IsLetter)
+                .ToArray());
+            return normalized switch
+            {
+                "disponible" => "Disponible",
+                "ocupada" => "Ocupada",
+                "reservada" => "Reservada",
+                "fueradeservicio" => "Fuera de Servicio",
+                _ => Estado
+            };
+        }
+    }
 
     /// <summary>
     /// Indica si la mesa está disponible
     /// </summary>
-    public bool Disponible => Estado.ToLowerInvariant() == "disponible";
+    public bool Disponible
+    {
+        get
+        {
+            var normalized = new string((Estado ?? string.Empty).ToLowerInvariant().Where(char.IsLetter).ToArray());
+            return normalized == "disponible";
+        }
+    }
 
     /// <summary>
     /// Indica si la mesa está ocupada
     /// </summary>
-    public bool Ocupada => Estado.ToLowerInvariant() == "ocupada";
+    public bool Ocupada
+    {
+        get
+        {
+            var normalized = new string((Estado ?? string.Empty).ToLowerInvariant().Where(char.IsLetter).ToArray());
+            return normalized == "ocupada";
+        }
+    }
 
     /// <summary>
     /// Indica si la mesa está reservada
     /// </summary>
-    public bool Reservada => Estado.ToLowerInvariant() == "reservada";
+    public bool Reservada
+    {
+        get
+        {
+            var normalized = new string((Estado ?? string.Empty).ToLowerInvariant().Where(char.IsLetter).ToArray());
+            return normalized == "reservada";
+        }
+    }
 
     /// <summary>
     /// Indica si la mesa está fuera de servicio
     /// </summary>
-    public bool FueraDeServicio => Estado.ToLowerInvariant() == "fuera_de_servicio";
+    public bool FueraDeServicio
+    {
+        get
+        {
+            var normalized = new string((Estado ?? string.Empty).ToLowerInvariant().Where(char.IsLetter).ToArray());
+            return normalized == "fueradeservicio";
+        }
+    }
 
     /// <summary>
     /// Notifica que una propiedad ha cambiado

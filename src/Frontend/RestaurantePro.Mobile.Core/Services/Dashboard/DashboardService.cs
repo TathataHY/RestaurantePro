@@ -2,6 +2,8 @@ using Microsoft.Extensions.Logging;
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Services.Api;
 using RestaurantePro.Mobile.Core.Services.Analytics;
+using RestaurantePro.Mobile.Core.Services.Mesas;
+using RestaurantePro.Mobile.Core.Services.Authentication;
 
 namespace RestaurantePro.Mobile.Core.Services.Dashboard;
 
@@ -12,12 +14,16 @@ public class DashboardService : IDashboardService
 {
     private readonly IApiService _apiService;
     private readonly IAnalyticsService _analyticsService;
+    private readonly IMesasService _mesasService;
+    private readonly IAuthService _authService;
     private readonly ILogger<DashboardService> _logger;
 
-    public DashboardService(IApiService apiService, IAnalyticsService analyticsService, ILogger<DashboardService> logger)
+    public DashboardService(IApiService apiService, IAnalyticsService analyticsService, IMesasService mesasService, IAuthService authService, ILogger<DashboardService> logger)
     {
         _apiService = apiService;
         _analyticsService = analyticsService;
+        _mesasService = mesasService;
+        _authService = authService;
         _logger = logger;
     }
 
@@ -127,14 +133,16 @@ public class DashboardService : IDashboardService
             var activeStatuses = new[] { "en_progreso", "preparando", "lista" };
             var totalActive = 0;
             
+            var token = await _authService.GetTokenAsync();
+
             foreach (var status in activeStatuses)
             {
-                var response = await _apiService.GetAsync<ApiResponse<PaginatedList<ComandaDto>>>(
-                    $"api/operaciones/comandas?estado={status}&pageSize=100");
+                var response = await _apiService.GetAsync<PaginatedList<ComandaDto>>(
+                    $"api/operaciones/comandas?estado={status}&pageSize=100", token);
                 
                 if (response.Success && response.Data != null)
                 {
-                    totalActive += response.Data.Data.Items.Count;
+                    totalActive += response.Data.Items.Count;
                 }
             }
             
@@ -154,12 +162,13 @@ public class DashboardService : IDashboardService
         {
             _logger.LogInformation("Obteniendo número de comandas pendientes desde la API");
             
-            var response = await _apiService.GetAsync<ApiResponse<PaginatedList<ComandaDto>>>(
-                "api/operaciones/comandas?estado=pendiente&pageSize=100");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<PaginatedList<ComandaDto>>(
+                "api/operaciones/comandas?estado=pendiente&pageSize=100", token);
             
             if (response.Success && response.Data != null)
             {
-                var pendingCount = response.Data.Data.Items.Count;
+                var pendingCount = response.Data.Items.Count;
                 _logger.LogInformation("Comandas pendientes obtenidas: {PendingCount}", pendingCount);
                 return pendingCount;
             }
@@ -195,21 +204,22 @@ public class DashboardService : IDashboardService
             _logger.LogInformation("Obteniendo comandas recientes desde la API");
             
             // Obtener las últimas comandas (las más recientes)
-            var response = await _apiService.GetAsync<ApiResponse<PaginatedList<ComandaDto>>>(
-                "api/operaciones/comandas?pageSize=10&sortBy=fechaCreacion&sortOrder=desc");
+            var token = await _authService.GetTokenAsync();
+            var response = await _apiService.GetAsync<PaginatedList<ComandaDto>>(
+                "api/operaciones/comandas?pageSize=10&sortBy=fechaCreacion&sortOrder=desc", token);
             
             if (response.Success && response.Data != null)
             {
-                var recentOrders = response.Data.Data.Items.Select(comanda => new OrderItem
+                var recentOrders = response.Data.Items.Select(comanda => new OrderItem
                 {
-                    Id = comanda.Id.GetHashCode(), // Convertir Guid a int para compatibilidad
+                    Id = comanda.Id.GetHashCode(),
                     OrderNumber = comanda.Numero,
-                    TableNumber = comanda.MesaNumero,
-                    CustomerName = comanda.ClienteNombre ?? "Cliente General",
+                    TableNumber = string.IsNullOrWhiteSpace(comanda.MesaNumero) ? (comanda.NumeroMesa > 0 ? $"Mesa {comanda.NumeroMesa}" : "") : comanda.MesaNumero,
+                    CustomerName = !string.IsNullOrWhiteSpace(comanda.ClienteNombre) ? comanda.ClienteNombre : (comanda.NombreCliente ?? "Cliente General"),
                     Total = comanda.Total,
-                    Status = GetStatusDisplayName(comanda.Estado),
+                    Status = !string.IsNullOrWhiteSpace(comanda.EstadoTexto) ? comanda.EstadoTexto : GetStatusDisplayName(comanda.Estado),
                     OrderTime = comanda.FechaCreacion,
-                    Items = comanda.Productos?.Select(item => item.Nombre ?? "Producto").ToList() ?? new List<string>()
+                    Items = (comanda.Productos?.Select(item => item.Nombre ?? "Producto").ToList() ?? new List<string>())
                 }).ToList();
                 
                 _logger.LogInformation("Comandas recientes obtenidas: {Count}", recentOrders.Count);
@@ -305,10 +315,9 @@ public class DashboardService : IDashboardService
         try
         {
             _logger.LogInformation("Obteniendo estado de mesas desde la API");
-            
-            var response = await _apiService.GetAsync<EstadoMesasDto>(
-                "api/operaciones/mesas/estado");
-            
+            // Usar el servicio de mesas que ya centraliza token y endpoints
+            var response = await _mesasService.ObtenerEstadoOcupacionAsync();
+
             if (response.Success && response.Data != null)
             {
                 _logger.LogInformation("Estado de mesas obtenido exitosamente: {TotalMesas} mesas", response.Data.TotalMesas);

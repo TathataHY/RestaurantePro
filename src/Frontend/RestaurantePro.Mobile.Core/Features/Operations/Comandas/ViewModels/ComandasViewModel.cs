@@ -164,13 +164,14 @@ public partial class ComandasViewModel : BaseViewModel
         {
             var response = await _comandasService.ObtenerEstadisticasAsync();
 
-            if (response.Success)
+            if (response.Success && response.Data != null)
             {
                 Estadisticas = response.Data;
             }
             else
             {
-                await _dialogService.ShowAlertAsync("Error", "No se pudieron cargar las estadísticas");
+                // Fallback seguro a cero para que la UI muestre siempre la banda
+                Estadisticas = new EstadisticasComandasDto();
             }
         }
         catch (Exception ex)

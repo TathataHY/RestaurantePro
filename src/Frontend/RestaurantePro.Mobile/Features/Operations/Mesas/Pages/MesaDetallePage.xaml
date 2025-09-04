@@ -6,6 +6,7 @@
              xmlns:vm="clr-namespace:RestaurantePro.Mobile.Core.Features.Operations.Mesas.ViewModels;assembly=RestaurantePro.Mobile.Core"
              xmlns:models="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
              x:DataType="vm:MesaDetalleViewModel"
+             x:Name="MesaDetallePageRef"
              Title="Detalle de Mesa">
 
     <!-- ViewModel se configura en code-behind con DI -->
@@ -31,7 +32,8 @@
                 
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <Label Grid.Row="0" Grid.Column="0" 
@@ -44,6 +46,17 @@
                        FontSize="16" FontAttributes="Bold" 
                        TextColor="{Binding Mesa.EstadoColor}" 
                        HorizontalOptions="End" />
+
+                <Button Grid.Row="0" Grid.Column="2" 
+                        Text="🔄" 
+                        Command="{Binding RefreshCommand}" 
+                        BackgroundColor="Transparent" 
+                        TextColor="#666" 
+                        FontSize="20" 
+                        WidthRequest="40" 
+                        HeightRequest="40" 
+                        CornerRadius="20" 
+                        Margin="8,0,0,0" />
 
                 <Label Grid.Row="1" Grid.Column="0" 
                        Text="{Binding Mesa.Capacidad, StringFormat='Capacidad: {0} personas'}" 
@@ -61,77 +74,218 @@
             </Grid>
         </Frame>
 
-        <!-- Comandas Activas -->
-        <RefreshView Grid.Row="1"
-                     IsRefreshing="{Binding IsRefreshing}"
-                     Command="{Binding RefreshCommand}">
-            <CollectionView ItemsSource="{Binding ComandasActivas}"
-                            SelectionMode="Single"
-                            SelectedItem="{Binding SelectedComanda}">
-                <CollectionView.Header>
-                    <StackLayout Padding="16,8">
-                        <Label Text="Comandas Activas" 
-                               FontSize="18" FontAttributes="Bold" 
-                               TextColor="#333" />
-                    </StackLayout>
-                </CollectionView.Header>
+        <!-- Contenido Principal con Scroll -->
+        <ScrollView Grid.Row="1">
+            <StackLayout>
+                
+                <!-- Comandas Listas para Entregar -->
+                <StackLayout IsVisible="{Binding TieneComandasListasParaEntregar}">
+                    <Label Text="🚚 Listas para Entregar" 
+                           FontSize="18" FontAttributes="Bold" 
+                           TextColor="#ffc107" 
+                           Padding="16,8,16,4" />
+                    
+                    <CollectionView ItemsSource="{Binding ComandasListasParaEntregar}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:ComandaDto">
+                                <Frame BackgroundColor="#fff3cd" 
+                                       Padding="16" 
+                                       Margin="8,2" 
+                                       CornerRadius="8" 
+                                       HasShadow="True"
+                                       BorderColor="#ffc107">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
 
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="models:ComandaDto">
-                        <Frame BackgroundColor="White" 
-                               Padding="16" 
-                               Margin="8,4" 
-                               CornerRadius="8" 
-                               HasShadow="True">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
 
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+                                        <Label Grid.Row="0" Grid.Column="0" 
+                                               Text="{Binding Numero, StringFormat='Comanda {0}'}" 
+                                               FontSize="16" FontAttributes="Bold" 
+                                               TextColor="#856404" />
 
-                                <Label Grid.Row="0" Grid.Column="0" 
-                                       Text="{Binding Numero, StringFormat='Comanda {0}'}" 
-                                       FontSize="16" FontAttributes="Bold" 
-                                       TextColor="#333" />
+                                        <Frame Grid.Row="0" Grid.Column="1" 
+                                               BackgroundColor="#ffc107"
+                                               CornerRadius="4" 
+                                               Padding="8,4" 
+                                               HorizontalOptions="Start">
+                                            <Label Text="LISTA" 
+                                                   FontSize="12" FontAttributes="Bold" 
+                                                   TextColor="#856404" />
+                                        </Frame>
 
-                                <Label Grid.Row="0" Grid.Column="1" 
-                                       Text="{Binding EstadoDescripcion}" 
-                                       FontSize="14" FontAttributes="Bold" 
-                                       TextColor="{Binding ColorEstado}" />
+                                        <Label Grid.Row="1" Grid.Column="0" 
+                                               Text="{Binding Total, StringFormat='Total: {0:C}'}" 
+                                               FontSize="14" FontAttributes="Bold" 
+                                               TextColor="#856404" />
 
-                                <Label Grid.Row="1" Grid.ColumnSpan="2" 
-                                       Text="{Binding ClienteNombre}" 
-                                       FontSize="14" TextColor="#666" 
-                                       IsVisible="{Binding ClienteNombre, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
+                                        <Button Grid.Row="1" Grid.Column="1" 
+                                                Text="Entregar" 
+                                                Command="{Binding Source={x:Reference MesaDetallePageRef}, Path=BindingContext.EntregarComandaCommand}"
+                                                CommandParameter="{Binding .}"
+                                                BackgroundColor="#28a745" 
+                                                TextColor="White" 
+                                                CornerRadius="4" 
+                                                Padding="12,6" 
+                                                FontSize="12"
+                                                IsVisible="{Binding PuedeEntregar}" />
 
-                                <Label Grid.Row="2" Grid.Column="0" 
-                                       Text="{Binding Total, StringFormat='Total: {0:C}'}" 
-                                       FontSize="14" FontAttributes="Bold" 
-                                       TextColor="#28a745" />
+                                        <Label Grid.Row="2" Grid.ColumnSpan="2" 
+                                               Text="{Binding ProductosResumen}" 
+                                               FontSize="12" TextColor="#856404" 
+                                               IsVisible="{Binding ProductosResumen, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
+                                    </Grid>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </StackLayout>
 
-                                <Label Grid.Row="2" Grid.Column="1" 
-                                       Text="{Binding FechaCreacion, StringFormat='{0:HH:mm}'}" 
-                                       FontSize="12" TextColor="#666" />
-                            </Grid>
-                        </Frame>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
+                <!-- Comandas Listas para Cobrar -->
+                <StackLayout IsVisible="{Binding TieneComandasListasParaCobrar}">
+                    <Label Text="💰 Listas para Cobrar" 
+                           FontSize="18" FontAttributes="Bold" 
+                           TextColor="#28a745" 
+                           Padding="16,8,16,4" />
+                    
+                    <CollectionView ItemsSource="{Binding ComandasListasParaCobrar}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:ComandaDto">
+                                <Frame BackgroundColor="#d4edda" 
+                                       Padding="16" 
+                                       Margin="8,2" 
+                                       CornerRadius="8" 
+                                       HasShadow="True"
+                                       BorderColor="#28a745">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
 
-                <CollectionView.EmptyView>
-                    <StackLayout Padding="16" HorizontalOptions="Center">
-                        <Label Text="No hay comandas activas para esta mesa" 
-                               FontSize="16" TextColor="#666" 
-                               HorizontalOptions="Center" />
-                    </StackLayout>
-                </CollectionView.EmptyView>
-            </CollectionView>
-        </RefreshView>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Label Grid.Row="0" Grid.Column="0" 
+                                               Text="{Binding Numero, StringFormat='Comanda {0}'}" 
+                                               FontSize="16" FontAttributes="Bold" 
+                                               TextColor="#155724" />
+
+                                        <Frame Grid.Row="0" Grid.Column="1" 
+                                               BackgroundColor="#28a745"
+                                               CornerRadius="4" 
+                                               Padding="8,4" 
+                                               HorizontalOptions="Start">
+                                            <Label Text="ENTREGADA" 
+                                                   FontSize="12" FontAttributes="Bold" 
+                                                   TextColor="#155724" />
+                                        </Frame>
+
+                                        <Label Grid.Row="1" Grid.Column="0" 
+                                               Text="{Binding Total, StringFormat='Total: {0:C}'}" 
+                                               FontSize="14" FontAttributes="Bold" 
+                                               TextColor="#155724" />
+
+                                        <Button Grid.Row="1" Grid.Column="1" 
+                                                Text="Cobrar" 
+                                                Command="{Binding Source={x:Reference MesaDetallePageRef}, Path=BindingContext.CobrarComandaCommand}"
+                                                CommandParameter="{Binding .}"
+                                                BackgroundColor="#dc3545" 
+                                                TextColor="White" 
+                                                CornerRadius="4" 
+                                                Padding="12,6" 
+                                                FontSize="12"
+                                                IsVisible="{Binding PuedeCobrar}" />
+
+                                        <Label Grid.Row="2" Grid.ColumnSpan="2" 
+                                               Text="{Binding ProductosResumen}" 
+                                               FontSize="12" TextColor="#155724" 
+                                               IsVisible="{Binding ProductosResumen, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
+                                    </Grid>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </StackLayout>
+
+                <!-- Comandas Activas (Otras) -->
+                <StackLayout IsVisible="{Binding TieneComandasActivas}">
+                    <Label Text="📋 Comandas Activas" 
+                           FontSize="18" FontAttributes="Bold" 
+                           TextColor="#333" 
+                           Padding="16,8,16,4" />
+                    
+                    <CollectionView ItemsSource="{Binding ComandasActivas}"
+                                    SelectionMode="Single"
+                                    SelectedItem="{Binding SelectedComanda}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="models:ComandaDto">
+                                <Frame BackgroundColor="White" 
+                                       Padding="16" 
+                                       Margin="8,4" 
+                                       CornerRadius="8" 
+                                       HasShadow="True">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <Label Grid.Row="0" Grid.Column="0" 
+                                               Text="{Binding Numero, StringFormat='Comanda {0}'}" 
+                                               FontSize="16" FontAttributes="Bold" 
+                                               TextColor="#333" />
+
+                                        <Label Grid.Row="0" Grid.Column="1" 
+                                               Text="{Binding EstadoDescripcion}" 
+                                               FontSize="14" FontAttributes="Bold" 
+                                               TextColor="{Binding ColorEstado}" />
+
+                                        <Label Grid.Row="1" Grid.ColumnSpan="2" 
+                                               Text="{Binding ClienteNombre}" 
+                                               FontSize="14" TextColor="#666" 
+                                               IsVisible="{Binding ClienteNombre, Converter={StaticResource IsNotNullOrEmptyConverter}}" />
+
+                                        <Label Grid.Row="2" Grid.Column="0" 
+                                               Text="{Binding Total, StringFormat='Total: {0:C}'}" 
+                                               FontSize="14" FontAttributes="Bold" 
+                                               TextColor="#28a745" />
+
+                                        <Label Grid.Row="2" Grid.Column="1" 
+                                               Text="{Binding FechaCreacion, StringFormat='{0:HH:mm}'}" 
+                                               FontSize="12" TextColor="#666" />
+                                    </Grid>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </StackLayout>
+
+                <!-- Mensaje cuando no hay comandas -->
+                <StackLayout IsVisible="{Binding TieneComandasActivas, Converter={StaticResource InverseBooleanConverter}}"
+                             Padding="16" HorizontalOptions="Center">
+                    <Label Text="No hay comandas activas para esta mesa" 
+                           FontSize="16" TextColor="#666" 
+                           HorizontalOptions="Center" />
+                </StackLayout>
+            </StackLayout>
+        </ScrollView>
 
         <!-- Botones de Acción con Scroll Horizontal -->
         <ScrollView Grid.Row="2" 

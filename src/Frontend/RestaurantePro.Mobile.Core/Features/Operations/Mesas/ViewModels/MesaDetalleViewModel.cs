@@ -47,6 +47,10 @@ public partial class MesaDetalleViewModel : BaseViewModel
         Title = "Detalle de Mesa";
         Mesa = new MesaDto();
         ComandasActivas = new ObservableCollection<ComandaDto>();
+        
+        // Inicializar comandos
+        EntregarComandaCommand = new AsyncRelayCommand<ComandaDto>(EntregarComandaAsync);
+        CobrarComandaCommand = new AsyncRelayCommand<ComandaDto>(CobrarComandaAsync);
     }
 
     /// <summary>
@@ -55,6 +59,28 @@ public partial class MesaDetalleViewModel : BaseViewModel
     public bool PuedeAsignar => Mesa?.Estado?.ToLowerInvariant() == "disponible";
     public bool PuedeLiberar => Mesa?.Estado?.ToLowerInvariant() == "ocupada";
     public bool TieneComandasActivas => ComandasActivas?.Any() == true;
+    
+    /// <summary>
+    /// Comandas listas para entregar (estado "Lista")
+    /// </summary>
+    public IEnumerable<ComandaDto> ComandasListasParaEntregar => 
+        ComandasActivas?.Where(c => c.Estado?.ToLowerInvariant() == "lista") ?? Enumerable.Empty<ComandaDto>();
+    
+    /// <summary>
+    /// Comandas listas para cobrar (estado "Entregada")
+    /// </summary>
+    public IEnumerable<ComandaDto> ComandasListasParaCobrar => 
+        ComandasActivas?.Where(c => c.Estado?.ToLowerInvariant() == "entregada") ?? Enumerable.Empty<ComandaDto>();
+    
+    /// <summary>
+    /// Indica si hay comandas listas para entregar
+    /// </summary>
+    public bool TieneComandasListasParaEntregar => ComandasListasParaEntregar.Any();
+    
+    /// <summary>
+    /// Indica si hay comandas listas para cobrar
+    /// </summary>
+    public bool TieneComandasListasParaCobrar => ComandasListasParaCobrar.Any();
 
     /// <summary>
     /// Inicializar el ViewModel con ID de mesa
@@ -169,6 +195,10 @@ public partial class MesaDetalleViewModel : BaseViewModel
                 
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] ComandasActivas collection count: {ComandasActivas.Count}");
                 OnPropertyChanged(nameof(TieneComandasActivas));
+                OnPropertyChanged(nameof(ComandasListasParaEntregar));
+                OnPropertyChanged(nameof(ComandasListasParaCobrar));
+                OnPropertyChanged(nameof(TieneComandasListasParaEntregar));
+                OnPropertyChanged(nameof(TieneComandasListasParaCobrar));
             }
             else
             {
@@ -426,6 +456,126 @@ public partial class MesaDetalleViewModel : BaseViewModel
         catch (Exception ex)
         {
             await _dialogService.ShowAlertAsync("Error", $"Error al crear comanda: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Comando para entregar una comanda
+    /// </summary>
+    public IAsyncRelayCommand<ComandaDto> EntregarComandaCommand { get; }
+
+    /// <summary>
+    /// Entregar una comanda lista al cliente
+    /// </summary>
+    private async Task EntregarComandaAsync(ComandaDto comanda)
+    {
+        System.Diagnostics.Debug.WriteLine($"[DEBUG] EntregarComandaAsync llamado con comanda: {comanda?.Id}");
+        if (comanda == null) return;
+
+        var confirmacion = await _dialogService.ShowConfirmAsync(
+            "Confirmar Entrega",
+            $"¿Está seguro que desea entregar la comanda #{comanda.Numero} al cliente?");
+
+        if (!confirmacion) return;
+
+        IsBusy = true;
+
+        try
+        {
+            var response = await _comandasService.CambiarEstadoComandaAsync(
+                comanda.Id,
+                "entregada",
+                "Comanda entregada al cliente");
+
+            if (response.Success)
+            {
+                await _dialogService.ShowAlertAsync("Éxito", 
+                    $"Comanda #{comanda.Numero} entregada correctamente");
+                await LoadComandasActivasAsync();
+                
+                // Notificar cambios en las propiedades calculadas
+                OnPropertyChanged(nameof(ComandasListasParaEntregar));
+                OnPropertyChanged(nameof(ComandasListasParaCobrar));
+                OnPropertyChanged(nameof(TieneComandasListasParaEntregar));
+                OnPropertyChanged(nameof(TieneComandasListasParaCobrar));
+            }
+            else
+            {
+                await _dialogService.ShowAlertAsync("Error", response.Message ?? "Error al entregar la comanda");
+            }
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error inesperado: {ex.Message}");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Comando para cobrar una comanda
+    /// </summary>
+    public IAsyncRelayCommand<ComandaDto> CobrarComandaCommand { get; }
+
+    /// <summary>
+    /// Cobrar una comanda entregada
+    /// </summary>
+    private async Task CobrarComandaAsync(ComandaDto comanda)
+    {
+        if (comanda == null) return;
+
+        var confirmacion = await _dialogService.ShowConfirmAsync(
+            "Confirmar Cobro",
+            $"¿Está seguro que desea cobrar la comanda #{comanda.Numero} por ${comanda.Total:F2}?");
+
+        if (!confirmacion) return;
+
+        // Seleccionar método de pago
+        var metodoPago = await _dialogService.ShowActionSheetAsync(
+            "Método de Pago",
+            $"Comanda #{comanda.Numero} - Total: ${comanda.Total:F2}",
+            "Cancelar",
+            "Efectivo", "Tarjeta", "Transferencia");
+
+        if (string.IsNullOrWhiteSpace(metodoPago) || metodoPago == "Cancelar")
+            return;
+
+        IsBusy = true;
+
+        try
+        {
+            var response = await _comandasService.CambiarEstadoComandaAsync(
+                comanda.Id,
+                "finalizada",
+                $"Comanda cobrada - Método: {metodoPago} - Total: ${comanda.Total:F2}");
+
+            if (response.Success)
+            {
+                await _dialogService.ShowAlertAsync("Éxito", 
+                    $"Comanda #{comanda.Numero} cobrada correctamente por ${comanda.Total:F2} ({metodoPago})");
+                await LoadComandasActivasAsync();
+                
+                // Notificar cambios en las propiedades calculadas
+                OnPropertyChanged(nameof(ComandasListasParaEntregar));
+                OnPropertyChanged(nameof(ComandasListasParaCobrar));
+                OnPropertyChanged(nameof(TieneComandasListasParaEntregar));
+                OnPropertyChanged(nameof(TieneComandasListasParaCobrar));
+                OnPropertyChanged(nameof(TieneComandasActivas));
+            }
+            else
+            {
+                await _dialogService.ShowAlertAsync("Error", response.Message ?? "Error al cobrar la comanda");
+            }
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error inesperado: {ex.Message}");
+        }
+        finally
+        {
+            IsBusy = false;
         }
     }
 

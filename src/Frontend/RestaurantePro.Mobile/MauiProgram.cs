@@ -212,7 +212,13 @@ public static class MauiProgram
 		services.AddTransient<ModernDashboardPage>();
 		
 		// Dashboard Service
-		services.AddTransient<IDashboardService, DashboardService>();
+		services.AddTransient<IDashboardService>(sp =>
+			new DashboardService(
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>(),
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Analytics.IAnalyticsService>(),
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Mesas.IMesasService>(),
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService>(),
+				sp.GetRequiredService<ILogger<DashboardService>>()));
 
 		// ViewModels desde Mobile.Core - Operaciones
 		services.AddTransient<MesasViewModel>();

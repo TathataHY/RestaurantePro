@@ -16,19 +16,48 @@ public class ComandaDto
     public string Numero { get; set; } = string.Empty;
 
     /// <summary>
+    /// Número de comanda enviado por backend (alternativo)
+    /// </summary>
+    public string NumeroComanda { get; set; } = string.Empty;
+
+    /// <summary>
     /// ID de la mesa asociada
     /// </summary>
     public Guid MesaId { get; set; }
 
     /// <summary>
-    /// Número de la mesa
+    /// Número de la mesa (string usado en mobile). Si no viene, usar <see cref="NumeroMesa"/>.
     /// </summary>
     public string MesaNumero { get; set; } = string.Empty;
 
     /// <summary>
-    /// Estado actual de la comanda
+    /// Número de la mesa como entero (propiedad que viene del backend)
+    /// </summary>
+    public int NumeroMesa { get; set; }
+
+    /// <summary>
+    /// Número de mesa para mostrar (fallback a NumeroMesa si MesaNumero está vacío)
+    /// </summary>
+    public string MesaNumeroDisplay => !string.IsNullOrWhiteSpace(MesaNumero)
+        ? MesaNumero
+        : (NumeroMesa > 0 ? NumeroMesa.ToString() : string.Empty);
+
+    /// <summary>
+    /// Número de comanda para mostrar con fallback seguro
+    /// </summary>
+    public string NumeroDisplay => !string.IsNullOrWhiteSpace(Numero)
+        ? Numero
+        : (!string.IsNullOrWhiteSpace(NumeroComanda) ? NumeroComanda : Id.ToString().Substring(0, 8).ToUpper());
+
+    /// <summary>
+    /// Estado actual de la comanda (texto si está disponible)
     /// </summary>
     public string Estado { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Estado en texto amigable (propiedad enviada por backend)
+    /// </summary>
+    public string EstadoTexto { get; set; } = string.Empty;
 
     /// <summary>
     /// ID del cliente (si está disponible)
@@ -36,9 +65,14 @@ public class ComandaDto
     public Guid? ClienteId { get; set; }
 
     /// <summary>
-    /// Nombre del cliente
+    /// Nombre del cliente (mobile)
     /// </summary>
     public string ClienteNombre { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Nombre del cliente (propiedad enviada por backend)
+    /// </summary>
+    public string? NombreCliente { get; set; }
 
     /// <summary>
     /// Fecha y hora de creación
@@ -93,51 +127,82 @@ public class ComandaDto
     /// <summary>
     /// Indica si la comanda está activa
     /// </summary>
-    public bool EstaActiva => Estado.ToLowerInvariant() switch
+    private static string Normalize(string? value)
     {
-        "pendiente" => true,
-        "en_preparacion" => true,
-        "lista" => true,
-        _ => false
-    };
+        return new string((value ?? string.Empty).ToLowerInvariant().Where(char.IsLetter).ToArray());
+    }
+
+    public bool EstaActiva
+    {
+        get
+        {
+            var estado = Normalize(Estado);
+            var estadoTexto = Normalize(EstadoTexto);
+            return estado is "pendiente" or "enpreparacion" or "preparando" or "lista" or "enproceso" or "creada"
+                || estadoTexto is "pendiente" or "enpreparacion" or "preparando" or "lista" or "enproceso" or "creada";
+        }
+    }
 
     /// <summary>
     /// Indica si la comanda puede ser editada
     /// </summary>
-    public bool PuedeSerEditada => Estado.ToLowerInvariant() switch
+    public bool PuedeSerEditada
     {
-        "pendiente" => true,
-        "en_preparacion" => false,
-        _ => false
-    };
+        get
+        {
+            var estado = Normalize(Estado);
+            return estado is "pendiente" or "creada";
+        }
+    }
 
     /// <summary>
     /// Color para mostrar en la UI según el estado
     /// </summary>
-    public string ColorEstado => Estado.ToLowerInvariant() switch
+    public string ColorEstado
     {
-        "pendiente" => "#FFC107",      // Amarillo
-        "en_preparacion" => "#FF9800", // Naranja
-        "lista" => "#4CAF50",          // Verde
-        "entregada" => "#2196F3",      // Azul
-        "cancelada" => "#F44336",      // Rojo
-        "finalizada" => "#9E9E9E",     // Gris
-        _ => "#607D8B"                 // Gris azulado por defecto
-    };
+        get
+        {
+            var estado = Normalize(Estado);
+            if (string.IsNullOrWhiteSpace(estado)) estado = Normalize(EstadoTexto);
+            return estado switch
+            {
+                "pendiente" => "#FFC107",
+                "enpreparacion" => "#FF9800",
+                "preparando" => "#FF9800",
+                "lista" => "#4CAF50",
+                "entregada" => "#2196F3",
+                "cancelada" => "#F44336",
+                "finalizada" => "#9E9E9E",
+                "enproceso" => "#FF9800",
+                _ => "#607D8B"
+            };
+        }
+    }
 
     /// <summary>
     /// Descripción amigable del estado
     /// </summary>
-    public string EstadoDescripcion => Estado.ToLowerInvariant() switch
+    public string EstadoDescripcion
     {
-        "pendiente" => "Pendiente",
-        "en_preparacion" => "En Preparación", 
-        "lista" => "Lista",
-        "entregada" => "Entregada",
-        "cancelada" => "Cancelada",
-        "finalizada" => "Finalizada",
-        _ => Estado
-    };
+        get
+        {
+            if (!string.IsNullOrWhiteSpace(EstadoTexto)) return EstadoTexto;
+            var estado = Normalize(Estado);
+            return estado switch
+            {
+                "pendiente" => "Pendiente",
+                "enpreparacion" => "En Preparación",
+                "preparando" => "En Preparación",
+                "lista" => "Lista",
+                "entregada" => "Entregada",
+                "cancelada" => "Cancelada",
+                "finalizada" => "Finalizada",
+                "enproceso" => "En Proceso",
+                "creada" => "Creada",
+                _ => string.IsNullOrWhiteSpace(Estado) ? "-" : Estado
+            };
+        }
+    }
 
     /// <summary>
     /// Información de la mesa asociada
@@ -195,6 +260,16 @@ public class ComandaDto
     /// Indica si la comanda puede ser marcada como lista
     /// </summary>
     public bool PuedeMarcarLista => Estado.ToLowerInvariant() == "enproceso";
+
+    /// <summary>
+    /// Indica si la comanda puede ser entregada al cliente
+    /// </summary>
+    public bool PuedeEntregar => Estado.ToLowerInvariant() == "lista";
+
+    /// <summary>
+    /// Indica si la comanda puede ser cobrada
+    /// </summary>
+    public bool PuedeCobrar => Estado.ToLowerInvariant() == "entregada";
 
     /// <summary>
     /// Indica si la comanda tiene observaciones

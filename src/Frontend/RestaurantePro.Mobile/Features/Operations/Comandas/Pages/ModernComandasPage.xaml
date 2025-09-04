@@ -26,7 +26,7 @@
                         <Label Text="Total" 
                                Style="{StaticResource CaptionStyle}" 
                                HorizontalOptions="Center" />
-                        <Label Text="{Binding Estadisticas.TotalComandas}" 
+                        <Label Text="{Binding Estadisticas.TotalComandasActivas}" 
                                Style="{StaticResource H2Style}" 
                                TextColor="{StaticResource TextPrimary}"
                                HorizontalOptions="Center" />
@@ -58,7 +58,7 @@
                         <Label Text="En Progreso" 
                                Style="{StaticResource CaptionStyle}" 
                                HorizontalOptions="Center" />
-                        <Label Text="{Binding Estadisticas.ComandasEnProgreso}" 
+                        <Label Text="{Binding Estadisticas.ComandasEnPreparacion}" 
                                Style="{StaticResource H2Style}" 
                                TextColor="{StaticResource PrimaryColor}"
                                HorizontalOptions="Center" />
@@ -74,7 +74,7 @@
                         <Label Text="Completadas" 
                                Style="{StaticResource CaptionStyle}" 
                                HorizontalOptions="Center" />
-                        <Label Text="{Binding Estadisticas.ComandasCompletadas}" 
+                        <Label Text="{Binding Estadisticas.ComandasCompletadasHoy}" 
                                Style="{StaticResource H2Style}" 
                                TextColor="{StaticResource SuccessColor}"
                                HorizontalOptions="Center" />
@@ -115,7 +115,7 @@
                         
                         <Button Grid.Column="2" Grid.Row="0"
                                 Text="🔍 Buscar"
-                                Command="{Binding BuscarComandaCommand}"
+                                Command="{Binding LoadComandasCommand}"
                                 Style="{StaticResource SecondaryButtonStyle}" />
                         
                         <Button Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="3"
@@ -142,14 +142,14 @@
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
                             <controls:ModernCard Margin="8">
-                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" 
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" 
                                       ColumnDefinitions="*,Auto">
                                     
                                     <!-- Header de Comanda -->
                                     <StackLayout Grid.Row="0" Grid.Column="0" 
                                                  Orientation="Horizontal" 
                                                  VerticalOptions="Center">
-                                        <Label Text="{Binding Numero, StringFormat='Comanda {0}'}" 
+                                        <Label Text="{Binding NumeroDisplay, StringFormat='Comanda {0}'}" 
                                                Style="{StaticResource H3Style}" />
                                         <Label Text="{Binding Estado, Converter={StaticResource EstadoIconConverter}}" 
                                                FontSize="16" 
@@ -170,7 +170,7 @@
                                     <!-- Información de Comanda -->
                                     <VerticalStackLayout Grid.Row="1" Grid.ColumnSpan="2" 
                                                          Spacing="4" Margin="0,12,0,0">
-                                        <Label Text="{Binding MesaNumero, StringFormat='🪑 Mesa: {0}'}" 
+                                        <Label Text="{Binding MesaNumeroDisplay, StringFormat='🪑 Mesa: {0}'}" 
                                                Style="{StaticResource BodyStyle}" />
                                         <Label Text="{Binding ClienteNombre, StringFormat='👤 Cliente: {0}'}" 
                                                Style="{StaticResource BodyStyle}" />
@@ -195,11 +195,11 @@
                                                                Style="{StaticResource CaptionStyle}"
                                                                VerticalOptions="Center" />
                                                         <Label Grid.Column="1"
-                                                               Text="{Binding ProductoNombre}"
+                                                               Text="{Binding Nombre}"
                                                                Style="{StaticResource CaptionStyle}"
                                                                VerticalOptions="Center" />
                                                         <Label Grid.Column="2"
-                                                               Text="{Binding Precio, StringFormat='{0:C}'}"
+                                                               Text="{Binding PrecioFinal, StringFormat='{0:C}'}"
                                                                Style="{StaticResource CaptionStyle}"
                                                                VerticalOptions="Center" />
                                                     </Grid>
