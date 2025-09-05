@@ -285,6 +285,34 @@
                 </StackLayout>
             </controls:ModernCard>
 
+            <!-- Entorno/Cliente -->
+            <controls:ModernCard>
+                <StackLayout Spacing="16">
+                    <Label Text="Entorno/Cliente"
+                           Style="{StaticResource H2Style}" />
+
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="15">
+                        <StackLayout Grid.Column="0">
+                            <Label Text="Seleccionar entorno"
+                                   Style="{StaticResource BodyStyle}"
+                                   FontAttributes="Bold" />
+                            <Label Text="Local, Beta u otros clientes"
+                                   Style="{StaticResource CaptionStyle}" />
+                        </StackLayout>
+                        <Picker Grid.Column="1"
+                                Title="Seleccionar"
+                                SelectedItem="{Binding SelectedEnvironment}"
+                                ItemsSource="{Binding AvailableEnvironments}"
+                                ItemDisplayBinding="{Binding Name}"
+                                VerticalOptions="Center" />
+                    </Grid>
+
+                    <Button Text="Aplicar Entorno"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Command="{Binding ApplyEnvironmentCommand}" />
+                </StackLayout>
+            </controls:ModernCard>
+
             <!-- Sección de Accesibilidad -->
             <controls:ModernCard>
                 <StackLayout Spacing="16">

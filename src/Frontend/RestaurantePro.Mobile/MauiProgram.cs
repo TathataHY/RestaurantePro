@@ -55,16 +55,19 @@ public static class MauiProgram
 				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
 			});
 
-		// Configurar HttpClient con URL base del backend y autenticación básica
+		// Configurar HttpClient con URL base del backend y autenticación básica según perfil
 		builder.Services.AddHttpClient<RestaurantePro.Mobile.Core.Services.Api.IApiService, RestaurantePro.Mobile.Core.Services.Api.ApiService>(client =>
 		{
-			// URL del backend RestaurantePro (cambiar a tu URL de hosting)
-			client.BaseAddress = new Uri(ApiConfig.BaseUrl);
+			// URL del backend por entorno/cliente
+			client.BaseAddress = new Uri(ApiConfig.GetBaseUrl());
 			client.Timeout = ApiConfig.RequestTimeout;
 			
-			// Configurar autenticación básica para el hosting
-			var credentials = ApiConfig.HostingCredentials.GetEncodedCredentials();
-			client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credentials);
+			// Configurar autenticación básica solo si el perfil lo requiere
+			var basic = ApiConfig.GetEncodedBasicCredentials();
+			if (!string.IsNullOrEmpty(basic))
+			{
+				client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", basic);
+			}
 			// Evitar conexiones mantenidas si el hosting cierra abruptamente
 			client.DefaultRequestHeaders.ConnectionClose = true;
 		})
@@ -79,12 +82,15 @@ public static class MauiProgram
 		// Configurar HttpClient para AuthService
 		builder.Services.AddHttpClient<RestaurantePro.Mobile.Core.Services.Authentication.AuthService>(client =>
 		{
-			client.BaseAddress = new Uri(ApiConfig.BaseUrl);
+			client.BaseAddress = new Uri(ApiConfig.GetBaseUrl());
 			client.Timeout = ApiConfig.RequestTimeout;
 			
-			// Configurar autenticación básica para el hosting
-			var credentials = ApiConfig.HostingCredentials.GetEncodedCredentials();
-			client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credentials);
+			// Configurar autenticación básica solo si el perfil lo requiere
+			var basic = ApiConfig.GetEncodedBasicCredentials();
+			if (!string.IsNullOrEmpty(basic))
+			{
+				client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", basic);
+			}
 			// Evitar conexiones mantenidas si el hosting cierra abruptamente
 			client.DefaultRequestHeaders.ConnectionClose = true;
 		})

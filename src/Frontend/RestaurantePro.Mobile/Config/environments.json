@@ -1,0 +1,22 @@
+{
+  "profiles": [
+    {
+      "id": "local",
+      "name": "Local",
+      "baseUrl": "http://10.0.2.2:8080/",
+      "usesBasic": false,
+      "tenantId": null
+    },
+    {
+      "id": "beta",
+      "name": "Beta (SmarterASP)",
+      "baseUrl": "http://limoncitoydedos-001-site1.jtempurl.com/",
+      "usesBasic": true,
+      "basicUser": "11263519",
+      "basicPass": "60-dayfreetrial",
+      "tenantId": null
+    }
+  ],
+  "default": "local"
+}
+

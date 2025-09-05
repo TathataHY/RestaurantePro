@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using RestaurantePro.Mobile.Services;
+using RestaurantePro.Mobile.Config;
 
 namespace RestaurantePro.Mobile.ViewModels;
 
@@ -31,6 +32,7 @@ public class ConfiguracionViewModel : INotifyPropertyChanged
         TestAccessibilityCommand = new Command(async () => await TestAccessibilityAsync());
         ResetAccessibilityCommand = new Command(async () => await ResetAccessibilityAsync());
         ApplyLanguageCommand = new Command(async () => await ApplyLanguageAsync());
+        ApplyEnvironmentCommand = new Command(async () => await ApplyEnvironmentAsync());
         
         // Suscribirse a cambios de tema
         _themeService.PropertyChanged += OnThemeServicePropertyChanged;
@@ -341,6 +343,67 @@ public class ConfiguracionViewModel : INotifyPropertyChanged
     public ICommand TestAccessibilityCommand { get; }
     public ICommand ResetAccessibilityCommand { get; }
     public ICommand ApplyLanguageCommand { get; }
+    public ICommand ApplyEnvironmentCommand { get; }
+
+    #endregion
+
+    #region Entornos/Clientes (Debug)
+
+    public class EnvironmentItem
+    {
+        public string Id { get; set; }
+        public string Name { get; set; }
+        public override string ToString() => Name;
+    }
+
+    public List<EnvironmentItem> AvailableEnvironments
+    {
+        get
+        {
+            var options = ApiConfig.GetEnvironmentOptions();
+            return options.Select(o => new EnvironmentItem { Id = o.Id, Name = o.Name }).ToList();
+        }
+    }
+
+    private EnvironmentItem _selectedEnvironment;
+    public EnvironmentItem SelectedEnvironment
+    {
+        get
+        {
+            if (_selectedEnvironment == null)
+            {
+                var id = ApiConfig.GetActiveEnvironmentId();
+                var name = ApiConfig.GetActiveEnvironmentName();
+                _selectedEnvironment = new EnvironmentItem { Id = id, Name = name };
+            }
+            return _selectedEnvironment;
+        }
+        set
+        {
+            if (_selectedEnvironment?.Id != value?.Id)
+            {
+                _selectedEnvironment = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    private async Task ApplyEnvironmentAsync()
+    {
+        try
+        {
+            if (SelectedEnvironment != null)
+            {
+                ApiConfig.SetActiveEnvironment(SelectedEnvironment.Id);
+                await Application.Current.MainPage.DisplayAlert(
+                    "Entorno", $"Entorno cambiado a {SelectedEnvironment.Name}. Reinicia la app para aplicar completamente.", "OK");
+            }
+        }
+        catch (Exception ex)
+        {
+            await Application.Current.MainPage.DisplayAlert("Error", ex.Message, "OK");
+        }
+    }
 
     #endregion
 
