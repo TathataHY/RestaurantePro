@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace RestaurantePro.Api.Controllers;
 
@@ -6,6 +7,7 @@ namespace RestaurantePro.Api.Controllers;
 /// Controlador para verificar el estado de salud de la API
 /// </summary>
 [ApiController]
+[AllowAnonymous]
 [Route("api/[controller]")]
 public class HealthController : ControllerBase
 {

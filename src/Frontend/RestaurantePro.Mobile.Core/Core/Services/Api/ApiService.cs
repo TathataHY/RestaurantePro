@@ -204,13 +204,12 @@ public class ApiService : IApiService
     {
         if (!string.IsNullOrEmpty(token))
         {
-            _httpClient.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", token);
+            // Mantener Authorization: Basic configurado en HttpClient (hosting SmarterASP)
+            // Enviar el JWT en un header separado para que el backend lo lea explícitamente
+            _httpClient.DefaultRequestHeaders.Remove("X-Bearer-Token");
+            _httpClient.DefaultRequestHeaders.Add("X-Bearer-Token", token);
         }
-        else
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = null;
-        }
+        // Si no hay token, mantenemos únicamente el Authorization existente (Basic)
     }
 
     private static JsonSerializerOptions GetJsonOptions()

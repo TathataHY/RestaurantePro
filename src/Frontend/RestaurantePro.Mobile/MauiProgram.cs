@@ -65,6 +65,8 @@ public static class MauiProgram
 			// Configurar autenticación básica para el hosting
 			var credentials = ApiConfig.HostingCredentials.GetEncodedCredentials();
 			client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credentials);
+			// Evitar conexiones mantenidas si el hosting cierra abruptamente
+			client.DefaultRequestHeaders.ConnectionClose = true;
 		})
 		.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
 		{
@@ -83,6 +85,8 @@ public static class MauiProgram
 			// Configurar autenticación básica para el hosting
 			var credentials = ApiConfig.HostingCredentials.GetEncodedCredentials();
 			client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", credentials);
+			// Evitar conexiones mantenidas si el hosting cierra abruptamente
+			client.DefaultRequestHeaders.ConnectionClose = true;
 		})
 		.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
 		{

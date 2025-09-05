@@ -78,6 +78,20 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
                     ValidAudience = jwtSettings.Audience,
                     ClockSkew = TimeSpan.Zero
                 };
+
+                // Permitir leer el token desde un header personalizado para no tocar Authorization: Basic
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var tokenFromHeader = context.Request.Headers["X-Bearer-Token"].FirstOrDefault();
+                        if (!string.IsNullOrEmpty(tokenFromHeader))
+                        {
+                            context.Token = tokenFromHeader;
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
             });
 
             // Registrar servicios de Identity
