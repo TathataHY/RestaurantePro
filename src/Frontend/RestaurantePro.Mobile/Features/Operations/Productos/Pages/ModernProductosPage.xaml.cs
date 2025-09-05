@@ -72,10 +72,11 @@ public partial class ModernProductosPage : ContentPage
             }
         }
 
-        // Animar FAB
-        if (MainFab != null)
+        // Animar FAB si existe en la vista
+        var fab = this.FindByName<FloatingActionButton>("MainFab");
+        if (fab != null)
         {
-            await MainFab.ScaleTo(1, 400, Easing.BounceOut);
+            await fab.ScaleTo(1, 400, Easing.BounceOut);
         }
     }
 

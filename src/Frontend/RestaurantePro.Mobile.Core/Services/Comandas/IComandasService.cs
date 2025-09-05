@@ -36,12 +36,12 @@ public interface IComandasService
     /// <summary>
     /// Actualizar cantidad de un producto en la comanda
     /// </summary>
-    Task<ApiResponse<ComandaDto>> ActualizarCantidadProductoAsync(Guid comandaId, Guid productoId, int nuevaCantidad);
+    Task<ApiResponse<ComandaDto>> ActualizarCantidadProductoAsync(Guid comandaId, Guid itemId, int nuevaCantidad);
 
     /// <summary>
     /// Remover producto de la comanda
     /// </summary>
-    Task<ApiResponse<ComandaDto>> RemoverProductoAsync(Guid comandaId, Guid productoId);
+    Task<ApiResponse<ComandaDto>> RemoverProductoAsync(Guid comandaId, Guid itemId);
 
     /// <summary>
     /// Cambiar estado de la comanda

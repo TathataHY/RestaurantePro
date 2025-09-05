@@ -115,6 +115,7 @@ public class OperacionesMappingProfile : Profile
 
         // ItemComanda (Domain) → ComandaProductoDto (para el frontend)
         CreateMap<ItemComanda, ComandaProductoDto>()
+            .ForMember(dest => dest.ItemId, opt => opt.MapFrom(src => src.Id))
             .ForMember(dest => dest.ProductoId, opt => opt.MapFrom(src => src.ProductoId))
             .ForMember(dest => dest.Nombre, opt => opt.Ignore()) // Se llenará manualmente si es necesario
             .ForMember(dest => dest.Descripcion, opt => opt.Ignore()) // Se llenará manualmente si es necesario
@@ -128,6 +129,7 @@ public class OperacionesMappingProfile : Profile
 
         // ItemComandaDto → ComandaProductoDto (para el frontend)
         CreateMap<ItemComandaDto, ComandaProductoDto>()
+            .ForMember(dest => dest.ItemId, opt => opt.MapFrom(src => src.Id))
             .ForMember(dest => dest.ProductoId, opt => opt.MapFrom(src => src.ProductoId))
             .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.NombreProducto))
             .ForMember(dest => dest.Descripcion, opt => opt.MapFrom(src => src.DescripcionProducto))

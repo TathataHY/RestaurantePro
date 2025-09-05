@@ -13,6 +13,7 @@ public class ProductoCarritoDto : INotifyPropertyChanged
     public string Nombre { get; set; } = string.Empty;
     public string Descripcion { get; set; } = string.Empty;
     public bool EsNuevo { get; set; } = true;
+    public Guid ItemId { get; set; }
     
     public decimal Precio
     {

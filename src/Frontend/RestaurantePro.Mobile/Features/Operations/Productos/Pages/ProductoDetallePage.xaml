@@ -293,49 +293,18 @@
             </StackLayout>
         </ScrollView>
 
-        <!-- Botones de Acción Principal -->
+        <!-- Botones de Acción Principal (sin editar/eliminar) -->
         <ScrollView Grid.Row="3" Orientation="Horizontal">
             <StackLayout Orientation="Horizontal" 
                          HorizontalOptions="Center" 
                          Padding="16"
                          Spacing="8">
-
-                <!-- Editar Producto -->
-                <Button Text="✏️ Editar" 
-                        Command="{Binding StartEditCommand}" 
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        IsVisible="{Binding CanEdit}" />
-
-                <!-- Guardar Cambios -->
-                <Button Text="💾 Guardar" 
-                        Command="{Binding SaveChangesCommand}" 
-                        Style="{StaticResource ActionButtonStyle}"
-                        IsVisible="{Binding IsEditing}" />
-
-                <!-- Cancelar Edición -->
-                <Button Text="❌ Cancelar" 
-                        Command="{Binding CancelEditCommand}" 
-                        Style="{StaticResource DangerButtonStyle}"
-                        IsVisible="{Binding IsEditing}" />
-
-                <!-- Cambiar Disponibilidad -->
-                <Button Text="{Binding Producto.PuedeAgregarAComanda, StringFormat='{0:🔴 Deshabilitar;🟢 Habilitar}'}" 
-                        Command="{Binding ToggleDisponibilidadCommand}" 
-                        Style="{StaticResource WarningButtonStyle}"
-                        IsVisible="{Binding CanEdit}" />
-
-                <!-- Ver Historial -->
-                <Button Text="📈 Historial" 
-                        Command="{Binding VerHistorialCommand}" 
-                        Style="{StaticResource SecondaryButtonStyle}" />
-
-                <!-- Eliminar Producto -->
-                <Button Text="🗑️ Eliminar" 
-                        Command="{Binding EliminarProductoCommand}" 
-                        Style="{StaticResource DangerButtonStyle}"
-                        IsVisible="{Binding CanDelete}" />
-
-                <!-- Refrescar -->
+                <!-- Editar/Guardar/Cancelar/Toggle/Eliminar ocultados en mobile operativo -->
+                <!--<Button Text="✏️ Editar" ... />-->
+                <!--<Button Text="💾 Guardar" ... />-->
+                <!--<Button Text="❌ Cancelar" ... />-->
+                <!--<Button Text="{Binding Producto.PuedeAgregarAComanda, StringFormat='{0:🔴 Deshabilitar;🟢 Habilitar}'}" ... />-->
+                <!--<Button Text="🗑️ Eliminar" ... />-->
                 <Button Text="🔄 Refrescar" 
                         Command="{Binding RefreshCommand}" 
                         BackgroundColor="#17a2b8" 

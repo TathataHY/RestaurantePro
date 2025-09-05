@@ -14,6 +14,7 @@ using RestaurantePro.Application.Operaciones.Comandas.Commands.UnificarComandas;
 using RestaurantePro.Application.Operaciones.Comandas.Commands.ProcesarPedidoCompleto;
 using RestaurantePro.Application.Operaciones.Comandas.Commands.FinalizarComanda;
 using RestaurantePro.Application.Operaciones.Commands.FinalizarServicioCompleto;
+using RestaurantePro.Application.Operaciones.Comandas.Commands.ActualizarCantidadItem;
 using RestaurantePro.Application.Operaciones.Comandas.Queries.ObtenerComandasPaginadas;
 using RestaurantePro.Application.Operaciones.Comandas.Queries.ObtenerComandaPorId;
 using RestaurantePro.Application.Operaciones.Comandas.DTOs;
@@ -253,6 +254,42 @@ public class ComandasController : ControllerBase
 
         var response = ApiResponse<ComandaDto>.SuccessResponse(
             result.Value, "Producto removido exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Actualiza la cantidad de un ítem de la comanda
+    /// </summary>
+    [HttpPut("{id:guid}/productos/{itemId:guid}/cantidad")]
+    [ProducesResponseType(typeof(ApiResponse<ComandaDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<ComandaDto>>> ActualizarCantidad(Guid id, Guid itemId, [FromBody] ActualizarCantidadItemCommand body)
+    {
+        _logger.LogInformation("✏️ PUT /api/operaciones/comandas/{Id}/productos/{ItemId}/cantidad - NuevaCantidad: {Cantidad}", id, itemId, body.NuevaCantidad);
+
+        var command = new ActualizarCantidadItemCommand
+        {
+            ComandaId = id,
+            ItemId = itemId,
+            NuevaCantidad = body.NuevaCantidad
+        };
+
+        var result = await _mediator.Send(command);
+
+        if (!result.Succeeded)
+        {
+            var statusCode = result.Error?.Contains("no encontrada") == true 
+                ? StatusCodes.Status404NotFound 
+                : StatusCodes.Status400BadRequest;
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error ?? "Error desconocido" },
+                "Error al actualizar cantidad de item",
+                statusCode);
+            return StatusCode(statusCode, errorResponse);
+        }
+
+        var response = ApiResponse<ComandaDto>.SuccessResponse(result.Value, "Cantidad actualizada exitosamente");
         return Ok(response);
     }
 

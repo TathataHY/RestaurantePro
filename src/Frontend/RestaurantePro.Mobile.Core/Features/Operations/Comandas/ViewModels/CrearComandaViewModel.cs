@@ -27,6 +27,7 @@ public partial class CrearComandaViewModel : BaseViewModel
     private readonly IDialogService _dialogService;
     private readonly Dictionary<Guid, int> _cantidadesOriginales = new();
     private readonly HashSet<Guid> _productosEliminados = new();
+    private readonly HashSet<Guid> _itemsEliminados = new();
 
     [ObservableProperty]
     private MesaDto _mesa = new();
@@ -221,7 +222,11 @@ public partial class CrearComandaViewModel : BaseViewModel
     {
         if (producto != null)
         {
-            if (!producto.EsNuevo && Guid.TryParse(producto.Id, out var pid))
+            if (!producto.EsNuevo && producto.ItemId != Guid.Empty)
+            {
+                _itemsEliminados.Add(producto.ItemId);
+            }
+            else if (!producto.EsNuevo && Guid.TryParse(producto.Id, out var pid))
             {
                 _productosEliminados.Add(pid);
             }
@@ -271,12 +276,27 @@ public partial class CrearComandaViewModel : BaseViewModel
 
             if (EsEdicion)
             {
-                // 1) Remover productos marcados
+                // 1) Remover items marcados (preferente por itemId)
+                foreach (var itemId in _itemsEliminados)
+                {
+                    if (itemId != Guid.Empty)
+                    {
+                        var respRemove = await _comandasService.RemoverProductoAsync(ComandaId, itemId);
+                        if (!respRemove.Success)
+                        {
+                            await _dialogService.ShowAlertAsync("Advertencia", respRemove.Message ?? $"No se pudo eliminar el item {itemId}");
+                        }
+                    }
+                }
+
+                // 1b) Remover por productoId (fallback si no hubo itemId)
                 foreach (var prodId in _productosEliminados)
                 {
                     if (prodId != Guid.Empty)
                     {
-                        var respRemove = await _comandasService.RemoverProductoAsync(ComandaId, prodId);
+                        var item = ProductosCarrito.FirstOrDefault(x => Guid.TryParse(x.Id, out var gid) && gid == prodId);
+                        var itemId = item?.ItemId ?? Guid.Empty;
+                        var respRemove = await _comandasService.RemoverProductoAsync(ComandaId, itemId);
                         if (!respRemove.Success)
                         {
                             await _dialogService.ShowAlertAsync("Advertencia", respRemove.Message ?? $"No se pudo eliminar el producto {prodId}");
@@ -292,15 +312,15 @@ public partial class CrearComandaViewModel : BaseViewModel
                     {
                         if (existente.Cantidad <= 0)
                         {
-                            var respDel = await _comandasService.RemoverProductoAsync(ComandaId, pid);
+                            var respDel = await _comandasService.RemoverProductoAsync(ComandaId, existente.ItemId);
                             if (!respDel.Success)
                             {
                                 await _dialogService.ShowAlertAsync("Advertencia", respDel.Message ?? $"No se pudo eliminar el producto {existente.Nombre}");
                             }
                         }
                         else
-                            {
-                            var respUpd = await _comandasService.ActualizarCantidadProductoAsync(ComandaId, pid, existente.Cantidad);
+                        {
+                            var respUpd = await _comandasService.ActualizarCantidadProductoAsync(ComandaId, existente.ItemId, existente.Cantidad);
                             if (!respUpd.Success)
                             {
                                 await _dialogService.ShowAlertAsync("Advertencia", respUpd.Message ?? $"No se pudo actualizar cantidad para {existente.Nombre}");
@@ -445,7 +465,8 @@ public partial class CrearComandaViewModel : BaseViewModel
                         Descripcion = i.Descripcion,
                         Precio = i.PrecioUnitario > 0 ? i.PrecioUnitario : i.PrecioFinal / Math.Max(1, i.Cantidad),
                         Cantidad = i.Cantidad,
-                        EsNuevo = false
+                        EsNuevo = false,
+                        ItemId = i.ItemId
                     });
                     _cantidadesOriginales[i.ProductoId] = i.Cantidad;
                 }

@@ -6,6 +6,11 @@ namespace RestaurantePro.Mobile.Core.Models.DTOs;
 public class ComandaProductoDto
 {
     /// <summary>
+    /// ID del ítem dentro de la comanda (ItemComanda)
+    /// </summary>
+    public Guid ItemId { get; set; }
+
+    /// <summary>
     /// ID del producto
     /// </summary>
     public Guid ProductoId { get; set; }

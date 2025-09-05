@@ -144,22 +144,15 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- Botones de Acción -->
+        <!-- Botones de Acción (sin Nueva Mesa) -->
         <Frame Grid.Row="2" 
                BackgroundColor="White" 
                CornerRadius="12"
                Padding="16"
                Margin="16"
                HasShadow="True">
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+            <Grid ColumnDefinitions="*" ColumnSpacing="12">
                 <Button Grid.Column="0" 
-                        Text="➕ Nueva Mesa"
-                        BackgroundColor="#4CAF50"
-                        TextColor="White"
-                        CornerRadius="8"
-                        Command="{Binding CreateMesaCommand}" />
-                
-                <Button Grid.Column="1" 
                         Text="📊 Estadísticas"
                         BackgroundColor="#2196F3"
                         TextColor="White"

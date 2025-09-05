@@ -161,23 +161,18 @@ public class ComandasService : IComandasService
     /// <summary>
     /// Actualizar cantidad de un producto en la comanda
     /// </summary>
-    public async Task<ApiResponse<ComandaDto>> ActualizarCantidadProductoAsync(Guid comandaId, Guid productoId, int nuevaCantidad)
+    public async Task<ApiResponse<ComandaDto>> ActualizarCantidadProductoAsync(Guid comandaId, Guid itemId, int nuevaCantidad)
     {
         try
         {
-            if (comandaId == Guid.Empty || productoId == Guid.Empty)
+            if (comandaId == Guid.Empty || itemId == Guid.Empty)
             {
                 return ApiResponse<ComandaDto>.ErrorResponse("ID de comanda y producto son requeridos", "ID de comanda y producto son requeridos");
             }
 
-            if (nuevaCantidad <= 0)
-            {
-                return ApiResponse<ComandaDto>.ErrorResponse("La cantidad debe ser mayor a 0", "La cantidad debe ser mayor a 0");
-            }
-
-            var request = new { ProductoId = productoId, Cantidad = nuevaCantidad };
+            var request = new { NuevaCantidad = nuevaCantidad };
             var token = await _authService.GetTokenAsync();
-            return await _apiService.PutAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}/productos/{productoId}/cantidad", request, token);
+            return await _apiService.PutAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}/productos/{itemId}/cantidad", request, token);
         }
         catch (Exception ex)
         {
@@ -188,16 +183,16 @@ public class ComandasService : IComandasService
     /// <summary>
     /// Remover producto de la comanda
     /// </summary>
-    public async Task<ApiResponse<ComandaDto>> RemoverProductoAsync(Guid comandaId, Guid productoId)
+    public async Task<ApiResponse<ComandaDto>> RemoverProductoAsync(Guid comandaId, Guid itemId)
     {
         try
         {
-            if (comandaId == Guid.Empty || productoId == Guid.Empty)
+            if (comandaId == Guid.Empty || itemId == Guid.Empty)
             {
                 return ApiResponse<ComandaDto>.ErrorResponse("ID de comanda y producto son requeridos", "ID de comanda y producto son requeridos");
             }
             var token = await _authService.GetTokenAsync();
-            await _apiService.DeleteAsync($"{BaseEndpoint}/{comandaId}/productos/{productoId}", token);
+            await _apiService.DeleteAsync($"{BaseEndpoint}/{comandaId}/productos/{itemId}", token);
             return ApiResponse<ComandaDto>.SuccessResponse(null!, "Producto removido exitosamente");
         }
         catch (Exception ex)
