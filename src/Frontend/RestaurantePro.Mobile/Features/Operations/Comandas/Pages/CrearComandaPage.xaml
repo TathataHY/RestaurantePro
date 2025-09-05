@@ -6,7 +6,7 @@
              xmlns:models="clr-namespace:RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models;assembly=RestaurantePro.Mobile.Core"
 
              x:DataType="vm:CrearComandaViewModel"
-             Title="Nueva Comanda"
+             Title="{Binding TituloPagina}"
              BackgroundColor="{AppThemeBinding Light=#F8F9FA, Dark=#1A1A1A}">
 
 
@@ -20,7 +20,7 @@
                    Padding="16"
                    HasShadow="True">
                 <StackLayout>
-                    <Label Text="🍽️ Nueva Comanda" 
+                    <Label Text="{Binding TituloPagina}" 
                            FontSize="20" 
                            FontAttributes="Bold" 
                            TextColor="{AppThemeBinding Light=#1976D2, Dark=#64B5F6}"
@@ -386,7 +386,7 @@
                         Command="{Binding CancelarCommand}"
                         HorizontalOptions="FillAndExpand"/>
                 
-                <Button Text="✅ Crear Comanda" 
+                <Button Text="{Binding TextoBotonPrimario}" 
                         FontSize="16" 
                         FontAttributes="Bold"
                         BackgroundColor="{AppThemeBinding Light=#4CAF50, Dark=#81C784}"
@@ -394,7 +394,7 @@
                         CornerRadius="25"
                         HeightRequest="50"
                         Command="{Binding CrearComandaCommand}"
-                        IsEnabled="{Binding PuedeCrearComanda}"
+                        IsEnabled="{Binding PuedeGuardar}"
                         HorizontalOptions="FillAndExpand"/>
             </StackLayout>
 

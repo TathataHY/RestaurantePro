@@ -218,6 +218,30 @@ public class AuthService : IAuthService
     }
 
     /// <summary>
+    /// Obtiene el UserId (claim sub/userid) desde el JWT actual
+    /// </summary>
+    public async Task<string?> GetUserIdAsync()
+    {
+        try
+        {
+            var token = await GetTokenAsync();
+            if (string.IsNullOrEmpty(token)) return null;
+
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var jwt = handler.ReadJwtToken(token);
+            var userId = jwt.Claims.FirstOrDefault(c => c.Type == "sub")?.Value
+                         ?? jwt.Claims.FirstOrDefault(c => c.Type == "userid")?.Value
+                         ?? jwt.Claims.FirstOrDefault(c => c.Type.EndsWith("/nameidentifier"))?.Value;
+            return userId;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener UserId del token");
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Cierra la sesión del usuario
     /// </summary>
     public async Task LogoutAsync()

@@ -16,6 +16,11 @@ public class ComandaProductoDto
     public string Nombre { get; set; } = string.Empty;
 
     /// <summary>
+    /// Nombre para mostrar (con fallback por si viene vacío)
+    /// </summary>
+    public string NombreDisplay => string.IsNullOrWhiteSpace(Nombre) ? "Producto" : Nombre;
+
+    /// <summary>
     /// Descripción del producto
     /// </summary>
     public string? Descripcion { get; set; }

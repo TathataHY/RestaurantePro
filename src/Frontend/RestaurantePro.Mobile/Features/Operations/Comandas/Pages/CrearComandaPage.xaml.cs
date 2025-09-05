@@ -22,11 +22,16 @@ public partial class CrearComandaPage : ContentPage, IQueryAttributable
     /// </summary>
     public async void ApplyQueryAttributes(IDictionary<string, object> query)
     {
-        if (query.TryGetValue("mesaId", out var mesaIdObj) && 
-            !string.IsNullOrEmpty(mesaIdObj?.ToString()))
+        // Modo creación: llega mesaId. Modo edición: llega comandaId.
+        if (query.TryGetValue("comandaId", out var comandaIdObj) && !string.IsNullOrEmpty(comandaIdObj?.ToString()))
         {
-            var mesaId = mesaIdObj.ToString();
-            await _viewModel.InitializeAsync(mesaId);
+            await _viewModel.InitializeEdicionAsync(comandaIdObj.ToString()!);
+            return;
+        }
+
+        if (query.TryGetValue("mesaId", out var mesaIdObj) && !string.IsNullOrEmpty(mesaIdObj?.ToString()))
+        {
+            await _viewModel.InitializeAsync(mesaIdObj.ToString()!);
         }
     }
 

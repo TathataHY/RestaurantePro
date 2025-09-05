@@ -64,6 +64,12 @@ public partial class ComandaDetalleViewModel : BaseViewModel
     [ObservableProperty]
     private int totalItems;
 
+    [ObservableProperty]
+    private string finalizarButtonText = "Finalizar";
+
+    [ObservableProperty]
+    private bool showCambiarEstado = true;
+
     #endregion
 
     #region Commands
@@ -84,10 +90,16 @@ public partial class ComandaDetalleViewModel : BaseViewModel
             if (result.Success && result.Data != null)
             {
                 Comanda = result.Data;
-                Title = $"Comanda {Comanda.Numero}";
+                Title = $"Comanda {Comanda.NumeroDisplay}";
                 Observaciones = Comanda.Observaciones ?? string.Empty;
-                
-                await LoadItemsComandaAsync();
+
+                // Preferir Items si el backend los devuelve; si no, usar Productos
+                Items.Clear();
+                var lista = (Comanda.Items != null && Comanda.Items.Any()) ? Comanda.Items : Comanda.Productos;
+                foreach (var p in lista)
+                {
+                    Items.Add(p);
+                }
                 ActualizarEstados();
                 CalcularTotales();
             }
@@ -227,8 +239,8 @@ public partial class ComandaDetalleViewModel : BaseViewModel
         var estadoActual = Comanda.Estado;
         var siguienteEstado = estadoActual switch
         {
-            "Pendiente" => "Preparando",
-            "Preparando" => "Lista",
+            "Pendiente" => "En Preparación",
+            "En Preparación" => "Lista",
             "Lista" => "Entregada",
             _ => "Pendiente"
         };
@@ -246,9 +258,8 @@ public partial class ComandaDetalleViewModel : BaseViewModel
 
             if (result.Success)
             {
-                Comanda.Estado = siguienteEstado;
-                ActualizarEstados();
-                
+                // Refrescar desde API para reflejar de inmediato (cache ya invalidada en backend)
+                await LoadComandaAsync(Comanda.Id);
                 await _dialogService.ShowAlertAsync("Éxito", $"Estado cambiado a '{siguienteEstado}'");
             }
             else
@@ -399,9 +410,21 @@ public partial class ComandaDetalleViewModel : BaseViewModel
     /// </summary>
     private void ActualizarEstados()
     {
-        IsEditable = Comanda?.Estado == "Pendiente" || Comanda?.Estado == "Preparando";
-        CanFinalize = Comanda?.Estado == "Lista";
-        CanCancel = Comanda?.Estado == "Pendiente" || Comanda?.Estado == "Preparando";
+        var estado = Comanda?.Estado ?? string.Empty;
+        var estadoLower = estado.ToLowerInvariant();
+
+        // Editable solo en Pendiente (no en preparación)
+        IsEditable = estadoLower.Contains("pend");
+
+        // Mostrar botón de finalizar en Lista o Entregada
+        CanFinalize = estadoLower.Contains("lista") || estadoLower.Contains("entreg");
+        FinalizarButtonText = estadoLower.Contains("entreg") ? "Cobrar" : "Finalizar";
+
+        // Mostrar "Cambiar Estado" salvo cuando ya está Entregada/Finalizada/Cancelada
+        ShowCambiarEstado = !(estadoLower.Contains("entreg") || estadoLower.Contains("finaliz") || estadoLower.Contains("cancel"));
+
+        // Cancelar permitido solo al inicio
+        CanCancel = estadoLower.Contains("pend") || estadoLower.Contains("prepar") && !estadoLower.Contains("entreg");
     }
 
     /// <summary>

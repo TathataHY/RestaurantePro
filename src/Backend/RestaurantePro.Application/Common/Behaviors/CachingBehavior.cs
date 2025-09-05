@@ -105,7 +105,7 @@ public class CachingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
             var name when name.Contains("obtenercomanda") => TimeSpan.FromSeconds(15),   // Comandas cambian muy rápido (cocina)
             var name when name.Contains("obtenermesa") => TimeSpan.FromSeconds(30),      // Mesas cambian muy rápido
             var name when name.Contains("obtenermesaporid") => TimeSpan.FromSeconds(15), // Mesa individual cambia muy rápido
-            var name when name.Contains("paginados") => TimeSpan.FromSeconds(30),        // Listas paginadas (incluye comandas)
+            var name when name.Contains("paginados") => TimeSpan.FromSeconds(15),        // Listas paginadas (incluye comandas)
             _ => TimeSpan.FromMinutes(10) // Tiempo por defecto
         };
     }

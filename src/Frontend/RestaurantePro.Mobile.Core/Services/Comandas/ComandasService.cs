@@ -84,7 +84,8 @@ public class ComandasService : IComandasService
         try
         {
             var token = await _authService.GetTokenAsync();
-            return await _apiService.GetAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}", token);
+            // Forzamos incluirItems=true para asegurarnos de traer nombres de productos
+            return await _apiService.GetAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}?incluirItems=true", token);
         }
         catch (Exception ex)
         {
@@ -134,8 +135,22 @@ public class ComandasService : IComandasService
             {
                 return ApiResponse<ComandaDto>.ErrorResponse("Se requiere al menos un producto", "Se requiere al menos un producto");
             }
+
             var token = await _authService.GetTokenAsync();
-            return await _apiService.PostAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}/productos", productos, token);
+            ApiResponse<ComandaDto>? lastResponse = null;
+
+            foreach (var p in productos)
+            {
+                var payload = new { ProductoId = p.ProductoId, Cantidad = p.Cantidad, Observaciones = p.Observaciones };
+                var resp = await _apiService.PostAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}/productos", payload, token);
+                if (!resp.Success)
+                {
+                    return resp;
+                }
+                lastResponse = resp;
+            }
+
+            return lastResponse ?? ApiResponse<ComandaDto>.ErrorResponse("No se pudo agregar ningún producto");
         }
         catch (Exception ex)
         {
@@ -235,7 +250,19 @@ public class ComandasService : IComandasService
                 return ApiResponse<ComandaDto>.ErrorResponse("El método de pago es requerido", "El método de pago es requerido");
             }
 
-            var request = new { MetodoPago = metodoPago, Observaciones = observaciones };
+            // Backend exige UsuarioId. Lo obtenemos del JWT.
+            var userIdStr = await _authService.GetUserIdAsync();
+            if (string.IsNullOrWhiteSpace(userIdStr) || !Guid.TryParse(userIdStr, out var userId) || userId == Guid.Empty)
+            {
+                return ApiResponse<ComandaDto>.ErrorResponse("No se pudo identificar al usuario (UserId)", "UsuarioId requerido");
+            }
+
+            var request = new {
+                UsuarioId = userId,
+                ObservacionesFinalizacion = observaciones,
+                ValidarTodosItemsListos = true,
+                NotificarMesero = true
+            };
             var token = await _authService.GetTokenAsync();
             return await _apiService.PostAsync<ComandaDto>($"{BaseEndpoint}/{comandaId}/finalizar", request, token);
         }
@@ -343,6 +370,8 @@ public class ComandasService : IComandasService
             // Agregar parámetros de paginación por defecto
             queryParams.Add("pageNumber=1");
             queryParams.Add("pageSize=100");
+            // Pedir también items para rellenar la sección de Items en la lista
+            queryParams.Add("incluirItems=true");
 
             var queryString = queryParams.Count > 0 ? $"?{string.Join("&", queryParams)}" : string.Empty;
             var token = await _authService.GetTokenAsync();

@@ -48,11 +48,12 @@ public partial class ModernComandasPage : ContentPage
     /// </summary>
     private void SetupFilterTabs()
     {
-        if (FilterTabNavigation != null)
+        var filterTabs = this.FindByName<TabNavigation>("FilterTabNavigation");
+        if (filterTabs != null)
         {
             // Configurar tabs para filtros de estado
-            FilterTabNavigation.Tabs = new ObservableCollection<string> { "Todas", "Pendientes", "En Progreso", "Completadas" };
-            FilterTabNavigation.TabSelectedCommand = new Command<int>(OnFilterTabChanged);
+            filterTabs.Tabs = new ObservableCollection<string> { "Todas", "Pendientes", "En Progreso", "Completadas" };
+            filterTabs.TabSelectedCommand = new Command<int>(OnFilterTabChanged);
         }
     }
 
@@ -84,7 +85,8 @@ public partial class ModernComandasPage : ContentPage
     /// </summary>
     private void SetupFloatingActionButton()
     {
-        if (MainFab != null)
+        var mainFab = this.FindByName<FloatingActionButton>("MainFab");
+        if (mainFab != null)
         {
             // El FAB ya está configurado en XAML con el comando CrearComandaCommand
             // Aquí podríamos agregar configuración adicional si es necesario
@@ -170,9 +172,10 @@ public partial class ModernComandasPage : ContentPage
         base.OnDisappearing();
         
         // Limpiar eventos para evitar memory leaks
-        if (FilterTabNavigation != null)
+        var filterTabs = this.FindByName<TabNavigation>("FilterTabNavigation");
+        if (filterTabs != null)
         {
-            FilterTabNavigation.TabSelectedCommand = null;
+            filterTabs.TabSelectedCommand = null;
         }
         
         // COMENTADO PARA USAR TABS NATIVOS

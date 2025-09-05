@@ -60,9 +60,9 @@ public class OperacionesMappingProfile : Profile
             .ForMember(dest => dest.FechaCreacion, opt => opt.MapFrom(src => src.FechaCreacion))
             .ForMember(dest => dest.FechaModificacion, opt => opt.MapFrom(src => src.FechaActualizacion))
             // Campos que requieren datos adicionales (se pueden completar en el handler)
-            .ForMember(dest => dest.NumeroMesa, opt => opt.Ignore())
+            .ForMember(dest => dest.NumeroMesa, opt => opt.MapFrom(src => src.Mesa != null ? src.Mesa.Numero : 0))
             .ForMember(dest => dest.NombreUsuario, opt => opt.Ignore()) // Se completa en el handler
-            .ForMember(dest => dest.NombreCliente, opt => opt.Ignore()); // Se completa en el handler
+            .ForMember(dest => dest.NombreCliente, opt => opt.MapFrom(src => src.Cliente != null ? src.Cliente.Nombre.NombreCompleto : null));
             // TODO: Reactivar cuando existan propiedades Usuario en Domain
             //.ForMember(dest => dest.NombreMesero, opt => opt.Ignore())
             //.ForMember(dest => dest.NombreCliente, opt => opt.Ignore())

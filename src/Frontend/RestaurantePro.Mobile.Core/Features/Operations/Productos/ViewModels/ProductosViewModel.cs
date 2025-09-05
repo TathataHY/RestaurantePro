@@ -467,8 +467,24 @@ public partial class ProductosViewModel : BaseViewModel
 
         try
         {
-            await _dialogService.ShowAlertAsync("Función no disponible", 
-                "La eliminación de productos no está disponible en esta versión. Contacta al administrador.");
+            var confirmar = await _dialogService.ShowConfirmAsync(
+                title: "Eliminar producto",
+                message: $"¿Seguro que deseas eliminar '{producto.Nombre}'?",
+                accept: "Eliminar",
+                cancel: "Cancelar");
+
+            if (!confirmar) return;
+
+            var result = await _productosService.EliminarProductoAsync(producto.Id);
+            if (result.Success)
+            {
+                await _dialogService.ShowSuccessAsync("Producto eliminado");
+                await LoadProductosAsync();
+            }
+            else
+            {
+                await _dialogService.ShowErrorAsync(result.Message ?? "No se pudo eliminar el producto");
+            }
         }
         catch (Exception ex)
         {

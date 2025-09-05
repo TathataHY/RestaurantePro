@@ -1,3 +1,7 @@
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Invalidation;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Interfaces;
+
 namespace RestaurantePro.Application.Operaciones.Comandas.Commands.CrearComanda;
 
 /// <summary>
@@ -10,17 +14,23 @@ public class CrearComandaHandler : IRequestHandler<CrearComandaCommand, Result<C
     private readonly IProductoRepository _productoRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<CrearComandaHandler> _logger;
+    private readonly ICacheService _cacheService;
+    private readonly IMesaRepository _mesaRepository;
 
     public CrearComandaHandler(
         IComandaRepository comandaRepository,
         IProductoRepository productoRepository,
         IMapper mapper,
-        ILogger<CrearComandaHandler> logger)
+        ILogger<CrearComandaHandler> logger,
+        ICacheService cacheService,
+        IMesaRepository mesaRepository)
     {
         _comandaRepository = comandaRepository;
         _productoRepository = productoRepository;
         _mapper = mapper;
         _logger = logger;
+        _cacheService = cacheService;
+        _mesaRepository = mesaRepository;
     }
 
     public async Task<Result<ComandaDto>> Handle(
@@ -55,7 +65,33 @@ public class CrearComandaHandler : IRequestHandler<CrearComandaCommand, Result<C
             await _comandaRepository.AgregarAsync(comanda, cancellationToken);
             await _comandaRepository.GuardarCambiosAsync(cancellationToken);
 
-            // 5. Mapear a DTO y retornar
+            // 4.1 Marcar mesa como Ocupada si aplica
+            if (request.MesaId.HasValue && request.MesaId.Value != Guid.Empty)
+            {
+                try
+                {
+                    var mesa = await _mesaRepository.ObtenerPorIdAsync(request.MesaId.Value, cancellationToken);
+                    if (mesa != null)
+                    {
+                        mesa.MarcarComoOcupada();
+                        await _mesaRepository.ActualizarAsync(mesa, cancellationToken);
+                        await _mesaRepository.GuardarCambiosAsync(cancellationToken);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "No se pudo marcar la mesa {MesaId} como Ocupada al crear comanda {ComandaId}", request.MesaId, comanda.Id);
+                }
+            }
+
+            // 5. Invalidar caches para que aparezca en listados inmediatamente y refrescar estado de mesas
+            _cacheService.InvalidatePattern("ObtenerComandasPaginadasQuery_");
+            _cacheService.InvalidatePattern("ObtenerComandasPorMesaQuery_");
+            _cacheService.InvalidateForEntity("ObtenerComandaPorIdQuery_", comanda.Id);
+            _cacheService.InvalidatePattern("ObtenerMesasDisponiblesQuery_");
+            _cacheService.InvalidatePattern("ObtenerEstadoMesasQuery_");
+
+            // 6. Mapear a DTO y retornar
             var comandaDto = _mapper.Map<ComandaDto>(comanda);
 
             _logger.LogInformation("🎉 Comanda creada exitosamente: {ComandaId} - Total productos: {CantidadProductos}", 

@@ -1,46 +1,8 @@
 namespace RestaurantePro.Application.Operaciones.Comandas.Commands.CrearComanda;
 
-/// <summary>
-/// Validador para CrearComandaCommand
-/// Implementa validaciones específicas para el contexto de restaurante
-/// </summary>
-public class CrearComandaValidator : AbstractValidator<CrearComandaCommand>
-{
-    public CrearComandaValidator()
-    {
-        // MesaId: Solo validar si está presente y no es Empty
-        RuleFor(x => x.MesaId)
-            .NotEqual(Guid.Empty).WithMessage("El ID de la mesa es obligatorio")
-            .When(x => x.MesaId.HasValue);
-
-        // MeseroId es obligatorio (desde el Command, tiene un valor por defecto)
-        RuleFor(x => x.MeseroId)
-            .NotEmpty().WithMessage("El ID del mesero es obligatorio");
-
-        // Items - según las pruebas, cuando se crean deben tener contenido
-        RuleFor(x => x.Items)
-            .NotNull().WithMessage("La comanda debe tener al menos un ítem")
-            .NotEmpty().WithMessage("La comanda debe tener al menos un ítem");
-
-        // Observaciones - opcional, pero con límite si se incluye
-        RuleFor(x => x.Observaciones)
-            .MaximumLength(500).WithMessage("Las observaciones no pueden exceder 500 caracteres")
-            .When(x => !string.IsNullOrWhiteSpace(x.Observaciones));
-
-        // Validaciones anidadas para cada item
-        RuleForEach(x => x.Items)
-            .SetValidator(new AgregarProductoValidator());
-
-        // Límites de colección
-        RuleFor(x => x.Items)
-            .Must(productos => productos == null || productos.Count <= 50)
-            .WithMessage("No se pueden agregar más de 50 productos diferentes en una comanda");
-
-        RuleFor(x => x.Items)
-            .Must(productos => productos == null || productos.Sum(p => p.Cantidad) <= 200)
-            .WithMessage("La cantidad total de productos no puede exceder 200 unidades");
-    }
-}
+// NOTA: Se eliminó el validador duplicado de CrearComandaCommand para evitar colisión
+// con CrearComandaCommandValidator (que realiza validaciones más completas e incluye
+// comprobaciones contra repositorios/DB). Mantener solo los validadores de ítems.
 
 /// <summary>
 /// Validador para productos individuales en la comanda

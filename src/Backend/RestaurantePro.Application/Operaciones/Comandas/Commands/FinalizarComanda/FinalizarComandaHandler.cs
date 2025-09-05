@@ -6,6 +6,8 @@ using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Domain.Core.SharedKernel.Results;
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Invalidation;
 
 namespace RestaurantePro.Application.Operaciones.Comandas.Commands.FinalizarComanda;
 
@@ -18,17 +20,20 @@ public class FinalizarComandaHandler : IRequestHandler<FinalizarComandaCommand, 
     private readonly IMapper _mapper;
     private readonly ILogger<FinalizarComandaHandler> _logger;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ICacheService _cacheService;
 
     public FinalizarComandaHandler(
         IComandaRepository comandaRepository,
         IMapper mapper,
         ILogger<FinalizarComandaHandler> logger,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ICacheService cacheService)
     {
         _comandaRepository = comandaRepository;
         _mapper = mapper;
         _logger = logger;
         _unitOfWork = unitOfWork;
+        _cacheService = cacheService;
     }
 
     public async Task<Result<ComandaDto>> Handle(
@@ -103,13 +108,18 @@ public class FinalizarComandaHandler : IRequestHandler<FinalizarComandaCommand, 
                 _logger.LogInformation("📝 Observaciones de finalización: {Observaciones}", request.ObservacionesFinalizacion);
             }
 
-            // 6. Mapear a DTO (ya no necesitamos guardar de nuevo)
+            // 6. Invalidar caché relevante para que la app vea el nuevo estado
+            _cacheService.InvalidatePattern("ObtenerComandasPaginadasQuery_");
+            _cacheService.InvalidatePattern("ObtenerComandasPorMesaQuery_");
+            _cacheService.InvalidateForEntity("ObtenerComandaPorIdQuery_", comanda.Id);
+
+            // 7. Mapear a DTO (ya no necesitamos guardar de nuevo)
             var comandaDto = _mapper.Map<ComandaDto>(comanda);
 
             _logger.LogInformation("✅ Comanda {ComandaId} finalizada exitosamente. Items: {TotalItems}, Total: {Total:C}", 
                 request.ComandaId, comanda.Items.Count, comanda.Total?.Total ?? 0);
 
-            // 8. Log adicional si hay notificación de mesero
+            // 9. Log adicional si hay notificación de mesero
             if (request.NotificarMesero)
             {
                 _logger.LogInformation("📱 Se enviará notificación al mesero para comanda {ComandaId}", 

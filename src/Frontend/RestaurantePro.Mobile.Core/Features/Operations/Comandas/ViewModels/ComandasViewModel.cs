@@ -1,11 +1,15 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using CommunityToolkit.Mvvm.Messaging.Messages;
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Services.Comandas;
+using RestaurantePro.Mobile.Core.Services.Mesas;
 using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Navigation;
 using RestaurantePro.Mobile.Core.Models.ViewModels;
+using RestaurantePro.Mobile.Core.Models.Common;
 using ComandaModels = RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models;
 
 namespace RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;
@@ -18,6 +22,7 @@ public partial class ComandasViewModel : BaseViewModel
     private readonly IComandasService _comandasService;
     private readonly IDialogService _dialogService;
     private readonly INavigationService _navigationService;
+    private readonly IMesasService _mesasService;
 
     #region Propiedades Observables
 
@@ -70,17 +75,28 @@ public partial class ComandasViewModel : BaseViewModel
     public ComandasViewModel(
         IComandasService comandasService,
         IDialogService dialogService,
-        INavigationService navigationService)
+        INavigationService navigationService,
+        IMesasService mesasService)
     {
         _comandasService = comandasService;
         _dialogService = dialogService;
         _navigationService = navigationService;
+        _mesasService = mesasService;
         
         Title = "Gestión de Comandas";
         
         // Cargar datos iniciales
         _ = LoadComandasAsync();
         _ = LoadEstadisticasAsync();
+
+        // Escuchar mensaje de actualización de comanda para refrescar al volver de edición
+        WeakReferenceMessenger.Default.Register<ValueChangedMessage<string>>(this, (r, m) =>
+        {
+            if (m.Value == Messages.ComandaActualizada)
+            {
+                _ = LoadComandasAsync();
+            }
+        });
     }
 
     #endregion
@@ -109,11 +125,30 @@ public partial class ComandasViewModel : BaseViewModel
 
             if (response.Success)
             {
-                // Si solo queremos activas, filtrar localmente
                 var comandasFiltradas = response.Data ?? new List<ComandaDto>();
-                if (SoloActivas)
+
+                // Por defecto ("Todos") mostrar estados operativos hasta Entregada.
+                // Si el usuario eligió un estado específico, el backend ya filtró.
+                if (string.IsNullOrWhiteSpace(FiltroEstado) || FiltroEstado == "Todos")
                 {
-                    comandasFiltradas = comandasFiltradas.Where(c => c.EstaActiva).ToList();
+                    if (SoloActivas)
+                    {
+                        // Incluir estados activos operativos: Creada/Pendiente, En preparación/En proceso, Lista y Entregada
+                        var estadosOperativos = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                        {
+                            "Creada", "Pendiente",
+                            "En Preparación", "Preparando", "En Proceso", "EnProceso",
+                            "Lista", "Entregada"
+                        };
+                        comandasFiltradas = comandasFiltradas
+                            .Where(c =>
+                            {
+                                var estado = c.Estado ?? string.Empty;
+                                var estadoTexto = c.EstadoTexto ?? string.Empty;
+                                return estadosOperativos.Contains(estado) || estadosOperativos.Contains(estadoTexto);
+                            })
+                            .ToList();
+                    }
                 }
 
                 Comandas.Clear();
@@ -194,56 +229,54 @@ public partial class ComandasViewModel : BaseViewModel
     [RelayCommand]
     private async Task CrearComandaAsync()
     {
-        var mesaId = await _dialogService.ShowPromptAsync(
-            "Nueva Comanda",
-            "Ingrese el ID de la mesa:");
-
-        if (string.IsNullOrWhiteSpace(mesaId))
-            return;
-
-        if (!Guid.TryParse(mesaId, out var mesaGuid))
-        {
-            await _dialogService.ShowAlertAsync("Error", "ID de mesa inválido");
-            return;
-        }
-
-        var observaciones = await _dialogService.ShowPromptAsync(
-            "Observaciones",
-            "Ingrese observaciones para la comanda (opcional):");
-
-        IsBusy = true;
-
         try
         {
-            var request = new ComandaModels.CrearComandaRequest
+            // 1) Traer mesas disponibles
+            var mesasResult = await _mesasService.ObtenerMesasDisponiblesAsync();
+            if (!mesasResult.Success)
             {
-                MeseroId = "11111111-1111-1111-1111-111111111111", // Usuario administrador por defecto
-                MesaId = mesaGuid.ToString(),
-                ClienteId = null,
-                Observaciones = observaciones,
-                ProductosIniciales = new List<ComandaModels.ProductoComandaRequest>(), // Lista vacía por ahora
-                Items = new List<ComandaModels.ProductoComandaRequest>() // Lista vacía por ahora
-            };
-
-            var response = await _comandasService.CrearComandaAsync(request);
-
-            if (response.Success)
-            {
-                await _dialogService.ShowAlertAsync("Éxito", "Comanda creada correctamente");
-                await LoadComandasAsync();
+                await _dialogService.ShowAlertAsync("Error", mesasResult.Message ?? "No se pudieron cargar las mesas disponibles");
+                return;
             }
-            else
+
+            var mesas = mesasResult.Data ?? new List<MesaDto>();
+            if (!mesas.Any())
             {
-                await _dialogService.ShowAlertAsync("Error", response.Message ?? "Error al crear la comanda");
+                await _dialogService.ShowAlertAsync("Sin Mesas", "No hay mesas disponibles en este momento");
+                return;
             }
+
+            // 2) Mostrar selector de mesa
+            var opciones = mesas
+                .Select(m => ($"Mesa {m.Numero} — {m.Ubicacion} (Cap: {m.Capacidad})", m.Id))
+                .ToList();
+
+            var labels = opciones.Select(o => o.Item1).ToArray();
+            var seleccion = await _dialogService.ShowActionSheetAsync(
+                "Seleccionar Mesa",
+                "Elija la mesa para la nueva comanda:",
+                "Cancelar",
+                labels);
+
+            if (string.IsNullOrWhiteSpace(seleccion) || seleccion == "Cancelar")
+                return;
+
+            var mesaSeleccionada = opciones.FirstOrDefault(o => o.Item1 == seleccion);
+            if (mesaSeleccionada == default)
+            {
+                await _dialogService.ShowAlertAsync("Error", "No se pudo identificar la mesa seleccionada");
+                return;
+            }
+
+            // 3) Navegar al formulario de crear comanda con la mesa elegida
+            await _navigationService.NavigateToAsync("crear-comanda", new Dictionary<string, object>
+            {
+                ["mesaId"] = mesaSeleccionada.Item2.ToString()
+            });
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowAlertAsync("Error", $"Error inesperado: {ex.Message}");
-        }
-        finally
-        {
-            IsBusy = false;
+            await _dialogService.ShowAlertAsync("Error", $"Error al iniciar nueva comanda: {ex.Message}");
         }
     }
 
@@ -266,7 +299,11 @@ public partial class ComandasViewModel : BaseViewModel
     {
         if (comanda == null) return;
 
-        await NavigateToAgregarProductosAsync(comanda);
+        // Ir al mismo formulario en modo edición
+        await _navigationService.NavigateToAsync("editar-comanda", new Dictionary<string, object>
+        {
+            ["comandaId"] = comanda.Id.ToString()
+        });
     }
 
     /// <summary>
@@ -461,17 +498,24 @@ public partial class ComandasViewModel : BaseViewModel
         await LoadComandasAsync();
         
         // Si no se encontraron resultados y el texto parece ser un número, buscar por número de comanda
-        if (!Comandas.Any() && int.TryParse(SearchText, out var numeroComanda))
+        if (!Comandas.Any())
         {
-            // Buscar en todas las comandas por número
-            var response = await _comandasService.BuscarComandasAsync();
+            // Buscar en todas las comandas y filtrar por número (int o código display)
+            var response = await _comandasService.BuscarComandasAsync(estado: null);
             if (response.Success && response.Data != null)
             {
-                var comandaEncontrada = response.Data.FirstOrDefault(c => c.Numero.ToString() == numeroComanda.ToString());
-                if (comandaEncontrada != null)
+                var term = SearchText.Trim();
+                var encontrados = response.Data.Where(c =>
+                    (!string.IsNullOrWhiteSpace(c.NumeroDisplay) && c.NumeroDisplay.Contains(term, StringComparison.OrdinalIgnoreCase))
+                    || c.Numero.ToString().Contains(term, StringComparison.OrdinalIgnoreCase)
+                    || (!string.IsNullOrWhiteSpace(c.ClienteNombre) && c.ClienteNombre.Contains(term, StringComparison.OrdinalIgnoreCase))
+                ).ToList();
+
+                if (encontrados.Any())
                 {
                     Comandas.Clear();
-                    Comandas.Add(comandaEncontrada);
+                    foreach (var c in encontrados)
+                        Comandas.Add(c);
                 }
             }
         }
@@ -527,7 +571,7 @@ public partial class ComandasViewModel : BaseViewModel
     {
         if (comanda == null) return;
 
-        await _navigationService.NavigateToAsync("productos", new Dictionary<string, object>
+        await _navigationService.NavigateToAsync("///productos", new Dictionary<string, object>
         {
             ["comandaId"] = comanda.Id.ToString()
         });

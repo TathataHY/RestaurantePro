@@ -6,6 +6,7 @@
              xmlns:vm="clr-namespace:RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;assembly=RestaurantePro.Mobile.Core"
              xmlns:dtos="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
              x:DataType="vm:ComandaDetalleViewModel"
+             x:Name="Page"
              Title="{Binding Title}">
 
     <ContentPage.Resources>
@@ -83,12 +84,10 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Número y Mesa -->
+                <!-- Mesa (el número de comanda ya va en el Title) -->
                 <StackLayout Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
-                    <Label Text="{Binding Comanda.Numero, StringFormat='Comanda #{0}'}" 
-                           FontSize="20" FontAttributes="Bold" TextColor="#333" />
-                    <Label Text="{Binding Comanda.MesaNumero, StringFormat='Mesa {0}'}" 
-                           FontSize="16" TextColor="#666" Margin="8,0,0,0" />
+                    <Label Text="{Binding Comanda.MesaNumeroDisplay, StringFormat='Mesa {0}', TargetNullValue='Mesa —'}" 
+                           FontSize="18" FontAttributes="Bold" TextColor="#333" />
                 </StackLayout>
 
                 <!-- Estado -->
@@ -106,9 +105,9 @@
                 <!-- Cliente y Fecha -->
                 <StackLayout Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal" Margin="0,8,0,0">
                     <Label Text="👤" FontSize="16" />
-                    <Label Text="{Binding Comanda.Cliente}" FontSize="14" TextColor="#666" />
+                    <Label Text="{Binding Comanda.ClienteNombre, StringFormat='Cliente: {0}', TargetNullValue='Cliente: —'}" FontSize="14" TextColor="#666" />
                     <Label Text="🕐" FontSize="16" Margin="16,0,0,0" />
-                    <Label Text="{Binding Comanda.FechaHora, StringFormat='{0:dd/MM/yyyy HH:mm}'}" 
+                    <Label Text="{Binding Comanda.FechaCreacion, StringFormat='{0:dd/MM/yyyy HH:mm}'}" 
                            FontSize="14" TextColor="#666" />
                 </StackLayout>
 
@@ -184,7 +183,7 @@
 
                                 <!-- Nombre del Producto -->
                                 <Label Grid.Row="0" Grid.Column="0" 
-                                       Text="{Binding Nombre}" 
+                                       Text="{Binding NombreDisplay}" 
                                        FontSize="16" FontAttributes="Bold" 
                                        TextColor="#333" />
 
@@ -210,23 +209,25 @@
                                        FontSize="12" TextColor="#666" 
                                        IsVisible="{Binding Observaciones, Converter={StaticResource IsNotNullConverter}}" />
 
-                                <!-- Botones de Acción (Solo si es editable) -->
+                                <!-- Botones de Acción (Solo si la comanda es editable) -->
                                 <StackLayout Grid.Row="3" Grid.ColumnSpan="2" 
                                              Orientation="Horizontal" 
                                              HorizontalOptions="End" 
                                              Spacing="8" 
                                              Margin="0,8,0,0"
-                                             IsVisible="{Binding Source={RelativeSource AncestorType={x:Type vm:ComandaDetalleViewModel}}, Path=IsEditable}">
+                                             IsVisible="{Binding BindingContext.IsEditable, Source={x:Reference Page}}">
                                     
                                     <Button Text="✏️ Cantidad" 
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ComandaDetalleViewModel}}, Path=ActualizarCantidadCommand}"
+                                            Command="{Binding Source={x:Reference Page}, Path=BindingContext.ActualizarCantidadCommand}"
                                             CommandParameter="{Binding .}"
-                                            Style="{StaticResource SecondaryButtonStyle}" />
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            IsVisible="{Binding BindingContext.IsEditable, Source={x:Reference Page}}" />
 
                                     <Button Text="🗑️ Eliminar" 
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ComandaDetalleViewModel}}, Path=EliminarItemCommand}"
+                                            Command="{Binding Source={x:Reference Page}, Path=BindingContext.EliminarItemCommand}"
                                             CommandParameter="{Binding .}"
-                                            Style="{StaticResource DangerButtonStyle}" />
+                                            Style="{StaticResource DangerButtonStyle}"
+                                            IsVisible="{Binding BindingContext.IsEditable, Source={x:Reference Page}}" />
                                 </StackLayout>
                             </Grid>
                         </Frame>
@@ -272,10 +273,11 @@
                 <!-- Cambiar Estado -->
                 <Button Text="🔄 Cambiar Estado" 
                         Command="{Binding CambiarEstadoCommand}" 
-                        Style="{StaticResource SecondaryButtonStyle}" />
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        IsVisible="{Binding ShowCambiarEstado}" />
 
-                <!-- Finalizar -->
-                <Button Text="✅ Finalizar" 
+                <!-- Finalizar/Cobrar -->
+                <Button Text="{Binding FinalizarButtonText, StringFormat='✅ {0}'}" 
                         Command="{Binding FinalizarComandaCommand}" 
                         Style="{StaticResource ActionButtonStyle}"
                         IsVisible="{Binding CanFinalize}" />

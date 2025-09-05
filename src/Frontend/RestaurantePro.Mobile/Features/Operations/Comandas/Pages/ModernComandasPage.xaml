@@ -5,139 +5,87 @@
              xmlns:converters="clr-namespace:RestaurantePro.Mobile.Converters"
              xmlns:vm="clr-namespace:RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;assembly=RestaurantePro.Mobile.Core"
              x:Class="RestaurantePro.Mobile.Features.Operations.Comandas.Pages.ModernComandasPage"
-             x:DataType="vm:ComandasViewModel"
              Title="{Binding Title}"
              BackgroundColor="{StaticResource SurfacePrimary}">
 
-    <Grid RowDefinitions="Auto,*,Auto">
-        
-        <!-- Header con Estadísticas -->
-        <ScrollView Grid.Row="0" 
-                    HorizontalScrollBarVisibility="Never"
-                    Padding="16,8">
-            <HorizontalStackLayout Spacing="12">
-                
-                <!-- Card Total Comandas -->
-                <controls:ModernCard Padding="16" WidthRequest="120">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="🍽️" 
-                               FontSize="24" 
-                               HorizontalOptions="Center" />
-                        <Label Text="Total" 
-                               Style="{StaticResource CaptionStyle}" 
-                               HorizontalOptions="Center" />
-                        <Label Text="{Binding Estadisticas.TotalComandasActivas}" 
-                               Style="{StaticResource H2Style}" 
-                               TextColor="{StaticResource TextPrimary}"
-                               HorizontalOptions="Center" />
+    <Grid RowDefinitions="*">
+
+        <!-- Contenido Principal en un solo scroll (Header + Items) -->
+        <RefreshView Grid.Row="0"
+                     IsRefreshing="{Binding IsRefreshing}"
+                     Command="{Binding RefreshComandasCommand}">
+
+            <CollectionView ItemsSource="{Binding Comandas}"
+                            SelectionMode="None">
+
+                <!-- Header: estadísticas + búsqueda + filtros + acciones -->
+                <CollectionView.Header>
+                    <VerticalStackLayout Spacing="12" Padding="16,8,16,0">
+                        <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                            <HorizontalStackLayout Spacing="12">
+                                <!-- Card Total Comandas -->
+                                <controls:ModernCard Padding="16" WidthRequest="120">
+                                    <VerticalStackLayout Spacing="8">
+                                        <Label Text="🍽️" FontSize="24" HorizontalOptions="Center" />
+                                        <Label Text="Total" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                                        <Label Text="{Binding Estadisticas.TotalComandasActivas}" Style="{StaticResource H2Style}" TextColor="{StaticResource TextPrimary}" HorizontalOptions="Center" />
+                                    </VerticalStackLayout>
+                                </controls:ModernCard>
+                                <!-- Card Pendientes -->
+                                <controls:ModernCard Padding="16" WidthRequest="120">
+                                    <VerticalStackLayout Spacing="8">
+                                        <Label Text="⏳" FontSize="24" HorizontalOptions="Center" />
+                                        <Label Text="Pendientes" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                                        <Label Text="{Binding Estadisticas.ComandasPendientes}" Style="{StaticResource H2Style}" TextColor="{StaticResource WarningColor}" HorizontalOptions="Center" />
+                                    </VerticalStackLayout>
+                                </controls:ModernCard>
+                                <!-- Card En Progreso -->
+                                <controls:ModernCard Padding="16" WidthRequest="120">
+                                    <VerticalStackLayout Spacing="8">
+                                        <Label Text="🔥" FontSize="24" HorizontalOptions="Center" />
+                                        <Label Text="En Progreso" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                                        <Label Text="{Binding Estadisticas.ComandasEnPreparacion}" Style="{StaticResource H2Style}" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
+                                    </VerticalStackLayout>
+                                </controls:ModernCard>
+                                <!-- Card Completadas -->
+                                <controls:ModernCard Padding="16" WidthRequest="120">
+                                    <VerticalStackLayout Spacing="8">
+                                        <Label Text="✅" FontSize="24" HorizontalOptions="Center" />
+                                        <Label Text="Completadas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                                        <Label Text="{Binding Estadisticas.ComandasCompletadasHoy}" Style="{StaticResource H2Style}" TextColor="{StaticResource SuccessColor}" HorizontalOptions="Center" />
+                                    </VerticalStackLayout>
+                                </controls:ModernCard>
+                            </HorizontalStackLayout>
+                        </ScrollView>
+
+                        <!-- Búsqueda, filtros y acciones -->
+                        <controls:ModernCard>
+                            <VerticalStackLayout Spacing="16">
+                                <controls:ModernEntry Placeholder="Buscar comanda por número o cliente..." Text="{Binding SearchText}" Icon="🔍" />
+                                
+                                <!-- Filtros rápidos: Estado y Solo Activas -->
+                                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12">
+                                    <Picker Grid.Column="0"
+                                            Title="Estado"
+                                            ItemsSource="{Binding EstadosDisponibles}"
+                                            SelectedItem="{Binding FiltroEstado, Mode=TwoWay}" />
+                                    <Label Grid.Column="1" Text="Solo activas" VerticalTextAlignment="Center" />
+                                    <Switch Grid.Column="2" IsToggled="{Binding SoloActivas, Mode=TwoWay}" />
+                                </Grid>
+                                <Grid ColumnDefinitions="*,*,*" RowDefinitions="*,*" ColumnSpacing="8" RowSpacing="8">
+                                    <Button Grid.Column="0" Grid.Row="0" Text="🔄 Refrescar" Command="{Binding RefreshComandasCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+                                    <Button Grid.Column="1" Grid.Row="0" Text="📊 Estadísticas" Command="{Binding LoadEstadisticasCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+                                    <Button Grid.Column="2" Grid.Row="0" Text="🔍 Buscar" Command="{Binding LoadComandasCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+                                    <Button Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="3" Text="+ Nueva Comanda" Command="{Binding CrearComandaCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                                </Grid>
+                            </VerticalStackLayout>
+                        </controls:ModernCard>
                     </VerticalStackLayout>
-                </controls:ModernCard>
+                </CollectionView.Header>
 
-                <!-- Card Pendientes -->
-                <controls:ModernCard Padding="16" WidthRequest="120">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="⏳" 
-                               FontSize="24" 
-                               HorizontalOptions="Center" />
-                        <Label Text="Pendientes" 
-                               Style="{StaticResource CaptionStyle}" 
-                               HorizontalOptions="Center" />
-                        <Label Text="{Binding Estadisticas.ComandasPendientes}" 
-                               Style="{StaticResource H2Style}" 
-                               TextColor="{StaticResource WarningColor}"
-                               HorizontalOptions="Center" />
-                    </VerticalStackLayout>
-                </controls:ModernCard>
-
-                <!-- Card En Progreso -->
-                <controls:ModernCard Padding="16" WidthRequest="120">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="🔥" 
-                               FontSize="24" 
-                               HorizontalOptions="Center" />
-                        <Label Text="En Progreso" 
-                               Style="{StaticResource CaptionStyle}" 
-                               HorizontalOptions="Center" />
-                        <Label Text="{Binding Estadisticas.ComandasEnPreparacion}" 
-                               Style="{StaticResource H2Style}" 
-                               TextColor="{StaticResource PrimaryColor}"
-                               HorizontalOptions="Center" />
-                    </VerticalStackLayout>
-                </controls:ModernCard>
-
-                <!-- Card Completadas -->
-                <controls:ModernCard Padding="16" WidthRequest="120">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="✅" 
-                               FontSize="24" 
-                               HorizontalOptions="Center" />
-                        <Label Text="Completadas" 
-                               Style="{StaticResource CaptionStyle}" 
-                               HorizontalOptions="Center" />
-                        <Label Text="{Binding Estadisticas.ComandasCompletadasHoy}" 
-                               Style="{StaticResource H2Style}" 
-                               TextColor="{StaticResource SuccessColor}"
-                               HorizontalOptions="Center" />
-                    </VerticalStackLayout>
-                </controls:ModernCard>
-
-            </HorizontalStackLayout>
-        </ScrollView>
-
-        <!-- Contenido Principal -->
-        <Grid Grid.Row="1" RowDefinitions="Auto,*">
-            
-            <!-- Barra de Búsqueda y Filtros -->
-            <controls:ModernCard Grid.Row="0" Margin="16,8">
-                <VerticalStackLayout Spacing="16">
-                    
-                    <!-- Búsqueda -->
-                    <controls:ModernEntry Placeholder="Buscar comanda por número o cliente..."
-                                         Text="{Binding SearchText}"
-                                         Icon="🔍" />
-                    
-                    <!-- Tabs de Filtro -->
-                    <controls:TabNavigation x:Name="FilterTabNavigation" />
-                    
-                    <!-- Botones de Acción -->
-                    <Grid ColumnDefinitions="*,*,*" RowDefinitions="*,*" 
-                          ColumnSpacing="8" RowSpacing="8">
-                        
-                        <Button Grid.Column="0" Grid.Row="0"
-                                Text="🔄 Refrescar"
-                                Command="{Binding RefreshComandasCommand}"
-                                Style="{StaticResource SecondaryButtonStyle}" />
-                        
-                        <Button Grid.Column="1" Grid.Row="0"
-                                Text="📊 Estadísticas"
-                                Command="{Binding LoadEstadisticasCommand}"
-                                Style="{StaticResource SecondaryButtonStyle}" />
-                        
-                        <Button Grid.Column="2" Grid.Row="0"
-                                Text="🔍 Buscar"
-                                Command="{Binding LoadComandasCommand}"
-                                Style="{StaticResource SecondaryButtonStyle}" />
-                        
-                        <Button Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="3"
-                                Text="+ Nueva Comanda"
-                                Command="{Binding CrearComandaCommand}"
-                                Style="{StaticResource PrimaryButtonStyle}" />
-                    </Grid>
-                </VerticalStackLayout>
-            </controls:ModernCard>
-
-            <!-- Lista de Comandas -->
-            <RefreshView Grid.Row="1"
-                         IsRefreshing="{Binding IsRefreshing}"
-                         Command="{Binding RefreshComandasCommand}">
-                
-                <CollectionView ItemsSource="{Binding Comandas}"
-                               SelectionMode="Single"
-                               SelectedItem="{Binding SelectedComanda}">
-                    
-                    <CollectionView.ItemsLayout>
-                        <LinearItemsLayout Orientation="Vertical" />
-                    </CollectionView.ItemsLayout>
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Vertical" />
+                </CollectionView.ItemsLayout>
 
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
@@ -170,9 +118,9 @@
                                     <!-- Información de Comanda -->
                                     <VerticalStackLayout Grid.Row="1" Grid.ColumnSpan="2" 
                                                          Spacing="4" Margin="0,12,0,0">
-                                        <Label Text="{Binding MesaNumeroDisplay, StringFormat='🪑 Mesa: {0}'}" 
+                                        <Label Text="{Binding MesaNumeroDisplay, StringFormat='🪑 Mesa: {0}', TargetNullValue='🪑 Mesa: Sin asignar'}" 
                                                Style="{StaticResource BodyStyle}" />
-                                        <Label Text="{Binding ClienteNombre, StringFormat='👤 Cliente: {0}'}" 
+                                        <Label Text="{Binding ClienteNombre, StringFormat='👤 Cliente: {0}', TargetNullValue='👤 Cliente: No asignado'}" 
                                                Style="{StaticResource BodyStyle}" />
                                         <Label Text="{Binding Total, StringFormat='💰 Total: {0:C}'}" 
                                                Style="{StaticResource BodyStyle}"
@@ -205,6 +153,11 @@
                                                     </Grid>
                                                 </DataTemplate>
                                             </CollectionView.ItemTemplate>
+                                            <CollectionView.EmptyView>
+                                                <Label Text="(sin items)"
+                                                       Style="{StaticResource CaptionStyle}"
+                                                       TextColor="{StaticResource TextSecondary}" />
+                                            </CollectionView.EmptyView>
                                         </CollectionView>
                                     </VerticalStackLayout>
 
@@ -219,28 +172,31 @@
                                                IsVisible="{Binding Observaciones, Converter={StaticResource IsNotNullConverter}}" />
                                     </VerticalStackLayout>
 
-                                    <!-- Botones de Acción -->
-                                    <HorizontalStackLayout Grid.Row="4" Grid.ColumnSpan="2" 
-                                                           Spacing="8" Margin="0,12,0,0">
-                                        
-                                        <Button Text="👁️ Ver"
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.VerDetalleCommand}"
-                                                CommandParameter="{Binding .}"
-                                                Style="{StaticResource SecondaryButtonStyle}"
-                                                HorizontalOptions="FillAndExpand" />
-                                        
-                                        <Button Text="✏️ Editar"
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditarCommand}"
-                                                CommandParameter="{Binding .}"
-                                                Style="{StaticResource SecondaryButtonStyle}"
-                                                HorizontalOptions="FillAndExpand" />
-                                        
-                                        <Button Text="✅ Finalizar"
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.FinalizarComandaCommand}"
-                                                CommandParameter="{Binding .}"
-                                                Style="{StaticResource SuccessButtonStyle}"
-                                                HorizontalOptions="FillAndExpand" />
-                                    </HorizontalStackLayout>
+                                    <!-- Botones de Acción (scroll horizontal) -->
+                                    <ScrollView Grid.Row="4" Grid.ColumnSpan="2"
+                                                Orientation="Horizontal"
+                                                HorizontalScrollBarVisibility="Never"
+                                                Margin="0,12,0,0">
+                                        <HorizontalStackLayout Spacing="8">
+                                            <Button Text="👁️ Ver"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.VerDetalleCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    HorizontalOptions="Start" />
+
+                                            <Button Text="✏️ Editar"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditarCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    HorizontalOptions="Start" />
+
+                                            <Button Text="✅ Finalizar"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.FinalizarComandaCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Style="{StaticResource SuccessButtonStyle}"
+                                                    HorizontalOptions="Start" />
+                                        </HorizontalStackLayout>
+                                    </ScrollView>
                                 </Grid>
                             </controls:ModernCard>
                         </DataTemplate>
@@ -270,7 +226,6 @@
                     </CollectionView.EmptyView>
                 </CollectionView>
             </RefreshView>
-        </Grid>
 
         <!-- Bottom Navigation - COMENTADO PARA USAR TABS NATIVOS -->
         <!--
@@ -278,7 +233,7 @@
         -->
 
         <!-- Floating Action Button -->
-        <controls:FloatingActionButton Grid.RowSpan="3"
+        <controls:FloatingActionButton Grid.RowSpan="1"
                                        x:Name="MainFab"
                                        Text="➕"
                                        Command="{Binding CrearComandaCommand}"

@@ -5,6 +5,8 @@ using RestaurantePro.Domain.Operaciones.Comandas.Interfaces;
 using RestaurantePro.Domain.Operaciones.Comandas.Enums;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache.Invalidation;
 
 namespace RestaurantePro.Application.Operaciones.Comandas.Commands.CambiarEstadoComanda;
 
@@ -13,15 +15,18 @@ public class CambiarEstadoComandaCommandHandler : IRequestHandler<CambiarEstadoC
     private readonly IComandaRepository _comandaRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<CambiarEstadoComandaCommandHandler> _logger;
+    private readonly ICacheService _cacheService;
 
     public CambiarEstadoComandaCommandHandler(
         IComandaRepository comandaRepository,
         IMapper mapper,
-        ILogger<CambiarEstadoComandaCommandHandler> logger)
+        ILogger<CambiarEstadoComandaCommandHandler> logger,
+        ICacheService cacheService)
     {
         _comandaRepository = comandaRepository;
         _mapper = mapper;
         _logger = logger;
+        _cacheService = cacheService;
     }
 
     public async Task<Result<ComandaDto>> Handle(CambiarEstadoComandaCommand request, CancellationToken cancellationToken)
@@ -75,7 +80,12 @@ public class CambiarEstadoComandaCommandHandler : IRequestHandler<CambiarEstadoC
         await _comandaRepository.ActualizarAsync(comanda, cancellationToken);
         await _comandaRepository.GuardarCambiosAsync(cancellationToken);
 
-        // 5. Mapear a DTO y retornar
+        // 5. Invalidar caché relevante para que el listado/detalle reflejen el nuevo estado
+        _cacheService.InvalidatePattern("ObtenerComandasPaginadasQuery_");
+        _cacheService.InvalidatePattern("ObtenerComandasPorMesaQuery_");
+        _cacheService.InvalidateForEntity("ObtenerComandaPorIdQuery_", comanda.Id);
+
+        // 6. Mapear a DTO y retornar
         var dto = _mapper.Map<ComandaDto>(comanda);
         return Result.Success(dto);
     }

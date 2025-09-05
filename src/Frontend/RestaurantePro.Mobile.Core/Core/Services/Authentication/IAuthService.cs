@@ -10,6 +10,10 @@ public interface IAuthService
     Task<ApiResponse<AuthResponse>> LoginAsync(string email, string password, bool recordarme = false);
     Task<string?> GetTokenAsync();
     Task<AuthUser?> GetCurrentUserAsync();
+    /// <summary>
+    /// Obtiene el UserId (GUID) desde el token JWT actual
+    /// </summary>
+    Task<string?> GetUserIdAsync();
     Task<bool> IsAuthenticatedAsync();
     Task LogoutAsync();
 } 

@@ -10,123 +10,14 @@
              Title="{Binding Title}"
              BackgroundColor="{StaticResource SurfacePrimary}">
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="*">
         
-        <!-- Header con Estadísticas -->
-        <ScrollView Grid.Row="0" 
-                    HorizontalScrollBarVisibility="Never"
-                    Orientation="Horizontal"
-                    Padding="16,8">
-            <HorizontalStackLayout Spacing="12">
-                
-                <!-- Card Total Productos -->
-                <controls:ModernCard Padding="16" WidthRequest="120">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="📦" 
-                               FontSize="24" 
-                               HorizontalOptions="Center" />
-                        <Label Text="Total" 
-                               Style="{StaticResource CaptionStyle}" 
-                               HorizontalOptions="Center" />
-                        <Label Text="{Binding Estadisticas.TotalProductos}" 
-                               Style="{StaticResource H2Style}" 
-                               TextColor="{StaticResource TextPrimary}"
-                               HorizontalOptions="Center" />
-                    </VerticalStackLayout>
-                </controls:ModernCard>
-
-                <!-- Card Disponibles -->
-                <controls:ModernCard Padding="16" WidthRequest="120">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="✅" 
-                               FontSize="24" 
-                               HorizontalOptions="Center" />
-                        <Label Text="Disponibles" 
-                               Style="{StaticResource CaptionStyle}" 
-                               HorizontalOptions="Center" />
-                        <Label Text="{Binding Estadisticas.ProductosDisponibles}" 
-                               Style="{StaticResource H2Style}" 
-                               TextColor="{StaticResource SuccessColor}"
-                               HorizontalOptions="Center" />
-                    </VerticalStackLayout>
-                </controls:ModernCard>
-
-                <!-- Card Agotados -->
-                <controls:ModernCard Padding="16" WidthRequest="120">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="❌" 
-                               FontSize="24" 
-                               HorizontalOptions="Center" />
-                        <Label Text="Agotados" 
-                               Style="{StaticResource CaptionStyle}" 
-                               HorizontalOptions="Center" />
-                        <Label Text="{Binding Estadisticas.ProductosAgotados}" 
-                               Style="{StaticResource H2Style}" 
-                               TextColor="{StaticResource ErrorColor}"
-                               HorizontalOptions="Center" />
-                    </VerticalStackLayout>
-                </controls:ModernCard>
-
-                <!-- Card Categorías -->
-                <controls:ModernCard Padding="16" WidthRequest="120">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="🏷️" 
-                               FontSize="24" 
-                               HorizontalOptions="Center" />
-                        <Label Text="Categorías" 
-                               Style="{StaticResource CaptionStyle}" 
-                               HorizontalOptions="Center" />
-                        <Label Text="{Binding Estadisticas.TotalCategorias}" 
-                               Style="{StaticResource H2Style}" 
-                               TextColor="{StaticResource PrimaryColor}"
-                               HorizontalOptions="Center" />
-                    </VerticalStackLayout>
-                </controls:ModernCard>
-
-            </HorizontalStackLayout>
-        </ScrollView>
+        
 
         <!-- Contenido Principal -->
-        <Grid Grid.Row="1" RowDefinitions="Auto,*">
+        <Grid Grid.Row="0">
             
-            <!-- Barra de Búsqueda y Filtros -->
-            <controls:ModernCard Grid.Row="0" Margin="16,8">
-                <VerticalStackLayout Spacing="16">
-                    
-                    <!-- Búsqueda -->
-                    <controls:ModernEntry Placeholder="Buscar productos por nombre o categoría..."
-                                         Text="{Binding TextoBusqueda}"
-                                         Icon="🔍" />
-                    
-                    <!-- Tabs de Filtro -->
-                    <controls:TabNavigation x:Name="FilterTabNavigation" />
-                    
-                    <!-- Botones de Acción -->
-                    <Grid ColumnDefinitions="*,*,*" RowDefinitions="*,*" 
-                          ColumnSpacing="8" RowSpacing="8">
-                        
-                        <Button Grid.Column="0" Grid.Row="0"
-                                Text="🔄 Refrescar"
-                                Command="{Binding RefreshProductosCommand}"
-                                Style="{StaticResource SecondaryButtonStyle}" />
-                        
-                        <Button Grid.Column="1" Grid.Row="0"
-                                Text="🔥 Populares"
-                                Command="{Binding LoadProductosPopularesCommand}"
-                                Style="{StaticResource SecondaryButtonStyle}" />
-                        
-                        <Button Grid.Column="2" Grid.Row="0"
-                                Text="✅ Disponibles"
-                                Command="{Binding LoadProductosDisponiblesCommand}"
-                                Style="{StaticResource SecondaryButtonStyle}" />
-                        
-                        <Button Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="3"
-                                Text="➕ Nuevo Producto"
-                                Command="{Binding CrearProductoCommand}"
-                                Style="{StaticResource PrimaryButtonStyle}" />
-                    </Grid>
-                </VerticalStackLayout>
-            </controls:ModernCard>
+            
 
             <!-- Grid de Productos -->
             <RefreshView Grid.Row="1"
@@ -134,8 +25,59 @@
                          Command="{Binding RefreshProductosCommand}">
                 
                 <CollectionView ItemsSource="{Binding Productos}"
-                               SelectionMode="Single"
-                               SelectedItem="{Binding SelectedProducto}">
+                               SelectionMode="None">
+                    
+                    <CollectionView.Header>
+                        <VerticalStackLayout Spacing="12" Padding="16,8,16,0">
+                            <!-- Estadísticas -->
+                            <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                                <HorizontalStackLayout Spacing="12">
+                                    <controls:ModernCard Padding="16" WidthRequest="120">
+                                        <VerticalStackLayout Spacing="8">
+                                            <Label Text="📦" FontSize="24" HorizontalOptions="Center" />
+                                            <Label Text="Total" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                                            <Label Text="{Binding Estadisticas.TotalProductos}" Style="{StaticResource H2Style}" TextColor="{StaticResource TextPrimary}" HorizontalOptions="Center" />
+                                        </VerticalStackLayout>
+                                    </controls:ModernCard>
+                                    <controls:ModernCard Padding="16" WidthRequest="120">
+                                        <VerticalStackLayout Spacing="8">
+                                            <Label Text="✅" FontSize="24" HorizontalOptions="Center" />
+                                            <Label Text="Disponibles" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                                            <Label Text="{Binding Estadisticas.ProductosDisponibles}" Style="{StaticResource H2Style}" TextColor="{StaticResource SuccessColor}" HorizontalOptions="Center" />
+                                        </VerticalStackLayout>
+                                    </controls:ModernCard>
+                                    <controls:ModernCard Padding="16" WidthRequest="120">
+                                        <VerticalStackLayout Spacing="8">
+                                            <Label Text="❌" FontSize="24" HorizontalOptions="Center" />
+                                            <Label Text="Agotados" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                                            <Label Text="{Binding Estadisticas.ProductosAgotados}" Style="{StaticResource H2Style}" TextColor="{StaticResource ErrorColor}" HorizontalOptions="Center" />
+                                        </VerticalStackLayout>
+                                    </controls:ModernCard>
+                                    <controls:ModernCard Padding="16" WidthRequest="120">
+                                        <VerticalStackLayout Spacing="8">
+                                            <Label Text="🏷️" FontSize="24" HorizontalOptions="Center" />
+                                            <Label Text="Categorías" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                                            <Label Text="{Binding Estadisticas.TotalCategorias}" Style="{StaticResource H2Style}" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
+                                        </VerticalStackLayout>
+                                    </controls:ModernCard>
+                                </HorizontalStackLayout>
+                            </ScrollView>
+
+                            <!-- Búsqueda, filtros y acciones -->
+                            <controls:ModernCard>
+                                <VerticalStackLayout Spacing="16">
+                                    <controls:ModernEntry Placeholder="Buscar productos por nombre o categoría..." Text="{Binding TextoBusqueda}" Icon="🔍" />
+                                    <controls:TabNavigation x:Name="FilterTabNavigation" />
+                                    <Grid ColumnDefinitions="*,*,*" RowDefinitions="*,*" ColumnSpacing="8" RowSpacing="8">
+                                        <Button Grid.Column="0" Grid.Row="0" Text="🔄 Refrescar" Command="{Binding RefreshProductosCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+                                        <Button Grid.Column="1" Grid.Row="0" Text="🔥 Populares" Command="{Binding LoadProductosPopularesCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+                                        <Button Grid.Column="2" Grid.Row="0" Text="✅ Disponibles" Command="{Binding LoadProductosDisponiblesCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+                                        <Button Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="3" Text="➕ Nuevo Producto" Command="{Binding CrearProductoCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                                    </Grid>
+                                </VerticalStackLayout>
+                            </controls:ModernCard>
+                        </VerticalStackLayout>
+                    </CollectionView.Header>
                     
                     <CollectionView.ItemsLayout>
                         <GridItemsLayout Orientation="Vertical" 
@@ -208,28 +150,31 @@
                                                Style="{StaticResource CaptionStyle}" />
                                     </VerticalStackLayout>
 
-                                    <!-- Botones de Acción -->
-                                    <HorizontalStackLayout Grid.Row="3" Grid.ColumnSpan="2" 
-                                                           Spacing="8" Margin="0,12,0,0">
-                                        
-                                        <Button Text="👁️ Ver"
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.VerProductoCommand}"
-                                                CommandParameter="{Binding .}"
-                                                Style="{StaticResource SecondaryButtonStyle}"
-                                                HorizontalOptions="FillAndExpand" />
-                                        
-                                        <Button Text="✏️ Editar"
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditarProductoCommand}"
-                                                CommandParameter="{Binding .}"
-                                                Style="{StaticResource SecondaryButtonStyle}"
-                                                HorizontalOptions="FillAndExpand" />
-                                        
-                                        <Button Text="🗑️ Eliminar"
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EliminarProductoCommand}"
-                                                CommandParameter="{Binding .}"
-                                                Style="{StaticResource DangerButtonStyle}"
-                                                HorizontalOptions="FillAndExpand" />
-                                    </HorizontalStackLayout>
+                                    <!-- Botones de Acción (scroll horizontal) -->
+                                    <ScrollView Grid.Row="3" Grid.ColumnSpan="2"
+                                                Orientation="Horizontal"
+                                                HorizontalScrollBarVisibility="Never"
+                                                Margin="0,12,0,0">
+                                        <HorizontalStackLayout Spacing="8" Padding="0,0,8,0">
+                                            <Button Text="👁️ Ver"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.VerProductoCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    HorizontalOptions="Start" />
+                                            
+                                            <Button Text="✏️ Editar"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditarProductoCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    HorizontalOptions="Start" />
+                                            
+                                            <Button Text="🗑️ Eliminar"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EliminarProductoCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Style="{StaticResource DangerButtonStyle}"
+                                                    HorizontalOptions="Start" />
+                                        </HorizontalStackLayout>
+                                    </ScrollView>
                                 </Grid>
                             </controls:ModernCard>
                         </DataTemplate>
@@ -267,7 +212,7 @@
         -->
 
         <!-- Floating Action Button -->
-        <controls:FloatingActionButton Grid.RowSpan="2"
+        <controls:FloatingActionButton Grid.RowSpan="1"
                                        x:Name="MainFab"
                                        Text="+"
                                        Command="{Binding CrearProductoCommand}"

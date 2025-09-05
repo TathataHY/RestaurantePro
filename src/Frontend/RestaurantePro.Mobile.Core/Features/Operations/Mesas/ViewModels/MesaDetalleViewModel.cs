@@ -30,6 +30,9 @@ public partial class MesaDetalleViewModel : BaseViewModel
     [ObservableProperty]
     private Guid mesaId;
 
+    [ObservableProperty]
+    private ComandaDto? selectedComanda;
+
     /// <summary>
     /// Constructor para inyección de dependencias
     /// </summary>
@@ -51,6 +54,7 @@ public partial class MesaDetalleViewModel : BaseViewModel
         // Inicializar comandos
         EntregarComandaCommand = new AsyncRelayCommand<ComandaDto>(EntregarComandaAsync);
         CobrarComandaCommand = new AsyncRelayCommand<ComandaDto>(CobrarComandaAsync);
+        VerComandaCommand = new AsyncRelayCommand<ComandaDto>(AbrirComandaDetalleAsync);
     }
 
     /// <summary>
@@ -520,6 +524,11 @@ public partial class MesaDetalleViewModel : BaseViewModel
     public IAsyncRelayCommand<ComandaDto> CobrarComandaCommand { get; }
 
     /// <summary>
+    /// Comando para abrir el detalle de una comanda desde la lista
+    /// </summary>
+    public IAsyncRelayCommand<ComandaDto> VerComandaCommand { get; }
+
+    /// <summary>
     /// Cobrar una comanda entregada
     /// </summary>
     private async Task CobrarComandaAsync(ComandaDto comanda)
@@ -586,5 +595,34 @@ public partial class MesaDetalleViewModel : BaseViewModel
     {
         ComandasActivas?.Clear();
         Mesa = new MesaDto();
+    }
+
+    partial void OnSelectedComandaChanged(ComandaDto? value)
+    {
+        // Disparar navegación sin bloquear el hilo del UI
+        if (value != null)
+        {
+            _ = AbrirComandaDetalleAsync(value);
+        }
+    }
+
+    /// <summary>
+    /// Navega al detalle de la comanda y limpia la selección
+    /// </summary>
+    private async Task AbrirComandaDetalleAsync(ComandaDto? comanda)
+    {
+        if (comanda == null) return;
+        try
+        {
+            await _navigationService.NavigateToAsync("comanda-detalle", new Dictionary<string, object>
+            {
+                ["comandaId"] = comanda.Id.ToString()
+            });
+        }
+        finally
+        {
+            // Limpiar selección para permitir re-taps
+            SelectedComanda = null;
+        }
     }
 } 

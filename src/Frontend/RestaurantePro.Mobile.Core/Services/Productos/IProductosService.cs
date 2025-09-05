@@ -74,4 +74,19 @@ public interface IProductosService
     /// </summary>
     /// <returns>Lista de categorías con productos</returns>
     Task<ApiResponse<List<CategoriaProductoDto>>> ObtenerCategoriasAsync();
+
+    /// <summary>
+    /// Crear un nuevo producto
+    /// </summary>
+    Task<ApiResponse<ProductoDto>> CrearProductoAsync(CrearProductoRequest request);
+
+    /// <summary>
+    /// Actualizar un producto existente
+    /// </summary>
+    Task<ApiResponse<ProductoDto>> ActualizarProductoAsync(ActualizarProductoRequest request);
+
+    /// <summary>
+    /// Eliminar un producto
+    /// </summary>
+    Task<ApiResponse<bool>> EliminarProductoAsync(Guid productoId);
 } 

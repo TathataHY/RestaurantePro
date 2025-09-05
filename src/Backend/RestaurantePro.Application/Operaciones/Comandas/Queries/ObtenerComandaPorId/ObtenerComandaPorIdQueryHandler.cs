@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Application.Common.DTOs;
@@ -55,6 +56,36 @@ public class ObtenerComandaPorIdQueryHandler : IRequestHandler<ObtenerComandaPor
 
             // Mapear a DTO
             var comandaDto = _mapper.Map<ComandaDto>(comanda);
+
+            // Enriquecer los items con el nombre del producto (si se incluyeron items)
+            if (request.IncluirItems && comandaDto.Items != null && comandaDto.Items.Count > 0)
+            {
+                var productoIds = comanda.Items
+                    .Select(i => i.ProductoId)
+                    .Distinct()
+                    .ToList();
+
+                var productos = await _context.Productos
+                    .Where(p => productoIds.Contains(p.Id))
+                    .Select(p => new { p.Id, p.Nombre })
+                    .ToListAsync(cancellationToken);
+
+                var productosDict = productos.ToDictionary(p => p.Id, p => p.Nombre);
+
+                foreach (var item in comandaDto.Items)
+                {
+                    if (productosDict.TryGetValue(item.ProductoId, out var nombre) && !string.IsNullOrWhiteSpace(nombre))
+                    {
+                        item.Nombre = nombre;
+                    }
+                    else if (string.IsNullOrWhiteSpace(item.Nombre))
+                    {
+                        item.Nombre = "Producto";
+                    }
+                }
+
+                _logger.LogInformation("🧩 Items enriquecidos con nombres de producto: {Count}", comandaDto.Items.Count);
+            }
 
             _logger.LogInformation("✅ Comanda obtenida exitosamente: {ComandaId}", request.ComandaId);
             return Result.Success(comandaDto);

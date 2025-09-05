@@ -203,4 +203,67 @@ public class ProductosService : IProductosService
             return ApiResponse<List<CategoriaProductoDto>>.ErrorResponse("Error al obtener categorías", "Error al obtener categorías");
         }
     }
+
+    /// <summary>
+    /// Crear un nuevo producto
+    /// </summary>
+    public async Task<ApiResponse<ProductoDto>> CrearProductoAsync(CrearProductoRequest request)
+    {
+        try
+        {
+            if (request is null)
+            {
+                return ApiResponse<ProductoDto>.ErrorResponse("Request inválido", "Request inválido");
+            }
+
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.PostAsync<ProductoDto>(BaseEndpoint, request, token);
+        }
+        catch (Exception)
+        {
+            return ApiResponse<ProductoDto>.ErrorResponse("Error al crear producto", "Error al crear producto");
+        }
+    }
+
+    /// <summary>
+    /// Actualizar un producto existente
+    /// </summary>
+    public async Task<ApiResponse<ProductoDto>> ActualizarProductoAsync(ActualizarProductoRequest request)
+    {
+        try
+        {
+            if (request is null || request.Id == Guid.Empty)
+            {
+                return ApiResponse<ProductoDto>.ErrorResponse("Request inválido", "Request inválido");
+            }
+
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.PutAsync<ProductoDto>($"{BaseEndpoint}/{request.Id}", request, token);
+        }
+        catch (Exception)
+        {
+            return ApiResponse<ProductoDto>.ErrorResponse("Error al actualizar producto", "Error al actualizar producto");
+        }
+    }
+
+    /// <summary>
+    /// Eliminar un producto
+    /// </summary>
+    public async Task<ApiResponse<bool>> EliminarProductoAsync(Guid productoId)
+    {
+        try
+        {
+            if (productoId == Guid.Empty)
+            {
+                return ApiResponse<bool>.ErrorResponse("El ID del producto es requerido", "El ID del producto es requerido");
+            }
+
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.DeleteAsync($"{BaseEndpoint}/{productoId}");
+        }
+        catch (Exception)
+        {
+            return ApiResponse<bool>.ErrorResponse("Error al eliminar producto", "Error al eliminar producto");
+        }
+    }
 } 
