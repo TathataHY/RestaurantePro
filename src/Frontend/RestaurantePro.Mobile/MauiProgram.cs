@@ -126,6 +126,7 @@ public static class MauiProgram
 		services.AddSingleton<INavigationService, RestaurantePro.Mobile.Services.NavigationService>();
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Dialog.IDialogService, RestaurantePro.Mobile.Services.DialogService>();
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Platform.ISecureStorageService, RestaurantePro.Mobile.Core.Services.Platform.SecureStorageService>();
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Realtime.IComandaRealtimeService, RestaurantePro.Mobile.Services.ComandaRealtimeService>();
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Notifications.INotificationService, RestaurantePro.Mobile.Services.NotificationService>();
 		
 		// Servicios V4 - Sistema de Temas

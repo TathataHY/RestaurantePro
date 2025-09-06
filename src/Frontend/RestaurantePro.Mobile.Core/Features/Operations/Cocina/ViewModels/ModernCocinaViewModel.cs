@@ -16,6 +16,7 @@ public partial class ModernCocinaViewModel : BaseViewModel
     private readonly IComandasService _comandasService;
     private readonly IDialogService _dialogService;
     private readonly RestaurantePro.Mobile.Core.Services.Notifications.INotificationService _notificationService;
+    private readonly RestaurantePro.Mobile.Core.Services.Realtime.IComandaRealtimeService _realtimeService;
 
     #region Propiedades Observables
 
@@ -30,6 +31,9 @@ public partial class ModernCocinaViewModel : BaseViewModel
 
     [ObservableProperty]
     private string filtroEstado = "Todas";
+
+    [ObservableProperty]
+    private bool soloPendientes = true;
 
     [ObservableProperty]
     private bool isRefreshing;
@@ -53,17 +57,32 @@ public partial class ModernCocinaViewModel : BaseViewModel
     public ModernCocinaViewModel(
         IComandasService comandasService,
         IDialogService dialogService,
-        RestaurantePro.Mobile.Core.Services.Notifications.INotificationService notificationService)
+        RestaurantePro.Mobile.Core.Services.Notifications.INotificationService notificationService,
+        RestaurantePro.Mobile.Core.Services.Realtime.IComandaRealtimeService realtimeService)
     {
         _comandasService = comandasService;
         _dialogService = dialogService;
         _notificationService = notificationService;
+        _realtimeService = realtimeService;
         
         Title = "Cocina";
         
         // Cargar datos iniciales
         _ = LoadComandasAsync();
         _ = LoadEstadisticasAsync();
+
+        // Suscribir a eventos realtime
+        _realtimeService.OnNuevaComanda += async () =>
+        {
+            await _notificationService.VibrateAsync(80);
+            await _notificationService.ShowToastAsync("Nueva comanda (tiempo real)");
+            await RefreshComandasCommand.ExecuteAsync(null);
+        };
+        _realtimeService.OnComandaActualizada += async () =>
+        {
+            await RefreshComandasCommand.ExecuteAsync(null);
+        };
+        _ = _realtimeService.StartAsync();
     }
 
     #endregion
@@ -316,6 +335,12 @@ public partial class ModernCocinaViewModel : BaseViewModel
         
         var comandasFiltradas = Comandas.AsEnumerable();
 
+        // Modo Solo Pendientes: Creada o EnProceso
+        if (SoloPendientes)
+        {
+            comandasFiltradas = comandasFiltradas.Where(c => c.Estado == "Creada" || c.Estado == "EnProceso");
+        }
+
         // Filtrar por estado
         if (FiltroEstado != "Todas")
         {
@@ -346,6 +371,11 @@ public partial class ModernCocinaViewModel : BaseViewModel
     #region Event Handlers
 
     partial void OnFiltroEstadoChanged(string value)
+    {
+        AplicarFiltros();
+    }
+
+    partial void OnSoloPendientesChanged(bool value)
     {
         AplicarFiltros();
     }

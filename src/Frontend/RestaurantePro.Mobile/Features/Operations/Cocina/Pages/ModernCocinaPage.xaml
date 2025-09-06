@@ -69,7 +69,7 @@
                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
                     StrokeShape="RoundRectangle 10"
                     Margin="0,0,0,10">
-                <Grid ColumnDefinitions="*,Auto" Padding="15">
+                <Grid ColumnDefinitions="*,Auto,Auto" Padding="15">
                     <!-- Filtro de estado -->
                     <Picker Grid.Column="0"
                             Title="Estado de Comanda"
@@ -77,8 +77,14 @@
                             SelectedItem="{Binding FiltroEstado}"
                             Margin="0,0,10,0"/>
                     
+                    <!-- Solo pendientes -->
+                    <HorizontalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center" Margin="0,0,10,0">
+                        <Label Text="Solo pendientes" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
+                        <Switch IsToggled="{Binding SoloPendientes}"/>
+                    </HorizontalStackLayout>
+
                     <!-- Botón de actualizar -->
-                    <Button Grid.Column="1"
+                    <Button Grid.Column="2"
                             Text="🔄"
                             FontSize="20"
                             BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"

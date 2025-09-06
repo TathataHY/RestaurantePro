@@ -84,39 +84,69 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
 
             // Contexto principal
             services.AddDbContext<RestauranteProDbContext>(options =>
-                options.UseSqlServer(
-                    defaultConnectionString,
-                    sqlOptions => sqlOptions.MigrationsAssembly(typeof(RestauranteProDbContext).Assembly.FullName)));
+                options
+                    .UseSqlServer(
+                        defaultConnectionString,
+                        sqlOptions =>
+                        {
+                            sqlOptions.MigrationsAssembly(typeof(RestauranteProDbContext).Assembly.FullName);
+                            sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                        }));
 
             // Core
             services.AddDbContext<CoreDbContext>(options =>
-                options.UseSqlServer(
-                    defaultConnectionString,
-                    sqlOptions => sqlOptions.MigrationsHistoryTable("__EFMigrationsHistoryCore", "Core")));
+                options
+                    .UseSqlServer(
+                        defaultConnectionString,
+                        sqlOptions =>
+                        {
+                            sqlOptions.MigrationsHistoryTable("__EFMigrationsHistoryCore", "Core");
+                            sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                        }));
 
             // Comercial
             services.AddDbContext<ComercialDbContext>(options =>
-                options.UseSqlServer(
-                    defaultConnectionString,
-                    sqlOptions => sqlOptions.MigrationsHistoryTable("__EFMigrationsHistoryComercial", "Comercial")));
+                options
+                    .UseSqlServer(
+                        defaultConnectionString,
+                        sqlOptions =>
+                        {
+                            sqlOptions.MigrationsHistoryTable("__EFMigrationsHistoryComercial", "Comercial");
+                            sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                        }));
 
             // Operaciones
             services.AddDbContext<OperacionesDbContext>(options =>
-                options.UseSqlServer(
-                    defaultConnectionString,
-                    sqlOptions => sqlOptions.MigrationsHistoryTable("__EFMigrationsHistoryOperaciones", "Operaciones")));
+                options
+                    .UseSqlServer(
+                        defaultConnectionString,
+                        sqlOptions =>
+                        {
+                            sqlOptions.MigrationsHistoryTable("__EFMigrationsHistoryOperaciones", "Operaciones");
+                            sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                        }));
 
             // Inventario
             services.AddDbContext<InventarioDbContext>(options =>
-                options.UseSqlServer(
-                    defaultConnectionString,
-                    sqlOptions => sqlOptions.MigrationsHistoryTable("__EFMigrationsHistoryInventario", "Inventario")));
+                options
+                    .UseSqlServer(
+                        defaultConnectionString,
+                        sqlOptions =>
+                        {
+                            sqlOptions.MigrationsHistoryTable("__EFMigrationsHistoryInventario", "Inventario");
+                            sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                        }));
 
             // Proveedores
             services.AddDbContext<ProveedoresDbContext>(options =>
-                options.UseSqlServer(
-                    defaultConnectionString,
-                    sqlOptions => sqlOptions.MigrationsHistoryTable("__EFMigrationsHistoryProveedores", "Proveedores")));
+                options
+                    .UseSqlServer(
+                        defaultConnectionString,
+                        sqlOptions =>
+                        {
+                            sqlOptions.MigrationsHistoryTable("__EFMigrationsHistoryProveedores", "Proveedores");
+                            sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                        }));
         }
 
         private static void RegisterTestDbContexts(IServiceCollection services, IConfiguration configuration)
