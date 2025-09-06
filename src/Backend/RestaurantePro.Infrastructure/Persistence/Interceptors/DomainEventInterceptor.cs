@@ -42,13 +42,15 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
 
         public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
         {
-            PublicarEventosDominioPendientes().GetAwaiter().GetResult();
+            // Publicar eventos en background para no bloquear la transacción
+            _ = Task.Run(() => PublicarEventosDominioPendientes());
             return base.SavedChanges(eventData, result);
         }
 
         public override async ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData, int result, CancellationToken cancellationToken = default)
         {
-            await PublicarEventosDominioPendientes(cancellationToken);
+            // Publicar eventos en background para no bloquear la transacción
+            _ = Task.Run(() => PublicarEventosDominioPendientes(cancellationToken), cancellationToken);
             return await base.SavedChangesAsync(eventData, result, cancellationToken);
         }
 

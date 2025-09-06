@@ -96,6 +96,34 @@
                          Command="{Binding LoadComandasCommand}">
                 <CollectionView ItemsSource="{Binding ComandasFiltradas}"
                                SelectionMode="None">
+                    <CollectionView.EmptyView>
+                        <VerticalStackLayout Padding="24"
+                                             Spacing="8"
+                                             HorizontalOptions="Center"
+                                             VerticalOptions="Center">
+                            <Label Text="🍽️"
+                                   FontSize="64"
+                                   HorizontalTextAlignment="Center"
+                                   HorizontalOptions="Center"
+                                   Margin="0,0,0,8"/>
+                            <Label Text="Sin comandas por ahora"
+                                   FontSize="18"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"
+                                   HorizontalTextAlignment="Center"/>
+                            <Label Text="Cuando llegue una nueva comanda, aparecerá aquí."
+                                   FontSize="14"
+                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
+                                   HorizontalTextAlignment="Center"/>
+                            <Button Text="Actualizar"
+                                    Command="{Binding RefreshComandasCommand}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
+                                    TextColor="White"
+                                    CornerRadius="8"
+                                    Padding="16,10"
+                                    HorizontalOptions="Center"/>
+                        </VerticalStackLayout>
+                    </CollectionView.EmptyView>
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
                             <Border Margin="0,5" 

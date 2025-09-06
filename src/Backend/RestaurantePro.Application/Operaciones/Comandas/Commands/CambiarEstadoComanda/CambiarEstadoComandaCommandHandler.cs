@@ -34,8 +34,8 @@ public class CambiarEstadoComandaCommandHandler : IRequestHandler<CambiarEstadoC
         _logger.LogInformation("🔄 Cambiando estado de comanda {ComandaId} a {NuevoEstado}", 
             request.ComandaId, request.NuevoEstado);
 
-        // 1. Buscar la comanda
-        var comanda = await _comandaRepository.ObtenerPorIdAsync(request.ComandaId, true, cancellationToken);
+        // 1. Buscar la comanda (sin items para reducir carga)
+        var comanda = await _comandaRepository.ObtenerPorIdAsync(request.ComandaId, incluirItems: false, cancellationToken);
         if (comanda == null)
             return Result.Failure<ComandaDto>($"No se encontró la comanda con ID {request.ComandaId}");
 

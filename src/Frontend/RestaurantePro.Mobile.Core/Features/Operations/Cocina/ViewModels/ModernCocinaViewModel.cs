@@ -156,6 +156,7 @@ public partial class ModernCocinaViewModel : BaseViewModel
         if (!confirmacion) return;
 
         IsBusy = true;
+        var shouldRefresh = false;
 
         try
         {
@@ -168,8 +169,7 @@ public partial class ModernCocinaViewModel : BaseViewModel
             {
                 await _dialogService.ShowAlertAsync("Éxito", 
                     $"Comanda #{comanda.NumeroDisplay} tomada para preparar");
-                await LoadComandasAsync();
-                await LoadEstadisticasAsync();
+                shouldRefresh = true;
             }
             else
             {
@@ -183,6 +183,11 @@ public partial class ModernCocinaViewModel : BaseViewModel
         finally
         {
             IsBusy = false;
+            if (shouldRefresh)
+            {
+                await RefreshComandasCommand.ExecuteAsync(null);
+                await LoadEstadisticasCommand.ExecuteAsync(null);
+            }
         }
     }
 
@@ -201,6 +206,7 @@ public partial class ModernCocinaViewModel : BaseViewModel
         if (!confirmacion) return;
 
         IsBusy = true;
+        var shouldRefresh = false;
 
         try
         {
@@ -213,8 +219,7 @@ public partial class ModernCocinaViewModel : BaseViewModel
             {
                 await _dialogService.ShowAlertAsync("Éxito", 
                     $"Comanda #{comanda.NumeroDisplay} marcada como lista");
-                await LoadComandasAsync();
-                await LoadEstadisticasAsync();
+                shouldRefresh = true;
             }
             else
             {
@@ -228,6 +233,10 @@ public partial class ModernCocinaViewModel : BaseViewModel
         finally
         {
             IsBusy = false;
+            if (shouldRefresh)
+            {
+                await RefreshComandasCommand.ExecuteAsync(null);
+            }
         }
     }
 
