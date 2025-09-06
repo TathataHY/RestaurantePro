@@ -11,6 +11,9 @@ using RestaurantePro.Mobile.Core.Services.Navigation;
 using RestaurantePro.Mobile.Core.Models.ViewModels;
 using RestaurantePro.Mobile.Core.Models.Common;
 using ComandaModels = RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models;
+using RestaurantePro.Mobile.Core.Services.Realtime;
+using RestaurantePro.Mobile.Core.Services.Notifications;
+using RestaurantePro.Mobile.Core.Services.Preferences;
 
 namespace RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;
 
@@ -23,6 +26,9 @@ public partial class ComandasViewModel : BaseViewModel
     private readonly IDialogService _dialogService;
     private readonly INavigationService _navigationService;
     private readonly IMesasService _mesasService;
+    private readonly IComandaRealtimeService _realtimeService;
+    private readonly INotificationService _notificationService;
+    private readonly IPreferencesService _preferencesService;
 
     #region Propiedades Observables
 
@@ -76,18 +82,40 @@ public partial class ComandasViewModel : BaseViewModel
         IComandasService comandasService,
         IDialogService dialogService,
         INavigationService navigationService,
-        IMesasService mesasService)
+        IMesasService mesasService,
+        INotificationService notificationService,
+        IComandaRealtimeService realtimeService,
+        IPreferencesService preferencesService)
     {
         _comandasService = comandasService;
         _dialogService = dialogService;
         _navigationService = navigationService;
         _mesasService = mesasService;
+        _notificationService = notificationService;
+        _realtimeService = realtimeService;
+        _preferencesService = preferencesService;
         
         Title = "Gestión de Comandas";
-        
+
+        // Restaurar preferencias de filtros antes de cargar datos
+        RestaurarPreferencias();
+
         // Cargar datos iniciales
         _ = LoadComandasAsync();
         _ = LoadEstadisticasAsync();
+
+        // Suscribir a eventos realtime y arrancar
+        _realtimeService.OnNuevaComanda += async () =>
+        {
+            await _notificationService.VibrateAsync(60);
+            await _notificationService.ShowToastAsync("Nueva comanda (tiempo real)");
+            await RefreshComandasCommand.ExecuteAsync(null);
+        };
+        _realtimeService.OnComandaActualizada += async () =>
+        {
+            await RefreshComandasCommand.ExecuteAsync(null);
+        };
+        _ = _realtimeService.StartAsync();
 
         // Escuchar mensaje de actualización de comanda para refrescar al volver de edición
         WeakReferenceMessenger.Default.Register<ValueChangedMessage<string>>(this, (r, m) =>
@@ -628,6 +656,84 @@ public partial class ComandasViewModel : BaseViewModel
             "cancelada" => "❌",
             _ => "?"
         };
+    }
+
+    /// <summary>
+    /// Restaurar preferencias de filtros del usuario
+    /// </summary>
+    private void RestaurarPreferencias()
+    {
+        try
+        {
+            FiltroEstado = _preferencesService.Get<string>("Comandas.FiltroEstado", string.Empty);
+            SoloActivas = _preferencesService.Get<bool>("Comandas.SoloActivas", true);
+            SearchText = _preferencesService.Get<string>("Comandas.SearchText", string.Empty);
+            var fechaTicks = _preferencesService.Get<long>("Comandas.FiltroFechaTicks", -1);
+            FiltroFecha = fechaTicks > 0 ? new DateTime(fechaTicks) : null;
+            var mesaIdStr = _preferencesService.Get<string>("Comandas.FiltroMesaId", string.Empty);
+            FiltroMesaId = Guid.TryParse(mesaIdStr, out var parsed) ? parsed : null;
+        }
+        catch
+        {
+            // Ignorar errores al restaurar preferencias
+        }
+    }
+
+    // Guardar cambios de filtros en preferencias
+    partial void OnFiltroEstadoChanged(string value)
+    {
+        _ = _preferencesService.SetAsync("Comandas.FiltroEstado", value ?? string.Empty);
+    }
+
+    partial void OnSoloActivasChanged(bool value)
+    {
+        _ = _preferencesService.SetAsync("Comandas.SoloActivas", value);
+    }
+
+    partial void OnSearchTextChanged(string value)
+    {
+        _ = _preferencesService.SetAsync("Comandas.SearchText", value ?? string.Empty);
+    }
+
+    partial void OnFiltroFechaChanged(DateTime? value)
+    {
+        var ticks = value?.Ticks ?? -1;
+        _ = _preferencesService.SetAsync("Comandas.FiltroFechaTicks", ticks);
+    }
+
+    partial void OnFiltroMesaIdChanged(Guid? value)
+    {
+        _ = _preferencesService.SetAsync("Comandas.FiltroMesaId", value?.ToString() ?? string.Empty);
+    }
+
+    /// <summary>
+    /// Mostrar menú de opciones para una comanda (acciones secundarias)
+    /// </summary>
+    [RelayCommand]
+    private async Task MostrarOpcionesComandaAsync(ComandaDto comanda)
+    {
+        if (comanda == null) return;
+
+        var seleccion = await _dialogService.ShowActionSheetAsync(
+            $"Comanda #{comanda.NumeroDisplay}",
+            "Seleccione una acción:",
+            "Cerrar",
+            new[] { "Editar", "Ver", "Agregar Productos" });
+
+        switch (seleccion)
+        {
+            case "Editar":
+                await EditarCommand.ExecuteAsync(comanda);
+                break;
+            case "Ver":
+                await VerDetalleCommand.ExecuteAsync(comanda);
+                break;
+            case "Agregar Productos":
+                await NavigateToAgregarProductosCommand.ExecuteAsync(comanda);
+                break;
+            default:
+                break;
+        }
     }
 
     #endregion

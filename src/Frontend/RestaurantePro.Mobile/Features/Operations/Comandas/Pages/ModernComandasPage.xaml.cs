@@ -165,6 +165,54 @@ public partial class ModernComandasPage : ContentPage
     }
 
     /// <summary>
+    /// Mostrar selector rápido de rango de fecha
+    /// </summary>
+    private async void OnFiltroFechaClicked(object sender, EventArgs e)
+    {
+        var opciones = new[] { "Todas", "Hoy", "Ayer", "Última semana", "Último mes" };
+        var seleccion = await DisplayActionSheet("Filtrar por Fecha", "Cancelar", null, opciones);
+        if (string.IsNullOrWhiteSpace(seleccion) || seleccion == "Cancelar") return;
+
+        _viewModel.FiltroFecha = seleccion switch
+        {
+            "Hoy" => DateTime.Today,
+            "Ayer" => DateTime.Today.AddDays(-1),
+            "Última semana" => DateTime.Today.AddDays(-7),
+            "Último mes" => DateTime.Today.AddDays(-30),
+            _ => null
+        };
+
+        if (_viewModel.ApplyFiltersCommand.CanExecute(null))
+            await _viewModel.ApplyFiltersCommand.ExecuteAsync(null);
+    }
+
+    /// <summary>
+    /// Mostrar selector de mesa (por ahora por ID simple)
+    /// </summary>
+    private async void OnFiltroMesaClicked(object sender, EventArgs e)
+    {
+        var texto = await DisplayPromptAsync("Filtrar por Mesa", "Ingrese el ID de la mesa (vacío = todas)", "OK", "Cancelar", "ID de Mesa");
+        if (texto == null) return;
+
+        if (string.IsNullOrWhiteSpace(texto))
+        {
+            _viewModel.FiltroMesaId = null;
+        }
+        else if (Guid.TryParse(texto, out var mesaId))
+        {
+            _viewModel.FiltroMesaId = mesaId;
+        }
+        else
+        {
+            await DisplayAlert("Error", "ID de mesa inválido", "OK");
+            return;
+        }
+
+        if (_viewModel.ApplyFiltersCommand.CanExecute(null))
+            await _viewModel.ApplyFiltersCommand.ExecuteAsync(null);
+    }
+
+    /// <summary>
     /// Evento cuando la página desaparece
     /// </summary>
     protected override void OnDisappearing()
@@ -185,5 +233,34 @@ public partial class ModernComandasPage : ContentPage
             BottomTabBar.TabSelected -= OnBottomTabChanged;
         }
         */
+    }
+
+    private async void OnMasOpcionesClicked(object sender, EventArgs e)
+    {
+        var accion = await DisplayActionSheet(
+            "Acciones",
+            "Cerrar",
+            null,
+            "Limpiar filtros",
+            "Recargar",
+            "Estadísticas");
+
+        switch (accion)
+        {
+            case "Limpiar filtros":
+                if (_viewModel.ClearFiltersCommand.CanExecute(null))
+                    await _viewModel.ClearFiltersCommand.ExecuteAsync(null);
+                break;
+            case "Recargar":
+                if (_viewModel.RefreshComandasCommand.CanExecute(null))
+                    await _viewModel.RefreshComandasCommand.ExecuteAsync(null);
+                break;
+            case "Estadísticas":
+                if (_viewModel.LoadEstadisticasCommand.CanExecute(null))
+                    await _viewModel.LoadEstadisticasCommand.ExecuteAsync(null);
+                break;
+            default:
+                break;
+        }
     }
 } 

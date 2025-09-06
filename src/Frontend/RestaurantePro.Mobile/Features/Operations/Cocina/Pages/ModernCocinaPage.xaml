@@ -69,37 +69,29 @@
                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
                     StrokeShape="RoundRectangle 10"
                     Margin="0,0,0,10">
-                <Grid ColumnDefinitions="*,Auto,Auto" Padding="15">
+                <Grid ColumnDefinitions="*,Auto" Padding="15">
                     <!-- Filtro de estado -->
                     <Picker Grid.Column="0"
                             Title="Estado de Comanda"
                             ItemsSource="{Binding EstadosDisponibles}"
                             SelectedItem="{Binding FiltroEstado}"
-                            Margin="0,0,10,0"/>
+                            Margin="0,0,10,0"
+                            VerticalOptions="Center"/>
                     
                     <!-- Solo pendientes -->
                     <HorizontalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center" Margin="0,0,10,0">
-                        <Label Text="Solo pendientes" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"/>
-                        <Switch IsToggled="{Binding SoloPendientes}"/>
+                        <Label Text="Solo pendientes" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}" VerticalTextAlignment="Center" VerticalOptions="Center"/>
+                        <Switch IsToggled="{Binding SoloPendientes}" VerticalOptions="Center"/>
                     </HorizontalStackLayout>
 
-                    <!-- Botón de actualizar -->
-                    <Button Grid.Column="2"
-                            Text="🔄"
-                            FontSize="20"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
-                            TextColor="White"
-                            WidthRequest="50"
-                            HeightRequest="50"
-                            CornerRadius="25"
-                            Command="{Binding RefreshComandasCommand}"/>
+                    
                 </Grid>
             </Border>
 
             <!-- Lista de comandas -->
             <RefreshView Grid.Row="1" 
                          IsRefreshing="{Binding IsRefreshing}"
-                         Command="{Binding LoadComandasCommand}">
+                         Command="{Binding RefreshComandasCommand}">
                 <CollectionView ItemsSource="{Binding ComandasFiltradas}"
                                SelectionMode="None">
                     <CollectionView.EmptyView>
@@ -121,13 +113,6 @@
                                    FontSize="14"
                                    TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray400}}"
                                    HorizontalTextAlignment="Center"/>
-                            <Button Text="Actualizar"
-                                    Command="{Binding RefreshComandasCommand}"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
-                                    TextColor="White"
-                                    CornerRadius="8"
-                                    Padding="16,10"
-                                    HorizontalOptions="Center"/>
                         </VerticalStackLayout>
                     </CollectionView.EmptyView>
                     <CollectionView.ItemTemplate>

@@ -265,7 +265,6 @@ public static class MauiProgram
 		// Páginas - Operaciones
 		services.AddTransient<MesasPage>();
 		services.AddTransient<MesaDetallePage>();
-		services.AddTransient<ComandasPage>();
 		services.AddTransient<ComandaDetallePage>();
 		services.AddTransient<CrearComandaPage>();
 		services.AddTransient<ProductosPage>();

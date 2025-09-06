@@ -72,11 +72,9 @@
                                     <Label Grid.Column="1" Text="Solo activas" VerticalTextAlignment="Center" />
                                     <Switch Grid.Column="2" IsToggled="{Binding SoloActivas, Mode=TwoWay}" />
                                 </Grid>
-                                <Grid ColumnDefinitions="*,*,*" RowDefinitions="*,*" ColumnSpacing="8" RowSpacing="8">
-                                    <Button Grid.Column="0" Grid.Row="0" Text="🔄 Refrescar" Command="{Binding RefreshComandasCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-                                    <Button Grid.Column="1" Grid.Row="0" Text="📊 Estadísticas" Command="{Binding LoadEstadisticasCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-                                    <Button Grid.Column="2" Grid.Row="0" Text="🔍 Buscar" Command="{Binding LoadComandasCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-                                    <Button Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="3" Text="+ Nueva Comanda" Command="{Binding CrearComandaCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                    <Button Grid.Column="0" Text="+ Nueva Comanda" Command="{Binding CrearComandaCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                                    <Button Grid.Column="1" Text="⋮ Más" Clicked="OnMasOpcionesClicked" Style="{StaticResource SecondaryButtonStyle}" />
                                 </Grid>
                             </VerticalStackLayout>
                         </controls:ModernCard>
@@ -90,6 +88,11 @@
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
                             <controls:ModernCard Margin="8">
+                                <controls:ModernCard.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.VerDetalleCommand}"
+                                        CommandParameter="{Binding .}" />
+                                </controls:ModernCard.GestureRecognizers>
                                 <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" 
                                       ColumnDefinitions="*,Auto">
                                     
@@ -178,22 +181,22 @@
                                                 HorizontalScrollBarVisibility="Never"
                                                 Margin="0,12,0,0">
                                         <HorizontalStackLayout Spacing="8">
-                                            <Button Text="👁️ Ver"
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.VerDetalleCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    Style="{StaticResource SecondaryButtonStyle}"
-                                                    HorizontalOptions="Start" />
-
-                                            <Button Text="✏️ Editar"
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditarCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    Style="{StaticResource SecondaryButtonStyle}"
-                                                    HorizontalOptions="Start" />
-
                                             <Button Text="✅ Finalizar"
                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.FinalizarComandaCommand}"
                                                     CommandParameter="{Binding .}"
                                                     Style="{StaticResource SuccessButtonStyle}"
+                                                    HorizontalOptions="Start" />
+
+                                            <Button Text="❌ Cancelar"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CancelarComandaCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    HorizontalOptions="Start" />
+
+                                            <Button Text="⋮ Más"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MostrarOpcionesComandaCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
                                                     HorizontalOptions="Start" />
                                         </HorizontalStackLayout>
                                     </ScrollView>
