@@ -15,6 +15,7 @@ public partial class ModernCocinaViewModel : BaseViewModel
 {
     private readonly IComandasService _comandasService;
     private readonly IDialogService _dialogService;
+    private readonly RestaurantePro.Mobile.Core.Services.Notifications.INotificationService _notificationService;
 
     #region Propiedades Observables
 
@@ -51,10 +52,12 @@ public partial class ModernCocinaViewModel : BaseViewModel
 
     public ModernCocinaViewModel(
         IComandasService comandasService,
-        IDialogService dialogService)
+        IDialogService dialogService,
+        RestaurantePro.Mobile.Core.Services.Notifications.INotificationService notificationService)
     {
         _comandasService = comandasService;
         _dialogService = dialogService;
+        _notificationService = notificationService;
         
         Title = "Cocina";
         
@@ -93,6 +96,12 @@ public partial class ModernCocinaViewModel : BaseViewModel
                 comandasFiltradas = comandasFiltradas.Where(c => 
                     c.Estado == "Creada" || c.Estado == "EnProceso" || c.Estado == "Lista").ToList();
 
+                // Detectar nuevas comandas para notificar
+                var nuevosIds = comandasFiltradas
+                    .Select(c => c.Id)
+                    .Except(Comandas.Select(c => c.Id))
+                    .ToList();
+
                 Comandas.Clear();
                 foreach (var comanda in comandasFiltradas)
                 {
@@ -100,6 +109,13 @@ public partial class ModernCocinaViewModel : BaseViewModel
                 }
                 
                 AplicarFiltros();
+
+                if (nuevosIds.Any())
+                {
+                    await _notificationService.VibrateAsync(120);
+                    await _notificationService.ShowToastAsync(
+                        nuevosIds.Count == 1 ? "Nueva comanda recibida" : $"{nuevosIds.Count} nuevas comandas");
+                }
             }
             else
             {

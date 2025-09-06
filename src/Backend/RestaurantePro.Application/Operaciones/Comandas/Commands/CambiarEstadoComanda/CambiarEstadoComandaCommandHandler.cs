@@ -80,10 +80,20 @@ public class CambiarEstadoComandaCommandHandler : IRequestHandler<CambiarEstadoC
         await _comandaRepository.ActualizarAsync(comanda, cancellationToken);
         await _comandaRepository.GuardarCambiosAsync(cancellationToken);
 
-        // 5. Invalidar caché relevante para que el listado/detalle reflejen el nuevo estado
-        _cacheService.InvalidatePattern("ObtenerComandasPaginadasQuery_");
-        _cacheService.InvalidatePattern("ObtenerComandasPorMesaQuery_");
-        _cacheService.InvalidateForEntity("ObtenerComandaPorIdQuery_", comanda.Id);
+        // 5. Invalidar caché relevante en background para no bloquear el comando
+        _ = Task.Run(() =>
+        {
+            try
+            {
+                _cacheService.InvalidatePattern("ObtenerComandasPaginadasQuery_");
+                _cacheService.InvalidatePattern("ObtenerComandasPorMesaQuery_");
+                _cacheService.InvalidateForEntity("ObtenerComandaPorIdQuery_", comanda.Id);
+            }
+            catch
+            {
+                // Best-effort: no bloquear por fallos de invalidación
+            }
+        }, cancellationToken);
 
         // 6. Mapear a DTO y retornar
         var dto = _mapper.Map<ComandaDto>(comanda);

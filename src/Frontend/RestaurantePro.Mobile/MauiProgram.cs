@@ -39,6 +39,7 @@ using RestaurantePro.Mobile.Core.Services.Navigation;
 using RestaurantePro.Mobile.Core.Services.Dashboard;
 using RestaurantePro.Mobile.Services;
 using System.Net.Http;
+using CommunityToolkit.Maui;
 
 namespace RestaurantePro.Mobile;
 
@@ -49,6 +50,7 @@ public static class MauiProgram
 		var builder = MauiApp.CreateBuilder();
 		builder
 			.UseMauiApp<App>()
+			.UseMauiCommunityToolkit()
 			.ConfigureFonts(fonts =>
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -124,6 +126,7 @@ public static class MauiProgram
 		services.AddSingleton<INavigationService, RestaurantePro.Mobile.Services.NavigationService>();
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Dialog.IDialogService, RestaurantePro.Mobile.Services.DialogService>();
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Platform.ISecureStorageService, RestaurantePro.Mobile.Core.Services.Platform.SecureStorageService>();
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Notifications.INotificationService, RestaurantePro.Mobile.Services.NotificationService>();
 		
 		// Servicios V4 - Sistema de Temas
 		services.AddSingleton<RestaurantePro.Mobile.Services.ThemeService>();

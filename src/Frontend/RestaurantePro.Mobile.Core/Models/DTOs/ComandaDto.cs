@@ -252,6 +252,35 @@ public class ComandaDto
     }
 
     /// <summary>
+    /// Minutos transcurridos desde la creación (para lógica SLA en UI)
+    /// </summary>
+    public int MinutosTranscurridos => (int)Math.Floor((DateTime.Now - FechaCreacion).TotalMinutes);
+
+    /// <summary>
+    /// True si la comanda supera el SLA según su estado (p. ej. > X minutos)
+    /// Defaults: Creada>5 min, EnProceso>15 min, Lista>5 min
+    /// </summary>
+    public bool EstaFueraSLA
+    {
+        get
+        {
+            var estado = Normalize(Estado);
+            if (string.IsNullOrWhiteSpace(estado)) estado = Normalize(EstadoTexto);
+
+            var minutos = MinutosTranscurridos;
+            return estado switch
+            {
+                "creada" => minutos > 5,
+                "enproceso" => minutos > 15,
+                "enpreparacion" => minutos > 15,
+                "preparando" => minutos > 15,
+                "lista" => minutos > 5,
+                _ => false
+            };
+        }
+    }
+
+    /// <summary>
     /// Indica si la comanda puede ser tomada por cocina
     /// </summary>
     public bool PuedeTomar => Estado.ToLowerInvariant() == "creada";
