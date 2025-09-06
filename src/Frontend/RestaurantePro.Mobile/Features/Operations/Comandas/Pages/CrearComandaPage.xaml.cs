@@ -33,6 +33,11 @@ public partial class CrearComandaPage : ContentPage, IQueryAttributable
         {
             await _viewModel.InitializeAsync(mesaIdObj.ToString()!);
         }
+        else
+        {
+            // Si no recibimos mesaId, iniciar el flujo pidiendo seleccionar mesa
+            await _viewModel.InitializeAsync(string.Empty);
+        }
     }
 
     /// <summary>

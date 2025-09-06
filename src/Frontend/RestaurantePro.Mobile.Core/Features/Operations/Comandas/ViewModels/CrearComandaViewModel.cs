@@ -365,12 +365,12 @@ public partial class CrearComandaViewModel : BaseViewModel
             {
                 var comandaRequest = new ComandaModels.CrearComandaRequest
                 {
-                    MeseroId = "11111111-1111-1111-1111-111111111111", // Usuario administrador por defecto
+                    MeseroId = string.Empty, // Se completará con el UserId del JWT en el servicio
                     MesaId = Mesa.Id.ToString(),
-                    ClienteId = null, // Opcional
+                    ClienteId = null,
                     Observaciones = Observaciones,
                     ProductosIniciales = productosComanda,
-                    Items = productosComanda // El backend parece esperar ambos campos
+                    Items = productosComanda
                 };
 
                 var result = await _comandasService.CrearComandaAsync(comandaRequest);
@@ -382,7 +382,9 @@ public partial class CrearComandaViewModel : BaseViewModel
                 }
                 else
                 {
-                    await _dialogService.ShowAlertAsync("Error", result.Message ?? "Error al crear la comanda");
+                    var detalleErrores = result.Errors != null && result.Errors.Any() ? string.Join("\n", result.Errors) : string.Empty;
+                    var mensaje = string.IsNullOrWhiteSpace(result.Message) ? "Error al crear la comanda" : result.Message;
+                    await _dialogService.ShowAlertAsync("Error", string.IsNullOrWhiteSpace(detalleErrores) ? mensaje : $"{mensaje}\n\n{detalleErrores}");
                 }
             }
         }
@@ -420,10 +422,15 @@ public partial class CrearComandaViewModel : BaseViewModel
         {
             IsLoading = true;
             
-            if (!string.IsNullOrEmpty(mesaId))
+            if (!string.IsNullOrWhiteSpace(mesaId) && Guid.TryParse(mesaId, out var _))
             {
                 await CargarMesaAsync(mesaId);
                 await BuscarProductosAsync();
+            }
+            else
+            {
+                // No llegó mesaId válido: pedir seleccionar mesa primero
+                await SolicitarSeleccionMesaAsync();
             }
         }
         catch (Exception ex)
@@ -505,7 +512,13 @@ public partial class CrearComandaViewModel : BaseViewModel
     {
         try
         {
-            var result = await _mesasService.ObtenerMesaAsync(Guid.Parse(mesaId));
+            if (!Guid.TryParse(mesaId, out var mesaGuid))
+            {
+                await _dialogService.ShowAlertAsync("Error", "Identificador de mesa inválido");
+                return;
+            }
+
+            var result = await _mesasService.ObtenerMesaAsync(mesaGuid);
             if (result.Success && result.Data != null)
             {
                 Mesa = result.Data;
@@ -515,12 +528,51 @@ public partial class CrearComandaViewModel : BaseViewModel
             }
             else
             {
-                await _dialogService.ShowAlertAsync("Error", "No se pudo cargar la información de la mesa");
+                var detalle = string.IsNullOrWhiteSpace(result.Message) ? string.Join("\n", result.Errors ?? new()) : result.Message;
+                await _dialogService.ShowAlertAsync("Error", string.IsNullOrWhiteSpace(detalle) ? "No se pudo cargar la información de la mesa" : detalle);
+                // Fallback: permitir seleccionar otra mesa
+                await SolicitarSeleccionMesaAsync();
             }
         }
         catch (Exception ex)
         {
             await _dialogService.ShowAlertAsync("Error", $"Error al cargar la mesa: {ex.Message}");
+            await SolicitarSeleccionMesaAsync();
+        }
+    }
+
+    /// <summary>
+    /// Si no hay mesa válida, abre un selector simple de mesas disponibles
+    /// </summary>
+    private async Task SolicitarSeleccionMesaAsync()
+    {
+        // Traer mesas disponibles
+        var mesasResp = await _mesasService.ObtenerMesasDisponiblesAsync();
+        if (!mesasResp.Success || mesasResp.Data == null || mesasResp.Data.Count == 0)
+        {
+            await _dialogService.ShowAlertAsync("Información", "No hay mesas disponibles ahora mismo");
+            return;
+        }
+
+        var opciones = mesasResp.Data
+            .Select(m => ($"Mesa {m.Numero} — {m.Ubicacion} (Cap: {m.Capacidad})", m.Id.ToString()))
+            .ToList();
+
+        var labels = opciones.Select(o => o.Item1).ToArray();
+        var seleccion = await _dialogService.ShowActionSheetAsync(
+            "Seleccionar Mesa",
+            "Elija la mesa para la nueva comanda:",
+            "Cancelar",
+            labels);
+
+        if (string.IsNullOrWhiteSpace(seleccion) || seleccion == "Cancelar")
+            return;
+
+        var mesaSeleccionada = opciones.FirstOrDefault(o => o.Item1 == seleccion);
+        if (mesaSeleccionada != default)
+        {
+            await CargarMesaAsync(mesaSeleccionada.Item2);
+            await BuscarProductosAsync();
         }
     }
 

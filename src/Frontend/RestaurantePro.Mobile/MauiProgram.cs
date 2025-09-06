@@ -137,6 +137,8 @@ public static class MauiProgram
 		services.AddSingleton<RestaurantePro.Mobile.Services.AnimationOptimizationService>();
 		services.AddSingleton<RestaurantePro.Mobile.Services.PerformanceService>();
 		services.AddSingleton<RestaurantePro.Mobile.Services.CacheService>();
+		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Caching.ICacheService>(sp =>
+			sp.GetRequiredService<RestaurantePro.Mobile.Services.CacheService>());
 		services.AddSingleton<RestaurantePro.Mobile.Services.LazyLoadingService>();
 		
 		// Servicios V4 - Accesibilidad
@@ -150,7 +152,8 @@ public static class MauiProgram
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Mesas.IMesasService>(sp =>
 			new RestaurantePro.Mobile.Core.Services.Mesas.MesasService(
 				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>(),
-				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService>()));
+				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService>(),
+				sp.GetService<RestaurantePro.Mobile.Core.Services.Caching.ICacheService>()));
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.Comandas.IComandasService>(sp =>
 			new RestaurantePro.Mobile.Core.Services.Comandas.ComandasService(
 				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>(),

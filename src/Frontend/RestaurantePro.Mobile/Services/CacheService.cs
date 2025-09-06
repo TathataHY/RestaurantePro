@@ -1,12 +1,14 @@
 using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 
+using RestaurantePro.Mobile.Core.Services.Caching;
+
 namespace RestaurantePro.Mobile.Services;
 
 /// <summary>
 /// Servicio de cache para optimización de performance - V4
 /// </summary>
-public class CacheService
+public class CacheService : ICacheService
 {
     private readonly ILogger<CacheService> _logger;
     private readonly ConcurrentDictionary<string, CacheItem> _cache;

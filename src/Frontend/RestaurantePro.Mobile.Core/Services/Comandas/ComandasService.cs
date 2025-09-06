@@ -31,7 +31,7 @@ public class ComandasService : IComandasService
         {
             var token = await _authService.GetTokenAsync();
             // Usar el endpoint principal con parámetros para obtener comandas activas
-            var queryParams = "pageNumber=1&pageSize=100&soloActivas=true&incluirItems=true";
+            var queryParams = "pageNumber=1&pageSize=50&soloActivas=true&incluirItems=true";
             var result = await _apiService.GetAsync<PaginatedList<ComandaDto>>($"{BaseEndpoint}?{queryParams}", token);
             
             if (result.Success && result.Data != null)
@@ -108,6 +108,17 @@ public class ComandasService : IComandasService
             if (request.ProductosIniciales == null || request.ProductosIniciales.Count == 0)
             {
                 return ApiResponse<ComandaDto>.ErrorResponse("Se requiere al menos un producto", "Se requiere al menos un producto");
+            }
+
+            // Si no viene MeseroId, tomarlo del JWT actual
+            if (string.IsNullOrWhiteSpace(request.MeseroId))
+            {
+                var userIdStr = await _authService.GetUserIdAsync();
+                if (string.IsNullOrWhiteSpace(userIdStr))
+                {
+                    return ApiResponse<ComandaDto>.ErrorResponse("No autenticado", "Debe iniciar sesión para crear una comanda");
+                }
+                request.MeseroId = userIdStr;
             }
             
             var token = await _authService.GetTokenAsync();

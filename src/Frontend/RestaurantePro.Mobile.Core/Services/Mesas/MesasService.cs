@@ -13,12 +13,14 @@ public class MesasService : IMesasService
 {
     private readonly IApiService _apiService;
     private readonly IAuthService _authService;
+    private readonly RestaurantePro.Mobile.Core.Services.Caching.ICacheService? _cache;
     private const string BasePath = "api/operaciones/mesas";
 
-    public MesasService(IApiService apiService, IAuthService authService)
+    public MesasService(IApiService apiService, IAuthService authService, RestaurantePro.Mobile.Core.Services.Caching.ICacheService? cache = null)
     {
         _apiService = apiService;
         _authService = authService;
+        _cache = cache;
     }
 
     /// <summary>
@@ -71,12 +73,26 @@ public class MesasService : IMesasService
         if (!string.IsNullOrWhiteSpace(ubicacion))
             queryParams.Add($"ubicacion={Uri.EscapeDataString(ubicacion)}");
 
-        var query = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
+        // Limitar tamaño por defecto a 50 para reducir latencia
+        queryParams.Add("pageNumber=1");
+        queryParams.Add("pageSize=50");
+        var query = "?" + string.Join("&", queryParams);
         var endpoint = $"{BasePath}/disponibles{query}";
         var token = await _authService.GetTokenAsync();
         
         // El endpoint retorna PaginatedList<MesaDto>, necesitamos extraer los Items
-        var response = await _apiService.GetAsync<PaginatedList<MesaDto>>(endpoint, token);
+        ApiResponse<PaginatedList<MesaDto>> response;
+        if (_cache != null)
+        {
+            response = await _cache.GetOrSetAsync(
+                key: $"mesas_disponibles:{query}",
+                factory: async () => await _apiService.GetAsync<PaginatedList<MesaDto>>(endpoint, token),
+                expiration: TimeSpan.FromSeconds(30));
+        }
+        else
+        {
+            response = await _apiService.GetAsync<PaginatedList<MesaDto>>(endpoint, token);
+        }
         
         if (response.Success && response.Data != null)
         {
