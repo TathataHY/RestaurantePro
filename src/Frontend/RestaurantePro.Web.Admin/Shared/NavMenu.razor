@@ -1,0 +1,96 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">RestaurantePro Admin</a>
+        <span class="text-light">@userName</span>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="oi oi-home" aria-hidden="true"></span> Dashboard
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="productos">
+                <span class="oi oi-fork" aria-hidden="true"></span> Productos
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="categorias">
+                <span class="oi oi-tags" aria-hidden="true"></span> Categorías
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="mesas">
+                <span class="oi oi-grid-three-up" aria-hidden="true"></span> Mesas
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="usuarios">
+                <span class="oi oi-people" aria-hidden="true"></span> Usuarios
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="promociones">
+                <span class="oi oi-badge" aria-hidden="true"></span> Promociones
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="reportes">
+                <span class="oi oi-bar-chart" aria-hidden="true"></span> Reportes
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="configuracion">
+                <span class="oi oi-cog" aria-hidden="true"></span> Configuración
+            </NavLink>
+        </div>
+        <div class="nav-item px-3 mt-3">
+            @if (isAuthenticated)
+            {
+                <button class="btn btn-sm btn-outline-light" @onclick="Logout">Salir</button>
+            }
+            else
+            {
+                <NavLink class="btn btn-sm btn-outline-light" href="login">Entrar</NavLink>
+            }
+        </div>
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    [CascadingParameter] private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
+    [Inject] private NavigationManager Nav { get; set; } = default!;
+    [Inject] private RestaurantePro.Web.Admin.Auth.JwtAuthenticationStateProvider AuthState { get; set; } = default!;
+
+    private bool isAuthenticated;
+    private string userName = string.Empty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var authState = await AuthenticationStateTask;
+        var user = authState.User;
+        isAuthenticated = user.Identity?.IsAuthenticated ?? false;
+        userName = isAuthenticated ? user.Identity?.Name ?? "" : string.Empty;
+    }
+
+    private void Logout()
+    {
+        AuthState.Logout();
+        Nav.NavigateTo("/login", true);
+    }
+}

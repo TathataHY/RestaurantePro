@@ -1,0 +1,95 @@
+@attribute [Authorize]
+@page "/categorias"
+
+<PageTitle>Categorías</PageTitle>
+
+@inject RestaurantePro.Web.Admin.Services.CategoriasApiService CategoriasApi
+
+<h3>Categorías</h3>
+<p class="text-muted">Listado de categorías de productos.</p>
+
+<div class="row mb-3">
+  <div class="col-md-4">
+    <input class="form-control" placeholder="Buscar por nombre" @bind="filtro" />
+  </div>
+  <div class="col-md-2">
+    <button class="btn btn-primary w-100" @onclick="BuscarAsync">Buscar</button>
+  </div>
+  <div class="col-md-3 d-flex align-items-center">
+    <div class="form-check me-3">
+      <input class="form-check-input" type="checkbox" id="chkSoloActivas" @bind="soloActivas" />
+      <label class="form-check-label" for="chkSoloActivas">Solo activas</label>
+    </div>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="chkOcultarVacias" @bind="ocultarVacias" />
+      <label class="form-check-label" for="chkOcultarVacias">Ocultar vacías</label>
+    </div>
+  </div>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Descripción</th>
+        <th>Activa</th>
+        <th>Productos</th>
+        <th>Disponibles</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (categorias is null)
+      {
+        <tr><td colspan="5">Cargando...</td></tr>
+      }
+      else if (!categorias.Any())
+      {
+        <tr><td colspan="5">Sin resultados.</td></tr>
+      }
+      else
+      {
+        @foreach (var c in categorias)
+        {
+          <tr>
+            <td>@c.Nombre</td>
+            <td>@c.Descripcion</td>
+            <td>@(c.Activa ? "Sí" : "No")</td>
+            <td>@c.CantidadProductos</td>
+            <td>@c.ProductosDisponibles</td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@code {
+  private List<CategoriaProductoDto>? categorias;
+  private string filtro = string.Empty;
+  private bool soloActivas = false;
+  private bool ocultarVacias = false;
+
+  protected override async Task OnInitializedAsync()
+  {
+    await CargarAsync();
+  }
+
+  private async Task CargarAsync()
+  {
+    categorias = await CategoriasApi.ObtenerAsync(soloActivas, ocultarVacias);
+    StateHasChanged();
+  }
+
+  private async Task BuscarAsync()
+  {
+    if (string.IsNullOrWhiteSpace(filtro))
+    {
+      await CargarAsync();
+    }
+    else
+    {
+      categorias = await CategoriasApi.BuscarAsync(filtro);
+    }
+  }
+}

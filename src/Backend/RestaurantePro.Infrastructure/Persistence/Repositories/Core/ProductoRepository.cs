@@ -24,7 +24,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
 
         public async Task<IEnumerable<Producto>> ObtenerTodosAsync(bool soloActivos = true, CancellationToken cancellationToken = default)
         {
-            var query = _dbSet.AsQueryable();
+            var query = _dbSet.AsNoTracking().AsQueryable();
             if (soloActivos)
             {
                 query = query.Where(p => p.EstaActivo);
@@ -34,7 +34,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
 
         public async Task<List<Producto>> ObtenerPorCategoriaAsync(Guid categoriaId, bool soloActivos = true, CancellationToken cancellationToken = default)
         {
-            var query = _dbSet.Where(p => p.CategoriaId == categoriaId);
+            var query = _dbSet.AsNoTracking().Where(p => p.CategoriaId == categoriaId);
             if (soloActivos)
             {
                 query = query.Where(p => p.EstaActivo);
@@ -44,7 +44,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
 
         public async Task<List<Producto>> ObtenerProductosPorIngredienteAsync(Guid ingredienteId, CancellationToken cancellationToken = default)
         {
-            return await _restauranteProDbContext.Productos
+            return await _restauranteProDbContext.Productos.AsNoTracking()
                 .Include(p => p.Recetas)
                 .ThenInclude(r => r.Ingredientes)
                 .Where(p => p.Recetas.Any(r => r.Ingredientes.Any(i => i.IngredienteId == ingredienteId)))
@@ -68,7 +68,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
 
         public async Task<List<Producto>> BuscarAsync(Expression<Func<Producto, bool>> predicate, CancellationToken cancellationToken)
         {
-            return await _restauranteProDbContext.Productos.Where(predicate).ToListAsync(cancellationToken);
+            return await _restauranteProDbContext.Productos.AsNoTracking().Where(predicate).ToListAsync(cancellationToken);
         }
 
         public async Task<List<Producto>> ObtenerProductosPorCategoriaAsync(Guid categoriaId, CancellationToken cancellationToken)

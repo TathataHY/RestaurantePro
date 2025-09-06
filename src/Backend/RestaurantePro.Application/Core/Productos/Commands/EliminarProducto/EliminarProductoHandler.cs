@@ -1,16 +1,21 @@
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache;
+
 namespace RestaurantePro.Application.Core.Productos.Commands.EliminarProducto;
 
 public class EliminarProductoHandler : IRequestHandler<EliminarProductoCommand, Result<bool>>
 {
     private readonly IProductoRepository _repository;
     private readonly ILogger<EliminarProductoHandler> _logger;
+    private readonly ICacheService _cache;
 
     public EliminarProductoHandler(
         IProductoRepository repository,
-        ILogger<EliminarProductoHandler> logger)
+        ILogger<EliminarProductoHandler> logger,
+        ICacheService cache)
     {
         _repository = repository;
         _logger = logger;
+        _cache = cache;
     }
 
     public async Task<Result<bool>> Handle(EliminarProductoCommand request, CancellationToken cancellationToken)
@@ -38,6 +43,16 @@ public class EliminarProductoHandler : IRequestHandler<EliminarProductoCommand, 
             producto.Desactivar();
             await _repository.ActualizarAsync(producto, cancellationToken);
             await _repository.GuardarCambiosAsync(cancellationToken);
+
+            try
+            {
+                _cache.InvalidatePattern("productos:lista:*");
+                _cache.Remove($"productos:detalle:{request.Id}");
+            }
+            catch (Exception cacheEx)
+            {
+                _logger.LogWarning(cacheEx, "No se pudo invalidar caché de productos tras desactivar {Id}", request.Id);
+            }
 
             _logger.LogInformation("✅ Producto desactivado exitosamente: {Id}", request.Id);
             return Result.Success(true);

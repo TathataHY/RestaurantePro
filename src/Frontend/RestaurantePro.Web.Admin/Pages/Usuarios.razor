@@ -1,0 +1,282 @@
+@attribute [Authorize]
+@page "/usuarios"
+
+<PageTitle>Usuarios</PageTitle>
+
+@inject RestaurantePro.Web.Admin.Services.UsuariosApiService UsuariosApi
+@inject RestaurantePro.Web.Admin.Services.AuthApiService Auth
+
+<h3>Usuarios</h3>
+<p class="text-muted">Gestión de personal y roles.</p>
+
+<div class="row mb-3">
+  <div class="col-md-4">
+    <input class="form-control" placeholder="Buscar por nombre o email" @bind="filtro" />
+  </div>
+  <div class="col-md-2">
+    <button class="btn btn-primary w-100" @onclick="BuscarAsync">Buscar</button>
+  </div>
+  <div class="col-md-2">
+    <button class="btn btn-outline-secondary w-100" @onclick="VerPerfilAsync">Ver perfil</button>
+    @if (!string.IsNullOrEmpty(perfilInfo))
+    {
+      <span class="d-block mt-1 text-muted small">@perfilInfo</span>
+    }
+  </div>
+  <div class="col-md-2 d-flex align-items-center">
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="chkIncluirInactivos" checked="@incluirInactivos" @onchange="OnIncluirInactivosChanged" />
+      <label class="form-check-label" for="chkIncluirInactivos">Incluir inactivos</label>
+    </div>
+  </div>
+  <div class="col-md-2 text-end">
+    <button class="btn btn-success" @onclick="AbrirCrear">Nuevo Usuario</button>
+  </div>
+  
+</div>
+
+<div class="table-responsive">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Usuario</th>
+        <th>Email</th>
+        <th>Rol</th>
+        <th>Nivel</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (usuarios is null)
+      {
+        <tr><td colspan="6">Cargando...</td></tr>
+      }
+      else if (!usuarios.Any())
+      {
+        <tr><td colspan="6">Sin resultados o no autorizado.</td></tr>
+      }
+      else
+      {
+        @foreach (var u in usuarios)
+        {
+          <tr>
+            <td>@u.NombreCompleto</td>
+            <td>@u.NombreUsuario</td>
+            <td>@u.Email</td>
+            <td>@u.Rol</td>
+            <td>@u.NivelAcceso</td>
+            <td class="text-end">
+              <div class="btn-group">
+                <button class="btn btn-sm btn-info" @onclick="(() => AbrirEditar(u))">Editar</button>
+                <button class="btn btn-sm btn-danger" @onclick="(() => ConfirmarEliminar(u))">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (mostrandoModal)
+{
+  <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5)">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">@modalTitulo</h5>
+          <button type="button" class="btn-close" @onclick="CerrarModal"></button>
+        </div>
+        <div class="modal-body">
+          <EditForm Model="editModel" OnValidSubmit="GuardarAsync">
+            <DataAnnotationsValidator />
+            <div class="mb-3">
+              <label class="form-label">Nombre completo</label>
+              <InputText class="form-control" @bind-Value="editModel.NombreCompleto" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Nombre de usuario</label>
+              <InputText class="form-control" @bind-Value="editModel.NombreUsuario" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <InputText class="form-control" @bind-Value="editModel.Email" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Rol</label>
+              <InputText class="form-control" @bind-Value="editModel.Rol" />
+            </div>
+            @if (esCreacion)
+            {
+              <div class="mb-3">
+                <label class="form-label">Contraseña temporal</label>
+                <InputText class="form-control" @bind-Value="editCreate.Password" type="password" />
+              </div>
+            }
+            <div class="text-end">
+              <button class="btn btn-secondary me-2" type="button" @onclick="CerrarModal">Cancelar</button>
+              <button class="btn btn-primary" type="submit">Guardar</button>
+            </div>
+          </EditForm>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@if (mostrandoConfirmarEliminar)
+{
+  <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5)">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Eliminar usuario</h5>
+          <button type="button" class="btn-close" @onclick="CerrarConfirmarEliminar"></button>
+        </div>
+        <div class="modal-body">
+          <p>¿Seguro que deseas eliminar a <strong>@usuarioAEliminar?.NombreCompleto</strong>?</p>
+          <div class="text-end">
+            <button class="btn btn-secondary me-2" @onclick="CerrarConfirmarEliminar">Cancelar</button>
+            <button class="btn btn-danger" @onclick="EliminarAsync">Eliminar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@code {
+  private List<UsuarioDto>? usuarios;
+  private string filtro = string.Empty;
+  private bool incluirInactivos = false;
+  private bool mostrandoModal = false;
+  private string modalTitulo = string.Empty;
+  private bool esCreacion = true;
+  private UsuarioDto? editModel = new();
+  private CreateUsuarioRequest editCreate = new();
+  private UsuarioDto? usuarioAEliminar;
+  private string perfilInfo = string.Empty;
+
+  protected override async Task OnInitializedAsync()
+  {
+    await CargarAsync();
+  }
+
+  private async Task CargarAsync()
+  {
+    usuarios = await UsuariosApi.ObtenerUsuariosAsync(
+      1,
+      20,
+      string.IsNullOrWhiteSpace(filtro) ? null : filtro,
+      soloActivos: !incluirInactivos
+    );
+    StateHasChanged();
+  }
+
+  private Task BuscarAsync() => CargarAsync();
+
+  private void AbrirCrear()
+  {
+    esCreacion = true;
+    modalTitulo = "Nuevo usuario";
+    editModel = new UsuarioDto();
+    editCreate = new CreateUsuarioRequest();
+    mostrandoModal = true;
+  }
+
+  private void AbrirEditar(UsuarioDto u)
+  {
+    esCreacion = false;
+    modalTitulo = "Editar usuario";
+    editModel = new UsuarioDto
+    {
+      Id = u.Id,
+      NombreCompleto = u.NombreCompleto,
+      NombreUsuario = u.NombreUsuario,
+      Email = u.Email,
+      Rol = u.Rol,
+      NivelAcceso = u.NivelAcceso
+    };
+    mostrandoModal = true;
+  }
+
+  private void CerrarModal() => mostrandoModal = false;
+
+  private async Task GuardarAsync()
+  {
+    if (esCreacion)
+    {
+      var creado = await UsuariosApi.CrearAsync(new CreateUsuarioRequest
+      {
+        NombreCompleto = editModel?.NombreCompleto ?? string.Empty,
+        NombreUsuario = editModel?.NombreUsuario ?? string.Empty,
+        Email = editModel?.Email ?? string.Empty,
+        Rol = editModel?.Rol ?? string.Empty,
+        Password = editCreate.Password,
+        Telefono = editModel?.Telefono
+      });
+      if (creado != null)
+      {
+        mostrandoModal = false;
+        await CargarAsync();
+      }
+    }
+    else if (editModel != null)
+    {
+      var actualizado = await UsuariosApi.ActualizarAsync(editModel.Id, new UpdateUsuarioRequest
+      {
+        NombreCompleto = editModel.NombreCompleto,
+        Email = editModel.Email,
+        Rol = editModel.Rol,
+        Telefono = editModel.Telefono
+      });
+      if (actualizado != null)
+      {
+        mostrandoModal = false;
+        await CargarAsync();
+      }
+    }
+  }
+
+  private void ConfirmarEliminar(UsuarioDto u)
+  {
+    usuarioAEliminar = u;
+    mostrandoConfirmarEliminar = true;
+  }
+
+  private bool mostrandoConfirmarEliminar = false;
+  private void CerrarConfirmarEliminar() => mostrandoConfirmarEliminar = false;
+
+  private async Task EliminarAsync()
+  {
+    if (usuarioAEliminar == null) return;
+    var ok = await UsuariosApi.EliminarAsync(usuarioAEliminar.Id);
+    mostrandoConfirmarEliminar = false;
+    if (ok)
+    {
+      await CargarAsync();
+    }
+  }
+
+  private async Task VerPerfilAsync()
+  {
+    var perfil = await Auth.GetProfileAsync();
+    if (perfil == null)
+    {
+      perfilInfo = "No autorizado";
+    }
+    else
+    {
+      perfilInfo = $"Usuario: {perfil.UserName} | Roles: {string.Join(", ", perfil.Roles)}";
+    }
+  }
+
+  private async Task OnIncluirInactivosChanged(ChangeEventArgs e)
+  {
+    incluirInactivos = Convert.ToBoolean(e.Value);
+    await CargarAsync();
+  }
+}
+
+

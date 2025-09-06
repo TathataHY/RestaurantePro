@@ -1,3 +1,5 @@
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache;
+
 namespace RestaurantePro.Application.Core.Productos.Commands.ActualizarProducto;
 
 public class ActualizarProductoHandler : IRequestHandler<ActualizarProductoCommand, Result<ProductoDto>>
@@ -6,17 +8,20 @@ public class ActualizarProductoHandler : IRequestHandler<ActualizarProductoComma
     private readonly IProductoCategoriaRepository _categoriaRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<ActualizarProductoHandler> _logger;
+    private readonly ICacheService _cache;
 
     public ActualizarProductoHandler(
         IProductoRepository repository,
         IProductoCategoriaRepository categoriaRepository,
         IMapper mapper,
-        ILogger<ActualizarProductoHandler> logger)
+        ILogger<ActualizarProductoHandler> logger,
+        ICacheService cache)
     {
         _repository = repository;
         _categoriaRepository = categoriaRepository;
         _mapper = mapper;
         _logger = logger;
+        _cache = cache;
     }
 
     public async Task<Result<ProductoDto>> Handle(ActualizarProductoCommand request, CancellationToken cancellationToken)
@@ -63,6 +68,17 @@ public class ActualizarProductoHandler : IRequestHandler<ActualizarProductoComma
 
             // Persistir los cambios
             await _repository.ActualizarAsync(producto, cancellationToken);
+
+            // Invalidar caché relacionada a listados y a este producto
+            try
+            {
+                _cache.InvalidatePattern("productos:lista:*");
+                _cache.Remove($"productos:detalle:{producto.Id}");
+            }
+            catch (Exception cacheEx)
+            {
+                _logger.LogWarning(cacheEx, "No se pudo invalidar caché de productos tras actualizar {Id}", producto.Id);
+            }
 
             _logger.LogInformation("✅ Producto actualizado exitosamente: {Id}", request.Id);
             return Result.Success(_mapper.Map<ProductoDto>(producto));

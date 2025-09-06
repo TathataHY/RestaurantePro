@@ -39,6 +39,7 @@ public class CategoriasController : ControllerBase
     /// Obtiene todas las categorías de productos
     /// </summary>
     [HttpGet]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<List<CategoriaProductoDto>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<List<CategoriaProductoDto>>>> GetCategorias(
         [FromQuery] bool soloActivas = true,
@@ -111,6 +112,7 @@ public class CategoriasController : ControllerBase
     /// Obtiene una categoría específica por ID
     /// </summary>
     [HttpGet("{id:guid}")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<CategoriaProductoDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<CategoriaProductoDto>>> GetCategoria(Guid id)
@@ -167,6 +169,7 @@ public class CategoriasController : ControllerBase
     /// Busca categorías por nombre
     /// </summary>
     [HttpGet("buscar")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<List<CategoriaProductoDto>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<List<CategoriaProductoDto>>>> BuscarCategorias([FromQuery] string nombre)
     {

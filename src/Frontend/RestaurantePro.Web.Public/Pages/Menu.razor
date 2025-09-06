@@ -1,0 +1,201 @@
+@page "/menu"
+@inject RestaurantePro.Web.Public.Services.MenuApiService Api
+@using RestaurantePro.Web.Public.Models
+@using System.Globalization
+
+<HeadContent>
+    <link rel="canonical" href="/menu" />
+    <meta property="og:title" content="Menú - RestaurantePro" />
+    <meta property="og:description" content="Explora nuestras categorías y platos destacados." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="/menu" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Menú - RestaurantePro" />
+    <meta name="twitter:description" content="Explora nuestras categorías y platos destacados." />
+</HeadContent>
+<h3>Menú</h3>
+
+<div class="row mb-3">
+    <div class="col-12 col-md-6 mb-2">
+        <input class="form-control" placeholder="Buscar categoría..." @bind-value="textoBusqueda" @bind-value:event="oninput" />
+    </div>
+    <div class="col-6 col-md-3 mb-2">
+        <select class="form-select" @bind="orden">
+            <option value="popularidad">Más populares</option>
+            <option value="precio_asc">Precio: menor a mayor</option>
+            <option value="precio_desc">Precio: mayor a menor</option>
+        </select>
+    </div>
+    <div class="col-6 col-md-3 mb-2">
+        <button class="btn btn-primary w-100" @onclick="AplicarBusqueda">Aplicar</button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 col-md-4">
+        <h5>Categorías</h5>
+        <ul class="list-group">
+            @foreach (var cat in categorias)
+            {
+                <li class="list-group-item d-flex justify-content-between align-items-center" @onclick="(() => SeleccionarCategoria(cat))" style="cursor:pointer">
+                    <span>@cat.Icono @cat.Nombre</span>
+                    <span class="badge bg-primary rounded-pill">@cat.ProductosDisponibles</span>
+                </li>
+            }
+        </ul>
+    </div>
+    <div class="col-12 col-md-8">
+        <h5>Productos @if (categoriaSeleccionada != null) { <text> - @categoriaSeleccionada!.Nombre</text>; }</h5>
+        @if (cargando)
+        {
+            <div class="text-muted">Cargando productos...</div>
+        }
+        else if (productos.Count == 0)
+        {
+            <div class="text-muted">No hay productos para mostrar.</div>
+        }
+        else
+        {
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3">
+                @foreach (var p in productosPagina)
+                {
+                    <div class="col">
+                        <div class="card h-100 @(p.Activo ? string.Empty : "opacity-50")">
+                            <img src="@ObtenerImagenProducto(p)" class="card-img-top" alt="@p.Nombre" />
+                            <div class="card-body">
+                                <h6 class="card-title">@p.Nombre</h6>
+                                <p class="card-text text-muted">@p.Descripcion</p>
+                            </div>
+                            <div class="card-footer d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">@FormatearPrecio(p.Precio)</span>
+                                <small class="text-muted">@p.CategoriaNombre</small>
+                            </div>
+                            @if (!p.Activo)
+                            {
+                                <span class="badge bg-secondary position-absolute m-2" style="right:0;">Sin stock</span>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <small class="text-muted">Página @paginaActual de @totalPaginas (@productos.Count ítems)</small>
+                <div class="btn-group">
+                    <button class="btn btn-outline-secondary" disabled="@(paginaActual <= 1)" @onclick="PaginaAnterior">Anterior</button>
+                    <button class="btn btn-outline-secondary" disabled="@(paginaActual >= totalPaginas)" @onclick="PaginaSiguiente">Siguiente</button>
+                </div>
+            </div>
+        }
+    </div>
+    
+</div>
+
+@code {
+    private List<CategoriaProductoDto> categorias = new();
+    private List<ProductoDto> productos = new();
+    private IEnumerable<ProductoDto> productosOrdenados => OrdenarProductos(productos, orden);
+    private IEnumerable<ProductoDto> productosPagina => productos; // cuando usemos server-side, la página ya vendrá recortada
+    private CategoriaProductoDto? categoriaSeleccionada;
+    private string textoBusqueda = string.Empty;
+    private string orden = "popularidad";
+    private bool cargando = false;
+    private int paginaActual = 1;
+    private int tamanoPagina = 6;
+    private int totalPaginas = 1;
+    private bool usarPaginacionServidor = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        categorias = await Api.ObtenerCategoriasAsync(true, true);
+        if (categorias.Count > 0)
+        {
+            await SeleccionarCategoria(categorias.First());
+        }
+    }
+
+    private async Task SeleccionarCategoria(CategoriaProductoDto cat)
+    {
+        categoriaSeleccionada = cat;
+        cargando = true;
+        if (usarPaginacionServidor)
+        {
+            var orderBy = orden == "precio_asc" ? "Precio" : orden == "precio_desc" ? "Precio" : "Popularidad";
+            var orderDirection = orden == "precio_desc" ? "desc" : orden == "precio_asc" ? "asc" : "desc";
+            var page = await Api.ObtenerProductosPaginadosAsync(cat.Id, paginaActual, tamanoPagina, false, orderBy, orderDirection);
+            productos = page.Items;
+            totalPaginas = page.TotalPages;
+        }
+        else
+        {
+            // Traer también no activos para marcar "Sin stock"
+            productos = await Api.ObtenerProductosPorCategoriaAsync(cat.Id, false, true);
+            CalcularTotalPaginas();
+        }
+        cargando = false;
+        paginaActual = 1;
+        StateHasChanged();
+    }
+
+    private async Task AplicarBusqueda()
+    {
+        if (string.IsNullOrWhiteSpace(textoBusqueda))
+        {
+            categorias = await Api.ObtenerCategoriasAsync(true, true);
+        }
+        else
+        {
+            categorias = await Api.BuscarCategoriasAsync(textoBusqueda);
+        }
+        if (categorias.Count > 0)
+        {
+            await SeleccionarCategoria(categorias.First());
+        }
+        else
+        {
+            categoriaSeleccionada = null;
+            productos = new List<ProductoDto>();
+            paginaActual = 1;
+            CalcularTotalPaginas();
+        }
+    }
+
+    private static IEnumerable<ProductoDto> OrdenarProductos(IEnumerable<ProductoDto> source, string criterio)
+    {
+        return criterio switch
+        {
+            "precio_asc" => source.OrderBy(p => p.Precio),
+            "precio_desc" => source.OrderByDescending(p => p.Precio),
+            _ => source.OrderByDescending(p => p.Popularidad)
+        };
+    }
+
+    private static string FormatearPrecio(decimal precio)
+    {
+        // Formato manual para evitar dependencia de ICU en WASM: miles con punto.
+        var miles = precio.ToString("#,0", CultureInfo.InvariantCulture).Replace(",", ".");
+        return "$ " + miles;
+    }
+
+    private static string ObtenerImagenProducto(ProductoDto p)
+    {
+        // Si en el futuro hay URL de imagen real en el DTO, usarla. Por ahora seed por Id.
+        return $"https://picsum.photos/seed/{p.Id}/600/400";
+    }
+
+    private void CalcularTotalPaginas()
+    {
+        totalPaginas = Math.Max(1, (int)Math.Ceiling(productos.Count / (double)tamanoPagina));
+        if (paginaActual > totalPaginas) paginaActual = totalPaginas;
+    }
+
+    private void PaginaSiguiente()
+    {
+        if (paginaActual < totalPaginas) { paginaActual++; if (categoriaSeleccionada != null && usarPaginacionServidor) _ = SeleccionarCategoria(categoriaSeleccionada); }
+    }
+
+    private void PaginaAnterior()
+    {
+        if (paginaActual > 1) { paginaActual--; if (categoriaSeleccionada != null && usarPaginacionServidor) _ = SeleccionarCategoria(categoriaSeleccionada); }
+    }
+}
+

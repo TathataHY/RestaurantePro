@@ -1,0 +1,73 @@
+@page "/login"
+@attribute [AllowAnonymous]
+@using RestaurantePro.Web.Admin.Models
+@inject RestaurantePro.Web.Admin.Services.AuthApiService Auth
+@inject NavigationManager Nav
+@inject RestaurantePro.Web.Admin.Auth.JwtAuthenticationStateProvider AuthState
+
+<PageTitle>Iniciar sesión - Admin</PageTitle>
+
+<div class="row justify-content-center mt-5">
+  <div class="col-md-4">
+    <h3 class="mb-3">Iniciar sesión</h3>
+    @if (!string.IsNullOrEmpty(error))
+    {
+      <div class="alert alert-danger">@error</div>
+    }
+    <EditForm Model="model" OnValidSubmit="LoginAsync">
+      <DataAnnotationsValidator />
+      <div class="mb-3">
+        <label class="form-label">Correo</label>
+        <InputText class="form-control" @bind-Value="model.Email" />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Contraseña</label>
+        <InputText class="form-control" @bind-Value="model.Password" type="password" />
+      </div>
+      <div class="form-check mb-3">
+        <InputCheckbox class="form-check-input" @bind-Value="model.Recordarme" />
+        <label class="form-check-label">Recordarme</label>
+      </div>
+      <button class="btn btn-primary w-100" disabled="@loading">@("Entrar" + (loading ? "..." : string.Empty))</button>
+    </EditForm>
+  </div>
+  </div>
+
+@code {
+  private LoginRequest model = new();
+  private string error = string.Empty;
+  private bool loading = false;
+
+  private string? returnUrl;
+
+  protected override void OnInitialized()
+  {
+    var uri = new Uri(Nav.Uri);
+    var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+    returnUrl = query["returnUrl"];
+  }
+
+  private async Task LoginAsync()
+  {
+    error = string.Empty;
+    loading = true;
+    var resp = await Auth.LoginAsync(model);
+    loading = false;
+    if (resp is null || !resp.Success || string.IsNullOrWhiteSpace(resp.Token))
+    {
+      error = "Usuario o contraseña inválidos";
+      return;
+    }
+    AuthState.SetAuth(resp);
+    if (!string.IsNullOrWhiteSpace(returnUrl))
+    {
+      Nav.NavigateTo(returnUrl);
+    }
+    else
+    {
+      Nav.NavigateTo("/");
+    }
+  }
+}
+
+

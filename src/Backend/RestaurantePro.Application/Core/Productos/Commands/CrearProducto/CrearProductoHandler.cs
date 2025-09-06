@@ -1,3 +1,5 @@
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache;
+
 namespace RestaurantePro.Application.Core.Productos.Commands.CrearProducto;
 
 /// <summary>
@@ -10,17 +12,20 @@ public class CrearProductoHandler : IRequestHandler<CrearProductoCommand, Result
     private readonly ProductoBuilder _builder;
     private readonly IMapper _mapper;
     private readonly ILogger<CrearProductoHandler> _logger;
+    private readonly ICacheService _cache;
 
     public CrearProductoHandler(
         IProductoRepository repository,
         ProductoBuilder builder,
         IMapper mapper,
-        ILogger<CrearProductoHandler> logger)
+        ILogger<CrearProductoHandler> logger,
+        ICacheService cache)
     {
         _repository = repository;
         _builder = builder;
         _mapper = mapper;
         _logger = logger;
+        _cache = cache;
     }
 
     public async Task<Result<ProductoDto>> Handle(CrearProductoCommand request, CancellationToken cancellationToken)
@@ -51,6 +56,15 @@ public class CrearProductoHandler : IRequestHandler<CrearProductoCommand, Result
 
             // 3. Mapear a DTO para respuesta
             var productoDto = _mapper.Map<ProductoDto>(producto);
+
+            try
+            {
+                _cache.InvalidatePattern("productos:lista:*");
+            }
+            catch (Exception cacheEx)
+            {
+                _logger.LogWarning(cacheEx, "No se pudo invalidar caché de listados tras crear producto {Id}", producto.Id);
+            }
 
             _logger.LogInformation("✅ Producto creado exitosamente: {Id} - {Nombre}", producto.Id, producto.Nombre);
             return Result.Success(productoDto);

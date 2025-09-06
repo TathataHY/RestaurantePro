@@ -1,0 +1,89 @@
+@page "/resenas"
+@inject RestaurantePro.Web.Public.Services.ReviewsApiService Api
+@using RestaurantePro.Web.Public.Models
+
+<HeadContent>
+    <link rel="canonical" href="/resenas" />
+    <meta property="og:title" content="Reseñas - RestaurantePro" />
+    <meta property="og:description" content="Lee y comparte opiniones reales de nuestros clientes." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="/resenas" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Reseñas - RestaurantePro" />
+    <meta name="twitter:description" content="Lee y comparte opiniones reales de nuestros clientes." />
+</HeadContent>
+<h3>Reseñas</h3>
+
+<EditForm Model="nuevo" OnValidSubmit="EnviarAsync">
+    <DataAnnotationsValidator />
+    <div class="row g-2 mb-3">
+        <div class="col-12 col-md-4">
+            <InputText @bind-Value="nuevo.Nombre" class="form-control" placeholder="Tu nombre" />
+        </div>
+        <div class="col-12 col-md-4">
+            <InputNumber @bind-Value="nuevo.Valoracion" class="form-control" placeholder="Valoración (1-5)" />
+        </div>
+        <div class="col-12">
+            <InputTextArea @bind-Value="nuevo.Comentario" class="form-control" placeholder="Escribe tu comentario..." rows="3" />
+        </div>
+        <div class="col-12">
+            <button class="btn btn-primary" disabled="@enviando">@(enviando ? "Enviando..." : "Enviar reseña")</button>
+        </div>
+    </div>
+</EditForm>
+
+@if (cargando)
+{
+    <p>Cargando reseñas...</p>
+}
+else if (resenas.Count == 0)
+{
+    <p>Aún no hay reseñas. ¡Sé el primero en comentar!</p>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-2 g-3">
+        @foreach (var r in resenas)
+        {
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">@r.Nombre <small class="text-muted">— @r.Valoracion/5</small></h5>
+                        <p class="card-text">@r.Comentario</p>
+                    </div>
+                    <div class="card-footer">
+                        <small class="text-muted">@r.Fecha.ToLocalTime().ToString("g")</small>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<ReviewDto> resenas = new();
+    private bool cargando = true;
+    private bool enviando = false;
+    private CreateReviewRequest nuevo = new() { Valoracion = 5 };
+
+    protected override async Task OnInitializedAsync()
+    {
+        cargando = true;
+        resenas = await Api.ObtenerAsync();
+        cargando = false;
+    }
+
+    private async Task EnviarAsync()
+    {
+        if (enviando) return;
+        enviando = true;
+        var ok = await Api.CrearAsync(nuevo);
+        if (ok)
+        {
+            nuevo = new CreateReviewRequest { Valoracion = 5 };
+            resenas = await Api.ObtenerAsync();
+        }
+        enviando = false;
+    }
+}
+

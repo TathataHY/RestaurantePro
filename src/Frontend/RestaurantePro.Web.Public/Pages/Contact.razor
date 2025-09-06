@@ -1,0 +1,95 @@
+@page "/contacto"
+@inject RestaurantePro.Web.Public.Services.ContactApiService Api
+@using RestaurantePro.Web.Public.Models
+
+<HeadContent>
+    <link rel="canonical" href="/contacto" />
+    <meta property="og:title" content="Contacto - RestaurantePro" />
+    <meta property="og:description" content="Envíanos un mensaje o consulta. ¡Estamos para ayudarte!" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="/contacto" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Contacto - RestaurantePro" />
+    <meta name="twitter:description" content="Envíanos un mensaje o consulta. ¡Estamos para ayudarte!" />
+</HeadContent>
+<h3>Contacto</h3>
+
+<EditForm Model="mensaje" OnValidSubmit="EnviarAsync">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="row g-2 mb-3">
+        <div class="col-12 col-md-6">
+            <InputText @bind-Value="mensaje.Nombre" class="form-control" placeholder="Tu nombre" />
+        </div>
+        <div class="col-12 col-md-6">
+            <InputText @bind-Value="mensaje.Email" class="form-control" placeholder="Tu email" />
+        </div>
+        <div class="col-12">
+            <InputText @bind-Value="mensaje.Asunto" class="form-control" placeholder="Asunto (opcional)" />
+        </div>
+        <div class="col-12">
+            <InputTextArea @bind-Value="mensaje.Mensaje" class="form-control" placeholder="Mensaje" rows="5" />
+        </div>
+        <div class="col-12">
+            <button class="btn btn-primary" disabled="@enviando">@(enviando ? "Enviando..." : "Enviar")</button>
+            @if (enviado)
+            {
+                <span class="ms-2 text-success">¡Gracias! Recibimos tu mensaje.</span>
+            }
+        </div>
+    </div>
+</EditForm>
+
+<h5 class="mt-4">Mensajes recientes (demo)</h5>
+@if (cargando)
+{
+    <p>Cargando...</p>
+}
+else if (mensajes.Count == 0)
+{
+    <p>No hay mensajes aún.</p>
+}
+else
+{
+    <ul class="list-group">
+        @foreach (var m in mensajes)
+        {
+            <li class="list-group-item">
+                <strong>@m.Nombre</strong> <small class="text-muted">(@m.Email) • @m.Fecha.ToLocalTime().ToString("g")</small>
+                <div>@m.Asunto</div>
+                <div>@m.Mensaje</div>
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    private CreateContactMessageRequest mensaje = new();
+    private bool enviando = false;
+    private bool enviado = false;
+    private bool cargando = true;
+    private List<ContactMessageDto> mensajes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        cargando = true;
+        mensajes = await Api.ObtenerAsync();
+        cargando = false;
+    }
+
+    private async Task EnviarAsync()
+    {
+        if (enviando) return;
+        enviado = false;
+        enviando = true;
+        var ok = await Api.EnviarAsync(mensaje);
+        if (ok)
+        {
+            enviado = true;
+            mensaje = new CreateContactMessageRequest();
+            mensajes = await Api.ObtenerAsync();
+        }
+        enviando = false;
+    }
+}
+

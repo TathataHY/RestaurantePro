@@ -30,6 +30,8 @@ public class ProductosController : ControllerBase
     /// Obtiene todos los productos con paginación
     /// </summary>
     [HttpGet]
+    [AllowAnonymous]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedList<ProductoDto>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<PaginatedList<ProductoDto>>>> GetProductos(
         [FromQuery] ObtenerProductosPaginadosQuery query)
@@ -54,6 +56,8 @@ public class ProductosController : ControllerBase
     /// Obtiene un producto específico por ID
     /// </summary>
     [HttpGet("{id:guid}")]
+    [AllowAnonymous]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     [ProducesResponseType(typeof(ApiResponse<ProductoDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<ProductoDto>>> GetProducto(Guid id)
@@ -79,6 +83,8 @@ public class ProductosController : ControllerBase
     /// Obtiene productos por categoría
     /// </summary>
     [HttpGet("categoria/{categoriaId:guid}")]
+    [AllowAnonymous]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     [ProducesResponseType(typeof(ApiResponse<List<ProductoDto>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<List<ProductoDto>>>> GetProductosPorCategoria(
         Guid categoriaId, [FromQuery] bool soloActivos = true, [FromQuery] bool ordenarPorPopularidad = false)

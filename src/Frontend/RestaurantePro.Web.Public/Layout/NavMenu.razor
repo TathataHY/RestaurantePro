@@ -1,6 +1,6 @@
 ﻿<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">RestaurantePro.Web.Public</a>
+        <a class="navbar-brand" href="">RestaurantePro Public</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -11,17 +11,37 @@
     <nav class="flex-column">
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Inicio
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
+            <NavLink class="nav-link" href="menu">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Menú
             </NavLink>
         </div>
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
+            <NavLink class="nav-link" href="resenas">
+                <span class="bi bi-chat-dots-fill" aria-hidden="true"></span> Reseñas
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="contacto">
+                <span class="bi bi-envelope-fill" aria-hidden="true"></span> Contacto
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="acerca">
+                <span class="bi bi-info-circle-fill" aria-hidden="true"></span> Acerca
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="reservas">
+                <span class="bi bi-calendar-check" aria-hidden="true"></span> Reservas
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="politicas">
+                <span class="bi bi-shield-check" aria-hidden="true"></span> Políticas
             </NavLink>
         </div>
     </nav>

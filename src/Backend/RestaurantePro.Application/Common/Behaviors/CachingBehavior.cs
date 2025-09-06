@@ -49,10 +49,19 @@ public class CachingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
         _logger.LogDebug("📝 Cache MISS para {RequestName}", requestName);
         var response = await next();
 
+        // Calcular expiración
+        var expiration = GetCacheExpiration(request);
+
+        // Si TTL es 0 o negativo, no cachear esta respuesta
+        if (expiration <= TimeSpan.Zero)
+        {
+            return response;
+        }
+
         // Guardar en caché con expiración
         var cacheOptions = new MemoryCacheEntryOptions
         {
-            AbsoluteExpirationRelativeToNow = GetCacheExpiration(request),
+            AbsoluteExpirationRelativeToNow = expiration,
             SlidingExpiration = TimeSpan.FromMinutes(5),
             Priority = CacheItemPriority.Normal
         };
@@ -98,14 +107,30 @@ public class CachingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
         var requestName = typeof(TRequest).Name.ToLowerInvariant();
 
         // Configuraciones específicas por tipo de consulta
+        // Regla específica: todas las consultas de Mesas SIN caché (estado cambia muy seguido)
+        if (requestName.Contains("mesa"))
+        {
+            return TimeSpan.Zero;
+        }
+
+        // Regla específica: listados paginados de productos SIN caché; otros paginados se mantienen breves
+        if (requestName.Contains("paginados"))
+        {
+            if (requestName.Contains("producto"))
+            {
+                return TimeSpan.Zero;
+            }
+            return TimeSpan.FromSeconds(15);
+        }
+
         return requestName switch
         {
-            var name when name.Contains("obtenerproducto") => TimeSpan.FromMinutes(15), // Productos cambian poco
+            var name when name.Contains("obtenerproductoporid") => TimeSpan.FromSeconds(10), // Detalle de producto: TTL corto
+            var name when name.Contains("obtenerproducto") => TimeSpan.FromMinutes(15), // Otros productos: TTL estándar
             var name when name.Contains("obtenerusuario") => TimeSpan.FromMinutes(10),   // Usuarios cambian moderadamente
             var name when name.Contains("obtenercomanda") => TimeSpan.FromSeconds(15),   // Comandas cambian muy rápido (cocina)
             var name when name.Contains("obtenermesa") => TimeSpan.FromSeconds(30),      // Mesas cambian muy rápido
             var name when name.Contains("obtenermesaporid") => TimeSpan.FromSeconds(15), // Mesa individual cambia muy rápido
-            var name when name.Contains("paginados") => TimeSpan.FromSeconds(15),        // Listas paginadas (incluye comandas)
             _ => TimeSpan.FromMinutes(10) // Tiempo por defecto
         };
     }

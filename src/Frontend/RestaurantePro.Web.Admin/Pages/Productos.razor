@@ -1,0 +1,290 @@
+@attribute [Authorize]
+@page "/productos"
+@inject RestaurantePro.Web.Admin.Services.ProductosApiService Api
+@using RestaurantePro.Web.Admin.Models
+
+<PageTitle>Productos</PageTitle>
+
+<h3>Productos</h3>
+
+<div class="row g-2 mb-3">
+    <div class="col-12 col-md-4">
+        <input class="form-control" placeholder="Buscar..." @bind-value="filtro" @bind-value:event="oninput" />
+    </div>
+    <div class="col-12 col-md-4">
+        <select class="form-select" @bind="categoriaIdString">
+            <option value="">Todas las categorías</option>
+            @foreach (var c in categorias)
+            {
+                <option value="@c.Id">@c.Nombre</option>
+            }
+        </select>
+    </div>
+    <div class="col-12 col-md-2">
+        <select class="form-select" @bind="orderBy">
+            <option value="Nombre">Nombre</option>
+            <option value="Precio">Precio</option>
+            <option value="Popularidad">Popularidad</option>
+        </select>
+    </div>
+    <div class="col-12 col-md-2">
+        <select class="form-select" @bind="orderDirection">
+            <option value="asc">Asc</option>
+            <option value="desc">Desc</option>
+        </select>
+    </div>
+    <div class="col-12 col-md-2">
+        <button class="btn btn-primary w-100" @onclick="BuscarAsync">Aplicar</button>
+    </div>
+    <div class="col-12 col-md-2">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="soloActivos" @bind="soloActivos" />
+            <label class="form-check-label" for="soloActivos">Solo activos</label>
+        </div>
+    </div>
+    
+</div>
+
+@if (cargando)
+{
+    <p>Cargando...</p>
+}
+else if (productos.Items.Count == 0)
+{
+    <p class="text-muted">No hay productos.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle" role="grid">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th class="text-end">Precio</th>
+                    <th>Popularidad</th>
+                    <th>Activo</th>
+                    <th class="text-end">
+                        <button class="btn btn-sm btn-success" @onclick="Nuevo">Nuevo</button>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in productos.Items)
+                {
+                    <tr>
+                        <td>@p.Nombre</td>
+                        <td>@p.CategoriaNombre</td>
+                        <td class="text-end">@p.Precio.ToString("N0")</td>
+                        <td>@p.Popularidad</td>
+                        <td>
+                            <input type="checkbox" class="form-check-input" checked="@p.Activo" disabled />
+                        </td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-primary me-1" @onclick="(() => Editar(p.Id))">Editar</button>
+                            <button class="btn btn-sm btn-outline-danger" @onclick="(() => Eliminar(p.Id))">Eliminar</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="d-flex justify-content-between align-items-center">
+        <small class="text-muted">Página @paginaActual de @productos.TotalPages (Total: @productos.TotalCount)</small>
+        <div class="btn-group">
+            <button class="btn btn-outline-secondary" disabled="@(paginaActual <= 1)" @onclick="Anterior">Anterior</button>
+            <button class="btn btn-outline-secondary" disabled="@(paginaActual >= productos.TotalPages)" @onclick="Siguiente">Siguiente</button>
+        </div>
+    </div>
+}
+
+@if (mostrandoModal)
+{
+    <div style="position:fixed; inset:0; background: rgba(0,0,0,.5); z-index:1080;" @onclick="CerrarModal">
+        <div style="max-width:640px; margin:10vh auto; background:#fff; border-radius:.5rem; overflow:hidden;" @onclick:stopPropagation="true">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="m-0">@(editando ? "Editar producto" : "Nuevo producto")</h5>
+                <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="CerrarModal">Cerrar</button>
+            </div>
+            <div class="p-3">
+                @if (editando)
+                {
+                    <EditForm Model="edicion">
+                        <DataAnnotationsValidator />
+                        <div class="mb-3">
+                            <label class="form-label">Nombre</label>
+                            <InputText class="form-control" @bind-Value="edicion.Nombre" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descripción</label>
+                            <InputTextArea class="form-control" rows="3" @bind-Value="edicion.Descripcion" />
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Precio</label>
+                                <InputNumber class="form-control" @bind-Value="edicion.Precio" />
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Categoría</label>
+                                <select class="form-select" @bind="edicion.CategoriaId">
+                                    @foreach (var c in categorias)
+                                    {
+                                        <option value="@c.Id">@c.Nombre</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="chkActivoEdit" @bind="edicion.Activo" />
+                            <label class="form-check-label" for="chkActivoEdit">Activo</label>
+                        </div>
+                    </EditForm>
+                }
+                else
+                {
+                    <EditForm Model="nuevo">
+                        <DataAnnotationsValidator />
+                        <div class="mb-3">
+                            <label class="form-label">Nombre</label>
+                            <InputText class="form-control" @bind-Value="nuevo.Nombre" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descripción</label>
+                            <InputTextArea class="form-control" rows="3" @bind-Value="nuevo.Descripcion" />
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Precio</label>
+                                <InputNumber class="form-control" @bind-Value="nuevo.Precio" />
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Categoría</label>
+                                <select class="form-select" @bind="nuevo.CategoriaId">
+                                    @foreach (var c in categorias)
+                                    {
+                                        <option value="@c.Id">@c.Nombre</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="chkActivoNuevo" @bind="nuevo.Activo" />
+                            <label class="form-check-label" for="chkActivoNuevo">Activo</label>
+                        </div>
+                    </EditForm>
+                }
+            </div>
+            <div class="p-3 border-top d-flex justify-content-end gap-2">
+                <button class="btn btn-secondary" @onclick="CerrarModal">Cancelar</button>
+                <button class="btn btn-primary" @onclick="GuardarAsync">Guardar</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<CategoriaProductoDto> categorias = new();
+    private PaginatedList<ProductoDto> productos = new();
+    private string filtro = string.Empty;
+    private Guid? categoriaId = null;
+    private string categoriaIdString
+    {
+        get => categoriaId?.ToString() ?? string.Empty;
+        set => categoriaId = Guid.TryParse(value, out var g) ? g : null;
+    }
+    private bool soloActivos = true;
+    private int paginaActual = 1;
+    private int tamanoPagina = 10;
+    private string orderBy = "Nombre";
+    private string orderDirection = "asc";
+    private bool cargando = true;
+    private bool mostrandoModal = false;
+    private bool editando = false;
+    private CreateProductoRequest nuevo = new();
+    private UpdateProductoRequest edicion = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        categorias = await Api.ObtenerCategoriasAsync();
+        await BuscarAsync();
+    }
+
+    private async Task BuscarAsync()
+    {
+        cargando = true;
+        productos = await Api.ObtenerProductosPaginadosAsync(paginaActual, tamanoPagina, filtro, categoriaId, soloActivos, orderBy, orderDirection);
+        cargando = false;
+        StateHasChanged();
+    }
+
+    private void Nuevo()
+    {
+        editando = false;
+        nuevo = new CreateProductoRequest { Activo = true, CategoriaId = categorias.FirstOrDefault()?.Id ?? Guid.Empty };
+        mostrandoModal = true;
+    }
+
+    private async Task Editar(Guid id)
+    {
+        var p = await Api.ObtenerPorIdAsync(id);
+        if (p is null) return;
+        editando = true;
+        edicion = new UpdateProductoRequest
+        {
+            Id = p.Id,
+            Nombre = p.Nombre,
+            Descripcion = p.Descripcion,
+            Precio = p.Precio,
+            CategoriaId = p.CategoriaId,
+            Activo = p.Activo
+        };
+        mostrandoModal = true;
+    }
+
+    private void CerrarModal()
+    {
+        mostrandoModal = false;
+    }
+
+    private async Task GuardarAsync()
+    {
+        if (editando)
+        {
+            var res = await Api.ActualizarAsync(edicion);
+        }
+        else
+        {
+            var res = await Api.CrearAsync(nuevo);
+        }
+        mostrandoModal = false;
+        await BuscarAsync();
+    }
+
+    private async Task Eliminar(Guid id)
+    {
+        if (await Api.EliminarAsync(id))
+        {
+            await BuscarAsync();
+        }
+    }
+
+    private async Task Siguiente()
+    {
+        if (paginaActual < productos.TotalPages)
+        {
+            paginaActual++;
+            await BuscarAsync();
+        }
+    }
+
+    private async Task Anterior()
+    {
+        if (paginaActual > 1)
+        {
+            paginaActual--;
+            await BuscarAsync();
+        }
+    }
+}
+
+

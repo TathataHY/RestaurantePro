@@ -1,0 +1,250 @@
+@attribute [Authorize]
+@page "/mesas"
+
+@inject RestaurantePro.Web.Admin.Services.MesasApiService MesasApi
+
+<PageTitle>Mesas</PageTitle>
+
+<h3>Mesas</h3>
+<p class="text-muted">Gestión de mesas: listado, filtros y CRUD básico.</p>
+
+<div class="row g-2 mb-3">
+  <div class="col-md-3">
+    <input class="form-control" placeholder="Estado (Disponible/Ocupada/Reservada)" @bind="estado" />
+  </div>
+  <div class="col-md-3">
+    <input class="form-control" placeholder="Ubicación/Zona" @bind="ubicacion" />
+  </div>
+  <div class="col-md-2">
+    <input class="form-control" type="number" min="1" placeholder="Capacidad mínima" @bind="capacidadMinima" />
+  </div>
+  <div class="col-md-2">
+    <button class="btn btn-primary w-100" @onclick="BuscarAsync">Buscar</button>
+  </div>
+  <div class="col-md-2 text-end">
+    <button class="btn btn-success" @onclick="NuevaMesa">Nuevo</button>
+  </div>
+  
+</div>
+
+@if (cargando)
+{
+  <div class="text-muted">Cargando...</div>
+}
+else if (mesas is null)
+{
+  <div class="text-danger">No se pudieron cargar las mesas.</div>
+}
+else
+{
+  <table class="table table-striped table-hover align-middle">
+    <thead>
+      <tr>
+        <th>Número</th>
+        <th>Capacidad</th>
+        <th>Estado</th>
+        <th>Zona</th>
+        <th>Tipo</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach (var m in mesas)
+      {
+        <tr>
+          <td>@m.Numero</td>
+          <td>@m.Capacidad</td>
+          <td>@m.Estado</td>
+          <td>@m.Zona</td>
+          <td>@m.Tipo</td>
+          <td class="text-end">
+            <button class="btn btn-sm btn-primary me-1" @onclick="() => EditarMesa(m)">Editar</button>
+            <button class="btn btn-sm btn-danger" @onclick="() => EliminarMesaAsync(m)">Eliminar</button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}
+
+@if (mostrandoModal)
+{
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,.5)">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">@(editando ? "Editar mesa" : "Nueva mesa")</h5>
+          <button type="button" class="btn-close" @onclick="CerrarModal"></button>
+        </div>
+        <div class="modal-body">
+          @if (!string.IsNullOrEmpty(error))
+          {
+            <div class="alert alert-danger">@error</div>
+          }
+          @if (editando)
+          {
+            <div class="mb-2">
+              <label class="form-label">Número</label>
+              <input class="form-control" @bind="editarDto.Numero" />
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Capacidad</label>
+              <input class="form-control" type="number" min="1" @bind="editarDto.Capacidad" />
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Ubicación/Zona</label>
+              <input class="form-control" @bind="editarDto.Ubicacion" />
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Tipo</label>
+              <input class="form-control" @bind="editarDto.Tipo" />
+            </div>
+          }
+          else
+          {
+            <div class="mb-2">
+              <label class="form-label">Número</label>
+              <input class="form-control" type="number" min="1" @bind="crearDto.Numero" />
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Capacidad</label>
+              <input class="form-control" type="number" min="1" @bind="crearDto.Capacidad" />
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Zona</label>
+              <input class="form-control" @bind="crearDto.Zona" />
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Descripción</label>
+              <textarea class="form-control" rows="2" @bind="crearDto.Descripcion"></textarea>
+            </div>
+          }
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" @onclick="CerrarModal">Cancelar</button>
+          <button class="btn btn-primary" @onclick="GuardarAsync">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@code {
+  private List<MesaDto>? mesas;
+  private bool cargando = true;
+  private string estado = string.Empty;
+  private string ubicacion = string.Empty;
+  private int? capacidadMinima;
+
+  private bool mostrandoModal = false;
+  private bool editando = false;
+  private string error = string.Empty;
+  private Guid mesaIdEditando;
+  private CrearMesaRequest crearDto = new();
+  private ActualizarMesaRequest editarDto = new();
+
+  protected override async Task OnInitializedAsync()
+  {
+    await CargarAsync();
+  }
+
+  private async Task CargarAsync()
+  {
+    cargando = true;
+    mesas = await MesasApi.ObtenerAsync(
+      string.IsNullOrWhiteSpace(estado) ? null : estado,
+      string.IsNullOrWhiteSpace(ubicacion) ? null : ubicacion,
+      capacidadMinima
+    );
+    cargando = false;
+    StateHasChanged();
+  }
+
+  private Task BuscarAsync() => CargarAsync();
+
+  private void NuevaMesa()
+  {
+    crearDto = new();
+    editando = false;
+    error = string.Empty;
+    mostrandoModal = true;
+  }
+
+  private void EditarMesa(MesaDto m)
+  {
+    mesaIdEditando = m.Id;
+    editarDto = new ActualizarMesaRequest
+    {
+      Numero = m.Numero,
+      Capacidad = m.Capacidad,
+      Ubicacion = m.Zona,
+      Tipo = m.Tipo
+    };
+    editando = true;
+    error = string.Empty;
+    mostrandoModal = true;
+  }
+
+  private async Task GuardarAsync()
+  {
+    error = string.Empty;
+    bool ok;
+    if (editando)
+    {
+      try
+      {
+        var actualizado = await MesasApi.ActualizarAsync(mesaIdEditando, editarDto);
+        ok = actualizado is not null;
+      }
+      catch (Exception ex)
+      {
+        error = ex.Message;
+        return;
+      }
+    }
+    else
+    {
+      // Validaciones de cliente
+      if (crearDto.Numero <= 0) { error = "El número de mesa debe ser mayor a 0."; return; }
+      if (crearDto.Capacidad <= 0) { error = "La capacidad debe ser mayor a 0."; return; }
+      if (string.IsNullOrWhiteSpace(crearDto.Zona)) { error = "La zona es obligatoria."; return; }
+      if (crearDto.Zona.Length > 30) { error = "La zona no debe superar los 30 caracteres."; return; }
+      if (!string.IsNullOrWhiteSpace(crearDto.Descripcion) && crearDto.Descripcion.Length > 200) { error = "La descripción no debe superar los 200 caracteres."; return; }
+
+      try
+      {
+        var creado = await MesasApi.CrearAsync(crearDto);
+        ok = creado is not null;
+      }
+      catch (Exception ex)
+      {
+        error = ex.Message;
+        return;
+      }
+    }
+    if (!ok)
+    {
+      error = "No se pudo guardar la mesa.";
+      return;
+    }
+    mostrandoModal = false;
+    await CargarAsync();
+  }
+
+  private void CerrarModal()
+  {
+    mostrandoModal = false;
+  }
+
+  private async Task EliminarMesaAsync(MesaDto m)
+  {
+    if (!await MesasApi.EliminarAsync(m.Id))
+    {
+      error = "No se pudo eliminar la mesa.";
+      return;
+    }
+    await CargarAsync();
+  }
+}
+
+
