@@ -151,7 +151,7 @@ public partial class ModernCocinaViewModel : BaseViewModel
 
         var confirmacion = await _dialogService.ShowConfirmAsync(
             "Tomar Comanda",
-            $"¿Está seguro que desea tomar la comanda #{comanda.Numero} para preparar?");
+            $"¿Está seguro que desea tomar la comanda #{comanda.NumeroDisplay} para preparar?");
 
         if (!confirmacion) return;
 
@@ -167,7 +167,7 @@ public partial class ModernCocinaViewModel : BaseViewModel
             if (response.Success)
             {
                 await _dialogService.ShowAlertAsync("Éxito", 
-                    $"Comanda #{comanda.Numero} tomada para preparar");
+                    $"Comanda #{comanda.NumeroDisplay} tomada para preparar");
                 await LoadComandasAsync();
                 await LoadEstadisticasAsync();
             }
@@ -196,7 +196,7 @@ public partial class ModernCocinaViewModel : BaseViewModel
 
         var confirmacion = await _dialogService.ShowConfirmAsync(
             "Marcar como Lista",
-            $"¿Está seguro que la comanda #{comanda.Numero} está lista para entregar?");
+            $"¿Está seguro que la comanda #{comanda.NumeroDisplay} está lista para entregar?");
 
         if (!confirmacion) return;
 
@@ -212,7 +212,7 @@ public partial class ModernCocinaViewModel : BaseViewModel
             if (response.Success)
             {
                 await _dialogService.ShowAlertAsync("Éxito", 
-                    $"Comanda #{comanda.Numero} marcada como lista");
+                    $"Comanda #{comanda.NumeroDisplay} marcada como lista");
                 await LoadComandasAsync();
                 await LoadEstadisticasAsync();
             }
@@ -241,8 +241,8 @@ public partial class ModernCocinaViewModel : BaseViewModel
 
         try
         {
-            var detalle = $"Comanda #{comanda.Numero}\n" +
-                         $"Mesa: {comanda.Mesa?.Numero}\n" +
+            var detalle = $"Comanda #{comanda.NumeroDisplay}\n" +
+                         $"Mesa: {comanda.MesaNumeroDisplay}\n" +
                          $"Estado: {comanda.Estado}\n" +
                          $"Total: {comanda.Total:C}\n" +
                          $"Productos: {comanda.ProductosResumen}";

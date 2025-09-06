@@ -113,6 +113,12 @@ public class CachingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
             return TimeSpan.Zero;
         }
 
+        // Regla específica: todas las consultas de Comandas SIN caché (estado cambia segundo a segundo)
+        if (requestName.Contains("comanda"))
+        {
+            return TimeSpan.Zero;
+        }
+
         // Regla específica: listados paginados de productos SIN caché; otros paginados se mantienen breves
         if (requestName.Contains("paginados"))
         {
