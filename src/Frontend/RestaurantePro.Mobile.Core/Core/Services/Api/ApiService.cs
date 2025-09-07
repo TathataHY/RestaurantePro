@@ -10,7 +10,7 @@ namespace RestaurantePro.Mobile.Core.Services.Api;
 /// </summary>
 public class ApiService : IApiService
 {
-    private readonly HttpClient _httpClient;
+    private readonly HttpClient _httpClient;Encoder 
 
     public ApiService(HttpClient httpClient)
     {

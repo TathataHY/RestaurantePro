@@ -202,7 +202,7 @@
                                     HeightRequest="280">
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="models:ProductoCarritoDto">
-                                <Frame BackgroundColor="{AppThemeBinding Light=#FFF8E1, Dark=#3E2723}" 
+                                <Frame BackgroundColor="{AppThemeBinding Light=#E3F2FD, Dark=#1E3A8A}" 
                                        CornerRadius="16" 
                                        Padding="20"
                                        Margin="0,8"
@@ -225,11 +225,11 @@
                                                 <Label Text="{Binding Nombre}" 
                                                        FontSize="18" 
                                                        FontAttributes="Bold"
-                                                       TextColor="{AppThemeBinding Light=#E65100, Dark=#FFB74D}"
+                                                       TextColor="{AppThemeBinding Light=#1976D2, Dark=#64B5F6}"
                                                        LineBreakMode="TailTruncation"/>
                                                 <Label Text="{Binding Precio, StringFormat='Precio unitario: ${0:F0}'}" 
                                                        FontSize="14" 
-                                                       TextColor="{AppThemeBinding Light=#BF360C, Dark=#FFCC02}"/>
+                                                       TextColor="{AppThemeBinding Light=#0D47A1, Dark=#BBDEFB}"/>
                                             </StackLayout>
                                             
                                             <Frame Grid.Column="1"
@@ -269,7 +269,7 @@
                                                 <Label Text="{Binding Cantidad}" 
                                                        FontSize="18" 
                                                        FontAttributes="Bold"
-                                                       TextColor="{AppThemeBinding Light=#E65100, Dark=#FFB74D}"
+                                                       TextColor="{AppThemeBinding Light=#1976D2, Dark=#64B5F6}"
                                                        HorizontalOptions="Center"
                                                        VerticalOptions="Center"
                                                        WidthRequest="40"/>
@@ -310,13 +310,14 @@
                            Padding="24"
                            Margin="0,20,0,0"
                            HasShadow="True">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
+                        <Grid RowSpacing="8">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
                             
-                            <StackLayout Grid.Column="0" Orientation="Horizontal" VerticalOptions="Center">
+                            <!-- Encabezado: ícono + textos -->
+                            <StackLayout Grid.Row="0" Orientation="Horizontal" VerticalOptions="Center">
                                 <Label Text="💰" 
                                        FontSize="28"
                                        VerticalOptions="Center"
@@ -333,12 +334,15 @@
                                 </StackLayout>
                             </StackLayout>
                             
-                            <StackLayout Grid.Column="1" VerticalOptions="Center">
+                            <!-- Monto abajo, alineado a la derecha -->
+                            <StackLayout Grid.Row="1" VerticalOptions="Center" HorizontalOptions="End">
                                 <Label Text="{Binding TotalCarrito, StringFormat='${0:F0}'}" 
                                        FontSize="28" 
                                        FontAttributes="Bold"
                                        TextColor="{AppThemeBinding Light=#1B5E20, Dark=#C8E6C9}"
                                        HorizontalOptions="End"
+                                       HorizontalTextAlignment="End"
+                                       LineBreakMode="TailTruncation"
                                        VerticalOptions="Center"/>
                                 <Label Text="Pesos Chilenos" 
                                        FontSize="12" 

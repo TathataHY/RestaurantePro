@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Services.Api;
 using RestaurantePro.Mobile.Core.Services.Platform;
+using RestaurantePro.Mobile.Core.Services.Navigation;
 
 namespace RestaurantePro.Mobile.Core.Services.Authentication;
 
@@ -13,6 +14,7 @@ public class AuthService : IAuthService
     private readonly IApiService _apiService;
     private readonly ILogger<AuthService> _logger;
     private readonly ISecureStorageService _secureStorage;
+    private readonly INavigationService _navigationService;
     
     private const string TokenKey = "auth_token";
     private const string UserKey = "auth_user";
@@ -22,11 +24,12 @@ public class AuthService : IAuthService
     private AuthUser? _currentUser;
     private string? _currentToken;
 
-    public AuthService(IApiService apiService, ILogger<AuthService> logger, ISecureStorageService secureStorage)
+    public AuthService(IApiService apiService, ILogger<AuthService> logger, ISecureStorageService secureStorage, INavigationService navigationService)
     {
         _apiService = apiService;
         _logger = logger;
         _secureStorage = secureStorage;
+        _navigationService = navigationService;
     }
 
     /// <summary>
@@ -312,8 +315,9 @@ public class AuthService : IAuthService
             var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
             var jsonToken = handler.ReadJwtToken(token);
             
-            // Verificar si el token está expirado
-            return jsonToken.ValidTo < DateTime.UtcNow;
+            // Considerar un margen (skew) para renovar antes de que expire definitivamente
+            var safetySkew = TimeSpan.FromSeconds(60);
+            return jsonToken.ValidTo <= DateTime.UtcNow.Add(safetySkew);
         }
         catch (Exception ex)
         {
@@ -362,7 +366,7 @@ public class AuthService : IAuthService
                 RefreshToken = refreshToken
             };
 
-            var response = await _apiService.PostAsync<AuthResponse>("auth/refresh", refreshRequest);
+            var response = await _apiService.PostAsync<AuthResponse>("api/auth/refresh", refreshRequest);
             
             if (response.Success && response.Data != null)
             {
@@ -402,6 +406,15 @@ public class AuthService : IAuthService
             _logger.LogInformation("Token expirado - limpiando sesión");
             // Limpiar la sesión actual
             await LogoutAsync();
+            // Navegación suave al login
+            try
+            {
+                await _navigationService.NavigateToAsync("//login");
+            }
+            catch (Exception navEx)
+            {
+                _logger.LogWarning(navEx, "No se pudo navegar automáticamente al login tras expiración de token");
+            }
         }
         catch (Exception ex)
         {
