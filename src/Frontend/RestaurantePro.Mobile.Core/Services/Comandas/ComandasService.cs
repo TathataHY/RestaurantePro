@@ -31,7 +31,7 @@ public class ComandasService : IComandasService
         {
             var token = await _authService.GetTokenAsync();
             // Usar el endpoint principal con parámetros para obtener comandas activas
-            var queryParams = "pageNumber=1&pageSize=50&soloActivas=true&incluirItems=true";
+            var queryParams = "pageNumber=1&pageSize=30&soloActivas=true&incluirItems=false";
             var result = await _apiService.GetAsync<PaginatedList<ComandaDto>>($"{BaseEndpoint}?{queryParams}", token);
             
             if (result.Success && result.Data != null)
@@ -58,7 +58,7 @@ public class ComandasService : IComandasService
         {
             var token = await _authService.GetTokenAsync();
             // Usar el endpoint principal con parámetros de consulta
-            var queryParams = $"mesaId={mesaId}&soloActivas=true&pageSize=100&incluirItems=true";
+            var queryParams = $"mesaId={mesaId}&soloActivas=true&pageSize=30&incluirItems=false";
             var result = await _apiService.GetAsync<PaginatedList<ComandaDto>>($"{BaseEndpoint}?{queryParams}", token);
             
             if (result.Success && result.Data != null)
@@ -375,9 +375,9 @@ public class ComandasService : IComandasService
 
             // Agregar parámetros de paginación por defecto
             queryParams.Add("pageNumber=1");
-            queryParams.Add("pageSize=100");
-            // Pedir también items para rellenar la sección de Items en la lista
-            queryParams.Add("incluirItems=true");
+            queryParams.Add("pageSize=30");
+            // No incluir items en la búsqueda de lista para reducir payload
+            queryParams.Add("incluirItems=false");
 
             var queryString = queryParams.Count > 0 ? $"?{string.Join("&", queryParams)}" : string.Empty;
             var token = await _authService.GetTokenAsync();

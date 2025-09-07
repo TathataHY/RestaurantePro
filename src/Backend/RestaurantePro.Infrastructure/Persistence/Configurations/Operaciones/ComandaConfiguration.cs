@@ -104,6 +104,6 @@ public class ComandaConfiguration : IEntityTypeConfiguration<Comanda>
         builder.Navigation(p => p.Mesa).AutoInclude();
         builder.Navigation(p => p.Mesero).AutoInclude();
         builder.Navigation(p => p.Cliente).AutoInclude();
-        builder.Navigation(p => p.Factura).AutoInclude();
+        // Factura se consulta bajo demanda; evitar AutoInclude para no encarecer listados
     }
 } 

@@ -35,12 +35,21 @@ public class ObtenerComandasPaginadasQueryHandler : IRequestHandler<ObtenerComan
                 request.PageNumber, request.PageSize, request.Estado, request.MesaId, request.MeseroId);
 
             // Construir query base con includes optimizados - solo lo necesario
-            var query = _context.Comandas
-                .Include(c => c.Mesa)      // Necesario para mostrar número de mesa
-                .Include(c => c.Mesero)    // Necesario para mostrar nombre del mesero
-                .Include(c => c.Cliente)   // Necesario para mostrar nombre del cliente
-                // Removido: .Include(c => c.Items) - se carga bajo demanda si es necesario
+            var baseQuery = _context.Comandas
+                .AsNoTracking()
                 .AsQueryable();
+
+            // Calcular el total sin Includes costosos
+            var filteredForCount = ApplyFilters(baseQuery, request);
+            var totalCount = await filteredForCount.CountAsync(cancellationToken);
+
+            // Ahora sí, proyectar con Includes mínimos para la página solicitada
+            var query = ApplyFilters(_context.Comandas
+                    .AsNoTracking()
+                    .Include(c => c.Mesa)
+                    .Include(c => c.Mesero)
+                    .Include(c => c.Cliente),
+                request);
 
             // Aplicar filtros
             if (!string.IsNullOrEmpty(request.Estado))
@@ -99,9 +108,6 @@ public class ObtenerComandasPaginadasQueryHandler : IRequestHandler<ObtenerComan
                         : Queryable.OrderBy<Comanda, DateTime>(query, c => c.FechaCreacion);
                     break;
             }
-
-            // Obtener total de registros
-            var totalCount = await query.CountAsync(cancellationToken);
 
             // Aplicar paginación
             var comandas = await query
@@ -175,5 +181,69 @@ public class ObtenerComandasPaginadasQueryHandler : IRequestHandler<ObtenerComan
             _logger.LogError(ex, "❌ Error obteniendo comandas paginadas: {ErrorMessage}", ex.Message);
             return Result.Failure<PaginatedList<ComandaDto>>($"Error obteniendo comandas: {ex.Message}");
         }
+    }
+
+    private static IQueryable<Comanda> ApplyFilters(IQueryable<Comanda> query, ObtenerComandasPaginadasQuery request)
+    {
+        // Aplicar filtros
+        if (!string.IsNullOrEmpty(request.Estado))
+        {
+            if (Enum.TryParse<EstadoComanda>(request.Estado, true, out var estado))
+            {
+                query = query.Where(c => c.Estado == estado);
+            }
+        }
+        if (request.MesaId != null)
+        {
+            query = query.Where(c => c.MesaId == request.MesaId);
+        }
+        if (request.ClienteId != null)
+        {
+            query = query.Where(c => c.ClienteId == request.ClienteId);
+        }
+        if (request.FechaDesde != null)
+        {
+            query = query.Where(c => c.FechaCreacion >= request.FechaDesde);
+        }
+        if (request.FechaHasta != null)
+        {
+            // Incluir todo el día Hasta
+            var hasta = request.FechaHasta.Value.Date.AddDays(1).AddTicks(-1);
+            query = query.Where(c => c.FechaCreacion <= hasta);
+        }
+        if (request.SoloActivas)
+        {
+            var estadosActivos = new[] { EstadoComanda.Creada, EstadoComanda.EnProceso, EstadoComanda.Lista, EstadoComanda.Entregada };
+            query = query.Where(c => estadosActivos.Contains(c.Estado));
+        }
+
+        // Ordenamiento
+        var direccion = request.DireccionOrdenamiento?.ToLower() ?? "desc";
+        switch (request.OrdenarPor?.ToLowerInvariant())
+        {
+            case "fecha":
+            case "fechacreacion":
+                query = direccion == "desc"
+                    ? Queryable.OrderByDescending<Comanda, DateTime>(query, c => c.FechaCreacion)
+                    : Queryable.OrderBy<Comanda, DateTime>(query, c => c.FechaCreacion);
+                break;
+            case "estado":
+                query = direccion == "desc"
+                    ? Queryable.OrderByDescending<Comanda, int>(query, c => (int)c.Estado)
+                    : Queryable.OrderBy<Comanda, int>(query, c => (int)c.Estado);
+                break;
+            case "mesa":
+                query = direccion == "desc"
+                    ? Queryable.OrderByDescending<Comanda, Guid?>(query, c => c.MesaId)
+                    : Queryable.OrderBy<Comanda, Guid?>(query, c => c.MesaId);
+                break;
+            default:
+                query = direccion == "desc"
+                    ? Queryable.OrderByDescending<Comanda, DateTime>(query, c => c.FechaCreacion)
+                    : Queryable.OrderBy<Comanda, DateTime>(query, c => c.FechaCreacion);
+                break;
+        }
+
+        return query;
     }
 } 
