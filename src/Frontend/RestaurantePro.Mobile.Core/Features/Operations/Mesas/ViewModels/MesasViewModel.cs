@@ -57,6 +57,10 @@ public partial class MesasViewModel : BaseViewModel
     [ObservableProperty]
     private ObservableCollection<string> ubicacionesDisponibles = new();
 
+    // Toggle para mostrar/ocultar la sección de “Más filtros”
+    [ObservableProperty]
+    private bool mostrarMasFiltros;
+
     #endregion
 
     #region Constructor
@@ -518,6 +522,15 @@ public partial class MesasViewModel : BaseViewModel
             System.Diagnostics.Debug.WriteLine($"❌ Error aplicando filtros: {ex.Message}");
             await _dialogService.ShowAlertAsync("Error", $"Error al aplicar filtros: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Alternar sección de "Más filtros"
+    /// </summary>
+    [RelayCommand]
+    private void ToggleMasFiltros()
+    {
+        MostrarMasFiltros = !MostrarMasFiltros;
     }
 
     /// <summary>

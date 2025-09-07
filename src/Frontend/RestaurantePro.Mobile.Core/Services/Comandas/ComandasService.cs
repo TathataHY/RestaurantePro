@@ -30,8 +30,8 @@ public class ComandasService : IComandasService
         try
         {
             var token = await _authService.GetTokenAsync();
-            // Usar el endpoint principal con parámetros para obtener comandas activas
-            var queryParams = "pageNumber=1&pageSize=30&soloActivas=true&incluirItems=false";
+            // Traer menos por página pero con items para mostrar productos en cards
+            var queryParams = "pageNumber=1&pageSize=12&soloActivas=true&incluirItems=true";
             var result = await _apiService.GetAsync<PaginatedList<ComandaDto>>($"{BaseEndpoint}?{queryParams}", token);
             
             if (result.Success && result.Data != null)
@@ -40,7 +40,8 @@ public class ComandasService : IComandasService
             }
             else
             {
-                return ApiResponse<List<ComandaDto>>.ErrorResponse(result.Message ?? "Error al obtener comandas activas");
+                var msg = result.Message ?? "Error al obtener comandas activas";
+                return ApiResponse<List<ComandaDto>>.ErrorResponse(msg, msg);
             }
         }
         catch (Exception ex)
@@ -57,8 +58,8 @@ public class ComandasService : IComandasService
         try
         {
             var token = await _authService.GetTokenAsync();
-            // Usar el endpoint principal con parámetros de consulta
-            var queryParams = $"mesaId={mesaId}&soloActivas=true&pageSize=30&incluirItems=false";
+            // Traer menos por página pero con items para mostrar productos en cards
+            var queryParams = $"mesaId={mesaId}&soloActivas=true&pageSize=12&incluirItems=true";
             var result = await _apiService.GetAsync<PaginatedList<ComandaDto>>($"{BaseEndpoint}?{queryParams}", token);
             
             if (result.Success && result.Data != null)
@@ -67,7 +68,8 @@ public class ComandasService : IComandasService
             }
             else
             {
-                return ApiResponse<List<ComandaDto>>.ErrorResponse(result.Message ?? "Error al obtener comandas por mesa");
+                var msg = result.Message ?? "Error al obtener comandas por mesa";
+                return ApiResponse<List<ComandaDto>>.ErrorResponse(msg, msg);
             }
         }
         catch (Exception ex)
@@ -373,11 +375,10 @@ public class ComandasService : IComandasService
             if (!string.IsNullOrWhiteSpace(clienteNombre))
                 queryParams.Add($"clienteNombre={Uri.EscapeDataString(clienteNombre)}");
 
-            // Agregar parámetros de paginación por defecto
+            // Agregar parámetros de paginación por defecto (menos ítems pero con productos)
             queryParams.Add("pageNumber=1");
-            queryParams.Add("pageSize=30");
-            // No incluir items en la búsqueda de lista para reducir payload
-            queryParams.Add("incluirItems=false");
+            queryParams.Add("pageSize=12");
+            queryParams.Add("incluirItems=true");
 
             var queryString = queryParams.Count > 0 ? $"?{string.Join("&", queryParams)}" : string.Empty;
             var token = await _authService.GetTokenAsync();
@@ -390,7 +391,8 @@ public class ComandasService : IComandasService
                 return ApiResponse<List<ComandaDto>>.SuccessResponse(response.Data.Items, response.Message);
             }
             
-            return ApiResponse<List<ComandaDto>>.ErrorResponse(response.Message ?? "Error al buscar comandas");
+            var msg = response.Message ?? "Error al buscar comandas";
+            return ApiResponse<List<ComandaDto>>.ErrorResponse(msg, msg);
         }
         catch (Exception ex)
         {

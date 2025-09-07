@@ -152,48 +152,9 @@ public partial class ComandaDetalleViewModel : BaseViewModel
     [RelayCommand]
     private async Task ActualizarCantidadAsync(ComandaProductoDto? item)
     {
-        if (item == null || !IsEditable) return;
-
-        var cantidadStr = await _dialogService.ShowPromptAsync(
-            "Actualizar Cantidad",
-            $"Cantidad actual: {item.Cantidad}",
-            item.Cantidad.ToString());
-
-        if (string.IsNullOrWhiteSpace(cantidadStr)) return;
-
-        if (int.TryParse(cantidadStr, out var nuevaCantidad) && nuevaCantidad > 0)
-        {
-            IsBusy = true;
-            try
-            {
-                var result = await _comandasService.ActualizarCantidadProductoAsync(
-                    Comanda.Id, item.ProductoId, nuevaCantidad);
-
-                if (result.Success)
-                {
-                    item.Cantidad = nuevaCantidad;
-                    CalcularTotales();
-                    
-                    await _dialogService.ShowAlertAsync("Éxito", "Cantidad actualizada correctamente");
-                }
-                else
-                {
-                    await _dialogService.ShowAlertAsync("Error", result.Message ?? "No se pudo actualizar la cantidad");
-                }
-            }
-            catch (Exception ex)
-            {
-                await _dialogService.ShowAlertAsync("Error", $"Error inesperado: {ex.Message}");
-            }
-            finally
-            {
-                IsBusy = false;
-            }
-        }
-        else
-        {
-            await _dialogService.ShowAlertAsync("Error", "Cantidad inválida");
-        }
+        // Redirigir a la sección de edición de comanda
+        if (Comanda?.Id == null || Comanda.Id == Guid.Empty) return;
+        await _navigationService.NavigateToAsync($"editar-comanda?comandaId={Comanda.Id}");
     }
 
     /// <summary>
@@ -202,19 +163,9 @@ public partial class ComandaDetalleViewModel : BaseViewModel
     [RelayCommand]
     private async Task EliminarItemAsync(ComandaProductoDto? item)
     {
-        if (item == null || !IsEditable) return;
-
-        var confirmar = await _dialogService.ShowConfirmAsync(
-            "Confirmar",
-            $"¿Eliminar {item.Nombre} de la comanda?");
-
-        if (!confirmar) return;
-
-        // Simular eliminación local por ahora
-        Items.Remove(item);
-        CalcularTotales();
-        
-        await _dialogService.ShowAlertAsync("Éxito", "Producto eliminado correctamente");
+        // Redirigir a la sección de edición de comanda
+        if (Comanda?.Id == null || Comanda.Id == Guid.Empty) return;
+        await _navigationService.NavigateToAsync($"editar-comanda?comandaId={Comanda.Id}");
     }
 
     /// <summary>
@@ -236,14 +187,19 @@ public partial class ComandaDetalleViewModel : BaseViewModel
     {
         if (Comanda?.Id == null) return;
 
-        var estadoActual = Comanda.Estado;
-        var siguienteEstado = estadoActual switch
+        var estadoActual = Comanda.Estado ?? string.Empty;
+        var estadoActualLower = estadoActual.ToLowerInvariant();
+
+        // Restricción: solo el mesero cambia de "Lista" a "Entregada".
+        if (!estadoActualLower.Contains("lista"))
         {
-            "Pendiente" => "En Preparación",
-            "En Preparación" => "Lista",
-            "Lista" => "Entregada",
-            _ => "Pendiente"
-        };
+            await _dialogService.ShowAlertAsync(
+                "Información",
+                "Este cambio de estado lo realiza Cocina. Solo puedes marcar 'Entregada' cuando la comanda esté 'Lista'.");
+            return;
+        }
+
+        var siguienteEstado = "Entregada";
 
         var confirmar = await _dialogService.ShowConfirmAsync(
             "Cambiar Estado",
@@ -420,8 +376,8 @@ public partial class ComandaDetalleViewModel : BaseViewModel
         CanFinalize = estadoLower.Contains("lista") || estadoLower.Contains("entreg");
         FinalizarButtonText = estadoLower.Contains("entreg") ? "Cobrar" : "Finalizar";
 
-        // Mostrar "Cambiar Estado" salvo cuando ya está Entregada/Finalizada/Cancelada
-        ShowCambiarEstado = !(estadoLower.Contains("entreg") || estadoLower.Contains("finaliz") || estadoLower.Contains("cancel"));
+        // Mostrar "Cambiar Estado" SOLO cuando está Lista (mesero marca 'Entregada')
+        ShowCambiarEstado = estadoLower.Contains("lista");
 
         // Cancelar permitido solo al inicio
         CanCancel = estadoLower.Contains("pend") || estadoLower.Contains("prepar") && !estadoLower.Contains("entreg");

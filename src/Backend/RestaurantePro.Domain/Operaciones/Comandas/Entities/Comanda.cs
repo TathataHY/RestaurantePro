@@ -714,6 +714,8 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 return false;
             
             Estado = EstadoComanda.EnProceso;
+            // Asegurar consistencia de totales antes de validar invariantes
+            RecalcularTotal();
             ActualizarFecha();
             ValidarInvariantes();
             
@@ -732,6 +734,8 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 return false;
             
             Estado = EstadoComanda.Lista;
+            // Alinear totales con items antes de validar
+            RecalcularTotal();
             ActualizarFecha();
             ValidarInvariantes();
             
@@ -750,6 +754,8 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 return false;
             
             Estado = EstadoComanda.Entregada;
+            // Recalcular para evitar desajustes de subtotal/impuestos/total
+            RecalcularTotal();
             ActualizarFecha();
             ValidarInvariantes();
             
@@ -768,6 +774,8 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 return false;
             
             Estado = EstadoComanda.Finalizada; // En este modelo, Finalizada equivale a Pagada
+            // Garantizar consistencia total antes de finalizar
+            RecalcularTotal();
             ActualizarFecha();
             ValidarInvariantes();
             

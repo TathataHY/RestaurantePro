@@ -6,60 +6,67 @@
              Title="Gestión de Mesas"
              BackgroundColor="{StaticResource SurfacePrimary}">
 
-    <Grid RowDefinitions="Auto,*,Auto">
-        
-        <!-- Header con Estadísticas (grid 2x2, estilo ModernCard) -->
-        <Grid Grid.Row="0" Padding="16" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
-            <controls:ModernCard Grid.Row="0" Grid.Column="0" Padding="16">
-                <VerticalStackLayout Spacing="8" HorizontalOptions="Fill" >
-                    <Label Text="🏠" FontSize="24" HorizontalOptions="Center" />
-                    <Label Text="Total Mesas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
-                    <Label Text="{Binding EstadoMesas.TotalMesas}" Style="{StaticResource H2Style}" TextColor="{StaticResource TextPrimary}" HorizontalOptions="Center" />
-                </VerticalStackLayout>
-            </controls:ModernCard>
-            <controls:ModernCard Grid.Row="0" Grid.Column="1" Padding="16">
-                <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
-                    <Label Text="✅" FontSize="24" HorizontalOptions="Center" />
-                    <Label Text="Disponibles" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
-                    <Label Text="{Binding EstadoMesas.MesasDisponibles.Count}" Style="{StaticResource H2Style}" TextColor="{StaticResource SuccessColor}" HorizontalOptions="Center" />
-                </VerticalStackLayout>
-            </controls:ModernCard>
-            <controls:ModernCard Grid.Row="1" Grid.Column="0" Padding="16">
-                <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
-                    <Label Text="👥" FontSize="24" HorizontalOptions="Center" />
-                    <Label Text="Ocupadas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
-                    <Label Text="{Binding EstadoMesas.MesasOcupadas.Count}" Style="{StaticResource H2Style}" TextColor="{StaticResource WarningColor}" HorizontalOptions="Center" />
-                </VerticalStackLayout>
-            </controls:ModernCard>
-            <controls:ModernCard Grid.Row="1" Grid.Column="1" Padding="16">
-                <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
-                    <Label Text="📅" FontSize="24" HorizontalOptions="Center" />
-                    <Label Text="Reservadas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
-                    <Label Text="{Binding EstadoMesas.MesasReservadas.Count}" Style="{StaticResource H2Style}" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
-                </VerticalStackLayout>
-            </controls:ModernCard>
-        </Grid>
+    <Grid RowDefinitions="Auto,*">
+        <!-- Banda de estadísticas con scroll horizontal -->
+        <ScrollView Grid.Row="0" Orientation="Horizontal" HorizontalScrollBarVisibility="Never" Padding="12,8">
+            <HorizontalStackLayout Spacing="12">
+                <controls:ModernCard Padding="16" WidthRequest="160">
+                    <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
+                        <Label Text="🏠" FontSize="24" HorizontalOptions="Center" />
+                        <Label Text="Total Mesas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                        <Label Text="{Binding EstadoMesas.TotalMesas}" Style="{StaticResource H2Style}" TextColor="{StaticResource TextPrimary}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </controls:ModernCard>
+                <controls:ModernCard Padding="16" WidthRequest="160">
+                    <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
+                        <Label Text="✅" FontSize="24" HorizontalOptions="Center" />
+                        <Label Text="Disponibles" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                        <Label Text="{Binding EstadoMesas.MesasDisponibles.Count}" Style="{StaticResource H2Style}" TextColor="{StaticResource SuccessColor}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </controls:ModernCard>
+                <controls:ModernCard Padding="16" WidthRequest="160">
+                    <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
+                        <Label Text="👥" FontSize="24" HorizontalOptions="Center" />
+                        <Label Text="Ocupadas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                        <Label Text="{Binding EstadoMesas.MesasOcupadas.Count}" Style="{StaticResource H2Style}" TextColor="{StaticResource WarningColor}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </controls:ModernCard>
+                <controls:ModernCard Padding="16" WidthRequest="160">
+                    <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
+                        <Label Text="📅" FontSize="24" HorizontalOptions="Center" />
+                        <Label Text="Reservadas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                        <Label Text="{Binding EstadoMesas.MesasReservadas.Count}" Style="{StaticResource H2Style}" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </controls:ModernCard>
+            </HorizontalStackLayout>
+        </ScrollView>
 
         <!-- Contenido Principal con virtualización real: CollectionView sin ScrollView externo -->
         <RefreshView Grid.Row="1" Command="{Binding RefreshMesasCommand}" IsRefreshing="{Binding IsRefreshing}">
-            <CollectionView Margin="16"
-                            ItemsSource="{Binding Mesas}"
-                            ItemsLayout="VerticalGrid, 2"
-                            ItemSizingStrategy="MeasureFirstItem"
-                            SelectionMode="None"
-                            RemainingItemsThreshold="6"
-                            RemainingItemsThresholdReached="OnRemainingItemsThresholdReached">
-                <CollectionView.Header>
-                    <controls:ModernCard>
+            <Grid RowDefinitions="Auto,*">
+                <!-- Filtros fuera del CollectionView para evitar layout de dos columnas -->
+                <VerticalStackLayout Grid.Row="0" Spacing="12" Margin="16,0,16,8">
+                    <!-- Fila compacta: Search + botón Más filtros -->
+                    <controls:ModernCard HorizontalOptions="FillAndExpand">
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto" ColumnSpacing="8">
+                            <controls:ModernEntry Grid.Column="0"
+                                                 HorizontalOptions="FillAndExpand"
+                                                 Margin="0,0,8,0"
+                                                 Placeholder="Buscar por número o ubicación"
+                                                 Text="{Binding SearchText}"
+                                                 Icon="🔍" />
+                            <Button Grid.Column="1"
+                                    Text="Más filtros"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Command="{Binding ToggleMasFiltrosCommand}" />
+                        </Grid>
+                    </controls:ModernCard>
+
+                    <!-- Sección colapsable: Más filtros -->
+                    <controls:ModernCard IsVisible="{Binding MostrarMasFiltros}" HorizontalOptions="FillAndExpand">
                         <VerticalStackLayout Spacing="16">
-                            <Label Text="🔍 Filtros" Style="{StaticResource H2Style}" />
-                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,*" ColumnSpacing="12" RowSpacing="12">
-                                <!-- Search -->
-                                <controls:ModernEntry Grid.Row="0" Grid.ColumnSpan="2"
-                                                     Placeholder="Buscar por número o ubicación"
-                                                     Text="{Binding SearchText}"
-                                                     Icon="🔍" />
-                                <Picker Grid.Column="0" Grid.Row="1" Title="Estado"
+                            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,*" ColumnSpacing="12" RowSpacing="12">
+                                <Picker Grid.Column="0" Grid.Row="0" Title="Estado"
                                         SelectedItem="{Binding FiltroEstado}"
                                         SelectedIndexChanged="OnEstadoFilterChanged">
                                     <Picker.Items>
@@ -71,7 +78,7 @@
                                         <x:String>En limpieza</x:String>
                                     </Picker.Items>
                                 </Picker>
-                                <Picker Grid.Column="1" Grid.Row="1" Title="Capacidad"
+                                <Picker Grid.Column="1" Grid.Row="0" Title="Capacidad"
                                         SelectedItem="{Binding FiltroCapacidad}"
                                         SelectedIndexChanged="OnCapacidadFilterChanged">
                                     <Picker.Items>
@@ -82,11 +89,11 @@
                                         <x:String>8+ personas</x:String>
                                     </Picker.Items>
                                 </Picker>
-                                <!-- Ubicación dinámica -->
-                                <Picker Grid.Row="2" Grid.ColumnSpan="2" Title="Ubicación"
+                                <Picker Grid.Row="1" Grid.ColumnSpan="2" Title="Ubicación"
                                         ItemsSource="{Binding UbicacionesDisponibles}"
                                         SelectedItem="{Binding FiltroUbicacion}" />
                             </Grid>
+
                             <!-- Botones rápidos filtros -->
                             <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
                                 <HorizontalStackLayout Spacing="8">
@@ -96,7 +103,16 @@
                             </ScrollView>
                         </VerticalStackLayout>
                     </controls:ModernCard>
-                </CollectionView.Header>
+                </VerticalStackLayout>
+
+                <!-- Lista virtualizada -->
+                <CollectionView Grid.Row="1" Margin="16"
+                                ItemsSource="{Binding Mesas}"
+                                ItemsLayout="VerticalGrid, 2"
+                                ItemSizingStrategy="MeasureFirstItem"
+                                SelectionMode="None"
+                                RemainingItemsThreshold="6"
+                                RemainingItemsThresholdReached="OnRemainingItemsThresholdReached">
                 <CollectionView.EmptyView>
                     <VerticalStackLayout Padding="24" Spacing="8">
                         <Label Text="No hay mesas que coincidan" HorizontalOptions="Center" />
@@ -125,25 +141,9 @@
                         </controls:ModernCard>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
-            </CollectionView>
-        </RefreshView>
-
-        <!-- Botones de Acción (sin Nueva Mesa) -->
-        <Frame Grid.Row="2" 
-               BackgroundColor="White" 
-               CornerRadius="12"
-               Padding="16"
-               Margin="16"
-               HasShadow="True">
-            <Grid ColumnDefinitions="*" ColumnSpacing="12">
-                <Button Grid.Column="0" 
-                        Text="📊 Estadísticas"
-                        BackgroundColor="#2196F3"
-                        TextColor="White"
-                        CornerRadius="8"
-                        Command="{Binding LoadEstadisticasCommandAsyncCommand}" />
+                </CollectionView>
             </Grid>
-        </Frame>
+        </RefreshView>
     </Grid>
 
 </ContentPage> 

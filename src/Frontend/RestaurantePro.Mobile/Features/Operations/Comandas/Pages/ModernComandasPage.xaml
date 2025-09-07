@@ -184,6 +184,7 @@
                                             <Button Text="✅ Finalizar"
                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.FinalizarComandaCommand}"
                                                     CommandParameter="{Binding .}"
+                                                    IsVisible="{Binding PuedeCobrar}"
                                                     Style="{StaticResource SuccessButtonStyle}"
                                                     HorizontalOptions="Start" />
 
