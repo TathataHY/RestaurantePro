@@ -51,6 +51,14 @@ public partial class ModernMesasPage : ContentPage
         }
     }
 
+    // Paginación incremental del CollectionView
+    private void OnRemainingItemsThresholdReached(object sender, EventArgs e)
+    {
+        if (_viewModel == null) return;
+        // Scroll infinito: anexar siguiente página del buffer local
+        _viewModel.LoadMoreMesasCommand?.Execute(null);
+    }
+
     private void OnEstadoFilterChanged(object sender, EventArgs e)
     {
         if (sender is Picker picker && _viewModel != null)

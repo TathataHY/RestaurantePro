@@ -1,148 +1,132 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
              x:Class="RestaurantePro.Mobile.Features.Operations.Mesas.Pages.ModernMesasPage"
              Title="Gestión de Mesas"
-             BackgroundColor="#F8F9FA">
+             BackgroundColor="{StaticResource SurfacePrimary}">
 
     <Grid RowDefinitions="Auto,*,Auto">
         
-        <!-- Header con Estadísticas -->
-        <ScrollView Grid.Row="0" 
-                    HorizontalScrollBarVisibility="Never"
-                    Orientation="Horizontal"
-                    Padding="16,8">
-            <HorizontalStackLayout Spacing="12">
-                
-                <!-- Card Total Mesas -->
-                <Frame BackgroundColor="White" 
-                       CornerRadius="12"
-                       Padding="16"
-                       HasShadow="True">
-                    <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
-                        <Label Text="🏠" FontSize="24" HorizontalOptions="Center" />
-                        <Label Text="Total Mesas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
-                        <Label Text="{Binding EstadoMesas.TotalMesas}" Style="{StaticResource H2Style}" HorizontalOptions="Center" />
-                    </VerticalStackLayout>
-                </Frame>
+        <!-- Header con Estadísticas (grid 2x2, estilo ModernCard) -->
+        <Grid Grid.Row="0" Padding="16" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
+            <controls:ModernCard Grid.Row="0" Grid.Column="0" Padding="16">
+                <VerticalStackLayout Spacing="8" HorizontalOptions="Fill" >
+                    <Label Text="🏠" FontSize="24" HorizontalOptions="Center" />
+                    <Label Text="Total Mesas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                    <Label Text="{Binding EstadoMesas.TotalMesas}" Style="{StaticResource H2Style}" TextColor="{StaticResource TextPrimary}" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </controls:ModernCard>
+            <controls:ModernCard Grid.Row="0" Grid.Column="1" Padding="16">
+                <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
+                    <Label Text="✅" FontSize="24" HorizontalOptions="Center" />
+                    <Label Text="Disponibles" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                    <Label Text="{Binding EstadoMesas.MesasDisponibles.Count}" Style="{StaticResource H2Style}" TextColor="{StaticResource SuccessColor}" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </controls:ModernCard>
+            <controls:ModernCard Grid.Row="1" Grid.Column="0" Padding="16">
+                <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
+                    <Label Text="👥" FontSize="24" HorizontalOptions="Center" />
+                    <Label Text="Ocupadas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                    <Label Text="{Binding EstadoMesas.MesasOcupadas.Count}" Style="{StaticResource H2Style}" TextColor="{StaticResource WarningColor}" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </controls:ModernCard>
+            <controls:ModernCard Grid.Row="1" Grid.Column="1" Padding="16">
+                <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
+                    <Label Text="📅" FontSize="24" HorizontalOptions="Center" />
+                    <Label Text="Reservadas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                    <Label Text="{Binding EstadoMesas.MesasReservadas.Count}" Style="{StaticResource H2Style}" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </controls:ModernCard>
+        </Grid>
 
-                <!-- Card Mesas Disponibles -->
-                <Frame BackgroundColor="White" 
-                       CornerRadius="12"
-                       Padding="16"
-                       HasShadow="True">
-                    <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
-                        <Label Text="✅" FontSize="24" HorizontalOptions="Center" />
-                        <Label Text="Disponibles" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
-                        <Label Text="{Binding EstadoMesas.MesasDisponibles.Count}" Style="{StaticResource H2Style}" HorizontalOptions="Center" TextColor="#4CAF50" />
+        <!-- Contenido Principal con virtualización real: CollectionView sin ScrollView externo -->
+        <RefreshView Grid.Row="1" Command="{Binding RefreshMesasCommand}" IsRefreshing="{Binding IsRefreshing}">
+            <CollectionView Margin="16"
+                            ItemsSource="{Binding Mesas}"
+                            ItemsLayout="VerticalGrid, 2"
+                            ItemSizingStrategy="MeasureFirstItem"
+                            SelectionMode="None"
+                            RemainingItemsThreshold="6"
+                            RemainingItemsThresholdReached="OnRemainingItemsThresholdReached">
+                <CollectionView.Header>
+                    <controls:ModernCard>
+                        <VerticalStackLayout Spacing="16">
+                            <Label Text="🔍 Filtros" Style="{StaticResource H2Style}" />
+                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,*" ColumnSpacing="12" RowSpacing="12">
+                                <!-- Search -->
+                                <controls:ModernEntry Grid.Row="0" Grid.ColumnSpan="2"
+                                                     Placeholder="Buscar por número o ubicación"
+                                                     Text="{Binding SearchText}"
+                                                     Icon="🔍" />
+                                <Picker Grid.Column="0" Grid.Row="1" Title="Estado"
+                                        SelectedItem="{Binding FiltroEstado}"
+                                        SelectedIndexChanged="OnEstadoFilterChanged">
+                                    <Picker.Items>
+                                        <x:String>Todas</x:String>
+                                        <x:String>Disponibles</x:String>
+                                        <x:String>Ocupadas</x:String>
+                                        <x:String>Reservadas</x:String>
+                                        <x:String>Fuera de servicio</x:String>
+                                        <x:String>En limpieza</x:String>
+                                    </Picker.Items>
+                                </Picker>
+                                <Picker Grid.Column="1" Grid.Row="1" Title="Capacidad"
+                                        SelectedItem="{Binding FiltroCapacidad}"
+                                        SelectedIndexChanged="OnCapacidadFilterChanged">
+                                    <Picker.Items>
+                                        <x:String>Todas</x:String>
+                                        <x:String>2 personas</x:String>
+                                        <x:String>4 personas</x:String>
+                                        <x:String>6 personas</x:String>
+                                        <x:String>8+ personas</x:String>
+                                    </Picker.Items>
+                                </Picker>
+                                <!-- Ubicación dinámica -->
+                                <Picker Grid.Row="2" Grid.ColumnSpan="2" Title="Ubicación"
+                                        ItemsSource="{Binding UbicacionesDisponibles}"
+                                        SelectedItem="{Binding FiltroUbicacion}" />
+                            </Grid>
+                            <!-- Botones rápidos filtros -->
+                            <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                                <HorizontalStackLayout Spacing="8">
+                                    <Button Text="Limpiar" Command="{Binding ClearFiltersCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+                                    <Button Text="Aplicar" Command="{Binding ApplyFiltersCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                                </HorizontalStackLayout>
+                            </ScrollView>
+                        </VerticalStackLayout>
+                    </controls:ModernCard>
+                </CollectionView.Header>
+                <CollectionView.EmptyView>
+                    <VerticalStackLayout Padding="24" Spacing="8">
+                        <Label Text="No hay mesas que coincidan" HorizontalOptions="Center" />
+                        <Button Text="Limpiar filtros" Command="{Binding ClearFiltersCommand}" />
                     </VerticalStackLayout>
-                </Frame>
-
-                <!-- Card Mesas Ocupadas -->
-                <Frame BackgroundColor="White" 
-                       CornerRadius="12"
-                       Padding="16"
-                       HasShadow="True">
-                    <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
-                        <Label Text="👥" FontSize="24" HorizontalOptions="Center" />
-                        <Label Text="Ocupadas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
-                        <Label Text="{Binding EstadoMesas.MesasOcupadas.Count}" Style="{StaticResource H2Style}" HorizontalOptions="Center" TextColor="#FF9800" />
-                    </VerticalStackLayout>
-                </Frame>
-
-                <!-- Card Reservadas -->
-                <Frame BackgroundColor="White" 
-                       CornerRadius="12"
-                       Padding="16"
-                       HasShadow="True">
-                    <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
-                        <Label Text="📅" FontSize="24" HorizontalOptions="Center" />
-                        <Label Text="Reservadas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
-                        <Label Text="{Binding EstadoMesas.MesasReservadas.Count}" Style="{StaticResource H2Style}" HorizontalOptions="Center" TextColor="#2196F3" />
-                    </VerticalStackLayout>
-                </Frame>
-            </HorizontalStackLayout>
-        </ScrollView>
-
-        <!-- Contenido Principal -->
-        <ScrollView Grid.Row="1" Padding="16">
-            <VerticalStackLayout Spacing="16">
-                
-                <!-- Filtros -->
-                <Frame BackgroundColor="White" 
-                       CornerRadius="12"
-                       Padding="16"
-                       HasShadow="True">
-                    <VerticalStackLayout Spacing="12">
-                        <Label Text="🔍 Filtros" Style="{StaticResource H2Style}" />
-                        
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                            <Picker Grid.Column="0" 
-                                    Title="Estado"
-                                    SelectedItem="{Binding FiltroEstado}"
-                                    SelectedIndexChanged="OnEstadoFilterChanged">
-                                <Picker.Items>
-                                    <x:String>Todas</x:String>
-                                    <x:String>Disponibles</x:String>
-                                    <x:String>Ocupadas</x:String>
-                                    <x:String>Reservadas</x:String>
-                                    <x:String>Fuera de servicio</x:String>
-                                    <x:String>En limpieza</x:String>
-                                </Picker.Items>
-                            </Picker>
-                            
-                            <Picker Grid.Column="1" 
-                                    Title="Capacidad"
-                                    SelectedItem="{Binding FiltroCapacidad}"
-                                    SelectedIndexChanged="OnCapacidadFilterChanged">
-                                <Picker.Items>
-                                    <x:String>Todas</x:String>
-                                    <x:String>2 personas</x:String>
-                                    <x:String>4 personas</x:String>
-                                    <x:String>6 personas</x:String>
-                                    <x:String>8+ personas</x:String>
-                                </Picker.Items>
-                            </Picker>
-                        </Grid>
-                    </VerticalStackLayout>
-                </Frame>
-
-                <!-- Grid de Mesas Dinámico -->
-                <CollectionView ItemsSource="{Binding Mesas}"
-                               ItemsLayout="VerticalGrid, 2"
-                               ItemSizingStrategy="MeasureAllItems">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate>
-                            <Frame BackgroundColor="{Binding EstadoColor}"
-                                   CornerRadius="12"
-                                   Padding="16"
-                                   Margin="6"
-                                   HasShadow="True">
-                                <Frame.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.NavigateToMesaDetailCommand}"
-                                                         CommandParameter="{Binding .}" />
-                                </Frame.GestureRecognizers>
-                                <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                                    <Label Text="🍽️" FontSize="32" HorizontalOptions="Center" />
-                                    <Label Text="{Binding Numero, StringFormat='Mesa {0}'}" 
-                                           Style="{StaticResource H3Style}" 
-                                           TextColor="White" 
-                                           HorizontalOptions="Center" />
-                                    <Label Text="{Binding Capacidad, StringFormat='{0} personas'}" 
-                                           Style="{StaticResource CaptionStyle}" 
-                                           TextColor="White" 
-                                           HorizontalOptions="Center" />
-                                    <Label Text="{Binding EstadoDescripcion}" 
-                                           Style="{StaticResource CaptionStyle}" 
-                                           TextColor="White" 
-                                           HorizontalOptions="Center" />
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <controls:ModernCard Margin="8">
+                            <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                                <Label Grid.Row="0" Grid.ColumnSpan="2" Text="{Binding Numero, StringFormat='Mesa {0}'}" Style="{StaticResource H3Style}" />
+                                <Border Grid.Row="1" Grid.Column="1" BackgroundColor="{Binding EstadoColor}" StrokeShape="RoundRectangle 12" Padding="8,4" HorizontalOptions="End">
+                                    <Label Text="{Binding EstadoDescripcion}" Style="{StaticResource CaptionStyle}" TextColor="White" HorizontalOptions="Center" />
+                                </Border>
+                                <VerticalStackLayout Grid.Row="2" Grid.ColumnSpan="2" Spacing="4" Margin="0,8,0,0">
+                                    <Label Text="{Binding Capacidad, StringFormat='👥 Capacidad: {0} personas'}" Style="{StaticResource BodyStyle}" />
+                                    <Label Text="{Binding Ubicacion, StringFormat='📍 {0}', TargetNullValue='📍 Sin ubicación'}" Style="{StaticResource CaptionStyle}" />
                                 </VerticalStackLayout>
-                            </Frame>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-            </VerticalStackLayout>
-        </ScrollView>
+                                <ScrollView Grid.Row="3" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalScrollBarVisibility="Never" Margin="0,8,0,0">
+                                    <HorizontalStackLayout Spacing="8">
+                                        <Button Text="Ver detalle" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.NavigateToMesaDetailCommand}" CommandParameter="{Binding .}" Style="{StaticResource SecondaryButtonStyle}" />
+                                        <Button Text="⋮ Más" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MostrarOpcionesMesaCommand}" CommandParameter="{Binding .}" Style="{StaticResource SecondaryButtonStyle}" />
+                                    </HorizontalStackLayout>
+                                </ScrollView>
+                            </Grid>
+                        </controls:ModernCard>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
 
         <!-- Botones de Acción (sin Nueva Mesa) -->
         <Frame Grid.Row="2" 

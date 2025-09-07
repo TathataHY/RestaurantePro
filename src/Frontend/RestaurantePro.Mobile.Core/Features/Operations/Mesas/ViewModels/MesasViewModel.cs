@@ -19,6 +19,12 @@ public partial class MesasViewModel : BaseViewModel
     private readonly INavigationService _navigationService;
     private readonly SemaphoreSlim _loadingSemaphore = new(1, 1);
 
+    // Buffer para paginado en cliente
+    private List<MesaDto> _allMesasBuffer = new();
+    private int _currentBufferIndex = 0;
+    private const int DefaultPageSize = 12; // Tamaño de página por defecto (12-20 sugerido)
+    private int _pageSize = DefaultPageSize;
+
     #region Propiedades Observables
 
     [ObservableProperty]
@@ -47,6 +53,9 @@ public partial class MesasViewModel : BaseViewModel
 
     [ObservableProperty]
     private string searchText = string.Empty;
+
+    [ObservableProperty]
+    private ObservableCollection<string> ubicacionesDisponibles = new();
 
     #endregion
 
@@ -108,12 +117,36 @@ public partial class MesasViewModel : BaseViewModel
 
             if (response.Success)
             {
-                Mesas.Clear();
-                foreach (var mesa in response.Data ?? new List<MesaDto>())
+                var data = response.Data ?? new List<MesaDto>();
+
+                // Actualizar ubicaciones disponibles (distintas, no vacías)
+                var ubicaciones = data
+                    .Select(m => m.Ubicacion)
+                    .Where(u => !string.IsNullOrWhiteSpace(u))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(u => u)
+                    .ToList();
+                UbicacionesDisponibles.Clear();
+                UbicacionesDisponibles.Add("Todas");
+                foreach (var u in ubicaciones) UbicacionesDisponibles.Add(u);
+
+                // Filtro de búsqueda local por número/ubicación/zona
+                if (!string.IsNullOrWhiteSpace(SearchText))
                 {
-                    Mesas.Add(mesa);
+                    var term = SearchText.Trim();
+                    data = data.Where(m =>
+                        (!string.IsNullOrWhiteSpace(m.Numero) && m.Numero.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
+                        (!string.IsNullOrWhiteSpace(m.Ubicacion) && m.Ubicacion.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
+                        (!string.IsNullOrWhiteSpace(m.Zona) && m.Zona.Contains(term, StringComparison.OrdinalIgnoreCase))
+                    ).ToList();
                 }
-                System.Diagnostics.Debug.WriteLine($"✅ Se cargaron {response.Data?.Count ?? 0} mesas");
+
+                // Configurar buffer de paginado local y pintar primera página
+                _allMesasBuffer = data;
+                _currentBufferIndex = 0;
+                Mesas.Clear();
+                AppendNextPage();
+                System.Diagnostics.Debug.WriteLine($"✅ Se cargaron {_allMesasBuffer.Count} mesas (mostrando {Mesas.Count})");
             }
             else
             {
@@ -142,6 +175,17 @@ public partial class MesasViewModel : BaseViewModel
     {
         IsRefreshing = true;
         await LoadMesasAsync();
+    }
+
+    /// <summary>
+    /// Cargar siguiente página del buffer (scroll infinito)
+    /// </summary>
+    [RelayCommand]
+    private Task LoadMoreMesasAsync()
+    {
+        if (IsBusy) return Task.CompletedTask;
+        AppendNextPage();
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -381,6 +425,42 @@ public partial class MesasViewModel : BaseViewModel
         }
     }
 
+    /// <summary>
+    /// Mostrar menú contextual por mesa (⋮ Más)
+    /// </summary>
+    [RelayCommand]
+    private async Task MostrarOpcionesMesaAsync(MesaDto mesa)
+    {
+        if (mesa == null) return;
+
+        var opcion = await _dialogService.ShowActionSheetAsync(
+            $"Mesa {mesa.Numero}",
+            "Seleccione una opción:",
+            "Cancelar",
+            "Asignar",
+            "Liberar",
+            "Cambiar estado",
+            "Crear comanda");
+
+        switch (opcion)
+        {
+            case "Asignar":
+                await AsignarMesaAsync(mesa);
+                break;
+            case "Liberar":
+                await LiberarMesaAsync(mesa);
+                break;
+            case "Cambiar estado":
+                await CambiarEstadoMesaAsync(mesa);
+                break;
+            case "Crear comanda":
+                await NavigateToNewComandaAsync(mesa);
+                break;
+            default:
+                break;
+        }
+    }
+
     #endregion
 
     #region Comandos de Filtros
@@ -601,6 +681,22 @@ public partial class MesasViewModel : BaseViewModel
             "en limpieza" => "Mantenimiento", // ajustar si existe estado específico
             _ => estadoUi
         };
+    }
+
+    private void AppendNextPage()
+    {
+        if (_allMesasBuffer == null || _allMesasBuffer.Count == 0) return;
+
+        var remaining = _allMesasBuffer.Count - _currentBufferIndex;
+        if (remaining <= 0) return;
+
+        var take = Math.Min(_pageSize, remaining);
+        var slice = _allMesasBuffer.Skip(_currentBufferIndex).Take(take);
+        foreach (var item in slice)
+        {
+            Mesas.Add(item);
+        }
+        _currentBufferIndex += take;
     }
 
     /// <summary>
