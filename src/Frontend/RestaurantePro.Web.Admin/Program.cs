@@ -20,6 +20,18 @@ builder.Services.AddHttpClient("Api", (sp, http) =>
 {
     var baseUrl = builder.Configuration["ApiBaseUrl"] ?? "http://localhost:8080";
     http.BaseAddress = new Uri(baseUrl);
+    var useBasic = builder.Configuration.GetValue<bool>("ApiUseBasicAuth");
+    if (useBasic)
+    {
+        var user = builder.Configuration["ApiBasicUser"];
+        var pass = builder.Configuration["ApiBasicPass"];
+        if (!string.IsNullOrWhiteSpace(user) && !string.IsNullOrWhiteSpace(pass))
+        {
+            var raw = System.Text.Encoding.UTF8.GetBytes($"{user}:{pass}");
+            var param = Convert.ToBase64String(raw);
+            http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", param);
+        }
+    }
 }).AddHttpMessageHandler<AuthTokenHandler>();
 builder.Services.AddScoped<ProductosApiService>();
 builder.Services.AddScoped<AuthApiService>();

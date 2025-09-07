@@ -16,7 +16,11 @@ public class AuthTokenHandler : DelegatingHandler
         var token = _tokenStore.Token;
         if (!string.IsNullOrWhiteSpace(token))
         {
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            // Si ya hay Authorization (por ejemplo Basic), no sobrescribir. Añadir solo X-Bearer-Token
+            if (request.Headers.Authorization == null || string.IsNullOrWhiteSpace(request.Headers.Authorization.Scheme))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            }
             if (!request.Headers.Contains("X-Bearer-Token"))
             {
                 request.Headers.Add("X-Bearer-Token", token);

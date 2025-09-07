@@ -28,4 +28,9 @@
     <ProjectReference Include="..\RestaurantePro.Infrastructure\RestaurantePro.Infrastructure.csproj" />
   </ItemGroup>
 
+  <!-- Asegura que la carpeta 'logs' exista en el artefacto publicado -->
+  <Target Name="EnsureLogsFolder" AfterTargets="Publish">
+    <MakeDir Directories="$(PublishDir)logs" />
+  </Target>
+
 </Project>
