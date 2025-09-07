@@ -157,7 +157,7 @@
                         BackgroundColor="#2196F3"
                         TextColor="White"
                         CornerRadius="8"
-                        Command="{Binding LoadEstadisticasCommandCommand}" />
+                        Command="{Binding LoadEstadisticasCommandAsyncCommand}" />
             </Grid>
         </Frame>
     </Grid>

@@ -143,6 +143,7 @@ public class MesasService : IMesasService
         string motivo = "Mesa liberada desde móvil", 
         string? observaciones = null)
     {
+        System.Diagnostics.Debug.WriteLine($"[DEBUG] MesasService.LiberarMesaAsync -> mesaId={mesaId}, motivo='{motivo}', observaciones='{observaciones}'");
         var request = new
         {
             Motivo = motivo,
@@ -152,7 +153,9 @@ public class MesasService : IMesasService
 
         var endpoint = $"{BasePath}/{mesaId}/liberar";
         var token = await _authService.GetTokenAsync();
-        return await _apiService.PostAsync<MesaDto>(endpoint, request, token);
+        var response = await _apiService.PostAsync<MesaDto>(endpoint, request, token);
+        System.Diagnostics.Debug.WriteLine($"[DEBUG] MesasService.LiberarMesaAsync <- Success={response.Success}, Message={response.Message}");
+        return response;
     }
 
     /// <summary>

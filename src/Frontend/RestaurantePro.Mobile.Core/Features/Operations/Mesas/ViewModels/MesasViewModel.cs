@@ -73,9 +73,6 @@ public partial class MesasViewModel : BaseViewModel
         _navigationService = navigationService;
         
         Title = "Gestión de Mesas";
-        
-        // Cargar datos iniciales
-        _ = LoadMesasAsync();
     }
 
     #endregion
@@ -105,7 +102,7 @@ public partial class MesasViewModel : BaseViewModel
             System.Diagnostics.Debug.WriteLine($"🔍 Filtros: Estado={estado}, Ubicacion={ubicacion}, CapacidadMinima={capacidadMinima}");
 
             var response = await _mesasService.ObtenerMesasAsync(
-                string.IsNullOrWhiteSpace(estado) ? null : estado,
+                string.IsNullOrWhiteSpace(estado) ? null : NormalizeEstado(estado),
                 string.IsNullOrWhiteSpace(ubicacion) ? null : ubicacion,
                 capacidadMinima);
 
@@ -586,6 +583,25 @@ public partial class MesasViewModel : BaseViewModel
     #endregion
 
     #region Métodos de Utilidad
+
+    private static string? NormalizeEstado(string? estadoUi)
+    {
+        if (string.IsNullOrWhiteSpace(estadoUi)) return null;
+        var e = estadoUi.Trim().ToLowerInvariant();
+        return e switch
+        {
+            "todas" => null,
+            "disponible" => "Disponible",
+            "disponibles" => "Disponible",
+            "ocupada" => "Ocupada",
+            "ocupadas" => "Ocupada",
+            "reservada" => "Reservada",
+            "reservadas" => "Reservada",
+            "fuera de servicio" => "Mantenimiento",
+            "en limpieza" => "Mantenimiento", // ajustar si existe estado específico
+            _ => estadoUi
+        };
+    }
 
     /// <summary>
     /// Obtener color basado en el estado de la mesa

@@ -51,36 +51,7 @@ public class ObtenerComandasPaginadasQueryHandler : IRequestHandler<ObtenerComan
                     .Include(c => c.Cliente),
                 request);
 
-            // Aplicar filtros
-            if (!string.IsNullOrEmpty(request.Estado))
-            {
-                if (Enum.TryParse<EstadoComanda>(request.Estado, true, out var estado))
-                {
-                    query = query.Where(c => c.Estado == estado);
-                }
-            }
-            if (request.MesaId != null)
-            {
-                query = query.Where(c => c.MesaId == request.MesaId);
-            }
-            if (request.ClienteId != null)
-            {
-                query = query.Where(c => c.ClienteId == request.ClienteId);
-            }
-            if (request.FechaDesde != null)
-            {
-                query = query.Where(c => c.FechaCreacion >= request.FechaDesde);
-            }
-            if (request.FechaHasta != null)
-            {
-                query = query.Where(c => c.FechaCreacion <= request.FechaHasta);
-            }
-
-            if (request.SoloActivas)
-            {
-                var estadosActivos = new[] { EstadoComanda.Creada, EstadoComanda.EnProceso, EstadoComanda.Lista, EstadoComanda.Entregada };
-                query = query.Where(c => estadosActivos.Contains(c.Estado));
-            }
+            // Filtros ya aplicados por ApplyFilters
 
             // Aplicar ordenamiento
             var direccion = request.DireccionOrdenamiento?.ToLower() ?? "desc";

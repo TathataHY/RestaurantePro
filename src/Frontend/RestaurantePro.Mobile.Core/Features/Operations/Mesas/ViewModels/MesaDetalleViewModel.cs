@@ -32,6 +32,9 @@ public partial class MesaDetalleViewModel : BaseViewModel
 
     [ObservableProperty]
     private ComandaDto? selectedComanda;
+    
+    private bool _isInitialized;
+    private readonly SemaphoreSlim _loadLock = new(1, 1);
 
     /// <summary>
     /// Constructor para inyección de dependencias
@@ -98,12 +101,15 @@ public partial class MesaDetalleViewModel : BaseViewModel
     /// <summary>
     /// Inicializar datos de la mesa
     /// </summary>
-    public async Task InitializeAsync()
+    public async Task InitializeAsync(bool force = false)
     {
-        if (MesaId == Guid.Empty) return;
-
+        await _loadLock.WaitAsync();
         try
         {
+            if (MesaId == Guid.Empty) return;
+            if (IsBusy) return;
+            if (_isInitialized && !force) return;
+
             IsBusy = true;
             HasError = false;
             ErrorMessage = string.Empty;
@@ -119,6 +125,8 @@ public partial class MesaDetalleViewModel : BaseViewModel
         finally
         {
             IsBusy = false;
+            _isInitialized = true;
+            _loadLock.Release();
         }
     }
 
@@ -171,6 +179,7 @@ public partial class MesaDetalleViewModel : BaseViewModel
     {
         try
         {
+            if (IsBusy) return; // evita solaparse con Initialize
             IsLoading = true;
             System.Diagnostics.Debug.WriteLine($"[DEBUG] Cargando comandas para mesa: {MesaId}");
             var result = await _comandasService.ObtenerComandasPorMesaAsync(MesaId);
@@ -283,6 +292,8 @@ public partial class MesaDetalleViewModel : BaseViewModel
     {
         try
         {
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] LiberarMesaAsync iniciado. MesaId={MesaId}, IsBusy={IsBusy}");
+            if (IsBusy) return;
             var confirmar = await _dialogService.ShowConfirmAsync(
                 "Confirmar",
                 "¿Está seguro que desea liberar esta mesa?");
@@ -296,11 +307,17 @@ public partial class MesaDetalleViewModel : BaseViewModel
                 "Cancelar",
                 "Finalización del servicio");
 
-            if (string.IsNullOrWhiteSpace(motivo))
-                return;
+            if (motivo == null)
+                return; // usuario canceló
 
+            // Si está vacío, usar un motivo por defecto
+            if (string.IsNullOrWhiteSpace(motivo))
+                motivo = "Finalización del servicio";
+
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Confirmado liberar. Motivo='{motivo}'");
             IsBusy = true;
             var result = await _mesasService.LiberarMesaAsync(MesaId, motivo);
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Resultado LiberarMesaAsync -> Success={result.Success}, Message={result.Message}");
 
             if (result.Success)
             {
@@ -315,6 +332,7 @@ public partial class MesaDetalleViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Excepción LiberarMesaAsync: {ex}");
             await _dialogService.ShowAlertAsync("Error", $"Error al liberar mesa: {ex.Message}");
         }
         finally
@@ -435,7 +453,8 @@ public partial class MesaDetalleViewModel : BaseViewModel
     [RelayCommand]
     private async Task RefreshAsync()
     {
-        await InitializeAsync();
+        if (IsBusy) return;
+        await InitializeAsync(force: true);
     }
 
     /// <summary>

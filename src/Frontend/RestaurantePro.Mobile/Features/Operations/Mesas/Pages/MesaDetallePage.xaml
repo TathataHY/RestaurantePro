@@ -50,6 +50,7 @@
                 <Button Grid.Row="0" Grid.Column="2" 
                         Text="🔄" 
                         Command="{Binding RefreshCommand}" 
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
                         BackgroundColor="Transparent" 
                         TextColor="#666" 
                         FontSize="20" 
@@ -315,6 +316,7 @@
                 <!-- Botón Liberar Mesa - Solo visible si la mesa está ocupada -->
                 <Button Text="🏠 Liberar Mesa" 
                         Command="{Binding LiberarMesaCommand}" 
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
                         BackgroundColor="#dc3545" 
                         TextColor="White" 
                         CornerRadius="6" 

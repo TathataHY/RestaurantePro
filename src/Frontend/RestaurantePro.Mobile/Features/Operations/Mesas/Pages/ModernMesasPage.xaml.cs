@@ -56,7 +56,7 @@ public partial class ModernMesasPage : ContentPage
         if (sender is Picker picker && _viewModel != null)
         {
             _viewModel.FiltroEstado = picker.SelectedItem?.ToString() ?? string.Empty;
-            _viewModel.ApplyFiltersCommand?.Execute(null);
+            _viewModel.LoadMesasCommand?.Execute(null);
         }
     }
 
@@ -66,7 +66,15 @@ public partial class ModernMesasPage : ContentPage
         {
             var capacidadStr = picker.SelectedItem?.ToString() ?? string.Empty;
             _viewModel.FiltroCapacidad = capacidadStr;
-            _viewModel.ApplyFiltersCommand?.Execute(null);
+            _viewModel.FiltroCapacidadMinima = capacidadStr switch
+            {
+                "2 personas" => 2,
+                "4 personas" => 4,
+                "6 personas" => 6,
+                "8+ personas" => 8,
+                _ => null
+            };
+            _viewModel.LoadMesasCommand?.Execute(null);
         }
     }
 } 

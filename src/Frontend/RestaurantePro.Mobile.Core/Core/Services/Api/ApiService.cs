@@ -39,165 +39,253 @@ public class ApiService : IApiService
 
     public async Task<ApiResponse<T>> GetAsync<T>(string endpoint, string? token = null)
     {
-        try
+        // Lectura por stream + reintentos para evitar EOF en Android/OkHttp con respuestas chunked
+        const int maxAttempts = 2;
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            AddAuthHeader(token);
-            var response = await _httpClient.GetAsync(endpoint);
-            
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var json = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<ApiResponse<T>>(json, GetJsonOptions());
-                return result ?? ApiResponse<T>.ErrorResponse("Respuesta vacía del servidor");
+                AddAuthHeader(token);
+                if (!_httpClient.DefaultRequestHeaders.Accept.Any(h => h.MediaType == "application/json"))
+                {
+                    _httpClient.DefaultRequestHeaders.Accept.Clear();
+                    _httpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+                }
+
+                using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+                request.Headers.ConnectionClose = true; // Evita mantener viva la conexión (mitiga EOF en Android)
+                try { request.Headers.AcceptEncoding.Clear(); request.Headers.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("identity")); } catch { }
+                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await using var stream = await response.Content.ReadAsStreamAsync();
+                    var result = await JsonSerializer.DeserializeAsync<ApiResponse<T>>(stream, GetJsonOptions());
+                    return result ?? ApiResponse<T>.ErrorResponse("Respuesta vacía del servidor");
+                }
+
+                // Intentar leer cuerpo de error (si existe)
+                string errorBody = string.Empty;
+                try { errorBody = await response.Content.ReadAsStringAsync(); } catch { /* ignorar */ }
+                return ApiResponse<T>.ErrorResponse(
+                    new List<string> { $"Error HTTP: {response.StatusCode} - {errorBody}" },
+                    "Error de conexión",
+                    (int)response.StatusCode);
             }
-            
-            return ApiResponse<T>.ErrorResponse(
-                new List<string> { "Error en la comunicación con el servidor" },
-                "Error de conexión", 
-                (int)response.StatusCode);
+            catch (IOException ioEx) when (attempt < maxAttempts)
+            {
+                // Reintentar una vez ante EOF/transitorios
+                System.Diagnostics.Debug.WriteLine($"[ApiService] Reintentando GET (IO) intento {attempt}: {ioEx.Message}");
+                await Task.Delay(150);
+                continue;
+            }
+            catch (HttpRequestException httpEx) when (attempt < maxAttempts)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ApiService] Reintentando GET (HTTP) intento {attempt}: {httpEx.Message}");
+                await Task.Delay(150);
+                continue;
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<T>.ErrorResponse(
+                    new List<string> { ex.Message },
+                    "Error inesperado",
+                    500);
+            }
         }
-        catch (Exception ex)
-        {
-            return ApiResponse<T>.ErrorResponse(
-                new List<string> { ex.Message },
-                "Error inesperado", 
-                500);
-        }
+
+        // Si por alguna razón salimos del bucle sin retornar, responder genérico
+        return ApiResponse<T>.ErrorResponse("Error de conexión", "Error inesperado", 500);
     }
 
     public async Task<ApiResponse<T>> PostAsync<T>(string endpoint, object data, string? token = null)
     {
-        try
+        const int maxAttempts = 2;
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            // DEBUG: Mostrar información detallada
-            var fullUrl = _httpClient.BaseAddress + endpoint;
-            var requestJson = JsonSerializer.Serialize(data, GetJsonOptions());
-            
-            // DEBUG: Comentado para flujo normal - descomentar solo si hay problemas
-            // ShowDebugPopup("🚀 POST Request", $"URL: {fullUrl}\nData: {requestJson}");
-            
-            AddAuthHeader(token);
-            var content = new StringContent(requestJson, Encoding.UTF8, "application/json");
-            
-            // DEBUG: Comentado para flujo normal - descomentar solo si hay problemas
-            // ShowDebugPopup("📤 Enviando petición", $"URL: {fullUrl}");
-            
-            var response = await _httpClient.PostAsync(endpoint, content);
-            
-            // DEBUG: Comentado para flujo normal - descomentar solo si hay problemas
-            // ShowDebugPopup("📥 Respuesta recibida", $"Status: {response.StatusCode}\nContent: {responseJson}");
-            
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var responseJson = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<ApiResponse<T>>(responseJson, GetJsonOptions());
-                return result ?? ApiResponse<T>.ErrorResponse("Respuesta vacía del servidor");
+                AddAuthHeader(token);
+                var requestJson = JsonSerializer.Serialize(data, GetJsonOptions());
+                using var request = new HttpRequestMessage(HttpMethod.Post, endpoint)
+                {
+                    Content = new StringContent(requestJson, Encoding.UTF8, "application/json")
+                };
+                request.Headers.ConnectionClose = true;
+                try { request.Headers.AcceptEncoding.Clear(); request.Headers.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("identity")); } catch { }
+                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await using var stream = await response.Content.ReadAsStreamAsync();
+                    var result = await JsonSerializer.DeserializeAsync<ApiResponse<T>>(stream, GetJsonOptions());
+                    return result ?? ApiResponse<T>.ErrorResponse("Respuesta vacía del servidor");
+                }
+
+                string errorBody = string.Empty;
+                try { errorBody = await response.Content.ReadAsStringAsync(); } catch { }
+                return ApiResponse<T>.ErrorResponse(
+                    new List<string> { $"Error HTTP: {response.StatusCode} - {errorBody}" },
+                    "Error de conexión",
+                    (int)response.StatusCode);
             }
-            
-            var errorResponseJson = await response.Content.ReadAsStringAsync();
-            return ApiResponse<T>.ErrorResponse(
-                new List<string> { $"Error HTTP: {response.StatusCode} - {errorResponseJson}" },
-                "Error de conexión", 
-                (int)response.StatusCode);
+            catch (IOException) when (attempt < maxAttempts)
+            {
+                await Task.Delay(150);
+                continue;
+            }
+            catch (HttpRequestException) when (attempt < maxAttempts)
+            {
+                await Task.Delay(150);
+                continue;
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<T>.ErrorResponse(new List<string> { ex.Message }, "Error inesperado", 500);
+            }
         }
-        catch (Exception ex)
-        {
-            // DEBUG: Comentado para flujo normal - descomentar solo si hay problemas
-            // ShowDebugPopup("❌ EXCEPCIÓN", $"Tipo: {ex.GetType().Name}\nMensaje: {ex.Message}\nStackTrace: {ex.StackTrace}");
-            
-            return ApiResponse<T>.ErrorResponse(
-                new List<string> { ex.Message },
-                "Error inesperado", 
-                500);
-        }
+        return ApiResponse<T>.ErrorResponse("Error de conexión", "Error inesperado", 500);
     }
 
     public async Task<ApiResponse<T>> PutAsync<T>(string endpoint, object data, string? token = null)
     {
-        try
+        const int maxAttempts = 2;
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            AddAuthHeader(token);
-            var json = JsonSerializer.Serialize(data, GetJsonOptions());
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-            
-            var response = await _httpClient.PutAsync(endpoint, content);
-            
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var responseJson = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<ApiResponse<T>>(responseJson, GetJsonOptions());
-                return result ?? ApiResponse<T>.ErrorResponse("Respuesta vacía del servidor");
+                AddAuthHeader(token);
+                var requestJson = JsonSerializer.Serialize(data, GetJsonOptions());
+                using var request = new HttpRequestMessage(HttpMethod.Put, endpoint)
+                {
+                    Content = new StringContent(requestJson, Encoding.UTF8, "application/json")
+                };
+                request.Headers.ConnectionClose = true;
+                try { request.Headers.AcceptEncoding.Clear(); request.Headers.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("identity")); } catch { }
+                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await using var stream = await response.Content.ReadAsStreamAsync();
+                    var result = await JsonSerializer.DeserializeAsync<ApiResponse<T>>(stream, GetJsonOptions());
+                    return result ?? ApiResponse<T>.ErrorResponse("Respuesta vacía del servidor");
+                }
+
+                string errorBody = string.Empty;
+                try { errorBody = await response.Content.ReadAsStringAsync(); } catch { }
+                return ApiResponse<T>.ErrorResponse(
+                    new List<string> { $"Error HTTP: {response.StatusCode} - {errorBody}" },
+                    "Error de conexión",
+                    (int)response.StatusCode);
             }
-            
-            return ApiResponse<T>.ErrorResponse(
-                new List<string> { "Error en la comunicación con el servidor" },
-                "Error de conexión", 
-                (int)response.StatusCode);
+            catch (IOException) when (attempt < maxAttempts)
+            {
+                await Task.Delay(150);
+                continue;
+            }
+            catch (HttpRequestException) when (attempt < maxAttempts)
+            {
+                await Task.Delay(150);
+                continue;
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<T>.ErrorResponse(new List<string> { ex.Message }, "Error inesperado", 500);
+            }
         }
-        catch (Exception ex)
-        {
-            return ApiResponse<T>.ErrorResponse(
-                new List<string> { ex.Message },
-                "Error inesperado", 
-                500);
-        }
+        return ApiResponse<T>.ErrorResponse("Error de conexión", "Error inesperado", 500);
     }
 
     public async Task<ApiResponse<T>> PatchAsync<T>(string endpoint, object data, string? token = null)
     {
-        try
+        const int maxAttempts = 2;
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            AddAuthHeader(token);
-            var json = JsonSerializer.Serialize(data, GetJsonOptions());
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-            
-            var response = await _httpClient.PatchAsync(endpoint, content);
-            
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var responseJson = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<ApiResponse<T>>(responseJson, GetJsonOptions());
-                return result ?? ApiResponse<T>.ErrorResponse("Respuesta vacía del servidor");
+                AddAuthHeader(token);
+                var requestJson = JsonSerializer.Serialize(data, GetJsonOptions());
+                using var request = new HttpRequestMessage(HttpMethod.Patch, endpoint)
+                {
+                    Content = new StringContent(requestJson, Encoding.UTF8, "application/json")
+                };
+                request.Headers.ConnectionClose = true;
+                try { request.Headers.AcceptEncoding.Clear(); request.Headers.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("identity")); } catch { }
+                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    await using var stream = await response.Content.ReadAsStreamAsync();
+                    var result = await JsonSerializer.DeserializeAsync<ApiResponse<T>>(stream, GetJsonOptions());
+                    return result ?? ApiResponse<T>.ErrorResponse("Respuesta vacía del servidor");
+                }
+
+                string errorBody = string.Empty;
+                try { errorBody = await response.Content.ReadAsStringAsync(); } catch { }
+                return ApiResponse<T>.ErrorResponse(
+                    new List<string> { $"Error HTTP: {response.StatusCode} - {errorBody}" },
+                    "Error de conexión",
+                    (int)response.StatusCode);
             }
-            
-            return ApiResponse<T>.ErrorResponse(
-                new List<string> { "Error en la comunicación con el servidor" },
-                "Error de conexión", 
-                (int)response.StatusCode);
+            catch (IOException) when (attempt < maxAttempts)
+            {
+                await Task.Delay(150);
+                continue;
+            }
+            catch (HttpRequestException) when (attempt < maxAttempts)
+            {
+                await Task.Delay(150);
+                continue;
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<T>.ErrorResponse(new List<string> { ex.Message }, "Error inesperado", 500);
+            }
         }
-        catch (Exception ex)
-        {
-            return ApiResponse<T>.ErrorResponse(
-                new List<string> { ex.Message },
-                "Error inesperado", 
-                500);
-        }
+        return ApiResponse<T>.ErrorResponse("Error de conexión", "Error inesperado", 500);
     }
 
     public async Task<ApiResponse<bool>> DeleteAsync(string endpoint, string? token = null)
     {
-        try
+        const int maxAttempts = 2;
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            AddAuthHeader(token);
-            var response = await _httpClient.DeleteAsync(endpoint);
-            
-            if (response.IsSuccessStatusCode)
+            try
             {
-                return ApiResponse<bool>.SuccessResponse(true, "Eliminado exitosamente");
+                AddAuthHeader(token);
+                using var request = new HttpRequestMessage(HttpMethod.Delete, endpoint);
+                request.Headers.ConnectionClose = true;
+                try { request.Headers.AcceptEncoding.Clear(); request.Headers.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("identity")); } catch { }
+                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return ApiResponse<bool>.SuccessResponse(true, "Eliminado exitosamente");
+                }
+
+                string errorBody = string.Empty;
+                try { errorBody = await response.Content.ReadAsStringAsync(); } catch { }
+                return ApiResponse<bool>.ErrorResponse(
+                    new List<string> { $"Error HTTP: {response.StatusCode} - {errorBody}" },
+                    "Error de conexión",
+                    (int)response.StatusCode);
             }
-            
-            return ApiResponse<bool>.ErrorResponse(
-                new List<string> { "Error en la comunicación con el servidor" },
-                "Error de conexión", 
-                (int)response.StatusCode);
+            catch (IOException) when (attempt < maxAttempts)
+            {
+                await Task.Delay(150);
+                continue;
+            }
+            catch (HttpRequestException) when (attempt < maxAttempts)
+            {
+                await Task.Delay(150);
+                continue;
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<bool>.ErrorResponse(new List<string> { ex.Message }, "Error inesperado", 500);
+            }
         }
-        catch (Exception ex)
-        {
-            return ApiResponse<bool>.ErrorResponse(
-                new List<string> { ex.Message },
-                "Error inesperado", 
-                500);
-        }
+        return ApiResponse<bool>.ErrorResponse("Error de conexión", "Error inesperado", 500);
     }
 
     private void AddAuthHeader(string? token)
