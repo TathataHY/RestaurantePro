@@ -296,9 +296,17 @@ public class ComandaDto
     public bool PuedeEntregar => Estado.ToLowerInvariant() == "lista";
 
     /// <summary>
-    /// Indica si la comanda puede ser cobrada
+    /// Indica si la comanda puede ser cobrada/finalizada
+    /// Se permite desde "Lista" (cobro directo) o "Entregada".
     /// </summary>
-    public bool PuedeCobrar => Estado.ToLowerInvariant() == "entregada";
+    public bool PuedeCobrar
+    {
+        get
+        {
+            var estado = Estado.ToLowerInvariant();
+            return estado == "lista" || estado == "entregada";
+        }
+    }
 
     /// <summary>
     /// Indica si la comanda tiene observaciones
