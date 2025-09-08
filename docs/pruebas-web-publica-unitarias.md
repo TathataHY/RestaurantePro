@@ -18,9 +18,9 @@ Definir y rastrear la cobertura de pruebas unitarias (xUnit + bUnit) para `Resta
 ---
 
 ## Checklist por Páginas
-- [ ] Home.razor
+- [x] Home.razor
   - [x] Renderiza hero y CTAs (Menú, Reseñas)
-- [ ] Menu.razor
+- [x] Menu.razor
   - [x] Muestra skeleton en carga
   - [x] Estado vacío sin productos
   - [x] Render de productos con data
@@ -34,48 +34,50 @@ Definir y rastrear la cobertura de pruebas unitarias (xUnit + bUnit) para `Resta
   - [x] Envío exitoso muestra confirmación
   - [x] Error muestra mensaje
   - [x] Botón deshabilitado durante envío (ajustado a estado estable)
-- [ ] Reviews.razor
+- [x] Reviews.razor
   - [x] Lista reseñas iniciales
   - [x] Crear reseña resetea formulario tras éxito
   - [x] Manejo de error en post
-- [ ] Contact.razor
+- [x] Contact.razor
   - [x] Validaciones de campos requeridos
   - [x] Envío exitoso
   - [x] Manejo de error
-- [ ] Reservas.razor
+- [x] Reservas.razor
   - [x] Renderiza información y enlaces
-- [ ] Politicas.razor
+- [x] Politicas.razor
   - [x] Renderiza contenido base
-- [ ] About.razor
+- [x] About.razor
   - [x] Renderiza contenido base
 
 ## Checklist Layout/Shared
 - [x] NavMenu.razor (unit)
   - [x] Enlaces presentes (Inicio, Menú, Reseñas, Registro, Promociones)
   - [x] Toggle colapsa/expande (clase CSS)
-- [ ] MainLayout.razor
+  - [x] Inicio activo en raíz
+- [x] MainLayout.razor
   - [x] Renderiza Footer y Body
-- [ ] App.razor
+- [x] App.razor
   - [x] NotFound personalizado
-- [ ] Footer.razor
+- [x] Footer.razor
   - [x] Renderiza horarios
   - [x] Enlaces sociales con href correctos
+  - [x] Muestra año actual
 
 ## Checklist Servicios
-- [ ] PromocionesApiService
+- [x] PromocionesApiService
   - [x] Construye URL con soloVigentes/ordenarPor/direccion
   - [x] Devuelve lista vacía si ApiResponse es null
   - [x] Manejo de error de red
-- [ ] ClientesPublicApiService
+- [x] ClientesPublicApiService
   - [x] True si 2xx y Success=true
   - [x] False si 4xx/5xx o cuerpo null/Success=false
-- [ ] ReviewsApiService
+- [x] ReviewsApiService
   - [x] GET parsea correctamente
   - [x] POST éxito/fallo según respuesta
-- [ ] MenuApiService
+- [x] MenuApiService
   - [x] Mapea filtros/paginación a querystring
   - [x] Devuelve colecciones por defecto en null
-- [ ] ContactApiService
+- [x] ContactApiService
   - [x] POST éxito/fallo según Success
 
 ---
@@ -98,24 +100,50 @@ Las unit tests validan comportamientos pequeños y deterministas y actúan como 
 ## Pruebas adicionales sugeridas (fase 2)
 
 - Menú
-  - [ ] Ordenar por precio asc/desc y popularidad reflejado en la UI
+  - [x] Ordenar por precio asc/desc y popularidad reflejado en la UI
   - [x] Formato de precio con símbolo y miles
   - [x] Búsqueda de categorías: resultados y estado vacío
 
 - Promociones
-  - Meta SEO en HeadContent (title/description presentes)
+  - [ ] Meta SEO en HeadContent (title/description presentes)
+  - [x] Verificación básica de contenido en UI
 
 - Registro
-  - Reseteo de formulario tras éxito (valores default)
+  - [x] Reseteo de formulario tras éxito (valores default)
 
 - Reseñas
-  - Nueva reseña aparece primera en la lista
+  - [x] Nueva reseña aparece primera en la lista
 
 - Contacto
-  - GET mensajes error → lista vacía y sin romper UI
+  - [x] GET mensajes error → lista vacía y sin romper UI
 
 - Servicios (extras)
-  - [ ] MenuApiService.ObtenerProductosPorCategoriaAsync con soloActivos=false incluye inactivos
-  - [ ] MenuApiService.BuscarCategoriasAsync codifica querystring
-  - [ ] ReviewsApiService GET error → lista vacía
-  - [ ] ContactApiService GET error → lista vacía
+  - [x] MenuApiService.ObtenerProductosPorCategoriaAsync con soloActivos=false incluye inactivos
+  - [x] MenuApiService.BuscarCategoriasAsync codifica querystring
+  - [x] ReviewsApiService GET error → lista vacía
+  - [x] ContactApiService GET error → lista vacía
+
+---
+
+## Pruebas SEO y UI adicionales (fase 3)
+
+- SEO HeadContent
+  - [ ] Home: canonical, og:title, og:description
+  - [ ] About: canonical, og:title, og:description
+  - [ ] Reservas: canonical, og:title, og:description
+  - [ ] Menu: canonical, og:title, og:description
+  - [ ] Registro: canonical, og:title, og:description
+
+- Menú (UI/estado)
+  - [ ] Paginación: botones deshabilitados en primera/última página
+  - [ ] Paginación: texto "Página X de Y" correcto
+  - [ ] Productos inactivos muestran "Sin stock" y opacidad
+
+- Contacto
+  - [ ] Render de lista con nombre/email/fecha formateada
+
+- NavMenu
+  - [ ] Link activo en /menu
+  - [ ] Link activo en /resenas
+  - [ ] Link activo en /registro
+  - [ ] Link activo en /promociones

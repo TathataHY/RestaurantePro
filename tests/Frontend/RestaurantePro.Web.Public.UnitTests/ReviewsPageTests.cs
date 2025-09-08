@@ -42,14 +42,22 @@ public class ReviewsPageTests : TestContext
         {
             new ReviewDto { Nombre = "Ana", Comentario = "Excelente", Valoracion = 5, Fecha = DateTime.UtcNow }
         };
-        var afterPost = new List<ReviewDto>(initial)
+        var afterPost = new List<ReviewDto>
         {
-            new ReviewDto { Nombre = "Juan", Comentario = "Muy rico", Valoracion = 5, Fecha = DateTime.UtcNow }
+            new ReviewDto { Nombre = "Juan", Comentario = "Muy rico", Valoracion = 5, Fecha = DateTime.UtcNow },
+            initial[0]
         };
 
         var mock = new MockHttpMessageHandler();
         mock.When(HttpMethod.Get, "http://localhost/api/public/reviews")
-            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<ReviewDto>> { Success = true, Data = afterPost }));
+            .Respond(req =>
+            {
+                var json = System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<ReviewDto>> { Success = true, Data = afterPost });
+                return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+                });
+            });
         mock.When(HttpMethod.Post, "http://localhost/api/public/reviews")
             .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<ReviewDto> { Success = true, Data = new ReviewDto { Nombre = "Juan", Comentario = "Muy rico", Valoracion = 5, Fecha = DateTime.UtcNow } }));
 
@@ -67,6 +75,9 @@ public class ReviewsPageTests : TestContext
         {
             cut.Markup.Should().Contain("Juan");
             cut.Markup.Should().Contain("Muy rico");
+            // La primera reseña debe ser la nueva (API retorna lista con nuevo primero)
+            var titulos = cut.FindAll("h5.card-title").Select(e => e.TextContent).ToList();
+            titulos.First().Should().Contain("Juan");
         });
     }
 

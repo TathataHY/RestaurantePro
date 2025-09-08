@@ -75,4 +75,82 @@ public class MenuAdvancedTests : TestContext
     }
 }
 
+public class MenuSortUiTests : TestContext
+{
+    [Fact]
+    public void Menu_Ordenacion_UI_PrecioAscDesc_Y_Popularidad()
+    {
+        var categoriaId = Guid.NewGuid();
+        var categorias = new[] { new CategoriaProductoDto { Id = categoriaId, Nombre = "Platos", ProductosDisponibles = 3 } };
+        var itemsBase = new List<ProductoDto>
+        {
+            new ProductoDto { Id = Guid.NewGuid(), Nombre = "A", Precio = 10000, Popularidad = 5, CategoriaId = categoriaId, CategoriaNombre = "Platos", Activo = true },
+            new ProductoDto { Id = Guid.NewGuid(), Nombre = "B", Precio = 20000, Popularidad = 8, CategoriaId = categoriaId, CategoriaNombre = "Platos", Activo = true },
+            new ProductoDto { Id = Guid.NewGuid(), Nombre = "C", Precio = 15000, Popularidad = 3, CategoriaId = categoriaId, CategoriaNombre = "Platos", Activo = true },
+        };
+
+        var mock = new MockHttpMessageHandler();
+        mock.When("http://localhost/api/core/categorias*")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>> { Success = true, Data = categorias.ToList() }));
+        // Respuesta dinámica según querystring
+        mock.When("http://localhost/api/core/productos*")
+            .Respond(req =>
+            {
+                var query = req.RequestUri?.Query ?? string.Empty;
+                List<ProductoDto> ordered;
+                if (query.Contains("OrderBy=Precio") && query.Contains("OrderDirection=asc"))
+                {
+                    ordered = itemsBase.OrderBy(p => p.Precio).ToList();
+                }
+                else if (query.Contains("OrderBy=Precio") && query.Contains("OrderDirection=desc"))
+                {
+                    ordered = itemsBase.OrderByDescending(p => p.Precio).ToList();
+                }
+                else
+                {
+                    ordered = itemsBase.OrderByDescending(p => p.Popularidad).ToList();
+                }
+
+                var json = System.Text.Json.JsonSerializer.Serialize(new ApiResponse<PaginatedList<ProductoDto>>
+                {
+                    Success = true,
+                    Data = new PaginatedList<ProductoDto> { Items = ordered, PageNumber = 1, PageSize = 6, TotalCount = ordered.Count, TotalPages = 1 }
+                });
+                return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+                });
+            });
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<MenuApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Menu>();
+
+        cut.InvokeAsync(() => cut.Find("select.form-select").Change("precio_asc"));
+        cut.InvokeAsync(() => cut.Find("button.btn.btn-primary").Click());
+        cut.WaitForAssertion(() =>
+        {
+            var cards = cut.FindAll(".card .card-title").Select(e => e.TextContent).ToList();
+            cards.Should().ContainInOrder("A", "C", "B");
+        });
+
+        cut.InvokeAsync(() => cut.Find("select.form-select").Change("precio_desc"));
+        cut.InvokeAsync(() => cut.Find("button.btn.btn-primary").Click());
+        cut.WaitForAssertion(() =>
+        {
+            var cards = cut.FindAll(".card .card-title").Select(e => e.TextContent).ToList();
+            cards.Should().ContainInOrder("B", "C", "A");
+        });
+
+        cut.InvokeAsync(() => cut.Find("select.form-select").Change("popularidad"));
+        cut.InvokeAsync(() => cut.Find("button.btn.btn-primary").Click());
+        cut.WaitForAssertion(() =>
+        {
+            var cards = cut.FindAll(".card .card-title").Select(e => e.TextContent).ToList();
+            cards.Should().ContainInOrder("B", "A", "C");
+        });
+    }
+}
+
 

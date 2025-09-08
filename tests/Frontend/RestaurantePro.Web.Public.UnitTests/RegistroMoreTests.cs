@@ -29,6 +29,30 @@ public class RegistroMoreTests : TestContext
     }
 
     [Fact]
+    public void Registro_Exito_Resetea_Formulario()
+    {
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Post, "http://localhost/api/public/clientes")
+            .Respond("application/json", "{ \"success\": true }");
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<ClientesPublicApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Registro>();
+        cut.Find("input[placeholder='Nombre completo']").Change("Juan Perez");
+        cut.Find("input[placeholder='Email']").Change("juan@example.com");
+        cut.Find("input[placeholder='Teléfono (e.g. +56912345678)']").Change("+56912345678");
+
+        cut.Find("form").Submit();
+
+        cut.WaitForAssertion(() =>
+        {
+            cut.Markup.Should().Contain("¡Registro exitoso!");
+            cut.Find("input[placeholder='Nombre completo']").GetAttribute("value").Should().Be("");
+            cut.Find("input[placeholder='Email']").GetAttribute("value").Should().Be("");
+            cut.Find("input[placeholder='Teléfono (e.g. +56912345678)']").GetAttribute("value").Should().Be("");
+        });
+    }
+    [Fact]
     public void Registro_Boton_Deshabilitado_Durante_Envio()
     {
         var mock = new MockHttpMessageHandler();

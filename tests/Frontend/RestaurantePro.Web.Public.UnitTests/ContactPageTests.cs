@@ -39,11 +39,15 @@ public class ContactPageTests : TestContext
 
         var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Contact>();
 
-        cut.Find("input[placeholder='Tu nombre']").Change("Juan");
-        cut.Find("input[placeholder='Tu email']").Change("j@e.com");
-        cut.Find("input[placeholder='Asunto (opcional)']").Change("Consulta");
-        cut.Find("textarea[placeholder='Mensaje']").Change("Hola mundo");
-        cut.Find("form").Submit();
+        // Interacciones en el hilo del dispatcher
+        cut.InvokeAsync(() =>
+        {
+            cut.Find("input[placeholder='Tu nombre']").Change("Juan");
+            cut.Find("input[placeholder='Tu email']").Change("j@e.com");
+            cut.Find("input[placeholder='Asunto (opcional)']").Change("Consulta");
+            cut.Find("textarea[placeholder='Mensaje']").Change("Hola mundo");
+            cut.Find("form").Submit();
+        });
 
         cut.WaitForAssertion(() =>
         {
@@ -73,6 +77,25 @@ public class ContactPageTests : TestContext
         cut.WaitForAssertion(() =>
         {
             cut.Markup.Should().NotContain("¡Gracias! Recibimos tu mensaje.");
+        });
+    }
+
+    [Fact]
+    public void Contact_Get_Error_Muestra_Lista_Vacia_Sin_Romper_UI()
+    {
+        var mock = new MockHttpMessageHandler();
+        // GET lanza error de red -> servicio retorna lista vacía
+        mock.When(HttpMethod.Get, "http://localhost/api/public/contact/messages")
+            .Throw(new HttpRequestException("Network error"));
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<ContactApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Contact>();
+
+        cut.WaitForAssertion(() =>
+        {
+            cut.Markup.Should().Contain("No hay mensajes aún.");
+            cut.Markup.Should().Contain("Contacto");
         });
     }
 }

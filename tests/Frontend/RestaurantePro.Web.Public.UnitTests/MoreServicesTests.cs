@@ -28,6 +28,51 @@ public class MoreServicesTests
     }
 
     [Fact]
+    public async Task MenuApiService_ProductosPorCategoria_Incluye_Inactivos_Cuando_SoloActivos_False()
+    {
+        var categoriaId = Guid.NewGuid();
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Get, "http://localhost/api/core/productos/categoria/*")
+            .Respond("application/json",
+                System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<ProductoDto>>
+                {
+                    Success = true,
+                    Data = new List<ProductoDto>
+                    {
+                        new ProductoDto { Id = Guid.NewGuid(), Nombre = "A", Activo = true, CategoriaId = categoriaId },
+                        new ProductoDto { Id = Guid.NewGuid(), Nombre = "B", Activo = false, CategoriaId = categoriaId },
+                    }
+                }));
+
+        var http = new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") };
+        var svc = new MenuApiService(http);
+
+        var list = await svc.ObtenerProductosPorCategoriaAsync(categoriaId, false, true);
+        list.Should().HaveCount(2);
+        list.Any(p => p.Activo == false).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task MenuApiService_BuscarCategorias_Codifica_Querystring()
+    {
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Get, "http://localhost/api/core/categorias/buscar*")
+            .Respond("application/json",
+                System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>>
+                {
+                    Success = true,
+                    Data = new List<CategoriaProductoDto> { new CategoriaProductoDto { Id = Guid.NewGuid(), Nombre = "Pizza Italiana" } }
+                }));
+
+        var http = new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") };
+        var svc = new MenuApiService(http);
+
+        var cats = await svc.BuscarCategoriasAsync("Pizza Italiana");
+        cats.Should().NotBeEmpty();
+        cats.First().Nombre.Should().Be("Pizza Italiana");
+    }
+
+    [Fact]
     public async Task MenuApiService_Mapea_Query_Paginados_Y_Defaults()
     {
         var categoriaId = Guid.NewGuid();

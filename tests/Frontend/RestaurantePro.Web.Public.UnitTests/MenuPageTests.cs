@@ -174,6 +174,121 @@ public class MenuPageTests : TestContext
             cut.Markup.Should().Contain("No hay productos para mostrar.");
         });
     }
+
+    [Fact]
+    public void Menu_Paginacion_Texto_Y_Boton_Anterior_Deshabilitado()
+    {
+        var categoriaId = Guid.NewGuid();
+        var categorias = new[] { new CategoriaProductoDto { Id = categoriaId, Nombre = "Platos", ProductosDisponibles = 12 } };
+
+        var items = Enumerable.Range(1, 6).Select(i => new ProductoDto
+        {
+            Id = Guid.NewGuid(), Nombre = $"Item {i}", Descripcion = "", Precio = 1000 * i,
+            CategoriaId = categoriaId, CategoriaNombre = "Platos", Activo = true, Popularidad = i
+        }).ToList();
+
+        var mock = new MockHttpMessageHandler();
+        mock.When("http://localhost/api/core/categorias*")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>> { Success = true, Data = categorias.ToList() }));
+        mock.When("http://localhost/api/core/productos*")
+            .Respond(req =>
+            {
+                var json = System.Text.Json.JsonSerializer.Serialize(new ApiResponse<PaginatedList<ProductoDto>>
+                {
+                    Success = true,
+                    Data = new PaginatedList<ProductoDto> { Items = items, PageNumber = 1, PageSize = 6, TotalCount = 12, TotalPages = 3 }
+                });
+                return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+                });
+            });
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<MenuApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Menu>();
+
+        cut.WaitForAssertion(() =>
+        {
+            cut.Markup.Should().Contain("Página 1 de 3");
+            var buttons = cut.FindAll(".btn-group button");
+            buttons.Should().HaveCount(2);
+            buttons[0].HasAttribute("disabled").Should().BeTrue(); // Anterior
+            buttons[1].HasAttribute("disabled").Should().BeFalse(); // Siguiente
+        });
+    }
+
+    [Fact]
+    public void Menu_Paginacion_Botones_Deshabilitados_En_Unica_Pagina()
+    {
+        var categoriaId = Guid.NewGuid();
+        var categorias = new[] { new CategoriaProductoDto { Id = categoriaId, Nombre = "Platos", ProductosDisponibles = 2 } };
+        var items = new List<ProductoDto>
+        {
+            new ProductoDto { Id = Guid.NewGuid(), Nombre = "A", Descripcion = "", Precio = 1000, CategoriaId = categoriaId, CategoriaNombre = "Platos", Activo = true },
+            new ProductoDto { Id = Guid.NewGuid(), Nombre = "B", Descripcion = "", Precio = 2000, CategoriaId = categoriaId, CategoriaNombre = "Platos", Activo = true },
+        };
+
+        var mock = new MockHttpMessageHandler();
+        mock.When("http://localhost/api/core/categorias*")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>> { Success = true, Data = categorias.ToList() }));
+        mock.When("http://localhost/api/core/productos*")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<PaginatedList<ProductoDto>>
+            {
+                Success = true,
+                Data = new PaginatedList<ProductoDto> { Items = items, PageNumber = 1, PageSize = 6, TotalCount = 2, TotalPages = 1 }
+            }));
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<MenuApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Menu>();
+
+        cut.WaitForAssertion(() =>
+        {
+            cut.Markup.Should().Contain("Página 1 de 1");
+            var buttons = cut.FindAll(".btn-group button");
+            buttons[0].HasAttribute("disabled").Should().BeTrue();
+            buttons[1].HasAttribute("disabled").Should().BeTrue();
+        });
+    }
+
+    [Fact]
+    public void Menu_Productos_Inactivos_Muestran_Badge_Y_Opacidad()
+    {
+        var categoriaId = Guid.NewGuid();
+        var categorias = new[] { new CategoriaProductoDto { Id = categoriaId, Nombre = "Platos", ProductosDisponibles = 2 } };
+        var items = new List<ProductoDto>
+        {
+            new ProductoDto { Id = Guid.NewGuid(), Nombre = "Activo", Descripcion = "", Precio = 1000, CategoriaId = categoriaId, CategoriaNombre = "Platos", Activo = true },
+            new ProductoDto { Id = Guid.NewGuid(), Nombre = "Inactivo", Descripcion = "", Precio = 2000, CategoriaId = categoriaId, CategoriaNombre = "Platos", Activo = false },
+        };
+
+        var mock = new MockHttpMessageHandler();
+        mock.When("http://localhost/api/core/categorias*")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>> { Success = true, Data = categorias.ToList() }));
+        mock.When("http://localhost/api/core/productos*")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<PaginatedList<ProductoDto>>
+            {
+                Success = true,
+                Data = new PaginatedList<ProductoDto> { Items = items, PageNumber = 1, PageSize = 6, TotalCount = 2, TotalPages = 1 }
+            }));
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<MenuApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Menu>();
+
+        cut.WaitForAssertion(() =>
+        {
+            // Badge "Sin stock" visible y card con opacidad
+            cut.Markup.Should().Contain("Sin stock");
+            var inactiveCard = cut.FindAll(".card").FirstOrDefault(c => c.TextContent.Contains("Inactivo"));
+            inactiveCard.Should().NotBeNull();
+            inactiveCard!.ClassList.Should().Contain("opacity-50");
+        });
+    }
 }
 
 

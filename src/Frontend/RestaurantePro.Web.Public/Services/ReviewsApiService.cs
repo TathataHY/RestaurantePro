@@ -17,8 +17,15 @@ public class ReviewsApiService
 
     public async Task<List<ReviewDto>> ObtenerAsync()
     {
-        var resp = await _http.GetFromJsonAsync<ApiResponse<List<ReviewDto>>>("api/public/reviews");
-        return resp?.Data ?? new List<ReviewDto>();
+        try
+        {
+            var resp = await _http.GetFromJsonAsync<ApiResponse<List<ReviewDto>>>("api/public/reviews");
+            return resp?.Data ?? new List<ReviewDto>();
+        }
+        catch
+        {
+            return new List<ReviewDto>();
+        }
     }
 
     public async Task<bool> CrearAsync(CreateReviewRequest request)

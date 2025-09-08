@@ -25,8 +25,15 @@ public class ContactApiService
 
     public async Task<List<ContactMessageDto>> ObtenerAsync()
     {
-        var body = await _http.GetFromJsonAsync<ApiResponse<List<ContactMessageDto>>>("api/public/contact/messages");
-        return body?.Data ?? new List<ContactMessageDto>();
+        try
+        {
+            var body = await _http.GetFromJsonAsync<ApiResponse<List<ContactMessageDto>>>("api/public/contact/messages");
+            return body?.Data ?? new List<ContactMessageDto>();
+        }
+        catch
+        {
+            return new List<ContactMessageDto>();
+        }
     }
 }
 
