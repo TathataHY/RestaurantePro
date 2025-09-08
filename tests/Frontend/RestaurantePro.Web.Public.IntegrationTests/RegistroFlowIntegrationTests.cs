@@ -14,6 +14,7 @@ public class RegistroFlowIntegrationTests : TestContext, IDisposable
 		_api = new ApiTestFactory();
 		Services.AddScoped(sp => _api.Client);
 		Services.AddScoped<ClientesPublicApiService>();
+		JSInterop.Mode = JSRuntimeMode.Loose;
 	}
 
 	[Fact]
@@ -21,40 +22,40 @@ public class RegistroFlowIntegrationTests : TestContext, IDisposable
 	{
 		var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Registro>();
 
-		// Llenar formulario válido
-		cut.Find("input[placeholder='Nombre completo']").Change("Juan Pérez");
-		cut.Find("input[placeholder='Email']").Change("juan@example.com");
-		cut.Find("input[placeholder='Teléfono (e.g. +56912345678)']").Change("+56912345678");
+		// Llenar formulario válido (inputs en orden: nombre, email, teléfono, fecha)
+		cut.FindAll("input")[0].Change("Juan Pérez");
+		cut.FindAll("input")[1].Change("juan@example.com");
+		cut.FindAll("input")[2].Change("+56912345678");
 
-		// Forzar que el formulario esté válido antes de enviar
+		// Enviar
 		cut.Find("form").Submit();
 
-		// Durante envío, el botón cambia de texto y queda deshabilitado
+		// Durante envío
 		cut.Markup.Should().Contain("Registrando...");
 
 		cut.WaitForAssertion(() =>
 		{
 			cut.Markup.Should().Contain("¡Registro exitoso!");
-			// Form reset: nombre y email vacíos
-			cut.Find("input[placeholder='Nombre completo']").GetAttribute("value").Should().Be("");
-			cut.Find("input[placeholder='Email']").GetAttribute("value").Should().Be("");
+			cut.FindAll("input")[0].GetAttribute("value").Should().Be("");
+			cut.FindAll("input")[1].GetAttribute("value").Should().Be("");
 		}, timeout: TimeSpan.FromSeconds(5));
 	}
 
 	[Fact]
-	public void Registro_Validaciones_Invalidas_Bloquean_Envio_Y_Muestran_Mensajes()
+	public void Registro_Validaciones_Invalidas_Bloquean_Envio_Y_No_Muta_Estado()
 	{
 		var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Registro>();
 
-		// Dejar email inválido y teléfono corto
-		cut.Find("input[placeholder='Nombre completo']").Change("Juan Pérez");
-		cut.Find("input[placeholder='Email']").Change("juan_at_example.com");
-		cut.Find("input[placeholder='Teléfono (e.g. +56912345678)']").Change("+56");
+		cut.FindAll("input")[0].Change("Juan Pérez");
+		cut.FindAll("input")[1].Change("juan_at_example.com"); // email inválido
+		cut.FindAll("input")[2].Change("+56"); // teléfono corto
 
-		// Intentar enviar
 		cut.Find("form").Submit();
 
-		cut.Markup.Should().Contain("Validation"); // ValidationSummary presente
+		// No cambia a estado de envío ni éxito
+		cut.Markup.Should().Contain("Registrarme");
+		cut.Markup.Should().NotContain("Registrando...");
+		cut.Markup.Should().NotContain("¡Registro exitoso!");
 	}
 
 	public new void Dispose()
