@@ -17,26 +17,32 @@
 <EditForm Model="mensaje" OnValidSubmit="EnviarAsync">
     <DataAnnotationsValidator />
     <ValidationSummary />
-    <div class="row g-2 mb-3">
-        <div class="col-12 col-md-6">
-            <InputText @bind-Value="mensaje.Nombre" class="form-control" placeholder="Tu nombre" />
-        </div>
-        <div class="col-12 col-md-6">
-            <InputText @bind-Value="mensaje.Email" class="form-control" placeholder="Tu email" />
-            <ValidationMessage For="() => mensaje.Email" />
-        </div>
-        <div class="col-12">
-            <InputText @bind-Value="mensaje.Asunto" class="form-control" placeholder="Asunto (opcional)" />
-        </div>
-        <div class="col-12">
-            <InputTextArea @bind-Value="mensaje.Mensaje" class="form-control" placeholder="Mensaje" rows="5" />
-        </div>
-        <div class="col-12">
-            <button class="btn btn-primary" disabled="@enviando">@(enviando ? "Enviando..." : "Enviar")</button>
-            @if (enviado)
-            {
-                <span class="ms-2 text-success">¡Gracias! Recibimos tu mensaje.</span>
-            }
+    <div class="form-card mb-3">
+        <div class="row g-3">
+            <div class="col-12 col-md-6">
+                <label class="form-label">Tu nombre</label>
+                <InputText @bind-Value="mensaje.Nombre" class="form-control" placeholder="Ej: Carlos Díaz" />
+            </div>
+            <div class="col-12 col-md-6">
+                <label class="form-label">Tu email</label>
+                <InputText @bind-Value="mensaje.Email" class="form-control" placeholder="tucorreo@dominio.com" />
+                <ValidationMessage For="() => mensaje.Email" />
+            </div>
+            <div class="col-12">
+                <label class="form-label">Asunto (opcional)</label>
+                <InputText @bind-Value="mensaje.Asunto" class="form-control" placeholder="Motivo del mensaje" />
+            </div>
+            <div class="col-12">
+                <label class="form-label">Mensaje</label>
+                <InputTextArea @bind-Value="mensaje.Mensaje" class="form-control" placeholder="Cuéntanos en qué podemos ayudarte" rows="5" />
+            </div>
+            <div class="col-12">
+                <button class="btn btn-primary" disabled="@enviando">@(enviando ? "Enviando..." : "Enviar")</button>
+                @if (enviado)
+                {
+                    <span class="ms-2 text-success">¡Gracias! Recibimos tu mensaje.</span>
+                }
+            </div>
         </div>
     </div>
 </EditForm>

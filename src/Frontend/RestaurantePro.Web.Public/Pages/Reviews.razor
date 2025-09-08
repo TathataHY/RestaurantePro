@@ -16,18 +16,24 @@
 
 <EditForm Model="nuevo" OnValidSubmit="EnviarAsync">
     <DataAnnotationsValidator />
-    <div class="row g-2 mb-3">
-        <div class="col-12 col-md-4">
-            <InputText @bind-Value="nuevo.Nombre" class="form-control" placeholder="Tu nombre" />
-        </div>
-        <div class="col-12 col-md-4">
-            <InputNumber @bind-Value="nuevo.Valoracion" class="form-control" placeholder="Valoración (1-5)" />
-        </div>
-        <div class="col-12">
-            <InputTextArea @bind-Value="nuevo.Comentario" class="form-control" placeholder="Escribe tu comentario..." rows="3" />
-        </div>
-        <div class="col-12">
-            <button class="btn btn-primary" disabled="@enviando">@(enviando ? "Enviando..." : "Enviar reseña")</button>
+    <div class="form-card mb-3">
+        <div class="row g-3">
+            <div class="col-12 col-md-4">
+                <label class="form-label">Tu nombre</label>
+                <InputText @bind-Value="nuevo.Nombre" class="form-control" placeholder="Ej: Ana Pérez" />
+            </div>
+            <div class="col-12 col-md-4">
+                <label class="form-label">Valoración</label>
+                <InputNumber @bind-Value="nuevo.Valoracion" class="form-control" placeholder="1 a 5" />
+                <div class="form-hint">Usa un valor entre 1 y 5</div>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Comentario</label>
+                <InputTextArea @bind-Value="nuevo.Comentario" class="form-control" placeholder="Escribe tu comentario..." rows="3" />
+            </div>
+            <div class="col-12">
+                <button class="btn btn-primary" disabled="@enviando">@(enviando ? "Enviando..." : "Enviar reseña")</button>
+            </div>
         </div>
     </div>
 </EditForm>

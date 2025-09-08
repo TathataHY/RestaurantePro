@@ -17,29 +17,36 @@
 <EditForm EditContext="editContext!" OnValidSubmit="Registrar">
     <DataAnnotationsValidator />
     <ValidationSummary />
-    <div class="row g-2 mb-3">
-        <div class="col-12 col-md-6">
-            <InputText @bind-Value="form.Nombre" class="form-control" placeholder="Nombre completo" />
-        </div>
-        <div class="col-12 col-md-6">
-            <InputText @bind-Value="form.Email" class="form-control" placeholder="Email" />
-        </div>
-        <div class="col-12 col-md-6">
-            <InputText @bind-Value="form.Telefono" class="form-control" placeholder="Teléfono (e.g. +56912345678)" />
-        </div>
-        <div class="col-12 col-md-6">
-            <InputDate @bind-Value="form.FechaNacimiento" class="form-control" />
-        </div>
-        <div class="col-12">
-            <button class="btn btn-primary" disabled="@(!esFormularioValido || enviando)">@(enviando ? "Registrando..." : "Registrarme")</button>
-            @if (exito)
-            {
-                <span class="ms-2 text-success">¡Registro exitoso!</span>
-            }
-            @if (!string.IsNullOrEmpty(error))
-            {
-                <span class="ms-2 text-danger">@error</span>
-            }
+    <div class="form-card mb-3">
+        <div class="row g-3">
+            <div class="col-12 col-md-6">
+                <label class="form-label">Nombre completo</label>
+                <InputText @bind-Value="form.Nombre" class="form-control" placeholder="Ej: María López" />
+            </div>
+            <div class="col-12 col-md-6">
+                <label class="form-label">Email</label>
+                <InputText @bind-Value="form.Email" class="form-control" placeholder="nombre@dominio.com" />
+            </div>
+            <div class="col-12 col-md-6">
+                <label class="form-label">Teléfono</label>
+                <InputText @bind-Value="form.Telefono" class="form-control" placeholder="+56912345678" />
+                <div class="form-hint">Mínimo 8 caracteres</div>
+            </div>
+            <div class="col-12 col-md-6">
+                <label class="form-label">Fecha de nacimiento</label>
+                <InputDate @bind-Value="form.FechaNacimiento" class="form-control" />
+            </div>
+            <div class="col-12">
+                <button class="btn btn-primary" disabled="@(!esFormularioValido || enviando)">@(enviando ? "Registrando..." : "Registrarme")</button>
+                @if (exito)
+                {
+                    <span class="ms-2 text-success">¡Registro exitoso!</span>
+                }
+                @if (!string.IsNullOrEmpty(error))
+                {
+                    <span class="ms-2 text-danger">@error</span>
+                }
+            </div>
         </div>
     </div>
 </EditForm>
