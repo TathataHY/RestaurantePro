@@ -207,3 +207,26 @@ Las unit tests validan comportamientos pequeños y deterministas y actúan como 
   - [x] ClientesPublicApiService: `Content-Type: application/json`; timeout retorna false
   - [x] MenuApiService: defaults sensatos (SoloActivos, PageSize) y caracteres especiales en filtros
   - [x] PromocionesApiService: `TaskCanceledException` → lista vacía
+
+## Pruebas de accesibilidad y robustez (fase 6)
+
+- Accesibilidad (A11y)
+  - [x] Home/About/Menú: imágenes con alt no vacío (Home cards, About galería, Menú alt=nombre)
+  - [x] NavMenu: botón navbar-toggler con aria-label/título consistente
+
+- Seguridad (XSS)
+  - [x] Reviews/Contact: contenido escapado; scripts se muestran como texto
+
+- Servicios (robustez extra)
+  - [x] ContactApiService: Content-Type application/json en POST
+  - [x] PromocionesApiService: encoding de ordenarPor/dirección con espacios/especiales
+  - [x] PromocionesApiService: Data null → lista vacía
+
+- Páginas
+  - [x] Promociones: “Cargando promociones…” visible durante fetch; desaparece tras data/error
+  - [x] Menú: alt de imagen igual al nombre del producto
+  - [x] Reservas: botón “Escríbenos” navega a /contacto
+
+- SEO
+  - [x] Home: og:image y twitter:image presentes (test)
+  - [x] Promociones: PageTitle coincide con encabezado principal

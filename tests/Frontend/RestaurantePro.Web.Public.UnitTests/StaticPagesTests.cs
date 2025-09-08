@@ -56,6 +56,30 @@ public class StaticPagesTests : TestContext
     }
 
     [Fact]
+    public void SEO_Promociones_PageTitle_Coincide_Encabezado()
+    {
+        // Registrar servicio requerido con HttpClient simulado
+        var mock = new RichardSzalay.MockHttp.MockHttpMessageHandler();
+        mock.When("http://localhost/api/public/promociones*")
+            .Respond("application/json", "{ \"success\": true, \"data\": [] }");
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<RestaurantePro.Web.Public.Services.PromocionesApiService>();
+
+        var head = RenderComponent<HeadOutlet>();
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Promociones>();
+        head.Markup.Should().Contain("<title>Promociones</title>");
+        cut.Markup.Should().Contain("<h3>Promociones</h3>");
+    }
+
+    [Fact]
+    public void Reservas_Boton_Contacto_Navega_A_Contacto()
+    {
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Reservas>();
+        var btn = cut.FindAll("a").First(a => a.GetAttribute("href") == "/contacto");
+        btn.TextContent.Should().Contain("Escríbenos");
+    }
+
+    [Fact]
     public void About_Renderiza_Secciones_Y_Galeria()
     {
         var cut = RenderComponent<RestaurantePro.Web.Public.Pages.About>();
@@ -241,6 +265,8 @@ public class StaticPagesTests : TestContext
         head.Markup.Should().Contain("href=\"/\"");
         head.Markup.Should().Contain("property=\"og:title\" content=\"RestaurantePro - Sabores que inspiran\"");
         head.Markup.Should().Contain("property=\"og:description\" content=\"Ingredientes frescos, técnica moderna y un servicio que te hará volver.\"");
+        head.Markup.Should().Contain("property=\"og:image\"");
+        head.Markup.Should().Contain("name=\"twitter:image\"");
     }
 
     [Fact]

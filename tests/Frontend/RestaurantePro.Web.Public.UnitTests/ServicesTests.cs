@@ -125,6 +125,29 @@ public class ServicesTests
     }
 
     [Fact]
+    public async Task ContactApiService_ContentType_Es_ApplicationJson()
+    {
+        var captured = new List<string>();
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Post, "http://localhost/api/public/contact/messages")
+            .Respond(async req =>
+            {
+                var ct = req.Content!.Headers.ContentType!.MediaType;
+                captured.Add(ct ?? string.Empty);
+                return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent("{ \"success\": true, \"data\": { } }", System.Text.Encoding.UTF8, "application/json")
+                };
+            });
+
+        var http = new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") };
+        var svc = new ContactApiService(http);
+        var ok = await svc.EnviarAsync(new CreateContactMessageRequest { Nombre = "Ana", Email = "a@a.com", Mensaje = "Hola" });
+        ok.Should().BeTrue();
+        captured.Should().Contain(ct => ct == "application/json");
+    }
+
+    [Fact]
     public async Task ClientesPublicApiService_ContentType_Es_ApplicationJson()
     {
         var captured = new List<string>();
@@ -168,6 +191,36 @@ public class ServicesTests
         cats.Should().NotBeNull();
         captured.Last().Should().Contain("soloActivas=True");
         captured.Last().Should().Contain("ocultarVacias=True");
+    }
+
+    [Fact]
+    public async Task PromocionesApiService_Encoding_OrdenarPor_Y_Direccion()
+    {
+        var captured = new List<string>();
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Get, "http://localhost/api/public/promociones*")
+            .Respond(req =>
+            {
+                captured.Add(req.RequestUri!.OriginalString);
+                return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent("{ \"success\": true, \"data\": [] }", System.Text.Encoding.UTF8, "application/json")
+                });
+            });
+
+        var http = new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") };
+        var svc = new PromocionesApiService(http);
+
+        var ordenarPor = "Fecha Creación"; // contiene espacio y carácter especial
+        var direccion = "desc especial";   // contiene espacio
+        var _ = await svc.ObtenerAsync(true, ordenarPor, direccion);
+
+        var url = captured.Last();
+        url.Should().Contain("soloVigentes=True");
+        url.Should().Contain("ordenarPor=");
+        url.Should().Contain("direccion=");
+        url.Should().Contain("ordenarPor=Fecha%20Creaci%C3%B3n");
+        url.Should().Contain("direccion=desc%20especial");
     }
 }
 
