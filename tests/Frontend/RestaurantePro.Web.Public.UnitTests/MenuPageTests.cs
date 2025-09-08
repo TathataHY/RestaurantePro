@@ -176,6 +176,96 @@ public class MenuPageTests : TestContext
     }
 
     [Fact]
+    public void Menu_Skeleton_Exacto_Seis_Placeholders()
+    {
+        var categoriaId = Guid.NewGuid();
+        var categorias = new[] { new CategoriaProductoDto { Id = categoriaId, Nombre = "Platos", ProductosDisponibles = 2 } };
+        var mockHttp = new MockHttpMessageHandler();
+        mockHttp.When("http://localhost/api/core/categorias*")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>> { Success = true, Data = categorias.ToList() }));
+        mockHttp.When("http://localhost/api/core/productos*")
+            .Respond(async req =>
+            {
+                await Task.Delay(1500);
+                var json = System.Text.Json.JsonSerializer.Serialize(new ApiResponse<PaginatedList<ProductoDto>>
+                {
+                    Success = true,
+                    Data = new PaginatedList<ProductoDto> { Items = new List<ProductoDto>(), PageNumber = 1, PageSize = 6, TotalCount = 0, TotalPages = 1 }
+                });
+                return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+                };
+            });
+
+        Services.AddScoped(sp => new HttpClient(mockHttp) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<MenuApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Menu>();
+
+        cut.WaitForAssertion(() =>
+        {
+            var skeletons = cut.FindAll(".placeholder-glow");
+            skeletons.Count.Should().Be(6);
+        }, TimeSpan.FromSeconds(2));
+    }
+
+    [Fact]
+    public void Menu_Paginacion_NextPrev_Envian_PageNumber()
+    {
+        var categoriaId = Guid.NewGuid();
+        var categorias = new[] { new CategoriaProductoDto { Id = categoriaId, Nombre = "Platos", ProductosDisponibles = 12 } };
+        var captured = new List<string>();
+
+        var items = Enumerable.Range(1, 6).Select(i => new ProductoDto
+        {
+            Id = Guid.NewGuid(), Nombre = $"Item {i}", Descripcion = "", Precio = 1000 * i,
+            CategoriaId = categoriaId, CategoriaNombre = "Platos", Activo = true, Popularidad = i
+        }).ToList();
+
+        var mock = new MockHttpMessageHandler();
+        mock.When("http://localhost/api/core/categorias*")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>> { Success = true, Data = categorias.ToList() }));
+        mock.When("http://localhost/api/core/productos*")
+            .Respond(req =>
+            {
+                captured.Add(req.RequestUri!.ToString());
+                var json = System.Text.Json.JsonSerializer.Serialize(new ApiResponse<PaginatedList<ProductoDto>>
+                {
+                    Success = true,
+                    Data = new PaginatedList<ProductoDto> { Items = items, PageNumber = 1, PageSize = 6, TotalCount = 12, TotalPages = 2 }
+                });
+                return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+                });
+            });
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<MenuApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Menu>();
+
+        // Esperar a que cargue y muestre paginación 1 de 2
+        cut.WaitForAssertion(() =>
+        {
+            cut.Markup.Should().Contain("Página 1 de 2");
+        });
+
+        // click siguiente
+        cut.InvokeAsync(() => cut.FindAll(".btn-group button")[1].Click());
+        // click anterior
+        cut.InvokeAsync(() => cut.FindAll(".btn-group button")[0].Click());
+
+        cut.WaitForAssertion(() =>
+        {
+            // Se esperan al menos 2 solicitudes (inicial + navegación) y que incluyan PageNumber
+            captured.Count.Should().BeGreaterThanOrEqualTo(2);
+            captured.Any(uri => uri.Contains("PageNumber=2")).Should().BeTrue();
+        });
+    }
+
+    [Fact]
     public void Menu_Paginacion_Texto_Y_Boton_Anterior_Deshabilitado()
     {
         var categoriaId = Guid.NewGuid();

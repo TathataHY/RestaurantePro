@@ -68,6 +68,26 @@ public class StaticPagesTests : TestContext
     }
 
     [Fact]
+    public void Home_PageTitle_Renderiza_Title_Tag()
+    {
+        var head = RenderComponent<HeadOutlet>();
+        RenderComponent<RestaurantePro.Web.Public.Pages.Home>();
+        head.Markup.Should().Contain("<title>Inicio</title>");
+    }
+
+    [Fact]
+    public void Home_No_Duplica_Meta_En_ReRender()
+    {
+        var head = RenderComponent<HeadOutlet>();
+        var home = RenderComponent<RestaurantePro.Web.Public.Pages.Home>();
+        // Forzar re-render
+        home.Render();
+        var markup = head.Markup;
+        markup.Split("property=\"og:title\"").Length.Should().Be(2); // 1 ocurrencia -> 2 partes
+        markup.Split("property=\"og:description\"").Length.Should().Be(2);
+    }
+
+    [Fact]
     public void SEO_Home_HeadContent()
     {
         var head = RenderComponent<HeadOutlet>();

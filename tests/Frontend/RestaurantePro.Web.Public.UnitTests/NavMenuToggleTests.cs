@@ -18,6 +18,20 @@ public class NavMenuToggleTests : TestContext
         wrapper = cut.Find("div.nav-scrollable");
         wrapper.GetAttribute("class").Should().NotContain("collapse");
     }
+
+    [Fact]
+    public void Click_En_Link_Colapsa_Menu()
+    {
+        var cut = RenderComponent<NavMenu>();
+        cut.Find("button.navbar-toggler").Click();
+        var wrapper = cut.Find("div.nav-scrollable");
+        wrapper.GetAttribute("class").Should().NotContain("collapse");
+
+        // Click en enlace "Menú" dispara Toggle por @onclick del contenedor
+        cut.FindAll("a").First(a => a.TextContent.Contains("Menú")).Click();
+        wrapper = cut.Find("div.nav-scrollable");
+        wrapper.GetAttribute("class").Should().Contain("collapse");
+    }
 }
 
 

@@ -147,3 +147,25 @@ Las unit tests validan comportamientos pequeños y deterministas y actúan como 
   - [x] Link activo en /resenas
   - [x] Link activo en /registro
   - [x] Link activo en /promociones
+
+---
+
+## Pruebas extra sugeridas (fase 4)
+
+- SEO
+  - [ ] Home: PageTitle via HeadOutlet
+  - [ ] Home: no duplica og:title/description en re-render
+
+- NavMenu / UX
+  - [ ] Click en un link colapsa el menú
+  - [ ] Enlaces externos (WhatsApp) tienen rel="noopener" con target="_blank"
+
+- Menú (UI/estado)
+  - [ ] Skeleton: exactamente 6 placeholders visibles durante carga
+  - [ ] Paginación: Siguiente/Anterior envían PageNumber correcto al servicio
+  - [ ] (Opcional) Al cambiar de categoría, la página vuelve a 1
+
+- Servicios
+  - [ ] ClientesPublicApiService: body POST serializa campos y fecha correctamente
+  - [ ] MenuApiService: combina filtros (OrderBy/Direction + SoloActivos + paginación)
+  - [ ] Manejo de TaskCanceledException como lista vacía
