@@ -1,0 +1,107 @@
+using Bunit;
+using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
+using RichardSzalay.MockHttp;
+using RestaurantePro.Web.Public.Models;
+using RestaurantePro.Web.Public.Services;
+
+namespace RestaurantePro.Web.Public.UnitTests;
+
+public class ReviewsPageTests : TestContext
+{
+    [Fact]
+    public void Reviews_ListaInicial_RenderizaResenas()
+    {
+        var reviews = new List<ReviewDto>
+        {
+            new ReviewDto { Nombre = "Ana", Comentario = "Excelente", Valoracion = 5, Fecha = DateTime.UtcNow },
+            new ReviewDto { Nombre = "Luis", Comentario = "Muy bueno", Valoracion = 4, Fecha = DateTime.UtcNow }
+        };
+
+        var mock = new MockHttpMessageHandler();
+        mock.When("http://localhost/api/public/reviews")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<ReviewDto>> { Success = true, Data = reviews }));
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<ReviewsApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Reviews>();
+
+        cut.WaitForAssertion(() =>
+        {
+            cut.Markup.Should().Contain("Reseñas");
+            cut.Markup.Should().Contain("Ana");
+            cut.Markup.Should().Contain("Luis");
+        });
+    }
+
+    [Fact]
+    public void Reviews_Crear_Exito_ReseteaYRecarga()
+    {
+        var initial = new List<ReviewDto>
+        {
+            new ReviewDto { Nombre = "Ana", Comentario = "Excelente", Valoracion = 5, Fecha = DateTime.UtcNow }
+        };
+        var afterPost = new List<ReviewDto>(initial)
+        {
+            new ReviewDto { Nombre = "Juan", Comentario = "Muy rico", Valoracion = 5, Fecha = DateTime.UtcNow }
+        };
+
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Get, "http://localhost/api/public/reviews")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<ReviewDto>> { Success = true, Data = afterPost }));
+        mock.When(HttpMethod.Post, "http://localhost/api/public/reviews")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<ReviewDto> { Success = true, Data = new ReviewDto { Nombre = "Juan", Comentario = "Muy rico", Valoracion = 5, Fecha = DateTime.UtcNow } }));
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<ReviewsApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Reviews>();
+
+        cut.Find("input[placeholder='Tu nombre']").Change("Juan");
+        cut.Find("input[placeholder='Valoración (1-5)']").Change("5");
+        cut.Find("textarea[placeholder='Escribe tu comentario...']").Change("Muy rico");
+        cut.Find("form").Submit();
+
+        cut.WaitForAssertion(() =>
+        {
+            cut.Markup.Should().Contain("Juan");
+            cut.Markup.Should().Contain("Muy rico");
+        });
+    }
+
+    [Fact]
+    public void Reviews_Crear_Error_NoCambiaLista()
+    {
+        var initial = new List<ReviewDto>
+        {
+            new ReviewDto { Nombre = "Ana", Comentario = "Excelente", Valoracion = 5, Fecha = DateTime.UtcNow }
+        };
+
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Get, "http://localhost/api/public/reviews")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<ReviewDto>> { Success = true, Data = initial }));
+        mock.When(HttpMethod.Post, "http://localhost/api/public/reviews")
+            .Respond(System.Net.HttpStatusCode.BadRequest);
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<ReviewsApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Reviews>();
+
+        cut.Find("input[placeholder='Tu nombre']").Change("Juan");
+        cut.Find("input[placeholder='Valoración (1-5)']").Change("5");
+        cut.Find("textarea[placeholder='Escribe tu comentario...']").Change("Muy rico");
+        cut.Find("form").Submit();
+
+        cut.WaitForAssertion(() =>
+        {
+            // La lista debe seguir mostrando solo la reseña inicial "Ana" (evitar inputs con valor "Juan")
+            var titulos = cut.FindAll("h5.card-title").Select(e => e.TextContent);
+            titulos.Should().Contain(t => t.Contains("Ana"));
+            titulos.Should().NotContain(t => t.Contains("Juan"));
+        });
+    }
+}
+
+

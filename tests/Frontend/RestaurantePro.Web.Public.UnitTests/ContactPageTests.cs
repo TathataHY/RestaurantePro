@@ -1,0 +1,80 @@
+using Bunit;
+using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
+using RichardSzalay.MockHttp;
+using RestaurantePro.Web.Public.Models;
+using RestaurantePro.Web.Public.Services;
+
+namespace RestaurantePro.Web.Public.UnitTests;
+
+public class ContactPageTests : TestContext
+{
+    [Fact]
+    public void Contact_Validacion_Campos_Requeridos()
+    {
+        var mock = new MockHttpMessageHandler();
+        mock.When("http://localhost/api/public/contact/messages")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<ContactMessageDto>> { Success = true, Data = new List<ContactMessageDto>() }));
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<ContactApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Contact>();
+
+        // Al intentar enviar vacíos, el formulario no debería enviarse (bUnit no muestra errores por defecto, validamos que no aparece el mensaje de éxito)
+        cut.Find("form").Submit();
+        cut.Markup.Should().NotContain("¡Gracias! Recibimos tu mensaje.");
+    }
+
+    [Fact]
+    public void Contact_Envio_Exitoso_Muestra_Mensaje_Y_Recarga()
+    {
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Get, "http://localhost/api/public/contact/messages")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<ContactMessageDto>> { Success = true, Data = new List<ContactMessageDto>() }));
+        mock.When(HttpMethod.Post, "http://localhost/api/public/contact/messages")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<ContactMessageDto> { Success = true, Data = new ContactMessageDto { Nombre = "Juan", Email = "j@e.com", Mensaje = "Hola" } }));
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<ContactApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Contact>();
+
+        cut.Find("input[placeholder='Tu nombre']").Change("Juan");
+        cut.Find("input[placeholder='Tu email']").Change("j@e.com");
+        cut.Find("input[placeholder='Asunto (opcional)']").Change("Consulta");
+        cut.Find("textarea[placeholder='Mensaje']").Change("Hola mundo");
+        cut.Find("form").Submit();
+
+        cut.WaitForAssertion(() =>
+        {
+            cut.Markup.Should().Contain("¡Gracias! Recibimos tu mensaje.");
+        });
+    }
+
+    [Fact]
+    public void Contact_Error_No_Muestra_Exito()
+    {
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Get, "http://localhost/api/public/contact/messages")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<ContactMessageDto>> { Success = true, Data = new List<ContactMessageDto>() }));
+        mock.When(HttpMethod.Post, "http://localhost/api/public/contact/messages")
+            .Respond(System.Net.HttpStatusCode.BadRequest);
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<ContactApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Contact>();
+
+        cut.Find("input[placeholder='Tu nombre']").Change("Juan");
+        cut.Find("input[placeholder='Tu email']").Change("j@e.com");
+        cut.Find("textarea[placeholder='Mensaje']").Change("Hola");
+        cut.Find("form").Submit();
+
+        cut.WaitForAssertion(() =>
+        {
+            cut.Markup.Should().NotContain("¡Gracias! Recibimos tu mensaje.");
+        });
+    }
+}
+
+

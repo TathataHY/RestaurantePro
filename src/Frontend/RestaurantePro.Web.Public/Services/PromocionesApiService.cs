@@ -15,8 +15,15 @@ public class PromocionesApiService
     public async Task<List<PromocionDto>> ObtenerAsync(bool soloVigentes = true, string ordenarPor = "FechaCreacion", string direccion = "desc")
     {
         var url = $"api/public/promociones?soloVigentes={soloVigentes}&ordenarPor={Uri.EscapeDataString(ordenarPor)}&direccion={Uri.EscapeDataString(direccion)}";
-        var resp = await _http.GetFromJsonAsync<ApiResponse<List<PromocionDto>>>(url);
-        return resp?.Data ?? new List<PromocionDto>();
+        try
+        {
+            var resp = await _http.GetFromJsonAsync<ApiResponse<List<PromocionDto>>>(url);
+            return resp?.Data ?? new List<PromocionDto>();
+        }
+        catch
+        {
+            return new List<PromocionDto>();
+        }
     }
 }
 
