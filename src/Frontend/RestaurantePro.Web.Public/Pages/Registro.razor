@@ -1,0 +1,76 @@
+@page "/registro"
+@inject RestaurantePro.Web.Public.Services.ClientesPublicApiService Api
+
+<HeadContent>
+    <link rel="canonical" href="/registro" />
+    <meta property="og:title" content="Registro de clientes - RestaurantePro" />
+    <meta property="og:description" content="Regístrate para recibir novedades y beneficios." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="/registro" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Registro de clientes - RestaurantePro" />
+    <meta name="twitter:description" content="Regístrate para recibir novedades y beneficios." />
+</HeadContent>
+
+<h3>Registro de clientes</h3>
+
+<EditForm Model="form" OnValidSubmit="Registrar">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="row g-2 mb-3">
+        <div class="col-12 col-md-6">
+            <InputText @bind-Value="form.Nombre" class="form-control" placeholder="Nombre completo" />
+        </div>
+        <div class="col-12 col-md-6">
+            <InputText @bind-Value="form.Email" class="form-control" placeholder="Email" />
+        </div>
+        <div class="col-12 col-md-6">
+            <InputText @bind-Value="form.Telefono" class="form-control" placeholder="Teléfono (e.g. +56912345678)" />
+        </div>
+        <div class="col-12 col-md-6">
+            <InputDate @bind-Value="form.FechaNacimiento" class="form-control" />
+        </div>
+        <div class="col-12">
+            <button class="btn btn-primary" disabled="@enviando">@(enviando ? "Registrando..." : "Registrarme")</button>
+            @if (exito)
+            {
+                <span class="ms-2 text-success">¡Registro exitoso!</span>
+            }
+            @if (!string.IsNullOrEmpty(error))
+            {
+                <span class="ms-2 text-danger">@error</span>
+            }
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    private RestaurantePro.Web.Public.Services.PublicClienteRegisterRequest form = new()
+    {
+        FechaNacimiento = DateTime.Today.AddYears(-20)
+    };
+    private bool enviando = false;
+    private bool exito = false;
+    private string? error;
+
+    private async Task Registrar()
+    {
+        if (enviando) return;
+        exito = false;
+        error = null;
+        enviando = true;
+        var ok = await Api.RegistrarAsync(form);
+        if (ok)
+        {
+            exito = true;
+            form = new RestaurantePro.Web.Public.Services.PublicClienteRegisterRequest { FechaNacimiento = DateTime.Today.AddYears(-20) };
+        }
+        else
+        {
+            error = "No fue posible completar el registro. Verifica los datos.";
+        }
+        enviando = false;
+    }
+}
+
+

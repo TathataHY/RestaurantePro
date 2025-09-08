@@ -12,5 +12,7 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(apiBaseU
 builder.Services.AddScoped<RestaurantePro.Web.Public.Services.MenuApiService>();
 builder.Services.AddScoped<RestaurantePro.Web.Public.Services.ReviewsApiService>();
 builder.Services.AddScoped<RestaurantePro.Web.Public.Services.ContactApiService>();
+builder.Services.AddScoped<RestaurantePro.Web.Public.Services.ClientesPublicApiService>();
+builder.Services.AddScoped<RestaurantePro.Web.Public.Services.PromocionesApiService>();
 
 await builder.Build().RunAsync();

@@ -1,0 +1,59 @@
+@page "/promociones"
+@inject RestaurantePro.Web.Public.Services.PromocionesApiService Api
+
+<HeadContent>
+    <link rel="canonical" href="/promociones" />
+    <meta property="og:title" content="Promociones - RestaurantePro" />
+    <meta property="og:description" content="Conoce nuestras promociones vigentes." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="/promociones" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Promociones - RestaurantePro" />
+    <meta name="twitter:description" content="Conoce nuestras promociones vigentes." />
+</HeadContent>
+
+<h3>Promociones</h3>
+
+@if (cargando)
+{
+    <p>Cargando promociones...</p>
+}
+else if (items.Count == 0)
+{
+    <p>No hay promociones vigentes.</p>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-md-2 g-3">
+        @foreach (var p in items)
+        {
+            <div class="col">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">@p.Nombre</h5>
+                        <h6 class="card-subtitle text-muted">Código: @p.Codigo</h6>
+                        <p class="card-text mt-2">@p.Descripcion</p>
+                        <div class="d-flex gap-3 small text-muted">
+                            <span>Inicio: @p.FechaInicio.ToLocalTime().ToString("d")</span>
+                            <span>Fin: @p.FechaFin.ToLocalTime().ToString("d")</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private bool cargando = true;
+    private List<RestaurantePro.Web.Public.Services.PromocionDto> items = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        cargando = true;
+        items = await Api.ObtenerAsync(true, "FechaCreacion", "desc");
+        cargando = false;
+    }
+}
+
+

@@ -48,7 +48,24 @@
         <h5>Productos @if (categoriaSeleccionada != null) { <text> - @categoriaSeleccionada!.Nombre</text>; }</h5>
         @if (cargando)
         {
-            <div class="text-muted">Cargando productos...</div>
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3">
+                @foreach (var _ in Enumerable.Range(0, 6))
+                {
+                    <div class="col">
+                        <div class="card h-100 placeholder-glow">
+                            <div class="card-img-top bg-light" style="height: 200px;"></div>
+                            <div class="card-body">
+                                <h6 class="card-title"><span class="placeholder col-6"></span></h6>
+                                <p class="card-text"><span class="placeholder col-8"></span></p>
+                            </div>
+                            <div class="card-footer d-flex justify-content-between align-items-center">
+                                <span class="placeholder col-3"></span>
+                                <small class="placeholder col-4"></small>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
         }
         else if (productos.Count == 0)
         {
@@ -94,7 +111,7 @@
     private List<CategoriaProductoDto> categorias = new();
     private List<ProductoDto> productos = new();
     private IEnumerable<ProductoDto> productosOrdenados => OrdenarProductos(productos, orden);
-    private IEnumerable<ProductoDto> productosPagina => productos; // cuando usemos server-side, la página ya vendrá recortada
+    private IEnumerable<ProductoDto> productosPagina => productos; // si el servidor ya recorta, esta es la página actual
     private CategoriaProductoDto? categoriaSeleccionada;
     private string textoBusqueda = string.Empty;
     private string orden = "popularidad";
@@ -103,6 +120,7 @@
     private int tamanoPagina = 6;
     private int totalPaginas = 1;
     private bool usarPaginacionServidor = true;
+    private string? error;
 
     protected override async Task OnInitializedAsync()
     {
@@ -117,23 +135,36 @@
     {
         categoriaSeleccionada = cat;
         cargando = true;
-        if (usarPaginacionServidor)
+        try
         {
-            var orderBy = orden == "precio_asc" ? "Precio" : orden == "precio_desc" ? "Precio" : "Popularidad";
-            var orderDirection = orden == "precio_desc" ? "desc" : orden == "precio_asc" ? "asc" : "desc";
-            var page = await Api.ObtenerProductosPaginadosAsync(cat.Id, paginaActual, tamanoPagina, false, orderBy, orderDirection);
-            productos = page.Items;
-            totalPaginas = page.TotalPages;
+            error = null;
+            if (usarPaginacionServidor)
+            {
+                var orderBy = orden == "precio_asc" ? "Precio" : orden == "precio_desc" ? "Precio" : "Popularidad";
+                var orderDirection = orden == "precio_desc" ? "desc" : orden == "precio_asc" ? "asc" : "desc";
+                var page = await Api.ObtenerProductosPaginadosAsync(cat.Id, paginaActual, tamanoPagina, false, orderBy, orderDirection);
+                productos = page.Items;
+                totalPaginas = page.TotalPages;
+            }
+            else
+            {
+                // Traer también no activos para marcar "Sin stock"
+                productos = await Api.ObtenerProductosPorCategoriaAsync(cat.Id, false, true);
+                CalcularTotalPaginas();
+            }
         }
-        else
+        catch
         {
-            // Traer también no activos para marcar "Sin stock"
-            productos = await Api.ObtenerProductosPorCategoriaAsync(cat.Id, false, true);
-            CalcularTotalPaginas();
+            error = "No fue posible cargar los productos. Intenta nuevamente.";
+            productos = new List<ProductoDto>();
+            totalPaginas = 1;
         }
-        cargando = false;
-        paginaActual = 1;
-        StateHasChanged();
+        finally
+        {
+            cargando = false;
+            paginaActual = 1;
+            StateHasChanged();
+        }
     }
 
     private async Task AplicarBusqueda()
