@@ -81,6 +81,37 @@ public class ContactPageTests : TestContext
     }
 
     [Fact]
+    public void Contact_Render_Lista_Con_Formato_Basico()
+    {
+        var when = DateTime.UtcNow;
+        var formatted = when.ToLocalTime().ToString("g");
+
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Get, "http://localhost/api/public/contact/messages")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(
+                new ApiResponse<List<ContactMessageDto>>
+                {
+                    Success = true,
+                    Data = new List<ContactMessageDto>
+                    {
+                        new ContactMessageDto { Nombre = "Ana", Email = "a@a.com", Asunto = "Hola", Mensaje = "Mensaje", Fecha = when }
+                    }
+                }));
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<ContactApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Contact>();
+
+        cut.WaitForAssertion(() =>
+        {
+            cut.Markup.Should().Contain("Ana");
+            cut.Markup.Should().Contain("a@a.com");
+            cut.Markup.Should().Contain(formatted);
+        });
+    }
+
+    [Fact]
     public void Contact_Get_Error_Muestra_Lista_Vacia_Sin_Romper_UI()
     {
         var mock = new MockHttpMessageHandler();

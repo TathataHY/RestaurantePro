@@ -66,10 +66,13 @@ public class ReviewsPageTests : TestContext
 
         var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Reviews>();
 
-        cut.Find("input[placeholder='Tu nombre']").Change("Juan");
-        cut.Find("input[placeholder='Valoración (1-5)']").Change("5");
-        cut.Find("textarea[placeholder='Escribe tu comentario...']").Change("Muy rico");
-        cut.Find("form").Submit();
+        cut.InvokeAsync(() =>
+        {
+            cut.Find("input[placeholder='Tu nombre']").Change("Juan");
+            cut.Find("input[placeholder='Valoración (1-5)']").Change("5");
+            cut.Find("textarea[placeholder='Escribe tu comentario...']").Change("Muy rico");
+            cut.Find("form").Submit();
+        });
 
         cut.WaitForAssertion(() =>
         {
@@ -100,10 +103,13 @@ public class ReviewsPageTests : TestContext
 
         var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Reviews>();
 
-        cut.Find("input[placeholder='Tu nombre']").Change("Juan");
-        cut.Find("input[placeholder='Valoración (1-5)']").Change("5");
-        cut.Find("textarea[placeholder='Escribe tu comentario...']").Change("Muy rico");
-        cut.Find("form").Submit();
+        cut.InvokeAsync(() =>
+        {
+            cut.Find("input[placeholder='Tu nombre']").Change("Juan");
+            cut.Find("input[placeholder='Valoración (1-5)']").Change("5");
+            cut.Find("textarea[placeholder='Escribe tu comentario...']").Change("Muy rico");
+            cut.Find("form").Submit();
+        });
 
         cut.WaitForAssertion(() =>
         {

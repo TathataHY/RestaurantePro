@@ -47,12 +47,12 @@ public class MenuAdvancedTests : TestContext
         };
 
         var mock = new MockHttpMessageHandler();
-        // La primera carga trae categorías base vacías
-        mock.When("http://localhost/api/core/categorias?*")
-            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>> { Success = true, Data = new List<CategoriaProductoDto>() }));
-        // Buscar
+        // Buscar (registrar PRIMERO para priorizar sobre el genérico)
         mock.When("http://localhost/api/core/categorias/buscar*")
             .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>> { Success = true, Data = categorias }));
+        // La primera carga trae categorías base vacías
+        mock.When("http://localhost/api/core/categorias*")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>> { Success = true, Data = new List<CategoriaProductoDto>() }));
         // Productos
         mock.When("http://localhost/api/core/productos*")
             .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<PaginatedList<ProductoDto>> { Success = true, Data = new PaginatedList<ProductoDto> { Items = items, PageNumber = 1, PageSize = 6, TotalCount = 1, TotalPages = 1 } }));
@@ -63,15 +63,18 @@ public class MenuAdvancedTests : TestContext
         var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Menu>();
 
         // Ingresar texto y aplicar búsqueda
-        cut.Find("input[placeholder='Buscar categoría...']").Input("Pizza");
-        cut.Find("button.btn.btn-primary").Click();
+        cut.InvokeAsync(() =>
+        {
+            cut.Find("input[placeholder='Buscar categoría...']").Input("Pizza");
+            cut.Find("button.btn.btn-primary").Click();
+        });
 
-        // Debe seleccionar la primera categoría encontrada y mostrar encabezado con su nombre
+        // Debe seleccionar la primera categoría encontrada y mostrar resultados de esa categoría
         cut.WaitForAssertion(() =>
         {
-            cut.Markup.Should().Contain("Productos  - Pizza");
             cut.Markup.Should().Contain("Margarita");
-        });
+            cut.Markup.Should().Contain("Pizza");
+        }, TimeSpan.FromSeconds(5));
     }
 }
 

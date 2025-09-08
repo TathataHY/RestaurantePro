@@ -128,22 +128,22 @@ Las unit tests validan comportamientos pequeños y deterministas y actúan como 
 ## Pruebas SEO y UI adicionales (fase 3)
 
 - SEO HeadContent
-  - [ ] Home: canonical, og:title, og:description
-  - [ ] About: canonical, og:title, og:description
-  - [ ] Reservas: canonical, og:title, og:description
-  - [ ] Menu: canonical, og:title, og:description
-  - [ ] Registro: canonical, og:title, og:description
+  - [x] Home: canonical, og:title, og:description
+  - [x] About: canonical, og:title, og:description
+  - [x] Reservas: canonical, og:title, og:description
+  - [x] Menu: canonical, og:title, og:description
+  - [x] Registro: canonical, og:title, og:description
 
 - Menú (UI/estado)
-  - [ ] Paginación: botones deshabilitados en primera/última página
-  - [ ] Paginación: texto "Página X de Y" correcto
-  - [ ] Productos inactivos muestran "Sin stock" y opacidad
+  - [x] Paginación: botones deshabilitados en primera/última página
+  - [x] Paginación: texto "Página X de Y" correcto
+  - [x] Productos inactivos muestran "Sin stock" y opacidad
 
 - Contacto
-  - [ ] Render de lista con nombre/email/fecha formateada
+  - [x] Render de lista con nombre/email/fecha formateada
 
 - NavMenu
-  - [ ] Link activo en /menu
-  - [ ] Link activo en /resenas
-  - [ ] Link activo en /registro
-  - [ ] Link activo en /promociones
+  - [x] Link activo en /menu
+  - [x] Link activo en /resenas
+  - [x] Link activo en /registro
+  - [x] Link activo en /promociones
