@@ -49,6 +49,29 @@ public class MoreServicesTests
     }
 
     [Fact]
+    public async Task MenuApiService_OrderBy_Encoding()
+    {
+        var captured = new List<string>();
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Get, "http://localhost/api/core/productos*")
+            .Respond(req =>
+            {
+                captured.Add(req.RequestUri!.ToString());
+                return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent(System.Text.Json.JsonSerializer.Serialize(new ApiResponse<PaginatedList<ProductoDto>> { Success = true, Data = new PaginatedList<ProductoDto>() }), System.Text.Encoding.UTF8, "application/json")
+                });
+            });
+
+        var http = new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") };
+        var svc = new MenuApiService(http);
+        await svc.ObtenerProductosPaginadosAsync(Guid.NewGuid(), 1, 6, true, "Precio Promedio", "asc");
+        var last = captured.Last();
+        // Usar @ para cadena literal y escapar correctamente la barra invertida
+        last.Should().MatchRegex(@"OrderBy=Precio( |%20|\+)?Promedio");
+    }
+
+    [Fact]
     public async Task Reviews_Contact_TaskCanceled_Retorna_Vacio()
     {
         var canceled = new MockHttpMessageHandler();

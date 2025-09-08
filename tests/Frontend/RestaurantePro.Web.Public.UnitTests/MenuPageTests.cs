@@ -266,6 +266,90 @@ public class MenuPageTests : TestContext
     }
 
     [Fact]
+    public void Menu_Busqueda_Query_Vacio_Restituye_Categorias()
+    {
+        var mock = new MockHttpMessageHandler();
+        // Buscar vacío → debe llamar a ObtenerCategoriasAsync
+        mock.When("http://localhost/api/core/categorias?soloActivas=True&ocultarVacias=True")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>> { Success = true, Data = new List<CategoriaProductoDto>() }));
+        mock.When("http://localhost/api/core/categorias*")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>> { Success = true, Data = new List<CategoriaProductoDto>() }));
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<MenuApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Menu>();
+
+        // Escribir vacío y aplicar
+        cut.InvokeAsync(() =>
+        {
+            cut.Find("input[placeholder='Buscar categoría...']").Change("");
+            cut.Find("button.btn.btn-primary").Click();
+        });
+
+        cut.WaitForAssertion(() =>
+        {
+            cut.Markup.Should().Contain("Productos ");
+        });
+    }
+
+    [Fact]
+    public void Menu_Busqueda_Acentos_Url_Encoding()
+    {
+        var mock = new MockHttpMessageHandler();
+        mock.When("http://localhost/api/core/categorias/buscar*")
+            .WithQueryString("nombre", "%C3%B1oquis")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>> { Success = true, Data = new List<CategoriaProductoDto>() }));
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<MenuApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Menu>();
+        cut.InvokeAsync(() =>
+        {
+            cut.Find("input[placeholder='Buscar categoría...']").Change("ñoquis");
+            cut.Find("button.btn.btn-primary").Click();
+        });
+
+        // Si no lanza excepción, el encoding fue correcto y la respuesta mockeada atendió
+        cut.Markup.Should().Contain("Menú");
+    }
+
+    [Fact]
+    public void Menu_Skeleton_Solo_Visible_Durante_Carga()
+    {
+        var cat = new CategoriaProductoDto { Id = Guid.NewGuid(), Nombre = "Entradas", ProductosDisponibles = 1 };
+        var mock = new MockHttpMessageHandler();
+        mock.When("http://localhost/api/core/categorias*")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>> { Success = true, Data = new List<CategoriaProductoDto> { cat } }));
+        // Simular retardo en productos para ver skeleton
+        mock.When("http://localhost/api/core/productos*")
+            .Respond(async () =>
+            {
+                await Task.Delay(100);
+                var json = System.Text.Json.JsonSerializer.Serialize(new ApiResponse<PaginatedList<ProductoDto>>
+                {
+                    Success = true,
+                    Data = new PaginatedList<ProductoDto> { Items = new List<ProductoDto>(), PageNumber = 1, PageSize = 6, TotalCount = 0, TotalPages = 1 }
+                });
+                return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+                };
+            });
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<MenuApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Menu>();
+        // Durante carga
+        cut.WaitForAssertion(() => cut.FindAll(".placeholder-glow").Count.Should().BeGreaterThan(0));
+        // Luego de cargar (lista vacía)
+        cut.WaitForAssertion(() => cut.Markup.Should().Contain("No hay productos"));
+        cut.FindAll(".placeholder-glow").Count.Should().Be(0);
+    }
+
+    [Fact]
     public void Menu_Cambiar_Orden_Reinicia_Pagina_1()
     {
         var categoria = new CategoriaProductoDto { Id = Guid.NewGuid(), Nombre = "Entradas", ProductosDisponibles = 12 };

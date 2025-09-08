@@ -76,6 +76,52 @@ public class StaticPagesTests : TestContext
     }
 
     [Fact]
+    public void PageTitle_Home_Coincide_Encabezado()
+    {
+        var head = RenderComponent<HeadOutlet>();
+        var home = RenderComponent<RestaurantePro.Web.Public.Pages.Home>();
+        head.Markup.Should().Contain("<title>Inicio</title>");
+        home.Markup.Should().Contain("Sabores que inspiran");
+    }
+
+    [Fact]
+    public void PageTitle_Politicas_Coincide_Encabezado()
+    {
+        var head = RenderComponent<HeadOutlet>();
+        var politicas = RenderComponent<RestaurantePro.Web.Public.Pages.Politicas>();
+        head.Markup.Should().Contain("<title>Políticas</title>");
+        politicas.Markup.Should().Contain("Políticas del Restaurante");
+    }
+
+    [Fact]
+    public void PageTitle_Reservas_Coincide_Encabezado()
+    {
+        var head = RenderComponent<HeadOutlet>();
+        var reservas = RenderComponent<RestaurantePro.Web.Public.Pages.Reservas>();
+        head.Markup.Should().Contain("<title>Reservas</title>");
+        reservas.Markup.Should().Contain("Reservas");
+    }
+
+    [Fact]
+    public void SEO_Politicas_HeadContent()
+    {
+        var head = RenderComponent<HeadOutlet>();
+        RenderComponent<RestaurantePro.Web.Public.Pages.Politicas>();
+        head.Markup.Should().Contain("href=\"/politicas\"");
+        head.Markup.Should().Contain("property=\"og:title\" content=\"Políticas - RestaurantePro\"");
+        head.Markup.Should().Contain("property=\"og:description\" content=\"Reservas, cancelaciones, alergias, privacidad y cookies.\"");
+    }
+
+    [Fact]
+    public void Reservas_Mapa_Iframe_Tiene_LoadingYReferrerpolicy()
+    {
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Reservas>();
+        var iframe = cut.Find("iframe");
+        iframe.GetAttribute("loading").Should().Be("lazy");
+        iframe.GetAttribute("referrerpolicy").Should().Be("no-referrer-when-downgrade");
+    }
+
+    [Fact]
     public void Home_No_Duplica_Meta_En_ReRender()
     {
         var head = RenderComponent<HeadOutlet>();
@@ -170,6 +216,21 @@ public class StaticPagesTests : TestContext
             a.GetAttribute("target").Should().Be("_blank");
             a.GetAttribute("rel").Should().Contain("noopener");
         }
+    }
+
+    [Fact]
+    public void Footer_Tiene_Mapa_Telefono_Y_Email_Correctos()
+    {
+        var cut = RenderComponent<RestaurantePro.Web.Public.Shared.Footer>();
+        var mapa = cut.FindAll("a").First(a => a.TextContent.Contains("Cómo llegar"));
+        mapa.GetAttribute("href").Should().StartWith("https://maps.google.com/");
+        mapa.GetAttribute("target").Should().Be("_blank");
+        mapa.GetAttribute("rel").Should().Contain("noopener");
+
+        var tel = cut.FindAll("a").First(a => a.GetAttribute("href")!.StartsWith("tel:"));
+        var mail = cut.FindAll("a").First(a => a.GetAttribute("href")!.StartsWith("mailto:"));
+        tel.GetAttribute("href").Should().Contain("+56");
+        mail.GetAttribute("href").Should().Contain("@");
     }
 
     [Fact]
