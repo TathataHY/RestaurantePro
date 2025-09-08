@@ -230,3 +230,31 @@ Las unit tests validan comportamientos pequeños y deterministas y actúan como 
 - SEO
   - [x] Home: og:image y twitter:image presentes (test)
   - [x] Promociones: PageTitle coincide con encabezado principal
+
+---
+
+## Pruebas ampliadas (fase 7)
+
+- Accesibilidad
+  - [ ] NavMenu: el botón toggler responde a teclado (Enter/Espacio) y alterna aria-expanded
+  - [ ] Home/Promociones: og:image y twitter:image usan URLs absolutas (https)
+
+- Menú
+  - [ ] Selección inicial: al cargar con categorías, selecciona la primera y dispara la carga de productos
+  - [ ] Paginación: evitar doble click rápido en Siguiente/Anterior (no duplica llamadas)
+  - [ ] Búsqueda: trimming y case-insensitive ("" y "  pizza  " producen misma llamada)
+
+- Promociones
+  - [ ] Loading: “Cargando promociones…” visible con delay y desaparece tras data o error (MockHttp delay)
+  - [ ] Varias combinaciones de ordenarPor/dirección (FechaFin asc, Nombre desc) mapeadas a la URL
+
+- Reviews
+  - [ ] POST error (4xx/5xx) → retorna false (servicio) y el botón queda habilitado otra vez (página)
+  - [ ] Botón deshabilitado durante envío (paridad con Registro)
+
+- Contacto
+  - [ ] Botón deshabilitado durante envío y evita doble submit
+  - [ ] Email inválido muestra mensaje de validación (regex básica del framework)
+
+- About (galería)
+  - [ ] Navegación modal: “Siguiente” envuelve al inicio y “Anterior” envuelve al final
