@@ -2,6 +2,7 @@ using FluentAssertions;
 using RichardSzalay.MockHttp;
 using RestaurantePro.Web.Public.Models;
 using RestaurantePro.Web.Public.Services;
+using System.Text.Json;
 
 namespace RestaurantePro.Web.Public.UnitTests;
 
@@ -75,6 +76,52 @@ public class ServicesTests
 
         var ok = await svc.RegistrarAsync(new PublicClienteRegisterRequest { Nombre = "A", Email = "a@a.com", Telefono = "+569", FechaNacimiento = DateTime.UtcNow.AddYears(-20) });
         ok.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ClientesPublicApiService_Serializa_Body_Con_Fechas_Y_Campos()
+    {
+        var captured = new List<string>();
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Post, "http://localhost/api/public/clientes")
+            .Respond(async req =>
+            {
+                var json = await req.Content!.ReadAsStringAsync();
+                captured.Add(json);
+                return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent("{ \"success\": true }", System.Text.Encoding.UTF8, "application/json")
+                };
+            });
+
+        var http = new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") };
+        var svc = new ClientesPublicApiService(http);
+        var fecha = new DateTime(1990, 5, 20, 0, 0, 0, DateTimeKind.Utc);
+        var ok = await svc.RegistrarAsync(new PublicClienteRegisterRequest
+        {
+            Nombre = "Juan Perez",
+            Email = "juan@example.com",
+            Telefono = "+56912345678",
+            FechaNacimiento = fecha
+        });
+
+        ok.Should().BeTrue();
+        captured.Should().HaveCount(1);
+
+        using var doc = JsonDocument.Parse(captured[0]);
+        var root = doc.RootElement;
+
+        JsonElement GetProp(string pascal, string camel)
+        {
+            if (root.TryGetProperty(pascal, out var v1)) return v1;
+            if (root.TryGetProperty(camel, out var v2)) return v2;
+            throw new KeyNotFoundException($"Propiedad no encontrada: {pascal}/{camel}");
+        }
+
+        GetProp("Nombre", "nombre").GetString().Should().Be("Juan Perez");
+        GetProp("Email", "email").GetString().Should().Be("juan@example.com");
+        GetProp("Telefono", "telefono").GetString().Should().Be("+56912345678");
+        GetProp("FechaNacimiento", "fechaNacimiento").GetDateTime().Should().Be(fecha);
     }
 }
 

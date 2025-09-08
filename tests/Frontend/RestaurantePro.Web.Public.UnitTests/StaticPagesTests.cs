@@ -88,6 +88,15 @@ public class StaticPagesTests : TestContext
     }
 
     [Fact]
+    public void Reservas_WhatsApp_Tiene_TargetBlank_Y_Noopener()
+    {
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Reservas>();
+        var wa = cut.FindAll("a").First(a => a.GetAttribute("href")!.StartsWith("https://wa.me/"));
+        wa.GetAttribute("target").Should().Be("_blank");
+        wa.GetAttribute("rel").Should().Contain("noopener");
+    }
+
+    [Fact]
     public void SEO_Home_HeadContent()
     {
         var head = RenderComponent<HeadOutlet>();

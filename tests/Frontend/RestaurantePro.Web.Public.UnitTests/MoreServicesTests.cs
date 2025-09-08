@@ -28,6 +28,47 @@ public class MoreServicesTests
     }
 
     [Fact]
+    public async Task MenuApiService_Combinacion_Filtros()
+    {
+        var categoriaId = Guid.NewGuid();
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Get, "http://localhost/api/core/productos*")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<PaginatedList<ProductoDto>>
+            {
+                Success = true,
+                Data = new PaginatedList<ProductoDto> { Items = new List<ProductoDto>(), PageNumber = 2, PageSize = 6, TotalCount = 0, TotalPages = 3 }
+            }));
+
+        var http = new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") };
+        var svc = new MenuApiService(http);
+
+        var page = await svc.ObtenerProductosPaginadosAsync(categoriaId, 2, 6, true, "Precio", "asc");
+        page.PageNumber.Should().Be(2);
+        page.TotalPages.Should().Be(3);
+        page.Items.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task Reviews_Contact_TaskCanceled_Retorna_Vacio()
+    {
+        var canceled = new MockHttpMessageHandler();
+        canceled.When(HttpMethod.Get, "http://localhost/api/public/reviews").Throw(new TaskCanceledException());
+        var httpR = new HttpClient(canceled) { BaseAddress = new Uri("http://localhost/") };
+        var reviewsSvc = new ReviewsApiService(httpR);
+        var rs = await reviewsSvc.ObtenerAsync();
+        rs.Should().NotBeNull();
+        rs.Should().HaveCount(0);
+
+        var canceled2 = new MockHttpMessageHandler();
+        canceled2.When(HttpMethod.Get, "http://localhost/api/public/contact/messages").Throw(new TaskCanceledException());
+        var httpC = new HttpClient(canceled2) { BaseAddress = new Uri("http://localhost/") };
+        var contactSvc = new ContactApiService(httpC);
+        var cs = await contactSvc.ObtenerAsync();
+        cs.Should().NotBeNull();
+        cs.Should().HaveCount(0);
+    }
+
+    [Fact]
     public async Task MenuApiService_ProductosPorCategoria_Incluye_Inactivos_Cuando_SoloActivos_False()
     {
         var categoriaId = Guid.NewGuid();

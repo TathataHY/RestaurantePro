@@ -105,7 +105,7 @@ Las unit tests validan comportamientos pequeños y deterministas y actúan como 
   - [x] Búsqueda de categorías: resultados y estado vacío
 
 - Promociones
-  - [ ] Meta SEO en HeadContent (title/description presentes)
+  - [x] Meta SEO en HeadContent (title/description presentes)
   - [x] Verificación básica de contenido en UI
 
 - Registro
@@ -153,19 +153,54 @@ Las unit tests validan comportamientos pequeños y deterministas y actúan como 
 ## Pruebas extra sugeridas (fase 4)
 
 - SEO
-  - [ ] Home: PageTitle via HeadOutlet
-  - [ ] Home: no duplica og:title/description en re-render
+  - [x] Home: PageTitle via HeadOutlet
+  - [x] Home: no duplica og:title/description en re-render
 
 - NavMenu / UX
-  - [ ] Click en un link colapsa el menú
-  - [ ] Enlaces externos (WhatsApp) tienen rel="noopener" con target="_blank"
+  - [x] Click en un link colapsa el menú
+  - [x] Enlaces externos (WhatsApp) tienen rel="noopener" con target="_blank"
 
 - Menú (UI/estado)
-  - [ ] Skeleton: exactamente 6 placeholders visibles durante carga
-  - [ ] Paginación: Siguiente/Anterior envían PageNumber correcto al servicio
-  - [ ] (Opcional) Al cambiar de categoría, la página vuelve a 1
+  - [x] Skeleton: exactamente 6 placeholders visibles durante carga
+  - [x] Paginación: Siguiente/Anterior envían PageNumber correcto al servicio
+  - [x] (Opcional) Al cambiar de categoría, la página vuelve a 1
 
 - Servicios
-  - [ ] ClientesPublicApiService: body POST serializa campos y fecha correctamente
-  - [ ] MenuApiService: combina filtros (OrderBy/Direction + SoloActivos + paginación)
-  - [ ] Manejo de TaskCanceledException como lista vacía
+  - [x] ClientesPublicApiService: body POST serializa campos y fecha correctamente
+  - [x] MenuApiService: combina filtros (OrderBy/Direction + SoloActivos + paginación)
+  - [x] Manejo de TaskCanceledException como lista vacía
+
+## Pruebas de refinamiento (fase 5)
+
+- Menú
+  - [ ] Cambiar "Ordenar por" o "Solo activos" reinicia a página 1
+  - [ ] Next/Prev conservan categoría, ordenar y soloActivos en el querystring
+  - [ ] Búsqueda de categorías: query vacío restablece la lista; acentos/ñ funcionan (encoding)
+  - [ ] Skeleton visible solo durante carga y desaparece tras data/error
+
+- Registro de clientes
+  - [ ] Validaciones: email inválido, teléfono corto, requeridos muestran mensaje
+  - [ ] Botón enviar deshabilitado cuando inválido o durante envío; evita doble submit
+  - [ ] Timeout/TaskCanceled en POST muestra error y no resetea formulario
+
+- Promociones (ver)
+  - [ ] GET timeout/error retorna lista vacía sin romper UI
+  - [ ] (Si aplica) ordenar/paginación: URL con parámetros correctos; empty state consistente
+
+- Información operativa (horarios/políticas/reservas)
+  - [ ] Reservas: enlace WhatsApp incluye texto prellenado en `text=` correctamente codificado
+  - [ ] Footer: enlaces a mapa/teléfono/email; `mailto:` y `tel:` válidos; `rel="noopener"` cuando target
+
+- Integración social y navegación
+  - [ ] NavMenu: `aria-expanded` alterna correctamente al abrir/cerrar
+  - [ ] Enlaces sociales: URLs correctas y `rel="noopener"` cuando `target="_blank"`
+
+- SEO y contenido
+  - [ ] Canonical href por página apunta a la ruta correcta
+  - [ ] No duplica metas en re-render para About/Reservas/Menú/Registro
+  - [ ] `PageTitle` coincide con el encabezado principal visible
+
+- Servicios (robustez)
+  - [ ] ClientesPublicApiService: `Content-Type: application/json`; timeout retorna false
+  - [ ] MenuApiService: defaults sensatos (SoloActivos, PageSize) y caracteres especiales en filtros
+  - [ ] PromocionesApiService: `TaskCanceledException` → lista vacía

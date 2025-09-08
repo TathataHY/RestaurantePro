@@ -266,6 +266,54 @@ public class MenuPageTests : TestContext
     }
 
     [Fact]
+    public void Menu_Cambiar_Categoria_Reinicia_Pagina_1()
+    {
+        var categoriaA = new CategoriaProductoDto { Id = Guid.NewGuid(), Nombre = "Entradas", ProductosDisponibles = 3 };
+        var categoriaB = new CategoriaProductoDto { Id = Guid.NewGuid(), Nombre = "Platos", ProductosDisponibles = 3 };
+        var categorias = new[] { categoriaA, categoriaB };
+
+        var captured = new List<string>();
+        var mock = new MockHttpMessageHandler();
+        mock.When("http://localhost/api/core/categorias*")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>> { Success = true, Data = categorias.ToList() }));
+        mock.When("http://localhost/api/core/productos*")
+            .Respond(req =>
+            {
+                captured.Add(req.RequestUri!.ToString());
+                var json = System.Text.Json.JsonSerializer.Serialize(new ApiResponse<PaginatedList<ProductoDto>>
+                {
+                    Success = true,
+                    Data = new PaginatedList<ProductoDto> { Items = new List<ProductoDto>(), PageNumber = 1, PageSize = 6, TotalCount = 12, TotalPages = 2 }
+                });
+                return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+                });
+            });
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<MenuApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Menu>();
+
+        // Ir a página 2
+        cut.InvokeAsync(() => cut.FindAll(".btn-group button")[1].Click());
+        var countAntes = captured.Count;
+
+        // Seleccionar la segunda categoría → debería resetear PageNumber a 1 en la siguiente llamada
+        cut.InvokeAsync(() =>
+        {
+            var item = cut.FindAll(".list-group .list-group-item").Last();
+            item.Click();
+        });
+
+        cut.WaitForAssertion(() =>
+        {
+            captured.Skip(countAntes).Any(uri => uri.Contains("PageNumber=1")).Should().BeTrue();
+        });
+    }
+
+    [Fact]
     public void Menu_Paginacion_Texto_Y_Boton_Anterior_Deshabilitado()
     {
         var categoriaId = Guid.NewGuid();
