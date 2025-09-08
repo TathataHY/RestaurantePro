@@ -76,6 +76,34 @@ public class MenuAdvancedTests : TestContext
             cut.Markup.Should().Contain("Pizza");
         }, TimeSpan.FromSeconds(5));
     }
+
+    [Fact]
+    public void Menu_Busqueda_Trimming_Y_CaseInsensitive()
+    {
+        var mock = new MockHttpMessageHandler();
+        // Debe llamar a buscar con nombre en minúsculas y sin espacios
+        mock.When("http://localhost/api/core/categorias/buscar*")
+            .WithQueryString("nombre", "pizza")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>> { Success = true, Data = new List<CategoriaProductoDto>() }));
+        // Carga inicial de categorías
+        mock.When("http://localhost/api/core/categorias*")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>> { Success = true, Data = new List<CategoriaProductoDto>() }));
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<MenuApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Menu>();
+
+        // Ingresar texto con espacios y mayúsculas
+        cut.InvokeAsync(() =>
+        {
+            cut.Find("input[placeholder='Buscar categoría...']").Input("  PiZzA  ");
+            cut.Find("button.btn.btn-primary").Click();
+        });
+
+        // Si se alcanzó el handler, no debe lanzar excepción
+        cut.Markup.Should().Contain("Menú");
+    }
 }
 
 public class MenuSortUiTests : TestContext

@@ -170,13 +170,14 @@
 
     private async Task AplicarBusqueda()
     {
-        if (string.IsNullOrWhiteSpace(textoBusqueda))
+        var query = textoBusqueda?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(query))
         {
             categorias = await Api.ObtenerCategoriasAsync(true, true);
         }
         else
         {
-            categorias = await Api.BuscarCategoriasAsync(textoBusqueda);
+            categorias = await Api.BuscarCategoriasAsync(query.ToLowerInvariant());
         }
         if (categorias.Count > 0)
         {
@@ -222,11 +223,13 @@
 
     private void PaginaSiguiente()
     {
+        if (cargando) return;
         if (paginaActual < totalPaginas) { paginaActual++; if (categoriaSeleccionada != null && usarPaginacionServidor) _ = SeleccionarCategoria(categoriaSeleccionada); }
     }
 
     private void PaginaAnterior()
     {
+        if (cargando) return;
         if (paginaActual > 1) { paginaActual--; if (categoriaSeleccionada != null && usarPaginacionServidor) _ = SeleccionarCategoria(categoriaSeleccionada); }
     }
 }

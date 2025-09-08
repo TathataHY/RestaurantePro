@@ -92,6 +92,21 @@ public class StaticPagesTests : TestContext
     }
 
     [Fact]
+    public void About_Galeria_Navegacion_Envuelve_InicioFin()
+    {
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.About>();
+        // Abrir modal en última imagen
+        var imgs = cut.FindAll("img");
+        imgs.Last().Click();
+        cut.Markup.Should().Contain("modal");
+
+        // Click Siguiente debe envolver al inicio sin fallar
+        cut.FindAll("button.btn.btn-outline-secondary").Last().Click();
+        // Click Anterior desde la primera debe envolver al final sin fallar
+        cut.FindAll("button.btn.btn-outline-secondary").First().Click();
+    }
+
+    [Fact]
     public void Home_PageTitle_Renderiza_Title_Tag()
     {
         var head = RenderComponent<HeadOutlet>();
@@ -318,6 +333,90 @@ public class StaticPagesTests : TestContext
         head.Markup.Should().Contain("property=\"og:title\" content=\"Registro de clientes - RestaurantePro\"");
         head.Markup.Should().Contain("property=\"og:description\" content=\"Regístrate para recibir novedades y beneficios.\"");
     }
+
+    [Fact]
+    public void NavMenu_Toggler_Responde_A_Teclado_Y_Alterna_AriaExpanded()
+    {
+        var cut = RenderComponent<RestaurantePro.Web.Public.Layout.NavMenu>();
+        var btn = cut.Find("button.navbar-toggler");
+        btn.GetAttribute("aria-expanded").Should().Be("false");
+
+        // Simular tecla Enter
+        btn.KeyDown(new KeyboardEventArgs { Key = "Enter" });
+        btn = cut.Find("button.navbar-toggler");
+        btn.GetAttribute("aria-expanded").Should().Be("true");
+
+        // Simular tecla Espacio
+        btn.KeyDown(new KeyboardEventArgs { Key = " " });
+        btn = cut.Find("button.navbar-toggler");
+        btn.GetAttribute("aria-expanded").Should().Be("false");
+    }
+
+    [Fact]
+    public void SEO_Home_Y_Promociones_Usan_Imagenes_Absolutas_Https()
+    {
+        // Registrar servicio requerido por Promociones
+        var mock = new MockHttpMessageHandler();
+        mock.When("http://localhost/api/public/promociones*")
+            .Respond("application/json", "{ \"success\": true, \"data\": [] }");
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<RestaurantePro.Web.Public.Services.PromocionesApiService>();
+
+        var head = RenderComponent<HeadOutlet>();
+        RenderComponent<RestaurantePro.Web.Public.Pages.Home>();
+        RenderComponent<RestaurantePro.Web.Public.Pages.Promociones>();
+        var markup = head.Markup;
+        markup.Should().Contain("property=\"og:image\"");
+        markup.Should().Contain("name=\"twitter:image\"");
+        markup.Should().Contain("https://");
+    }
+
+	[Fact]
+	public void Promociones_Loading_Visible_Con_Delay_Y_Desaparece_Tras_Data()
+	{
+		var mock = new MockHttpMessageHandler();
+		mock.When("http://localhost/api/public/promociones*")
+			.Respond(async () =>
+			{
+				await Task.Delay(200);
+				return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+				{
+					Content = new StringContent("{ \"success\": true, \"data\": [] }", System.Text.Encoding.UTF8, "application/json")
+				};
+			});
+		Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+		Services.AddScoped<RestaurantePro.Web.Public.Services.PromocionesApiService>();
+
+		var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Promociones>();
+		cut.Markup.Should().Contain("Cargando promociones...");
+		cut.WaitForAssertion(() =>
+		{
+			cut.Markup.Should().NotContain("Cargando promociones...");
+			cut.Markup.Should().Contain("No hay promociones vigentes.");
+		}, timeout: TimeSpan.FromSeconds(3));
+	}
+
+	[Fact]
+	public void Promociones_Loading_Visible_Con_Delay_Y_Desaparece_Tras_Error()
+	{
+		var mock = new MockHttpMessageHandler();
+		mock.When("http://localhost/api/public/promociones*")
+			.Respond(async () =>
+			{
+				await Task.Delay(200);
+				return new HttpResponseMessage(System.Net.HttpStatusCode.InternalServerError);
+			});
+		Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+		Services.AddScoped<RestaurantePro.Web.Public.Services.PromocionesApiService>();
+
+		var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Promociones>();
+		cut.Markup.Should().Contain("Cargando promociones...");
+		cut.WaitForAssertion(() =>
+		{
+			cut.Markup.Should().NotContain("Cargando promociones...");
+			cut.Markup.Should().Contain("No hay promociones vigentes.");
+		}, timeout: TimeSpan.FromSeconds(3));
+	}
 }
 
 

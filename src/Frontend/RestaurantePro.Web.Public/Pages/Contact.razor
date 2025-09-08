@@ -23,6 +23,7 @@
         </div>
         <div class="col-12 col-md-6">
             <InputText @bind-Value="mensaje.Email" class="form-control" placeholder="Tu email" />
+            <ValidationMessage For="() => mensaje.Email" />
         </div>
         <div class="col-12">
             <InputText @bind-Value="mensaje.Asunto" class="form-control" placeholder="Asunto (opcional)" />

@@ -580,6 +580,92 @@ public class MenuPageTests : TestContext
     }
 
     [Fact]
+    public void Menu_Seleccion_Inicial_Carga_Primera_Categoria()
+    {
+        var categoriaId = Guid.NewGuid();
+        var categorias = new[] { new CategoriaProductoDto { Id = categoriaId, Nombre = "Entradas", ProductosDisponibles = 1 } };
+        var captured = new List<string>();
+
+        var mock = new MockHttpMessageHandler();
+        mock.When("http://localhost/api/core/categorias*")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>> { Success = true, Data = categorias.ToList() }));
+        mock.When("http://localhost/api/core/productos*")
+            .Respond(req =>
+            {
+                captured.Add(req.RequestUri!.ToString());
+                var json = System.Text.Json.JsonSerializer.Serialize(new ApiResponse<PaginatedList<ProductoDto>>
+                {
+                    Success = true,
+                    Data = new PaginatedList<ProductoDto> { Items = new List<ProductoDto>(), PageNumber = 1, PageSize = 6, TotalCount = 0, TotalPages = 1 }
+                });
+                return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+                });
+            });
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<MenuApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Menu>();
+
+        cut.WaitForAssertion(() =>
+        {
+            // Debe haberse solicitado productos con la primera categoría
+            captured.Should().NotBeEmpty();
+            captured.First().Should().Contain($"CategoriaId={categoriaId}");
+            cut.Markup.Should().Contain("Productos  - Entradas");
+        });
+    }
+
+    [Fact]
+    public void Menu_Paginacion_DobleClick_No_Duplica_Llamadas()
+    {
+        var categoriaId = Guid.NewGuid();
+        var categorias = new[] { new CategoriaProductoDto { Id = categoriaId, Nombre = "Platos", ProductosDisponibles = 12 } };
+        var captured = new List<string>();
+
+        var mock = new MockHttpMessageHandler();
+        mock.When("http://localhost/api/core/categorias*")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>> { Success = true, Data = categorias.ToList() }));
+        // Simular retardo en productos para mantener 'cargando' mientras se hace doble click
+        mock.When("http://localhost/api/core/productos*")
+            .Respond(async req =>
+            {
+                captured.Add(req.RequestUri!.ToString());
+                await Task.Delay(200);
+                var json = System.Text.Json.JsonSerializer.Serialize(new ApiResponse<PaginatedList<ProductoDto>>
+                {
+                    Success = true,
+                    Data = new PaginatedList<ProductoDto> { Items = new List<ProductoDto>(), PageNumber = 1, PageSize = 6, TotalCount = 12, TotalPages = 3 }
+                });
+                return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+                };
+            });
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<MenuApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Menu>();
+
+        // Esperar a que haga la primera carga
+        cut.WaitForAssertion(() => captured.Count.Should().BeGreaterThanOrEqualTo(1));
+
+        // Doble click rápido en Siguiente
+        cut.InvokeAsync(() =>
+        {
+            var next = cut.FindAll(".btn-group button")[1];
+            next.Click();
+            next.Click();
+        });
+
+        // Debe haber solo una llamada adicional (total 2): inicial + una navegación
+        cut.WaitForAssertion(() => captured.Count.Should().Be(2), TimeSpan.FromSeconds(2));
+    }
+
+    [Fact]
     public void Menu_Productos_Inactivos_Muestran_Badge_Y_Opacidad()
     {
         var categoriaId = Guid.NewGuid();

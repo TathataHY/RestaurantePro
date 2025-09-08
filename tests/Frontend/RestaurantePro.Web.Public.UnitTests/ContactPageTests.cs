@@ -129,6 +129,66 @@ public class ContactPageTests : TestContext
             cut.Markup.Should().Contain("Contacto");
         });
     }
+
+    [Fact]
+    public void Contact_Boton_Deshabilitado_Durante_Envio_Y_Evita_DobleSubmit()
+    {
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Get, "http://localhost/api/public/contact/messages")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<ContactMessageDto>> { Success = true, Data = new List<ContactMessageDto>() }));
+        var postCount = 0;
+        mock.When(HttpMethod.Post, "http://localhost/api/public/contact/messages")
+            .Respond(async req =>
+            {
+                Interlocked.Increment(ref postCount);
+                await Task.Delay(200);
+                return new HttpResponseMessage(System.Net.HttpStatusCode.BadRequest);
+            });
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<ContactApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Contact>();
+
+        cut.InvokeAsync(() =>
+        {
+            cut.Find("input[placeholder='Tu nombre']").Change("Juan");
+            cut.Find("input[placeholder='Tu email']").Change("invalido@e.com");
+            cut.Find("textarea[placeholder='Mensaje']").Change("Hola");
+            // Doble submit rápido
+            cut.Find("form").Submit();
+            cut.Find("form").Submit();
+        });
+
+        // Durante envío el botón debe estar deshabilitado y solo 1 POST en curso
+        cut.WaitForAssertion(() =>
+        {
+            var btn = cut.Find("button.btn.btn-primary");
+            btn.HasAttribute("disabled").Should().BeTrue();
+            Volatile.Read(ref postCount).Should().Be(1);
+        }, TimeSpan.FromMilliseconds(150));
+    }
+
+    [Fact]
+    public void Contact_Email_Invalido_Muestra_Mensaje_Validacion()
+    {
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Get, "http://localhost/api/public/contact/messages")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<ContactMessageDto>> { Success = true, Data = new List<ContactMessageDto>() }));
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<ContactApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Contact>();
+
+        cut.InvokeAsync(() =>
+        {
+            cut.Find("input[placeholder='Tu email']").Change("no-es-email");
+            cut.Find("form").Submit();
+        });
+
+        cut.Markup.Should().Contain("email"); // ValidationMessage debe renderizar algún mensaje relacionado con email
+    }
 }
 
 

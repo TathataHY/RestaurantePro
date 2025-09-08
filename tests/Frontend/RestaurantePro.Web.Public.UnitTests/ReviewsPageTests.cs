@@ -119,6 +119,80 @@ public class ReviewsPageTests : TestContext
             titulos.Should().NotContain(t => t.Contains("Juan"));
         });
     }
+
+    [Fact]
+    public void Reviews_Crear_Error_RetornaFalse_Y_Boton_Rehabilitado()
+    {
+        var initial = new List<ReviewDto>
+        {
+            new ReviewDto { Nombre = "Ana", Comentario = "Excelente", Valoracion = 5, Fecha = DateTime.UtcNow }
+        };
+
+        var mock = new MockHttpMessageHandler();
+        mock.When(HttpMethod.Get, "http://localhost/api/public/reviews")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<ReviewDto>> { Success = true, Data = initial }));
+        mock.When(HttpMethod.Post, "http://localhost/api/public/reviews")
+            .Respond(System.Net.HttpStatusCode.BadRequest);
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<ReviewsApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Reviews>();
+
+        // Llenar y enviar
+        cut.InvokeAsync(() =>
+        {
+            cut.Find("input[placeholder='Tu nombre']").Change("Juan");
+            cut.Find("input[placeholder='Valoración (1-5)']").Change("5");
+            cut.Find("textarea[placeholder='Escribe tu comentario...']").Change("Muy rico");
+            cut.Find("form").Submit();
+        });
+
+        // Verifica que el botón quede habilitado (no sigue en estado 'Enviando...')
+        cut.WaitForAssertion(() =>
+        {
+            var btn = cut.Find("button.btn.btn-primary");
+            btn.HasAttribute("disabled").Should().BeFalse();
+            btn.TextContent.Should().Be("Enviar reseña");
+        });
+    }
+
+    [Fact]
+    public void Reviews_Boton_Deshabilitado_Durante_Envio()
+    {
+        var mock = new MockHttpMessageHandler();
+        // GET inicial vacío
+        mock.When(HttpMethod.Get, "http://localhost/api/public/reviews")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<ReviewDto>> { Success = true, Data = new List<ReviewDto>() }));
+        // POST con retardo para verificar estado 'enviando'
+        mock.When(HttpMethod.Post, "http://localhost/api/public/reviews")
+            .Respond(async req =>
+            {
+                await Task.Delay(200);
+                return new HttpResponseMessage(System.Net.HttpStatusCode.BadRequest);
+            });
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<ReviewsApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Reviews>();
+
+        cut.InvokeAsync(() =>
+        {
+            cut.Find("input[placeholder='Tu nombre']").Change("Juan");
+            cut.Find("input[placeholder='Valoración (1-5)']").Change("5");
+            cut.Find("textarea[placeholder='Escribe tu comentario...']").Change("Muy rico");
+            cut.Find("form").Submit();
+        });
+
+        // Durante envío
+        cut.WaitForAssertion(() =>
+        {
+            var btn = cut.Find("button.btn.btn-primary");
+            btn.HasAttribute("disabled").Should().BeTrue();
+            btn.TextContent.Should().Contain("Enviando");
+        }, TimeSpan.FromMilliseconds(150));
+    }
 }
 
 

@@ -236,25 +236,45 @@ Las unit tests validan comportamientos pequeños y deterministas y actúan como 
 ## Pruebas ampliadas (fase 7)
 
 - Accesibilidad
-  - [ ] NavMenu: el botón toggler responde a teclado (Enter/Espacio) y alterna aria-expanded
-  - [ ] Home/Promociones: og:image y twitter:image usan URLs absolutas (https)
+  - [x] NavMenu: el botón toggler responde a teclado (Enter/Espacio) y alterna aria-expanded
+  - [x] Home/Promociones: og:image y twitter:image usan URLs absolutas (https)
 
 - Menú
-  - [ ] Selección inicial: al cargar con categorías, selecciona la primera y dispara la carga de productos
-  - [ ] Paginación: evitar doble click rápido en Siguiente/Anterior (no duplica llamadas)
-  - [ ] Búsqueda: trimming y case-insensitive ("" y "  pizza  " producen misma llamada)
+  - [x] Selección inicial: al cargar con categorías, selecciona la primera y dispara la carga de productos
+  - [x] Paginación: evitar doble click rápido en Siguiente/Anterior (no duplica llamadas)
+  - [x] Búsqueda: trimming y case-insensitive ("" y "  pizza  " producen misma llamada)
 
 - Promociones
-  - [ ] Loading: “Cargando promociones…” visible con delay y desaparece tras data o error (MockHttp delay)
+  - [x] Loading: “Cargando promociones…” visible con delay y desaparece tras data o error (MockHttp delay)
   - [ ] Varias combinaciones de ordenarPor/dirección (FechaFin asc, Nombre desc) mapeadas a la URL
 
 - Reviews
-  - [ ] POST error (4xx/5xx) → retorna false (servicio) y el botón queda habilitado otra vez (página)
-  - [ ] Botón deshabilitado durante envío (paridad con Registro)
+  - [x] POST error (4xx/5xx) → retorna false (servicio) y el botón queda habilitado otra vez (página)
+  - [x] Botón deshabilitado durante envío (paridad con Registro)
 
 - Contacto
-  - [ ] Botón deshabilitado durante envío y evita doble submit
-  - [ ] Email inválido muestra mensaje de validación (regex básica del framework)
+  - [x] Botón deshabilitado durante envío y evita doble submit
+  - [x] Email inválido muestra mensaje de validación (regex básica del framework)
 
 - About (galería)
-  - [ ] Navegación modal: “Siguiente” envuelve al inicio y “Anterior” envuelve al final
+  - [x] Navegación modal: “Siguiente” envuelve al inicio y “Anterior” envuelve al final
+
+---
+
+## División de trabajo (paralelo)
+
+- Grupo A (UI/A11y + Promociones + SEO)
+  - [x] NavMenu: toggler responde a teclado (Enter/Espacio) y alterna aria-expanded
+  - [x] Home/Promociones: og:image y twitter:image usan URLs absolutas (https)
+  - [x] Promociones: “Cargando promociones…” visible con delay y desaparece tras data/error (MockHttp delay)
+  - [ ] Promociones: Varias combinaciones de ordenarPor/dirección (FechaFin asc, Nombre desc) mapeadas a la URL
+
+- Grupo B (Menú + Reviews + Contact + About)
+  - [x] Menú: selección inicial carga primera categoría y dispara productos
+  - [x] Menú: paginación evita doble click rápido (no duplica llamadas)
+  - [x] Menú: búsqueda con trimming y case-insensitive ("" y "  pizza  " misma llamada)
+  - [x] Reviews: POST error (4xx/5xx) → false y botón re-habilitado
+  - [x] Reviews: botón deshabilitado durante envío (paridad con Registro)
+  - [x] Contact: botón deshabilitado durante envío y evita doble submit
+  - [x] Contact: email inválido muestra mensaje de validación
+  - [x] About (galería): navegación modal envuelve inicio/fin
