@@ -92,3 +92,30 @@ Definir y rastrear la cobertura de pruebas unitarias (xUnit + bUnit) para `Resta
 
 ## Nota
 Las unit tests validan comportamientos pequeños y deterministas y actúan como documentación viva; evitan dependencias externas para detectar regresiones temprano.
+
+---
+
+## Pruebas adicionales sugeridas (fase 2)
+
+- Menú
+  - [ ] Ordenar por precio asc/desc y popularidad reflejado en la UI
+  - [x] Formato de precio con símbolo y miles
+  - [x] Búsqueda de categorías: resultados y estado vacío
+
+- Promociones
+  - Meta SEO en HeadContent (title/description presentes)
+
+- Registro
+  - Reseteo de formulario tras éxito (valores default)
+
+- Reseñas
+  - Nueva reseña aparece primera en la lista
+
+- Contacto
+  - GET mensajes error → lista vacía y sin romper UI
+
+- Servicios (extras)
+  - [ ] MenuApiService.ObtenerProductosPorCategoriaAsync con soloActivos=false incluye inactivos
+  - [ ] MenuApiService.BuscarCategoriasAsync codifica querystring
+  - [ ] ReviewsApiService GET error → lista vacía
+  - [ ] ContactApiService GET error → lista vacía
