@@ -39,6 +39,22 @@ public class PromocionesMoreTests : TestContext
             cut.Markup.Should().Contain("No hay promociones vigentes.");
         });
     }
+
+    [Fact]
+    public void Promociones_Timeout_TaskCanceled_Retorna_Vacio()
+    {
+        var mock = new MockHttpMessageHandler();
+        mock.When("http://localhost/api/public/promociones*")
+            .Throw(new TaskCanceledException("timeout"));
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<PromocionesApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Promociones>();
+        cut.WaitForAssertion(() =>
+        {
+            cut.Markup.Should().Contain("No hay promociones vigentes.");
+        });
+    }
 }
 
 

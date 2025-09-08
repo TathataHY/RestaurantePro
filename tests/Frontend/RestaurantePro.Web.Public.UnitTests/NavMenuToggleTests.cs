@@ -32,6 +32,18 @@ public class NavMenuToggleTests : TestContext
         wrapper = cut.Find("div.nav-scrollable");
         wrapper.GetAttribute("class").Should().Contain("collapse");
     }
+
+    [Fact]
+    public void AriaExpanded_Toggle_Correcto()
+    {
+        var cut = RenderComponent<NavMenu>();
+        var btn = cut.Find("button.navbar-toggler");
+        btn.GetAttribute("aria-expanded").Should().Be("false");
+        btn.Click();
+        cut.WaitForAssertion(() => cut.Find("button.navbar-toggler").GetAttribute("aria-expanded").Should().Be("true"));
+        btn.Click();
+        cut.WaitForAssertion(() => cut.Find("button.navbar-toggler").GetAttribute("aria-expanded").Should().Be("false"));
+    }
 }
 
 

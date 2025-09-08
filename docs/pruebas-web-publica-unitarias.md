@@ -173,31 +173,32 @@ Las unit tests validan comportamientos pequeños y deterministas y actúan como 
 ## Pruebas de refinamiento (fase 5)
 
 - Menú
-  - [ ] Cambiar "Ordenar por" o "Solo activos" reinicia a página 1
-  - [ ] Next/Prev conservan categoría, ordenar y soloActivos en el querystring
+  - [x] Cambiar "Ordenar por" o "Solo activos" reinicia a página 1
+  - [x] Next/Prev conservan categoría, ordenar y soloActivos en el querystring
   - [ ] Búsqueda de categorías: query vacío restablece la lista; acentos/ñ funcionan (encoding)
   - [ ] Skeleton visible solo durante carga y desaparece tras data/error
 
 - Registro de clientes
-  - [ ] Validaciones: email inválido, teléfono corto, requeridos muestran mensaje
-  - [ ] Botón enviar deshabilitado cuando inválido o durante envío; evita doble submit
-  - [ ] Timeout/TaskCanceled en POST muestra error y no resetea formulario
+  - [x] Validaciones: email inválido, teléfono corto, requeridos muestran mensaje
+  - [x] Botón enviar deshabilitado cuando inválido o durante envío; evita doble submit
+  - [x] Timeout/TaskCanceled en POST muestra error y no resetea formulario
 
 - Promociones (ver)
-  - [ ] GET timeout/error retorna lista vacía sin romper UI
+  - [x] GET timeout/error retorna lista vacía sin romper UI
   - [ ] (Si aplica) ordenar/paginación: URL con parámetros correctos; empty state consistente
 
 - Información operativa (horarios/políticas/reservas)
   - [ ] Reservas: enlace WhatsApp incluye texto prellenado en `text=` correctamente codificado
   - [ ] Footer: enlaces a mapa/teléfono/email; `mailto:` y `tel:` válidos; `rel="noopener"` cuando target
+  - [x] Reservas: enlaces `tel:` y `mailto:` con formatos válidos
 
 - Integración social y navegación
   - [ ] NavMenu: `aria-expanded` alterna correctamente al abrir/cerrar
-  - [ ] Enlaces sociales: URLs correctas y `rel="noopener"` cuando `target="_blank"`
+  - [x] Enlaces sociales: URLs correctas y `rel="noopener"` cuando `target="_blank"`
 
 - SEO y contenido
-  - [ ] Canonical href por página apunta a la ruta correcta
-  - [ ] No duplica metas en re-render para About/Reservas/Menú/Registro
+  - [x] Canonical href por página apunta a la ruta correcta
+  - [x] No duplica metas en re-render para About/Reservas/Menú/Registro
   - [ ] `PageTitle` coincide con el encabezado principal visible
 
 - Servicios (robustez)

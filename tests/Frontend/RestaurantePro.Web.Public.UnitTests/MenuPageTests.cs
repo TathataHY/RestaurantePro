@@ -266,6 +266,109 @@ public class MenuPageTests : TestContext
     }
 
     [Fact]
+    public void Menu_Cambiar_Orden_Reinicia_Pagina_1()
+    {
+        var categoria = new CategoriaProductoDto { Id = Guid.NewGuid(), Nombre = "Entradas", ProductosDisponibles = 12 };
+        var categorias = new[] { categoria };
+
+        var captured = new List<string>();
+        var mock = new MockHttpMessageHandler();
+        mock.When("http://localhost/api/core/categorias*")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>> { Success = true, Data = categorias.ToList() }));
+
+        mock.When("http://localhost/api/core/productos*")
+            .Respond(req =>
+            {
+                captured.Add(req.RequestUri!.ToString());
+                var items = new List<ProductoDto> { new ProductoDto { Id = Guid.NewGuid(), Nombre = "X", Precio = 10, Activo = true, CategoriaNombre = "Entradas" } };
+                var json = System.Text.Json.JsonSerializer.Serialize(new ApiResponse<PaginatedList<ProductoDto>>
+                {
+                    Success = true,
+                    Data = new PaginatedList<ProductoDto> { Items = items, PageNumber = 1, PageSize = 6, TotalCount = 12, TotalPages = 2 }
+                });
+                return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+                });
+            });
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<MenuApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Menu>();
+        cut.WaitForAssertion(() => captured.Any());
+
+        // Ir a página 2
+        cut.InvokeAsync(() => cut.FindAll(".btn-group button")[1].Click());
+        var countAntes = captured.Count;
+
+        // Cambiar orden a "precio_desc" y aplicar
+        cut.InvokeAsync(() =>
+        {
+            var select = cut.Find("select.form-select");
+            select.Change("precio_desc");
+            cut.Find("button.btn.btn-primary").Click();
+        });
+
+        // Debe reiniciar PageNumber a 1 en la siguiente solicitud
+        cut.WaitForAssertion(() => captured.Skip(countAntes).Any(u => u.Contains("PageNumber=1")).Should().BeTrue());
+    }
+
+    [Fact]
+    public void Menu_Paginacion_NextPrev_Conserva_Filtros_De_Orden()
+    {
+        var categoria = new CategoriaProductoDto { Id = Guid.NewGuid(), Nombre = "Entradas", ProductosDisponibles = 12 };
+        var categorias = new[] { categoria };
+
+        var captured = new List<string>();
+        var mock = new MockHttpMessageHandler();
+        mock.When("http://localhost/api/core/categorias*")
+            .Respond("application/json", System.Text.Json.JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>> { Success = true, Data = categorias.ToList() }));
+
+        mock.When("http://localhost/api/core/productos*")
+            .Respond(req =>
+            {
+                captured.Add(req.RequestUri!.ToString());
+                var json = System.Text.Json.JsonSerializer.Serialize(new ApiResponse<PaginatedList<ProductoDto>>
+                {
+                    Success = true,
+                    Data = new PaginatedList<ProductoDto> { Items = new List<ProductoDto>(), PageNumber = 1, PageSize = 6, TotalCount = 12, TotalPages = 3 }
+                });
+                return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+                });
+            });
+
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<MenuApiService>();
+
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Menu>();
+        cut.WaitForAssertion(() => captured.Any());
+
+        // Cambiar orden a "precio_desc" y aplicar
+        cut.InvokeAsync(() =>
+        {
+            var select = cut.Find("select.form-select");
+            select.Change("precio_desc");
+            cut.Find("button.btn.btn-primary").Click();
+        });
+
+        // Ahora ir a siguiente página
+        cut.InvokeAsync(() => cut.FindAll(".btn-group button")[1].Click());
+
+        cut.WaitForAssertion(() =>
+        {
+            // La última solicitud debe conservar filtros: OrderBy=Precio, OrderDirection=desc y SoloActivos=false
+            var last = captured.Last().ToLowerInvariant();
+            last.Should().Contain("categoriaid=");
+            last.Should().Contain("orderby=precio");
+            last.Should().Contain("orderdirection=desc");
+            last.Should().Contain("soloactivos=false");
+        });
+    }
+
+    [Fact]
     public void Menu_Cambiar_Categoria_Reinicia_Pagina_1()
     {
         var categoriaA = new CategoriaProductoDto { Id = Guid.NewGuid(), Nombre = "Entradas", ProductosDisponibles = 3 };

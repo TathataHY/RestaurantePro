@@ -14,7 +14,7 @@
 
 <h3>Registro de clientes</h3>
 
-<EditForm Model="form" OnValidSubmit="Registrar">
+<EditForm EditContext="editContext!" OnValidSubmit="Registrar">
     <DataAnnotationsValidator />
     <ValidationSummary />
     <div class="row g-2 mb-3">
@@ -31,7 +31,7 @@
             <InputDate @bind-Value="form.FechaNacimiento" class="form-control" />
         </div>
         <div class="col-12">
-            <button class="btn btn-primary" disabled="@enviando">@(enviando ? "Registrando..." : "Registrarme")</button>
+            <button class="btn btn-primary" disabled="@(!esFormularioValido || enviando)">@(enviando ? "Registrando..." : "Registrarme")</button>
             @if (exito)
             {
                 <span class="ms-2 text-success">¡Registro exitoso!</span>
@@ -49,9 +49,22 @@
     {
         FechaNacimiento = DateTime.Today.AddYears(-20)
     };
+    private EditContext? editContext;
+    private bool esFormularioValido = false;
     private bool enviando = false;
     private bool exito = false;
     private string? error;
+
+    protected override void OnInitialized()
+    {
+        editContext = new EditContext(form);
+        esFormularioValido = false;
+        editContext.OnFieldChanged += (s, e) =>
+        {
+            esFormularioValido = editContext!.Validate();
+            StateHasChanged();
+        };
+    }
 
     private async Task Registrar()
     {
@@ -64,6 +77,13 @@
         {
             exito = true;
             form = new RestaurantePro.Web.Public.Services.PublicClienteRegisterRequest { FechaNacimiento = DateTime.Today.AddYears(-20) };
+            editContext = new EditContext(form);
+            esFormularioValido = false;
+            editContext.OnFieldChanged += (s, e) =>
+            {
+                esFormularioValido = editContext!.Validate();
+                StateHasChanged();
+            };
         }
         else
         {

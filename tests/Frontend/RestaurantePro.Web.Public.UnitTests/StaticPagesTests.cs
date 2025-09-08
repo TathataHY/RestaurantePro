@@ -88,12 +88,88 @@ public class StaticPagesTests : TestContext
     }
 
     [Fact]
+    public void SEO_About_No_Duplica_Meta_En_ReRender()
+    {
+        var head = RenderComponent<HeadOutlet>();
+        var about = RenderComponent<RestaurantePro.Web.Public.Pages.About>();
+        about.Render();
+        var markup = head.Markup;
+        markup.Split("property=\"og:title\"").Length.Should().Be(2);
+        markup.Split("property=\"og:description\"").Length.Should().Be(2);
+    }
+
+    [Fact]
+    public void SEO_Reservas_No_Duplica_Meta_En_ReRender()
+    {
+        var head = RenderComponent<HeadOutlet>();
+        var res = RenderComponent<RestaurantePro.Web.Public.Pages.Reservas>();
+        res.Render();
+        var markup = head.Markup;
+        markup.Split("property=\"og:title\"").Length.Should().Be(2);
+        markup.Split("property=\"og:description\"").Length.Should().Be(2);
+    }
+
+    [Fact]
+    public void SEO_Menu_No_Duplica_Meta_En_ReRender()
+    {
+        var mock = new MockHttpMessageHandler();
+        mock.When("http://localhost/api/core/categorias*")
+            .Respond("application/json", "{ \"success\": true, \"data\": [] }");
+        Services.AddScoped(sp => new HttpClient(mock) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<RestaurantePro.Web.Public.Services.MenuApiService>();
+
+        var head = RenderComponent<HeadOutlet>();
+        var menu = RenderComponent<RestaurantePro.Web.Public.Pages.Menu>();
+        menu.Render();
+        var markup = head.Markup;
+        markup.Split("property=\"og:title\"").Length.Should().Be(2);
+        markup.Split("property=\"og:description\"").Length.Should().Be(2);
+    }
+
+    [Fact]
+    public void SEO_Registro_No_Duplica_Meta_En_ReRender()
+    {
+        Services.AddScoped(sp => new HttpClient(new MockHttpMessageHandler()) { BaseAddress = new Uri("http://localhost/") });
+        Services.AddScoped<RestaurantePro.Web.Public.Services.ClientesPublicApiService>();
+
+        var head = RenderComponent<HeadOutlet>();
+        var reg = RenderComponent<RestaurantePro.Web.Public.Pages.Registro>();
+        reg.Render();
+        var markup = head.Markup;
+        markup.Split("property=\"og:title\"").Length.Should().Be(2);
+        markup.Split("property=\"og:description\"").Length.Should().Be(2);
+    }
+
+    [Fact]
     public void Reservas_WhatsApp_Tiene_TargetBlank_Y_Noopener()
     {
         var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Reservas>();
-        var wa = cut.FindAll("a").First(a => a.GetAttribute("href")!.StartsWith("https://wa.me/"));
+        var wa = cut.FindAll("a").First(a => a.GetAttribute("href")!.StartsWith("https://wa.me/") && a.GetAttribute("href")!.Contains("text="));
         wa.GetAttribute("target").Should().Be("_blank");
         wa.GetAttribute("rel").Should().Contain("noopener");
+    }
+
+    [Fact]
+    public void Reservas_Tiene_Tel_Y_Mailto_Validos()
+    {
+        var cut = RenderComponent<RestaurantePro.Web.Public.Pages.Reservas>();
+        var tel = cut.FindAll("a").First(a => a.GetAttribute("href")!.StartsWith("tel:"));
+        var mail = cut.FindAll("a").First(a => a.GetAttribute("href")!.StartsWith("mailto:"));
+        tel.GetAttribute("href").Should().MatchRegex("^tel:\\+?\\d+");
+        mail.GetAttribute("href").Should().Contain("@");
+    }
+
+    [Fact]
+    public void Footer_Social_Tienen_Noopener_Y_TargetBlank()
+    {
+        var cut = RenderComponent<RestaurantePro.Web.Public.Shared.Footer>();
+        var links = cut.FindAll("a").Where(a => a.GetAttribute("href")!.StartsWith("http"));
+        links.Should().NotBeEmpty();
+        foreach (var a in links)
+        {
+            a.GetAttribute("target").Should().Be("_blank");
+            a.GetAttribute("rel").Should().Contain("noopener");
+        }
     }
 
     [Fact]
