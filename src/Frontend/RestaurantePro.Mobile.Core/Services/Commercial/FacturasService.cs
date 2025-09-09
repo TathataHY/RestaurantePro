@@ -15,10 +15,12 @@ public class FacturasService : IFacturasService
         _authService = authService;
     }
 
-    public async Task<ApiResponse<List<FacturaDto>>> ObtenerFacturasAsync(DateTime fecha)
+    public async Task<ApiResponse<List<FacturaDto>>> ObtenerFacturasAsync(DateTime fecha, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<FacturaDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var response = await _apiService.GetAsync<List<FacturaDto>>($"api/comercial/facturas?fecha={fecha:yyyy-MM-dd}", token);
             return response;
@@ -43,10 +45,12 @@ public class FacturasService : IFacturasService
         }
     }
 
-    public async Task<ApiResponse<List<FacturaDto>>> BuscarFacturasAsync(string busqueda, DateTime fecha)
+    public async Task<ApiResponse<List<FacturaDto>>> BuscarFacturasAsync(string busqueda, DateTime fecha, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<FacturaDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var response = await _apiService.GetAsync<List<FacturaDto>>($"api/comercial/facturas/buscar-por-termino?busqueda={busqueda}&fecha={fecha:yyyy-MM-dd}", token);
             return response;
@@ -71,10 +75,12 @@ public class FacturasService : IFacturasService
         }
     }
 
-    public async Task<ApiResponse<EstadisticasFacturasDto>> ObtenerEstadisticasAsync(DateTime fecha)
+    public async Task<ApiResponse<EstadisticasFacturasDto>> ObtenerEstadisticasAsync(DateTime fecha, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<EstadisticasFacturasDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var response = await _apiService.GetAsync<EstadisticasFacturasDto>($"api/comercial/facturas/estadisticas?fecha={fecha:yyyy-MM-dd}", token);
             return response;
@@ -85,10 +91,12 @@ public class FacturasService : IFacturasService
         }
     }
 
-    public async Task<ApiResponse<bool>> ImprimirFacturaAsync(Guid facturaId)
+    public async Task<ApiResponse<bool>> ImprimirFacturaAsync(Guid facturaId, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<bool>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var response = await _apiService.PostAsync<bool>($"api/comercial/facturas/{facturaId}/imprimir", null, token);
             return response;
@@ -99,10 +107,12 @@ public class FacturasService : IFacturasService
         }
     }
 
-    public async Task<ApiResponse<string>> EnviarFacturaPorEmailAsync(Guid id, string email)
+    public async Task<ApiResponse<string>> EnviarFacturaPorEmailAsync(Guid id, string email, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<string>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var request = new { Email = email };
             var response = await _apiService.PostAsync<string>($"api/comercial/facturas/{id}/enviar-email", request, token);
@@ -114,10 +124,12 @@ public class FacturasService : IFacturasService
         }
     }
 
-    public async Task<ApiResponse<List<FacturaDto>>> ObtenerFacturasPendientesAsync()
+    public async Task<ApiResponse<List<FacturaDto>>> ObtenerFacturasPendientesAsync(CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<FacturaDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var response = await _apiService.GetAsync<List<FacturaDto>>("api/comercial/facturas/pendientes", token);
             return response;
@@ -128,10 +140,12 @@ public class FacturasService : IFacturasService
         }
     }
 
-    public async Task<ApiResponse<bool>> RegistrarPagoAsync(Guid facturaId, RegistrarPagoDto pagoDto)
+    public async Task<ApiResponse<bool>> RegistrarPagoAsync(Guid facturaId, RegistrarPagoDto pagoDto, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<bool>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var response = await _apiService.PostAsync<bool>($"api/comercial/facturas/{facturaId}/pagar", pagoDto, token);
             return response;
@@ -142,10 +156,12 @@ public class FacturasService : IFacturasService
         }
     }
 
-    public async Task<ApiResponse<bool>> AnularFacturaAsync(Guid facturaId, AnularFacturaDto anulacionDto)
+    public async Task<ApiResponse<bool>> AnularFacturaAsync(Guid facturaId, AnularFacturaDto anulacionDto, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<bool>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var response = await _apiService.DeleteAsync($"api/comercial/facturas/{facturaId}", token);
             return response;
@@ -156,10 +172,12 @@ public class FacturasService : IFacturasService
         }
     }
 
-    public async Task<ApiResponse<string>> DescargarFacturaPdfAsync(Guid facturaId)
+    public async Task<ApiResponse<string>> DescargarFacturaPdfAsync(Guid facturaId, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<string>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var response = await _apiService.GetAsync<string>($"api/comercial/facturas/{facturaId}/pdf", token);
             return response;

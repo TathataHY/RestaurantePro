@@ -464,4 +464,98 @@ public class ClientesServiceTests
         Assert.False(result.Succeeded);
         Assert.Contains("Error de red", result.Error);
     }
+
+    [Fact]
+    public async Task ObtenerClienteAsync_WithUnauthorized_ShouldPropagate401()
+    {
+        // Arrange
+        var clienteId = Guid.NewGuid();
+        var errorResponse = ApiResponse<ClienteDto>.ErrorResponse(new List<string> { "Unauthorized" }, "Unauthorized", 401);
+        _mockApiService.Setup(x => x.GetAsync<ClienteDto>(It.IsAny<string>(), It.IsAny<string>()))
+                      .ReturnsAsync(errorResponse);
+
+        // Act
+        var result = await _clientesService.ObtenerClienteAsync(clienteId);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Equal(401, result.StatusCode);
+        Assert.Contains("Unauthorized", result.Error);
+    }
+
+    [Fact]
+    public async Task EliminarClienteAsync_WithForbidden_ShouldPropagate403()
+    {
+        // Arrange
+        var clienteId = Guid.NewGuid();
+        var errorResponse = ApiResponse<bool>.ErrorResponse(new List<string> { "Forbidden" }, "Forbidden", 403);
+        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>()))
+                      .ReturnsAsync(errorResponse);
+
+        // Act
+        var result = await _clientesService.EliminarClienteAsync(clienteId);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Equal(403, result.StatusCode);
+        Assert.Contains("Forbidden", result.Error);
+    }
+
+    [Fact]
+    public async Task CrearClienteAsync_WithTooManyRequests_ShouldPropagate429()
+    {
+        // Arrange
+        var cliente = new ClienteDto { NombreCompleto = "Rate Limited", Email = "rate@test.com" };
+        var errorResponse = ApiResponse<ClienteDto>.ErrorResponse(new List<string> { "Too Many Requests" }, "Too Many Requests", 429);
+        _mockApiService.Setup(x => x.PostAsync<ClienteDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+                      .ReturnsAsync(errorResponse);
+
+        // Act
+        var result = await _clientesService.CrearClienteAsync(cliente);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Equal(429, result.StatusCode);
+        Assert.Contains("Too Many Requests", result.Error);
+    }
+
+    [Fact]
+    public async Task ObtenerClientesAsync_WithEmptyBody_ShouldReturnEmptyList()
+    {
+        // Arrange
+        var paginatedResponse = new PaginatedList<ClienteSummaryDto>
+        {
+            Items = new List<ClienteSummaryDto>(),
+            TotalCount = 0,
+            PageNumber = 1,
+            PageSize = 10
+        };
+        var apiResponse = ApiResponse<PaginatedList<ClienteSummaryDto>>.SuccessResponse(paginatedResponse);
+        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>()))
+                      .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _clientesService.ObtenerClientesAsync();
+
+        // Assert
+        Assert.True(result.Succeeded);
+        Assert.NotNull(result.Data);
+        Assert.Empty(result.Data);
+    }
+
+    [Fact]
+    public async Task ObtenerClientesAsync_WithNullData_ShouldReturnFailure()
+    {
+        // Arrange
+        var apiResponse = ApiResponse<PaginatedList<ClienteSummaryDto>>.SuccessResponse(null);
+        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>()))
+                      .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _clientesService.ObtenerClientesAsync();
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Contains("No se pudieron obtener los clientes", result.Error);
+    }
 } 

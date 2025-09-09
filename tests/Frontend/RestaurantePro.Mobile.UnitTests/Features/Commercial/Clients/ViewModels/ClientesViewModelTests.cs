@@ -7,6 +7,7 @@ using RestaurantePro.Mobile.Core.Services.Navigation;
 using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using System.Collections.ObjectModel;
+using System.Threading;
 
 namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
 {
@@ -41,7 +42,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
                 new ClienteSummaryDto { Id = Guid.NewGuid(), NombreCompleto = "María García", Email = "maria@test.com" }
             };
 
-            _mockClientesService.Setup(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>()))
+            _mockClientesService.Setup(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<ClienteSummaryDto>>.SuccessResponse(clientes));
 
             // Act
@@ -57,7 +58,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
         public async Task LoadClientesAsync_WithError_ShouldShowError()
         {
             // Arrange
-            _mockClientesService.Setup(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>()))
+            _mockClientesService.Setup(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<ClienteSummaryDto>>.ErrorResponse(new List<string> { "Error al cargar clientes" }));
 
             // Act
@@ -112,14 +113,14 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
                 new ClienteSummaryDto { Id = Guid.NewGuid(), NombreCompleto = "Juan Pérez" }
             };
 
-            _mockClientesService.Setup(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>()))
+            _mockClientesService.Setup(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<ClienteSummaryDto>>.SuccessResponse(clientes));
 
             // Act
             await _viewModel.RefrescarClientesCommand.ExecuteAsync(null);
 
             // Assert
-            _mockClientesService.Verify(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>()), Times.AtLeastOnce);
+            _mockClientesService.Verify(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
             Assert.NotNull(_viewModel.Clientes);
             Assert.Equal(1, _viewModel.Clientes.Count);
         }
@@ -134,7 +135,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
             };
 
             _mockClientesService
-                .Setup(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>()))
+                .Setup(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>(), It.IsAny<CancellationToken>()))
                 .Returns(async () =>
                 {
                     await Task.Delay(200);
@@ -147,7 +148,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
             await t1;
 
             // Assert
-            _mockClientesService.Verify(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>()), Times.Once);
+            _mockClientesService.Verify(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -161,7 +162,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
             };
 
             _mockClientesService
-                .Setup(x => x.BuscarClientesAsync(It.IsAny<string>()))
+                .Setup(x => x.BuscarClientesAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .Returns(async () =>
                 {
                     await Task.Delay(200);
@@ -174,7 +175,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
             await t1;
 
             // Assert
-            _mockClientesService.Verify(x => x.BuscarClientesAsync(It.IsAny<string>()), Times.Once);
+            _mockClientesService.Verify(x => x.BuscarClientesAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -182,7 +183,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
         {
             // Arrange
             _mockClientesService
-                .Setup(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>()))
+                .Setup(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<ClienteSummaryDto>>.SuccessResponse(new List<ClienteSummaryDto>()));
 
             // Act
@@ -201,7 +202,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
             // Arrange
             _viewModel.FiltroBusqueda = "abc";
             _mockClientesService
-                .Setup(x => x.BuscarClientesAsync(It.IsAny<string>()))
+                .Setup(x => x.BuscarClientesAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<ClienteSummaryDto>>.SuccessResponse(new List<ClienteSummaryDto>()));
 
             // Act
@@ -220,7 +221,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
             // Arrange
             _viewModel.FiltroBusqueda = "juan";
             _mockClientesService
-                .Setup(x => x.BuscarClientesAsync(It.IsAny<string>()))
+                .Setup(x => x.BuscarClientesAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<ClienteSummaryDto>>.ErrorResponse(new List<string> { "Error al buscar clientes" }));
 
             // Act
@@ -253,7 +254,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
             await _viewModel.DesactivarClienteCommand.ExecuteAsync(cliente);
 
             // Assert
-            _mockClientesService.Verify(x => x.DesactivarClienteAsync(It.IsAny<Guid>()), Times.Never);
+            _mockClientesService.Verify(x => x.DesactivarClienteAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
             _mockDialogService.Verify(x => x.ShowSuccessAsync(It.IsAny<string>()), Times.Never);
         }
 
@@ -266,19 +267,19 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
                 .Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(true);
             _mockClientesService
-                .Setup(x => x.DesactivarClienteAsync(cliente.Id))
+                .Setup(x => x.DesactivarClienteAsync(cliente.Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<bool>.SuccessResponse(true));
             _mockClientesService
-                .Setup(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>()))
+                .Setup(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<ClienteSummaryDto>>.SuccessResponse(new List<ClienteSummaryDto>()));
 
             // Act
             await _viewModel.DesactivarClienteCommand.ExecuteAsync(cliente);
 
             // Assert
-            _mockClientesService.Verify(x => x.DesactivarClienteAsync(cliente.Id), Times.Once);
+            _mockClientesService.Verify(x => x.DesactivarClienteAsync(cliente.Id, It.IsAny<CancellationToken>()), Times.Once);
             _mockDialogService.Verify(x => x.ShowSuccessAsync(It.IsAny<string>()), Times.Once);
-            _mockClientesService.Verify(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>()), Times.AtLeastOnce);
+            _mockClientesService.Verify(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
         }
 
         [Fact]
@@ -291,7 +292,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
             await _viewModel.BuscarClientesCommand.ExecuteAsync(null);
 
             // Assert
-            _mockClientesService.Verify(x => x.BuscarClientesAsync(It.IsAny<string>()), Times.Never);
+            _mockClientesService.Verify(x => x.BuscarClientesAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
@@ -303,7 +304,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
                 .Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(true);
             _mockClientesService
-                .Setup(x => x.DesactivarClienteAsync(cliente.Id))
+                .Setup(x => x.DesactivarClienteAsync(cliente.Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<bool>.ErrorResponse(new List<string> { "No se pudo desactivar" }));
 
             // Act

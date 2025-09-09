@@ -10,6 +10,7 @@ using RestaurantePro.Mobile.Core.Models.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Billing.ViewModels;
@@ -59,9 +60,9 @@ public class FacturasViewModelTests
             PromedioFactura = 150.00m
         });
 
-        _mockFacturasService.Setup(x => x.ObtenerFacturasAsync(It.IsAny<DateTime>()))
+        _mockFacturasService.Setup(x => x.ObtenerFacturasAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(facturasResponse);
-        _mockFacturasService.Setup(x => x.ObtenerEstadisticasAsync(It.IsAny<DateTime>()))
+        _mockFacturasService.Setup(x => x.ObtenerEstadisticasAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(estadisticasResponse);
 
                     // Act
@@ -72,8 +73,8 @@ public class FacturasViewModelTests
         _viewModel.TotalFacturasHoy.Should().Be(2);
         _viewModel.TotalVentasHoy.Should().Be(300.00m);
         _viewModel.PromedioFacturaHoy.Should().Be(150.00m);
-        _mockFacturasService.Verify(x => x.ObtenerFacturasAsync(It.IsAny<DateTime>()), Times.Once);
-        _mockFacturasService.Verify(x => x.ObtenerEstadisticasAsync(It.IsAny<DateTime>()), Times.Once);
+        _mockFacturasService.Verify(x => x.ObtenerFacturasAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockFacturasService.Verify(x => x.ObtenerEstadisticasAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -87,7 +88,7 @@ public class FacturasViewModelTests
         };
 
         var response = ApiResponse<List<FacturaDto>>.SuccessResponse(facturas);
-        _mockFacturasService.Setup(x => x.ObtenerFacturasAsync(It.IsAny<DateTime>()))
+        _mockFacturasService.Setup(x => x.ObtenerFacturasAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(response);
 
         // Act
@@ -95,7 +96,7 @@ public class FacturasViewModelTests
 
         // Assert
         _viewModel.Facturas.Should().HaveCount(2);
-        _mockFacturasService.Verify(x => x.ObtenerFacturasAsync(It.IsAny<DateTime>()), Times.Once);
+        _mockFacturasService.Verify(x => x.ObtenerFacturasAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -104,7 +105,7 @@ public class FacturasViewModelTests
         // Arrange
         var errorMessage = "Error en la operación";
         var response = ApiResponse<List<FacturaDto>>.ErrorResponse(errorMessage);
-        _mockFacturasService.Setup(x => x.ObtenerFacturasAsync(It.IsAny<DateTime>()))
+        _mockFacturasService.Setup(x => x.ObtenerFacturasAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(response);
 
         // Act
@@ -126,7 +127,7 @@ public class FacturasViewModelTests
         };
 
         var response = ApiResponse<List<FacturaDto>>.SuccessResponse(facturas);
-        _mockFacturasService.Setup(x => x.BuscarFacturasAsync("F001", It.IsAny<DateTime>()))
+        _mockFacturasService.Setup(x => x.BuscarFacturasAsync("F001", It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(response);
 
         // Act
@@ -135,7 +136,7 @@ public class FacturasViewModelTests
         // Assert
         _viewModel.Facturas.Should().HaveCount(1);
         _viewModel.Facturas.First().NumeroFactura.Should().Be("F001");
-        _mockFacturasService.Verify(x => x.BuscarFacturasAsync("F001", It.IsAny<DateTime>()), Times.Once);
+        _mockFacturasService.Verify(x => x.BuscarFacturasAsync("F001", It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -144,7 +145,7 @@ public class FacturasViewModelTests
         // Arrange
         _viewModel.Busqueda = "F001";
         var response = ApiResponse<List<FacturaDto>>.ErrorResponse("Error en la operación");
-        _mockFacturasService.Setup(x => x.BuscarFacturasAsync("F001", It.IsAny<DateTime>()))
+        _mockFacturasService.Setup(x => x.BuscarFacturasAsync("F001", It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(response);
 
         // Act
@@ -172,17 +173,17 @@ public class FacturasViewModelTests
             PromedioFactura = 100.00m
         });
 
-        _mockFacturasService.Setup(x => x.ObtenerFacturasAsync(It.IsAny<DateTime>()))
+        _mockFacturasService.Setup(x => x.ObtenerFacturasAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(facturasResponse);
-        _mockFacturasService.Setup(x => x.ObtenerEstadisticasAsync(It.IsAny<DateTime>()))
+        _mockFacturasService.Setup(x => x.ObtenerEstadisticasAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(estadisticasResponse);
 
         // Act
         await _viewModel.CambiarFechaCommand.ExecuteAsync(null);
 
         // Assert
-        _mockFacturasService.Verify(x => x.ObtenerFacturasAsync(It.IsAny<DateTime>()), Times.Once);
-        _mockFacturasService.Verify(x => x.ObtenerEstadisticasAsync(It.IsAny<DateTime>()), Times.Once);
+        _mockFacturasService.Verify(x => x.ObtenerFacturasAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockFacturasService.Verify(x => x.ObtenerEstadisticasAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -216,7 +217,7 @@ public class FacturasViewModelTests
         // Arrange
         var factura = new FacturaDto { Id = Guid.NewGuid(), NumeroFactura = "F001" };
         var response = ApiResponse<bool>.SuccessResponse(true);
-        _mockFacturasService.Setup(x => x.ImprimirFacturaAsync(factura.Id))
+        _mockFacturasService.Setup(x => x.ImprimirFacturaAsync(factura.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(response);
 
         // Act
@@ -224,7 +225,7 @@ public class FacturasViewModelTests
 
         // Assert
         _mockDialogService.Verify(x => x.ShowSuccessAsync("Factura enviada a impresión"), Times.Once);
-        _mockFacturasService.Verify(x => x.ImprimirFacturaAsync(factura.Id), Times.Once);
+        _mockFacturasService.Verify(x => x.ImprimirFacturaAsync(factura.Id, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -233,7 +234,7 @@ public class FacturasViewModelTests
         // Arrange
         var factura = new FacturaDto { Id = Guid.NewGuid(), NumeroFactura = "F001" };
         var response = ApiResponse<bool>.ErrorResponse("Error al imprimir");
-        _mockFacturasService.Setup(x => x.ImprimirFacturaAsync(factura.Id))
+        _mockFacturasService.Setup(x => x.ImprimirFacturaAsync(factura.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(response);
 
         // Act
@@ -250,7 +251,7 @@ public class FacturasViewModelTests
         await _viewModel.ImprimirFacturaCommand.ExecuteAsync(null);
 
         // Assert
-        _mockFacturasService.Verify(x => x.ImprimirFacturaAsync(It.IsAny<Guid>()), Times.Never);
+        _mockFacturasService.Verify(x => x.ImprimirFacturaAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -270,17 +271,17 @@ public class FacturasViewModelTests
             PromedioFactura = 100.00m
         });
 
-        _mockFacturasService.Setup(x => x.ObtenerFacturasAsync(It.IsAny<DateTime>()))
+        _mockFacturasService.Setup(x => x.ObtenerFacturasAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(facturasResponse);
-        _mockFacturasService.Setup(x => x.ObtenerEstadisticasAsync(It.IsAny<DateTime>()))
+        _mockFacturasService.Setup(x => x.ObtenerEstadisticasAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(estadisticasResponse);
 
         // Act
         await _viewModel.RefrescarCommand.ExecuteAsync(null);
 
         // Assert
-        _mockFacturasService.Verify(x => x.ObtenerFacturasAsync(It.IsAny<DateTime>()), Times.Once);
-        _mockFacturasService.Verify(x => x.ObtenerEstadisticasAsync(It.IsAny<DateTime>()), Times.Once);
+        _mockFacturasService.Verify(x => x.ObtenerFacturasAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockFacturasService.Verify(x => x.ObtenerEstadisticasAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

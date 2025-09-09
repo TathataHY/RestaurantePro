@@ -237,10 +237,7 @@
                            Padding="16,8,16,4" />
                     
                     <CollectionView ItemsSource="{Binding ComandasActivas}"
-                                    SelectionMode="Single"
-                                    SelectedItem="{Binding SelectedComanda}"
-                                    SelectionChangedCommand="{Binding VerComandaCommand}"
-                                    SelectionChangedCommandParameter="{Binding SelectedItem, Source={x:Reference MesaDetallePageRef}}">
+                                    SelectionMode="None">
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="models:ComandaDto">
                                 <Frame BackgroundColor="White" 
@@ -250,8 +247,7 @@
                                        HasShadow="True">
                                     <Frame.GestureRecognizers>
                                         <TapGestureRecognizer 
-                                            Command="{Binding Source={x:Reference MesaDetallePageRef}, Path=BindingContext.VerComandaCommand}"
-                                            CommandParameter="{Binding .}" />
+                                            Tapped="OnComandaTapped" />
                                     </Frame.GestureRecognizers>
                                     <Grid>
                                         <Grid.RowDefinitions>

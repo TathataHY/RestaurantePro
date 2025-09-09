@@ -122,6 +122,20 @@ Estado Fase 2.1: Completada (suite de tests Comandas Services en verde).
 
 Estado Fase 2.2: Completada (suite de tests Mesas/Productos Services en verde).
 
+#### Fase 2.3 - Services Commercial: Facturas
+- [x] 401/403/429 (propagación de `StatusCode` y mensaje)
+- [x] 204/empty body y `null Data`
+- [x] Cancelación (`CancellationToken`) y cancelación temprana (sin invocar API)
+
+Estado Fase 2.3: Completada (suite de tests Facturas Service/ViewModel en verde).
+
+#### Fase 2.4 - Services Commercial: Clientes
+- [x] 401/403/429 (propagación de `StatusCode` y mensaje)
+- [x] 204/empty body y `null Data`
+- [x] Cancelación (`CancellationToken`) y cancelación temprana (si aplica)
+
+Estado Fase 2.4: Completada (suite de tests Clientes Service/ViewModel en verde).
+
 ### Fase 3 - ViewModels (Otras features)
 
 #### Reservaciones

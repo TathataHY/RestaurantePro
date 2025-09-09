@@ -14,10 +14,12 @@ public class ClientesService : IClientesService
         _authService = authService;
     }
 
-    public async Task<ApiResponse<List<ClienteSummaryDto>>> ObtenerClientesAsync(bool soloActivos = true)
+    public async Task<ApiResponse<List<ClienteSummaryDto>>> ObtenerClientesAsync(bool soloActivos = true, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<ClienteSummaryDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var response = await _apiService.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?soloActivos={soloActivos}", token);
             if (response.Succeeded && response.Data != null)
@@ -32,10 +34,12 @@ public class ClientesService : IClientesService
         }
     }
 
-    public async Task<ApiResponse<ClienteDto>> ObtenerClienteAsync(Guid id)
+    public async Task<ApiResponse<ClienteDto>> ObtenerClienteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<ClienteDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var response = await _apiService.GetAsync<ClienteDto>($"api/comercial/clientes/{id}", token);
             return response;
@@ -46,10 +50,12 @@ public class ClientesService : IClientesService
         }
     }
 
-    public async Task<ApiResponse<List<ClienteSummaryDto>>> BuscarClientesAsync(string terminoBusqueda)
+    public async Task<ApiResponse<List<ClienteSummaryDto>>> BuscarClientesAsync(string terminoBusqueda, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<ClienteSummaryDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var response = await _apiService.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?filtroTexto={terminoBusqueda}", token);
             if (response.Succeeded && response.Data != null)
@@ -64,10 +70,12 @@ public class ClientesService : IClientesService
         }
     }
 
-    public async Task<ApiResponse<ClienteDto>> CrearClienteAsync(ClienteDto cliente)
+    public async Task<ApiResponse<ClienteDto>> CrearClienteAsync(ClienteDto cliente, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<ClienteDto>.Failure("Operación cancelada por el usuario");
             var response = await _apiService.PostAsync<ClienteDto>("api/comercial/clientes", cliente);
             return response;
         }
@@ -77,10 +85,12 @@ public class ClientesService : IClientesService
         }
     }
 
-    public async Task<ApiResponse<ClienteDto>> ActualizarClienteAsync(Guid id, ClienteDto cliente)
+    public async Task<ApiResponse<ClienteDto>> ActualizarClienteAsync(Guid id, ClienteDto cliente, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<ClienteDto>.Failure("Operación cancelada por el usuario");
             var response = await _apiService.PutAsync<ClienteDto>($"api/comercial/clientes/{id}", cliente);
             return response;
         }
@@ -90,10 +100,12 @@ public class ClientesService : IClientesService
         }
     }
 
-    public async Task<ApiResponse<bool>> EliminarClienteAsync(Guid id)
+    public async Task<ApiResponse<bool>> EliminarClienteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<bool>.Failure("Operación cancelada por el usuario");
             var response = await _apiService.DeleteAsync($"api/comercial/clientes/{id}");
             return response;
         }
@@ -103,10 +115,12 @@ public class ClientesService : IClientesService
         }
     }
 
-    public async Task<ApiResponse<EstadisticasClientesDto>> ObtenerEstadisticasAsync()
+    public async Task<ApiResponse<EstadisticasClientesDto>> ObtenerEstadisticasAsync(CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<EstadisticasClientesDto>.Failure("Operación cancelada por el usuario");
             // Como no hay endpoint específico de estadísticas, retornamos un error
             return ApiResponse<EstadisticasClientesDto>.Failure("Endpoint de estadísticas no disponible");
         }
@@ -116,10 +130,12 @@ public class ClientesService : IClientesService
         }
     }
 
-    public async Task<ApiResponse<List<ClienteSummaryDto>>> ObtenerClientesFrecuentesAsync(int cantidad = 10)
+    public async Task<ApiResponse<List<ClienteSummaryDto>>> ObtenerClientesFrecuentesAsync(int cantidad = 10, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<ClienteSummaryDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var response = await _apiService.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?soloClientesFrecuentes=true&pageSize={cantidad}", token);
             if (response.Succeeded && response.Data != null)
@@ -135,10 +151,12 @@ public class ClientesService : IClientesService
     }
 
     // Métodos adicionales para ViewModels
-    public async Task<ApiResponse<List<ClienteSummaryDto>>> ObtenerClientesAsync(FiltroClientesDto filtro)
+    public async Task<ApiResponse<List<ClienteSummaryDto>>> ObtenerClientesAsync(FiltroClientesDto filtro, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<ClienteSummaryDto>>.Failure("Operación cancelada por el usuario");
             // Usamos el endpoint principal con parámetros de consulta
             var queryParams = new List<string>();
             if (!string.IsNullOrEmpty(filtro.Busqueda)) queryParams.Add($"filtroTexto={filtro.Busqueda}");
@@ -163,10 +181,12 @@ public class ClientesService : IClientesService
         }
     }
 
-    public async Task<ApiResponse<List<ClienteSummaryDto>>> ObtenerClientesPorSegmentoAsync(string segmento)
+    public async Task<ApiResponse<List<ClienteSummaryDto>>> ObtenerClientesPorSegmentoAsync(string segmento, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<ClienteSummaryDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var response = await _apiService.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?segmento={segmento}", token);
             if (response.Succeeded && response.Data != null)
@@ -181,10 +201,12 @@ public class ClientesService : IClientesService
         }
     }
 
-    public async Task<ApiResponse<List<ClienteSummaryDto>>> ObtenerClientesConTarjetaFidelizacionAsync()
+    public async Task<ApiResponse<List<ClienteSummaryDto>>> ObtenerClientesConTarjetaFidelizacionAsync(CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<ClienteSummaryDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var response = await _apiService.GetAsync<PaginatedList<ClienteSummaryDto>>("api/comercial/clientes?soloConTarjetaFidelizacion=true", token);
             if (response.Succeeded && response.Data != null)
@@ -199,10 +221,12 @@ public class ClientesService : IClientesService
         }
     }
 
-    public async Task<ApiResponse<List<ClienteSummaryDto>>> ObtenerClientesPorFechaRegistroAsync(DateTime fechaDesde, DateTime fechaHasta)
+    public async Task<ApiResponse<List<ClienteSummaryDto>>> ObtenerClientesPorFechaRegistroAsync(DateTime fechaDesde, DateTime fechaHasta, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<ClienteSummaryDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var response = await _apiService.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?fechaRegistroDesde={fechaDesde:yyyy-MM-dd}&fechaRegistroHasta={fechaHasta:yyyy-MM-dd}", token);
             if (response.Succeeded && response.Data != null)
@@ -217,10 +241,12 @@ public class ClientesService : IClientesService
         }
     }
 
-    public async Task<ApiResponse<bool>> DesactivarClienteAsync(Guid clienteId)
+    public async Task<ApiResponse<bool>> DesactivarClienteAsync(Guid clienteId, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<bool>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var response = await _apiService.DeleteAsync($"api/comercial/clientes/{clienteId}", token);
             return response;
@@ -231,10 +257,12 @@ public class ClientesService : IClientesService
         }
     }
 
-    public async Task<ApiResponse<List<ComandaDto>>> ObtenerHistorialComandasAsync(Guid clienteId)
+    public async Task<ApiResponse<List<ComandaDto>>> ObtenerHistorialComandasAsync(Guid clienteId, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<ComandaDto>>.Failure("Operación cancelada por el usuario");
             // Como no hay endpoint específico de historial de comandas, retornamos un error
             return ApiResponse<List<ComandaDto>>.Failure("Endpoint de historial de comandas no disponible");
         }

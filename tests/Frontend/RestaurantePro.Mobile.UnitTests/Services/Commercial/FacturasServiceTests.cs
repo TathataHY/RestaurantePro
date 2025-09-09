@@ -253,6 +253,48 @@ public class FacturasServiceTests
     }
 
     [Fact]
+    public async Task ObtenerFacturasAsync_ShouldReturnCancelled_WhenTokenIsCancelled()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+        var calls = 0;
+        _mockApiService
+            .Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>()))
+            .Callback(() => calls++)
+            .ReturnsAsync(ApiResponse<List<FacturaDto>>.SuccessResponse(new List<FacturaDto>()));
+
+        // Act
+        var result = await _facturasService.ObtenerFacturasAsync(DateTime.Today, cts.Token);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Contains("cancelada", result.Error, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0, calls);
+    }
+
+    [Fact]
+    public async Task RegistrarPagoAsync_ShouldReturnCancelled_WhenTokenIsCancelled()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+        var calls = 0;
+        _mockApiService
+            .Setup(x => x.PostAsync<bool>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+            .Callback(() => calls++)
+            .ReturnsAsync(ApiResponse<bool>.SuccessResponse(true));
+
+        // Act
+        var result = await _facturasService.RegistrarPagoAsync(Guid.NewGuid(), new RegistrarPagoDto{ MetodoPago = "Efectivo", MontoPagado = 10 }, cts.Token);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Contains("cancelada", result.Error, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(0, calls);
+    }
+
+    [Fact]
     public async Task ObtenerFacturasAsync_WhenExceptionOccurs_ShouldReturnFailure()
     {
         // Arrange

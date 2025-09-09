@@ -64,7 +64,7 @@ public partial class MesaDetalleViewModel : BaseViewModel
     /// Propiedades calculadas para la UI
     /// </summary>
     public bool PuedeAsignar => Mesa?.Estado?.ToLowerInvariant() == "disponible";
-    public bool PuedeLiberar => Mesa?.Estado?.ToLowerInvariant() == "ocupada";
+    public bool PuedeLiberar => Mesa?.Estado?.ToLowerInvariant() == "ocupada" && !TieneComandasActivas;
     public bool TieneComandasActivas => ComandasActivas?.Any() == true;
     
     /// <summary>
@@ -179,7 +179,7 @@ public partial class MesaDetalleViewModel : BaseViewModel
     {
         try
         {
-            if (IsBusy) return; // evita solaparse con Initialize
+            // Nota: no usamos IsBusy aquí para permitir la carga dentro de InitializeAsync
             IsLoading = true;
             System.Diagnostics.Debug.WriteLine($"[DEBUG] Cargando comandas para mesa: {MesaId}");
             var result = await _comandasService.ObtenerComandasPorMesaAsync(MesaId);
@@ -208,6 +208,7 @@ public partial class MesaDetalleViewModel : BaseViewModel
                 
                 System.Diagnostics.Debug.WriteLine($"[DEBUG] ComandasActivas collection count: {ComandasActivas.Count}");
                 OnPropertyChanged(nameof(TieneComandasActivas));
+                OnPropertyChanged(nameof(PuedeLiberar));
                 OnPropertyChanged(nameof(ComandasListasParaEntregar));
                 OnPropertyChanged(nameof(ComandasListasParaCobrar));
                 OnPropertyChanged(nameof(TieneComandasListasParaEntregar));
@@ -630,13 +631,26 @@ public partial class MesaDetalleViewModel : BaseViewModel
     /// </summary>
     private async Task AbrirComandaDetalleAsync(ComandaDto? comanda)
     {
-        if (comanda == null) return;
+        System.Diagnostics.Debug.WriteLine($"[DEBUG] AbrirComandaDetalleAsync llamado con comanda: {comanda?.Id}");
+        if (comanda == null) 
+        {
+            System.Diagnostics.Debug.WriteLine("[DEBUG] Comanda es null, saliendo");
+            return;
+        }
+        
         try
         {
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Navegando a comanda-detalle con ID: {comanda.Id}");
             await _navigationService.NavigateToAsync("comanda-detalle", new Dictionary<string, object>
             {
                 ["comandaId"] = comanda.Id.ToString()
             });
+            System.Diagnostics.Debug.WriteLine("[DEBUG] Navegación completada");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Error en navegación: {ex.Message}");
+            await _dialogService.ShowAlertAsync("Error", $"Error al navegar: {ex.Message}");
         }
         finally
         {

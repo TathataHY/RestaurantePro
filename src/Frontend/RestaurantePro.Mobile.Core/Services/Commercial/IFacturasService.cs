@@ -12,7 +12,7 @@ public interface IFacturasService
     /// </summary>
     /// <param name="fecha">Fecha de las facturas</param>
     /// <returns>Lista de facturas</returns>
-    Task<ApiResponse<List<FacturaDto>>> ObtenerFacturasAsync(DateTime fecha);
+    Task<ApiResponse<List<FacturaDto>>> ObtenerFacturasAsync(DateTime fecha, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Buscar facturas por criterios
@@ -20,27 +20,27 @@ public interface IFacturasService
     /// <param name="busqueda">Término de búsqueda</param>
     /// <param name="fecha">Fecha de las facturas</param>
     /// <returns>Lista de facturas filtradas</returns>
-    Task<ApiResponse<List<FacturaDto>>> BuscarFacturasAsync(string busqueda, DateTime fecha);
+    Task<ApiResponse<List<FacturaDto>>> BuscarFacturasAsync(string busqueda, DateTime fecha, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Obtener estadísticas de facturas
     /// </summary>
     /// <param name="fecha">Fecha para las estadísticas</param>
     /// <returns>Estadísticas de facturas</returns>
-    Task<ApiResponse<EstadisticasFacturasDto>> ObtenerEstadisticasAsync(DateTime fecha);
+    Task<ApiResponse<EstadisticasFacturasDto>> ObtenerEstadisticasAsync(DateTime fecha, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Imprimir factura
     /// </summary>
     /// <param name="facturaId">ID de la factura</param>
     /// <returns>Resultado de la impresión</returns>
-    Task<ApiResponse<bool>> ImprimirFacturaAsync(Guid facturaId);
+    Task<ApiResponse<bool>> ImprimirFacturaAsync(Guid facturaId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Obtener facturas pendientes
     /// </summary>
     /// <returns>Lista de facturas pendientes</returns>
-    Task<ApiResponse<List<FacturaDto>>> ObtenerFacturasPendientesAsync();
+    Task<ApiResponse<List<FacturaDto>>> ObtenerFacturasPendientesAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Registrar pago de factura
@@ -48,7 +48,7 @@ public interface IFacturasService
     /// <param name="facturaId">ID de la factura</param>
     /// <param name="pagoDto">Datos del pago</param>
     /// <returns>Resultado del registro</returns>
-    Task<ApiResponse<bool>> RegistrarPagoAsync(Guid facturaId, RegistrarPagoDto pagoDto);
+    Task<ApiResponse<bool>> RegistrarPagoAsync(Guid facturaId, RegistrarPagoDto pagoDto, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Anular factura
@@ -56,14 +56,14 @@ public interface IFacturasService
     /// <param name="facturaId">ID de la factura</param>
     /// <param name="anulacionDto">Datos de la anulación</param>
     /// <returns>Resultado de la anulación</returns>
-    Task<ApiResponse<bool>> AnularFacturaAsync(Guid facturaId, AnularFacturaDto anulacionDto);
+    Task<ApiResponse<bool>> AnularFacturaAsync(Guid facturaId, AnularFacturaDto anulacionDto, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Descargar factura en PDF
     /// </summary>
     /// <param name="facturaId">ID de la factura</param>
     /// <returns>URL del PDF</returns>
-    Task<ApiResponse<string>> DescargarFacturaPdfAsync(Guid facturaId);
+    Task<ApiResponse<string>> DescargarFacturaPdfAsync(Guid facturaId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Enviar factura por email
@@ -71,5 +71,5 @@ public interface IFacturasService
     /// <param name="facturaId">ID de la factura</param>
     /// <param name="email">Email de destino</param>
     /// <returns>Resultado del envío</returns>
-    Task<ApiResponse<string>> EnviarFacturaPorEmailAsync(Guid facturaId, string email);
+    Task<ApiResponse<string>> EnviarFacturaPorEmailAsync(Guid facturaId, string email, CancellationToken cancellationToken = default);
 } 
