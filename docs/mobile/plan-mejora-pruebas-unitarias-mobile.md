@@ -109,10 +109,18 @@ Estado Fase 1.3: Completada (suite de tests Comandas ViewModels en verde).
 #### Fase 2.1 - Services Operations: Comandas
 - [x] 204/empty y `null Data` (mapeo coherente a estado vacío o error informativo)
 - [x] 401/403/429 (propagación de `StatusCode` y mensaje)
-- [ ] Cancelación (`CancellationToken`) y cancelación temprana (sin invocar API)
+- [x] Cancelación (`CancellationToken`) y cancelación temprana (sin invocar API)
 - [ ] Paginación: verificación de parámetros `pageNumber/pageSize` en query
 
-Estado Fase 2.1: Parcial (quedan cancelación y verificación de paginación).
+Estado Fase 2.1: Parcial (queda verificación de paginación).
+
+#### Fase 2.2 - Services Operations: Mesas y Productos
+- [x] 204/empty y `null Data` en MesasService y ProductosService
+- [x] 401/403/429 en MesasService y ProductosService
+- [x] Cancelación (`CancellationToken`) y cancelación temprana (sin invocar API)
+- [ ] Paginación: verificación de parámetros `pageNumber/pageSize` (si aplica)
+
+Estado Fase 2.2: Parcial (errores, 204 y cancelación listos; falta paginación).
 
 ### Métricas e inspección (opcional)
 - Cobertura (Coverlet + ReportGenerator)

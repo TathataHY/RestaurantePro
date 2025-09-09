@@ -732,54 +732,53 @@ public class MesasViewModelTests
     {
         private readonly ApiResponse<List<MesaDto>> _response;
         public FakeMesasService(ApiResponse<List<MesaDto>> response) { _response = response; }
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null)
+        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, CancellationToken cancellationToken = default)
             => Task.FromResult(_response);
-        public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id) => throw new NotImplementedException();
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null) => throw new NotImplementedException();
-        public Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync() => throw new NotImplementedException();
-        public Task<ApiResponse<object>> AsignarMesaAsync(Guid mesaId, Guid? clienteId = null, int? numeroPersonas = null, string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> LiberarMesaAsync(Guid mesaId, string motivo = "Mesa liberada desde móvil", string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> CambiarEstadoMesaAsync(Guid mesaId, string nuevoEstado, string? motivo = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> BuscarMejorMesaAsync(int numeroPersonas, string? ubicacionPreferida = null) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<object>> AsignarMesaAsync(Guid mesaId, Guid? clienteId = null, int? numeroPersonas = null, string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> LiberarMesaAsync(Guid mesaId, string motivo = "Mesa liberada desde móvil", string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> CambiarEstadoMesaAsync(Guid mesaId, string nuevoEstado, string? motivo = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> BuscarMejorMesaAsync(int numeroPersonas, string? ubicacionPreferida = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
     private class FakeMesasServiceThrows : IMesasService
     {
         private readonly Exception _exception;
         public FakeMesasServiceThrows(Exception exception) { _exception = exception; }
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null)
+        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, CancellationToken cancellationToken = default)
             => throw _exception;
-        public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id) => throw new NotImplementedException();
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null) => throw new NotImplementedException();
-        public Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync() => throw new NotImplementedException();
-        public Task<ApiResponse<object>> AsignarMesaAsync(Guid mesaId, Guid? clienteId = null, int? numeroPersonas = null, string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> LiberarMesaAsync(Guid mesaId, string motivo = "Mesa liberada desde móvil", string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> CambiarEstadoMesaAsync(Guid mesaId, string nuevoEstado, string? motivo = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> BuscarMejorMesaAsync(int numeroPersonas, string? ubicacionPreferida = null) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<object>> AsignarMesaAsync(Guid mesaId, Guid? clienteId = null, int? numeroPersonas = null, string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> LiberarMesaAsync(Guid mesaId, string motivo = "Mesa liberada desde móvil", string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> CambiarEstadoMesaAsync(Guid mesaId, string nuevoEstado, string? motivo = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> BuscarMejorMesaAsync(int numeroPersonas, string? ubicacionPreferida = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
     private class FakeMesasServiceNotCalled : IMesasService
     {
         public bool WasCalled { get; set; }
 
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null)
+        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, CancellationToken cancellationToken = default)
         {
-            WasCalled = true;
             return Task.FromResult(ApiResponse<List<MesaDto>>.SuccessResponse(new List<MesaDto>()));
         }
 
-        public Task<ApiResponse<object>> AsignarMesaAsync(Guid mesaId, Guid? clienteId = null, int? numeroPersonas = null, string? observaciones = null)
+        public Task<ApiResponse<object>> AsignarMesaAsync(Guid mesaId, Guid? clienteId = null, int? numeroPersonas = null, string? observaciones = null, CancellationToken cancellationToken = default)
         {
             WasCalled = true;
             return Task.FromResult(ApiResponse<object>.SuccessResponse(new object()));
         }
 
-        public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id) => throw new NotImplementedException();
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null) => throw new NotImplementedException();
-        public Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync() => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> LiberarMesaAsync(Guid mesaId, string motivo = "Mesa liberada desde móvil", string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> CambiarEstadoMesaAsync(Guid mesaId, string nuevoEstado, string? motivo = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> BuscarMejorMesaAsync(int numeroPersonas, string? ubicacionPreferida = null) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> LiberarMesaAsync(Guid mesaId, string motivo = "Mesa liberada desde móvil", string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> CambiarEstadoMesaAsync(Guid mesaId, string nuevoEstado, string? motivo = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> BuscarMejorMesaAsync(int numeroPersonas, string? ubicacionPreferida = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
     private class FakeDialogService : IDialogService
@@ -860,7 +859,7 @@ public class MesasViewModelTests
             WasCalled = false;
         }
 
-        public Task<ApiResponse<object>> AsignarMesaAsync(Guid mesaId, Guid? clienteId = null, int? numeroPersonas = null, string? observaciones = null)
+        public Task<ApiResponse<object>> AsignarMesaAsync(Guid mesaId, Guid? clienteId = null, int? numeroPersonas = null, string? observaciones = null, CancellationToken cancellationToken = default)
         {
             WasCalled = true;
             return Task.FromResult(_success 
@@ -868,13 +867,14 @@ public class MesasViewModelTests
                 : ApiResponse<object>.ErrorResponse(new List<string> { _message }, _message, 500));
         }
 
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id) => throw new NotImplementedException();
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null) => throw new NotImplementedException();
-        public Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync() => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> LiberarMesaAsync(Guid mesaId, string motivo = "Mesa liberada desde móvil", string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> CambiarEstadoMesaAsync(Guid mesaId, string nuevoEstado, string? motivo = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> BuscarMejorMesaAsync(int numeroPersonas, string? ubicacionPreferida = null) => throw new NotImplementedException();
+        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, CancellationToken cancellationToken = default)
+            => Task.FromResult(ApiResponse<List<MesaDto>>.SuccessResponse(new List<MesaDto>()));
+        public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> LiberarMesaAsync(Guid mesaId, string motivo = "Mesa liberada desde móvil", string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> CambiarEstadoMesaAsync(Guid mesaId, string nuevoEstado, string? motivo = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> BuscarMejorMesaAsync(int numeroPersonas, string? ubicacionPreferida = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
     // Fake para pruebas de liberación
@@ -891,7 +891,7 @@ public class MesasViewModelTests
             WasCalled = false;
         }
 
-        public Task<ApiResponse<MesaDto>> LiberarMesaAsync(Guid mesaId, string motivo = "Mesa liberada desde móvil", string? observaciones = null)
+        public Task<ApiResponse<MesaDto>> LiberarMesaAsync(Guid mesaId, string motivo = "Mesa liberada desde móvil", string? observaciones = null, CancellationToken cancellationToken = default)
         {
             WasCalled = true;
             return Task.FromResult(_success 
@@ -899,13 +899,14 @@ public class MesasViewModelTests
                 : ApiResponse<MesaDto>.ErrorResponse(new List<string> { _message }, _message, 500));
         }
 
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id) => throw new NotImplementedException();
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null) => throw new NotImplementedException();
-        public Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync() => throw new NotImplementedException();
-        public Task<ApiResponse<object>> AsignarMesaAsync(Guid mesaId, Guid? clienteId = null, int? numeroPersonas = null, string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> CambiarEstadoMesaAsync(Guid mesaId, string nuevoEstado, string? motivo = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> BuscarMejorMesaAsync(int numeroPersonas, string? ubicacionPreferida = null) => throw new NotImplementedException();
+        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, CancellationToken cancellationToken = default)
+            => Task.FromResult(ApiResponse<List<MesaDto>>.SuccessResponse(new List<MesaDto>()));
+        public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<object>> AsignarMesaAsync(Guid mesaId, Guid? clienteId = null, int? numeroPersonas = null, string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> CambiarEstadoMesaAsync(Guid mesaId, string nuevoEstado, string? motivo = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> BuscarMejorMesaAsync(int numeroPersonas, string? ubicacionPreferida = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
     // Fake para pruebas de estadísticas
@@ -922,7 +923,7 @@ public class MesasViewModelTests
             _message = message;
         }
 
-        public Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync()
+        public Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync(CancellationToken cancellationToken = default)
         {
             if (_success)
             {
@@ -935,18 +936,18 @@ public class MesasViewModelTests
         }
 
         // Implementar ObtenerMesasAsync para evitar excepción en constructor
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null)
+        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(ApiResponse<List<MesaDto>>.SuccessResponse(new List<MesaDto>()));
         }
 
         // Métodos no usados en este test
-        public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id) => throw new NotImplementedException();
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null) => throw new NotImplementedException();
-        public Task<ApiResponse<object>> AsignarMesaAsync(Guid mesaId, Guid? clienteId = null, int? numeroPersonas = null, string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> LiberarMesaAsync(Guid mesaId, string motivo = "Mesa liberada desde móvil", string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> CambiarEstadoMesaAsync(Guid mesaId, string nuevoEstado, string? motivo = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> BuscarMejorMesaAsync(int numeroPersonas, string? ubicacionPreferida = null) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<object>> AsignarMesaAsync(Guid mesaId, Guid? clienteId = null, int? numeroPersonas = null, string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> LiberarMesaAsync(Guid mesaId, string motivo = "Mesa liberada desde móvil", string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> CambiarEstadoMesaAsync(Guid mesaId, string nuevoEstado, string? motivo = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> BuscarMejorMesaAsync(int numeroPersonas, string? ubicacionPreferida = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
     // Fake para capturar parámetros de filtros
@@ -956,7 +957,7 @@ public class MesasViewModelTests
         public string? LastUbicacion { get; private set; }
         public int? LastCapacidadMinima { get; private set; }
 
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null)
+        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, CancellationToken cancellationToken = default)
         {
             LastEstado = estado;
             LastUbicacion = ubicacion;
@@ -965,13 +966,13 @@ public class MesasViewModelTests
         }
 
         // Métodos no utilizados en estas pruebas
-        public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id) => throw new NotImplementedException();
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null) => throw new NotImplementedException();
-        public Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync() => throw new NotImplementedException();
-        public Task<ApiResponse<object>> AsignarMesaAsync(Guid mesaId, Guid? clienteId = null, int? numeroPersonas = null, string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> LiberarMesaAsync(Guid mesaId, string motivo = "Mesa liberada desde móvil", string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> CambiarEstadoMesaAsync(Guid mesaId, string nuevoEstado, string? motivo = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> BuscarMejorMesaAsync(int numeroPersonas, string? ubicacionPreferida = null) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<object>> AsignarMesaAsync(Guid mesaId, Guid? clienteId = null, int? numeroPersonas = null, string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> LiberarMesaAsync(Guid mesaId, string motivo = "Mesa liberada desde móvil", string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> CambiarEstadoMesaAsync(Guid mesaId, string nuevoEstado, string? motivo = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> BuscarMejorMesaAsync(int numeroPersonas, string? ubicacionPreferida = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
     // Fake para pruebas de cambiar estado
@@ -988,7 +989,7 @@ public class MesasViewModelTests
             _message = message;
         }
 
-        public Task<ApiResponse<MesaDto>> CambiarEstadoMesaAsync(Guid mesaId, string nuevoEstado, string? motivo = null)
+        public Task<ApiResponse<MesaDto>> CambiarEstadoMesaAsync(Guid mesaId, string nuevoEstado, string? motivo = null, CancellationToken cancellationToken = default)
         {
             WasCambiarCalled = true;
             return Task.FromResult(_success
@@ -996,19 +997,19 @@ public class MesasViewModelTests
                 : ApiResponse<MesaDto>.ErrorResponse(new List<string> { _message }, _message, 500));
         }
 
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null)
+        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, CancellationToken cancellationToken = default)
         {
             ObtenerMesasCalledCount++;
             return Task.FromResult(ApiResponse<List<MesaDto>>.SuccessResponse(new List<MesaDto>()));
         }
 
         // Métodos no usados
-        public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id) => throw new NotImplementedException();
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null) => throw new NotImplementedException();
-        public Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync() => throw new NotImplementedException();
-        public Task<ApiResponse<object>> AsignarMesaAsync(Guid mesaId, Guid? clienteId = null, int? numeroPersonas = null, string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> LiberarMesaAsync(Guid mesaId, string motivo = "Mesa liberada desde móvil", string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<MesaDto>> BuscarMejorMesaAsync(int numeroPersonas, string? ubicacionPreferida = null) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<object>> AsignarMesaAsync(Guid mesaId, Guid? clienteId = null, int? numeroPersonas = null, string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> LiberarMesaAsync(Guid mesaId, string motivo = "Mesa liberada desde móvil", string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> BuscarMejorMesaAsync(int numeroPersonas, string? ubicacionPreferida = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
     #endregion

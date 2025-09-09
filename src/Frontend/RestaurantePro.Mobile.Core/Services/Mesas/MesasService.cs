@@ -29,8 +29,11 @@ public class MesasService : IMesasService
     public async Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(
         string? estado = null, 
         string? ubicacion = null, 
-        int? capacidadMinima = null)
+        int? capacidadMinima = null,
+        CancellationToken cancellationToken = default)
     {
+        if (cancellationToken.IsCancellationRequested)
+            return ApiResponse<List<MesaDto>>.ErrorResponse("Operación cancelada por el usuario");
         var queryParams = new List<string>();
         
         if (!string.IsNullOrWhiteSpace(estado))
@@ -51,8 +54,10 @@ public class MesasService : IMesasService
     /// <summary>
     /// Obtiene una mesa específica por ID
     /// </summary>
-    public async Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id)
+    public async Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id, CancellationToken cancellationToken = default)
     {
+        if (cancellationToken.IsCancellationRequested)
+            return ApiResponse<MesaDto>.ErrorResponse("Operación cancelada por el usuario");
         var endpoint = $"{BasePath}/{id}";
         var token = await _authService.GetTokenAsync();
         return await _apiService.GetAsync<MesaDto>(endpoint, token);
@@ -63,8 +68,11 @@ public class MesasService : IMesasService
     /// </summary>
     public async Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(
         int? capacidadMinima = null, 
-        string? ubicacion = null)
+        string? ubicacion = null,
+        CancellationToken cancellationToken = default)
     {
+        if (cancellationToken.IsCancellationRequested)
+            return ApiResponse<List<MesaDto>>.ErrorResponse("Operación cancelada por el usuario");
         var queryParams = new List<string>();
         
         if (capacidadMinima.HasValue)
@@ -106,8 +114,10 @@ public class MesasService : IMesasService
     /// <summary>
     /// Obtiene el estado general de ocupación de las mesas
     /// </summary>
-    public async Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync()
+    public async Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync(CancellationToken cancellationToken = default)
     {
+        if (cancellationToken.IsCancellationRequested)
+            return ApiResponse<EstadoMesasDto>.ErrorResponse("Operación cancelada por el usuario");
         var endpoint = $"{BasePath}/estado-ocupacion";
         var token = await _authService.GetTokenAsync();
         return await _apiService.GetAsync<EstadoMesasDto>(endpoint, token);
@@ -120,8 +130,11 @@ public class MesasService : IMesasService
         Guid mesaId, 
         Guid? clienteId = null, 
         int? numeroPersonas = null, 
-        string? observaciones = null)
+        string? observaciones = null,
+        CancellationToken cancellationToken = default)
     {
+        if (cancellationToken.IsCancellationRequested)
+            return ApiResponse<object>.ErrorResponse("Operación cancelada por el usuario");
         var request = new
         {
             ClienteId = clienteId,
@@ -141,8 +154,11 @@ public class MesasService : IMesasService
     public async Task<ApiResponse<MesaDto>> LiberarMesaAsync(
         Guid mesaId, 
         string motivo = "Mesa liberada desde móvil", 
-        string? observaciones = null)
+        string? observaciones = null,
+        CancellationToken cancellationToken = default)
     {
+        if (cancellationToken.IsCancellationRequested)
+            return ApiResponse<MesaDto>.ErrorResponse("Operación cancelada por el usuario");
         System.Diagnostics.Debug.WriteLine($"[DEBUG] MesasService.LiberarMesaAsync -> mesaId={mesaId}, motivo='{motivo}', observaciones='{observaciones}'");
         var request = new
         {
@@ -164,8 +180,11 @@ public class MesasService : IMesasService
     public async Task<ApiResponse<MesaDto>> CambiarEstadoMesaAsync(
         Guid mesaId, 
         string nuevoEstado, 
-        string? motivo = null)
+        string? motivo = null,
+        CancellationToken cancellationToken = default)
     {
+        if (cancellationToken.IsCancellationRequested)
+            return ApiResponse<MesaDto>.ErrorResponse("Operación cancelada por el usuario");
         var request = new
         {
             NuevoEstado = nuevoEstado,
@@ -183,8 +202,11 @@ public class MesasService : IMesasService
     /// </summary>
     public async Task<ApiResponse<MesaDto>> BuscarMejorMesaAsync(
         int numeroPersonas, 
-        string? ubicacionPreferida = null)
+        string? ubicacionPreferida = null,
+        CancellationToken cancellationToken = default)
     {
+        if (cancellationToken.IsCancellationRequested)
+            return ApiResponse<MesaDto>.ErrorResponse("Operación cancelada por el usuario");
         var queryParams = new List<string>
         {
             $"numeroPersonas={numeroPersonas}"

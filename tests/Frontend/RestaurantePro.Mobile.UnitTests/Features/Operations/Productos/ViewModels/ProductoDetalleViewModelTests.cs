@@ -51,9 +51,9 @@ public class ProductoDetalleViewModelTests
             CantidadDisponible = 10
         };
         
-        _mockProductosService.Setup(x => x.ObtenerProductoPorIdAsync(productoId))
+        _mockProductosService.Setup(x => x.ObtenerProductoPorIdAsync(productoId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<ProductoDto>.SuccessResponse(producto));
-        _mockProductosService.Setup(x => x.ObtenerCategoriasAsync())
+        _mockProductosService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(new List<CategoriaProductoDto>()));
 
         var vm = new ProductoDetalleViewModel(_mockProductosService.Object, _mockNavigationService.Object, _mockDialogService.Object);
@@ -70,7 +70,7 @@ public class ProductoDetalleViewModelTests
     public async Task LoadProductoAsync_WithErrorResponse_ShouldShowError()
     {
         var productoId = Guid.NewGuid();
-        _mockProductosService.Setup(x => x.ObtenerProductoPorIdAsync(productoId))
+        _mockProductosService.Setup(x => x.ObtenerProductoPorIdAsync(productoId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<ProductoDto>.ErrorResponse(new List<string> { "Error" }, "Error", 500));
 
         var vm = new ProductoDetalleViewModel(_mockProductosService.Object, _mockNavigationService.Object, _mockDialogService.Object);
@@ -89,7 +89,7 @@ public class ProductoDetalleViewModelTests
             new CategoriaProductoDto { Id = Guid.NewGuid(), Nombre = "Platos" }
         };
         
-        _mockProductosService.Setup(x => x.ObtenerCategoriasAsync())
+        _mockProductosService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias));
 
         var vm = new ProductoDetalleViewModel(_mockProductosService.Object, _mockNavigationService.Object, _mockDialogService.Object);
@@ -460,7 +460,7 @@ public class ProductoDetalleViewModelTests
         
         await vm.RefreshCommand.ExecuteAsync(null);
 
-        _mockProductosService.Verify(x => x.ObtenerProductoPorIdAsync(It.IsAny<Guid>()), Times.Never);
+        _mockProductosService.Verify(x => x.ObtenerProductoPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

@@ -27,10 +27,13 @@ public class ProductosService : IProductosService
         int pageNumber = 1, 
         int pageSize = 20, 
         string? filtro = null, 
-        bool soloActivos = true)
+        bool soloActivos = true,
+        CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<ProductoDto>>.ErrorResponse("Operación cancelada por el usuario");
             var queryParams = $"?pageNumber={pageNumber}&pageSize={pageSize}&soloActivos={soloActivos}";
             
             if (!string.IsNullOrWhiteSpace(filtro))
@@ -58,10 +61,12 @@ public class ProductosService : IProductosService
     /// <summary>
     /// Obtener producto por ID específico
     /// </summary>
-    public async Task<ApiResponse<ProductoDto>> ObtenerProductoPorIdAsync(Guid productoId)
+    public async Task<ApiResponse<ProductoDto>> ObtenerProductoPorIdAsync(Guid productoId, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<ProductoDto>.ErrorResponse("Operación cancelada por el usuario");
             if (productoId == Guid.Empty)
             {
                 return ApiResponse<ProductoDto>.ErrorResponse("El ID del producto es requerido", "El ID del producto es requerido");
@@ -81,10 +86,13 @@ public class ProductosService : IProductosService
     /// </summary>
     public async Task<ApiResponse<List<ProductoDto>>> ObtenerProductosPorCategoriaAsync(
         Guid categoriaId, 
-        bool soloActivos = true)
+        bool soloActivos = true,
+        CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<ProductoDto>>.ErrorResponse("Operación cancelada por el usuario");
             if (categoriaId == Guid.Empty)
             {
                 return ApiResponse<List<ProductoDto>>.ErrorResponse("El ID de la categoría es requerido", "El ID de la categoría es requerido");
@@ -102,10 +110,12 @@ public class ProductosService : IProductosService
     /// <summary>
     /// Verificar disponibilidad de un producto específico
     /// </summary>
-    public async Task<ApiResponse<DisponibilidadProductoDto>> VerificarDisponibilidadProductoAsync(Guid productoId)
+    public async Task<ApiResponse<DisponibilidadProductoDto>> VerificarDisponibilidadProductoAsync(Guid productoId, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<DisponibilidadProductoDto>.ErrorResponse("Operación cancelada por el usuario");
             if (productoId == Guid.Empty)
             {
                 return ApiResponse<DisponibilidadProductoDto>.ErrorResponse("El ID del producto es requerido", "El ID del producto es requerido");
@@ -125,10 +135,13 @@ public class ProductosService : IProductosService
     /// </summary>
     public async Task<ApiResponse<List<ProductoDto>>> BuscarProductosAsync(
         string textoBusqueda, 
-        bool soloActivos = true)
+        bool soloActivos = true,
+        CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<ProductoDto>>.ErrorResponse("Operación cancelada por el usuario");
             if (string.IsNullOrWhiteSpace(textoBusqueda))
             {
                 return ApiResponse<List<ProductoDto>>.ErrorResponse("El texto de búsqueda es requerido", "El texto de búsqueda es requerido");
@@ -147,10 +160,12 @@ public class ProductosService : IProductosService
     /// <summary>
     /// Obtener productos más populares (para recomendaciones)
     /// </summary>
-    public async Task<ApiResponse<List<ProductoDto>>> ObtenerProductosPopularesAsync(int limite = 10)
+    public async Task<ApiResponse<List<ProductoDto>>> ObtenerProductosPopularesAsync(int limite = 10, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<ProductoDto>>.ErrorResponse("Operación cancelada por el usuario");
             if (limite <= 0)
             {
                 return ApiResponse<List<ProductoDto>>.ErrorResponse("El límite debe ser mayor a 0", "El límite debe ser mayor a 0");
@@ -168,10 +183,12 @@ public class ProductosService : IProductosService
     /// <summary>
     /// Obtener productos disponibles para agregar a comandas (filtrados)
     /// </summary>
-    public async Task<ApiResponse<List<ProductoDto>>> ObtenerProductosDisponiblesParaComandasAsync(Guid? categoriaId = null)
+    public async Task<ApiResponse<List<ProductoDto>>> ObtenerProductosDisponiblesParaComandasAsync(Guid? categoriaId = null, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<ProductoDto>>.ErrorResponse("Operación cancelada por el usuario");
             var endpoint = $"{BaseEndpoint}/disponibles-comandas";
             
             if (categoriaId.HasValue && categoriaId.Value != Guid.Empty)
@@ -191,10 +208,12 @@ public class ProductosService : IProductosService
     /// <summary>
     /// Obtener categorías de productos disponibles
     /// </summary>
-    public async Task<ApiResponse<List<CategoriaProductoDto>>> ObtenerCategoriasAsync()
+    public async Task<ApiResponse<List<CategoriaProductoDto>>> ObtenerCategoriasAsync(CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<CategoriaProductoDto>>.ErrorResponse("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             return await _apiService.GetAsync<List<CategoriaProductoDto>>("api/core/categorias", token);
         }
@@ -207,10 +226,12 @@ public class ProductosService : IProductosService
     /// <summary>
     /// Crear un nuevo producto
     /// </summary>
-    public async Task<ApiResponse<ProductoDto>> CrearProductoAsync(CrearProductoRequest request)
+    public async Task<ApiResponse<ProductoDto>> CrearProductoAsync(CrearProductoRequest request, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<ProductoDto>.ErrorResponse("Operación cancelada por el usuario");
             if (request is null)
             {
                 return ApiResponse<ProductoDto>.ErrorResponse("Request inválido", "Request inválido");
@@ -228,10 +249,12 @@ public class ProductosService : IProductosService
     /// <summary>
     /// Actualizar un producto existente
     /// </summary>
-    public async Task<ApiResponse<ProductoDto>> ActualizarProductoAsync(ActualizarProductoRequest request)
+    public async Task<ApiResponse<ProductoDto>> ActualizarProductoAsync(ActualizarProductoRequest request, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<ProductoDto>.ErrorResponse("Operación cancelada por el usuario");
             if (request is null || request.Id == Guid.Empty)
             {
                 return ApiResponse<ProductoDto>.ErrorResponse("Request inválido", "Request inválido");
@@ -249,10 +272,12 @@ public class ProductosService : IProductosService
     /// <summary>
     /// Eliminar un producto
     /// </summary>
-    public async Task<ApiResponse<bool>> EliminarProductoAsync(Guid productoId)
+    public async Task<ApiResponse<bool>> EliminarProductoAsync(Guid productoId, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<bool>.ErrorResponse("Operación cancelada por el usuario");
             if (productoId == Guid.Empty)
             {
                 return ApiResponse<bool>.ErrorResponse("El ID del producto es requerido", "El ID del producto es requerido");

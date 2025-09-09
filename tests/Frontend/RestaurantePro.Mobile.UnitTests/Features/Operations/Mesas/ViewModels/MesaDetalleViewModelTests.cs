@@ -41,7 +41,7 @@ public class MesaDetalleViewModelTests
         await vm.InitializeAsync(mesaId);
 
         vm.MesaId.Should().Be(mesaId);
-        _mockMesasService.Verify(x => x.ObtenerMesaAsync(mesaId), Times.Once);
+        _mockMesasService.Verify(x => x.ObtenerMesaAsync(mesaId, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -51,7 +51,7 @@ public class MesaDetalleViewModelTests
 
         await vm.InitializeAsync(Guid.Empty);
 
-        _mockMesasService.Verify(x => x.ObtenerMesaAsync(It.IsAny<Guid>()), Times.Never);
+        _mockMesasService.Verify(x => x.ObtenerMesaAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -59,7 +59,7 @@ public class MesaDetalleViewModelTests
     {
         var mesaId = Guid.NewGuid();
         var mesa = new MesaDto { Id = mesaId, Numero = "1", Estado = "disponible", Capacidad = 4 };
-        _mockMesasService.Setup(x => x.ObtenerMesaAsync(mesaId))
+        _mockMesasService.Setup(x => x.ObtenerMesaAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<MesaDto>.SuccessResponse(mesa));
 
         var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
@@ -75,7 +75,7 @@ public class MesaDetalleViewModelTests
     public async Task LoadMesaAsync_ErrorResponse_ShouldShowError()
     {
         var mesaId = Guid.NewGuid();
-        _mockMesasService.Setup(x => x.ObtenerMesaAsync(mesaId))
+        _mockMesasService.Setup(x => x.ObtenerMesaAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<MesaDto>.ErrorResponse(new List<string> { "Error" }, "Error", 500));
 
         var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
@@ -127,10 +127,10 @@ public class MesaDetalleViewModelTests
     {
         var mesaId = Guid.NewGuid();
         var mesa = new MesaDto { Id = mesaId, Estado = "disponible" };
-        _mockMesasService.Setup(x => x.ObtenerMesaAsync(mesaId))
+        _mockMesasService.Setup(x => x.ObtenerMesaAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<MesaDto>.SuccessResponse(mesa));
         _mockMesasService.Setup(x => x.AsignarMesaAsync(
-            It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<int?>(), It.IsAny<string>()))
+            It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<object>.SuccessResponse(new { mesa.Id, mesa.Estado }));
         
         int promptCall = 0;
@@ -148,7 +148,7 @@ public class MesaDetalleViewModelTests
         await vm.AsignarMesaCommand.ExecuteAsync(null);
 
         _mockMesasService.Verify(x => x.AsignarMesaAsync(
-            mesaId, null, 4, It.Is<string>(s => s.Contains("Juan Pérez"))), Times.Once);
+            mesaId, null, 4, It.Is<string>(s => s.Contains("Juan Pérez")), It.IsAny<CancellationToken>()), Times.Once);
         _mockDialog.Verify(x => x.ShowAlertAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
@@ -168,7 +168,7 @@ public class MesaDetalleViewModelTests
         await vm.AsignarMesaCommand.ExecuteAsync(null);
 
         _mockMesasService.Verify(x => x.AsignarMesaAsync(
-            It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<int?>(), It.IsAny<string>()), Times.Never);
+            It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -177,7 +177,7 @@ public class MesaDetalleViewModelTests
         var mesaId = Guid.NewGuid();
         var mesa = new MesaDto { Id = mesaId, Estado = "disponible" };
         _mockMesasService.Setup(x => x.AsignarMesaAsync(
-            It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<int?>(), It.IsAny<string>()))
+            It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<object>.SuccessResponse(new { mesa.Id, mesa.Estado }));
         
         int promptCall = 0;
@@ -195,7 +195,7 @@ public class MesaDetalleViewModelTests
         await vm.AsignarMesaCommand.ExecuteAsync(null);
 
         _mockMesasService.Verify(x => x.AsignarMesaAsync(
-            mesaId, null, 2, It.IsAny<string>()), Times.Once);
+            mesaId, null, 2, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -203,10 +203,10 @@ public class MesaDetalleViewModelTests
     {
         var mesaId = Guid.NewGuid();
         var mesa = new MesaDto { Id = mesaId, Estado = "ocupada" };
-        _mockMesasService.Setup(x => x.ObtenerMesaAsync(mesaId))
+        _mockMesasService.Setup(x => x.ObtenerMesaAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<MesaDto>.SuccessResponse(mesa));
         _mockMesasService.Setup(x => x.LiberarMesaAsync(
-            It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()))
+            It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<MesaDto>.SuccessResponse(mesa));
         
         // Configurar el mock de comandas para evitar error al cargar comandas
@@ -227,7 +227,7 @@ public class MesaDetalleViewModelTests
         await vm.LiberarMesaCommand.ExecuteAsync(null);
 
         _mockMesasService.Verify(x => x.LiberarMesaAsync(
-            mesaId, "Finalización del servicio", It.IsAny<string>()), Times.Once);
+            mesaId, "Finalización del servicio", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockDialog.Verify(x => x.ShowAlertAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
@@ -247,7 +247,7 @@ public class MesaDetalleViewModelTests
         await vm.LiberarMesaCommand.ExecuteAsync(null);
 
         _mockMesasService.Verify(x => x.LiberarMesaAsync(
-            It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -255,10 +255,10 @@ public class MesaDetalleViewModelTests
     {
         var mesaId = Guid.NewGuid();
         var mesa = new MesaDto { Id = mesaId, Estado = "disponible" };
-        _mockMesasService.Setup(x => x.ObtenerMesaAsync(mesaId))
+        _mockMesasService.Setup(x => x.ObtenerMesaAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<MesaDto>.SuccessResponse(mesa));
         _mockMesasService.Setup(x => x.CambiarEstadoMesaAsync(
-            It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()))
+            It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<MesaDto>.SuccessResponse(mesa));
         _mockDialog.Setup(x => x.ShowActionSheetAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string[]>()))
@@ -270,7 +270,7 @@ public class MesaDetalleViewModelTests
         await vm.CambiarEstadoCommand.ExecuteAsync(null);
 
         _mockMesasService.Verify(x => x.CambiarEstadoMesaAsync(
-            mesaId, "mantenimiento", It.IsAny<string>()), Times.Once);
+            mesaId, "mantenimiento", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockDialog.Verify(x => x.ShowAlertAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
@@ -290,7 +290,7 @@ public class MesaDetalleViewModelTests
         await vm.CambiarEstadoCommand.ExecuteAsync(null);
 
         _mockMesasService.Verify(x => x.CambiarEstadoMesaAsync(
-            It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+            It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

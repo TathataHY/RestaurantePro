@@ -9,6 +9,18 @@ public partial class CreateDailyPreparationPage : ContentPage
         InitializeComponent();
         BindingContext = vm;
     }
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        if (BindingContext is CreateDailyPreparationViewModel vm)
+        {
+            if (vm.Productos.Count == 0)
+            {
+                await vm.BuscarProductosCommand.ExecuteAsync(null);
+            }
+        }
+    }
 }
 
 

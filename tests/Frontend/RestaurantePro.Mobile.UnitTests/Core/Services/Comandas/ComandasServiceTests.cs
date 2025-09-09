@@ -66,6 +66,70 @@ public class ComandasServiceTests
 
     #endregion
 
+    #region Paginación (query params)
+
+    [Fact]
+    public async Task ObtenerComandasActivasAsync_DebeIncluirPageNumberYPageSizeEnQuery()
+    {
+        var expectedComandas = new List<ComandaDto>();
+        var paged = new PaginatedList<ComandaDto> { Items = expectedComandas };
+
+        _apiServiceMock
+            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.Is<string>(s =>
+                s.StartsWith("api/operaciones/comandas?") &&
+                s.Contains("pageNumber=1") &&
+                s.Contains("pageSize=12")), It.IsAny<string?>()))
+            .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(paged));
+
+        var result = await _comandasService.ObtenerComandasActivasAsync();
+
+        result.Success.Should().BeTrue();
+        _apiServiceMock.Verify(x => x.GetAsync<PaginatedList<ComandaDto>>(It.Is<string>(s => s.Contains("pageNumber=1") && s.Contains("pageSize=12")), It.IsAny<string?>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task BuscarComandasAsync_DebeIncluirPageNumberYPageSizeEnQuery()
+    {
+        var expectedComandas = new List<ComandaDto>();
+        var paged = new PaginatedList<ComandaDto> { Items = expectedComandas };
+
+        _apiServiceMock
+            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.Is<string>(s =>
+                s.StartsWith("api/operaciones/comandas?") &&
+                s.Contains("pageNumber=1") &&
+                s.Contains("pageSize=12")), It.IsAny<string?>()))
+            .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(paged));
+
+        var result = await _comandasService.BuscarComandasAsync(estado: "pendiente");
+
+        result.Success.Should().BeTrue();
+        _apiServiceMock.Verify(x => x.GetAsync<PaginatedList<ComandaDto>>(It.Is<string>(s => s.Contains("pageNumber=1") && s.Contains("pageSize=12")), It.IsAny<string?>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ObtenerComandasPorMesaAsync_DebeIncluirPageSizeSoloActivasEIncluirItems()
+    {
+        var mesaId = Guid.NewGuid();
+        var expectedComandas = new List<ComandaDto>();
+        var paged = new PaginatedList<ComandaDto> { Items = expectedComandas };
+
+        _apiServiceMock
+            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.Is<string>(s =>
+                s.StartsWith("api/operaciones/comandas?") &&
+                s.Contains($"mesaId={mesaId}") &&
+                s.Contains("soloActivas=true") &&
+                s.Contains("pageSize=12") &&
+                s.Contains("incluirItems=true")), It.IsAny<string?>()))
+            .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(paged));
+
+        var result = await _comandasService.ObtenerComandasPorMesaAsync(mesaId);
+
+        result.Success.Should().BeTrue();
+        _apiServiceMock.Verify(x => x.GetAsync<PaginatedList<ComandaDto>>(It.Is<string>(s => s.Contains($"mesaId={mesaId}") && s.Contains("pageSize=12") && s.Contains("soloActivas=true") && s.Contains("incluirItems=true")), It.IsAny<string?>()), Times.Once);
+    }
+
+    #endregion
+
     #region ObtenerComandasPorMesaAsync Tests
 
     [Fact]

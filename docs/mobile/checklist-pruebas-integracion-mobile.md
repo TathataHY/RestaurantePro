@@ -16,6 +16,8 @@ Elevar la calidad y estabilidad de las pruebas de integración móviles aseguran
 - `DailyPreparationsEndToEndTests`: 6/6 pruebas correctas usando `ApiService` real.
 - E2E añadidos y correctos: Comandas, Mesas, Facturación (desde comanda), Reservaciones (confirmación), Productos (smoke listar/detalle).
 - Suite completa integración móvil: 246/246 OK en 15.7s (local). TRX: `tests/Frontend/RestaurantePro.Mobile.IntegrationTests/TestResults/TestResults.trx`.
+- Pruebas nuevas: Expiración/refresh de token (2/2 OK).
+- Seguridad/Roles: sin token 401 (OK); Mesero puede listar Facturas (200), acceso a `Usuarios` devuelve 403 (OK).
 
 ### Checklist (técnico)
 - [x] Agregar `FakeNavigationService` en proyecto de integración y referenciar donde se construye `AuthService`.
@@ -50,8 +52,10 @@ Elevar la calidad y estabilidad de las pruebas de integración móviles aseguran
 - InMemory per-test: revisar aislamiento y, si procede, datos por clase con fixture compartido.
 
 ### Siguientes pasos
-1) Seguridad y roles: agregar casos 401/403 por rol/credenciales en flujos críticos.
-2) Tokens y sesión: pruebas de expiración y refresh de token (renovación automática).
+1) Resiliencia cliente: simular 500/timeout y verificar manejo en ViewModels.
+2) Datos deterministas: builders para crear datos mínimos por caso.
+3) Limpieza: confirmar limpieza por clase de `FakeSecureStorageService` (instancia por test).
+4) CI/CD: pipeline que ejecute suite y publique TRX/HTML.
 3) Estados inválidos: transiciones no permitidas en Comandas/Mesas y mensajes de error.
 4) Resiliencia cliente: simular 500/timeout y verificar manejo en ViewModels.
 5) Datos deterministas: builders para crear datos mínimos por caso.

@@ -19,14 +19,15 @@ public interface IProductosService
         int pageNumber = 1, 
         int pageSize = 20, 
         string? filtro = null, 
-        bool soloActivos = true);
+        bool soloActivos = true,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Obtener producto por ID específico
     /// </summary>
     /// <param name="productoId">ID del producto</param>
     /// <returns>Producto solicitado</returns>
-    Task<ApiResponse<ProductoDto>> ObtenerProductoPorIdAsync(Guid productoId);
+    Task<ApiResponse<ProductoDto>> ObtenerProductoPorIdAsync(Guid productoId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Obtener productos por categoría específica
@@ -36,14 +37,15 @@ public interface IProductosService
     /// <returns>Lista de productos de la categoría</returns>
     Task<ApiResponse<List<ProductoDto>>> ObtenerProductosPorCategoriaAsync(
         Guid categoriaId, 
-        bool soloActivos = true);
+        bool soloActivos = true,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Verificar disponibilidad de un producto específico
     /// </summary>
     /// <param name="productoId">ID del producto</param>
     /// <returns>Información de disponibilidad del producto</returns>
-    Task<ApiResponse<DisponibilidadProductoDto>> VerificarDisponibilidadProductoAsync(Guid productoId);
+    Task<ApiResponse<DisponibilidadProductoDto>> VerificarDisponibilidadProductoAsync(Guid productoId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Buscar productos por texto (nombre, descripción, categoría)
@@ -53,40 +55,41 @@ public interface IProductosService
     /// <returns>Lista de productos que coinciden con la búsqueda</returns>
     Task<ApiResponse<List<ProductoDto>>> BuscarProductosAsync(
         string textoBusqueda, 
-        bool soloActivos = true);
+        bool soloActivos = true,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Obtener productos más populares (para recomendaciones)
     /// </summary>
     /// <param name="limite">Número máximo de productos a retornar (por defecto 10)</param>
     /// <returns>Lista de productos más populares</returns>
-    Task<ApiResponse<List<ProductoDto>>> ObtenerProductosPopularesAsync(int limite = 10);
+    Task<ApiResponse<List<ProductoDto>>> ObtenerProductosPopularesAsync(int limite = 10, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Obtener productos disponibles para agregar a comandas (filtrados)
     /// </summary>
     /// <param name="categoriaId">ID de categoría opcional para filtrar</param>
     /// <returns>Lista de productos disponibles para comandas</returns>
-    Task<ApiResponse<List<ProductoDto>>> ObtenerProductosDisponiblesParaComandasAsync(Guid? categoriaId = null);
+    Task<ApiResponse<List<ProductoDto>>> ObtenerProductosDisponiblesParaComandasAsync(Guid? categoriaId = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Obtener categorías de productos disponibles
     /// </summary>
     /// <returns>Lista de categorías con productos</returns>
-    Task<ApiResponse<List<CategoriaProductoDto>>> ObtenerCategoriasAsync();
+    Task<ApiResponse<List<CategoriaProductoDto>>> ObtenerCategoriasAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Crear un nuevo producto
     /// </summary>
-    Task<ApiResponse<ProductoDto>> CrearProductoAsync(CrearProductoRequest request);
+    Task<ApiResponse<ProductoDto>> CrearProductoAsync(CrearProductoRequest request, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Actualizar un producto existente
     /// </summary>
-    Task<ApiResponse<ProductoDto>> ActualizarProductoAsync(ActualizarProductoRequest request);
+    Task<ApiResponse<ProductoDto>> ActualizarProductoAsync(ActualizarProductoRequest request, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Eliminar un producto
     /// </summary>
-    Task<ApiResponse<bool>> EliminarProductoAsync(Guid productoId);
+    Task<ApiResponse<bool>> EliminarProductoAsync(Guid productoId, CancellationToken cancellationToken = default);
 } 

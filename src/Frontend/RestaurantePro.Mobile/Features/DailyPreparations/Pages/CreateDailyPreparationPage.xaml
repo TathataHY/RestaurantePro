@@ -14,12 +14,14 @@
                 <VerticalStackLayout Spacing="12">
                     <Label Text="Producto" Style="{StaticResource CaptionStyle}" />
                     <SearchBar Placeholder="Buscar producto..." Text="{Binding ProductoBusqueda}" SearchCommand="{Binding BuscarProductosCommand}" />
+                    <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+                    <Label Text="{Binding ProductoSeleccionado.Nombre, StringFormat='Seleccionado: {0}'}" IsVisible="{Binding ProductoSeleccionado}" />
                     <CollectionView ItemsSource="{Binding Productos}" SelectionMode="Single" SelectedItem="{Binding ProductoSeleccionado}">
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
                                 <Grid Padding="8" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
                                     <Label Grid.Row="0" Grid.Column="0" Text="{Binding Nombre}" FontAttributes="Bold" />
-                                    <Label Grid.Row="1" Grid.Column="0" Text="{Binding CategoriaNombre}" FontSize="12" TextColor="{StaticResource OnSurfaceVariant}" />
+                                    <Label Grid.Row="1" Grid.Column="0" Text="{Binding CategoriaNombre}" FontSize="12" TextColor="{StaticResource TextSecondary}" />
                                     <Label Grid.RowSpan="2" Grid.Column="1" Text="{Binding Precio, StringFormat='S/. {0:F2}'}" />
                                 </Grid>
                             </DataTemplate>

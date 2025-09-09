@@ -128,7 +128,7 @@ public class ComandasViewModelTests
             new MesaDto { Id = Guid.NewGuid(), Numero = "10", Ubicacion = "Salón", Capacidad = 4 }
         };
         _mockMesas
-            .Setup(x => x.ObtenerMesasDisponiblesAsync(It.IsAny<int?>(), It.IsAny<string?>()))
+            .Setup(x => x.ObtenerMesasDisponiblesAsync(It.IsAny<int?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<MesaDto>>.SuccessResponse(mesas));
         var label = $"Mesa {mesas[0].Numero} — {mesas[0].Ubicacion} (Cap: {mesas[0].Capacidad})";
         _mockDialog
@@ -159,7 +159,7 @@ public class ComandasViewModelTests
     {
         // Arrange: error al cargar mesas disponibles
         _mockMesas
-            .Setup(x => x.ObtenerMesasDisponiblesAsync(It.IsAny<int?>(), It.IsAny<string?>()))
+            .Setup(x => x.ObtenerMesasDisponiblesAsync(It.IsAny<int?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<MesaDto>>.ErrorResponse(new List<string>{"err"}, "No se pudieron cargar las mesas disponibles", 500));
 
         var vm = CreateVm(new FakeComandasService(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>())), _mockDialog.Object);

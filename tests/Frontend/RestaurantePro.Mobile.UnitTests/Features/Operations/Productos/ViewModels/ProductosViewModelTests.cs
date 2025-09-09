@@ -40,7 +40,7 @@ public class ProductosViewModelTests
             new ProductoDto { Id = Guid.NewGuid(), Nombre = "Producto 1", Precio = 10.0m, Activo = true, CantidadDisponible = 5 },
             new ProductoDto { Id = Guid.NewGuid(), Nombre = "Producto 2", Precio = 15.0m, Activo = true, CantidadDisponible = 3 }
         };
-        _mockProductosService.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool>()))
+        _mockProductosService.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ProductoDto>>.SuccessResponse(productos));
 
         var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object);
@@ -57,7 +57,7 @@ public class ProductosViewModelTests
     [Fact]
     public async Task LoadProductosAsync_ErrorResponse_SetsErrorMessage()
     {
-        _mockProductosService.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool>()))
+        _mockProductosService.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ProductoDto>>.ErrorResponse(new List<string> { "Error de servicio" }, "Error", 500));
 
         var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object);
@@ -76,7 +76,7 @@ public class ProductosViewModelTests
             new CategoriaProductoDto { Id = Guid.NewGuid(), Nombre = "Categoría 1" },
             new CategoriaProductoDto { Id = Guid.NewGuid(), Nombre = "Categoría 2" }
         };
-        _mockProductosService.Setup(x => x.ObtenerCategoriasAsync())
+        _mockProductosService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias));
 
         var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object);
@@ -93,7 +93,7 @@ public class ProductosViewModelTests
         {
             new ProductoDto { Id = Guid.NewGuid(), Nombre = "Pizza", Precio = 10.0m, Activo = true, CantidadDisponible = 5 }
         };
-        _mockProductosService.Setup(x => x.BuscarProductosAsync(It.IsAny<string>(), It.IsAny<bool>()))
+        _mockProductosService.Setup(x => x.BuscarProductosAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ProductoDto>>.SuccessResponse(productos));
 
         var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object);
@@ -102,7 +102,7 @@ public class ProductosViewModelTests
 
         vm.Productos.Should().HaveCount(1);
         vm.Productos.First().Nombre.Should().Be("Pizza");
-        _mockProductosService.Verify(x => x.BuscarProductosAsync("Pizza", true), Times.Once);
+        _mockProductosService.Verify(x => x.BuscarProductosAsync("Pizza", true, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class ProductosViewModelTests
         {
             new ProductoDto { Id = Guid.NewGuid(), Nombre = "Coca Cola", CategoriaId = categoria.Id, Activo = true, CantidadDisponible = 10 }
         };
-        _mockProductosService.Setup(x => x.ObtenerProductosPorCategoriaAsync(It.IsAny<Guid>(), It.IsAny<bool>()))
+        _mockProductosService.Setup(x => x.ObtenerProductosPorCategoriaAsync(It.IsAny<Guid>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ProductoDto>>.SuccessResponse(productos));
 
         var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object);
@@ -121,7 +121,7 @@ public class ProductosViewModelTests
 
         vm.SelectedCategoria.Should().Be(categoria);
         vm.Productos.Should().HaveCount(1);
-        _mockProductosService.Verify(x => x.ObtenerProductosPorCategoriaAsync(categoria.Id, true), Times.Once);
+        _mockProductosService.Verify(x => x.ObtenerProductosPorCategoriaAsync(categoria.Id, true, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -220,14 +220,14 @@ public class ProductosViewModelTests
             new ProductoDto { Id = Guid.NewGuid(), Nombre = "Popular 1", Activo = true, CantidadDisponible = 5 },
             new ProductoDto { Id = Guid.NewGuid(), Nombre = "Popular 2", Activo = true, CantidadDisponible = 3 }
         };
-        _mockProductosService.Setup(x => x.ObtenerProductosPopularesAsync(It.IsAny<int>()))
+        _mockProductosService.Setup(x => x.ObtenerProductosPopularesAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ProductoDto>>.SuccessResponse(productos));
 
         var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object);
         await vm.LoadProductosPopularesCommand.ExecuteAsync(null);
 
         vm.Productos.Should().HaveCount(2);
-        _mockProductosService.Verify(x => x.ObtenerProductosPopularesAsync(10), Times.Once);
+        _mockProductosService.Verify(x => x.ObtenerProductosPopularesAsync(10, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Theory]
@@ -270,8 +270,8 @@ public class ProductosViewModelTests
 
         await vm.InitializeAsync();
 
-        _mockProductosService.Verify(x => x.ObtenerCategoriasAsync(), Times.Exactly(2));
-        _mockProductosService.Verify(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool>()), Times.Once);
+        _mockProductosService.Verify(x => x.ObtenerCategoriasAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
+        _mockProductosService.Verify(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -328,8 +328,8 @@ public class ProductosViewModelTests
 
         await vm.LoadProductosCommand.ExecuteAsync(null);
 
-        _mockProductosService.Verify(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>()), Times.Never);
-        _mockProductosService.Verify(x => x.ObtenerCategoriasAsync(), Times.Never);
+        _mockProductosService.Verify(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockProductosService.Verify(x => x.ObtenerCategoriasAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -341,10 +341,10 @@ public class ProductosViewModelTests
             new ProductoDto { Id = Guid.NewGuid(), Nombre = "P2", Activo = false, CantidadDisponible = 0, Precio = 20 }
         };
         _mockProductosService
-            .Setup(x => x.ObtenerCategoriasAsync())
+            .Setup(x => x.ObtenerCategoriasAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(new List<CategoriaProductoDto>()));
         _mockProductosService
-            .Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>()))
+            .Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ProductoDto>>.SuccessResponse(productos));
 
         var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object);
@@ -375,10 +375,10 @@ public class ProductosViewModelTests
     public async Task LoadProductosAsync_WithEmptyResult_ShouldSetEmptyState()
     {
         _mockProductosService
-            .Setup(x => x.ObtenerCategoriasAsync())
+            .Setup(x => x.ObtenerCategoriasAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(new List<CategoriaProductoDto>()));
         _mockProductosService
-            .Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>()))
+            .Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ProductoDto>>.SuccessResponse(new List<ProductoDto>()));
 
         var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object);
@@ -393,10 +393,10 @@ public class ProductosViewModelTests
     public async Task LoadProductosAsync_ShouldCallGetPagedWithDefaultPaging_WhenNoFilters()
     {
         _mockProductosService
-            .Setup(x => x.ObtenerCategoriasAsync())
+            .Setup(x => x.ObtenerCategoriasAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(new List<CategoriaProductoDto>()));
         _mockProductosService
-            .Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>()))
+            .Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ProductoDto>>.SuccessResponse(new List<ProductoDto>()));
 
         var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object);
@@ -406,7 +406,8 @@ public class ProductosViewModelTests
             It.Is<int>(n => n == 1),
             It.Is<int>(s => s == 100),
             It.Is<string?>(f => f == null),
-            It.Is<bool>(a => a == true)
+            It.Is<bool>(a => a == true),
+            It.IsAny<CancellationToken>()
         ), Times.Once);
     }
 
@@ -414,10 +415,10 @@ public class ProductosViewModelTests
     public async Task BuscarProductosAsync_ShouldDebounceRapidCalls_OnlyOneServiceCall()
     {
         _mockProductosService
-            .Setup(x => x.ObtenerCategoriasAsync())
+            .Setup(x => x.ObtenerCategoriasAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(new List<CategoriaProductoDto>()));
         _mockProductosService
-            .Setup(x => x.BuscarProductosAsync(It.IsAny<string>(), It.IsAny<bool>()))
+            .Setup(x => x.BuscarProductosAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ProductoDto>>.SuccessResponse(new List<ProductoDto>()));
 
         var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object)
@@ -439,14 +440,14 @@ public class ProductosViewModelTests
         // Esperar un poco más del debounce para asegurar ejecución
         await Task.Delay(100);
 
-        _mockProductosService.Verify(x => x.BuscarProductosAsync(It.IsAny<string>(), It.IsAny<bool>()), Times.Once);
+        _mockProductosService.Verify(x => x.BuscarProductosAsync(It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task LoadProductosPopularesAsync_ErrorResponse_ShouldShowError()
     {
         _mockProductosService
-            .Setup(x => x.ObtenerProductosPopularesAsync(It.IsAny<int>()))
+            .Setup(x => x.ObtenerProductosPopularesAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ProductoDto>>.ErrorResponse(new List<string>{"err"}, "Error al cargar", 500));
 
         var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object);
@@ -460,7 +461,7 @@ public class ProductosViewModelTests
     public async Task LoadProductosPopularesAsync_WhenException_ShouldShowUnexpectedError()
     {
         _mockProductosService
-            .Setup(x => x.ObtenerProductosPopularesAsync(It.IsAny<int>()))
+            .Setup(x => x.ObtenerProductosPopularesAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("boom"));
 
         var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object);
@@ -474,7 +475,7 @@ public class ProductosViewModelTests
     public async Task LoadCategoriasAsync_WhenException_ShouldShowError()
     {
         _mockProductosService
-            .Setup(x => x.ObtenerCategoriasAsync())
+            .Setup(x => x.ObtenerCategoriasAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("net"));
 
         var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object);
@@ -489,10 +490,10 @@ public class ProductosViewModelTests
     {
         var categoria = new CategoriaProductoDto { Id = Guid.NewGuid(), Nombre = "Bebidas" };
         _mockProductosService
-            .Setup(x => x.ObtenerCategoriasAsync())
+            .Setup(x => x.ObtenerCategoriasAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(new List<CategoriaProductoDto>()));
         _mockProductosService
-            .Setup(x => x.ObtenerProductosPorCategoriaAsync(categoria.Id, It.IsAny<bool>()))
+            .Setup(x => x.ObtenerProductosPorCategoriaAsync(categoria.Id, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ProductoDto>>.ErrorResponse(new List<string>{"E"}, "Error", 500));
 
         var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object)
@@ -510,10 +511,10 @@ public class ProductosViewModelTests
     public async Task BuscarProductosAsync_ErrorResponse_ShouldShowErrorAndSetHasError()
     {
         _mockProductosService
-            .Setup(x => x.ObtenerCategoriasAsync())
+            .Setup(x => x.ObtenerCategoriasAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(new List<CategoriaProductoDto>()));
         _mockProductosService
-            .Setup(x => x.BuscarProductosAsync("pizza", It.IsAny<bool>()))
+            .Setup(x => x.BuscarProductosAsync("pizza", It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ProductoDto>>.ErrorResponse(new List<string>{"E"}, "Error", 500));
 
         var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object)
