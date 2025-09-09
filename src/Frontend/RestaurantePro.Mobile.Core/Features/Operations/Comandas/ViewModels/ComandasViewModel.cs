@@ -327,6 +327,17 @@ public partial class ComandasViewModel : BaseViewModel
     {
         if (comanda == null) return;
 
+        // Verificar si la comanda es editable
+        var esFinalizada = comanda.Estado?.ToString()?.ToLowerInvariant().Contains("finalizada") == true;
+        var esCancelada = comanda.Estado?.ToString()?.ToLowerInvariant().Contains("cancelada") == true;
+        
+        if (esFinalizada || esCancelada)
+        {
+            await _dialogService.ShowAlertAsync("No Editable", 
+                "No se puede editar una comanda finalizada o cancelada. Use 'Ver' para consultar los detalles.");
+            return;
+        }
+
         // Ir al mismo formulario en modo edición
         await _navigationService.NavigateToAsync("editar-comanda", new Dictionary<string, object>
         {
@@ -714,11 +725,33 @@ public partial class ComandasViewModel : BaseViewModel
     {
         if (comanda == null) return;
 
+        // Determinar opciones disponibles según el estado de la comanda
+        var opciones = new List<string>();
+        var esFinalizada = comanda.Estado?.ToString()?.ToLowerInvariant().Contains("finalizada") == true;
+        var esCancelada = comanda.Estado?.ToString()?.ToLowerInvariant().Contains("cancelada") == true;
+        var esEditable = !esFinalizada && !esCancelada;
+
+        if (esEditable)
+        {
+            // Comandas editables: mostrar opciones de edición
+            opciones.Add("Editar");
+            opciones.Add("Agregar Productos");
+        }
+        
+        // Todas las comandas pueden ser vistas
+        opciones.Add("Ver");
+
+        if (!opciones.Any())
+        {
+            await _dialogService.ShowAlertAsync("Información", "No hay acciones disponibles para esta comanda");
+            return;
+        }
+
         var seleccion = await _dialogService.ShowActionSheetAsync(
             $"Comanda #{comanda.NumeroDisplay}",
             "Seleccione una acción:",
             "Cerrar",
-            new[] { "Editar", "Ver", "Agregar Productos" });
+            opciones.ToArray());
 
         switch (seleccion)
         {

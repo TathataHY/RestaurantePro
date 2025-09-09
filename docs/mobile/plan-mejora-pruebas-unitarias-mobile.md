@@ -136,6 +136,27 @@ Estado Fase 2.3: Completada (suite de tests Facturas Service/ViewModel en verde)
 
 Estado Fase 2.4: Completada (suite de tests Clientes Service/ViewModel en verde).
 
+#### Fase 2.5 - Services Commercial: Tarjetas de Fidelización
+- [x] 401/403/429 (propagación de `StatusCode` y mensaje)
+- [x] 204/empty body y `null Data`
+- [x] Cancelación (`CancellationToken`) y cancelación temprana (sin invocar API)
+
+Estado Fase 2.5: Completada (suite de tests TarjetasFidelizacion Service en verde).
+
+#### Fase 2.6 - Services Analytics
+- [x] 401/403/429 (propagación de `StatusCode` y mensaje)
+- [x] 204/empty body y `null Data`
+- [x] Cancelación (`CancellationToken`) y cancelación temprana (sin invocar API)
+
+Estado Fase 2.6: Completada (suite de tests Analytics Service en verde).
+
+#### Fase 2.7 - Services Categorias
+- [x] 401/403/429 (propagación de `StatusCode` y mensaje)
+- [x] 204/empty body y `null Data`
+- [x] Cancelación (`CancellationToken`) y cancelación temprana (sin invocar API)
+
+Estado Fase 2.7: Completada (suite de tests Categorias Service en verde).
+
 ### Fase 3 - ViewModels (Otras features)
 
 #### Reservaciones

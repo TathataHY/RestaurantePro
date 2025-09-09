@@ -33,7 +33,7 @@ public class CategoriasServiceTests
         };
 
         var apiResponse = ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias);
-        _mockApiService.Setup(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -57,7 +57,7 @@ public class CategoriasServiceTests
         };
 
         var apiResponse = ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias);
-        _mockApiService.Setup(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -163,7 +163,7 @@ public class CategoriasServiceTests
         };
 
         var apiResponse = ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias);
-        _mockApiService.Setup(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -188,7 +188,7 @@ public class CategoriasServiceTests
         };
 
         var apiResponse = ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias);
-        _mockApiService.Setup(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -265,7 +265,7 @@ public class CategoriasServiceTests
         var categorias = new List<CategoriaProductoDto>();
 
         var apiResponse = ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias);
-        _mockApiService.Setup(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -285,7 +285,7 @@ public class CategoriasServiceTests
         var categorias = new List<CategoriaProductoDto>();
 
         var apiResponse = ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias);
-        _mockApiService.Setup(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -313,5 +313,108 @@ public class CategoriasServiceTests
         // Assert
         Assert.False(result.Succeeded);
         Assert.Contains("Categoría no encontrada", result.Error);
+    }
+
+    // Tests para 401/403/429
+    [Fact]
+    public async Task ObtenerCategoriasAsync_WithUnauthorized_ShouldPropagate401()
+    {
+        // Arrange
+        var apiResponse = ApiResponse<List<CategoriaProductoDto>>.ErrorResponse("Unauthorized", 401);
+        _mockApiService.Setup(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                      .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _categoriasService.ObtenerCategoriasAsync();
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Equal(401, result.StatusCode);
+        Assert.Contains("Unauthorized", result.Error);
+    }
+
+    [Fact]
+    public async Task ObtenerCategoriasAsync_WithForbidden_ShouldPropagate403()
+    {
+        // Arrange
+        var apiResponse = ApiResponse<List<CategoriaProductoDto>>.ErrorResponse("Forbidden", 403);
+        _mockApiService.Setup(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                      .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _categoriasService.ObtenerCategoriasAsync();
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Equal(403, result.StatusCode);
+        Assert.Contains("Forbidden", result.Error);
+    }
+
+    [Fact]
+    public async Task ObtenerCategoriasAsync_WithTooManyRequests_ShouldPropagate429()
+    {
+        // Arrange
+        var apiResponse = ApiResponse<List<CategoriaProductoDto>>.ErrorResponse("Too Many Requests", 429);
+        _mockApiService.Setup(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                      .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _categoriasService.ObtenerCategoriasAsync();
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Equal(429, result.StatusCode);
+        Assert.Contains("Too Many Requests", result.Error);
+    }
+
+    // Tests para 204/empty body
+    [Fact]
+    public async Task ObtenerCategoriasAsync_WithEmptyBody_ShouldReturnEmptyList()
+    {
+        // Arrange
+        var apiResponse = ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(new List<CategoriaProductoDto>());
+        _mockApiService.Setup(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                      .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _categoriasService.ObtenerCategoriasAsync();
+
+        // Assert
+        Assert.True(result.Succeeded);
+        Assert.NotNull(result.Data);
+        Assert.Empty(result.Data);
+    }
+
+    // Tests para cancelación
+    [Fact]
+    public async Task ObtenerCategoriasAsync_WhenCancelled_ShouldReturnCancelled()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel(); // Cancel the token immediately
+
+        // Act
+        var result = await _categoriasService.ObtenerCategoriasAsync(cancellationToken: cts.Token);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Contains("Operación cancelada por el usuario", result.Error);
+        _mockApiService.Verify(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task BuscarCategoriasAsync_WhenCancelled_ShouldReturnCancelled()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel(); // Cancel the token immediately
+
+        // Act
+        var result = await _categoriasService.BuscarCategoriasAsync("test", cts.Token);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Contains("Operación cancelada por el usuario", result.Error);
+        _mockApiService.Verify(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 } 

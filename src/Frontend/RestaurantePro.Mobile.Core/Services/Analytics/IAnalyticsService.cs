@@ -11,7 +11,7 @@ public interface IAnalyticsService
     /// Obtener métricas operativas del día actual
     /// </summary>
     /// <returns>Métricas del día</returns>
-    Task<ApiResponse<MetricasDiaDto>> ObtenerMetricasDiaAsync();
+    Task<ApiResponse<MetricasDiaDto>> ObtenerMetricasDiaAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Obtener métricas operativas por rango de fechas
@@ -19,7 +19,7 @@ public interface IAnalyticsService
     /// <param name="fechaDesde">Fecha desde</param>
     /// <param name="fechaHasta">Fecha hasta</param>
     /// <returns>Métricas del rango de fechas</returns>
-    Task<ApiResponse<MetricasRangoDto>> ObtenerMetricasRangoAsync(DateTime fechaDesde, DateTime fechaHasta);
+    Task<ApiResponse<MetricasRangoDto>> ObtenerMetricasRangoAsync(DateTime fechaDesde, DateTime fechaHasta, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Obtener el top de productos más vendidos
@@ -28,14 +28,14 @@ public interface IAnalyticsService
     /// <param name="fechaDesde">Fecha desde (opcional)</param>
     /// <param name="fechaHasta">Fecha hasta (opcional)</param>
     /// <returns>Lista de productos más vendidos</returns>
-    Task<ApiResponse<List<TopProductoDto>>> ObtenerTopProductosAsync(int limite, DateTime? fechaDesde = null, DateTime? fechaHasta = null);
+    Task<ApiResponse<List<TopProductoDto>>> ObtenerTopProductosAsync(int limite, DateTime? fechaDesde = null, DateTime? fechaHasta = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Obtener métricas de ocupación de mesas
     /// </summary>
     /// <param name="fecha">Fecha para consultar</param>
     /// <returns>Métricas de ocupación de mesas</returns>
-    Task<ApiResponse<OcupacionMesasDto>> ObtenerOcupacionMesasAsync(DateTime fecha);
+    Task<ApiResponse<OcupacionMesasDto>> ObtenerOcupacionMesasAsync(DateTime fecha, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Obtener métricas de tiempo promedio de preparación
@@ -43,12 +43,12 @@ public interface IAnalyticsService
     /// <param name="fechaDesde">Fecha desde (opcional)</param>
     /// <param name="fechaHasta">Fecha hasta (opcional)</param>
     /// <returns>Métricas de tiempo de preparación</returns>
-    Task<ApiResponse<TiempoPreparacionDto>> ObtenerTiempoPreparacionAsync(DateTime? fechaDesde = null, DateTime? fechaHasta = null);
+    Task<ApiResponse<TiempoPreparacionDto>> ObtenerTiempoPreparacionAsync(DateTime? fechaDesde = null, DateTime? fechaHasta = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Obtener resumen de ventas por hora
     /// </summary>
     /// <param name="fecha">Fecha para consultar</param>
     /// <returns>Lista de ventas por hora</returns>
-    Task<ApiResponse<List<VentasHoraDto>>> ObtenerVentasPorHoraAsync(DateTime fecha);
+    Task<ApiResponse<List<VentasHoraDto>>> ObtenerVentasPorHoraAsync(DateTime fecha, CancellationToken cancellationToken = default);
 } 

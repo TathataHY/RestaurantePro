@@ -37,7 +37,7 @@ public class AnalyticsServiceTests
 
         _mockAuthService.Setup(x => x.GetTokenAsync()).ReturnsAsync("test-token");
         var apiResponse = ApiResponse<MetricasDiaDto>.SuccessResponse(metricas);
-        _mockApiService.Setup(x => x.GetAsync<MetricasDiaDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<MetricasDiaDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -378,5 +378,108 @@ public class AnalyticsServiceTests
         Assert.NotNull(result.Data);
         Assert.Empty(result.Data);
         _mockApiService.Verify(x => x.GetAsync<List<VentasHoraDto>>($"api/analytics/ventas-hora?fecha={fecha:yyyy-MM-dd}", "test-token"), Times.Once);
+    }
+
+    // Tests para 401/403/429
+    [Fact]
+    public async Task ObtenerMetricasDiaAsync_WithUnauthorized_ShouldPropagate401()
+    {
+        // Arrange
+        var apiResponse = ApiResponse<MetricasDiaDto>.ErrorResponse("Unauthorized", 401);
+        _mockApiService.Setup(x => x.GetAsync<MetricasDiaDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                      .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _analyticsService.ObtenerMetricasDiaAsync();
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Equal(401, result.StatusCode);
+        Assert.Contains("Unauthorized", result.Error);
+    }
+
+    [Fact]
+    public async Task ObtenerMetricasDiaAsync_WithForbidden_ShouldPropagate403()
+    {
+        // Arrange
+        var apiResponse = ApiResponse<MetricasDiaDto>.ErrorResponse("Forbidden", 403);
+        _mockApiService.Setup(x => x.GetAsync<MetricasDiaDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                      .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _analyticsService.ObtenerMetricasDiaAsync();
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Equal(403, result.StatusCode);
+        Assert.Contains("Forbidden", result.Error);
+    }
+
+    [Fact]
+    public async Task ObtenerMetricasDiaAsync_WithTooManyRequests_ShouldPropagate429()
+    {
+        // Arrange
+        var apiResponse = ApiResponse<MetricasDiaDto>.ErrorResponse("Too Many Requests", 429);
+        _mockApiService.Setup(x => x.GetAsync<MetricasDiaDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                      .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _analyticsService.ObtenerMetricasDiaAsync();
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Equal(429, result.StatusCode);
+        Assert.Contains("Too Many Requests", result.Error);
+    }
+
+    // Tests para 204/empty body
+    [Fact]
+    public async Task ObtenerTopProductosAsync_WithEmptyBody_ShouldReturnEmptyList()
+    {
+        // Arrange
+        var apiResponse = ApiResponse<List<TopProductoDto>>.SuccessResponse(new List<TopProductoDto>());
+        _mockApiService.Setup(x => x.GetAsync<List<TopProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                      .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _analyticsService.ObtenerTopProductosAsync(10);
+
+        // Assert
+        Assert.True(result.Succeeded);
+        Assert.NotNull(result.Data);
+        Assert.Empty(result.Data);
+    }
+
+    // Tests para cancelación
+    [Fact]
+    public async Task ObtenerMetricasDiaAsync_WhenCancelled_ShouldReturnCancelled()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel(); // Cancel the token immediately
+
+        // Act
+        var result = await _analyticsService.ObtenerMetricasDiaAsync(cts.Token);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Contains("Operación cancelada por el usuario", result.Error);
+        _mockApiService.Verify(x => x.GetAsync<MetricasDiaDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ObtenerTopProductosAsync_WhenCancelled_ShouldReturnCancelled()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel(); // Cancel the token immediately
+
+        // Act
+        var result = await _analyticsService.ObtenerTopProductosAsync(10, cancellationToken: cts.Token);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Contains("Operación cancelada por el usuario", result.Error);
+        _mockApiService.Verify(x => x.GetAsync<List<TopProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 } 

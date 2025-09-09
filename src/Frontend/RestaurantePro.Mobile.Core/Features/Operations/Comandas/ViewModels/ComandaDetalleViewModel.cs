@@ -70,6 +70,11 @@ public partial class ComandaDetalleViewModel : BaseViewModel
     [ObservableProperty]
     private bool showCambiarEstado = true;
 
+    /// <summary>
+    /// Indica si la comanda es nueva (estado Creada)
+    /// </summary>
+    public bool EsNueva => Comanda?.Estado?.ToString() == "Creada";
+
     #endregion
 
     #region Commands
@@ -254,11 +259,14 @@ public partial class ComandaDetalleViewModel : BaseViewModel
 
             if (result.Success)
             {
-                Comanda.Estado = "Finalizada";
-                ActualizarEstados();
+                // Recargar los datos de la comanda para obtener el estado actualizado
+                await LoadComandaAsync(Comanda.Id);
                 
                 await _dialogService.ShowAlertAsync("Éxito", "Comanda finalizada correctamente");
-                await _navigationService.GoBackAsync();
+                
+                // Opcional: navegar de vuelta después de un breve delay
+                // await Task.Delay(1000);
+                // await _navigationService.GoBackAsync();
             }
             else
             {
@@ -302,11 +310,14 @@ public partial class ComandaDetalleViewModel : BaseViewModel
 
             if (result.Success)
             {
-                Comanda.Estado = "Cancelada";
-                ActualizarEstados();
+                // Recargar los datos de la comanda para obtener el estado actualizado
+                await LoadComandaAsync(Comanda.Id);
                 
                 await _dialogService.ShowAlertAsync("Éxito", "Comanda cancelada correctamente");
-                await _navigationService.GoBackAsync();
+                
+                // Opcional: navegar de vuelta después de un breve delay
+                // await Task.Delay(1000);
+                // await _navigationService.GoBackAsync();
             }
             else
             {
@@ -357,6 +368,28 @@ public partial class ComandaDetalleViewModel : BaseViewModel
         }
     }
 
+    /// <summary>
+    /// Editar comanda (navegar a página de edición)
+    /// </summary>
+    [RelayCommand]
+    private async Task EditarComandaAsync()
+    {
+        if (Comanda?.Id == null) return;
+
+        try
+        {
+            // Navegar a la página de edición de comanda
+            await _navigationService.NavigateToAsync("editar-comanda", new Dictionary<string, object>
+            {
+                ["comandaId"] = Comanda.Id.ToString()
+            });
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error al editar comanda: {ex.Message}");
+        }
+    }
+
     #endregion
 
     #region Private Methods
@@ -379,8 +412,14 @@ public partial class ComandaDetalleViewModel : BaseViewModel
         // Mostrar "Cambiar Estado" SOLO cuando está Lista (mesero marca 'Entregada')
         ShowCambiarEstado = estadoLower.Contains("lista");
 
-        // Cancelar permitido solo al inicio
-        CanCancel = estadoLower.Contains("pend") || estadoLower.Contains("prepar") && !estadoLower.Contains("entreg");
+        // Cancelar permitido solo al inicio (no en finalizadas o canceladas)
+        CanCancel = (estadoLower.Contains("pend") || estadoLower.Contains("prepar")) 
+                   && !estadoLower.Contains("entreg") 
+                   && !estadoLower.Contains("finalizada") 
+                   && !estadoLower.Contains("cancelada");
+
+        // Notificar cambio en EsNueva para actualizar la UI
+        OnPropertyChanged(nameof(EsNueva));
     }
 
     /// <summary>

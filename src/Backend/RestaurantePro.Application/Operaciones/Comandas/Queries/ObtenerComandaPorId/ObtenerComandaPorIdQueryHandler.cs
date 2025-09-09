@@ -60,31 +60,50 @@ public class ObtenerComandaPorIdQueryHandler : IRequestHandler<ObtenerComandaPor
             // Enriquecer los items con el nombre del producto (si se incluyeron items)
             if (request.IncluirItems && comandaDto.Items != null && comandaDto.Items.Count > 0)
             {
+                _logger.LogInformation("🔍 Enriqueciendo {Count} items de la comanda {ComandaId}", comandaDto.Items.Count, request.ComandaId);
+                
                 var productoIds = comanda.Items
                     .Select(i => i.ProductoId)
                     .Distinct()
                     .ToList();
+
+                _logger.LogInformation("🔍 ProductoIds encontrados: {ProductoIds}", string.Join(", ", productoIds));
 
                 var productos = await _context.Productos
                     .Where(p => productoIds.Contains(p.Id))
                     .Select(p => new { p.Id, p.Nombre })
                     .ToListAsync(cancellationToken);
 
+                _logger.LogInformation("🔍 Productos encontrados en BD: {Count}", productos.Count);
+                foreach (var p in productos)
+                {
+                    _logger.LogInformation("🔍 Producto: {Id} = {Nombre}", p.Id, p.Nombre);
+                }
+
                 var productosDict = productos.ToDictionary(p => p.Id, p => p.Nombre);
 
                 foreach (var item in comandaDto.Items)
                 {
+                    _logger.LogInformation("🔍 Procesando item: ProductoId={ProductoId}, Nombre actual='{NombreActual}'", item.ProductoId, item.Nombre);
+                    
                     if (productosDict.TryGetValue(item.ProductoId, out var nombre) && !string.IsNullOrWhiteSpace(nombre))
                     {
+                        _logger.LogInformation("🔍 Asignando nombre: {Nombre}", nombre);
                         item.Nombre = nombre;
                     }
                     else if (string.IsNullOrWhiteSpace(item.Nombre))
                     {
+                        _logger.LogInformation("🔍 Asignando nombre por defecto: Producto");
                         item.Nombre = "Producto";
                     }
                 }
 
                 _logger.LogInformation("🧩 Items enriquecidos con nombres de producto: {Count}", comandaDto.Items.Count);
+            }
+            else
+            {
+                _logger.LogWarning("⚠️ No se enriquecieron items - IncluirItems: {IncluirItems}, Items null: {ItemsNull}, Items count: {ItemsCount}", 
+                    request.IncluirItems, comandaDto.Items == null, comandaDto.Items?.Count ?? 0);
             }
 
             _logger.LogInformation("✅ Comanda obtenida exitosamente: {ComandaId}", request.ComandaId);

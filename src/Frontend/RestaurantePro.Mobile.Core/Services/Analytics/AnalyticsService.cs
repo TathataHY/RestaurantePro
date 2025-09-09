@@ -21,12 +21,14 @@ public class AnalyticsService : IAnalyticsService
     /// <summary>
     /// Obtener métricas operativas del día actual
     /// </summary>
-    public async Task<ApiResponse<MetricasDiaDto>> ObtenerMetricasDiaAsync()
+    public async Task<ApiResponse<MetricasDiaDto>> ObtenerMetricasDiaAsync(CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<MetricasDiaDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.GetAsync<MetricasDiaDto>("api/analytics/metricas-dia", token);
+            var response = await _apiService.GetAsync<MetricasDiaDto>("api/analytics/metricas-dia", token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -38,13 +40,15 @@ public class AnalyticsService : IAnalyticsService
     /// <summary>
     /// Obtener métricas operativas por rango de fechas
     /// </summary>
-    public async Task<ApiResponse<MetricasRangoDto>> ObtenerMetricasRangoAsync(DateTime fechaDesde, DateTime fechaHasta)
+    public async Task<ApiResponse<MetricasRangoDto>> ObtenerMetricasRangoAsync(DateTime fechaDesde, DateTime fechaHasta, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<MetricasRangoDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var endpoint = $"api/analytics/metricas-rango?fechaDesde={fechaDesde:yyyy-MM-dd}&fechaHasta={fechaHasta:yyyy-MM-dd}";
-            var response = await _apiService.GetAsync<MetricasRangoDto>(endpoint, token);
+            var response = await _apiService.GetAsync<MetricasRangoDto>(endpoint, token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -56,10 +60,12 @@ public class AnalyticsService : IAnalyticsService
     /// <summary>
     /// Obtener el top de productos más vendidos
     /// </summary>
-    public async Task<ApiResponse<List<TopProductoDto>>> ObtenerTopProductosAsync(int limite, DateTime? fechaDesde = null, DateTime? fechaHasta = null)
+    public async Task<ApiResponse<List<TopProductoDto>>> ObtenerTopProductosAsync(int limite, DateTime? fechaDesde = null, DateTime? fechaHasta = null, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<TopProductoDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var endpoint = $"api/analytics/top-productos?limite={limite}";
             
@@ -69,7 +75,7 @@ public class AnalyticsService : IAnalyticsService
             if (fechaHasta.HasValue)
                 endpoint += $"&fechaHasta={fechaHasta.Value:yyyy-MM-dd}";
             
-            var response = await _apiService.GetAsync<List<TopProductoDto>>(endpoint, token);
+            var response = await _apiService.GetAsync<List<TopProductoDto>>(endpoint, token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -81,13 +87,15 @@ public class AnalyticsService : IAnalyticsService
     /// <summary>
     /// Obtener métricas de ocupación de mesas
     /// </summary>
-    public async Task<ApiResponse<OcupacionMesasDto>> ObtenerOcupacionMesasAsync(DateTime fecha)
+    public async Task<ApiResponse<OcupacionMesasDto>> ObtenerOcupacionMesasAsync(DateTime fecha, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<OcupacionMesasDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var endpoint = $"api/analytics/ocupacion-mesas?fecha={fecha:yyyy-MM-dd}";
-            var response = await _apiService.GetAsync<OcupacionMesasDto>(endpoint, token);
+            var response = await _apiService.GetAsync<OcupacionMesasDto>(endpoint, token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -99,10 +107,12 @@ public class AnalyticsService : IAnalyticsService
     /// <summary>
     /// Obtener métricas de tiempo promedio de preparación
     /// </summary>
-    public async Task<ApiResponse<TiempoPreparacionDto>> ObtenerTiempoPreparacionAsync(DateTime? fechaDesde = null, DateTime? fechaHasta = null)
+    public async Task<ApiResponse<TiempoPreparacionDto>> ObtenerTiempoPreparacionAsync(DateTime? fechaDesde = null, DateTime? fechaHasta = null, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<TiempoPreparacionDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var endpoint = "api/analytics/tiempo-preparacion";
             
@@ -112,7 +122,7 @@ public class AnalyticsService : IAnalyticsService
             if (fechaHasta.HasValue)
                 endpoint += $"{(fechaDesde.HasValue ? "&" : "?")}fechaHasta={fechaHasta.Value:yyyy-MM-dd}";
             
-            var response = await _apiService.GetAsync<TiempoPreparacionDto>(endpoint, token);
+            var response = await _apiService.GetAsync<TiempoPreparacionDto>(endpoint, token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -124,13 +134,15 @@ public class AnalyticsService : IAnalyticsService
     /// <summary>
     /// Obtener resumen de ventas por hora
     /// </summary>
-    public async Task<ApiResponse<List<VentasHoraDto>>> ObtenerVentasPorHoraAsync(DateTime fecha)
+    public async Task<ApiResponse<List<VentasHoraDto>>> ObtenerVentasPorHoraAsync(DateTime fecha, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<VentasHoraDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var endpoint = $"api/analytics/ventas-hora?fecha={fecha:yyyy-MM-dd}";
-            var response = await _apiService.GetAsync<List<VentasHoraDto>>(endpoint, token);
+            var response = await _apiService.GetAsync<List<VentasHoraDto>>(endpoint, token, cancellationToken);
             return response;
         }
         catch (Exception ex)

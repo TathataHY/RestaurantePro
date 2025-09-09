@@ -37,7 +37,7 @@ public class ApiService : IApiService
         // catch { /* Ignorar errores si no está disponible */ }
     }
 
-    public async Task<ApiResponse<T>> GetAsync<T>(string endpoint, string? token = null)
+    public async Task<ApiResponse<T>> GetAsync<T>(string endpoint, string? token = null, CancellationToken cancellationToken = default)
     {
         // Lectura por stream + reintentos para evitar EOF en Android/OkHttp con respuestas chunked
         const int maxAttempts = 2;
@@ -55,18 +55,18 @@ public class ApiService : IApiService
                 using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
                 request.Headers.ConnectionClose = true; // Evita mantener viva la conexión (mitiga EOF en Android)
                 try { request.Headers.AcceptEncoding.Clear(); request.Headers.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("identity")); } catch { }
-                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    await using var stream = await response.Content.ReadAsStreamAsync();
-                    var result = await JsonSerializer.DeserializeAsync<ApiResponse<T>>(stream, GetJsonOptions());
+                    await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                    var result = await JsonSerializer.DeserializeAsync<ApiResponse<T>>(stream, GetJsonOptions(), cancellationToken);
                     return result ?? ApiResponse<T>.ErrorResponse("Respuesta vacía del servidor");
                 }
 
                 // Intentar leer cuerpo de error (si existe)
                 string errorBody = string.Empty;
-                try { errorBody = await response.Content.ReadAsStringAsync(); } catch { /* ignorar */ }
+                try { errorBody = await response.Content.ReadAsStringAsync(cancellationToken); } catch { /* ignorar */ }
                 return ApiResponse<T>.ErrorResponse(
                     new List<string> { $"Error HTTP: {response.StatusCode} - {errorBody}" },
                     "Error de conexión",
@@ -98,7 +98,7 @@ public class ApiService : IApiService
         return ApiResponse<T>.ErrorResponse("Error de conexión", "Error inesperado", 500);
     }
 
-    public async Task<ApiResponse<T>> PostAsync<T>(string endpoint, object data, string? token = null)
+    public async Task<ApiResponse<T>> PostAsync<T>(string endpoint, object data, string? token = null, CancellationToken cancellationToken = default)
     {
         const int maxAttempts = 2;
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
@@ -113,17 +113,17 @@ public class ApiService : IApiService
                 };
                 request.Headers.ConnectionClose = true;
                 try { request.Headers.AcceptEncoding.Clear(); request.Headers.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("identity")); } catch { }
-                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    await using var stream = await response.Content.ReadAsStreamAsync();
-                    var result = await JsonSerializer.DeserializeAsync<ApiResponse<T>>(stream, GetJsonOptions());
+                    await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                    var result = await JsonSerializer.DeserializeAsync<ApiResponse<T>>(stream, GetJsonOptions(), cancellationToken);
                     return result ?? ApiResponse<T>.ErrorResponse("Respuesta vacía del servidor");
                 }
 
                 string errorBody = string.Empty;
-                try { errorBody = await response.Content.ReadAsStringAsync(); } catch { }
+                try { errorBody = await response.Content.ReadAsStringAsync(cancellationToken); } catch { }
                 return ApiResponse<T>.ErrorResponse(
                     new List<string> { $"Error HTTP: {response.StatusCode} - {errorBody}" },
                     "Error de conexión",
@@ -147,7 +147,7 @@ public class ApiService : IApiService
         return ApiResponse<T>.ErrorResponse("Error de conexión", "Error inesperado", 500);
     }
 
-    public async Task<ApiResponse<T>> PutAsync<T>(string endpoint, object data, string? token = null)
+    public async Task<ApiResponse<T>> PutAsync<T>(string endpoint, object data, string? token = null, CancellationToken cancellationToken = default)
     {
         const int maxAttempts = 2;
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
@@ -162,17 +162,17 @@ public class ApiService : IApiService
                 };
                 request.Headers.ConnectionClose = true;
                 try { request.Headers.AcceptEncoding.Clear(); request.Headers.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("identity")); } catch { }
-                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    await using var stream = await response.Content.ReadAsStreamAsync();
-                    var result = await JsonSerializer.DeserializeAsync<ApiResponse<T>>(stream, GetJsonOptions());
+                    await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                    var result = await JsonSerializer.DeserializeAsync<ApiResponse<T>>(stream, GetJsonOptions(), cancellationToken);
                     return result ?? ApiResponse<T>.ErrorResponse("Respuesta vacía del servidor");
                 }
 
                 string errorBody = string.Empty;
-                try { errorBody = await response.Content.ReadAsStringAsync(); } catch { }
+                try { errorBody = await response.Content.ReadAsStringAsync(cancellationToken); } catch { }
                 return ApiResponse<T>.ErrorResponse(
                     new List<string> { $"Error HTTP: {response.StatusCode} - {errorBody}" },
                     "Error de conexión",
@@ -196,7 +196,7 @@ public class ApiService : IApiService
         return ApiResponse<T>.ErrorResponse("Error de conexión", "Error inesperado", 500);
     }
 
-    public async Task<ApiResponse<T>> PatchAsync<T>(string endpoint, object data, string? token = null)
+    public async Task<ApiResponse<T>> PatchAsync<T>(string endpoint, object data, string? token = null, CancellationToken cancellationToken = default)
     {
         const int maxAttempts = 2;
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
@@ -211,17 +211,17 @@ public class ApiService : IApiService
                 };
                 request.Headers.ConnectionClose = true;
                 try { request.Headers.AcceptEncoding.Clear(); request.Headers.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("identity")); } catch { }
-                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
-                    await using var stream = await response.Content.ReadAsStreamAsync();
-                    var result = await JsonSerializer.DeserializeAsync<ApiResponse<T>>(stream, GetJsonOptions());
+                    await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                    var result = await JsonSerializer.DeserializeAsync<ApiResponse<T>>(stream, GetJsonOptions(), cancellationToken);
                     return result ?? ApiResponse<T>.ErrorResponse("Respuesta vacía del servidor");
                 }
 
                 string errorBody = string.Empty;
-                try { errorBody = await response.Content.ReadAsStringAsync(); } catch { }
+                try { errorBody = await response.Content.ReadAsStringAsync(cancellationToken); } catch { }
                 return ApiResponse<T>.ErrorResponse(
                     new List<string> { $"Error HTTP: {response.StatusCode} - {errorBody}" },
                     "Error de conexión",
@@ -245,7 +245,7 @@ public class ApiService : IApiService
         return ApiResponse<T>.ErrorResponse("Error de conexión", "Error inesperado", 500);
     }
 
-    public async Task<ApiResponse<bool>> DeleteAsync(string endpoint, string? token = null)
+    public async Task<ApiResponse<bool>> DeleteAsync(string endpoint, string? token = null, CancellationToken cancellationToken = default)
     {
         const int maxAttempts = 2;
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
@@ -256,7 +256,7 @@ public class ApiService : IApiService
                 using var request = new HttpRequestMessage(HttpMethod.Delete, endpoint);
                 request.Headers.ConnectionClose = true;
                 try { request.Headers.AcceptEncoding.Clear(); request.Headers.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("identity")); } catch { }
-                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -264,7 +264,7 @@ public class ApiService : IApiService
                 }
 
                 string errorBody = string.Empty;
-                try { errorBody = await response.Content.ReadAsStringAsync(); } catch { }
+                try { errorBody = await response.Content.ReadAsStringAsync(cancellationToken); } catch { }
                 return ApiResponse<bool>.ErrorResponse(
                     new List<string> { $"Error HTTP: {response.StatusCode} - {errorBody}" },
                     "Error de conexión",

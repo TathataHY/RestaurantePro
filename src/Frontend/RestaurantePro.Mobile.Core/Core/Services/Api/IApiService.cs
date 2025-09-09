@@ -7,9 +7,9 @@ namespace RestaurantePro.Mobile.Core.Services.Api;
 /// </summary>
 public interface IApiService
 {
-    Task<ApiResponse<T>> GetAsync<T>(string endpoint, string? token = null);
-    Task<ApiResponse<T>> PostAsync<T>(string endpoint, object data, string? token = null);
-    Task<ApiResponse<T>> PutAsync<T>(string endpoint, object data, string? token = null);
-    Task<ApiResponse<T>> PatchAsync<T>(string endpoint, object data, string? token = null);
-    Task<ApiResponse<bool>> DeleteAsync(string endpoint, string? token = null);
+    Task<ApiResponse<T>> GetAsync<T>(string endpoint, string? token = null, CancellationToken cancellationToken = default);
+    Task<ApiResponse<T>> PostAsync<T>(string endpoint, object data, string? token = null, CancellationToken cancellationToken = default);
+    Task<ApiResponse<T>> PutAsync<T>(string endpoint, object data, string? token = null, CancellationToken cancellationToken = default);
+    Task<ApiResponse<T>> PatchAsync<T>(string endpoint, object data, string? token = null, CancellationToken cancellationToken = default);
+    Task<ApiResponse<bool>> DeleteAsync(string endpoint, string? token = null, CancellationToken cancellationToken = default);
 } 

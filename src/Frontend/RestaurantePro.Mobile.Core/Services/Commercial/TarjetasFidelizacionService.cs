@@ -14,13 +14,15 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
         _authService = authService;
     }
 
-    public async Task<ApiResponse<TarjetaFidelizacionDto>> BuscarTarjetaAsync(string numeroTarjeta)
+    public async Task<ApiResponse<TarjetaFidelizacionDto>> BuscarTarjetaAsync(string numeroTarjeta, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<TarjetaFidelizacionDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             // Como no hay endpoint específico de búsqueda, usamos el endpoint principal con filtros
-            var response = await _apiService.GetAsync<List<TarjetaFidelizacionDto>>($"api/comercial/tarjetas-fidelizacion?pageSize=100", token);
+            var response = await _apiService.GetAsync<List<TarjetaFidelizacionDto>>($"api/comercial/tarjetas-fidelizacion?pageSize=100", token, cancellationToken);
             if (response.Succeeded && response.Data != null)
             {
                 var tarjeta = response.Data.FirstOrDefault(t => t.NumeroTarjeta == numeroTarjeta);
@@ -37,20 +39,22 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
         }
     }
 
-    public async Task<ApiResponse<TarjetaFidelizacionDto>> ActivarTarjetaAsync(string numeroTarjeta, string nombreCliente)
+    public async Task<ApiResponse<TarjetaFidelizacionDto>> ActivarTarjetaAsync(string numeroTarjeta, string nombreCliente, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<TarjetaFidelizacionDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             // Primero necesitamos encontrar la tarjeta por número
-            var buscarResponse = await BuscarTarjetaAsync(numeroTarjeta);
+            var buscarResponse = await BuscarTarjetaAsync(numeroTarjeta, cancellationToken);
             if (!buscarResponse.Succeeded)
             {
                 return ApiResponse<TarjetaFidelizacionDto>.Failure("Tarjeta no encontrada para activar");
             }
 
             var tarjetaId = buscarResponse.Data.Id;
-            var response = await _apiService.PostAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/activar", new { }, token);
+            var response = await _apiService.PostAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/activar", new { }, token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -59,13 +63,15 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
         }
     }
 
-    public async Task<ApiResponse<TarjetaFidelizacionDto>> ObtenerTarjetaPorCodigoAsync(string codigo)
+    public async Task<ApiResponse<TarjetaFidelizacionDto>> ObtenerTarjetaPorCodigoAsync(string codigo, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<TarjetaFidelizacionDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             // Como no hay endpoint específico por código, usamos el endpoint principal
-            var response = await _apiService.GetAsync<List<TarjetaFidelizacionDto>>($"api/comercial/tarjetas-fidelizacion?pageSize=100", token);
+            var response = await _apiService.GetAsync<List<TarjetaFidelizacionDto>>($"api/comercial/tarjetas-fidelizacion?pageSize=100", token, cancellationToken);
             if (response.Succeeded && response.Data != null)
             {
                 // Buscar por cualquier propiedad que pueda contener el código
@@ -83,12 +89,14 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
         }
     }
 
-    public async Task<ApiResponse<TarjetaFidelizacionDto>> ObtenerTarjetaAsync(Guid id)
+    public async Task<ApiResponse<TarjetaFidelizacionDto>> ObtenerTarjetaAsync(Guid id, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<TarjetaFidelizacionDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.GetAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{id}", token);
+            var response = await _apiService.GetAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{id}", token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -97,13 +105,15 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
         }
     }
 
-    public async Task<ApiResponse<List<TransaccionPuntosDto>>> ObtenerHistorialTransaccionesAsync(Guid tarjetaId)
+    public async Task<ApiResponse<List<TransaccionPuntosDto>>> ObtenerHistorialTransaccionesAsync(Guid tarjetaId, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<TransaccionPuntosDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             // Usamos el endpoint de historial que existe
-            var response = await _apiService.GetAsync<List<HistorialPuntosDto>>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/historial", token);
+            var response = await _apiService.GetAsync<List<HistorialPuntosDto>>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/historial", token, cancellationToken);
             if (response.Succeeded && response.Data != null)
             {
                 // Convertir HistorialPuntosDto a TransaccionPuntosDto si es necesario
@@ -127,18 +137,20 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
         }
     }
 
-    public async Task<ApiResponse<TarjetaFidelizacionDto>> AcumularPuntosAsync(Guid tarjetaId, decimal montoCompra)
+    public async Task<ApiResponse<TarjetaFidelizacionDto>> AcumularPuntosAsync(Guid tarjetaId, decimal montoCompra, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<TarjetaFidelizacionDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var request = new { MontoCompra = montoCompra };
             // Usar object en lugar de AgregarPuntosResponse si no está disponible
-            var response = await _apiService.PostAsync<object>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/puntos", request, token);
+            var response = await _apiService.PostAsync<object>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/puntos", request, token, cancellationToken);
             if (response.Succeeded)
             {
                 // Obtener la tarjeta actualizada
-                var tarjetaResponse = await _apiService.GetAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}", token);
+                var tarjetaResponse = await _apiService.GetAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}", token, cancellationToken);
                 if (tarjetaResponse.Succeeded)
                 {
                     return ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(tarjetaResponse.Data, "Puntos acumulados exitosamente");
@@ -152,18 +164,20 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
         }
     }
 
-    public async Task<ApiResponse<TarjetaFidelizacionDto>> CanjearPuntosAsync(Guid tarjetaId, int puntosACanjear, decimal descuento)
+    public async Task<ApiResponse<TarjetaFidelizacionDto>> CanjearPuntosAsync(Guid tarjetaId, int puntosACanjear, decimal descuento, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<TarjetaFidelizacionDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var request = new { PuntosACanjear = puntosACanjear, Descuento = descuento };
             // Usar object en lugar de CanjearPuntosTarjetaResponse si no está disponible
-            var response = await _apiService.PostAsync<object>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/canjear", request, token);
+            var response = await _apiService.PostAsync<object>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/canjear", request, token, cancellationToken);
             if (response.Succeeded)
             {
                 // Obtener la tarjeta actualizada
-                var tarjetaResponse = await _apiService.GetAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}", token);
+                var tarjetaResponse = await _apiService.GetAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}", token, cancellationToken);
                 if (tarjetaResponse.Succeeded)
                 {
                     return ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(tarjetaResponse.Data, "Puntos canjeados exitosamente");
@@ -177,15 +191,17 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
         }
     }
 
-    public async Task<ApiResponse<List<TarjetaFidelizacionDto>>> ObtenerTarjetasActivasAsync()
+    public async Task<ApiResponse<List<TarjetaFidelizacionDto>>> ObtenerTarjetasActivasAsync(CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<TarjetaFidelizacionDto>>.Failure("Operación cancelada por el usuario");
             // Obtener el token de autenticación
             var token = await _authService.GetTokenAsync();
             
             // Primero intentamos obtener todas las tarjetas sin filtro
-            var response = await _apiService.GetAsync<List<TarjetaFidelizacionDto>>("api/comercial/tarjetas-fidelizacion", token);
+            var response = await _apiService.GetAsync<List<TarjetaFidelizacionDto>>("api/comercial/tarjetas-fidelizacion", token, cancellationToken);
             if (response.Succeeded && response.Data != null)
             {
                 // Filtramos las activas en el cliente
@@ -200,12 +216,14 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
         }
     }
 
-    public async Task<ApiResponse<bool>> DesactivarTarjetaAsync(Guid id)
+    public async Task<ApiResponse<bool>> DesactivarTarjetaAsync(Guid id, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<bool>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.PostAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{id}/desactivar", new { }, token);
+            var response = await _apiService.PostAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{id}/desactivar", new { }, token, cancellationToken);
             return ApiResponse<bool>.SuccessResponse(response.Succeeded, "Tarjeta desactivada exitosamente");
         }
         catch (Exception ex)
@@ -215,10 +233,12 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
     }
 
     // Métodos adicionales para ViewModels
-    public async Task<ApiResponse<List<TarjetaFidelizacionDto>>> ObtenerTarjetasAsync(FiltroTarjetasFidelizacionDto filtro)
+    public async Task<ApiResponse<List<TarjetaFidelizacionDto>>> ObtenerTarjetasAsync(FiltroTarjetasFidelizacionDto filtro, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<TarjetaFidelizacionDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             // Usamos el endpoint principal con parámetros de consulta
             var queryParams = new List<string>();
@@ -227,7 +247,7 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
             if (filtro.ClienteId.HasValue) queryParams.Add($"clienteId={filtro.ClienteId}");
             
             var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
-            var response = await _apiService.GetAsync<List<TarjetaFidelizacionDto>>($"api/comercial/tarjetas-fidelizacion{queryString}", token);
+            var response = await _apiService.GetAsync<List<TarjetaFidelizacionDto>>($"api/comercial/tarjetas-fidelizacion{queryString}", token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -236,12 +256,14 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
         }
     }
 
-    public async Task<ApiResponse<List<TransaccionPuntosDto>>> ObtenerHistorialAsync(Guid tarjetaId)
+    public async Task<ApiResponse<List<TransaccionPuntosDto>>> ObtenerHistorialAsync(Guid tarjetaId, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<TransaccionPuntosDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.GetAsync<List<HistorialPuntosDto>>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/historial", token);
+            var response = await _apiService.GetAsync<List<HistorialPuntosDto>>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/historial", token, cancellationToken);
             if (response.Succeeded && response.Data != null)
             {
                 // Convertir HistorialPuntosDto a TransaccionPuntosDto
@@ -265,13 +287,15 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
         }
     }
 
-    public async Task<ApiResponse<bool>> BloquearTarjetaAsync(Guid tarjetaId)
+    public async Task<ApiResponse<bool>> BloquearTarjetaAsync(Guid tarjetaId, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<bool>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             // Como no hay endpoint específico de bloquear, usamos desactivar
-            var response = await _apiService.PostAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/desactivar", new { }, token);
+            var response = await _apiService.PostAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/desactivar", new { }, token, cancellationToken);
             return ApiResponse<bool>.SuccessResponse(response.Succeeded, "Tarjeta bloqueada exitosamente");
         }
         catch (Exception ex)
@@ -280,12 +304,14 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
         }
     }
 
-    public async Task<ApiResponse<HistorialPuntosDto>> ObtenerHistorialPuntosAsync(Guid tarjetaId)
+    public async Task<ApiResponse<HistorialPuntosDto>> ObtenerHistorialPuntosAsync(Guid tarjetaId, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<HistorialPuntosDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.GetAsync<List<HistorialPuntosDto>>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/historial", token);
+            var response = await _apiService.GetAsync<List<HistorialPuntosDto>>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/historial", token, cancellationToken);
             if (response.Succeeded && response.Data != null && response.Data.Any())
             {
                 // Retornamos el primer elemento del historial como ejemplo
@@ -299,12 +325,14 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
         }
     }
 
-    public async Task<ApiResponse<EstadisticasTarjetaDto>> ObtenerEstadisticasAsync(Guid tarjetaId)
+    public async Task<ApiResponse<EstadisticasTarjetaDto>> ObtenerEstadisticasAsync(Guid tarjetaId, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<EstadisticasTarjetaDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.GetAsync<EstadisticasTarjetaDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/estadisticas", token);
+            var response = await _apiService.GetAsync<EstadisticasTarjetaDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/estadisticas", token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -313,12 +341,14 @@ public class TarjetasFidelizacionService : ITarjetasFidelizacionService
         }
     }
 
-    public async Task<ApiResponse<bool>> EliminarTarjetaAsync(Guid tarjetaId)
+    public async Task<ApiResponse<bool>> EliminarTarjetaAsync(Guid tarjetaId, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<bool>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.DeleteAsync($"api/comercial/tarjetas-fidelizacion/{tarjetaId}", token);
+            var response = await _apiService.DeleteAsync($"api/comercial/tarjetas-fidelizacion/{tarjetaId}", token, cancellationToken);
             return response;
         }
         catch (Exception ex)

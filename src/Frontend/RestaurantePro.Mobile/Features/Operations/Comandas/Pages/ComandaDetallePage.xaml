@@ -209,26 +209,7 @@
                                        FontSize="12" TextColor="#666" 
                                        IsVisible="{Binding Observaciones, Converter={StaticResource IsNotNullConverter}}" />
 
-                                <!-- Botones de Acción (Solo si la comanda es editable) -->
-                                <StackLayout Grid.Row="3" Grid.ColumnSpan="2" 
-                                             Orientation="Horizontal" 
-                                             HorizontalOptions="End" 
-                                             Spacing="8" 
-                                             Margin="0,8,0,0"
-                                             IsVisible="{Binding BindingContext.IsEditable, Source={x:Reference Page}}">
-                                    
-                                    <Button Text="✏️ Cantidad" 
-                                            Command="{Binding Source={x:Reference Page}, Path=BindingContext.ActualizarCantidadCommand}"
-                                            CommandParameter="{Binding .}"
-                                            Style="{StaticResource SecondaryButtonStyle}"
-                                            IsVisible="{Binding BindingContext.IsEditable, Source={x:Reference Page}}" />
-
-                                    <Button Text="🗑️ Eliminar" 
-                                            Command="{Binding Source={x:Reference Page}, Path=BindingContext.EliminarItemCommand}"
-                                            CommandParameter="{Binding .}"
-                                            Style="{StaticResource DangerButtonStyle}"
-                                            IsVisible="{Binding BindingContext.IsEditable, Source={x:Reference Page}}" />
-                                </StackLayout>
+                                <!-- Botones individuales eliminados - ahora se usa un botón general "Editar" abajo -->
                             </Grid>
                         </Frame>
                     </DataTemplate>
@@ -257,6 +238,12 @@
                          HorizontalOptions="Center" 
                          Padding="16"
                          Spacing="8">
+
+                <!-- Editar Comanda (Solo para comandas nuevas) -->
+                <Button Text="✏️ Editar" 
+                        Command="{Binding EditarComandaCommand}" 
+                        Style="{StaticResource ActionButtonStyle}"
+                        IsVisible="{Binding EsNueva}" />
 
                 <!-- Agregar Producto -->
                 <Button Text="➕ Agregar Producto" 

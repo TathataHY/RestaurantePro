@@ -41,7 +41,7 @@ public class TarjetasFidelizacionServiceTests
 
         var tarjetas = new List<TarjetaFidelizacionDto> { tarjeta };
         var apiResponse = ApiResponse<List<TarjetaFidelizacionDto>>.SuccessResponse(tarjetas);
-        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -558,5 +558,114 @@ public class TarjetasFidelizacionServiceTests
         // Assert
         Assert.False(result.Succeeded);
         Assert.Contains("Error de red", result.Error);
+    }
+
+    // Tests para 401/403/429
+    [Fact]
+    public async Task BuscarTarjetaAsync_WithUnauthorized_ShouldPropagate401()
+    {
+        // Arrange
+        var numeroTarjeta = "123456789";
+        var apiResponse = ApiResponse<List<TarjetaFidelizacionDto>>.ErrorResponse("Unauthorized", 401);
+        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                      .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _tarjetasService.BuscarTarjetaAsync(numeroTarjeta);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Equal(401, result.StatusCode);
+        Assert.Contains("Unauthorized", result.Error);
+    }
+
+    [Fact]
+    public async Task BuscarTarjetaAsync_WithForbidden_ShouldPropagate403()
+    {
+        // Arrange
+        var numeroTarjeta = "123456789";
+        var apiResponse = ApiResponse<List<TarjetaFidelizacionDto>>.ErrorResponse("Forbidden", 403);
+        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                      .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _tarjetasService.BuscarTarjetaAsync(numeroTarjeta);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Equal(403, result.StatusCode);
+        Assert.Contains("Forbidden", result.Error);
+    }
+
+    [Fact]
+    public async Task BuscarTarjetaAsync_WithTooManyRequests_ShouldPropagate429()
+    {
+        // Arrange
+        var numeroTarjeta = "123456789";
+        var apiResponse = ApiResponse<List<TarjetaFidelizacionDto>>.ErrorResponse("Too Many Requests", 429);
+        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                      .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _tarjetasService.BuscarTarjetaAsync(numeroTarjeta);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Equal(429, result.StatusCode);
+        Assert.Contains("Too Many Requests", result.Error);
+    }
+
+    // Tests para 204/empty body
+    [Fact]
+    public async Task BuscarTarjetaAsync_WithEmptyBody_ShouldReturnFailure()
+    {
+        // Arrange
+        var numeroTarjeta = "123456789";
+        var apiResponse = ApiResponse<List<TarjetaFidelizacionDto>>.SuccessResponse(new List<TarjetaFidelizacionDto>());
+        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                      .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _tarjetasService.BuscarTarjetaAsync(numeroTarjeta);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Contains("Tarjeta no encontrada", result.Error);
+    }
+
+    // Tests para cancelación
+    [Fact]
+    public async Task BuscarTarjetaAsync_WhenCancelled_ShouldReturnCancelled()
+    {
+        // Arrange
+        var numeroTarjeta = "123456789";
+        var cts = new CancellationTokenSource();
+        cts.Cancel(); // Cancel the token immediately
+
+        // Act
+        var result = await _tarjetasService.BuscarTarjetaAsync(numeroTarjeta, cts.Token);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Contains("Operación cancelada por el usuario", result.Error);
+        _mockApiService.Verify(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ActivarTarjetaAsync_WhenCancelled_ShouldReturnCancelled()
+    {
+        // Arrange
+        var numeroTarjeta = "123456789";
+        var nombreCliente = "Juan Pérez";
+        var cts = new CancellationTokenSource();
+        cts.Cancel(); // Cancel the token immediately
+
+        // Act
+        var result = await _tarjetasService.ActivarTarjetaAsync(numeroTarjeta, nombreCliente, cts.Token);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Contains("Operación cancelada por el usuario", result.Error);
+        _mockApiService.Verify(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 } 

@@ -21,12 +21,14 @@ public class CategoriasService : ICategoriasService
     /// <summary>
     /// Obtener todas las categorías de productos
     /// </summary>
-    public async Task<ApiResponse<List<CategoriaProductoDto>>> ObtenerCategoriasAsync(bool soloActivas = true)
+    public async Task<ApiResponse<List<CategoriaProductoDto>>> ObtenerCategoriasAsync(bool soloActivas = true, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<CategoriaProductoDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.GetAsync<List<CategoriaProductoDto>>($"api/core/categorias?soloActivas={soloActivas}", token);
+            var response = await _apiService.GetAsync<List<CategoriaProductoDto>>($"api/core/categorias?soloActivas={soloActivas}", token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -38,12 +40,14 @@ public class CategoriasService : ICategoriasService
     /// <summary>
     /// Obtener una categoría específica por ID
     /// </summary>
-    public async Task<ApiResponse<CategoriaProductoDto>> ObtenerCategoriaAsync(Guid id)
+    public async Task<ApiResponse<CategoriaProductoDto>> ObtenerCategoriaAsync(Guid id, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<CategoriaProductoDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.GetAsync<CategoriaProductoDto>($"api/core/categorias/{id}", token);
+            var response = await _apiService.GetAsync<CategoriaProductoDto>($"api/core/categorias/{id}", token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -55,12 +59,14 @@ public class CategoriasService : ICategoriasService
     /// <summary>
     /// Obtener productos por categoría
     /// </summary>
-    public async Task<ApiResponse<List<ProductoDto>>> ObtenerProductosPorCategoriaAsync(Guid categoriaId, bool soloActivos = true)
+    public async Task<ApiResponse<List<ProductoDto>>> ObtenerProductosPorCategoriaAsync(Guid categoriaId, bool soloActivos = true, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<ProductoDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.GetAsync<List<ProductoDto>>($"api/core/productos/categoria/{categoriaId}?soloActivos={soloActivos}", token);
+            var response = await _apiService.GetAsync<List<ProductoDto>>($"api/core/productos/categoria/{categoriaId}?soloActivos={soloActivos}", token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -72,12 +78,14 @@ public class CategoriasService : ICategoriasService
     /// <summary>
     /// Obtener categorías activas con productos
     /// </summary>
-    public async Task<ApiResponse<List<CategoriaProductoDto>>> ObtenerCategoriasActivasAsync()
+    public async Task<ApiResponse<List<CategoriaProductoDto>>> ObtenerCategoriasActivasAsync(CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<CategoriaProductoDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.GetAsync<List<CategoriaProductoDto>>("api/core/categorias?soloActivas=true&ocultarVacias=true", token);
+            var response = await _apiService.GetAsync<List<CategoriaProductoDto>>("api/core/categorias?soloActivas=true&ocultarVacias=true", token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -89,12 +97,14 @@ public class CategoriasService : ICategoriasService
     /// <summary>
     /// Buscar categorías por nombre
     /// </summary>
-    public async Task<ApiResponse<List<CategoriaProductoDto>>> BuscarCategoriasAsync(string nombre)
+    public async Task<ApiResponse<List<CategoriaProductoDto>>> BuscarCategoriasAsync(string nombre, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<CategoriaProductoDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.GetAsync<List<CategoriaProductoDto>>($"api/core/categorias?nombre={Uri.EscapeDataString(nombre)}", token);
+            var response = await _apiService.GetAsync<List<CategoriaProductoDto>>($"api/core/categorias?nombre={Uri.EscapeDataString(nombre)}", token, cancellationToken);
             return response;
         }
         catch (Exception ex)

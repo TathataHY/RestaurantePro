@@ -1,3 +1,6 @@
+using RestaurantePro.Application.Common.Interfaces;
+using Microsoft.EntityFrameworkCore;
+
 namespace RestaurantePro.Application.Operaciones.Comandas.Queries.ObtenerComandaPorId;
 
 /// <summary>
@@ -9,15 +12,18 @@ public class ObtenerComandaPorIdHandler : IRequestHandler<ObtenerComandaPorIdQue
     private readonly IComandaRepository _comandaRepository;
     private readonly IMapper _mapper;
     private readonly ILogger<ObtenerComandaPorIdHandler> _logger;
+    private readonly IApplicationDbContext _context;
 
     public ObtenerComandaPorIdHandler(
         IComandaRepository comandaRepository,
         IMapper mapper,
-        ILogger<ObtenerComandaPorIdHandler> logger)
+        ILogger<ObtenerComandaPorIdHandler> logger,
+        IApplicationDbContext context)
     {
         _comandaRepository = comandaRepository;
         _mapper = mapper;
         _logger = logger;
+        _context = context;
     }
 
     public async Task<Result<ComandaDto>> Handle(
@@ -100,11 +106,48 @@ public class ObtenerComandaPorIdHandler : IRequestHandler<ObtenerComandaPorIdQue
             // }
 
             // 4. Obtener nombres de productos para los items
-            // foreach (var item in comandaDto.Items)
-            // {
-            //     var producto = await _productoRepository.ObtenerPorIdAsync(item.ProductoId, cancellationToken);
-            //     item.NombreProducto = producto?.Nombre?.Valor ?? "Producto no encontrado";
-            // }
+            if (comandaDto.Items != null && comandaDto.Items.Count > 0)
+            {
+                _logger.LogInformation("🔍 Enriqueciendo {Count} items de la comanda {ComandaId}", comandaDto.Items.Count, comanda.Id);
+                
+                var productoIds = comanda.Items
+                    .Select(i => i.ProductoId)
+                    .Distinct()
+                    .ToList();
+
+                _logger.LogInformation("🔍 ProductoIds encontrados: {ProductoIds}", string.Join(", ", productoIds));
+
+                var productos = await _context.Productos
+                    .Where(p => productoIds.Contains(p.Id))
+                    .Select(p => new { p.Id, p.Nombre })
+                    .ToListAsync(cancellationToken);
+
+                _logger.LogInformation("🔍 Productos encontrados en BD: {Count}", productos.Count);
+                foreach (var p in productos)
+                {
+                    _logger.LogInformation("🔍 Producto: {Id} = {Nombre}", p.Id, p.Nombre);
+                }
+
+                var productosDict = productos.ToDictionary(p => p.Id, p => p.Nombre);
+
+                foreach (var item in comandaDto.Items)
+                {
+                    _logger.LogInformation("🔍 Procesando item: ProductoId={ProductoId}, Nombre actual='{NombreActual}'", item.ProductoId, item.Nombre);
+                    
+                    if (productosDict.TryGetValue(item.ProductoId, out var nombre) && !string.IsNullOrWhiteSpace(nombre))
+                    {
+                        _logger.LogInformation("🔍 Asignando nombre: {Nombre}", nombre);
+                        item.Nombre = nombre;
+                    }
+                    else if (string.IsNullOrWhiteSpace(item.Nombre))
+                    {
+                        _logger.LogInformation("🔍 Asignando nombre por defecto: Producto");
+                        item.Nombre = "Producto";
+                    }
+                }
+
+                _logger.LogInformation("🧩 Items enriquecidos con nombres de producto: {Count}", comandaDto.Items.Count);
+            }
 
             _logger.LogDebug("📋 Datos adicionales procesados para comanda: {ComandaId}", comanda.Id);
         }
