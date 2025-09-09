@@ -7,6 +7,7 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
     {
         private readonly IFacturaRepository _facturaRepository;
         private readonly IComandaRepository _comandaRepository;
+        private readonly IProductoRepository _productoRepository;
         private readonly IDateTimeService _dateTimeService;
         private readonly INotificationManager _notificationManager;
         private readonly ILogger<FacturaBuilder> _facturaBuilderLogger;
@@ -16,18 +17,21 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
         /// </summary>
         /// <param name="facturaRepository">Repositorio de facturas</param>
         /// <param name="comandaRepository">Repositorio de comandas</param>
+        /// <param name="productoRepository">Repositorio de productos</param>
         /// <param name="dateTimeService">Servicio de fecha/hora</param>
         /// <param name="notificationManager">Gestor de notificaciones para validaciones</param>
         /// <param name="facturaBuilderLogger">Logger para el FacturaBuilder</param>
         public ServicioFacturacion(
             IFacturaRepository facturaRepository,
             IComandaRepository comandaRepository,
+            IProductoRepository productoRepository,
             IDateTimeService dateTimeService,
             INotificationManager notificationManager,
             ILogger<FacturaBuilder> facturaBuilderLogger)
         {
             _facturaRepository = facturaRepository ?? throw new ArgumentNullException(nameof(facturaRepository));
             _comandaRepository = comandaRepository ?? throw new ArgumentNullException(nameof(comandaRepository));
+            _productoRepository = productoRepository ?? throw new ArgumentNullException(nameof(productoRepository));
             _dateTimeService = dateTimeService ?? throw new ArgumentNullException(nameof(dateTimeService));
             _notificationManager = notificationManager ?? throw new ArgumentNullException(nameof(notificationManager));
             _facturaBuilderLogger = facturaBuilderLogger ?? throw new ArgumentNullException(nameof(facturaBuilderLogger));
@@ -97,9 +101,18 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Services
                 // Agregar detalles de la comanda al builder antes de construir
                 foreach (var item in comanda.Items)
                 {
+                    // Obtener el nombre del producto desde la base de datos
+                    var producto = await _productoRepository.ObtenerPorIdAsync(item.ProductoId, cancellationToken);
+                    var descripcionProducto = producto?.Nombre ?? $"Producto {item.ProductoId}";
+                    
+                    // Combinar nombre del producto con observaciones si las hay
+                    var descripcionCompleta = string.IsNullOrWhiteSpace(item.Observaciones) 
+                        ? descripcionProducto 
+                        : $"{descripcionProducto} - {item.Observaciones}";
+                    
                     builder.AgregarDetalle(
                         item.ProductoId,
-                        item.Observaciones ?? $"Producto {item.ProductoId}",
+                        descripcionCompleta,
                         item.Cantidad,
                         item.PrecioUnitario,
                         16.0m,  // IVA fijo del 16% - en una implementación real esto podría obtenerse del producto o de configuración

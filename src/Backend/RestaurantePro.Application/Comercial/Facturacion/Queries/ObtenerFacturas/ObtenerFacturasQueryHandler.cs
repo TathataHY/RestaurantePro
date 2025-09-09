@@ -59,7 +59,7 @@ public class ObtenerFacturasQueryHandler : IRequestHandler<ObtenerFacturasQuery,
                 ClienteId = f.ClienteId,
                 NombreCliente = f.NombreCliente,
                 ComandaId = f.ComandasIds.FirstOrDefault(), // Tomar la primera comanda
-                NumeroComanda = 0, // TODO: Obtener número de comanda
+                NumeroComanda = int.TryParse(f.Comandas?.FirstOrDefault()?.NumeroComanda, out var numeroComanda) ? numeroComanda : 0, // Obtener número de comanda desde la relación
                 FechaEmision = f.FechaEmision,
                 FechaVencimiento = f.FechaVencimiento,
                 Estado = f.Estado,
@@ -70,11 +70,19 @@ public class ObtenerFacturasQueryHandler : IRequestHandler<ObtenerFacturasQuery,
                 Total = f.Total,
                 MontoPagado = f.TotalPagado,
                 FechaPago = f.FechaPago,
-                MetodoPago = null, // TODO: Obtener método de pago
-                ReferenciaPago = null // TODO: Obtener referencia de pago
+                MetodoPago = f.Pagos?.FirstOrDefault()?.MetodoPago.ToString(), // Obtener método de pago desde la relación
+                ReferenciaPago = f.Pagos?.FirstOrDefault()?.ReferenciaTransaccion // Obtener referencia de pago desde la relación
             }).ToList();
 
             _logger.LogInformation("✅ Se obtuvieron {Count} facturas", facturasDto.Count);
+            
+            // Log detallado de la primera factura para debugging
+            if (facturasDto.Any())
+            {
+                var primeraFactura = facturasDto.First();
+                _logger.LogInformation("🔍 [DEBUG] Primera factura - ID: {Id}, Numero: {Numero}, Cliente: {Cliente}, Total: {Total}, Estado: {Estado}", 
+                    primeraFactura.Id, primeraFactura.Numero, primeraFactura.NombreCliente, primeraFactura.Total, primeraFactura.Estado);
+            }
 
             return Result.Success(facturasDto);
         }

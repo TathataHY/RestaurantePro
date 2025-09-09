@@ -78,9 +78,28 @@ public class FinalizarComandaHandler : IRequestHandler<FinalizarComandaCommand, 
             // 4. Finalizar la comanda usando el método correcto
             try
             {
-                // Usar el método de dominio normal para cambiar el estado
-                comanda.ActualizarEstado(EstadoComanda.Finalizada);
-                _logger.LogInformation("Estado actualizado a Finalizada usando método de dominio");
+                // Primero marcar como entregada si no lo está
+                if (comanda.Estado == EstadoComanda.Lista)
+                {
+                    var entregadaExitoso = comanda.MarcarEntregada();
+                    if (!entregadaExitoso)
+                    {
+                        _logger.LogWarning("❌ No se puede marcar como entregada la comanda {ComandaId} desde su estado actual {EstadoActual}", 
+                            request.ComandaId, comanda.Estado);
+                        return Result.Failure<ComandaDto>("No se puede marcar como entregada la comanda desde su estado actual");
+                    }
+                    _logger.LogInformation("✅ Comanda {ComandaId} marcada como entregada", request.ComandaId);
+                }
+                
+                // Luego marcar como pagada para disparar eventos de dominio (creación de factura, liberación de mesa)
+                var finalizadaExitoso = comanda.MarcarPagada();
+                if (!finalizadaExitoso)
+                {
+                    _logger.LogWarning("❌ No se puede finalizar la comanda {ComandaId} desde su estado actual {EstadoActual}", 
+                        request.ComandaId, comanda.Estado);
+                    return Result.Failure<ComandaDto>("No se puede finalizar la comanda desde su estado actual");
+                }
+                _logger.LogInformation("✅ Comanda {ComandaId} finalizada exitosamente usando MarcarPagada() - Eventos de dominio disparados", request.ComandaId);
                 
                 // Guardar cambios
                 await _unitOfWork.SaveChangesAsync();

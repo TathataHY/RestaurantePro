@@ -29,6 +29,9 @@ public partial class FacturasViewModel : BaseViewModel
     private string _busqueda = string.Empty;
 
     [ObservableProperty]
+    private string _textoBusqueda = string.Empty;
+
+    [ObservableProperty]
     private DateTime _fechaSeleccionada = DateTime.Today;
 
     [ObservableProperty]
@@ -39,6 +42,12 @@ public partial class FacturasViewModel : BaseViewModel
 
     [ObservableProperty]
     private decimal _promedioFacturaHoy;
+
+    [ObservableProperty]
+    private bool _isRefreshing = false;
+
+    [ObservableProperty]
+    private FacturaDto? _selectedFactura;
 
     #endregion
 
@@ -190,7 +199,16 @@ public partial class FacturasViewModel : BaseViewModel
     [RelayCommand]
     private async Task RefreshFacturasAsync()
     {
-        await CargarFacturasAsync();
+        IsRefreshing = true;
+        try
+        {
+            await CargarFacturasAsync();
+            await CargarEstadisticasAsync();
+        }
+        finally
+        {
+            IsRefreshing = false;
+        }
     }
 
     /// <summary>
@@ -298,6 +316,42 @@ public partial class FacturasViewModel : BaseViewModel
         catch (Exception ex)
         {
             await _dialogService.ShowAlertAsync("Error", $"Error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Comando para procesar pago
+    /// </summary>
+    [RelayCommand]
+    private async Task ProcesarPagoAsync()
+    {
+        try
+        {
+            await _dialogService.ShowAlertAsync("Función no disponible", 
+                "El procesamiento de pagos no está disponible en esta versión. Contacta al administrador.");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error al procesar pago: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Comando para procesar pago de factura específica
+    /// </summary>
+    [RelayCommand]
+    private async Task ProcesarPagoFacturaAsync(FacturaDto? factura)
+    {
+        if (factura == null) return;
+
+        try
+        {
+            await _dialogService.ShowAlertAsync("Función no disponible", 
+                "El procesamiento de pagos no está disponible en esta versión. Contacta al administrador.");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error al procesar pago: {ex.Message}");
         }
     }
 } 

@@ -38,12 +38,14 @@ public class ComandaFinalizadaFacturaHandler : Domain.Core.Base.Events.Handlers.
         try
         {
             // Obtener la comanda con sus datos completos
+            _logger.LogInformation("🔍 [FACTURA HANDLER] Obteniendo comanda {ComandaId} del repositorio", evento.ComandaId);
             var comanda = await _comandaRepository.ObtenerPorIdAsync(evento.ComandaId, cancellationToken);
             if (comanda == null)
             {
-                _logger.LogWarning("❌ Comanda {ComandaId} no encontrada para generar factura", evento.ComandaId);
+                _logger.LogWarning("❌ [FACTURA HANDLER] Comanda {ComandaId} no encontrada para generar factura", evento.ComandaId);
                 return;
             }
+            _logger.LogInformation("✅ [FACTURA HANDLER] Comanda {ComandaId} obtenida exitosamente", evento.ComandaId);
 
             // Obtener datos del cliente
             Cliente? cliente = null;
@@ -63,16 +65,17 @@ public class ComandaFinalizadaFacturaHandler : Domain.Core.Base.Events.Handlers.
             };
 
             // Ejecutar comando de creación de factura
+            _logger.LogInformation("🚀 [FACTURA HANDLER] Ejecutando comando CrearFacturaCommand para comanda {ComandaId}", evento.ComandaId);
             var resultado = await _mediator.Send(crearFacturaCommand, cancellationToken);
             
             if (resultado.IsSuccess())
             {
-                _logger.LogInformation("✅ Factura generada automáticamente para comanda {ComandaId} - Factura ID: {FacturaId}", 
+                _logger.LogInformation("✅ [FACTURA HANDLER] Factura generada automáticamente para comanda {ComandaId} - Factura ID: {FacturaId}", 
                     evento.ComandaId, resultado.Value?.Id);
             }
             else
             {
-                _logger.LogError("❌ Error al generar factura automática para comanda {ComandaId}: {Error}", 
+                _logger.LogError("❌ [FACTURA HANDLER] Error al generar factura automática para comanda {ComandaId}: {Error}", 
                     evento.ComandaId, resultado.Error);
             }
         }

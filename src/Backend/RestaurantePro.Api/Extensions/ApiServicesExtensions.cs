@@ -61,6 +61,20 @@ namespace RestaurantePro.Api.Extensions
                         .AllowAnyMethod()
                         .AllowAnyHeader();
                 });
+                
+                // Política más segura para producción
+                options.AddPolicy("Production", builder =>
+                {
+                    builder.WithOrigins(
+                            "https://limoncitoydedos-001-site1.site4now.net",
+                            "https://www.limoncitoydedos-001-site1.site4now.net",
+                            "http://localhost:3000",
+                            "http://localhost:8080"
+                        )
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();
+                });
             });
 
             // 🚀 Registrar servicios de SignalR

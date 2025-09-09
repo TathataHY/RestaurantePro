@@ -35,6 +35,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
 
         public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)
         {
+            _logger.LogInformation("🔄 [DomainEventInterceptor] SavingChangesAsync - Iniciando recolección de eventos");
             // Recolectar eventos antes de guardar, pero no publicarlos aún
             RecolectarEventosDominio(eventData.Context);
             return await base.SavingChangesAsync(eventData, result, cancellationToken);
@@ -42,25 +43,26 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
 
         public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
         {
-            // Publicar eventos en background para no bloquear la transacción
-            _ = Task.Run(() => PublicarEventosDominioPendientes());
+            // Publicar eventos sincrónicamente para mantener el contexto activo
+            PublicarEventosDominioPendientes().GetAwaiter().GetResult();
             return base.SavedChanges(eventData, result);
         }
 
         public override async ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData, int result, CancellationToken cancellationToken = default)
         {
-            // Publicar eventos en background para no bloquear la transacción
-            _ = Task.Run(() => PublicarEventosDominioPendientes(cancellationToken), cancellationToken);
+            _logger.LogInformation("✅ [DomainEventInterceptor] SavedChangesAsync - Iniciando publicación de eventos");
+            // Publicar eventos sincrónicamente para mantener el contexto activo
+            await PublicarEventosDominioPendientes(cancellationToken);
             return await base.SavedChangesAsync(eventData, result, cancellationToken);
         }
 
         private void RecolectarEventosDominio(DbContext? context)
         {
-            Console.WriteLine("[DomainEventInterceptor] 🔍 INICIO RecolectarEventosDominio");
+            _logger.LogInformation("🔍 [DomainEventInterceptor] INICIO RecolectarEventosDominio");
             
             if (context == null)
             {
-                Console.WriteLine("[DomainEventInterceptor] ❌ Context es null");
+                _logger.LogWarning("❌ [DomainEventInterceptor] Context es null");
                 return;
             }
 
@@ -69,11 +71,11 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
                 .Select(e => e.Entity)
                 .ToList();
 
-            Console.WriteLine($"[DomainEventInterceptor] 🔍 Encontradas {entidadesConEventos.Count} entidades con eventos");
+            _logger.LogInformation("🔍 [DomainEventInterceptor] Encontradas {Count} entidades con eventos", entidadesConEventos.Count);
 
             if (!entidadesConEventos.Any())
             {
-                Console.WriteLine("[DomainEventInterceptor] ⚠️ No hay entidades con eventos");
+                _logger.LogWarning("⚠️ [DomainEventInterceptor] No hay entidades con eventos");
                 return;
             }
 
@@ -84,22 +86,23 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
                 var eventos = entidad.DomainEvents.ToList();
                 entidad.ClearDomainEvents();
                 
-                Console.WriteLine($"[DomainEventInterceptor] 🔧 Entidad: {entidad.GetType().Name}, ID: {entidad.Id}, Eventos: {eventos.Count}");
+                _logger.LogInformation("🔧 [DomainEventInterceptor] Entidad: {EntityType}, ID: {EntityId}, Eventos: {EventCount}", 
+                    entidad.GetType().Name, entidad.Id, eventos.Count);
                 
                 // Agregar eventos a la lista pendiente
                 _pendingEvents.AddRange(eventos);
             }
             
-            Console.WriteLine("[DomainEventInterceptor] ✅ FIN RecolectarEventosDominio");
+            _logger.LogInformation("✅ [DomainEventInterceptor] FIN RecolectarEventosDominio");
         }
 
         private async Task PublicarEventosDominioPendientes(CancellationToken cancellationToken = default)
         {
-            Console.WriteLine("[DomainEventInterceptor] 🚀 INICIO PublicarEventosDominioPendientes");
+            _logger.LogInformation("🚀 [DomainEventInterceptor] INICIO PublicarEventosDominioPendientes");
             
             if (!_pendingEvents.Any())
             {
-                Console.WriteLine("[DomainEventInterceptor] ⚠️ No hay eventos pendientes para publicar");
+                _logger.LogWarning("⚠️ [DomainEventInterceptor] No hay eventos pendientes para publicar");
                 return;
             }
 
@@ -110,7 +113,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
 
             foreach (var evento in eventosParaPublicar)
             {
-                Console.WriteLine($"[DomainEventInterceptor] 🚀 Publicando evento: {evento.GetType().Name}");
+                _logger.LogInformation("🚀 [DomainEventInterceptor] Publicando evento: {EventType}", evento.GetType().Name);
                 
                 _logger.LogInformation("Publicando evento de dominio {EventType}",
                     evento.GetType().Name);
@@ -118,7 +121,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
                 await _domainEventDispatcher.Dispatch(evento, cancellationToken);
             }
             
-            Console.WriteLine("[DomainEventInterceptor] ✅ FIN PublicarEventosDominioPendientes");
+            _logger.LogInformation("✅ [DomainEventInterceptor] FIN PublicarEventosDominioPendientes");
         }
     }
 } 

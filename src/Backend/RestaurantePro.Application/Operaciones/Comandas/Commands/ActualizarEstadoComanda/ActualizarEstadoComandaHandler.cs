@@ -134,12 +134,14 @@ public class ActualizarEstadoComandaHandler : IRequestHandler<ActualizarEstadoCo
                     break;
 
                 case EstadoComanda.Finalizada:
+                    _logger.LogInformation("💰 [ESTADO HANDLER] Intentando finalizar comanda {ComandaId}", comanda.Id);
                     var finalizadaExitoso = comanda.MarcarPagada();
                     if (!finalizadaExitoso)
                     {
+                        _logger.LogWarning("❌ [ESTADO HANDLER] No se puede finalizar la comanda {ComandaId} desde su estado actual {EstadoActual}", comanda.Id, comanda.Estado);
                         return Result.Failure("No se puede finalizar la comanda desde su estado actual");
                     }
-                    _logger.LogInformation("💰 Comanda finalizada (pagada)");
+                    _logger.LogInformation("✅ [ESTADO HANDLER] Comanda {ComandaId} finalizada (pagada) exitosamente", comanda.Id);
                     break;
 
                 case EstadoComanda.Cancelada:

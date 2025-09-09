@@ -83,7 +83,7 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             var defaultConnectionString = configuration.GetConnectionString("DefaultConnection");
 
             // Contexto principal
-            services.AddDbContext<RestauranteProDbContext>(options =>
+            services.AddDbContext<RestauranteProDbContext>((serviceProvider, options) =>
                 options
                     .UseSqlServer(
                         defaultConnectionString,
@@ -91,10 +91,13 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
                         {
                             sqlOptions.MigrationsAssembly(typeof(RestauranteProDbContext).Assembly.FullName);
                             sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
-                        }));
+                        })
+                    .AddInterceptors(serviceProvider.GetRequiredService<AuditableEntityInterceptor>())
+                    .AddInterceptors(serviceProvider.GetRequiredService<DomainEventInterceptor>())
+                    .AddInterceptors(serviceProvider.GetRequiredService<SoftDeleteInterceptor>()));
 
             // Core
-            services.AddDbContext<CoreDbContext>(options =>
+            services.AddDbContext<CoreDbContext>((serviceProvider, options) =>
                 options
                     .UseSqlServer(
                         defaultConnectionString,
@@ -102,10 +105,13 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
                         {
                             sqlOptions.MigrationsHistoryTable("__EFMigrationsHistoryCore", "Core");
                             sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
-                        }));
+                        })
+                    .AddInterceptors(serviceProvider.GetRequiredService<AuditableEntityInterceptor>())
+                    .AddInterceptors(serviceProvider.GetRequiredService<DomainEventInterceptor>())
+                    .AddInterceptors(serviceProvider.GetRequiredService<SoftDeleteInterceptor>()));
 
             // Comercial
-            services.AddDbContext<ComercialDbContext>(options =>
+            services.AddDbContext<ComercialDbContext>((serviceProvider, options) =>
                 options
                     .UseSqlServer(
                         defaultConnectionString,
@@ -113,10 +119,13 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
                         {
                             sqlOptions.MigrationsHistoryTable("__EFMigrationsHistoryComercial", "Comercial");
                             sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
-                        }));
+                        })
+                    .AddInterceptors(serviceProvider.GetRequiredService<AuditableEntityInterceptor>())
+                    .AddInterceptors(serviceProvider.GetRequiredService<DomainEventInterceptor>())
+                    .AddInterceptors(serviceProvider.GetRequiredService<SoftDeleteInterceptor>()));
 
             // Operaciones
-            services.AddDbContext<OperacionesDbContext>(options =>
+            services.AddDbContext<OperacionesDbContext>((serviceProvider, options) =>
                 options
                     .UseSqlServer(
                         defaultConnectionString,
@@ -124,10 +133,13 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
                         {
                             sqlOptions.MigrationsHistoryTable("__EFMigrationsHistoryOperaciones", "Operaciones");
                             sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
-                        }));
+                        })
+                    .AddInterceptors(serviceProvider.GetRequiredService<AuditableEntityInterceptor>())
+                    .AddInterceptors(serviceProvider.GetRequiredService<DomainEventInterceptor>())
+                    .AddInterceptors(serviceProvider.GetRequiredService<SoftDeleteInterceptor>()));
 
             // Inventario
-            services.AddDbContext<InventarioDbContext>(options =>
+            services.AddDbContext<InventarioDbContext>((serviceProvider, options) =>
                 options
                     .UseSqlServer(
                         defaultConnectionString,
@@ -135,10 +147,13 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
                         {
                             sqlOptions.MigrationsHistoryTable("__EFMigrationsHistoryInventario", "Inventario");
                             sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
-                        }));
+                        })
+                    .AddInterceptors(serviceProvider.GetRequiredService<AuditableEntityInterceptor>())
+                    .AddInterceptors(serviceProvider.GetRequiredService<DomainEventInterceptor>())
+                    .AddInterceptors(serviceProvider.GetRequiredService<SoftDeleteInterceptor>()));
 
             // Proveedores
-            services.AddDbContext<ProveedoresDbContext>(options =>
+            services.AddDbContext<ProveedoresDbContext>((serviceProvider, options) =>
                 options
                     .UseSqlServer(
                         defaultConnectionString,
@@ -146,7 +161,10 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
                         {
                             sqlOptions.MigrationsHistoryTable("__EFMigrationsHistoryProveedores", "Proveedores");
                             sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
-                        }));
+                        })
+                    .AddInterceptors(serviceProvider.GetRequiredService<AuditableEntityInterceptor>())
+                    .AddInterceptors(serviceProvider.GetRequiredService<DomainEventInterceptor>())
+                    .AddInterceptors(serviceProvider.GetRequiredService<SoftDeleteInterceptor>()));
         }
 
         private static void RegisterTestDbContexts(IServiceCollection services, IConfiguration configuration)
@@ -288,6 +306,9 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             services.AddScoped<ICommunicationService, Services.CommunicationService>();
             services.AddScoped<Application.Common.Interfaces.INotificationService, Services.NotificationService>();
             services.AddScoped<IAuditService, Services.AuditService>();
+            
+            // Registrar servicios de dominio
+            services.AddScoped<Domain.Comercial.Facturacion.Services.IServicioFacturacion, Domain.Comercial.Facturacion.Services.ServicioFacturacion>();
             
             // Registrar servicios de Application layer que implementan en Infrastructure
             services.AddScoped<Application.Comercial.Facturacion.Interfaces.IFacturacionService, Services.FacturacionService>();

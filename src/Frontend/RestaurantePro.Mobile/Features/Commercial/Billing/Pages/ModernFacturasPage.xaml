@@ -139,7 +139,7 @@
                                     <StackLayout Grid.Row="0" Grid.Column="0" 
                                                  Orientation="Horizontal" 
                                                  VerticalOptions="Center">
-                                        <Label Text="{Binding NumeroFactura, StringFormat='Factura {0}'}" 
+                                        <Label Text="{Binding Numero, StringFormat='Factura {0}'}" 
                                                Style="{StaticResource H3Style}" />
                                         <Label Text="{Binding Estado, Converter={StaticResource EstadoIconConverter}}" 
                                                FontSize="16" 
@@ -160,7 +160,7 @@
                                     <!-- Información de Factura -->
                                     <VerticalStackLayout Grid.Row="1" Grid.ColumnSpan="2" 
                                                          Spacing="4" Margin="0,12,0,0">
-                                        <Label Text="{Binding ClienteNombre, StringFormat='👤 Cliente: {0}'}" 
+                                        <Label Text="{Binding NombreCliente, StringFormat='👤 Cliente: {0}'}" 
                                                Style="{StaticResource BodyStyle}" />
                                         <Label Text="{Binding FechaEmision, StringFormat='📅 Fecha: {0:dd/MM/yyyy}'}" 
                                                Style="{StaticResource BodyStyle}" />
@@ -196,11 +196,11 @@
                                                                Style="{StaticResource CaptionStyle}"
                                                                VerticalOptions="Center" />
                                                         <Label Grid.Column="1"
-                                                               Text="{Binding ProductoNombre}"
+                                                               Text="{Binding NombreProducto}"
                                                                Style="{StaticResource CaptionStyle}"
                                                                VerticalOptions="Center" />
                                                         <Label Grid.Column="2"
-                                                               Text="{Binding Precio, StringFormat='{0:C}'}"
+                                                               Text="{Binding PrecioUnitario, StringFormat='{0:C}'}"
                                                                Style="{StaticResource CaptionStyle}"
                                                                VerticalOptions="Center" />
                                                     </Grid>

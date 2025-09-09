@@ -15,6 +15,15 @@ public class FacturaDto
     public string ClienteEmail { get; set; } = string.Empty;
     public string MetodoPago { get; set; } = string.Empty;
     public List<ItemFacturaDto> Items { get; set; } = new();
+    
+    // Propiedades adicionales para la UI
+    public string Numero { get; set; } = string.Empty;
+    public string MesaNumero { get; set; } = string.Empty;
+    public decimal Subtotal { get; set; }
+    public decimal Impuestos { get; set; }
+    public decimal Descuentos { get; set; }
+    public DateTime? FechaPago { get; set; }
+    public string? ReferenciaPago { get; set; }
 }
 
 /// <summary>
@@ -24,8 +33,10 @@ public class ItemFacturaDto
 {
     public Guid Id { get; set; }
     public string NombreProducto { get; set; } = string.Empty;
+    public string ProductoNombre { get; set; } = string.Empty; // Alias para compatibilidad
     public int Cantidad { get; set; }
     public decimal PrecioUnitario { get; set; }
+    public decimal Precio { get; set; } // Alias para compatibilidad
     public decimal Subtotal { get; set; }
 }
 
