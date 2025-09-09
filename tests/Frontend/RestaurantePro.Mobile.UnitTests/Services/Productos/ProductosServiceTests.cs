@@ -98,6 +98,58 @@ public class ProductosServiceTests
 
     #endregion
 
+    #region Auth/RateLimit/NoContent Errors
+
+    [Theory]
+    [InlineData(401, "Unauthorized")]
+    [InlineData(403, "Forbidden")]
+    [InlineData(429, "Too Many Requests")]
+    public async Task ObtenerProductosPaginadosAsync_ShouldPropagateStatusAndMessage_OnApiError(int status, string message)
+    {
+        _mockApiService
+            .Setup(x => x.GetAsync<PaginatedList<ProductoDto>>(It.IsAny<string>(), It.IsAny<string?>()))
+            .ReturnsAsync(ApiResponse<PaginatedList<ProductoDto>>.ErrorResponse(new List<string> { message }, message, status));
+
+        var result = await _productosService.ObtenerProductosPaginadosAsync();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(status);
+        result.Message.Should().Be(message);
+    }
+
+    [Fact]
+    public async Task ObtenerProductosPaginadosAsync_ShouldReturnError_OnNoContent()
+    {
+        _mockApiService
+            .Setup(x => x.GetAsync<PaginatedList<ProductoDto>>(It.IsAny<string>(), It.IsAny<string?>()))
+            .ReturnsAsync(ApiResponse<PaginatedList<ProductoDto>>.ErrorResponse(new List<string> { "No Content" }, "No Content", 204));
+
+        var result = await _productosService.ObtenerProductosPaginadosAsync();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(204);
+        result.Message.Should().Contain("No Content");
+    }
+
+    [Theory]
+    [InlineData(401, "Unauthorized")]
+    [InlineData(403, "Forbidden")]
+    [InlineData(429, "Too Many Requests")]
+    public async Task ObtenerProductoPorIdAsync_ShouldPropagateStatusAndMessage_OnApiError(int status, string message)
+    {
+        _mockApiService
+            .Setup(x => x.GetAsync<ProductoDto>(It.IsAny<string>(), It.IsAny<string?>()))
+            .ReturnsAsync(ApiResponse<ProductoDto>.ErrorResponse(new List<string> { message }, message, status));
+
+        var result = await _productosService.ObtenerProductoPorIdAsync(Guid.NewGuid());
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(status);
+        result.Message.Should().Be(message);
+    }
+
+    #endregion
+
     #region ObtenerProductoPorIdAsync
 
     [Fact]
@@ -368,7 +420,7 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias);
         
         _mockApiService
-            .Setup(x => x.GetAsync<List<CategoriaProductoDto>>("api/categorias", It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<List<CategoriaProductoDto>>("api/core/categorias", It.IsAny<string?>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -385,7 +437,7 @@ public class ProductosServiceTests
     {
         // Arrange
         _mockApiService
-            .Setup(x => x.GetAsync<List<CategoriaProductoDto>>("api/categorias", It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<List<CategoriaProductoDto>>("api/core/categorias", It.IsAny<string?>()))
             .ThrowsAsync(new Exception("Error de red"));
 
         // Act

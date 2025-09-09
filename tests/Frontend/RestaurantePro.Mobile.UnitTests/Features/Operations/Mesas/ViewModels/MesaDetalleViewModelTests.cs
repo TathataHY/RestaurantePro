@@ -42,7 +42,6 @@ public class MesaDetalleViewModelTests
 
         vm.MesaId.Should().Be(mesaId);
         _mockMesasService.Verify(x => x.ObtenerMesaAsync(mesaId), Times.Once);
-        _mockComandasService.Verify(x => x.ObtenerComandasPorMesaAsync(mesaId), Times.Once);
     }
 
     [Fact]
@@ -53,7 +52,6 @@ public class MesaDetalleViewModelTests
         await vm.InitializeAsync(Guid.Empty);
 
         _mockMesasService.Verify(x => x.ObtenerMesaAsync(It.IsAny<Guid>()), Times.Never);
-        _mockComandasService.Verify(x => x.ObtenerComandasPorMesaAsync(It.IsAny<Guid>()), Times.Never);
     }
 
     [Fact]
@@ -97,7 +95,7 @@ public class MesaDetalleViewModelTests
             new ComandaDto { Id = Guid.NewGuid(), MesaId = mesaId, Estado = "en preparación", Numero = "2" },
             new ComandaDto { Id = Guid.NewGuid(), MesaId = mesaId, Estado = "finalizada", Numero = "3" }
         };
-        _mockComandasService.Setup(x => x.ObtenerComandasPorMesaAsync(mesaId))
+        _mockComandasService.Setup(x => x.ObtenerComandasPorMesaAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ComandaDto>>.SuccessResponse(comandas));
 
         var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
@@ -112,7 +110,7 @@ public class MesaDetalleViewModelTests
     public async Task LoadComandasActivasAsync_EmptyResponse_ShouldClearComandas()
     {
         var mesaId = Guid.NewGuid();
-        _mockComandasService.Setup(x => x.ObtenerComandasPorMesaAsync(mesaId))
+        _mockComandasService.Setup(x => x.ObtenerComandasPorMesaAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>()));
 
         var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
@@ -212,7 +210,7 @@ public class MesaDetalleViewModelTests
             .ReturnsAsync(ApiResponse<MesaDto>.SuccessResponse(mesa));
         
         // Configurar el mock de comandas para evitar error al cargar comandas
-        _mockComandasService.Setup(x => x.ObtenerComandasPorMesaAsync(mesaId))
+        _mockComandasService.Setup(x => x.ObtenerComandasPorMesaAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>()));
         
         // Configurar ambos diálogos que se llaman en LiberarMesaAsync

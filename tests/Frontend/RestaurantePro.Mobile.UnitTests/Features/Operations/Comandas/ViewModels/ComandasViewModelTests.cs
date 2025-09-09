@@ -48,11 +48,11 @@ public class ComandasViewModelTests
         var mockService = new Mock<IComandasService>();
         var calls = 0;
         mockService
-            .Setup(s => s.BuscarComandasAsync(It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<string?>()))
+            .Setup(s => s.BuscarComandasAsync(It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>()))
             .Callback(() => calls++);
         mockService
-            .Setup(s => s.ObtenerEstadisticasAsync())
+            .Setup(s => s.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<EstadisticasComandasDto>.SuccessResponse(new EstadisticasComandasDto()));
 
         var vm = CreateVm(mockService.Object, _mockDialog.Object);
@@ -74,11 +74,11 @@ public class ComandasViewModelTests
         var mockService = new Mock<IComandasService>();
         var statCalls = 0;
         mockService
-            .Setup(s => s.ObtenerEstadisticasAsync())
+            .Setup(s => s.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<EstadisticasComandasDto>.SuccessResponse(new EstadisticasComandasDto()))
             .Callback(() => statCalls++);
         mockService
-            .Setup(s => s.BuscarComandasAsync(It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<string?>()))
+            .Setup(s => s.BuscarComandasAsync(It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>()));
 
         var vm = CreateVm(mockService.Object, _mockDialog.Object);
@@ -238,7 +238,7 @@ public class ComandasViewModelTests
         var vm = CreateVm(mockService.Object, fakeDialog);
 
         await vm.CambiarEstadoComandaCommand.ExecuteAsync(comanda);
-        mockService.Verify(s => s.CambiarEstadoComandaAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string?>()), Times.Never);
+        mockService.Verify(s => s.CambiarEstadoComandaAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -539,7 +539,7 @@ public class ComandasViewModelTests
         mockDialog.Setup(x => x.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.CompletedTask);
         var vm = CreateVm(mockService.Object, mockDialog.Object);
         await vm.CambiarEstadoComandaCommand.ExecuteAsync(comanda);
-        mockService.Verify(s => s.CambiarEstadoComandaAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string?>()), Times.Never);
+        mockService.Verify(s => s.CambiarEstadoComandaAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
         mockDialog.Verify(x => x.ShowAlertAsync(It.Is<string>(t => t == "Información"), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 
@@ -549,11 +549,11 @@ public class ComandasViewModelTests
         var mockService = new Mock<IComandasService>();
         var calls = 0;
         mockService
-            .Setup(s => s.BuscarComandasAsync(It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<string?>()))
+            .Setup(s => s.BuscarComandasAsync(It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>()))
             .Callback(() => calls++);
         mockService
-            .Setup(s => s.ObtenerEstadisticasAsync())
+            .Setup(s => s.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<EstadisticasComandasDto>.SuccessResponse(new EstadisticasComandasDto()));
         var vm = CreateVm(mockService.Object, _mockDialog.Object);
         await Task.Delay(50);
@@ -568,11 +568,11 @@ public class ComandasViewModelTests
         var mockService = new Mock<IComandasService>();
         var calls = 0;
         mockService
-            .Setup(s => s.BuscarComandasAsync(It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<string?>()))
+            .Setup(s => s.BuscarComandasAsync(It.IsAny<string?>(), It.IsAny<Guid?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>()))
             .Callback(() => calls++);
         mockService
-            .Setup(s => s.ObtenerEstadisticasAsync())
+            .Setup(s => s.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<EstadisticasComandasDto>.SuccessResponse(new EstadisticasComandasDto()));
 
         var vm = CreateVm(mockService.Object, _mockDialog.Object);
@@ -606,19 +606,19 @@ public class ComandasViewModelTests
     {
         private readonly ApiResponse<List<ComandaDto>> _response;
         public FakeComandasService(ApiResponse<List<ComandaDto>> response) { _response = response; }
-        public Task<ApiResponse<List<ComandaDto>>> BuscarComandasAsync(string? estado = null, Guid? mesaId = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, string? clienteNombre = null)
+        public Task<ApiResponse<List<ComandaDto>>> BuscarComandasAsync(string? estado = null, Guid? mesaId = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, string? clienteNombre = null, CancellationToken cancellationToken = default)
             => Task.FromResult(_response);
-        public Task<ApiResponse<ComandaDto>> ObtenerComandaPorIdAsync(Guid comandaId) => throw new NotImplementedException();
-        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasActivasAsync() => throw new NotImplementedException();
-        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasPorMesaAsync(Guid mesaId) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> CrearComandaAsync(ComandaModels.CrearComandaRequest request) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> AgregarProductosAsync(Guid comandaId, List<ComandaProductoRequest> productos) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> ActualizarCantidadProductoAsync(Guid comandaId, Guid productoId, int nuevaCantidad) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> RemoverProductoAsync(Guid comandaId, Guid productoId) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> CambiarEstadoComandaAsync(Guid comandaId, string nuevoEstado, string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> FinalizarComandaAsync(Guid comandaId, string metodoPago, string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> CancelarComandaAsync(Guid comandaId, string motivo) => throw new NotImplementedException();
-        public Task<ApiResponse<EstadisticasComandasDto>> ObtenerEstadisticasAsync() => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> ObtenerComandaPorIdAsync(Guid comandaId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasActivasAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasPorMesaAsync(Guid mesaId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> CrearComandaAsync(ComandaModels.CrearComandaRequest request, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> AgregarProductosAsync(Guid comandaId, List<ComandaProductoRequest> productos, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> ActualizarCantidadProductoAsync(Guid comandaId, Guid productoId, int nuevaCantidad, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> RemoverProductoAsync(Guid comandaId, Guid productoId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> CambiarEstadoComandaAsync(Guid comandaId, string nuevoEstado, string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> FinalizarComandaAsync(Guid comandaId, string metodoPago, string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> CancelarComandaAsync(Guid comandaId, string motivo, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<EstadisticasComandasDto>> ObtenerEstadisticasAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
     // --- Fakes específicos para tests ---
@@ -635,7 +635,7 @@ public class ComandasViewModelTests
             WasCalled = false;
         }
 
-        public Task<ApiResponse<ComandaDto>> CrearComandaAsync(ComandaModels.CrearComandaRequest request)
+        public Task<ApiResponse<ComandaDto>> CrearComandaAsync(ComandaModels.CrearComandaRequest request, CancellationToken cancellationToken = default)
         {
             WasCalled = true;
             return Task.FromResult(_success 
@@ -643,21 +643,21 @@ public class ComandasViewModelTests
                 : ApiResponse<ComandaDto>.ErrorResponse(new List<string> { _message }, _message, 500));
         }
 
-        public Task<ApiResponse<List<ComandaDto>>> BuscarComandasAsync(string? estado = null, Guid? mesaId = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, string? clienteNombre = null)
+        public Task<ApiResponse<List<ComandaDto>>> BuscarComandasAsync(string? estado = null, Guid? mesaId = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, string? clienteNombre = null, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>()));
         }
 
-        public Task<ApiResponse<ComandaDto>> ObtenerComandaPorIdAsync(Guid comandaId) => throw new NotImplementedException();
-        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasActivasAsync() => throw new NotImplementedException();
-        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasPorMesaAsync(Guid mesaId) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> AgregarProductosAsync(Guid comandaId, List<ComandaProductoRequest> productos) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> ActualizarCantidadProductoAsync(Guid comandaId, Guid productoId, int nuevaCantidad) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> RemoverProductoAsync(Guid comandaId, Guid productoId) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> CambiarEstadoComandaAsync(Guid comandaId, string nuevoEstado, string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> FinalizarComandaAsync(Guid comandaId, string metodoPago, string? observaciones = null) => Task.FromResult(ApiResponse<ComandaDto>.SuccessResponse(new ComandaDto()));
-        public Task<ApiResponse<ComandaDto>> CancelarComandaAsync(Guid comandaId, string motivo) => throw new NotImplementedException();
-        public Task<ApiResponse<EstadisticasComandasDto>> ObtenerEstadisticasAsync() => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> ObtenerComandaPorIdAsync(Guid comandaId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasActivasAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasPorMesaAsync(Guid mesaId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> AgregarProductosAsync(Guid comandaId, List<ComandaProductoRequest> productos, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> ActualizarCantidadProductoAsync(Guid comandaId, Guid productoId, int nuevaCantidad, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> RemoverProductoAsync(Guid comandaId, Guid productoId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> CambiarEstadoComandaAsync(Guid comandaId, string nuevoEstado, string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> FinalizarComandaAsync(Guid comandaId, string metodoPago, string? observaciones = null, CancellationToken cancellationToken = default) => Task.FromResult(ApiResponse<ComandaDto>.SuccessResponse(new ComandaDto()));
+        public Task<ApiResponse<ComandaDto>> CancelarComandaAsync(Guid comandaId, string motivo, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<EstadisticasComandasDto>> ObtenerEstadisticasAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
     private class FakeComandasServiceCambiarEstado : IComandasService
@@ -673,7 +673,7 @@ public class ComandasViewModelTests
             WasCalled = false;
         }
 
-        public Task<ApiResponse<ComandaDto>> CambiarEstadoComandaAsync(Guid comandaId, string nuevoEstado, string? observaciones = null)
+        public Task<ApiResponse<ComandaDto>> CambiarEstadoComandaAsync(Guid comandaId, string nuevoEstado, string? observaciones = null, CancellationToken cancellationToken = default)
         {
             WasCalled = true;
             return Task.FromResult(_success 
@@ -681,49 +681,49 @@ public class ComandasViewModelTests
                 : ApiResponse<ComandaDto>.ErrorResponse(new List<string> { _message }, _message, 500));
         }
 
-        public Task<ApiResponse<List<ComandaDto>>> BuscarComandasAsync(string? estado = null, Guid? mesaId = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, string? clienteNombre = null)
+        public Task<ApiResponse<List<ComandaDto>>> BuscarComandasAsync(string? estado = null, Guid? mesaId = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, string? clienteNombre = null, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>()));
         }
 
-        public Task<ApiResponse<ComandaDto>> ObtenerComandaPorIdAsync(Guid comandaId) => throw new NotImplementedException();
-        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasActivasAsync() => throw new NotImplementedException();
-        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasPorMesaAsync(Guid mesaId) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> CrearComandaAsync(ComandaModels.CrearComandaRequest request) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> AgregarProductosAsync(Guid comandaId, List<ComandaProductoRequest> productos) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> ActualizarCantidadProductoAsync(Guid comandaId, Guid productoId, int nuevaCantidad) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> RemoverProductoAsync(Guid comandaId, Guid productoId) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> FinalizarComandaAsync(Guid comandaId, string metodoPago, string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> CancelarComandaAsync(Guid comandaId, string motivo) => throw new NotImplementedException();
-        public Task<ApiResponse<EstadisticasComandasDto>> ObtenerEstadisticasAsync() => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> ObtenerComandaPorIdAsync(Guid comandaId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasActivasAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasPorMesaAsync(Guid mesaId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> CrearComandaAsync(ComandaModels.CrearComandaRequest request, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> AgregarProductosAsync(Guid comandaId, List<ComandaProductoRequest> productos, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> ActualizarCantidadProductoAsync(Guid comandaId, Guid productoId, int nuevaCantidad, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> RemoverProductoAsync(Guid comandaId, Guid productoId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> FinalizarComandaAsync(Guid comandaId, string metodoPago, string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> CancelarComandaAsync(Guid comandaId, string motivo, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<EstadisticasComandasDto>> ObtenerEstadisticasAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
     private class FakeComandasServiceNotCalled : IComandasService
     {
         public bool WasCalled { get; set; }
 
-        public Task<ApiResponse<List<ComandaDto>>> BuscarComandasAsync(string? estado = null, Guid? mesaId = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, string? clienteNombre = null)
+        public Task<ApiResponse<List<ComandaDto>>> BuscarComandasAsync(string? estado = null, Guid? mesaId = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, string? clienteNombre = null, CancellationToken cancellationToken = default)
         {
             WasCalled = true;
             return Task.FromResult(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>()));
         }
 
-        public Task<ApiResponse<ComandaDto>> CrearComandaAsync(ComandaModels.CrearComandaRequest request)
+        public Task<ApiResponse<ComandaDto>> CrearComandaAsync(ComandaModels.CrearComandaRequest request, CancellationToken cancellationToken = default)
         {
             WasCalled = true;
             return Task.FromResult(ApiResponse<ComandaDto>.SuccessResponse(new ComandaDto()));
         }
 
-        public Task<ApiResponse<ComandaDto>> ObtenerComandaPorIdAsync(Guid comandaId) => throw new NotImplementedException();
-        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasActivasAsync() => throw new NotImplementedException();
-        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasPorMesaAsync(Guid mesaId) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> AgregarProductosAsync(Guid comandaId, List<ComandaProductoRequest> productos) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> ActualizarCantidadProductoAsync(Guid comandaId, Guid productoId, int nuevaCantidad) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> RemoverProductoAsync(Guid comandaId, Guid productoId) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> CambiarEstadoComandaAsync(Guid comandaId, string nuevoEstado, string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> FinalizarComandaAsync(Guid comandaId, string metodoPago, string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> CancelarComandaAsync(Guid comandaId, string motivo) => throw new NotImplementedException();
-        public Task<ApiResponse<EstadisticasComandasDto>> ObtenerEstadisticasAsync() => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> ObtenerComandaPorIdAsync(Guid comandaId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasActivasAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasPorMesaAsync(Guid mesaId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> AgregarProductosAsync(Guid comandaId, List<ComandaProductoRequest> productos, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> ActualizarCantidadProductoAsync(Guid comandaId, Guid productoId, int nuevaCantidad, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> RemoverProductoAsync(Guid comandaId, Guid productoId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> CambiarEstadoComandaAsync(Guid comandaId, string nuevoEstado, string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> FinalizarComandaAsync(Guid comandaId, string metodoPago, string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> CancelarComandaAsync(Guid comandaId, string motivo, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<EstadisticasComandasDto>> ObtenerEstadisticasAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
     private class FakeComandasServiceFinalizar : IComandasService
@@ -737,24 +737,24 @@ public class ComandasViewModelTests
             _message = message;
             WasCalled = false;
         }
-        public Task<ApiResponse<ComandaDto>> FinalizarComandaAsync(Guid comandaId, string metodoPago, string? observaciones = null)
+        public Task<ApiResponse<ComandaDto>> FinalizarComandaAsync(Guid comandaId, string metodoPago, string? observaciones = null, CancellationToken cancellationToken = default)
         {
             WasCalled = true;
             return Task.FromResult(_success
                 ? ApiResponse<ComandaDto>.SuccessResponse(new ComandaDto(), _message)
                 : ApiResponse<ComandaDto>.ErrorResponse(new List<string> { _message }, _message, 500));
         }
-        public Task<ApiResponse<List<ComandaDto>>> BuscarComandasAsync(string? estado = null, Guid? mesaId = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, string? clienteNombre = null) => Task.FromResult(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>()));
-        public Task<ApiResponse<ComandaDto>> ObtenerComandaPorIdAsync(Guid comandaId) => throw new NotImplementedException();
-        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasActivasAsync() => throw new NotImplementedException();
-        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasPorMesaAsync(Guid mesaId) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> CrearComandaAsync(ComandaModels.CrearComandaRequest request) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> AgregarProductosAsync(Guid comandaId, List<ComandaProductoRequest> productos) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> ActualizarCantidadProductoAsync(Guid comandaId, Guid productoId, int nuevaCantidad) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> RemoverProductoAsync(Guid comandaId, Guid productoId) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> CambiarEstadoComandaAsync(Guid comandaId, string nuevoEstado, string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> CancelarComandaAsync(Guid comandaId, string motivo) => throw new NotImplementedException();
-        public Task<ApiResponse<EstadisticasComandasDto>> ObtenerEstadisticasAsync() => throw new NotImplementedException();
+        public Task<ApiResponse<List<ComandaDto>>> BuscarComandasAsync(string? estado = null, Guid? mesaId = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, string? clienteNombre = null, CancellationToken cancellationToken = default) => Task.FromResult(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>()));
+        public Task<ApiResponse<ComandaDto>> ObtenerComandaPorIdAsync(Guid comandaId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasActivasAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasPorMesaAsync(Guid mesaId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> CrearComandaAsync(ComandaModels.CrearComandaRequest request, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> AgregarProductosAsync(Guid comandaId, List<ComandaProductoRequest> productos, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> ActualizarCantidadProductoAsync(Guid comandaId, Guid productoId, int nuevaCantidad, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> RemoverProductoAsync(Guid comandaId, Guid productoId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> CambiarEstadoComandaAsync(Guid comandaId, string nuevoEstado, string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> CancelarComandaAsync(Guid comandaId, string motivo, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<EstadisticasComandasDto>> ObtenerEstadisticasAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
     private class FakeComandasServiceCancelar : IComandasService
@@ -768,24 +768,24 @@ public class ComandasViewModelTests
             _message = message;
             WasCalled = false;
         }
-        public Task<ApiResponse<ComandaDto>> CancelarComandaAsync(Guid comandaId, string motivo)
+        public Task<ApiResponse<ComandaDto>> CancelarComandaAsync(Guid comandaId, string motivo, CancellationToken cancellationToken = default)
         {
             WasCalled = true;
             return Task.FromResult(_success
                 ? ApiResponse<ComandaDto>.SuccessResponse(new ComandaDto(), _message)
                 : ApiResponse<ComandaDto>.ErrorResponse(new List<string> { _message }, _message, 500));
         }
-        public Task<ApiResponse<List<ComandaDto>>> BuscarComandasAsync(string? estado = null, Guid? mesaId = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, string? clienteNombre = null) => Task.FromResult(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>()));
-        public Task<ApiResponse<ComandaDto>> ObtenerComandaPorIdAsync(Guid comandaId) => throw new NotImplementedException();
-        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasActivasAsync() => throw new NotImplementedException();
-        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasPorMesaAsync(Guid mesaId) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> CrearComandaAsync(ComandaModels.CrearComandaRequest request) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> AgregarProductosAsync(Guid comandaId, List<ComandaProductoRequest> productos) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> ActualizarCantidadProductoAsync(Guid comandaId, Guid productoId, int nuevaCantidad) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> RemoverProductoAsync(Guid comandaId, Guid productoId) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> CambiarEstadoComandaAsync(Guid comandaId, string nuevoEstado, string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> FinalizarComandaAsync(Guid comandaId, string metodoPago, string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<EstadisticasComandasDto>> ObtenerEstadisticasAsync() => throw new NotImplementedException();
+        public Task<ApiResponse<List<ComandaDto>>> BuscarComandasAsync(string? estado = null, Guid? mesaId = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, string? clienteNombre = null, CancellationToken cancellationToken = default) => Task.FromResult(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>()));
+        public Task<ApiResponse<ComandaDto>> ObtenerComandaPorIdAsync(Guid comandaId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasActivasAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasPorMesaAsync(Guid mesaId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> CrearComandaAsync(ComandaModels.CrearComandaRequest request, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> AgregarProductosAsync(Guid comandaId, List<ComandaProductoRequest> productos, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> ActualizarCantidadProductoAsync(Guid comandaId, Guid productoId, int nuevaCantidad, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> RemoverProductoAsync(Guid comandaId, Guid productoId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> CambiarEstadoComandaAsync(Guid comandaId, string nuevoEstado, string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> FinalizarComandaAsync(Guid comandaId, string metodoPago, string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<EstadisticasComandasDto>> ObtenerEstadisticasAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
     private class FakeDialogService : IDialogService
@@ -863,7 +863,7 @@ public class ComandasViewModelTests
             _estadisticas = estadisticas ?? new EstadisticasComandasDto();
             _message = message;
         }
-        public Task<ApiResponse<EstadisticasComandasDto>> ObtenerEstadisticasAsync()
+        public Task<ApiResponse<EstadisticasComandasDto>> ObtenerEstadisticasAsync(CancellationToken cancellationToken = default)
         {
             if (_success)
             {
@@ -874,17 +874,17 @@ public class ComandasViewModelTests
                 return Task.FromResult(ApiResponse<EstadisticasComandasDto>.ErrorResponse(new List<string> { _message }, "No se pudieron cargar las estadísticas", 500));
             }
         }
-        public Task<ApiResponse<List<ComandaDto>>> BuscarComandasAsync(string? estado = null, Guid? mesaId = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, string? clienteNombre = null) => Task.FromResult(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>()));
-        public Task<ApiResponse<ComandaDto>> ObtenerComandaPorIdAsync(Guid comandaId) => throw new NotImplementedException();
-        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasActivasAsync() => throw new NotImplementedException();
-        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasPorMesaAsync(Guid mesaId) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> CrearComandaAsync(ComandaModels.CrearComandaRequest request) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> AgregarProductosAsync(Guid comandaId, List<ComandaProductoRequest> productos) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> ActualizarCantidadProductoAsync(Guid comandaId, Guid productoId, int nuevaCantidad) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> RemoverProductoAsync(Guid comandaId, Guid productoId) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> CambiarEstadoComandaAsync(Guid comandaId, string nuevoEstado, string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> FinalizarComandaAsync(Guid comandaId, string metodoPago, string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> CancelarComandaAsync(Guid comandaId, string motivo) => throw new NotImplementedException();
+        public Task<ApiResponse<List<ComandaDto>>> BuscarComandasAsync(string? estado = null, Guid? mesaId = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, string? clienteNombre = null, CancellationToken cancellationToken = default) => Task.FromResult(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>()));
+        public Task<ApiResponse<ComandaDto>> ObtenerComandaPorIdAsync(Guid comandaId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasActivasAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasPorMesaAsync(Guid mesaId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> CrearComandaAsync(ComandaModels.CrearComandaRequest request, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> AgregarProductosAsync(Guid comandaId, List<ComandaProductoRequest> productos, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> ActualizarCantidadProductoAsync(Guid comandaId, Guid productoId, int nuevaCantidad, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> RemoverProductoAsync(Guid comandaId, Guid productoId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> CambiarEstadoComandaAsync(Guid comandaId, string nuevoEstado, string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> FinalizarComandaAsync(Guid comandaId, string metodoPago, string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> CancelarComandaAsync(Guid comandaId, string motivo, CancellationToken cancellationToken = default) => throw new NotImplementedException();
     }
 
     // Fake para flujo de búsqueda con fallback
@@ -894,7 +894,7 @@ public class ComandasViewModelTests
         private int _calls;
         public FakeComandasServiceSearchFlow(string term) { _term = term; _calls = 0; }
 
-        public Task<ApiResponse<List<ComandaDto>>> BuscarComandasAsync(string? estado = null, Guid? mesaId = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, string? clienteNombre = null)
+        public Task<ApiResponse<List<ComandaDto>>> BuscarComandasAsync(string? estado = null, Guid? mesaId = null, DateTime? fechaDesde = null, DateTime? fechaHasta = null, string? clienteNombre = null, CancellationToken cancellationToken = default)
         {
             _calls++;
             // 1ra llamada (constructor) → lista vacía
@@ -913,16 +913,16 @@ public class ComandasViewModelTests
         }
 
         // Métodos no usados en estas pruebas
-        public Task<ApiResponse<ComandaDto>> ObtenerComandaPorIdAsync(Guid comandaId) => throw new NotImplementedException();
-        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasActivasAsync() => throw new NotImplementedException();
-        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasPorMesaAsync(Guid mesaId) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> CrearComandaAsync(ComandaModels.CrearComandaRequest request) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> AgregarProductosAsync(Guid comandaId, List<ComandaProductoRequest> productos) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> ActualizarCantidadProductoAsync(Guid comandaId, Guid productoId, int nuevaCantidad) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> RemoverProductoAsync(Guid comandaId, Guid productoId) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> CambiarEstadoComandaAsync(Guid comandaId, string nuevoEstado, string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> FinalizarComandaAsync(Guid comandaId, string metodoPago, string? observaciones = null) => throw new NotImplementedException();
-        public Task<ApiResponse<ComandaDto>> CancelarComandaAsync(Guid comandaId, string motivo) => throw new NotImplementedException();
-        public Task<ApiResponse<EstadisticasComandasDto>> ObtenerEstadisticasAsync() => Task.FromResult(ApiResponse<EstadisticasComandasDto>.SuccessResponse(new EstadisticasComandasDto()));
+        public Task<ApiResponse<ComandaDto>> ObtenerComandaPorIdAsync(Guid comandaId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasActivasAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<List<ComandaDto>>> ObtenerComandasPorMesaAsync(Guid mesaId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> CrearComandaAsync(ComandaModels.CrearComandaRequest request, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> AgregarProductosAsync(Guid comandaId, List<ComandaProductoRequest> productos, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> ActualizarCantidadProductoAsync(Guid comandaId, Guid productoId, int nuevaCantidad, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> RemoverProductoAsync(Guid comandaId, Guid productoId, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> CambiarEstadoComandaAsync(Guid comandaId, string nuevoEstado, string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> FinalizarComandaAsync(Guid comandaId, string metodoPago, string? observaciones = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<ComandaDto>> CancelarComandaAsync(Guid comandaId, string motivo, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+        public Task<ApiResponse<EstadisticasComandasDto>> ObtenerEstadisticasAsync(CancellationToken cancellationToken = default) => Task.FromResult(ApiResponse<EstadisticasComandasDto>.SuccessResponse(new EstadisticasComandasDto()));
     }
 } 

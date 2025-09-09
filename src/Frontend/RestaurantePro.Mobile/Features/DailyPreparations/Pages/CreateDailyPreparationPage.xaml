@@ -12,8 +12,22 @@
         <VerticalStackLayout Spacing="16" Padding="16">
             <controls:ModernCard>
                 <VerticalStackLayout Spacing="12">
-                    <Label Text="ProductoId (GUID)" Style="{StaticResource CaptionStyle}" />
-                    <controls:ModernEntry Placeholder="Ej: 3f0f..." Text="{Binding ProductoIdText}" />
+                    <Label Text="Producto" Style="{StaticResource CaptionStyle}" />
+                    <SearchBar Placeholder="Buscar producto..." Text="{Binding ProductoBusqueda}" SearchCommand="{Binding BuscarProductosCommand}" />
+                    <CollectionView ItemsSource="{Binding Productos}" SelectionMode="Single" SelectedItem="{Binding ProductoSeleccionado}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Padding="8" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                                    <Label Grid.Row="0" Grid.Column="0" Text="{Binding Nombre}" FontAttributes="Bold" />
+                                    <Label Grid.Row="1" Grid.Column="0" Text="{Binding CategoriaNombre}" FontSize="12" TextColor="{StaticResource OnSurfaceVariant}" />
+                                    <Label Grid.RowSpan="2" Grid.Column="1" Text="{Binding Precio, StringFormat='S/. {0:F2}'}" />
+                                </Grid>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                        <CollectionView.EmptyView>
+                            <Label Text="Sin resultados" HorizontalOptions="Center"/>
+                        </CollectionView.EmptyView>
+                    </CollectionView>
 
                     <Label Text="Cantidad" Style="{StaticResource CaptionStyle}" />
                     <Entry Keyboard="Numeric" Text="{Binding Cantidad}" />

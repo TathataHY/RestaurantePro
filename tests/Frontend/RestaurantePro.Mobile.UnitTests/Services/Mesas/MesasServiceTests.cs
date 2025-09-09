@@ -112,7 +112,7 @@ public class MesasServiceTests
         };
         var expectedResponse = ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(paginatedList);
 
-        _mockApiService.Setup(x => x.GetAsync<PaginatedList<MesaDto>>("api/operaciones/mesas/disponibles", It.IsAny<string?>()))
+        _mockApiService.Setup(x => x.GetAsync<PaginatedList<MesaDto>>(It.Is<string>(s => s.StartsWith("api/operaciones/mesas/disponibles") && s.Contains("pageNumber=1") && s.Contains("pageSize=50")), It.IsAny<string?>()))
                        .ReturnsAsync(expectedResponse);
 
         // Act
@@ -122,7 +122,7 @@ public class MesasServiceTests
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
         result.Data.Should().BeEquivalentTo(expectedMesas);
-        _mockApiService.Verify(x => x.GetAsync<PaginatedList<MesaDto>>("api/operaciones/mesas/disponibles", It.IsAny<string?>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<PaginatedList<MesaDto>>(It.Is<string>(s => s.StartsWith("api/operaciones/mesas/disponibles") && s.Contains("pageNumber=1") && s.Contains("pageSize=50")), It.IsAny<string?>()), Times.Once);
     }
 
     [Fact]
@@ -139,7 +139,7 @@ public class MesasServiceTests
         };
         var expectedResponse = ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(paginatedList);
 
-        _mockApiService.Setup(x => x.GetAsync<PaginatedList<MesaDto>>("api/operaciones/mesas/disponibles?capacidadMinima=6&ubicacion=Terraza", It.IsAny<string?>()))
+        _mockApiService.Setup(x => x.GetAsync<PaginatedList<MesaDto>>(It.Is<string>(s => s.StartsWith("api/operaciones/mesas/disponibles?") && s.Contains("capacidadMinima=6") && s.Contains("ubicacion=Terraza") && s.Contains("pageNumber=1") && s.Contains("pageSize=50")), It.IsAny<string?>()))
                        .ReturnsAsync(expectedResponse);
 
         // Act
@@ -149,7 +149,7 @@ public class MesasServiceTests
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
         result.Data.Should().BeEquivalentTo(expectedMesas);
-        _mockApiService.Verify(x => x.GetAsync<PaginatedList<MesaDto>>("api/operaciones/mesas/disponibles?capacidadMinima=6&ubicacion=Terraza", It.IsAny<string?>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<PaginatedList<MesaDto>>(It.Is<string>(s => s.StartsWith("api/operaciones/mesas/disponibles?") && s.Contains("capacidadMinima=6") && s.Contains("ubicacion=Terraza") && s.Contains("pageNumber=1") && s.Contains("pageSize=50")), It.IsAny<string?>()), Times.Once);
     }
 
     #endregion
@@ -271,6 +271,57 @@ public class MesasServiceTests
             $"api/operaciones/mesas/{mesaId}/estado",
             It.IsAny<object>(),
             It.IsAny<string?>()), Times.Once);
+    }
+
+    #endregion
+
+    #region Auth/RateLimit/NoContent Errors
+
+    [Theory]
+    [InlineData(401, "Unauthorized")]
+    [InlineData(403, "Forbidden")]
+    [InlineData(429, "Too Many Requests")]
+    public async Task ObtenerMesasAsync_ShouldPropagateStatusAndMessage_OnApiError(int status, string message)
+    {
+        _mockApiService
+            .Setup(x => x.GetAsync<List<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>()))
+            .ReturnsAsync(ApiResponse<List<MesaDto>>.ErrorResponse(new List<string> { message }, message, status));
+
+        var result = await _mesasService.ObtenerMesasAsync();
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(status);
+        result.Message.Should().Be(message);
+    }
+
+    [Fact]
+    public async Task ObtenerMesasDisponiblesAsync_ShouldReturnError_OnNoContent()
+    {
+        _mockApiService
+            .Setup(x => x.GetAsync<PaginatedList<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>()))
+            .ReturnsAsync(ApiResponse<PaginatedList<MesaDto>>.ErrorResponse(new List<string> { "No Content" }, "No Content", 204));
+
+        var result = await _mesasService.ObtenerMesasDisponiblesAsync();
+
+        result.Success.Should().BeFalse();
+        result.Message.Should().NotBeNullOrEmpty();
+    }
+
+    [Theory]
+    [InlineData(401, "Unauthorized")]
+    [InlineData(403, "Forbidden")]
+    [InlineData(429, "Too Many Requests")]
+    public async Task CambiarEstadoMesaAsync_ShouldPropagateStatusAndMessage_OnApiError(int status, string message)
+    {
+        _mockApiService
+            .Setup(x => x.PutAsync<MesaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>()))
+            .ReturnsAsync(ApiResponse<MesaDto>.ErrorResponse(new List<string> { message }, message, status));
+
+        var result = await _mesasService.CambiarEstadoMesaAsync(Guid.NewGuid(), "Fuera de servicio", "mantención");
+
+        result.Success.Should().BeFalse();
+        result.StatusCode.Should().Be(status);
+        result.Message.Should().Be(message);
     }
 
     #endregion

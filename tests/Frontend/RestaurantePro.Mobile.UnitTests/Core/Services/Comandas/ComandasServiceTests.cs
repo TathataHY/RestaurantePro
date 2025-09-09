@@ -521,4 +521,51 @@ public class ComandasServiceTests
 
     #endregion
 
+    #region Cancellation Tests
+
+    [Fact]
+    public async Task BuscarComandasAsync_ShouldReturnCancelled_WhenTokenIsCancelled()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+        var calls = 0;
+        _apiServiceMock
+            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>()))
+            .Callback(() => calls++)
+            .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(new PaginatedList<ComandaDto>()));
+
+        // Act
+        var result = await _comandasService.BuscarComandasAsync(cancellationToken: cts.Token);
+
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Message.Should().ContainEquivalentOf("operación");
+        calls.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task FinalizarComandaAsync_ShouldReturnCancelled_WhenTokenIsCancelled()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+        var comandaId = Guid.NewGuid();
+        var calls = 0;
+        _apiServiceMock
+            .Setup(x => x.PostAsync<ComandaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>()))
+            .Callback(() => calls++)
+            .ReturnsAsync(ApiResponse<ComandaDto>.SuccessResponse(new ComandaDto { Id = comandaId }));
+
+        // Act
+        var result = await _comandasService.FinalizarComandaAsync(comandaId, "Efectivo", cancellationToken: cts.Token);
+
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Message.Should().ContainEquivalentOf("operación");
+        calls.Should().Be(0);
+    }
+
+    #endregion
+
 } 

@@ -3,6 +3,9 @@ using CommunityToolkit.Mvvm.Input;
 using RestaurantePro.Mobile.Core.Services;
 using RestaurantePro.Mobile.Core.Services.Authentication;
 using RestaurantePro.Mobile.Core.Services.Navigation;
+using RestaurantePro.Mobile.Core.Services.Productos;
+using RestaurantePro.Mobile.Core.Models.DTOs;
+using System.Collections.ObjectModel;
 
 namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels;
 
@@ -12,6 +15,26 @@ public partial class CreateDailyPreparationViewModel : ObservableObject
     private readonly IAuthService _authService;
     private readonly IDialogService _dialogService;
     private readonly INavigationService _navigationService;
+    private readonly IProductosService _productosService;
+
+    // Búsqueda y selección de producto
+    [ObservableProperty]
+    private string _productoBusqueda = string.Empty;
+
+    [ObservableProperty]
+    private ObservableCollection<ProductoDto> _productos = new();
+
+    [ObservableProperty]
+    private ProductoDto? _productoSeleccionado;
+
+    partial void OnProductoSeleccionadoChanged(ProductoDto? value)
+    {
+        if (value != null)
+        {
+            // Mantener compatibilidad con lógica existente
+            ProductoIdText = value.Id.ToString();
+        }
+    }
 
     [ObservableProperty]
     private string _productoIdText = string.Empty;
@@ -32,12 +55,14 @@ public partial class CreateDailyPreparationViewModel : ObservableObject
         IDailyPreparationsService dailyPreparationsService,
         IAuthService authService,
         IDialogService dialogService,
-        INavigationService navigationService)
+        INavigationService navigationService,
+        IProductosService productosService)
     {
         _dailyPreparationsService = dailyPreparationsService;
         _authService = authService;
         _dialogService = dialogService;
         _navigationService = navigationService;
+        _productosService = productosService;
     }
 
     [RelayCommand]
@@ -45,7 +70,14 @@ public partial class CreateDailyPreparationViewModel : ObservableObject
     {
         if (IsBusy) return;
 
-        if (!Guid.TryParse(ProductoIdText, out var productoId))
+        // Priorizar el seleccionado en UI; si no, usar texto GUID
+        var tieneSeleccion = ProductoSeleccionado != null;
+        Guid productoId;
+        if (tieneSeleccion)
+        {
+            productoId = ProductoSeleccionado!.Id;
+        }
+        else if (!Guid.TryParse(ProductoIdText, out productoId))
         {
             await _dialogService.ShowErrorAsync("ProductoId inválido. Usa un GUID válido.");
             return;
@@ -53,6 +85,11 @@ public partial class CreateDailyPreparationViewModel : ObservableObject
         if (Cantidad <= 0)
         {
             await _dialogService.ShowErrorAsync("La cantidad debe ser mayor que 0.");
+            return;
+        }
+        if (FechaVencimiento.Date < DateTime.Today)
+        {
+            await _dialogService.ShowErrorAsync("La fecha de vencimiento debe ser hoy o futura.");
             return;
         }
 
@@ -85,6 +122,34 @@ public partial class CreateDailyPreparationViewModel : ObservableObject
         catch (Exception ex)
         {
             await _dialogService.ShowErrorAsync($"Error al crear preparación: {ex.Message}");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task BuscarProductosAsync()
+    {
+        if (IsBusy) return;
+        IsBusy = true;
+        try
+        {
+            var page = 1;
+            var size = 10;
+            var term = string.IsNullOrWhiteSpace(ProductoBusqueda) ? null : ProductoBusqueda;
+            var result = await _productosService.ObtenerProductosPaginadosAsync(page, size, term, true);
+            Productos.Clear();
+            if (result.Success && result.Data != null)
+            {
+                foreach (var p in result.Data)
+                    Productos.Add(p);
+            }
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowErrorAsync($"Error al buscar productos: {ex.Message}");
         }
         finally
         {

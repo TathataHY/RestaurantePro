@@ -9,12 +9,13 @@ Elevar la calidad y estabilidad de las pruebas de integración móviles aseguran
 
 ### Estado rápido
 - Compilación/host: OK en clases representativas tras correcciones de firmas y tipos.
-- Integración real: Mixto (algunas usan `MockHttpMessageHandler`). Pendiente migración completa.
+- Integración real: OK (flujos E2E reales: Auth, Preparaciones, Comandas, Mesas, Facturación, Reservaciones, Productos).
 - Semilla de datos: Fixture con seed global (OK). Se añadió `TestCacheService` para DI estable en tests.
 
-### Resultados parciales
+### Resultados finales
 - `DailyPreparationsEndToEndTests`: 6/6 pruebas correctas usando `ApiService` real.
-- Suite completa integración móvil: 242/242 OK en ~10.4s (local).
+- E2E añadidos y correctos: Comandas, Mesas, Facturación (desde comanda), Reservaciones (confirmación), Productos (smoke listar/detalle).
+- Suite completa integración móvil: 246/246 OK en 15.7s (local). TRX: `tests/Frontend/RestaurantePro.Mobile.IntegrationTests/TestResults/TestResults.trx`.
 
 ### Checklist (técnico)
 - [x] Agregar `FakeNavigationService` en proyecto de integración y referenciar donde se construye `AuthService`.
@@ -24,20 +25,20 @@ Elevar la calidad y estabilidad de las pruebas de integración móviles aseguran
 - [x] Reemplazar mocks HTTP por `HttpClient` del fixture en tests marcados como integración.
 - [x] Refactorizar `DailyPreparationsEndToEndTests` para usar `ApiService` real del `HttpClient` del fixture.
 - [x] Mejorar aserciones según xUnit analyzers (`Assert.Contains`, `Assert.Empty`, etc.).
-- [ ] Asegurar seed único y limpieza de estado por clase o caso donde aplique.
+- [x] Asegurar seed único y limpieza de estado por clase o caso donde aplique.
 - [x] Ejecutar suite completa y capturar métricas (tiempo total, tests pasados/fallidos, estabilidad).
 
 ### Cobertura por flujo (según distribución funcional)
 - Auth (login básico y no autorizado): cubierto (`AuthenticationTest`, `AuthService*IntegrationTests`).
 - Preparaciones (cocina) E2E: cubierto (`DailyPreparationsEndToEndTests`).
-- Mesas (listar, disponibles, estado ocupación): cubierto a nivel servicio; falta E2E de asignar/liberar.
-- Comandas (crear, agregar producto, avanzar estado): cubierto a nivel servicio; falta E2E completo hasta facturar.
-- Facturación (generar factura de venta): cubierto a nivel servicio; falta E2E desde comanda.
-- Reservaciones (confirmación/consulta): cubierto a nivel servicio; falta E2E confirmación.
-- Productos (consulta menú): cubierto a nivel servicio; E2E opcional smoke.
+- Mesas (asignar/liberar): E2E cubierto (`MesasEndToEndTests`).
+- Comandas (crear, agregar producto, avanzar/finalizar): E2E cubierto (`ComandasEndToEndTests`).
+- Facturación (generar factura desde comanda): E2E cubierto (`FacturacionEndToEndTests`).
+- Reservaciones (confirmación): E2E cubierto (`ReservacionesEndToEndTests`).
+- Productos (consulta menú): E2E smoke cubierto (`ProductosSmokeEndToEndTests`).
 - Clientes (consulta básica): cubierto a nivel servicio.
 - Tarjetas fidelización (uso/consulta): cubierto a nivel servicio; E2E opcional con factura.
-- [ ] Documentar cobertura de flujos críticos (Auth, Preparaciones, Comandas, Mesas, Productos) y huecos restantes.
+- [x] Documentar cobertura de flujos críticos (Auth, Preparaciones, Comandas, Mesas, Productos) y huecos restantes.
 
 ### Métricas objetivo
 - Tiempo total: ≤ 5-8 min local, ≤ 12 min CI (indicativo).
@@ -49,10 +50,12 @@ Elevar la calidad y estabilidad de las pruebas de integración móviles aseguran
 - InMemory per-test: revisar aislamiento y, si procede, datos por clase con fixture compartido.
 
 ### Siguientes pasos
-1) Crear `FakeNavigationService` y arreglar construcción de `AuthService` en todos los tests afectados.
-2) Corregir namespaces/tipos en tests de Comandas.
-3) Quitar mocks HTTP en pruebas de integración y usar `HttpClient` del fixture.
-4) Ajustar aserciones a reglas xUnit.
-5) Ejecutar suite y actualizar este documento con resultados.
+1) Seguridad y roles: agregar casos 401/403 por rol/credenciales en flujos críticos.
+2) Tokens y sesión: pruebas de expiración y refresh de token (renovación automática).
+3) Estados inválidos: transiciones no permitidas en Comandas/Mesas y mensajes de error.
+4) Resiliencia cliente: simular 500/timeout y verificar manejo en ViewModels.
+5) Datos deterministas: builders para crear datos mínimos por caso.
+6) Limpieza: confirmar limpieza por clase de `FakeSecureStorageService` (instancia por test).
+7) CI/CD: pipeline que ejecute suite y publique TRX/HTML.
 
 
