@@ -129,8 +129,8 @@ public class DashboardService : IDashboardService
         {
             _logger.LogInformation("Obteniendo número de comandas activas desde la API");
             
-            // Obtener comandas activas (en progreso, preparando, lista)
-            var activeStatuses = new[] { "en_progreso", "preparando", "lista" };
+            // Obtener comandas activas según enum del backend: EnProceso, Lista, Entregada
+            var activeStatuses = new[] { "EnProceso", "Lista", "Entregada" };
             var totalActive = 0;
             
             var token = await _authService.GetTokenAsync();
@@ -138,7 +138,7 @@ public class DashboardService : IDashboardService
             foreach (var status in activeStatuses)
             {
                 var response = await _apiService.GetAsync<PaginatedList<ComandaDto>>(
-                    $"api/operaciones/comandas?estado={status}&pageSize=100", token);
+                    $"api/operaciones/comandas?Estado={status}&PageSize=100&SoloActivas=true", token);
                 
                 if (response.Success && response.Data != null)
                 {
@@ -163,8 +163,9 @@ public class DashboardService : IDashboardService
             _logger.LogInformation("Obteniendo número de comandas pendientes desde la API");
             
             var token = await _authService.GetTokenAsync();
+            // Pendientes en backend corresponden a estado Creada
             var response = await _apiService.GetAsync<PaginatedList<ComandaDto>>(
-                "api/operaciones/comandas?estado=pendiente&pageSize=100", token);
+                "api/operaciones/comandas?Estado=Creada&PageSize=100", token);
             
             if (response.Success && response.Data != null)
             {
@@ -206,7 +207,7 @@ public class DashboardService : IDashboardService
             // Obtener las últimas comandas (las más recientes)
             var token = await _authService.GetTokenAsync();
             var response = await _apiService.GetAsync<PaginatedList<ComandaDto>>(
-                "api/operaciones/comandas?pageSize=10&sortBy=fechaCreacion&sortOrder=desc", token);
+                "api/operaciones/comandas?PageSize=10&OrdenarPor=fechaCreacion&DireccionOrdenamiento=desc", token);
             
             if (response.Success && response.Data != null)
             {

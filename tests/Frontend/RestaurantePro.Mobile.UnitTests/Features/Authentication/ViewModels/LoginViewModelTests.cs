@@ -97,7 +97,7 @@ public class LoginViewModelTests
         // Assert
         _viewModel.HasError.Should().BeTrue();
         _viewModel.ErrorMessage.Should().Be("Por favor ingrese su email");
-        _mockAuthService.Verify(x => x.LoginAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockAuthService.Verify(x => x.LoginAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class LoginViewModelTests
         // Assert
         _viewModel.HasError.Should().BeTrue();
         _viewModel.ErrorMessage.Should().Be("Por favor ingrese su email");
-        _mockAuthService.Verify(x => x.LoginAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockAuthService.Verify(x => x.LoginAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
     }
 
     [Fact]
@@ -129,7 +129,7 @@ public class LoginViewModelTests
         // Assert
         _viewModel.HasError.Should().BeTrue();
         _viewModel.ErrorMessage.Should().Be("Por favor ingrese su contraseña");
-        _mockAuthService.Verify(x => x.LoginAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockAuthService.Verify(x => x.LoginAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
     }
 
     [Fact]
@@ -145,7 +145,7 @@ public class LoginViewModelTests
         // Assert
         _viewModel.HasError.Should().BeTrue();
         _viewModel.ErrorMessage.Should().Be("Por favor ingrese su contraseña");
-        _mockAuthService.Verify(x => x.LoginAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockAuthService.Verify(x => x.LoginAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
     }
 
     [Fact]
@@ -160,14 +160,14 @@ public class LoginViewModelTests
         _viewModel.Email = email;
         _viewModel.Password = password;
 
-        _mockAuthService.Setup(x => x.LoginAsync(email, password))
+        _mockAuthService.Setup(x => x.LoginAsync(email, password, It.IsAny<bool>()))
                        .ReturnsAsync(apiResponse);
 
         // Act
         await _viewModel.LoginCommand.ExecuteAsync(null);
 
         // Assert
-        _mockAuthService.Verify(x => x.LoginAsync(email, password), Times.Once);
+        _mockAuthService.Verify(x => x.LoginAsync(email, password, It.IsAny<bool>()), Times.Once);
         _mockNavigationService.Verify(x => x.NavigateToAsync("//main/dashboard"), Times.Once);
         _viewModel.HasError.Should().BeFalse();
         _viewModel.IsLoading.Should().BeFalse();
@@ -185,14 +185,14 @@ public class LoginViewModelTests
         _viewModel.Email = email;
         _viewModel.Password = password;
 
-        _mockAuthService.Setup(x => x.LoginAsync(email, password))
+        _mockAuthService.Setup(x => x.LoginAsync(email, password, It.IsAny<bool>()))
                        .ReturnsAsync(apiResponse);
 
         // Act
         await _viewModel.LoginCommand.ExecuteAsync(null);
 
         // Assert
-        _mockAuthService.Verify(x => x.LoginAsync(email, password), Times.Once);
+        _mockAuthService.Verify(x => x.LoginAsync(email, password, It.IsAny<bool>()), Times.Once);
         _mockNavigationService.Verify(x => x.NavigateToAsync(It.IsAny<string>()), Times.Never);
         _viewModel.HasError.Should().BeTrue();
         _viewModel.ErrorMessage.Should().Be(errorMessage);
@@ -210,7 +210,7 @@ public class LoginViewModelTests
         _viewModel.Email = email;
         _viewModel.Password = password;
 
-        _mockAuthService.Setup(x => x.LoginAsync(email, password))
+        _mockAuthService.Setup(x => x.LoginAsync(email, password, It.IsAny<bool>()))
                        .ReturnsAsync(apiResponse);
 
         // Act
@@ -233,7 +233,7 @@ public class LoginViewModelTests
         _viewModel.Email = email;
         _viewModel.Password = password;
 
-        _mockAuthService.Setup(x => x.LoginAsync(email, password))
+        _mockAuthService.Setup(x => x.LoginAsync(email, password, It.IsAny<bool>()))
                        .ThrowsAsync(new Exception(exceptionMessage));
 
         // Act
@@ -258,7 +258,7 @@ public class LoginViewModelTests
         _viewModel.Email = email;
         _viewModel.Password = password;
 
-        _mockAuthService.Setup(x => x.LoginAsync(email, password))
+        _mockAuthService.Setup(x => x.LoginAsync(email, password, It.IsAny<bool>()))
                        .Returns(tcs.Task);
 
         // Act - Start the command but don't await
@@ -287,7 +287,7 @@ public class LoginViewModelTests
         await _viewModel.LoginCommand.ExecuteAsync(null);
 
         // Assert
-        _mockAuthService.Verify(x => x.LoginAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        _mockAuthService.Verify(x => x.LoginAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
     }
 
     [Fact]
@@ -311,7 +311,7 @@ public class LoginViewModelTests
         _viewModel.Email = email;
         _viewModel.Password = password;
 
-        _mockAuthService.Setup(x => x.LoginAsync(email, password))
+        _mockAuthService.Setup(x => x.LoginAsync(email, password, It.IsAny<bool>()))
                        .ReturnsAsync(apiResponse);
 
         // Act
@@ -436,7 +436,7 @@ public class LoginViewModelTests
         };
         var apiResponse = ApiResponse<AuthResponse>.SuccessResponse(authResponse);
 
-        _mockAuthService.Setup(x => x.LoginAsync(email, password))
+        _mockAuthService.Setup(x => x.LoginAsync(email, password, It.IsAny<bool>()))
                        .ReturnsAsync(apiResponse);
 
         // Act - Set credentials
@@ -447,7 +447,7 @@ public class LoginViewModelTests
         await _viewModel.LoginCommand.ExecuteAsync(null);
 
         // Assert - Complete flow verification
-        _mockAuthService.Verify(x => x.LoginAsync(email, password), Times.Once);
+        _mockAuthService.Verify(x => x.LoginAsync(email, password, It.IsAny<bool>()), Times.Once);
         _mockNavigationService.Verify(x => x.NavigateToAsync("//main/dashboard"), Times.Once);
         
         _viewModel.HasError.Should().BeFalse();
@@ -465,7 +465,7 @@ public class LoginViewModelTests
         var errors = new List<string> { "Usuario o contraseña incorrectos" };
         var apiResponse = ApiResponse<AuthResponse>.ErrorResponse(errors, "Authentication failed", 401);
 
-        _mockAuthService.Setup(x => x.LoginAsync(email, password))
+        _mockAuthService.Setup(x => x.LoginAsync(email, password, It.IsAny<bool>()))
                        .ReturnsAsync(apiResponse);
 
         // Act - Set credentials and login
@@ -474,7 +474,7 @@ public class LoginViewModelTests
         await _viewModel.LoginCommand.ExecuteAsync(null);
 
         // Assert - Error handling verification
-        _mockAuthService.Verify(x => x.LoginAsync(email, password), Times.Once);
+        _mockAuthService.Verify(x => x.LoginAsync(email, password, It.IsAny<bool>()), Times.Once);
         _mockNavigationService.Verify(x => x.NavigateToAsync(It.IsAny<string>()), Times.Never);
         
         _viewModel.HasError.Should().BeTrue();

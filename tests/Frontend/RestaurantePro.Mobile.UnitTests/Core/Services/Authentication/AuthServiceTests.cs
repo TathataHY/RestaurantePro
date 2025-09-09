@@ -5,6 +5,7 @@ public class AuthServiceTests
     private readonly Mock<IApiService> _mockApiService;
     private readonly Mock<ILogger<AuthService>> _mockLogger;
     private readonly Mock<ISecureStorageService> _mockSecureStorage;
+    private readonly Mock<INavigationService> _mockNavigation;
     private readonly AuthService _authService;
     private readonly Fixture _fixture;
 
@@ -13,7 +14,8 @@ public class AuthServiceTests
         _mockApiService = new Mock<IApiService>();
         _mockLogger = new Mock<ILogger<AuthService>>();
         _mockSecureStorage = new Mock<ISecureStorageService>();
-        _authService = new AuthService(_mockApiService.Object, _mockLogger.Object, _mockSecureStorage.Object);
+        _mockNavigation = new Mock<INavigationService>();
+        _authService = new AuthService(_mockApiService.Object, _mockLogger.Object, _mockSecureStorage.Object, _mockNavigation.Object);
         _fixture = new Fixture();
     }
 

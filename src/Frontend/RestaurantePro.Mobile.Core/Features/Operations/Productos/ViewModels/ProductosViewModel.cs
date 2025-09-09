@@ -17,6 +17,7 @@ public partial class ProductosViewModel : BaseViewModel
     private readonly IProductosService _productosService;
     private readonly IDialogService _dialogService;
     private readonly INavigationService _navigationService;
+    private CancellationTokenSource? _searchCts;
 
     [ObservableProperty]
     private ObservableCollection<ProductoDto> productos = new();
@@ -75,6 +76,11 @@ public partial class ProductosViewModel : BaseViewModel
 
         Title = "Productos";
     }
+
+    /// <summary>
+    /// Retardo para debounce de búsqueda (ms). Ajustable para pruebas.
+    /// </summary>
+    public int DebounceDelayMs { get; set; } = 300;
 
     // ========================================
     // PROPIEDADES CALCULADAS
@@ -224,7 +230,22 @@ public partial class ProductosViewModel : BaseViewModel
     [RelayCommand]
     private async Task BuscarProductosAsync()
     {
-        await LoadProductosAsync();
+        // Debounce: cancelar búsqueda anterior si existe
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
+        _searchCts = new CancellationTokenSource();
+        var token = _searchCts.Token;
+
+        try
+        {
+            await Task.Delay(DebounceDelayMs, token);
+            if (token.IsCancellationRequested) return;
+            await LoadProductosAsync();
+        }
+        catch (TaskCanceledException)
+        {
+            // cancelado a propósito, ignorar
+        }
     }
 
     /// <summary>
@@ -548,5 +569,8 @@ public partial class ProductosViewModel : BaseViewModel
         SelectedProducto = null;
         SelectedCategoria = null;
         TextoBusqueda = string.Empty;
+        _searchCts?.Cancel();
+        _searchCts?.Dispose();
+        _searchCts = null;
     }
 } 

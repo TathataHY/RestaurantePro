@@ -34,6 +34,8 @@ public partial class AppShell : Shell
 		// Páginas de creación
 		Routing.RegisterRoute("crear-comanda", typeof(CrearComandaPage));
 		Routing.RegisterRoute("editar-comanda", typeof(CrearComandaPage));
+		Routing.UnRegisterRoute("crear-preparacion-diaria");
+		Routing.RegisterRoute("crear-preparacion-diaria", typeof(RestaurantePro.Mobile.Features.DailyPreparations.Pages.CreateDailyPreparationPage));
 
 		// Editor de productos (crear/editar)
 		Routing.UnRegisterRoute("producto-crear");

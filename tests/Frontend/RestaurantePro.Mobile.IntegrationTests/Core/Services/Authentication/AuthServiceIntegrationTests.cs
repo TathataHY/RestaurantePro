@@ -25,7 +25,7 @@ namespace RestaurantePro.Mobile.IntegrationTests.Core.Services.Authentication
             var secureStorage = new FakeSecureStorageService();
             var apiService = new ApiService(httpClient);
             var logger = Microsoft.Extensions.Logging.Abstractions.NullLogger<RestaurantePro.Mobile.Core.Services.Authentication.AuthService>.Instance;
-            var authService = new AuthService(apiService, logger, secureStorage);
+            var authService = new AuthService(apiService, logger, secureStorage, new FakeNavigationService());
 
             // Assert
             Assert.NotNull(authService);

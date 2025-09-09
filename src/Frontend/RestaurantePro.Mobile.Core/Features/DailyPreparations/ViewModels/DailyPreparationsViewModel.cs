@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Models.Common;
 using RestaurantePro.Mobile.Core.Services;
+using RestaurantePro.Mobile.Core.Services.Navigation;
 using System.Collections.ObjectModel;
 
 namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
@@ -14,6 +15,7 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
     {
         private readonly IDailyPreparationsService _dailyPreparationsService;
         private readonly IDialogService _dialogService;
+        private readonly INavigationService _navigationService;
 
         [ObservableProperty]
         private ObservableCollection<PreparacionDiariaDto> _preparacionesDiarias = new();
@@ -41,10 +43,12 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
 
         public DailyPreparationsViewModel(
             IDailyPreparationsService dailyPreparationsService,
-            IDialogService dialogService)
+            IDialogService dialogService,
+            INavigationService navigationService)
         {
             _dailyPreparationsService = dailyPreparationsService;
             _dialogService = dialogService;
+            _navigationService = navigationService;
         }
 
         #region Commands
@@ -272,8 +276,7 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
         [RelayCommand]
         private async Task CrearNuevaPreparacionAsync()
         {
-            // Navegar a la página de creación
-            // await _navigationService.NavigateToAsync("dailypreparationcreate");
+            await _navigationService.NavigateToAsync("crear-preparacion-diaria");
         }
 
         [RelayCommand]

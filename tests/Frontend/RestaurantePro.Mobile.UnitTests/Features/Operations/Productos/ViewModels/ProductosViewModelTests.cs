@@ -318,4 +318,212 @@ public class ProductosViewModelTests
         
         vm.MostrarSoloDisponibles.Should().BeFalse();
     }
+
+    [Fact]
+    public async Task LoadProductosAsync_WhenIsBusy_ShouldNotCallService()
+    {
+        var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object);
+
+        vm.IsBusy = true;
+
+        await vm.LoadProductosCommand.ExecuteAsync(null);
+
+        _mockProductosService.Verify(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>()), Times.Never);
+        _mockProductosService.Verify(x => x.ObtenerCategoriasAsync(), Times.Never);
+    }
+
+    [Fact]
+    public async Task PropertyChanged_ComputedProperties_ShouldRaiseAfterSuccessfulLoad()
+    {
+        var productos = new List<ProductoDto>
+        {
+            new ProductoDto { Id = Guid.NewGuid(), Nombre = "P1", Activo = true, CantidadDisponible = 1, Precio = 10 },
+            new ProductoDto { Id = Guid.NewGuid(), Nombre = "P2", Activo = false, CantidadDisponible = 0, Precio = 20 }
+        };
+        _mockProductosService
+            .Setup(x => x.ObtenerCategoriasAsync())
+            .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(new List<CategoriaProductoDto>()));
+        _mockProductosService
+            .Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>()))
+            .ReturnsAsync(ApiResponse<List<ProductoDto>>.SuccessResponse(productos));
+
+        var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object);
+        var raised = new List<string>();
+        vm.PropertyChanged += (_, e) => raised.Add(e.PropertyName!);
+
+        await vm.LoadProductosCommand.ExecuteAsync(null);
+
+        raised.Should().Contain(nameof(ProductosViewModel.TieneProductos));
+        raised.Should().Contain(nameof(ProductosViewModel.PorcentajeDisponibilidad));
+        raised.Should().Contain(nameof(ProductosViewModel.MensajeSinProductos));
+        raised.Should().Contain(nameof(ProductosViewModel.Estadisticas));
+    }
+
+    [Fact]
+    public void PropertyChanged_TextoBusqueda_ShouldRaise()
+    {
+        var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object);
+        var raised = new List<string>();
+        vm.PropertyChanged += (_, e) => raised.Add(e.PropertyName!);
+
+        vm.TextoBusqueda = "pizza";
+
+        raised.Should().Contain(nameof(ProductosViewModel.TextoBusqueda));
+    }
+
+    [Fact]
+    public async Task LoadProductosAsync_WithEmptyResult_ShouldSetEmptyState()
+    {
+        _mockProductosService
+            .Setup(x => x.ObtenerCategoriasAsync())
+            .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(new List<CategoriaProductoDto>()));
+        _mockProductosService
+            .Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>()))
+            .ReturnsAsync(ApiResponse<List<ProductoDto>>.SuccessResponse(new List<ProductoDto>()));
+
+        var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object);
+        await vm.LoadProductosCommand.ExecuteAsync(null);
+
+        vm.Productos.Should().BeEmpty();
+        vm.TieneProductos.Should().BeFalse();
+        vm.MensajeSinProductos.Should().Be("No hay productos disponibles");
+    }
+
+    [Fact]
+    public async Task LoadProductosAsync_ShouldCallGetPagedWithDefaultPaging_WhenNoFilters()
+    {
+        _mockProductosService
+            .Setup(x => x.ObtenerCategoriasAsync())
+            .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(new List<CategoriaProductoDto>()));
+        _mockProductosService
+            .Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>()))
+            .ReturnsAsync(ApiResponse<List<ProductoDto>>.SuccessResponse(new List<ProductoDto>()));
+
+        var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object);
+        await vm.LoadProductosCommand.ExecuteAsync(null);
+
+        _mockProductosService.Verify(x => x.ObtenerProductosPaginadosAsync(
+            It.Is<int>(n => n == 1),
+            It.Is<int>(s => s == 100),
+            It.Is<string?>(f => f == null),
+            It.Is<bool>(a => a == true)
+        ), Times.Once);
+    }
+
+    [Fact]
+    public async Task BuscarProductosAsync_ShouldDebounceRapidCalls_OnlyOneServiceCall()
+    {
+        _mockProductosService
+            .Setup(x => x.ObtenerCategoriasAsync())
+            .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(new List<CategoriaProductoDto>()));
+        _mockProductosService
+            .Setup(x => x.BuscarProductosAsync(It.IsAny<string>(), It.IsAny<bool>()))
+            .ReturnsAsync(ApiResponse<List<ProductoDto>>.SuccessResponse(new List<ProductoDto>()));
+
+        var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object)
+        {
+            DebounceDelayMs = 50,
+            TextoBusqueda = "p"
+        };
+
+        // Lanzar varias llamadas rápidas
+        var t1 = vm.BuscarProductosCommand.ExecuteAsync(null);
+        vm.TextoBusqueda = "pi";
+        var t2 = vm.BuscarProductosCommand.ExecuteAsync(null);
+        vm.TextoBusqueda = "piz";
+        var t3 = vm.BuscarProductosCommand.ExecuteAsync(null);
+        vm.TextoBusqueda = "pizza";
+        var t4 = vm.BuscarProductosCommand.ExecuteAsync(null);
+
+        await Task.WhenAll(t1, t2, t3, t4);
+        // Esperar un poco más del debounce para asegurar ejecución
+        await Task.Delay(100);
+
+        _mockProductosService.Verify(x => x.BuscarProductosAsync(It.IsAny<string>(), It.IsAny<bool>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task LoadProductosPopularesAsync_ErrorResponse_ShouldShowError()
+    {
+        _mockProductosService
+            .Setup(x => x.ObtenerProductosPopularesAsync(It.IsAny<int>()))
+            .ReturnsAsync(ApiResponse<List<ProductoDto>>.ErrorResponse(new List<string>{"err"}, "Error al cargar", 500));
+
+        var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object);
+
+        await vm.LoadProductosPopularesCommand.ExecuteAsync(null);
+
+        _mockDialog.Verify(x => x.ShowErrorAsync("Error al cargar productos populares"), Times.Once);
+    }
+
+    [Fact]
+    public async Task LoadProductosPopularesAsync_WhenException_ShouldShowUnexpectedError()
+    {
+        _mockProductosService
+            .Setup(x => x.ObtenerProductosPopularesAsync(It.IsAny<int>()))
+            .ThrowsAsync(new Exception("boom"));
+
+        var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object);
+
+        await vm.LoadProductosPopularesCommand.ExecuteAsync(null);
+
+        _mockDialog.Verify(x => x.ShowErrorAsync(It.Is<string>(s => s.Contains("Error inesperado"))), Times.Once);
+    }
+
+    [Fact]
+    public async Task LoadCategoriasAsync_WhenException_ShouldShowError()
+    {
+        _mockProductosService
+            .Setup(x => x.ObtenerCategoriasAsync())
+            .ThrowsAsync(new Exception("net"));
+
+        var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object);
+
+        await vm.LoadCategoriasCommand.ExecuteAsync(null);
+
+        _mockDialog.Verify(x => x.ShowErrorAsync("Error al cargar categorías"), Times.Once);
+    }
+
+    [Fact]
+    public async Task LoadProductosAsync_FilterByCategoria_Error_ShouldShowErrorAndSetHasError()
+    {
+        var categoria = new CategoriaProductoDto { Id = Guid.NewGuid(), Nombre = "Bebidas" };
+        _mockProductosService
+            .Setup(x => x.ObtenerCategoriasAsync())
+            .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(new List<CategoriaProductoDto>()));
+        _mockProductosService
+            .Setup(x => x.ObtenerProductosPorCategoriaAsync(categoria.Id, It.IsAny<bool>()))
+            .ReturnsAsync(ApiResponse<List<ProductoDto>>.ErrorResponse(new List<string>{"E"}, "Error", 500));
+
+        var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object)
+        {
+            SelectedCategoria = categoria
+        };
+
+        await vm.LoadProductosCommand.ExecuteAsync(null);
+
+        vm.HasError.Should().BeTrue();
+        _mockDialog.Verify(x => x.ShowErrorAsync("Error"), Times.Once);
+    }
+
+    [Fact]
+    public async Task BuscarProductosAsync_ErrorResponse_ShouldShowErrorAndSetHasError()
+    {
+        _mockProductosService
+            .Setup(x => x.ObtenerCategoriasAsync())
+            .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(new List<CategoriaProductoDto>()));
+        _mockProductosService
+            .Setup(x => x.BuscarProductosAsync("pizza", It.IsAny<bool>()))
+            .ReturnsAsync(ApiResponse<List<ProductoDto>>.ErrorResponse(new List<string>{"E"}, "Error", 500));
+
+        var vm = new ProductosViewModel(_mockProductosService.Object, _mockDialog.Object, _mockNav.Object)
+        {
+            TextoBusqueda = "pizza"
+        };
+
+        await vm.BuscarProductosCommand.ExecuteAsync(null);
+
+        vm.HasError.Should().BeTrue();
+        _mockDialog.Verify(x => x.ShowErrorAsync("Error"), Times.Once);
+    }
 } 

@@ -112,7 +112,8 @@ namespace RestaurantePro.Mobile.IntegrationTests.Services
 
             // Assert
             Assert.False(result.Succeeded);
-            Assert.True(result.Error.Contains("Error de red"));
+            Assert.NotNull(result.Error);
+            Assert.Contains("Error de red", result.Error);
         }
 
         #endregion
@@ -232,7 +233,8 @@ namespace RestaurantePro.Mobile.IntegrationTests.Services
 
             // Assert
             Assert.False(result.Succeeded);
-            Assert.True(result.Error.Contains("El ID del producto no puede estar vacío"));
+            Assert.NotNull(result.Error);
+            Assert.Contains("El ID del producto no puede estar vacío", result.Error);
         }
 
         #endregion
@@ -549,7 +551,8 @@ namespace RestaurantePro.Mobile.IntegrationTests.Services
 
             // Assert
             Assert.False(result.Succeeded);
-            Assert.True(result.Error.Contains("Error de conexión de red"));
+            Assert.NotNull(result.Error);
+            Assert.Contains("Error de conexión de red", result.Error);
         }
 
         [Fact]
@@ -565,7 +568,8 @@ namespace RestaurantePro.Mobile.IntegrationTests.Services
 
             // Assert
             Assert.False(result.Succeeded);
-            Assert.True(result.Error.Contains("Error de formato JSON"));
+            Assert.NotNull(result.Error);
+            Assert.Contains("Error de formato JSON", result.Error);
         }
 
         [Fact]
@@ -581,7 +585,8 @@ namespace RestaurantePro.Mobile.IntegrationTests.Services
 
             // Assert
             Assert.False(result.Succeeded);
-            Assert.True(result.Error.Contains("Timeout"));
+            Assert.NotNull(result.Error);
+            Assert.Contains("Timeout", result.Error);
         }
 
         #endregion

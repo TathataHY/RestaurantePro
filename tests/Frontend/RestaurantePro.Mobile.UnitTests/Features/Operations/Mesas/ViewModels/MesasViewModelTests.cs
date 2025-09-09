@@ -343,6 +343,213 @@ public class MesasViewModelTests
 
     #endregion
 
+    #region Infinite Scroll Tests
+
+    [Fact]
+    public async Task LoadMoreMesasAsync_ShouldAppendNextPage_WhenBufferHasMore()
+    {
+        // Arrange: 25 mesas simuladas, pageSize=12 => 12 + 12 + 1
+        var mesas = _fixture.CreateMany<MesaDto>(25).ToList();
+        var response = ApiResponse<List<MesaDto>>.SuccessResponse(mesas);
+        var fakeService = new FakeMesasService(response);
+        var fakeDialog = new FakeDialogService();
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object);
+
+        // Act: cargar primera página
+        await viewModel.LoadMesasCommand.ExecuteAsync(null);
+        var firstCount = viewModel.Mesas.Count;
+        await viewModel.LoadMoreMesasCommand.ExecuteAsync(null);
+        var secondCount = viewModel.Mesas.Count;
+        await viewModel.LoadMoreMesasCommand.ExecuteAsync(null);
+        var thirdCount = viewModel.Mesas.Count;
+
+        // Assert
+        firstCount.Should().BeGreaterThan(0);
+        secondCount.Should().BeGreaterThan(firstCount);
+        thirdCount.Should().Be(mesas.Count);
+    }
+
+    [Fact]
+    public async Task LoadMoreMesasAsync_WhenIsBusy_ShouldNotAppend()
+    {
+        var mesas = _fixture.CreateMany<MesaDto>(10).ToList();
+        var response = ApiResponse<List<MesaDto>>.SuccessResponse(mesas);
+        var fakeService = new FakeMesasService(response);
+        var fakeDialog = new FakeDialogService();
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object);
+
+        await viewModel.LoadMesasCommand.ExecuteAsync(null);
+        var before = viewModel.Mesas.Count;
+        viewModel.IsBusy = true;
+        await viewModel.LoadMoreMesasCommand.ExecuteAsync(null);
+        viewModel.Mesas.Count.Should().Be(before);
+    }
+
+    #endregion
+
+    #region Filters Mapping Tests
+
+    [Fact]
+    public async Task ApplyFiltersAsync_ShouldMapUiEstadoToBackend()
+    {
+        var mesas = _fixture.CreateMany<MesaDto>(3).ToList();
+        var response = ApiResponse<List<MesaDto>>.SuccessResponse(mesas);
+        var fakeService = new FakeMesasService(response);
+        var fakeDialog = new FakeDialogService();
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object)
+        {
+            FiltroEstado = "Disponibles",
+            FiltroCapacidad = "4 personas"
+        };
+
+        await viewModel.ApplyFiltersCommand.ExecuteAsync(null);
+
+        // Si no lanza excepción y carga, damos por válido el mapeo; en escenarios reales, 
+        // instrumentar Fake para capturar parámetros
+        viewModel.Mesas.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task ClearFiltersAsync_ShouldResetFiltersAndReload()
+    {
+        var mesas = _fixture.CreateMany<MesaDto>(2).ToList();
+        var response = ApiResponse<List<MesaDto>>.SuccessResponse(mesas);
+        var fakeService = new FakeMesasService(response);
+        var fakeDialog = new FakeDialogService();
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object)
+        {
+            FiltroEstado = "Ocupadas",
+            FiltroUbicacion = "Terraza",
+            FiltroCapacidadMinima = 4,
+            FiltroCapacidad = "4 personas",
+            SearchText = "A1"
+        };
+
+        await viewModel.ClearFiltersCommand.ExecuteAsync(null);
+
+        viewModel.FiltroEstado.Should().BeEmpty();
+        viewModel.FiltroUbicacion.Should().BeEmpty();
+        viewModel.FiltroCapacidadMinima.Should().BeNull();
+        viewModel.FiltroCapacidad.Should().BeEmpty();
+        viewModel.SearchText.Should().BeEmpty();
+        viewModel.Mesas.Should().NotBeNull();
+    }
+
+    #endregion
+    
+    #region CambiarEstado Tests
+
+    [Fact]
+    public async Task CambiarEstadoMesaAsync_WhenUserCancels_ShouldNotCallService()
+    {
+        // Arrange
+        var mesa = _fixture.Create<MesaDto>();
+        var fakeService = new FakeMesasServiceCambiarEstado(success: true, message: "ok");
+        var fakeDialog = new FakeDialogService { ActionSheetResponse = "Cancelar" };
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object);
+
+        // Act
+        await viewModel.CambiarEstadoMesaCommand.ExecuteAsync(mesa);
+
+        // Assert
+        fakeService.WasCambiarCalled.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task CambiarEstadoMesaAsync_WhenServiceFails_ShouldShowError()
+    {
+        // Arrange
+        var mesa = _fixture.Create<MesaDto>();
+        var errorMessage = "Error al cambiar";
+        var fakeService = new FakeMesasServiceCambiarEstado(success: false, message: errorMessage);
+        var fakeDialog = new FakeDialogService { ActionSheetResponse = "Ocupada" };
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object);
+
+        // Act
+        await viewModel.CambiarEstadoMesaCommand.ExecuteAsync(mesa);
+
+        // Assert
+        fakeService.WasCambiarCalled.Should().BeTrue();
+        fakeDialog.LastTitle.Should().Be("Error");
+        fakeDialog.LastMessage.Should().Be(errorMessage);
+    }
+
+    [Fact]
+    public async Task CambiarEstadoMesaAsync_WhenSuccessful_ShouldShowSuccessAndReload()
+    {
+        // Arrange
+        var mesa = _fixture.Create<MesaDto>();
+        var fakeService = new FakeMesasServiceCambiarEstado(success: true, message: "Cambiado");
+        var fakeDialog = new FakeDialogService { ActionSheetResponse = "Disponible" };
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object);
+
+        // Act
+        await viewModel.CambiarEstadoMesaCommand.ExecuteAsync(mesa);
+
+        // Assert
+        fakeService.WasCambiarCalled.Should().BeTrue();
+        fakeService.ObtenerMesasCalledCount.Should().BeGreaterThan(0); // recarga
+        fakeDialog.LastTitle.Should().Be("Éxito");
+    }
+
+    #endregion
+
+    #region Search Filter Tests
+
+    [Fact]
+    public async Task LoadMesasAsync_WhenSearchText_ShouldFilterLocally()
+    {
+        // Arrange datos
+        var all = new List<MesaDto>
+        {
+            new MesaDto { Id = Guid.NewGuid(), Numero = "A1", Ubicacion = "Terraza", Zona = "Norte", Capacidad = 4 },
+            new MesaDto { Id = Guid.NewGuid(), Numero = "B2", Ubicacion = "Salon", Zona = "Sur", Capacidad = 2 },
+            new MesaDto { Id = Guid.NewGuid(), Numero = "A10", Ubicacion = "Terraza", Zona = "Oeste", Capacidad = 6 },
+        };
+        var response = ApiResponse<List<MesaDto>>.SuccessResponse(all);
+        var fakeService = new FakeMesasService(response);
+        var fakeDialog = new FakeDialogService();
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object)
+        {
+            SearchText = "A1"
+        };
+
+        // Act
+        await viewModel.LoadMesasCommand.ExecuteAsync(null);
+
+        // Assert: deben quedar A1 y A10 (contiene "A1")
+        viewModel.Mesas.Should().HaveCount(2);
+        viewModel.Mesas.Select(m => m.Numero).Should().BeEquivalentTo(new[] { "A1", "A10" });
+    }
+
+    #endregion
+
+    #region Filters Mapping (Captura de parámetros)
+
+    [Fact]
+    public async Task ApplyFiltersAsync_ShouldMapAndPassParametersToService()
+    {
+        // Arrange
+        var captureService = new FakeMesasServiceCaptureParams();
+        var fakeDialog = new FakeDialogService();
+        var viewModel = new MesasViewModel(captureService, fakeDialog, _mockNavigationService.Object)
+        {
+            FiltroEstado = "Disponibles",
+            FiltroCapacidad = "4 personas",
+            FiltroUbicacion = "Terraza"
+        };
+
+        // Act
+        await viewModel.ApplyFiltersCommand.ExecuteAsync(null);
+
+        // Assert
+        captureService.LastEstado.Should().Be("Disponible");
+        captureService.LastUbicacion.Should().Be("Terraza");
+        captureService.LastCapacidadMinima.Should().Be(4);
+        viewModel.FiltroCapacidadMinima.Should().Be(4);
+    }
+
+    #endregion
     #region Estadisticas Tests
 
     [Fact]
@@ -582,6 +789,7 @@ public class MesasViewModelTests
         public string? LastMessage { get; private set; }
         public string? PromptResponse { get; set; } = "test_response";
         public bool ConfirmResponse { get; set; } = true;
+        public string? ActionSheetResponse { get; set; } = "Disponible";
         
         public Task ShowAlertAsync(string title, string message, string cancel = "OK")
         {
@@ -626,7 +834,7 @@ public class MesasViewModelTests
             WasCalled = true;
             LastTitle = title;
             LastMessage = message;
-            return Task.FromResult<string?>("Disponible");
+            return Task.FromResult<string?>(ActionSheetResponse);
         }
         
         public Task<string?> ShowPromptAsync(string title, string message, string accept = "OK", string cancel = "Cancelar", string placeholder = "", int maxLength = -1, string? initialValue = null)
@@ -738,6 +946,68 @@ public class MesasViewModelTests
         public Task<ApiResponse<object>> AsignarMesaAsync(Guid mesaId, Guid? clienteId = null, int? numeroPersonas = null, string? observaciones = null) => throw new NotImplementedException();
         public Task<ApiResponse<MesaDto>> LiberarMesaAsync(Guid mesaId, string motivo = "Mesa liberada desde móvil", string? observaciones = null) => throw new NotImplementedException();
         public Task<ApiResponse<MesaDto>> CambiarEstadoMesaAsync(Guid mesaId, string nuevoEstado, string? motivo = null) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> BuscarMejorMesaAsync(int numeroPersonas, string? ubicacionPreferida = null) => throw new NotImplementedException();
+    }
+
+    // Fake para capturar parámetros de filtros
+    private class FakeMesasServiceCaptureParams : IMesasService
+    {
+        public string? LastEstado { get; private set; }
+        public string? LastUbicacion { get; private set; }
+        public int? LastCapacidadMinima { get; private set; }
+
+        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null)
+        {
+            LastEstado = estado;
+            LastUbicacion = ubicacion;
+            LastCapacidadMinima = capacidadMinima;
+            return Task.FromResult(ApiResponse<List<MesaDto>>.SuccessResponse(new List<MesaDto>()));
+        }
+
+        // Métodos no utilizados en estas pruebas
+        public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id) => throw new NotImplementedException();
+        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null) => throw new NotImplementedException();
+        public Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync() => throw new NotImplementedException();
+        public Task<ApiResponse<object>> AsignarMesaAsync(Guid mesaId, Guid? clienteId = null, int? numeroPersonas = null, string? observaciones = null) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> LiberarMesaAsync(Guid mesaId, string motivo = "Mesa liberada desde móvil", string? observaciones = null) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> CambiarEstadoMesaAsync(Guid mesaId, string nuevoEstado, string? motivo = null) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> BuscarMejorMesaAsync(int numeroPersonas, string? ubicacionPreferida = null) => throw new NotImplementedException();
+    }
+
+    // Fake para pruebas de cambiar estado
+    private class FakeMesasServiceCambiarEstado : IMesasService
+    {
+        private readonly bool _success;
+        private readonly string _message;
+        public bool WasCambiarCalled { get; private set; }
+        public int ObtenerMesasCalledCount { get; private set; }
+
+        public FakeMesasServiceCambiarEstado(bool success, string message)
+        {
+            _success = success;
+            _message = message;
+        }
+
+        public Task<ApiResponse<MesaDto>> CambiarEstadoMesaAsync(Guid mesaId, string nuevoEstado, string? motivo = null)
+        {
+            WasCambiarCalled = true;
+            return Task.FromResult(_success
+                ? ApiResponse<MesaDto>.SuccessResponse(new MesaDto(), _message)
+                : ApiResponse<MesaDto>.ErrorResponse(new List<string> { _message }, _message, 500));
+        }
+
+        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null)
+        {
+            ObtenerMesasCalledCount++;
+            return Task.FromResult(ApiResponse<List<MesaDto>>.SuccessResponse(new List<MesaDto>()));
+        }
+
+        // Métodos no usados
+        public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id) => throw new NotImplementedException();
+        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null) => throw new NotImplementedException();
+        public Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync() => throw new NotImplementedException();
+        public Task<ApiResponse<object>> AsignarMesaAsync(Guid mesaId, Guid? clienteId = null, int? numeroPersonas = null, string? observaciones = null) => throw new NotImplementedException();
+        public Task<ApiResponse<MesaDto>> LiberarMesaAsync(Guid mesaId, string motivo = "Mesa liberada desde móvil", string? observaciones = null) => throw new NotImplementedException();
         public Task<ApiResponse<MesaDto>> BuscarMejorMesaAsync(int numeroPersonas, string? ubicacionPreferida = null) => throw new NotImplementedException();
     }
 

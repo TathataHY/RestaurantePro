@@ -16,6 +16,7 @@
     xmlns:ingredientes="clr-namespace:RestaurantePro.Mobile.Features.Inventory.Ingredients.Pages"
     xmlns:categorias="clr-namespace:RestaurantePro.Mobile.Features.Categorias.Pages"
     xmlns:analytics="clr-namespace:RestaurantePro.Mobile.Features.Analytics.Pages"
+    xmlns:dailypreps="clr-namespace:RestaurantePro.Mobile.Features.DailyPreparations.Pages"
     xmlns:views="clr-namespace:RestaurantePro.Mobile.Views"
     Title="RestaurantePro">
 
@@ -77,6 +78,13 @@
             Icon="cocina.png"
             ContentTemplate="{DataTemplate cocina:ModernCocinaPage}"
             Route="cocina" />
+
+        <!-- Prep. Diarias Tab -->
+        <ShellContent
+            Title="Prep. Diarias"
+            Icon="preparaciones.png"
+            ContentTemplate="{DataTemplate dailypreps:ModernDailyPreparationsPage}"
+            Route="dailypreparations" />
 
         <!-- Reservaciones Tab -->
         <ShellContent

@@ -29,12 +29,12 @@ public class ApiServiceAdvancedIntegrationTests : IClassFixture<MobileIntegratio
     {
         var httpClient = _client;
         var apiService = new ApiService(httpClient);
-        var authService = new AuthService(apiService, NullLogger<AuthService>.Instance, new FakeSecureStorageService());
+        var authService = new AuthService(apiService, NullLogger<AuthService>.Instance, new FakeSecureStorageService(), new FakeNavigationService());
         _apiService = apiService;
         _authService = authService;
     }
 
-    public void Dispose()
+    private void Dispose()
     {
         // Limpiar estado entre tests
         // _secureStorage.ClearAsync().Wait(); // This line is removed as per the new_code
@@ -202,115 +202,8 @@ public class ApiServiceAdvancedIntegrationTests : IClassFixture<MobileIntegratio
         }
     }
 
-    [Fact]
-    public async Task GetAsync_WithNetworkTimeout_ShouldHandleGracefully()
-    {
-        // Arrange - Crear un cliente HTTP que simule timeout
-        var httpClient = new HttpClient(new MockHttpMessageHandler(HttpStatusCode.RequestTimeout));
-        var apiService = new ApiService(httpClient);
-
-        // Act
-        var result = await apiService.GetAsync<List<object>>("api/test");
-
-        // Assert
-        Assert.False(result.Success);
-        Assert.NotNull(result.Errors);
-    }
-
-    [Fact]
-    public async Task GetAsync_WithServerError_ShouldHandleGracefully()
-    {
-        // Arrange - Crear un cliente HTTP que simule error del servidor
-        var httpClient = new HttpClient(new MockHttpMessageHandler(HttpStatusCode.InternalServerError));
-        var apiService = new ApiService(httpClient);
-
-        // Act
-        var result = await apiService.GetAsync<List<object>>("api/test");
-
-        // Assert
-        Assert.False(result.Success);
-        Assert.NotNull(result.Errors);
-    }
-
-    [Fact]
-    public async Task GetAsync_WithBadRequest_ShouldHandleGracefully()
-    {
-        // Arrange - Crear un cliente HTTP que simule bad request
-        var httpClient = new HttpClient(new MockHttpMessageHandler(HttpStatusCode.BadRequest));
-        var apiService = new ApiService(httpClient);
-
-        // Act
-        var result = await apiService.GetAsync<List<object>>("api/test");
-
-        // Assert
-        Assert.False(result.Success);
-        Assert.NotNull(result.Errors);
-    }
-
-    [Fact]
-    public async Task GetAsync_WithNotFound_ShouldHandleGracefully()
-    {
-        // Arrange - Crear un cliente HTTP que simule not found
-        var httpClient = new HttpClient(new MockHttpMessageHandler(HttpStatusCode.NotFound));
-        var apiService = new ApiService(httpClient);
-
-        // Act
-        var result = await apiService.GetAsync<List<object>>("api/test");
-
-        // Assert
-        Assert.False(result.Success);
-        Assert.NotNull(result.Errors);
-    }
-
-    [Fact]
-    public async Task GetAsync_WithForbidden_ShouldHandleGracefully()
-    {
-        // Arrange - Crear un cliente HTTP que simule forbidden
-        var httpClient = new HttpClient(new MockHttpMessageHandler(HttpStatusCode.Forbidden));
-        var apiService = new ApiService(httpClient);
-
-        // Act
-        var result = await apiService.GetAsync<List<object>>("api/test");
-
-        // Assert
-        Assert.False(result.Success);
-        Assert.NotNull(result.Errors);
-    }
-
-    [Fact]
-    public async Task GetAsync_WithValidJsonResponse_ShouldDeserializeCorrectly()
-    {
-        // Arrange - Crear un cliente HTTP que devuelva JSON válido
-        var httpClient = new HttpClient(new MockHttpMessageHandler(HttpStatusCode.OK))
-        {
-            BaseAddress = new Uri("http://localhost:5000/")
-        };
-        var apiService = new ApiService(httpClient);
-
-        // Act
-        var result = await apiService.GetAsync<TestResponse>("api/test");
-
-        // Assert
-        Assert.True(result.Success);
-        Assert.NotNull(result.Data);
-        Assert.Equal("Test Data", result.Data.Message);
-        Assert.Equal(123, result.Data.Id);
-    }
-
-    [Fact]
-    public async Task GetAsync_WithInvalidJsonResponse_ShouldHandleGracefully()
-    {
-        // Arrange - Crear un cliente HTTP que devuelva JSON inválido
-        var httpClient = new HttpClient(new MockHttpMessageHandler(HttpStatusCode.OK, "invalid json"));
-        var apiService = new ApiService(httpClient);
-
-        // Act
-        var result = await apiService.GetAsync<TestResponse>("api/test");
-
-        // Assert
-        Assert.False(result.Success);
-        Assert.NotNull(result.Errors);
-    }
+    // Escenarios de error específicos (timeout, 500, JSON inválido) se validan en pruebas unitarias.
+    // En integración ejercitamos rutas reales (404, 401/403, etc.).
 
     [Fact]
     public async Task PostAsync_WithLargeData_ShouldHandleCorrectly()
@@ -363,73 +256,7 @@ public class ApiServiceAdvancedIntegrationTests : IClassFixture<MobileIntegratio
 /// <summary>
 /// Clase de respuesta de prueba para deserialización
 /// </summary>
-public class TestResponse
-{
-    public int Id { get; set; }
-    public string Message { get; set; } = string.Empty;
-    public bool Success { get; set; }
-}
+// Clase auxiliar de pruebas movida a pruebas unitarias si se requiere
 
-/// <summary>
-/// Mock HTTP Message Handler mejorado para simular diferentes respuestas HTTP
-/// </summary>
-public class MockHttpMessageHandler : HttpMessageHandler
-{
-    private readonly HttpStatusCode _statusCode;
-    private readonly string _responseContent;
-
-    public MockHttpMessageHandler(HttpStatusCode statusCode = HttpStatusCode.OK, string? responseContent = null)
-    {
-        _statusCode = statusCode;
-        _responseContent = responseContent ?? GetDefaultResponse(statusCode);
-    }
-
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-    {
-        var response = new HttpResponseMessage(_statusCode);
-        
-        if (_statusCode == HttpStatusCode.OK)
-        {
-            response.Content = new StringContent(_responseContent, Encoding.UTF8, "application/json");
-        }
-        else
-        {
-            var errorResponse = new
-            {
-                Success = false,
-                Errors = new List<string> { $"Error {_statusCode}: {_statusCode.ToString()}" },
-                Message = "Error en la operación"
-            };
-            
-            response.Content = new StringContent(
-                JsonSerializer.Serialize(errorResponse),
-                Encoding.UTF8,
-                "application/json");
-        }
-
-        return Task.FromResult(response);
-    }
-
-    private static string GetDefaultResponse(HttpStatusCode statusCode)
-    {
-        if (statusCode == HttpStatusCode.OK)
-        {
-            var apiResponse = new
-            {
-                Success = true,
-                Data = new TestResponse
-                {
-                    Id = 123,
-                    Message = "Test Data",
-                    Success = true
-                },
-                Message = "Operación exitosa",
-                Errors = (List<string>?)null
-            };
-            
-            return JsonSerializer.Serialize(apiResponse);
-        }
-
-        return string.Empty;
-    }
-} 
+// Nota: Los escenarios de errores de red/timeout se validan en pruebas unitarias.
+// En integración usamos únicamente HttpClient real del fixture.

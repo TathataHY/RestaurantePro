@@ -27,7 +27,7 @@ public class TarjetasFidelizacionServiceIntegrationTests : IClassFixture<MobileI
         // Crear servicios móviles localmente para evitar conflictos con el backend
         var httpClient = _client;
         var apiService = new ApiService(httpClient);
-        var authService = new AuthService(apiService, NullLogger<AuthService>.Instance, new FakeSecureStorageService());
+        var authService = new AuthService(apiService, NullLogger<AuthService>.Instance, new FakeSecureStorageService(), new FakeNavigationService());
         _tarjetasFidelizacionService = new TarjetasFidelizacionService(apiService, authService);
         _authService = authService;
     }

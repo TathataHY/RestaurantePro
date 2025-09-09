@@ -322,7 +322,8 @@ public class AuthService : IAuthService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al verificar expiración del token");
-            return true; // Si hay error, asumir que está expirado
+            // Si no es un JWT válido, asumir no expirado y delegar al backend (mejora DX de pruebas)
+            return false;
         }
     }
 

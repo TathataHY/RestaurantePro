@@ -26,7 +26,7 @@ public class ComandasServiceAdvancedIntegrationTests : IClassFixture<MobileInteg
         // Crear servicios móviles localmente para evitar conflictos con el backend
         var httpClient = _client;
         var apiService = new ApiService(httpClient);
-        var authService = new AuthService(apiService, NullLogger<AuthService>.Instance, new FakeSecureStorageService());
+        var authService = new AuthService(apiService, NullLogger<AuthService>.Instance, new FakeSecureStorageService(), new FakeNavigationService());
         _comandasService = new ComandasService(apiService, authService);
         _authService = authService;
 
@@ -49,11 +49,12 @@ public class ComandasServiceAdvancedIntegrationTests : IClassFixture<MobileInteg
     {
         // Arrange
         await SetupAsync();
-        var request = new CrearComandaRequest
+        var request = new RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models.CrearComandaRequest
         {
-            MesaId = Guid.NewGuid(),
+            MeseroId = "mesero-test",
+            MesaId = Guid.NewGuid().ToString(),
             Observaciones = "Comanda sin productos",
-            Productos = new List<ComandaProductoRequest>()
+            ProductosIniciales = new List<RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models.ProductoComandaRequest>()
         };
 
         // Act
@@ -78,11 +79,12 @@ public class ComandasServiceAdvancedIntegrationTests : IClassFixture<MobileInteg
     {
         // Arrange
         await SetupAsync();
-        var request = new CrearComandaRequest
+        var request = new RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models.CrearComandaRequest
         {
-            MesaId = Guid.NewGuid(),
+            MeseroId = "mesero-test",
+            MesaId = Guid.NewGuid().ToString(),
             Observaciones = "Comanda con productos nulos",
-            Productos = null
+            ProductosIniciales = null
         };
 
         // Act
@@ -311,17 +313,18 @@ public class ComandasServiceAdvancedIntegrationTests : IClassFixture<MobileInteg
         // El backend puede retornar éxito o error dependiendo de la configuración
 
         // 2. Crear una nueva comanda
-        var request = new CrearComandaRequest
+        var request = new RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models.CrearComandaRequest
         {
-            MesaId = Guid.NewGuid(), // Mesa de prueba
+            MeseroId = "mesero-test",
+            MesaId = Guid.NewGuid().ToString(), // Mesa de prueba
             Observaciones = "Comanda de prueba para flujo completo",
-            Productos = new List<ComandaProductoRequest>
+            ProductosIniciales = new List<RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models.ProductoComandaRequest>
             {
-                new ComandaProductoRequest
+                new RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models.ProductoComandaRequest
                 {
-                    ProductoId = Guid.NewGuid(), // Producto de prueba
+                    ProductoId = Guid.NewGuid().ToString(), // Producto de prueba
                     Cantidad = 1,
-                    Observaciones = "Bien cocido"
+                    Precio = 0
                 }
             }
         };

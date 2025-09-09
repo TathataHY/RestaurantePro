@@ -24,7 +24,7 @@ public class PreparacionesServiceIntegrationTests : IClassFixture<MobileIntegrat
         _secureStorage = new FakeSecureStorageService();
         _apiService = new ApiService(client);
         var logger = NullLogger<AuthService>.Instance;
-        _authService = new AuthService(_apiService, logger, _secureStorage);
+        _authService = new AuthService(_apiService, logger, _secureStorage, new FakeNavigationService());
         _preparacionesService = new PreparacionesService(_apiService, _authService);
     }
 

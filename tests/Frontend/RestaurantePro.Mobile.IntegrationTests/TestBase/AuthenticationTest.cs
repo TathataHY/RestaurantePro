@@ -130,7 +130,7 @@ public class AuthenticationTest : MobileIntegrationTestBase
 
         // 🔧 VERIFICAR QUE HAY CLIENTES EN LA RESPUESTA
         var clientes = itemsElement.EnumerateArray().ToList();
-        Assert.True(clientes.Count > 0, "No se encontraron clientes en la respuesta");
+        Assert.NotEmpty(clientes);
 
         Console.WriteLine($"✅ TestClientesEndpoint_ShouldReturnClientes PASSED - {clientes.Count} clientes encontrados");
     }

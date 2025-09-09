@@ -128,6 +128,9 @@ public class MobileIntegrationTestFixture : WebApplicationFactory<Program>, IDis
             
             // 🔧 REGISTRAR SERVICIOS MOCK ADICIONALES PARA EVENT HANDLERS
             services.AddScoped<RestaurantePro.Application.Common.Interfaces.ISMSService, MockSMSService>();
+
+            // 🔧 REGISTRAR CACHE FAKE PARA HANDLERS QUE LO REQUIEREN
+            services.AddSingleton<RestaurantePro.Domain.Core.SharedKernel.Services.Cache.ICacheService, TestCacheService>();
             
             // 🔧 REGISTRAR TEST ANALYTICS SERVICE
             Console.WriteLine("🔧 Registrando TestAnalyticsService en MobileIntegrationTestFixture");
@@ -181,6 +184,14 @@ public class MobileIntegrationTestFixture : WebApplicationFactory<Program>, IDis
         {
             if (disposing)
             {
+                // 🔧 LIMPIAR ESTADO COMPARTIDO (cache, etc.) ANTES DE DISPOSE
+                try
+                {
+                    using var scope = Services.CreateScope();
+                    var cache = scope.ServiceProvider.GetService<RestaurantePro.Domain.Core.SharedKernel.Services.Cache.ICacheService>() as TestCacheService;
+                    cache?.Clear();
+                }
+                catch { /* best-effort */ }
                 // 🔧 LIMPIAR RECURSOS DEL FIXTURE
                 base.Dispose(disposing);
             }
@@ -204,6 +215,52 @@ public abstract class MobileIntegrationTestBase : IClassFixture<MobileIntegratio
     }
 
     protected HttpClient CreateClient() => _fixture.CreateClient();
+}
+
+public class TestCacheService : RestaurantePro.Domain.Core.SharedKernel.Services.Cache.ICacheService
+{
+    private readonly Dictionary<string, object?> _store = new();
+
+    public bool Exists(string key) => _store.ContainsKey(key);
+    public Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default) => Task.FromResult(Exists(key));
+    public T Get<T>(string key) => _store.TryGetValue(key, out var v) && v is T t ? t : default!;
+    public Task<T> GetAsync<T>(string key, CancellationToken cancellationToken = default) => Task.FromResult(Get<T>(key));
+    public void InvalidatePattern(string pattern)
+    {
+        var keys = _store.Keys.Where(k => k.Contains(pattern, StringComparison.OrdinalIgnoreCase)).ToList();
+        foreach (var k in keys) _store.Remove(k);
+    }
+    public Task InvalidatePatternAsync(string pattern, CancellationToken cancellationToken = default)
+    {
+        InvalidatePattern(pattern);
+        return Task.CompletedTask;
+    }
+    public void Remove(string key) => _store.Remove(key);
+    public Task RemoveAsync(string key, CancellationToken cancellationToken = default) { Remove(key); return Task.CompletedTask; }
+    public void Set<T>(string key, T value, int expirationMinutes = 60) => _store[key] = value;
+    public Task SetAsync<T>(string key, T value, int expirationMinutes = 60, CancellationToken cancellationToken = default) { Set(key, value, expirationMinutes); return Task.CompletedTask; }
+    public Task SetAsync<T>(string key, T value, TimeSpan expiration, CancellationToken cancellationToken = default) { Set(key, value, (int)expiration.TotalMinutes); return Task.CompletedTask; }
+    public T GetOrCreate<T>(string key, Func<T> factory, int expirationMinutes = 60)
+    {
+        if (_store.TryGetValue(key, out var v) && v is T t) return t;
+        var created = factory();
+        _store[key] = created;
+        return created;
+    }
+    public T GetOrAdd<T>(string key, Func<T> loadFunc, int timeToLiveMinutes = 10) => GetOrCreate(key, loadFunc, timeToLiveMinutes);
+    public Task<T> GetOrAddAsync<T>(string key, Func<CancellationToken, Task<T>> loadFunc, int timeToLiveMinutes = 10, CancellationToken cancellationToken = default)
+    {
+        if (_store.TryGetValue(key, out var v) && v is T t) return Task.FromResult(t);
+        return loadAndSet();
+        async Task<T> loadAndSet()
+        {
+            var created = await loadFunc(cancellationToken);
+            _store[key] = created;
+            return created;
+        }
+    }
+
+    public void Clear() => _store.Clear();
 }
 
 /// <summary>

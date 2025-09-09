@@ -27,7 +27,7 @@ public class MesasServiceIntegrationTests : IClassFixture<MobileIntegrationTestF
         // Crear servicios móviles localmente para evitar conflictos con el backend
         var httpClient = _client;
         var apiService = new ApiService(httpClient);
-        var authService = new AuthService(apiService, NullLogger<AuthService>.Instance, new FakeSecureStorageService());
+        var authService = new AuthService(apiService, NullLogger<AuthService>.Instance, new FakeSecureStorageService(), new FakeNavigationService());
         _mesasService = new MesasService(apiService, authService);
         _authService = authService;
     }
@@ -46,7 +46,7 @@ public class MesasServiceIntegrationTests : IClassFixture<MobileIntegrationTestF
         Assert.NotNull(result);
         Assert.True(result.Success);
         Assert.NotNull(result.Data);
-        Assert.True(result.Data.Count > 0);
+        Assert.NotEmpty(result.Data);
     }
 
     [Fact]
@@ -81,12 +81,11 @@ public class MesasServiceIntegrationTests : IClassFixture<MobileIntegrationTestF
         Assert.True(result.Success);
         Assert.NotNull(result.Data);
         // Verificar que al menos hay algunas mesas disponibles
-        Assert.True(result.Data.Count > 0, "Should have at least some available tables");
+        Assert.NotEmpty(result.Data);
         
         // Verificar que al menos algunas mesas están disponibles (puede que no todas estén disponibles)
         var mesasDisponibles = result.Data.Where(m => m.Estado == "Disponible").ToList();
-        Assert.True(mesasDisponibles.Count > 0, 
-            $"Should have at least some available tables. Found: {string.Join(", ", result.Data.Select(m => $"{m.Numero}({m.Estado})"))}");
+        Assert.NotEmpty(mesasDisponibles);
     }
 
     [Fact]

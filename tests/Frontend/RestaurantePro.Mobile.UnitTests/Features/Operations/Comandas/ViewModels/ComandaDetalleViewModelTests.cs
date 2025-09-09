@@ -124,14 +124,6 @@ public class ComandaDetalleViewModelTests
         var item = new ComandaProductoDto { ProductoId = Guid.NewGuid(), Cantidad = 1, PrecioUnitario = 10 };
         var comanda = new ComandaDto { Id = comandaId, Estado = "Pendiente" };
         
-        _mockComandasService.Setup(x => x.ActualizarCantidadProductoAsync(
-            It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<int>()))
-            .ReturnsAsync(ApiResponse<ComandaDto>.SuccessResponse(comanda));
-        
-        _mockDialogService.Setup(x => x.ShowPromptAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
-            .ReturnsAsync("3");
-
         var vm = new ComandaDetalleViewModel(_mockComandasService.Object, _mockNavigationService.Object, _mockDialogService.Object);
         vm.Comanda = comanda;
         vm.IsEditable = true;
@@ -139,24 +131,16 @@ public class ComandaDetalleViewModelTests
         
         await vm.ActualizarCantidadCommand.ExecuteAsync(item);
 
-        item.Cantidad.Should().Be(3);
-        vm.TotalActual.Should().Be(30); // 3 * 10
-        _mockComandasService.Verify(x => x.ActualizarCantidadProductoAsync(
-            comandaId, item.ProductoId, 3), Times.Once);
-        _mockDialogService.Verify(x => x.ShowAlertAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _mockNavigationService.Verify(x => x.NavigateToAsync(
+            It.Is<string>(s => s.Contains("editar-comanda"))), Times.Once);
     }
 
     [Fact]
     public async Task ActualizarCantidadAsync_WhenUserCancels_ShouldNotUpdate()
     {
         var item = new ComandaProductoDto { Cantidad = 1 };
-        var comanda = new ComandaDto { Estado = "Pendiente" };
+        var comanda = new ComandaDto { Estado = "Pendiente", Id = Guid.NewGuid() };
         
-        _mockDialogService.Setup(x => x.ShowPromptAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
-            .ReturnsAsync((string?)null);
-
         var vm = new ComandaDetalleViewModel(_mockComandasService.Object, _mockNavigationService.Object, _mockDialogService.Object);
         vm.Comanda = comanda;
         vm.IsEditable = true;
@@ -164,7 +148,8 @@ public class ComandaDetalleViewModelTests
         
         await vm.ActualizarCantidadCommand.ExecuteAsync(item);
 
-        item.Cantidad.Should().Be(1); // No cambió
+        _mockNavigationService.Verify(x => x.NavigateToAsync(
+            It.Is<string>(s => s.Contains("editar-comanda"))), Times.Once);
         _mockComandasService.Verify(x => x.ActualizarCantidadProductoAsync(
             It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<int>()), Times.Never);
     }
@@ -173,12 +158,8 @@ public class ComandaDetalleViewModelTests
     public async Task ActualizarCantidadAsync_WithInvalidQuantity_ShouldShowError()
     {
         var item = new ComandaProductoDto { Cantidad = 1 };
-        var comanda = new ComandaDto { Estado = "Pendiente" };
+        var comanda = new ComandaDto { Estado = "Pendiente", Id = Guid.NewGuid() };
         
-        _mockDialogService.Setup(x => x.ShowPromptAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
-            .ReturnsAsync("invalid");
-
         var vm = new ComandaDetalleViewModel(_mockComandasService.Object, _mockNavigationService.Object, _mockDialogService.Object);
         vm.Comanda = comanda;
         vm.IsEditable = true;
@@ -186,15 +167,15 @@ public class ComandaDetalleViewModelTests
         
         await vm.ActualizarCantidadCommand.ExecuteAsync(item);
 
-        _mockDialogService.Verify(x => x.ShowAlertAsync(
-            "Error", "Cantidad inválida", It.IsAny<string>()), Times.Once);
+        _mockNavigationService.Verify(x => x.NavigateToAsync(
+            It.Is<string>(s => s.Contains("editar-comanda"))), Times.Once);
     }
 
     [Fact]
     public async Task EliminarItemAsync_WithConfirmation_ShouldRemoveItem()
     {
         var item = new ComandaProductoDto { Nombre = "Test Product", Cantidad = 1, PrecioUnitario = 10 };
-        var comanda = new ComandaDto { Estado = "Pendiente" };
+        var comanda = new ComandaDto { Estado = "Pendiente", Id = Guid.NewGuid() };
         
         _mockDialogService.Setup(x => x.ShowConfirmAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
@@ -209,11 +190,8 @@ public class ComandaDetalleViewModelTests
         
         await vm.EliminarItemCommand.ExecuteAsync(item);
 
-        vm.Items.Should().BeEmpty();
-        vm.TotalActual.Should().Be(0);
-        vm.TotalItems.Should().Be(0);
-        _mockDialogService.Verify(x => x.ShowAlertAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _mockNavigationService.Verify(x => x.NavigateToAsync(
+            It.Is<string>(s => s.Contains("editar-comanda"))), Times.Once);
     }
 
     [Fact]
@@ -271,10 +249,13 @@ public class ComandaDetalleViewModelTests
     public async Task CambiarEstadoAsync_WithConfirmation_ShouldChangeEstado()
     {
         var comandaId = Guid.NewGuid();
-        var comanda = new ComandaDto { Id = comandaId, Estado = "Pendiente" };
+        var comanda = new ComandaDto { Id = comandaId, Estado = "Lista" };
         
         _mockComandasService.Setup(x => x.CambiarEstadoComandaAsync(
             It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(ApiResponse<ComandaDto>.SuccessResponse(comanda));
+        
+        _mockComandasService.Setup(x => x.ObtenerComandaPorIdAsync(comandaId))
             .ReturnsAsync(ApiResponse<ComandaDto>.SuccessResponse(comanda));
         
         _mockDialogService.Setup(x => x.ShowConfirmAsync(
@@ -286,11 +267,10 @@ public class ComandaDetalleViewModelTests
         
         await vm.CambiarEstadoCommand.ExecuteAsync(null);
 
-        vm.Comanda.Estado.Should().Be("Preparando");
         _mockComandasService.Verify(x => x.CambiarEstadoComandaAsync(
-            comandaId, "Preparando", It.IsAny<string>()), Times.Once);
+            comandaId, "Entregada", It.IsAny<string>()), Times.Once);
         _mockDialogService.Verify(x => x.ShowAlertAsync(
-            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+            It.Is<string>(t => t == "Éxito"), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -339,6 +319,49 @@ public class ComandaDetalleViewModelTests
     }
 
     [Fact]
+    public async Task FinalizarComandaAsync_WhenUserCancelsConfirmation_ShouldNotCallService()
+    {
+        var comandaId = Guid.NewGuid();
+        var comanda = new ComandaDto { Id = comandaId, Numero = "001", Estado = "Lista" };
+
+        _mockDialogService.Setup(x => x.ShowConfirmAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(false);
+
+        var vm = new ComandaDetalleViewModel(_mockComandasService.Object, _mockNavigationService.Object, _mockDialogService.Object);
+        vm.Comanda = comanda;
+        vm.CanFinalize = true;
+
+        await vm.FinalizarComandaCommand.ExecuteAsync(null);
+
+        _mockComandasService.Verify(x => x.FinalizarComandaAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task FinalizarComandaAsync_WhenServiceFails_ShouldShowError()
+    {
+        var comandaId = Guid.NewGuid();
+        var comanda = new ComandaDto { Id = comandaId, Numero = "001", Estado = "Lista" };
+
+        _mockComandasService.Setup(x => x.FinalizarComandaAsync(
+            It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(ApiResponse<ComandaDto>.ErrorResponse(new List<string>{"err"}, "fallo", 500));
+
+        _mockDialogService.Setup(x => x.ShowConfirmAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
+
+        var vm = new ComandaDetalleViewModel(_mockComandasService.Object, _mockNavigationService.Object, _mockDialogService.Object);
+        vm.Comanda = comanda;
+        vm.CanFinalize = true;
+
+        await vm.FinalizarComandaCommand.ExecuteAsync(null);
+
+        _mockDialogService.Verify(x => x.ShowAlertAsync(
+            It.Is<string>(t => t == "Error"), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
     public async Task CancelarComandaAsync_WithValidMotivo_ShouldCancelComanda()
     {
         var comandaId = Guid.NewGuid();
@@ -365,6 +388,70 @@ public class ComandaDetalleViewModelTests
         _mockComandasService.Verify(x => x.CancelarComandaAsync(
             comandaId, "Motivo de cancelación"), Times.Once);
         _mockNavigationService.Verify(x => x.GoBackAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task CancelarComandaAsync_WhenUserCancelsConfirm_ShouldNotCallService()
+    {
+        var comandaId = Guid.NewGuid();
+        var comanda = new ComandaDto { Id = comandaId, Numero = "001", Estado = "Pendiente" };
+
+        _mockDialogService.Setup(x => x.ShowPromptAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
+            .ReturnsAsync("Motivo");
+        _mockDialogService.Setup(x => x.ShowConfirmAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(false);
+
+        var vm = new ComandaDetalleViewModel(_mockComandasService.Object, _mockNavigationService.Object, _mockDialogService.Object);
+        vm.Comanda = comanda;
+        vm.CanCancel = true;
+
+        await vm.CancelarComandaCommand.ExecuteAsync(null);
+
+        _mockComandasService.Verify(x => x.CancelarComandaAsync(It.IsAny<Guid>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CancelarComandaAsync_WhenServiceFails_ShouldShowError()
+    {
+        var comandaId = Guid.NewGuid();
+        var comanda = new ComandaDto { Id = comandaId, Numero = "001", Estado = "Pendiente" };
+
+        _mockDialogService.Setup(x => x.ShowPromptAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
+            .ReturnsAsync("Motivo");
+        _mockDialogService.Setup(x => x.ShowConfirmAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
+
+        _mockComandasService.Setup(x => x.CancelarComandaAsync(
+            It.IsAny<Guid>(), It.IsAny<string>()))
+            .ReturnsAsync(ApiResponse<ComandaDto>.ErrorResponse(new List<string>{"err"}, "fallo", 500));
+
+        var vm = new ComandaDetalleViewModel(_mockComandasService.Object, _mockNavigationService.Object, _mockDialogService.Object);
+        vm.Comanda = comanda;
+        vm.CanCancel = true;
+
+        await vm.CancelarComandaCommand.ExecuteAsync(null);
+
+        _mockDialogService.Verify(x => x.ShowAlertAsync(
+            It.Is<string>(t => t == "Error"), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CambiarEstadoAsync_WhenNotLista_ShouldShowInfoAndNotCallService()
+    {
+        var comanda = new ComandaDto { Id = Guid.NewGuid(), Estado = "Pendiente" };
+        var vm = new ComandaDetalleViewModel(_mockComandasService.Object, _mockNavigationService.Object, _mockDialogService.Object);
+        vm.Comanda = comanda;
+
+        await vm.CambiarEstadoCommand.ExecuteAsync(null);
+
+        _mockDialogService.Verify(x => x.ShowAlertAsync(
+            It.Is<string>(t => t == "Información"), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _mockComandasService.Verify(x => x.CambiarEstadoComandaAsync(
+            It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
     [Fact]
