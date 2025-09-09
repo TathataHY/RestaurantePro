@@ -15,6 +15,10 @@ public partial class CreateDailyPreparationPage : ContentPage
         base.OnAppearing();
         if (BindingContext is CreateDailyPreparationViewModel vm)
         {
+            if (vm.Categorias.Count == 0)
+            {
+                await vm.CargarCategoriasCommand.ExecuteAsync(null);
+            }
             if (vm.Productos.Count == 0)
             {
                 await vm.BuscarProductosCommand.ExecuteAsync(null);

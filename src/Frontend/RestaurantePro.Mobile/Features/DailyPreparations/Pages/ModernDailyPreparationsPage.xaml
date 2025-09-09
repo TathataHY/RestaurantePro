@@ -62,7 +62,7 @@
             </controls:ModernCard>
 
             <RefreshView Grid.Row="1" IsRefreshing="{Binding IsBusy}" Command="{Binding RefreshCommand}">
-                <CollectionView ItemsSource="{Binding PreparacionesDiarias}" SelectionMode="Single" SelectedItem="{Binding SelectedPreparacion}">
+                <CollectionView ItemsSource="{Binding PreparacionesDiarias}" SelectionMode="None">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
                             <controls:ModernCard Margin="8">

@@ -6,6 +6,7 @@ using RestaurantePro.Mobile.Core.Services.Navigation;
 using RestaurantePro.Mobile.Core.Services.Productos;
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using System.Collections.ObjectModel;
+using RestaurantePro.Mobile.Core.Services.Categorias;
 
 namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels;
 
@@ -38,6 +39,19 @@ public partial class CreateDailyPreparationViewModel : ObservableObject
 
     [ObservableProperty]
     private string _productoIdText = string.Empty;
+
+    // Categorías
+    [ObservableProperty]
+    private ObservableCollection<CategoriaProductoDto> _categorias = new();
+
+    [ObservableProperty]
+    private CategoriaProductoDto? _categoriaSeleccionada;
+
+    partial void OnCategoriaSeleccionadaChanged(CategoriaProductoDto? value)
+    {
+        // Refrescar productos al cambiar de categoría
+        _ = BuscarProductosAsync();
+    }
 
     [ObservableProperty]
     private int _cantidad = 1;
@@ -139,7 +153,19 @@ public partial class CreateDailyPreparationViewModel : ObservableObject
             var page = 1;
             var size = 10;
             var term = string.IsNullOrWhiteSpace(ProductoBusqueda) ? null : ProductoBusqueda;
-            var result = await _productosService.ObtenerProductosPaginadosAsync(page, size, term, true);
+            ApiResponse<List<ProductoDto>> result;
+            if (CategoriaSeleccionada != null && string.IsNullOrWhiteSpace(term))
+            {
+                result = await _productosService.ObtenerProductosPorCategoriaAsync(CategoriaSeleccionada.Id, true);
+            }
+            else if (!string.IsNullOrWhiteSpace(term))
+            {
+                result = await _productosService.BuscarProductosAsync(term!, true);
+            }
+            else
+            {
+                result = await _productosService.ObtenerProductosPaginadosAsync(page, size, term, true);
+            }
             Productos.Clear();
             if (result.Success && result.Data != null)
             {
@@ -154,6 +180,25 @@ public partial class CreateDailyPreparationViewModel : ObservableObject
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task CargarCategoriasAsync()
+    {
+        try
+        {
+            var resp = await _productosService.ObtenerCategoriasAsync();
+            Categorias.Clear();
+            if (resp.Success && resp.Data != null)
+            {
+                foreach (var c in resp.Data)
+                    Categorias.Add(c);
+            }
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowErrorAsync($"Error al cargar categorías: {ex.Message}");
         }
     }
 

@@ -128,6 +128,24 @@ public class ComandasServiceTests
         _apiServiceMock.Verify(x => x.GetAsync<PaginatedList<ComandaDto>>(It.Is<string>(s => s.Contains($"mesaId={mesaId}") && s.Contains("pageSize=12") && s.Contains("soloActivas=true") && s.Contains("incluirItems=true")), It.IsAny<string?>()), Times.Once);
     }
 
+    [Fact]
+    public async Task ObtenerComandasActivasAsync_DebeIncluirSoloActivasEIncluirItems()
+    {
+        var paged = new PaginatedList<ComandaDto> { Items = new List<ComandaDto>() };
+
+        _apiServiceMock
+            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.Is<string>(s =>
+                s.StartsWith("api/operaciones/comandas?") &&
+                s.Contains("soloActivas=true") &&
+                s.Contains("incluirItems=true")), It.IsAny<string?>()))
+            .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(paged));
+
+        var result = await _comandasService.ObtenerComandasActivasAsync();
+
+        result.Success.Should().BeTrue();
+        _apiServiceMock.Verify(x => x.GetAsync<PaginatedList<ComandaDto>>(It.Is<string>(s => s.Contains("soloActivas=true") && s.Contains("incluirItems=true")), It.IsAny<string?>()), Times.Once);
+    }
+
     #endregion
 
     #region ObtenerComandasPorMesaAsync Tests

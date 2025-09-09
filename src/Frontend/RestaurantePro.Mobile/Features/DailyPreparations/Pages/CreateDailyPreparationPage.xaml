@@ -12,6 +12,9 @@
         <VerticalStackLayout Spacing="16" Padding="16">
             <controls:ModernCard>
                 <VerticalStackLayout Spacing="12">
+                    <Label Text="Categoría" Style="{StaticResource CaptionStyle}" />
+                    <Picker ItemsSource="{Binding Categorias}" ItemDisplayBinding="{Binding Nombre}" SelectedItem="{Binding CategoriaSeleccionada}" />
+
                     <Label Text="Producto" Style="{StaticResource CaptionStyle}" />
                     <SearchBar Placeholder="Buscar producto..." Text="{Binding ProductoBusqueda}" SearchCommand="{Binding BuscarProductosCommand}" />
                     <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
