@@ -18,6 +18,7 @@ Elevar la calidad y estabilidad de las pruebas de integración móviles aseguran
 - Suite completa integración móvil: 246/246 OK en 15.7s (local). TRX: `tests/Frontend/RestaurantePro.Mobile.IntegrationTests/TestResults/TestResults.trx`.
 - Pruebas nuevas: Expiración/refresh de token (2/2 OK).
 - Seguridad/Roles: sin token 401 (OK); Mesero puede listar Facturas (200), acceso a `Usuarios` devuelve 403 (OK).
+- Resiliencia ViewModels: manejo de error/timeout en `DailyPreparationsViewModel.LoadEstadisticas` mostrando mensaje al usuario (OK).
 
 ### Checklist (técnico)
 - [x] Agregar `FakeNavigationService` en proyecto de integración y referenciar donde se construye `AuthService`.
@@ -29,6 +30,7 @@ Elevar la calidad y estabilidad de las pruebas de integración móviles aseguran
 - [x] Mejorar aserciones según xUnit analyzers (`Assert.Contains`, `Assert.Empty`, etc.).
 - [x] Asegurar seed único y limpieza de estado por clase o caso donde aplique.
 - [x] Ejecutar suite completa y capturar métricas (tiempo total, tests pasados/fallidos, estabilidad).
+- [x] Unificar E2E con helpers (`TestDataBuilders`) para login/token, producto, mesa y crear comanda.
 
 ### Cobertura por flujo (según distribución funcional)
 - Auth (login básico y no autorizado): cubierto (`AuthenticationTest`, `AuthService*IntegrationTests`).
@@ -52,10 +54,16 @@ Elevar la calidad y estabilidad de las pruebas de integración móviles aseguran
 - InMemory per-test: revisar aislamiento y, si procede, datos por clase con fixture compartido.
 
 ### Siguientes pasos
-1) Resiliencia cliente: simular 500/timeout y verificar manejo en ViewModels.
-2) Datos deterministas: builders para crear datos mínimos por caso.
-3) Limpieza: confirmar limpieza por clase de `FakeSecureStorageService` (instancia por test).
-4) CI/CD: pipeline que ejecute suite y publique TRX/HTML.
+1) Logout/Auth: verificar logout limpia storage y 401 en endpoint protegido post-logout.
+2) Preparaciones (ViewModel): filtrar; consumo inválido (> disponible); marcar disponible; eliminar; verificar `IDialogService`.
+3) Comandas (acciones): agregar/remover producto; actualizar cantidad; aplicar descuento; cerrar/servicio completo.
+4) Mesas (extendido): reservar; fuera de servicio; cambiar estado; buscar mejor mesa.
+5) Productos: filtros por categoría; paginación (límites y fuera de rango); detalle 404.
+6) Clientes: búsqueda básica; detalle 404 (Guid inexistente).
+7) Fidelización: canjear puntos OK y error por saldo insuficiente.
+8) Ingredientes: bajo stock; consultas básicas y detalle 404.
+9) Errores controlados: validar mapeo 400/404/422 en `ApiService` y mensajes en ViewModels.
+10) Limpieza: confirmar limpieza por clase de `FakeSecureStorageService` (instancia por test).
 3) Estados inválidos: transiciones no permitidas en Comandas/Mesas y mensajes de error.
 4) Resiliencia cliente: simular 500/timeout y verificar manejo en ViewModels.
 5) Datos deterministas: builders para crear datos mínimos por caso.

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
+             xmlns:vm="clr-namespace:RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels;assembly=RestaurantePro.Mobile.Core"
+             x:Class="RestaurantePro.Mobile.Features.DailyPreparations.Pages.EditDailyPreparationPage"
+             x:DataType="vm:EditDailyPreparationViewModel"
+             Title="Editar Preparación"
+             BackgroundColor="{StaticResource SurfacePrimary}">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="16" Padding="16">
+            <controls:ModernCard>
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Categoría" Style="{StaticResource CaptionStyle}" />
+                    <Picker ItemsSource="{Binding Categorias}" ItemDisplayBinding="{Binding Nombre}" SelectedItem="{Binding CategoriaSeleccionada}" />
+
+                    <Label Text="Producto" Style="{StaticResource CaptionStyle}" />
+                    <SearchBar Placeholder="Buscar producto..." Text="{Binding ProductoBusqueda}" SearchCommand="{Binding BuscarProductosCommand}" />
+                    <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+                    <CollectionView ItemsSource="{Binding Productos}" SelectionMode="Single" SelectedItem="{Binding ProductoSeleccionado}">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <controls:ModernCard Margin="0,4">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" Padding="8">
+                                        <Label Text="🍽️" />
+                                        <Label Grid.Column="1" Text="{Binding Nombre}" Style="{StaticResource BodyStyle}" />
+                                        <Label Grid.Column="2" Text="{Binding Precio, StringFormat='S/ {0:F2}'}" Style="{StaticResource CaptionStyle}" />
+                                    </Grid>
+                                </controls:ModernCard>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </controls:ModernCard>
+
+            <controls:ModernCard>
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="Cantidad preparada" Style="{StaticResource CaptionStyle}" />
+                    <Entry Keyboard="Numeric" Text="{Binding CantidadPreparada}" />
+
+                    <Label Text="Cantidad disponible" Style="{StaticResource CaptionStyle}" />
+                    <Entry Keyboard="Numeric" Text="{Binding CantidadDisponible}" />
+
+                    <Label Text="Vence" Style="{StaticResource CaptionStyle}" />
+                    <DatePicker Date="{Binding FechaVencimiento}" />
+
+                    <Label Text="Observaciones" Style="{StaticResource CaptionStyle}" />
+                    <Editor Text="{Binding Observaciones}" AutoSize="TextChanges" />
+                </VerticalStackLayout>
+            </controls:ModernCard>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                <Button Text="Cancelar" Command="{Binding CancelarCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+                <Button Grid.Column="1" Text="Guardar" Command="{Binding GuardarCambiosCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+            </Grid>
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
+
+

@@ -86,7 +86,7 @@ public partial class PreparacionesViewModel : BaseViewModel
         PreparacionSeleccionada = null;
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     public async Task CargarPreparacionesAsync()
     {
         if (IsBusy) return;
@@ -126,7 +126,7 @@ public partial class PreparacionesViewModel : BaseViewModel
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task CargarMasPreparacionesAsync()
     {
         if (IsBusy || !HayMasPreparaciones) return;
@@ -135,7 +135,7 @@ public partial class PreparacionesViewModel : BaseViewModel
         await CargarPreparacionesAsync();
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task RefrescarPreparacionesAsync()
     {
         if (EstaRefrescando) return;
@@ -152,14 +152,14 @@ public partial class PreparacionesViewModel : BaseViewModel
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task AplicarFiltrosAsync()
     {
         PaginaActual = 1;
         await CargarPreparacionesAsync();
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task LimpiarFiltrosAsync()
     {
         FiltroEstado = string.Empty;
@@ -184,7 +184,7 @@ public partial class PreparacionesViewModel : BaseViewModel
         });
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     public async Task IniciarPreparacionAsync(PreparacionDto preparacion)
     {
         if (preparacion == null) return;
@@ -226,7 +226,7 @@ public partial class PreparacionesViewModel : BaseViewModel
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task CompletarPreparacionAsync(PreparacionDto preparacion)
     {
         if (preparacion == null) return;
@@ -262,7 +262,7 @@ public partial class PreparacionesViewModel : BaseViewModel
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task CancelarPreparacionAsync(PreparacionDto preparacion)
     {
         if (preparacion == null) return;
@@ -313,7 +313,7 @@ public partial class PreparacionesViewModel : BaseViewModel
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task CargarColaPreparacionesAsync()
     {
         if (IsBusy) return;
@@ -346,7 +346,7 @@ public partial class PreparacionesViewModel : BaseViewModel
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task CargarPreparacionesPendientesAsync()
     {
         if (IsBusy) return;
@@ -379,7 +379,7 @@ public partial class PreparacionesViewModel : BaseViewModel
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task CargarPreparacionesEnPreparacionAsync()
     {
         if (IsBusy) return;
@@ -412,7 +412,7 @@ public partial class PreparacionesViewModel : BaseViewModel
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task CargarPreparacionesCompletadasAsync()
     {
         if (IsBusy) return;
@@ -442,6 +442,36 @@ public partial class PreparacionesViewModel : BaseViewModel
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    public async Task CrearPreparacionAsync()
+    {
+        try
+        {
+            await _dialogService.ShowAlertAsync("Función no disponible",
+                "La creación de preparaciones no está disponible en esta versión. Contacta al administrador.");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    public async Task VerPreparacionAsync(PreparacionDto? preparacion)
+    {
+        if (preparacion == null) return;
+
+        try
+        {
+            await _dialogService.ShowAlertAsync("Detalles de Preparación",
+                $"Nombre: {preparacion.Nombre}\nCategoría: {preparacion.Categoria}\nDisponible: {(preparacion.Disponible ? "Sí" : "No")}");
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error al ver preparación: {ex.Message}");
         }
     }
 

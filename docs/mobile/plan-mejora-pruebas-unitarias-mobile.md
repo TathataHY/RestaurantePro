@@ -68,7 +68,7 @@ Elevar la calidad y robustez de los tests unitarios del frontend móvil (MAUI) a
 - [ ] Casos límite de datos (listas vacías, cantidades límite)
 
 #### Deuda puntual
-- [ ] Reactivar o reemplazar `tests/Frontend/RestaurantePro.Mobile.UnitTests/ViewModels/DailyPreparationsViewModelTests.cs` (actualmente comentado)
+- [x] Reactivar o reemplazar `tests/Frontend/RestaurantePro.Mobile.UnitTests/ViewModels/DailyPreparationsViewModelTests.cs` (reactivado con mocks compatibles)
 
 ### Prioridades y orden de ejecución
 1. ViewModels Operations (Productos → Mesas → Comandas)
@@ -121,6 +121,27 @@ Estado Fase 2.1: Completada (suite de tests Comandas Services en verde).
 - [x] Paginación: verificación de parámetros `pageNumber/pageSize` (si aplica)
 
 Estado Fase 2.2: Completada (suite de tests Mesas/Productos Services en verde).
+
+### Fase 3 - ViewModels (Otras features)
+
+#### Reservaciones
+- [x] IsLoading y `PropertyChanged` básicos (término de búsqueda, estado, fecha)
+- [x] Errores en carga (diálogo de error coherente)
+- [x] Filtros: estado + búsqueda (aplicación sobre colección)
+- [x] CanExecute/debounce (paginación N/A) y estado vacío
+- [x] Estadísticas y confirmar; ver/editar completados
+
+Estado parcial Fase 3 (Reservaciones): Completada para núcleo + CanExecute/debounce y estado vacío; ver/editar completados.
+
+#### Preparaciones
+- [x] IsLoading y `PropertyChanged` (término de búsqueda, categoría, solo disponibles)
+- [x] Errores en carga/búsqueda (diálogo de error coherente)
+- [x] Búsqueda: actualización de `PreparacionesFiltradas`
+- [x] Cambiar disponibilidad: éxito y error (feedback de diálogo)
+- [x] CanExecute/debounce y paginación/estado vacío
+- [x] Comandos secundarios: iniciar/completar/cancelar; ver/crear completados
+
+Estado parcial Fase 3 (Preparaciones): Completada para comandos principales y no reentrancia; ver/crear completados.
 
 ### Métricas e inspección (opcional)
 - Cobertura (Coverlet + ReportGenerator)

@@ -28,21 +28,12 @@ public class MesasEndToEndTests : IClassFixture<MobileIntegrationTestFixture>
     [Fact]
     public async Task AsignarYLiberarMesa_FlujoBasico_OK()
     {
-        // Login
-        var loginResult = await _authService.LoginAsync("admin@restaurantepro.com", "AdminRestaurante123!");
-        Assert.True(loginResult.Success);
-        var token = await _authService.GetTokenAsync();
-        Assert.False(string.IsNullOrWhiteSpace(token));
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        // Login via builders
+        var token = await TestDataBuilders.LoginAsync(_client, "admin@restaurantepro.com", "AdminRestaurante123!");
+        TestDataBuilders.SetBearer(_client, token);
 
         // Obtener mesas disponibles (Data.Items)
-        var respDisponibles = await _client.GetAsync("/api/operaciones/mesas/disponibles");
-        respDisponibles.EnsureSuccessStatusCode();
-        var disponiblesJson = await respDisponibles.Content.ReadAsStringAsync();
-        using var dispDoc = JsonDocument.Parse(disponiblesJson);
-        var mesas = dispDoc.RootElement.GetProperty("Data").GetProperty("Items").EnumerateArray().ToList();
-        Assert.NotEmpty(mesas);
-        var mesaId = mesas.First().GetProperty("Id").GetGuid();
+        var mesaId = await TestDataBuilders.GetAnyMesaDisponibleIdAsync(_client);
 
         // Asignar mesa: POST /mesas/{id}/asignar
         var asignarCmd = new { ClienteNombre = "Cliente E2E", NumeroPersonas = 2 };

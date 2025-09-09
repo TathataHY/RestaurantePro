@@ -43,9 +43,10 @@ public partial class ReservacionesViewModel : ObservableObject
         _dialogService = dialogService;
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task CargarReservacionesAsync()
     {
+        if (IsLoading) return;
         try
         {
             IsLoading = true;
@@ -75,9 +76,10 @@ public partial class ReservacionesViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task CargarReservacionesHoyAsync()
     {
+        if (IsLoading) return;
         try
         {
             IsLoading = true;
@@ -107,7 +109,7 @@ public partial class ReservacionesViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task CargarEstadisticasAsync()
     {
         try
@@ -124,9 +126,10 @@ public partial class ReservacionesViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     private async Task BuscarReservacionesAsync()
     {
+        if (IsLoading) return;
         if (string.IsNullOrWhiteSpace(TerminoBusqueda))
         {
             AplicarFiltros();
@@ -322,8 +325,12 @@ public partial class ReservacionesViewModel : ObservableObject
 
         try
         {
+            var horaTexto = reservacion.HoraReservacion is TimeSpan ts
+                ? ts.ToString(@"hh\:mm")
+                : $"{reservacion.HoraReservacion}";
+
             await _dialogService.ShowAlertAsync("Detalles de Reservación", 
-                $"Cliente: {reservacion.NombreCliente}\nFecha: {reservacion.FechaReservacion:dd/MM/yyyy}\nHora: {reservacion.HoraReservacion:HH:mm}\nPersonas: {reservacion.NumeroPersonas}");
+                $"Cliente: {reservacion.NombreCliente}\nFecha: {reservacion.FechaReservacion:dd/MM/yyyy}\nHora: {horaTexto}\nPersonas: {reservacion.NumeroPersonas}");
         }
         catch (Exception ex)
         {

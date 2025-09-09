@@ -52,6 +52,15 @@ public partial class BaseViewModel : ObservableObject
     }
 
     /// <summary>
+    /// Establece explícitamente un estado de error con mensaje.
+    /// </summary>
+    public void SetError(string message)
+    {
+        ErrorMessage = message;
+        HasError = true;
+    }
+
+    /// <summary>
     /// Método para manejar la navegación hacia atrás
     /// </summary>
     [RelayCommand]

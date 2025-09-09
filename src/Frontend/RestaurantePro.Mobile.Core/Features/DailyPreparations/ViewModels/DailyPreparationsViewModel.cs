@@ -41,6 +41,9 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
         [ObservableProperty]
         private bool _isBusy;
 
+        [ObservableProperty]
+        private bool _isRefreshing;
+
         public DailyPreparationsViewModel(
             IDailyPreparationsService dailyPreparationsService,
             IDialogService dialogService,
@@ -53,7 +56,24 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
 
         #region Commands
 
-        [RelayCommand]
+        [RelayCommand(AllowConcurrentExecutions = false)]
+        private async Task RefreshAsync()
+        {
+            if (IsRefreshing) return;
+
+            IsRefreshing = true;
+            try
+            {
+                await LoadPreparacionesDiariasCommand.ExecuteAsync(null);
+                await LoadEstadisticasCommand.ExecuteAsync(null);
+            }
+            finally
+            {
+                IsRefreshing = false;
+            }
+        }
+
+        [RelayCommand(AllowConcurrentExecutions = false)]
         private async Task LoadPreparacionesDiariasAsync()
         {
             if (IsBusy) return;
@@ -86,7 +106,7 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
             }
         }
 
-        [RelayCommand]
+        [RelayCommand(AllowConcurrentExecutions = false)]
         private async Task LoadEstadisticasAsync()
         {
             try
@@ -108,7 +128,7 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
             }
         }
 
-        [RelayCommand]
+        [RelayCommand(AllowConcurrentExecutions = false)]
         private async Task FiltrarPorEstadoAsync(string estado)
         {
             if (IsBusy) return;
@@ -151,54 +171,12 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
             }
         }
 
-        [RelayCommand]
-        private async Task ConsumirPreparacionAsync(PreparacionDiariaDto preparacion)
-        {
-            if (preparacion == null) return;
+        // El consumo ahora se gestiona desde Comandas; se deja intencionalmente deshabilitado aquí
+        [RelayCommand(CanExecute = nameof(CanNeverExecute))]
+        private Task ConsumirPreparacionAsync(PreparacionDiariaDto preparacion)
+            => Task.CompletedTask;
 
-            try
-            {
-                var cantidadStr = await _dialogService.ShowPromptAsync(
-                    "Consumir Preparación",
-                    $"Ingrese la cantidad a consumir de {preparacion.NombreProducto}",
-                    "OK",
-                    "Cancelar",
-                    "",
-                    -1,
-                    "1");
-
-                if (string.IsNullOrEmpty(cantidadStr))
-                    return;
-
-                if (!int.TryParse(cantidadStr, out int cantidad) || cantidad <= 0)
-                {
-                    await _dialogService.ShowErrorAsync("La cantidad debe ser un número positivo");
-                    return;
-                }
-
-                if (cantidad > preparacion.CantidadDisponible)
-                {
-                    await _dialogService.ShowErrorAsync($"La cantidad no puede ser mayor a {preparacion.CantidadDisponible}");
-                    return;
-                }
-
-                var result = await _dailyPreparationsService.ConsumirPreparacionDiariaAsync(preparacion.Id, cantidad);
-                
-                if (result.Succeeded)
-                {
-                    await _dialogService.ShowSuccessAsync("Preparación consumida exitosamente");
-                    await LoadPreparacionesDiariasCommand.ExecuteAsync(null);
-                }
-                else
-                {
-                    await _dialogService.ShowErrorAsync(result.Error ?? "Error al consumir preparación");
-                }
-            }
-            catch (Exception ex)
-            {
-                await _dialogService.ShowErrorAsync($"Error al consumir preparación: {ex.Message}");
-            }
-        }
+        private bool CanNeverExecute => false;
 
         [RelayCommand]
         private async Task MarcarComoDisponibleAsync(PreparacionDiariaDto preparacion)
@@ -265,6 +243,16 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
         }
 
         [RelayCommand]
+        private async Task EditarPreparacionAsync(PreparacionDiariaDto preparacion)
+        {
+            if (preparacion == null) return;
+            await _navigationService.NavigateToAsync("editar-preparacion-diaria", new Dictionary<string, object>
+            {
+                { "id", preparacion.Id }
+            });
+        }
+
+        [RelayCommand]
         private async Task VerDetalleAsync(PreparacionDiariaDto preparacion)
         {
             if (preparacion == null) return;
@@ -279,12 +267,7 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
             await _navigationService.NavigateToAsync("crear-preparacion-diaria");
         }
 
-        [RelayCommand]
-        private async Task RefreshAsync()
-        {
-            await LoadPreparacionesDiariasCommand.ExecuteAsync(null);
-            await LoadEstadisticasCommand.ExecuteAsync(null);
-        }
+        
 
         [RelayCommand]
         private void BuscarPreparaciones()

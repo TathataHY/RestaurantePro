@@ -256,6 +256,7 @@ public static class MauiProgram
 		// ViewModel de Preparaciones Diarias V1
 		services.AddTransient<DailyPreparationsViewModel>();
 		services.AddTransient<RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels.CreateDailyPreparationViewModel>();
+		services.AddTransient<RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels.EditDailyPreparationViewModel>();
 
 		// ViewModels desde Mobile.Core - Comercial
 		services.AddTransient<FacturasViewModel>();
@@ -283,6 +284,7 @@ public static class MauiProgram
 		// Página de Preparaciones Diarias V1
 		services.AddTransient<DailyPreparationsPage>();
 		services.AddTransient<RestaurantePro.Mobile.Features.DailyPreparations.Pages.CreateDailyPreparationPage>();
+		services.AddTransient<RestaurantePro.Mobile.Features.DailyPreparations.Pages.EditDailyPreparationPage>();
 
 		// Páginas - Comercial
 		services.AddTransient<FacturasPage>();

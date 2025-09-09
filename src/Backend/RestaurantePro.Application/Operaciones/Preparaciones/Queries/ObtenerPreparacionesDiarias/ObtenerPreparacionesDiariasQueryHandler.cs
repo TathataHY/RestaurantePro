@@ -43,13 +43,31 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerPr
 
             try
             {
-                // Obtener todas las preparaciones diarias
-                var preparaciones = await _context.PreparacionesDiarias
+                // Proyección con joins para incluir nombres de producto y chef
+                var preparacionesDto = await _context.PreparacionesDiarias
                     .OrderByDescending(p => p.FechaPreparacion)
+                    .Select(p => new PreparacionDiariaDto
+                    {
+                        Id = p.Id,
+                        ProductoId = p.ProductoId,
+                        ChefId = p.ChefId,
+                        CantidadPreparada = p.CantidadPreparada,
+                        CantidadDisponible = p.CantidadDisponible,
+                        FechaVencimiento = p.FechaVencimiento,
+                        Observaciones = p.Observaciones ?? string.Empty,
+                        FechaPreparacion = p.FechaPreparacion,
+                        Estado = p.Estado.ToString(),
+                        // Nombres mediante joins
+                        NombreProducto = _context.Productos
+                            .Where(prod => prod.Id == p.ProductoId)
+                            .Select(prod => prod.Nombre)
+                            .FirstOrDefault() ?? string.Empty,
+                        NombreChef = _context.Usuarios
+                            .Where(u => u.Id == p.ChefId)
+                            .Select(u => u.NombreCompleto)
+                            .FirstOrDefault() ?? string.Empty
+                    })
                     .ToListAsync(cancellationToken);
-
-                // Mapear a DTOs
-                var preparacionesDto = _mapper.Map<List<PreparacionDiariaDto>>(preparaciones);
 
                 _logger.LogInformation("✅ Preparaciones diarias obtenidas exitosamente: {Cantidad} preparaciones", preparacionesDto.Count);
 

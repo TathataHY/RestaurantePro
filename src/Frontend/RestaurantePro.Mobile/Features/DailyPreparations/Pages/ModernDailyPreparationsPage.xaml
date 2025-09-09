@@ -4,6 +4,7 @@
              xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
              xmlns:vm="clr-namespace:RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels;assembly=RestaurantePro.Mobile.Core"
              x:Class="RestaurantePro.Mobile.Features.DailyPreparations.Pages.ModernDailyPreparationsPage"
+             x:Name="DailyPrepsPage"
              x:DataType="vm:DailyPreparationsViewModel"
              Title="Preparaciones Diarias"
              BackgroundColor="{StaticResource SurfacePrimary}">
@@ -61,7 +62,11 @@
                 </VerticalStackLayout>
             </controls:ModernCard>
 
-            <RefreshView Grid.Row="1" IsRefreshing="{Binding IsBusy}" Command="{Binding RefreshCommand}">
+            <RefreshView x:Name="RefreshControl"
+                         Grid.Row="1"
+                         IsRefreshing="{Binding IsRefreshing, Mode=TwoWay}"
+                         Command="{Binding RefreshCommand}"
+                         Refreshing="OnRefreshing">
                 <CollectionView ItemsSource="{Binding PreparacionesDiarias}" SelectionMode="None">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
@@ -97,9 +102,8 @@
                                             <Label Text="{Binding Observaciones}" Style="{StaticResource CaptionStyle}" />
                                         </VerticalStackLayout>
                                         <HorizontalStackLayout Grid.Column="1" Spacing="6">
-                                            <Button Text="🍽️" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ConsumirPreparacionCommand}" CommandParameter="{Binding .}" Style="{StaticResource SecondaryButtonStyle}" />
-                                            <Button Text="✅" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MarcarComoDisponibleCommand}" CommandParameter="{Binding .}" Style="{StaticResource SecondaryButtonStyle}" />
-                                            <Button Text="🗑️" Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EliminarPreparacionCommand}" CommandParameter="{Binding .}" Style="{StaticResource DangerButtonStyle}" />
+                                            <Button Text="✏️" Clicked="OnEditarClicked" Style="{StaticResource SecondaryButtonStyle}" />
+                                            <Button Text="🗑️" Clicked="OnEliminarClicked" Style="{StaticResource DangerButtonStyle}" />
                                         </HorizontalStackLayout>
                                     </Grid>
                                 </Grid>

@@ -101,9 +101,9 @@ public partial class CreateDailyPreparationViewModel : ObservableObject
             await _dialogService.ShowErrorAsync("La cantidad debe ser mayor que 0.");
             return;
         }
-        if (FechaVencimiento.Date < DateTime.Today)
+        if (FechaVencimiento.Date <= DateTime.Today)
         {
-            await _dialogService.ShowErrorAsync("La fecha de vencimiento debe ser hoy o futura.");
+            await _dialogService.ShowErrorAsync("La fecha de vencimiento debe ser futura (desde mañana).");
             return;
         }
 

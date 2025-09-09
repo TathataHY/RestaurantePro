@@ -55,6 +55,37 @@ public partial class ModernDailyPreparationsPage : ContentPage
         var tabName = FilterTabNavigation.Tabs[tabIndex];
         await _viewModel.FiltrarPorEstadoCommand.ExecuteAsync(tabName);
     }
+
+    private async void OnEditarClicked(object sender, EventArgs e)
+    {
+        if (sender is Button btn && btn.BindingContext is RestaurantePro.Mobile.Core.Models.DTOs.PreparacionDiariaDto prep)
+        {
+            await _viewModel.EditarPreparacionCommand.ExecuteAsync(prep);
+        }
+    }
+
+    private async void OnEliminarClicked(object sender, EventArgs e)
+    {
+        if (sender is Button btn && btn.BindingContext is RestaurantePro.Mobile.Core.Models.DTOs.PreparacionDiariaDto prep)
+        {
+            await _viewModel.EliminarPreparacionCommand.ExecuteAsync(prep);
+        }
+    }
+
+    private async void OnRefreshing(object sender, EventArgs e)
+    {
+        // Garantizar apagado del refresco incluso si hay errores/red lenta
+        try
+        {
+            await _viewModel.RefreshCommand.ExecuteAsync(null);
+        }
+        finally
+        {
+            // Failsafe de seguridad
+            await Task.Delay(100);
+            RefreshControl.IsRefreshing = false;
+        }
+    }
 }
 
 

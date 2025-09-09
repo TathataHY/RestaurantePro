@@ -69,6 +69,45 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
         }
 
         [Fact]
+        public async Task CargarPreparacionesAsync_DobleEjecucion_NoDebeReentrar()
+        {
+            var preparaciones = new List<PreparacionDto>
+            {
+                new() { Id = Guid.NewGuid(), Nombre = "Pizza", NombreProducto = "Pizza" }
+            };
+
+            _mockPreparacionesService.Setup(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>()))
+                                     .Returns(async () =>
+                                     {
+                                         await Task.Delay(200);
+                                         return ApiResponse<List<PreparacionDto>>.SuccessResponse(preparaciones);
+                                     });
+
+            var t1 = _viewModel.CargarPreparacionesAsync();
+            var t2 = _viewModel.CargarPreparacionesAsync();
+            await t1;
+
+            _mockPreparacionesService.Verify(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task RefrescarPreparacionesAsync_DobleEjecucion_NoDebeReentrar()
+        {
+            _mockPreparacionesService.Setup(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>()))
+                                     .Returns(async () =>
+                                     {
+                                         await Task.Delay(200);
+                                         return ApiResponse<List<PreparacionDto>>.SuccessResponse(new List<PreparacionDto>());
+                                     });
+
+            var t1 = _viewModel.RefrescarPreparacionesCommand.ExecuteAsync(null);
+            var t2 = _viewModel.RefrescarPreparacionesCommand.ExecuteAsync(null);
+            await t1;
+
+            _mockPreparacionesService.Verify(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>()), Times.Once);
+        }
+
+        [Fact]
         public async Task CargarPreparacionesAsync_ConError_DebeMostrarError()
         {
             // Arrange
@@ -121,6 +160,57 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
             // Assert
             _viewModel.Preparaciones.Should().HaveCount(1);
             _viewModel.IsBusy.Should().BeFalse();
+        }
+
+        [Fact]
+        public async Task CargarPreparacionesAsync_SinDatos_DebeQuedarVacioYSinMasPaginas()
+        {
+            // Arrange
+            var result = ApiResponse<List<PreparacionDto>>.SuccessResponse(new List<PreparacionDto>());
+
+            _mockPreparacionesService.Setup(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>()))
+                                    .ReturnsAsync(result);
+
+            // Act
+            await _viewModel.CargarPreparacionesAsync();
+
+            // Assert
+            _viewModel.Preparaciones.Should().BeEmpty();
+            _viewModel.HayMasPreparaciones.Should().BeFalse();
+            _viewModel.PaginaActual.Should().Be(1);
+        }
+
+        [Fact]
+        public async Task CargarMasPreparacionesAsync_ConMasPaginas_DebeIncrementarPaginaYEjecutarCarga()
+        {
+            // Arrange
+            _viewModel.HayMasPreparaciones = true;
+            _viewModel.PaginaActual = 1;
+
+            _mockPreparacionesService.Setup(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>()))
+                                    .ReturnsAsync(ApiResponse<List<PreparacionDto>>.SuccessResponse(new List<PreparacionDto>()));
+
+            // Act
+            await _viewModel.CargarMasPreparacionesCommand.ExecuteAsync(null);
+
+            // Assert
+            _viewModel.PaginaActual.Should().Be(2);
+            _mockPreparacionesService.Verify(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task CargarMasPreparacionesAsync_SinMasPaginas_NoDebeEjecutar()
+        {
+            // Arrange
+            _viewModel.HayMasPreparaciones = false; // por defecto
+            _viewModel.PaginaActual = 1;
+
+            // Act
+            await _viewModel.CargarMasPreparacionesCommand.ExecuteAsync(null);
+
+            // Assert
+            _viewModel.PaginaActual.Should().Be(1);
+            _mockPreparacionesService.Verify(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>()), Times.Never);
         }
 
         [Fact]
@@ -441,6 +531,41 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
             filtros.Should().NotBeNull();
             filtros!.SearchTerm.Should().Be("Pizza");
             filtros.Estado.Should().Be("Pendiente");
+        }
+
+        [Fact]
+        public async Task VerPreparacionAsync_DebeMostrarDetallesEnDialogo()
+        {
+            // Arrange
+            var preparacion = new PreparacionDto
+            {
+                Id = Guid.NewGuid(),
+                Nombre = "Pizza Margherita",
+                Categoria = "Pizzas",
+                Disponible = true
+            };
+
+            // Act
+            await _viewModel.VerPreparacionCommand.ExecuteAsync(preparacion);
+
+            // Assert
+            _mockDialogService.Verify(x => x.ShowAlertAsync(
+                It.Is<string>(t => t.Contains("Detalles")),
+                It.Is<string>(m => m.Contains("Nombre:") && m.Contains("Pizza Margherita") && m.Contains("Categoría:") && m.Contains("Pizzas") && m.Contains("Disponible: Sí")),
+                It.IsAny<string>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task CrearPreparacionAsync_NoDisponible_DebeMostrarMensaje()
+        {
+            // Act
+            await _viewModel.CrearPreparacionCommand.ExecuteAsync(null);
+
+            // Assert
+            _mockDialogService.Verify(x => x.ShowAlertAsync(
+                It.Is<string>(t => t.Contains("Función no disponible")),
+                It.Is<string>(m => m.Contains("creación de preparaciones") || m.Contains("no está disponible")),
+                It.IsAny<string>()), Times.Once);
         }
     }
 } 
