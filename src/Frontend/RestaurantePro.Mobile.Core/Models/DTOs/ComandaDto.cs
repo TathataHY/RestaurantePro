@@ -312,4 +312,22 @@ public class ComandaDto
     /// Indica si la comanda tiene observaciones
     /// </summary>
     public bool TieneObservaciones => !string.IsNullOrWhiteSpace(Observaciones);
+
+    /// <summary>
+    /// Indica si la comanda puede ser cancelada
+    /// Solo en estados Creada, Pendiente o EnProceso (no en finalizada o cancelada)
+    /// </summary>
+    public bool PuedeCancelar
+    {
+        get
+        {
+            var estado = Estado.ToLowerInvariant();
+            var estadoTexto = EstadoTexto.ToLowerInvariant();
+            var estadoNormalizado = !string.IsNullOrWhiteSpace(estado) ? estado : estadoTexto;
+            
+            return (estadoNormalizado == "creada" || estadoNormalizado == "pendiente" || estadoNormalizado == "enproceso") 
+                   && estadoNormalizado != "finalizada" 
+                   && estadoNormalizado != "cancelada";
+        }
+    }
 } 

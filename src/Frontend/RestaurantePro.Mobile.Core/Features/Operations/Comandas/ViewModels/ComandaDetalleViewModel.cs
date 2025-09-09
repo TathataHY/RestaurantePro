@@ -73,7 +73,7 @@ public partial class ComandaDetalleViewModel : BaseViewModel
     /// <summary>
     /// Indica si la comanda es nueva (estado Creada)
     /// </summary>
-    public bool EsNueva => Comanda?.Estado?.ToString() == "Creada";
+    public bool EsNueva => Comanda?.PuedeSerEditada == true;
 
     #endregion
 
@@ -399,24 +399,29 @@ public partial class ComandaDetalleViewModel : BaseViewModel
     /// </summary>
     private void ActualizarEstados()
     {
-        var estado = Comanda?.Estado ?? string.Empty;
-        var estadoLower = estado.ToLowerInvariant();
+        if (Comanda == null) return;
 
-        // Editable solo en Pendiente (no en preparación)
-        IsEditable = estadoLower.Contains("pend");
+        // Usar las propiedades del DTO del frontend
+        var estado = Comanda.Estado?.ToLowerInvariant() ?? string.Empty;
+        var estadoTexto = Comanda.EstadoTexto?.ToLowerInvariant() ?? string.Empty;
+        var estadoNormalizado = !string.IsNullOrWhiteSpace(estado) ? estado : estadoTexto;
 
-        // Mostrar botón de finalizar en Lista o Entregada
-        CanFinalize = estadoLower.Contains("lista") || estadoLower.Contains("entreg");
-        FinalizarButtonText = estadoLower.Contains("entreg") ? "Cobrar" : "Finalizar";
+        // Editable solo si puede ser editada (Creada o Pendiente)
+        IsEditable = Comanda.PuedeSerEditada;
+
+        // Mostrar botón de finalizar solo en Lista o Entregada (NO en finalizada)
+        CanFinalize = (estadoNormalizado == "lista" || estadoNormalizado == "entregada") 
+                     && estadoNormalizado != "finalizada" 
+                     && estadoNormalizado != "cancelada";
+        FinalizarButtonText = estadoNormalizado == "entregada" ? "Cobrar" : "Finalizar";
 
         // Mostrar "Cambiar Estado" SOLO cuando está Lista (mesero marca 'Entregada')
-        ShowCambiarEstado = estadoLower.Contains("lista");
+        ShowCambiarEstado = estadoNormalizado == "lista";
 
-        // Cancelar permitido solo al inicio (no en finalizadas o canceladas)
-        CanCancel = (estadoLower.Contains("pend") || estadoLower.Contains("prepar")) 
-                   && !estadoLower.Contains("entreg") 
-                   && !estadoLower.Contains("finalizada") 
-                   && !estadoLower.Contains("cancelada");
+        // Cancelar permitido solo en Creada o EnProceso (no en finalizadas o canceladas)
+        CanCancel = (estadoNormalizado == "creada" || estadoNormalizado == "enproceso" || estadoNormalizado == "pendiente") 
+                   && estadoNormalizado != "finalizada" 
+                   && estadoNormalizado != "cancelada";
 
         // Notificar cambio en EsNueva para actualizar la UI
         OnPropertyChanged(nameof(EsNueva));

@@ -157,6 +157,20 @@ Estado Fase 2.6: Completada (suite de tests Analytics Service en verde).
 
 Estado Fase 2.7: Completada (suite de tests Categorias Service en verde).
 
+#### Fase 2.8 - Services Inventory: Ingredientes
+- [x] 401/403/429 (propagación de `StatusCode` y mensaje)
+- [x] 204/empty body y `null Data`
+- [x] Cancelación (`CancellationToken`) y cancelación temprana (sin invocar API)
+
+Estado Fase 2.8: Completada (suite de tests Ingredientes Service en verde).
+
+#### Fase 2.9 - Services Inventory: Preparaciones
+- [x] 401/403/429 (propagación de `StatusCode` y mensaje)
+- [x] 204/empty body y `null Data`
+- [x] Cancelación (`CancellationToken`) y cancelación temprana (sin invocar API)
+
+Estado Fase 2.9: Completada (suite de tests Preparaciones Service en verde).
+
 ### Fase 3 - ViewModels (Otras features)
 
 #### Reservaciones

@@ -191,6 +191,7 @@
                                             <Button Text="❌ Cancelar"
                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CancelarComandaCommand}"
                                                     CommandParameter="{Binding .}"
+                                                    IsVisible="{Binding PuedeCancelar}"
                                                     Style="{StaticResource SecondaryButtonStyle}"
                                                     HorizontalOptions="Start" />
 

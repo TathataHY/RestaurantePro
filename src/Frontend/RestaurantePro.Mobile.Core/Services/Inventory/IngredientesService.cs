@@ -15,12 +15,14 @@ public class IngredientesService : IIngredientesService
         _authService = authService;
     }
 
-    public async Task<ApiResponse<List<IngredienteSummaryDto>>> ObtenerIngredientesAsync(bool soloActivos = true)
+    public async Task<ApiResponse<List<IngredienteSummaryDto>>> ObtenerIngredientesAsync(bool soloActivos = true, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<IngredienteSummaryDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.GetAsync<List<IngredienteSummaryDto>>($"api/inventario/ingredientes/lista?soloActivos={soloActivos}", token);
+            var response = await _apiService.GetAsync<List<IngredienteSummaryDto>>($"api/inventario/ingredientes/lista?soloActivos={soloActivos}", token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -29,12 +31,14 @@ public class IngredientesService : IIngredientesService
         }
     }
 
-    public async Task<ApiResponse<IngredienteDto>> ObtenerIngredienteAsync(Guid id)
+    public async Task<ApiResponse<IngredienteDto>> ObtenerIngredienteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<IngredienteDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.GetAsync<IngredienteDto>($"api/inventario/ingredientes/{id}", token);
+            var response = await _apiService.GetAsync<IngredienteDto>($"api/inventario/ingredientes/{id}", token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -43,10 +47,12 @@ public class IngredientesService : IIngredientesService
         }
     }
 
-    public async Task<ApiResponse<List<IngredienteSummaryDto>>> BuscarIngredientesAsync(string terminoBusqueda, string? categoria = null, bool? soloDisponibles = null)
+    public async Task<ApiResponse<List<IngredienteSummaryDto>>> BuscarIngredientesAsync(string terminoBusqueda, string? categoria = null, bool? soloDisponibles = null, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<IngredienteSummaryDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             var queryParams = new List<string> { $"termino={terminoBusqueda}" };
             if (!string.IsNullOrEmpty(categoria))
@@ -55,7 +61,7 @@ public class IngredientesService : IIngredientesService
                 queryParams.Add($"soloDisponibles={soloDisponibles.Value}");
 
             var queryString = string.Join("&", queryParams);
-            var response = await _apiService.GetAsync<List<IngredienteSummaryDto>>($"api/inventario/ingredientes/buscar?{queryString}", token);
+            var response = await _apiService.GetAsync<List<IngredienteSummaryDto>>($"api/inventario/ingredientes/buscar?{queryString}", token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -64,12 +70,14 @@ public class IngredientesService : IIngredientesService
         }
     }
 
-    public async Task<ApiResponse<IngredienteDto>> CrearIngredienteAsync(IngredienteDto ingrediente)
+    public async Task<ApiResponse<IngredienteDto>> CrearIngredienteAsync(IngredienteDto ingrediente, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<IngredienteDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.PostAsync<IngredienteDto>("api/inventario/ingredientes", ingrediente, token);
+            var response = await _apiService.PostAsync<IngredienteDto>("api/inventario/ingredientes", ingrediente, token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -78,12 +86,14 @@ public class IngredientesService : IIngredientesService
         }
     }
 
-    public async Task<ApiResponse<IngredienteDto>> ActualizarIngredienteAsync(Guid id, IngredienteDto ingrediente)
+    public async Task<ApiResponse<IngredienteDto>> ActualizarIngredienteAsync(Guid id, IngredienteDto ingrediente, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<IngredienteDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.PutAsync<IngredienteDto>($"api/inventario/ingredientes/{id}", ingrediente, token);
+            var response = await _apiService.PutAsync<IngredienteDto>($"api/inventario/ingredientes/{id}", ingrediente, token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -92,12 +102,14 @@ public class IngredientesService : IIngredientesService
         }
     }
 
-    public async Task<ApiResponse<bool>> EliminarIngredienteAsync(Guid id)
+    public async Task<ApiResponse<bool>> EliminarIngredienteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<bool>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.DeleteAsync($"api/inventario/ingredientes/{id}", token);
+            var response = await _apiService.DeleteAsync($"api/inventario/ingredientes/{id}", token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -106,12 +118,14 @@ public class IngredientesService : IIngredientesService
         }
     }
 
-    public async Task<ApiResponse<EstadisticasIngredientesDto>> ObtenerEstadisticasAsync()
+    public async Task<ApiResponse<EstadisticasIngredientesDto>> ObtenerEstadisticasAsync(CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<EstadisticasIngredientesDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.GetAsync<EstadisticasIngredientesDto>("api/inventario/ingredientes/estadisticas", token);
+            var response = await _apiService.GetAsync<EstadisticasIngredientesDto>("api/inventario/ingredientes/estadisticas", token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -120,12 +134,14 @@ public class IngredientesService : IIngredientesService
         }
     }
 
-    public async Task<ApiResponse<List<IngredienteSummaryDto>>> ObtenerIngredientesBajoStockAsync(int stockMinimo = 10)
+    public async Task<ApiResponse<List<IngredienteSummaryDto>>> ObtenerIngredientesBajoStockAsync(int stockMinimo = 10, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<IngredienteSummaryDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.GetAsync<List<IngredienteSummaryDto>>($"api/inventario/ingredientes/bajo-stock?stockMinimo={stockMinimo}", token);
+            var response = await _apiService.GetAsync<List<IngredienteSummaryDto>>($"api/inventario/ingredientes/bajo-stock?stockMinimo={stockMinimo}", token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -149,12 +165,14 @@ public class IngredientesService : IIngredientesService
         }
     }
 
-    public async Task<ApiResponse<List<ReporteValoracionDto>>> GenerarReporteValoracionAsync(FiltroIngredientesDto filtro)
+    public async Task<ApiResponse<List<ReporteValoracionDto>>> GenerarReporteValoracionAsync(FiltroIngredientesDto filtro, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<ReporteValoracionDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.PostAsync<List<ReporteValoracionDto>>("api/inventario/ingredientes/reporte-valoracion", filtro, token);
+            var response = await _apiService.PostAsync<List<ReporteValoracionDto>>("api/inventario/ingredientes/reporte-valoracion", filtro, token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -163,12 +181,14 @@ public class IngredientesService : IIngredientesService
         }
     }
 
-    public async Task<ApiResponse<List<MovimientoInventarioDto>>> ObtenerMovimientosAsync(Guid ingredienteId)
+    public async Task<ApiResponse<List<MovimientoInventarioDto>>> ObtenerMovimientosAsync(Guid ingredienteId, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<MovimientoInventarioDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.GetAsync<List<MovimientoInventarioDto>>($"api/inventario/ingredientes/{ingredienteId}/movimientos", token);
+            var response = await _apiService.GetAsync<List<MovimientoInventarioDto>>($"api/inventario/ingredientes/{ingredienteId}/movimientos", token, cancellationToken);
             return response;
         }
         catch (Exception ex)

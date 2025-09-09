@@ -15,13 +15,15 @@ public class PreparacionesService : IPreparacionesService
         _authService = authService;
     }
 
-    public async Task<ApiResponse<List<PreparacionDto>>> ObtenerPreparacionesAsync(bool soloDisponibles = true)
+    public async Task<ApiResponse<List<PreparacionDto>>> ObtenerPreparacionesAsync(bool soloDisponibles = true, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<PreparacionDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             // El backend devuelve una respuesta paginada, necesitamos extraer los Items
-            var response = await _apiService.GetAsync<PreparacionesPaginadasDto>("api/operaciones/preparaciones", token);
+            var response = await _apiService.GetAsync<PreparacionesPaginadasDto>("api/operaciones/preparaciones", token, cancellationToken);
             
             if (response.Succeeded && response.Data != null)
             {
@@ -38,12 +40,14 @@ public class PreparacionesService : IPreparacionesService
         }
     }
 
-    public async Task<ApiResponse<PreparacionDto>> ObtenerPreparacionAsync(Guid id)
+    public async Task<ApiResponse<PreparacionDto>> ObtenerPreparacionAsync(Guid id, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<PreparacionDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.GetAsync<PreparacionDto>($"api/operaciones/preparaciones/{id}", token);
+            var response = await _apiService.GetAsync<PreparacionDto>($"api/operaciones/preparaciones/{id}", token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -52,12 +56,14 @@ public class PreparacionesService : IPreparacionesService
         }
     }
 
-    public async Task<ApiResponse<List<PreparacionDto>>> BuscarPreparacionesAsync(string terminoBusqueda)
+    public async Task<ApiResponse<List<PreparacionDto>>> BuscarPreparacionesAsync(string terminoBusqueda, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<PreparacionDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.GetAsync<List<PreparacionDto>>($"api/operaciones/preparaciones/buscar?termino={terminoBusqueda}", token);
+            var response = await _apiService.GetAsync<List<PreparacionDto>>($"api/operaciones/preparaciones/buscar?termino={terminoBusqueda}", token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -66,12 +72,14 @@ public class PreparacionesService : IPreparacionesService
         }
     }
 
-    public async Task<ApiResponse<PreparacionDto>> CrearPreparacionAsync(PreparacionDto preparacion)
+    public async Task<ApiResponse<PreparacionDto>> CrearPreparacionAsync(PreparacionDto preparacion, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<PreparacionDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.PostAsync<PreparacionDto>("api/operaciones/preparaciones", preparacion, token);
+            var response = await _apiService.PostAsync<PreparacionDto>("api/operaciones/preparaciones", preparacion, token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -80,12 +88,14 @@ public class PreparacionesService : IPreparacionesService
         }
     }
 
-    public async Task<ApiResponse<PreparacionDto>> ActualizarPreparacionAsync(Guid id, PreparacionDto preparacion)
+    public async Task<ApiResponse<PreparacionDto>> ActualizarPreparacionAsync(Guid id, PreparacionDto preparacion, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<PreparacionDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.PutAsync<PreparacionDto>($"api/operaciones/preparaciones/{id}", preparacion, token);
+            var response = await _apiService.PutAsync<PreparacionDto>($"api/operaciones/preparaciones/{id}", preparacion, token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -94,12 +104,14 @@ public class PreparacionesService : IPreparacionesService
         }
     }
 
-    public async Task<ApiResponse<bool>> EliminarPreparacionAsync(Guid id)
+    public async Task<ApiResponse<bool>> EliminarPreparacionAsync(Guid id, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<bool>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.DeleteAsync($"api/operaciones/preparaciones/{id}", token);
+            var response = await _apiService.DeleteAsync($"api/operaciones/preparaciones/{id}", token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -108,12 +120,14 @@ public class PreparacionesService : IPreparacionesService
         }
     }
 
-    public async Task<ApiResponse<EstadisticasPreparacionesDto>> ObtenerEstadisticasAsync()
+    public async Task<ApiResponse<EstadisticasPreparacionesDto>> ObtenerEstadisticasAsync(CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<EstadisticasPreparacionesDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.GetAsync<EstadisticasPreparacionesDto>("api/operaciones/preparaciones/estadisticas", token);
+            var response = await _apiService.GetAsync<EstadisticasPreparacionesDto>("api/operaciones/preparaciones/estadisticas", token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -122,12 +136,14 @@ public class PreparacionesService : IPreparacionesService
         }
     }
 
-    public async Task<ApiResponse<List<PreparacionDto>>> ObtenerPreparacionesPorCategoriaAsync(string categoria)
+    public async Task<ApiResponse<List<PreparacionDto>>> ObtenerPreparacionesPorCategoriaAsync(string categoria, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<PreparacionDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.GetAsync<List<PreparacionDto>>($"api/operaciones/preparaciones/por-categoria?categoria={categoria}", token);
+            var response = await _apiService.GetAsync<List<PreparacionDto>>($"api/operaciones/preparaciones/por-categoria?categoria={categoria}", token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -136,14 +152,16 @@ public class PreparacionesService : IPreparacionesService
         }
     }
 
-    public async Task<ApiResponse<PreparacionDto>> CambiarDisponibilidadAsync(Guid id, bool disponible)
+    public async Task<ApiResponse<PreparacionDto>> CambiarDisponibilidadAsync(Guid id, bool disponible, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<PreparacionDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             // El backend usa el endpoint /disponible, no /cambiar-disponibilidad
             var request = new { Disponible = disponible };
-            var response = await _apiService.PostAsync<PreparacionDto>($"api/operaciones/preparaciones/{id}/disponible", request, token);
+            var response = await _apiService.PostAsync<PreparacionDto>($"api/operaciones/preparaciones/{id}/disponible", request, token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -152,12 +170,14 @@ public class PreparacionesService : IPreparacionesService
         }
     }
 
-    public async Task<ApiResponse<PreparacionDto>> IniciarPreparacionAsync(Guid id, IniciarPreparacionDto dto)
+    public async Task<ApiResponse<PreparacionDto>> IniciarPreparacionAsync(Guid id, IniciarPreparacionDto dto, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<PreparacionDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.PostAsync<PreparacionDto>($"api/operaciones/preparaciones/{id}/iniciar", dto, token);
+            var response = await _apiService.PostAsync<PreparacionDto>($"api/operaciones/preparaciones/{id}/iniciar", dto, token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -166,12 +186,14 @@ public class PreparacionesService : IPreparacionesService
         }
     }
 
-    public async Task<ApiResponse<PreparacionDto>> CompletarPreparacionAsync(Guid id)
+    public async Task<ApiResponse<PreparacionDto>> CompletarPreparacionAsync(Guid id, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<PreparacionDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.PostAsync<PreparacionDto>($"api/operaciones/preparaciones/{id}/completar", new { }, token);
+            var response = await _apiService.PostAsync<PreparacionDto>($"api/operaciones/preparaciones/{id}/completar", new { }, token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -180,12 +202,14 @@ public class PreparacionesService : IPreparacionesService
         }
     }
 
-    public async Task<ApiResponse<PreparacionDto>> CancelarPreparacionAsync(Guid id, CancelarPreparacionDto dto)
+    public async Task<ApiResponse<PreparacionDto>> CancelarPreparacionAsync(Guid id, CancelarPreparacionDto dto, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<PreparacionDto>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.PostAsync<PreparacionDto>($"api/operaciones/preparaciones/{id}/cancelar", dto, token);
+            var response = await _apiService.PostAsync<PreparacionDto>($"api/operaciones/preparaciones/{id}/cancelar", dto, token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -194,12 +218,14 @@ public class PreparacionesService : IPreparacionesService
         }
     }
 
-    public async Task<ApiResponse<List<PreparacionDto>>> ObtenerColaPreparacionesAsync()
+    public async Task<ApiResponse<List<PreparacionDto>>> ObtenerColaPreparacionesAsync(CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<PreparacionDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
-            var response = await _apiService.GetAsync<List<PreparacionDto>>("api/operaciones/preparaciones/cola", token);
+            var response = await _apiService.GetAsync<List<PreparacionDto>>("api/operaciones/preparaciones/cola", token, cancellationToken);
             return response;
         }
         catch (Exception ex)
@@ -208,13 +234,15 @@ public class PreparacionesService : IPreparacionesService
         }
     }
 
-    public async Task<ApiResponse<List<PreparacionDto>>> ObtenerPreparacionesPorEstadoAsync(string estado)
+    public async Task<ApiResponse<List<PreparacionDto>>> ObtenerPreparacionesPorEstadoAsync(string estado, CancellationToken cancellationToken = default)
     {
         try
         {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<PreparacionDto>>.Failure("Operación cancelada por el usuario");
             var token = await _authService.GetTokenAsync();
             // El backend usa el endpoint /por-estado, no /estado/{estado}
-            var response = await _apiService.GetAsync<List<PreparacionDto>>($"api/operaciones/preparaciones/por-estado?estado={estado}", token);
+            var response = await _apiService.GetAsync<List<PreparacionDto>>($"api/operaciones/preparaciones/por-estado?estado={estado}", token, cancellationToken);
             return response;
         }
         catch (Exception ex)

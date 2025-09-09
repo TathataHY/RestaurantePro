@@ -36,7 +36,7 @@ public class IngredientesServiceTests
         };
 
         var apiResponse = ApiResponse<List<IngredienteSummaryDto>>.SuccessResponse(ingredientes);
-        _mockApiService.Setup(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -97,7 +97,7 @@ public class IngredientesServiceTests
         };
 
         var apiResponse = ApiResponse<List<IngredienteSummaryDto>>.SuccessResponse(ingredientes);
-        _mockApiService.Setup(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -209,7 +209,7 @@ public class IngredientesServiceTests
         };
 
         var apiResponse = ApiResponse<List<IngredienteSummaryDto>>.SuccessResponse(ingredientes);
-        _mockApiService.Setup(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -232,7 +232,7 @@ public class IngredientesServiceTests
         };
 
         var apiResponse = ApiResponse<List<IngredienteSummaryDto>>.SuccessResponse(ingredientes);
-        _mockApiService.Setup(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -379,5 +379,108 @@ public class IngredientesServiceTests
         // Assert
         Assert.False(result.Succeeded);
         Assert.Contains("Error de red", result.Error);
+    }
+
+    // Tests para 401/403/429
+    [Fact]
+    public async Task ObtenerIngredientesAsync_WithUnauthorized_ShouldPropagate401()
+    {
+        // Arrange
+        var apiResponse = ApiResponse<List<IngredienteSummaryDto>>.ErrorResponse("Unauthorized", 401);
+        _mockApiService.Setup(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                      .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _ingredientesService.ObtenerIngredientesAsync();
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Equal(401, result.StatusCode);
+        Assert.Contains("Unauthorized", result.Error);
+    }
+
+    [Fact]
+    public async Task ObtenerIngredientesAsync_WithForbidden_ShouldPropagate403()
+    {
+        // Arrange
+        var apiResponse = ApiResponse<List<IngredienteSummaryDto>>.ErrorResponse("Forbidden", 403);
+        _mockApiService.Setup(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                      .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _ingredientesService.ObtenerIngredientesAsync();
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Equal(403, result.StatusCode);
+        Assert.Contains("Forbidden", result.Error);
+    }
+
+    [Fact]
+    public async Task ObtenerIngredientesAsync_WithTooManyRequests_ShouldPropagate429()
+    {
+        // Arrange
+        var apiResponse = ApiResponse<List<IngredienteSummaryDto>>.ErrorResponse("Too Many Requests", 429);
+        _mockApiService.Setup(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                      .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _ingredientesService.ObtenerIngredientesAsync();
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Equal(429, result.StatusCode);
+        Assert.Contains("Too Many Requests", result.Error);
+    }
+
+    // Tests para 204/empty body
+    [Fact]
+    public async Task ObtenerIngredientesAsync_WithEmptyBody_ShouldReturnEmptyList()
+    {
+        // Arrange
+        var apiResponse = ApiResponse<List<IngredienteSummaryDto>>.SuccessResponse(new List<IngredienteSummaryDto>());
+        _mockApiService.Setup(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                      .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _ingredientesService.ObtenerIngredientesAsync();
+
+        // Assert
+        Assert.True(result.Succeeded);
+        Assert.NotNull(result.Data);
+        Assert.Empty(result.Data);
+    }
+
+    // Tests para cancelación
+    [Fact]
+    public async Task ObtenerIngredientesAsync_WhenCancelled_ShouldReturnCancelled()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel(); // Cancel the token immediately
+
+        // Act
+        var result = await _ingredientesService.ObtenerIngredientesAsync(cancellationToken: cts.Token);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Contains("Operación cancelada por el usuario", result.Error);
+        _mockApiService.Verify(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task BuscarIngredientesAsync_WhenCancelled_ShouldReturnCancelled()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel(); // Cancel the token immediately
+
+        // Act
+        var result = await _ingredientesService.BuscarIngredientesAsync("test", cancellationToken: cts.Token);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Contains("Operación cancelada por el usuario", result.Error);
+        _mockApiService.Verify(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 } 

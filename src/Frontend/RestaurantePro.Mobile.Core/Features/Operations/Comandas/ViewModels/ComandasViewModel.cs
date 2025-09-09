@@ -328,8 +328,12 @@ public partial class ComandasViewModel : BaseViewModel
         if (comanda == null) return;
 
         // Verificar si la comanda es editable
-        var esFinalizada = comanda.Estado?.ToString()?.ToLowerInvariant().Contains("finalizada") == true;
-        var esCancelada = comanda.Estado?.ToString()?.ToLowerInvariant().Contains("cancelada") == true;
+        var estado = comanda.Estado?.ToLowerInvariant() ?? string.Empty;
+        var estadoTexto = comanda.EstadoTexto?.ToLowerInvariant() ?? string.Empty;
+        var estadoNormalizado = !string.IsNullOrWhiteSpace(estado) ? estado : estadoTexto;
+        
+        var esFinalizada = estadoNormalizado == "finalizada";
+        var esCancelada = estadoNormalizado == "cancelada";
         
         if (esFinalizada || esCancelada)
         {
@@ -727,9 +731,13 @@ public partial class ComandasViewModel : BaseViewModel
 
         // Determinar opciones disponibles según el estado de la comanda
         var opciones = new List<string>();
-        var esFinalizada = comanda.Estado?.ToString()?.ToLowerInvariant().Contains("finalizada") == true;
-        var esCancelada = comanda.Estado?.ToString()?.ToLowerInvariant().Contains("cancelada") == true;
-        var esEditable = !esFinalizada && !esCancelada;
+        var estado = comanda.Estado?.ToLowerInvariant() ?? string.Empty;
+        var estadoTexto = comanda.EstadoTexto?.ToLowerInvariant() ?? string.Empty;
+        var estadoNormalizado = !string.IsNullOrWhiteSpace(estado) ? estado : estadoTexto;
+        
+        var esFinalizada = estadoNormalizado == "finalizada";
+        var esCancelada = estadoNormalizado == "cancelada";
+        var esEditable = !esFinalizada && !esCancelada && comanda.PuedeSerEditada;
 
         if (esEditable)
         {
