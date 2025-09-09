@@ -50,9 +50,9 @@ Elevar la calidad y robustez de los tests unitarios del frontend móvil (MAUI) a
 
 #### ViewModels - Otras features
 - Reservaciones / Preparaciones / Ingredientes / Categorías / Clientes / Tarjetas / Analytics / Login
-  - [x] `IsBusy`/`CanExecute` y `PropertyChanged` (Clientes y Analytics: no reentrancia)
+  - [x] `IsBusy`/`CanExecute` y `PropertyChanged` (Clientes, Analytics y Login: no reentrancia)
   - [x] Paginación (donde aplique) y 204/empty states (Clientes y Analytics: estados vacíos cubiertos)
-  - [x] Errores por comando (Clientes y Analytics: errores mostrados con diálogo)
+  - [x] Errores por comando (Clientes, Analytics y Login: errores mostrados con diálogo)
   - [ ] Validación de rangos/filtros; cultura/formateo
 
 #### Services (Productos, Mesas, Preparaciones, Ingredientes, Categorías, Comercial, Facturas, Clientes, Analytics)
@@ -170,6 +170,12 @@ Estado parcial Fase 3 (Clientes): Completada para no reentrancia, estados vacío
 - [x] Errores por comando (métricas/tiempos/ventas), tolerancia a mensajes
 
 Estado parcial Fase 3 (Analytics): Completada (no reentrancia, estados vacíos y errores en verde).
+
+#### Login
+- [x] CanExecute/debounce en `LoginCommand` (no reentrancia con `IsLoading`)
+- [x] Errores/validaciones: email/contraseña vacíos; error de servicio muestra mensaje; éxito navega a dashboard
+
+Estado parcial Fase 3 (Login): Completada (no reentrancia y errores/validaciones en verde).
 
 ### Métricas e inspección (opcional)
 - Cobertura (Coverlet + ReportGenerator)

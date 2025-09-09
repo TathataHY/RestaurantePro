@@ -445,4 +445,76 @@ public class FacturasServiceTests
         Assert.False(result.Succeeded);
         Assert.Contains("Error al enviar email", result.Error);
     }
+
+    [Fact]
+    public async Task ObtenerFacturasAsync_WithUnauthorized_ShouldPropagate401()
+    {
+        // Arrange
+        var fecha = DateTime.Today;
+        var errorResponse = ApiResponse<List<FacturaDto>>.ErrorResponse(new List<string> { "Unauthorized" }, "Unauthorized", 401);
+        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>()))
+                      .ReturnsAsync(errorResponse);
+
+        // Act
+        var result = await _facturasService.ObtenerFacturasAsync(fecha);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Equal(401, result.StatusCode);
+        Assert.Contains("Unauthorized", result.Error);
+    }
+
+    [Fact]
+    public async Task ObtenerFacturasAsync_WithForbidden_ShouldPropagate403()
+    {
+        // Arrange
+        var fecha = DateTime.Today;
+        var errorResponse = ApiResponse<List<FacturaDto>>.ErrorResponse(new List<string> { "Forbidden" }, "Forbidden", 403);
+        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>()))
+                      .ReturnsAsync(errorResponse);
+
+        // Act
+        var result = await _facturasService.ObtenerFacturasAsync(fecha);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Equal(403, result.StatusCode);
+        Assert.Contains("Forbidden", result.Error);
+    }
+
+    [Fact]
+    public async Task ObtenerFacturasAsync_WithTooManyRequests_ShouldPropagate429()
+    {
+        // Arrange
+        var fecha = DateTime.Today;
+        var errorResponse = ApiResponse<List<FacturaDto>>.ErrorResponse(new List<string> { "Too Many Requests" }, "Too Many Requests", 429);
+        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>()))
+                      .ReturnsAsync(errorResponse);
+
+        // Act
+        var result = await _facturasService.ObtenerFacturasAsync(fecha);
+
+        // Assert
+        Assert.False(result.Succeeded);
+        Assert.Equal(429, result.StatusCode);
+        Assert.Contains("Too Many Requests", result.Error);
+    }
+
+    [Fact]
+    public async Task ObtenerFacturasAsync_WithEmptyBody_ShouldReturnEmptyList()
+    {
+        // Arrange
+        var fecha = DateTime.Today;
+        var apiResponse = ApiResponse<List<FacturaDto>>.SuccessResponse(new List<FacturaDto>());
+        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>()))
+                      .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _facturasService.ObtenerFacturasAsync(fecha);
+
+        // Assert
+        Assert.True(result.Succeeded);
+        Assert.NotNull(result.Data);
+        Assert.Empty(result.Data);
+    }
 } 

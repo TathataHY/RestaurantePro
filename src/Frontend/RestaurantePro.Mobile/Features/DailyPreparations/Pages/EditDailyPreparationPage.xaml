@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
              xmlns:vm="clr-namespace:RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels;assembly=RestaurantePro.Mobile.Core"
+             xmlns:dto="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
              x:Class="RestaurantePro.Mobile.Features.DailyPreparations.Pages.EditDailyPreparationPage"
              x:DataType="vm:EditDailyPreparationViewModel"
              Title="Editar Preparación"
@@ -20,12 +21,12 @@
                     <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
                     <CollectionView ItemsSource="{Binding Productos}" SelectionMode="Single" SelectedItem="{Binding ProductoSeleccionado}">
                         <CollectionView.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="dto:ProductoDto">
                                 <controls:ModernCard Margin="0,4">
                                     <Grid ColumnDefinitions="Auto,*,Auto" Padding="8">
                                         <Label Text="🍽️" />
-                                        <Label Grid.Column="1" Text="{Binding Nombre}" Style="{StaticResource BodyStyle}" />
-                                        <Label Grid.Column="2" Text="{Binding Precio, StringFormat='S/ {0:F2}'}" Style="{StaticResource CaptionStyle}" />
+                                        <Label Grid.Column="1" Text="{Binding Nombre}" Style="{StaticResource BodyStyle}" TextColor="{StaticResource TextPrimary}" />
+                                        <Label Grid.Column="2" Text="{Binding Precio, StringFormat='S/ {0:F2}'}" Style="{StaticResource CaptionStyle}" TextColor="{StaticResource TextPrimary}" />
                                     </Grid>
                                 </controls:ModernCard>
                             </DataTemplate>

@@ -241,14 +241,8 @@ public partial class CrearComandaViewModel : BaseViewModel
         else
             _consumosPreparaciones[prep.Id] = 1;
 
-        // Reflejar inmediatamente en la UI la reducción de disponibilidad de la preparación
-        prep.CantidadDisponible -= 1;
-        var idx = PreparacionesDelDia.IndexOf(prep);
-        if (idx >= 0)
-        {
-            // Asignar de nuevo para notificar CollectionChanged
-            PreparacionesDelDia[idx] = prep;
-        }
+        // Refrescar inmediatamente en la UI creando una nueva instancia con el nuevo disponible
+        ActualizarCantidadDisponiblePreparacion(prep, prep.CantidadDisponible - 1);
 
         OnPropertyChanged(nameof(TotalCarrito));
         OnPropertyChanged(nameof(PuedeGuardar));
@@ -427,16 +421,14 @@ public partial class CrearComandaViewModel : BaseViewModel
         if (prep == null)
             return false;
 
-        prep.CantidadDisponible -= 1;
+        // Actualizar contador interno de consumos
         if (_consumosPreparaciones.ContainsKey(prep.Id))
             _consumosPreparaciones[prep.Id] += 1;
         else
             _consumosPreparaciones[prep.Id] = 1;
 
-        // refrescar item en la colección para notificar cambios
-        var idx = PreparacionesDelDia.IndexOf(prep);
-        if (idx >= 0)
-            PreparacionesDelDia[idx] = prep;
+        // Refrescar item en la colección creando copia
+        ActualizarCantidadDisponiblePreparacion(prep, prep.CantidadDisponible - 1);
         return true;
     }
 
@@ -451,11 +443,31 @@ public partial class CrearComandaViewModel : BaseViewModel
             return false;
 
         _consumosPreparaciones[prep.Id] -= 1;
-        prep.CantidadDisponible += 1;
-        var idx = PreparacionesDelDia.IndexOf(prep);
-        if (idx >= 0)
-            PreparacionesDelDia[idx] = prep;
+        ActualizarCantidadDisponiblePreparacion(prep, prep.CantidadDisponible + 1);
         return true;
+    }
+
+    private void ActualizarCantidadDisponiblePreparacion(PreparacionDiariaDto original, int nuevaCantidad)
+    {
+        var idx = PreparacionesDelDia.IndexOf(original);
+        if (idx < 0) return;
+
+        var actualizado = new PreparacionDiariaDto
+        {
+            Id = original.Id,
+            ProductoId = original.ProductoId,
+            NombreProducto = original.NombreProducto,
+            ChefId = original.ChefId,
+            NombreChef = original.NombreChef,
+            CantidadPreparada = original.CantidadPreparada,
+            CantidadDisponible = nuevaCantidad,
+            FechaVencimiento = original.FechaVencimiento,
+            Observaciones = original.Observaciones,
+            FechaPreparacion = original.FechaPreparacion,
+            Estado = original.Estado
+        };
+
+        PreparacionesDelDia[idx] = actualizado;
     }
 
     [RelayCommand]

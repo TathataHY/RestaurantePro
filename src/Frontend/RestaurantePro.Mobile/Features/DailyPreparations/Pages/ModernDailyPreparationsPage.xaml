@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
              xmlns:vm="clr-namespace:RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels;assembly=RestaurantePro.Mobile.Core"
+            xmlns:dto="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
              x:Class="RestaurantePro.Mobile.Features.DailyPreparations.Pages.ModernDailyPreparationsPage"
              x:Name="DailyPrepsPage"
              x:DataType="vm:DailyPreparationsViewModel"
@@ -69,13 +70,13 @@
                          Refreshing="OnRefreshing">
                 <CollectionView ItemsSource="{Binding PreparacionesDiarias}" SelectionMode="None">
                     <CollectionView.ItemTemplate>
-                        <DataTemplate>
+                        <DataTemplate x:DataType="dto:PreparacionDiariaDto">
                             <controls:ModernCard Margin="8">
                                 <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
                                     <HorizontalStackLayout Grid.Row="0" Grid.ColumnSpan="2" Spacing="8">
                                         <Label Text="{Binding NombreProducto}" Style="{StaticResource H3Style}" />
                                         <Label Text="{Binding IconoEstado}" FontSize="16" />
-                                        <Border BackgroundColor="{Binding ColorEstado}" StrokeShape="RoundRectangle 10" Padding="8,2">
+                                        <Border BackgroundColor="{Binding ColorEstado}" StrokeShape="RoundRectangle 10" Padding="{OnPlatform iOS='8,2', Android='8,2', WinUI='8,2'}">
                                             <Label Text="{Binding TextoEstado}" Style="{StaticResource CaptionStyle}" TextColor="White" />
                                         </Border>
                                     </HorizontalStackLayout>

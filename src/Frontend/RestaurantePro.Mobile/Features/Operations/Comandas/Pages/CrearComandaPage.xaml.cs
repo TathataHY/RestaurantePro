@@ -75,6 +75,14 @@ public partial class CrearComandaPage : ContentPage, IQueryAttributable
         }
     }
 
+    private void OnUsarDesdePreparacionClicked(object sender, EventArgs e)
+    {
+        if (sender is Button button && button.BindingContext is RestaurantePro.Mobile.Core.Models.DTOs.PreparacionDiariaDto prep)
+        {
+            _viewModel.IncrementarDesdePreparacionCommand.Execute(prep);
+        }
+    }
+
     #endregion
 
     #region Event Handlers para botones del carrito

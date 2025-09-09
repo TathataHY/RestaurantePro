@@ -58,7 +58,7 @@ public class LoginViewModelTests
         await vm.LoginCommand.ExecuteAsync(null);
 
         vm.HasError.Should().BeFalse();
-        _mockNav.Verify(n => n.NavigateToAsync("//main/dashboard", It.IsAny<IDictionary<string, object>>()), Times.Once);
+        _mockNav.Verify(n => n.NavigateToAsync("//main/dashboard"), Times.Once);
     }
 
     [Fact]
