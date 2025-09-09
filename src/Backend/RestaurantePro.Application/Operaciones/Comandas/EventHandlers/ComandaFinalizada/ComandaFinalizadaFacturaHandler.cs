@@ -33,7 +33,7 @@ public class ComandaFinalizadaFacturaHandler : Domain.Core.Base.Events.Handlers.
 
     public async Task Handle(Domain.Operaciones.Comandas.Events.Comanda.ComandaFinalizada evento, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("🧾 Generando factura automática para comanda finalizada {ComandaId}", evento.ComandaId);
+        _logger.LogInformation("🧾 [FACTURA HANDLER] Iniciando generación de factura automática para comanda finalizada {ComandaId}", evento.ComandaId);
 
         try
         {
