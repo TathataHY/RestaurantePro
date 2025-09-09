@@ -82,7 +82,7 @@
         <!-- Prep. Diarias Tab -->
         <ShellContent
             Title="Prep. Diarias"
-            Icon="cocina.svg"
+            Icon="preparaciones-diarias.svg"
             ContentTemplate="{DataTemplate dailypreps:ModernDailyPreparationsPage}"
             Route="dailypreparations" />
 
