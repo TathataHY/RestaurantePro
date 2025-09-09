@@ -46,7 +46,7 @@ public partial class CrearComandaPage : ContentPage, IQueryAttributable
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        // La inicialización se maneja en ApplyQueryAttributes
+        await _viewModel.LoadPreparacionesDiaCommand.ExecuteAsync(null);
     }
 
     #region Event Handlers para botones de productos disponibles

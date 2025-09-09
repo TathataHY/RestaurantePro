@@ -316,5 +316,213 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
             _viewModel.IngredientesBajoStock.Should().Be(0);
             _viewModel.IngredienteSeleccionado.Should().BeNull();
         }
+
+        [Fact]
+        public async Task CargarIngredientesAsync_SinDatos_DebeQuedarVacio()
+        {
+            // Arrange
+            var response = ApiResponse<List<IngredienteSummaryDto>>.SuccessResponse(new List<IngredienteSummaryDto>());
+
+            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>()))
+                .ReturnsAsync(response);
+
+            // Act
+            await _viewModel.CargarIngredientesCommand.ExecuteAsync(null);
+
+            // Assert
+            _viewModel.Ingredientes.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task BuscarIngredientesAsync_SinResultados_DebeQuedarVacio()
+        {
+            // Arrange
+            _viewModel.Busqueda = "Inexistente";
+            var response = ApiResponse<List<IngredienteSummaryDto>>.SuccessResponse(new List<IngredienteSummaryDto>());
+
+            _mockIngredientesService.Setup(x => x.BuscarIngredientesAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()))
+                .ReturnsAsync(response);
+
+            // Act
+            await _viewModel.BuscarIngredientesCommand.ExecuteAsync(null);
+
+            // Assert
+            _viewModel.Ingredientes.Should().BeEmpty();
+        }
+
+        [Fact]
+        public async Task CargarIngredientesAsync_DosVeces_NoDebeDuplicarResultados()
+        {
+            // Arrange
+            var ingredientes = new List<IngredienteSummaryDto>
+            {
+                new() { Id = Guid.NewGuid(), Nombre = "Tomate", StockActual = 50, StockMinimo = 10 }
+            };
+
+            var response = ApiResponse<List<IngredienteSummaryDto>>.SuccessResponse(ingredientes);
+
+            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>()))
+                .ReturnsAsync(response);
+
+            // Act
+            await _viewModel.CargarIngredientesCommand.ExecuteAsync(null);
+            await _viewModel.CargarIngredientesCommand.ExecuteAsync(null);
+
+            // Assert
+            _viewModel.Ingredientes.Should().HaveCount(1);
+            _viewModel.Ingredientes.First().Nombre.Should().Be("Tomate");
+            _mockIngredientesService.Verify(x => x.ObtenerIngredientesAsync(It.IsAny<bool>()), Times.Exactly(2));
+        }
+
+        [Fact]
+        public async Task BuscarIngredientesCommand_WithError_ShouldShowError()
+        {
+            // Arrange
+            _viewModel.Busqueda = "Tomate";
+            var response = ApiResponse<List<IngredienteSummaryDto>>.ErrorResponse(
+                new List<string> { "Error al buscar ingredientes" },
+                "Error",
+                500);
+
+            _mockIngredientesService.Setup(x => x.BuscarIngredientesAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()))
+                .ReturnsAsync(response);
+
+            // Act
+            await _viewModel.BuscarIngredientesCommand.ExecuteAsync(null);
+
+            // Assert
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Error"), Times.Once);
+        }
+
+        [Fact]
+        public async Task VerIngredienteCommand_WithValidItem_ShouldShowDetailsDialog()
+        {
+            // Arrange
+            var ingrediente = new IngredienteSummaryDto { Id = Guid.NewGuid(), Nombre = "Tomate", StockActual = 42 };
+
+            // Act
+            await _viewModel.VerIngredienteCommand.ExecuteAsync(ingrediente);
+
+            // Assert
+            _mockDialogService.Verify(x => x.ShowAlertAsync(
+                It.Is<string>(t => t.Contains("Detalles")),
+                It.Is<string>(m => m.Contains("Nombre:") && m.Contains("Tomate") && m.Contains("Stock:") && m.Contains("42")),
+                It.IsAny<string>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task VerIngredienteCommand_WithNull_ShouldNotShowDialog()
+        {
+            // Act
+            await _viewModel.VerIngredienteCommand.ExecuteAsync(null);
+
+            // Assert
+            _mockDialogService.Verify(x => x.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task CrearIngredienteCommand_ShouldShowNoDisponible()
+        {
+            // Act
+            await _viewModel.CrearIngredienteCommand.ExecuteAsync(null);
+
+            // Assert
+            _mockDialogService.Verify(x => x.ShowAlertAsync(
+                It.Is<string>(t => t.Contains("Función no disponible")),
+                It.Is<string>(m => m.Contains("creación de ingredientes") || m.Contains("no está disponible")),
+                It.IsAny<string>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task EditarIngredienteCommand_ShouldShowNoDisponible()
+        {
+            // Arrange
+            var ingrediente = new IngredienteSummaryDto { Id = Guid.NewGuid(), Nombre = "Tomate" };
+
+            // Act
+            await _viewModel.EditarIngredienteCommand.ExecuteAsync(ingrediente);
+
+            // Assert
+            _mockDialogService.Verify(x => x.ShowAlertAsync(
+                It.Is<string>(t => t.Contains("Función no disponible")),
+                It.Is<string>(m => m.Contains("edición de ingredientes") || m.Contains("no está disponible")),
+                It.IsAny<string>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task AjustarStockCommand_ShouldShowNoDisponible()
+        {
+            // Arrange
+            var ingrediente = new IngredienteSummaryDto { Id = Guid.NewGuid(), Nombre = "Tomate" };
+
+            // Act
+            await _viewModel.AjustarStockCommand.ExecuteAsync(ingrediente);
+
+            // Assert
+            _mockDialogService.Verify(x => x.ShowAlertAsync(
+                It.Is<string>(t => t.Contains("Función no disponible")),
+                It.Is<string>(m => m.Contains("ajuste de stock") || m.Contains("no está disponible")),
+                It.IsAny<string>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task LoadAlertasStockCommand_WithError_ShouldShowError()
+        {
+            // Arrange
+            var response = ApiResponse<List<IngredienteSummaryDto>>.ErrorResponse(
+                new List<string> { "Error al cargar alertas" }, "Error", 500);
+
+            _mockIngredientesService.Setup(x => x.ObtenerIngredientesBajoStockAsync(It.IsAny<int>()))
+                .ReturnsAsync(response);
+
+            // Act
+            await _viewModel.LoadAlertasStockCommand.ExecuteAsync(null);
+
+            // Assert
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Error"), Times.Once);
+        }
+
+        [Fact]
+        public async Task CargarIngredientesAsync_DobleEjecucion_NoDebeReentrar()
+        {
+            var ingredientes = new List<IngredienteSummaryDto>
+            {
+                new() { Id = Guid.NewGuid(), Nombre = "Tomate", StockActual = 50, StockMinimo = 10 }
+            };
+
+            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>()))
+                .Returns(async () =>
+                {
+                    await Task.Delay(200);
+                    return ApiResponse<List<IngredienteSummaryDto>>.SuccessResponse(ingredientes);
+                });
+
+            var t1 = _viewModel.CargarIngredientesCommand.ExecuteAsync(null);
+            var t2 = _viewModel.CargarIngredientesCommand.ExecuteAsync(null);
+            await t1;
+
+            _mockIngredientesService.Verify(x => x.ObtenerIngredientesAsync(It.IsAny<bool>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task BuscarIngredientesAsync_DobleEjecucion_NoDebeReentrar()
+        {
+            _viewModel.Busqueda = "Tomate";
+            var lista = new List<IngredienteSummaryDto> { new() { Id = Guid.NewGuid(), Nombre = "Tomate" } };
+
+            _mockIngredientesService
+                .Setup(x => x.BuscarIngredientesAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()))
+                .Returns(async () =>
+                {
+                    await Task.Delay(200);
+                    return ApiResponse<List<IngredienteSummaryDto>>.SuccessResponse(lista);
+                });
+
+            var t1 = _viewModel.BuscarIngredientesCommand.ExecuteAsync(null);
+            var t2 = _viewModel.BuscarIngredientesCommand.ExecuteAsync(null);
+            await t1;
+
+            _mockIngredientesService.Verify(x => x.BuscarIngredientesAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool?>()), Times.Once);
+        }
     }
 } 

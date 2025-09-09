@@ -123,5 +123,195 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
             Assert.NotNull(_viewModel.Clientes);
             Assert.Equal(1, _viewModel.Clientes.Count);
         }
+
+        [Fact]
+        public async Task CargarClientesAsync_DobleEjecucion_NoDebeReentrar()
+        {
+            // Arrange
+            var clientes = new List<ClienteSummaryDto>
+            {
+                new() { Id = Guid.NewGuid(), NombreCompleto = "Juan Pérez" }
+            };
+
+            _mockClientesService
+                .Setup(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>()))
+                .Returns(async () =>
+                {
+                    await Task.Delay(200);
+                    return ApiResponse<List<ClienteSummaryDto>>.SuccessResponse(clientes);
+                });
+
+            // Act
+            var t1 = _viewModel.CargarClientesCommand.ExecuteAsync(null);
+            var t2 = _viewModel.CargarClientesCommand.ExecuteAsync(null);
+            await t1;
+
+            // Assert
+            _mockClientesService.Verify(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task BuscarClientesAsync_DobleEjecucion_NoDebeReentrar()
+        {
+            // Arrange
+            _viewModel.FiltroBusqueda = "Juan";
+            var clientes = new List<ClienteSummaryDto>
+            {
+                new() { Id = Guid.NewGuid(), NombreCompleto = "Juan Pérez" }
+            };
+
+            _mockClientesService
+                .Setup(x => x.BuscarClientesAsync(It.IsAny<string>()))
+                .Returns(async () =>
+                {
+                    await Task.Delay(200);
+                    return ApiResponse<List<ClienteSummaryDto>>.SuccessResponse(clientes);
+                });
+
+            // Act
+            var t1 = _viewModel.BuscarClientesCommand.ExecuteAsync(null);
+            var t2 = _viewModel.BuscarClientesCommand.ExecuteAsync(null);
+            await t1;
+
+            // Assert
+            _mockClientesService.Verify(x => x.BuscarClientesAsync(It.IsAny<string>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task CargarClientesAsync_SinDatos_DebeQuedarVacioYTotalCero()
+        {
+            // Arrange
+            _mockClientesService
+                .Setup(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>()))
+                .ReturnsAsync(ApiResponse<List<ClienteSummaryDto>>.SuccessResponse(new List<ClienteSummaryDto>()));
+
+            // Act
+            await _viewModel.CargarClientesCommand.ExecuteAsync(null);
+
+            // Assert
+            Assert.NotNull(_viewModel.Clientes);
+            Assert.Empty(_viewModel.Clientes);
+            Assert.Equal(0, _viewModel.TotalClientes);
+            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task BuscarClientesAsync_SinResultados_DebeQuedarVacioYTotalCero()
+        {
+            // Arrange
+            _viewModel.FiltroBusqueda = "abc";
+            _mockClientesService
+                .Setup(x => x.BuscarClientesAsync(It.IsAny<string>()))
+                .ReturnsAsync(ApiResponse<List<ClienteSummaryDto>>.SuccessResponse(new List<ClienteSummaryDto>()));
+
+            // Act
+            await _viewModel.BuscarClientesCommand.ExecuteAsync(null);
+
+            // Assert
+            Assert.NotNull(_viewModel.Clientes);
+            Assert.Empty(_viewModel.Clientes);
+            Assert.Equal(0, _viewModel.TotalClientes);
+            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task BuscarClientesAsync_WithError_ShouldShowError()
+        {
+            // Arrange
+            _viewModel.FiltroBusqueda = "juan";
+            _mockClientesService
+                .Setup(x => x.BuscarClientesAsync(It.IsAny<string>()))
+                .ReturnsAsync(ApiResponse<List<ClienteSummaryDto>>.ErrorResponse(new List<string> { "Error al buscar clientes" }));
+
+            // Act
+            await _viewModel.BuscarClientesCommand.ExecuteAsync(null);
+
+            // Assert
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Error al buscar clientes"), Times.Once);
+        }
+
+        [Fact]
+        public async Task SeleccionarClienteAsync_WithNull_ShouldNotNavigate()
+        {
+            // Act
+            await _viewModel.SeleccionarClienteCommand.ExecuteAsync(null);
+
+            // Assert
+            _mockNavigationService.Verify(x => x.NavigateToAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task DesactivarClienteAsync_CanceladoPorUsuario_NoDebeLlamarServicio()
+        {
+            // Arrange
+            var cliente = new ClienteSummaryDto { Id = Guid.NewGuid(), NombreCompleto = "Juan Pérez" };
+            _mockDialogService
+                .Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(false);
+
+            // Act
+            await _viewModel.DesactivarClienteCommand.ExecuteAsync(cliente);
+
+            // Assert
+            _mockClientesService.Verify(x => x.DesactivarClienteAsync(It.IsAny<Guid>()), Times.Never);
+            _mockDialogService.Verify(x => x.ShowSuccessAsync(It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task DesactivarClienteAsync_Confirmado_Success_MuestraExitoYRefresca()
+        {
+            // Arrange
+            var cliente = new ClienteSummaryDto { Id = Guid.NewGuid(), NombreCompleto = "Juan Pérez" };
+            _mockDialogService
+                .Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(true);
+            _mockClientesService
+                .Setup(x => x.DesactivarClienteAsync(cliente.Id))
+                .ReturnsAsync(ApiResponse<bool>.SuccessResponse(true));
+            _mockClientesService
+                .Setup(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>()))
+                .ReturnsAsync(ApiResponse<List<ClienteSummaryDto>>.SuccessResponse(new List<ClienteSummaryDto>()));
+
+            // Act
+            await _viewModel.DesactivarClienteCommand.ExecuteAsync(cliente);
+
+            // Assert
+            _mockClientesService.Verify(x => x.DesactivarClienteAsync(cliente.Id), Times.Once);
+            _mockDialogService.Verify(x => x.ShowSuccessAsync(It.IsAny<string>()), Times.Once);
+            _mockClientesService.Verify(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>()), Times.AtLeastOnce);
+        }
+
+        [Fact]
+        public async Task BuscarClientesAsync_FiltroVacio_NoDebeLlamarServicio()
+        {
+            // Arrange
+            _viewModel.FiltroBusqueda = string.Empty;
+
+            // Act
+            await _viewModel.BuscarClientesCommand.ExecuteAsync(null);
+
+            // Assert
+            _mockClientesService.Verify(x => x.BuscarClientesAsync(It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task DesactivarClienteAsync_Confirmado_Error_MuestraError()
+        {
+            // Arrange
+            var cliente = new ClienteSummaryDto { Id = Guid.NewGuid(), NombreCompleto = "Juan Pérez" };
+            _mockDialogService
+                .Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(true);
+            _mockClientesService
+                .Setup(x => x.DesactivarClienteAsync(cliente.Id))
+                .ReturnsAsync(ApiResponse<bool>.ErrorResponse(new List<string> { "No se pudo desactivar" }));
+
+            // Act
+            await _viewModel.DesactivarClienteCommand.ExecuteAsync(cliente);
+
+            // Assert
+            _mockDialogService.Verify(x => x.ShowErrorAsync("No se pudo desactivar"), Times.Once);
+            _mockDialogService.Verify(x => x.ShowSuccessAsync(It.IsAny<string>()), Times.Never);
+        }
     }
 } 

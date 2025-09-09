@@ -49,10 +49,10 @@ Elevar la calidad y robustez de los tests unitarios del frontend móvil (MAUI) a
   - [x] Revisar errores y confirmaciones adicionales en ComandaDetalleViewModel
 
 #### ViewModels - Otras features
-- Reservaciones / Preparaciones / Ingredientes / Categorías / Tarjetas / Analytics / Login
-  - [ ] `IsBusy`/`CanExecute` y `PropertyChanged`
-  - [ ] Paginación (donde aplique) y 204/empty states
-  - [ ] Errores por comando (no solo carga)
+- Reservaciones / Preparaciones / Ingredientes / Categorías / Clientes / Tarjetas / Analytics / Login
+  - [x] `IsBusy`/`CanExecute` y `PropertyChanged` (Clientes y Analytics: no reentrancia)
+  - [x] Paginación (donde aplique) y 204/empty states (Clientes y Analytics: estados vacíos cubiertos)
+  - [x] Errores por comando (Clientes y Analytics: errores mostrados con diálogo)
   - [ ] Validación de rangos/filtros; cultura/formateo
 
 #### Services (Productos, Mesas, Preparaciones, Ingredientes, Categorías, Comercial, Facturas, Clientes, Analytics)
@@ -142,6 +142,34 @@ Estado parcial Fase 3 (Reservaciones): Completada para núcleo + CanExecute/debo
 - [x] Comandos secundarios: iniciar/completar/cancelar; ver/crear completados
 
 Estado parcial Fase 3 (Preparaciones): Completada para comandos principales y no reentrancia; ver/crear completados.
+
+#### Ingredientes
+- [x] CanExecute/debounce en cargas y búsquedas (no reentrancia con ExecuteAsync)
+- [x] Estados vacíos en carga/búsqueda; no duplicación de resultados
+- [x] Errores por comando: buscar, alertas stock; validaciones de null en ver
+
+Estado parcial Fase 3 (Ingredientes): Completada (suite de tests de ViewModel en verde).
+
+#### Categorías
+- [x] CanExecute/debounce en carga y búsqueda (no reentrancia)
+- [x] Estados vacíos y métricas en cero
+- [x] Errores/validaciones por comando (carga/búsqueda, filtros, activar/desactivar)
+
+Estado parcial Fase 3 (Categorías): Completada (no reentrancia, estados vacíos y errores/validaciones en verde).
+
+#### Clientes
+- [x] CanExecute/debounce en carga y búsqueda (no reentrancia con IsBusy)
+- [x] Estados vacíos en carga/búsqueda; TotalClientes en cero
+- [x] Errores/validaciones: filtro vacío no invoca servicio; confirmación/cancelación en desactivar; éxito y error muestran diálogo adecuado
+
+Estado parcial Fase 3 (Clientes): Completada para no reentrancia, estados vacíos y errores/validaciones.
+
+#### Analytics
+- [x] CanExecute/debounce en comandos de carga (no reentrancia con IsBusy)
+- [x] Estados vacíos (TopProductos sin datos, colecciones sin errores)
+- [x] Errores por comando (métricas/tiempos/ventas), tolerancia a mensajes
+
+Estado parcial Fase 3 (Analytics): Completada (no reentrancia, estados vacíos y errores en verde).
 
 ### Métricas e inspección (opcional)
 - Cobertura (Coverlet + ReportGenerator)

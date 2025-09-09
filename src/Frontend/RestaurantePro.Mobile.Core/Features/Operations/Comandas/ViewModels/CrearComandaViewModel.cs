@@ -15,6 +15,8 @@ using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Models.ViewModels;
 using RestaurantePro.Mobile.Core.Models.Common;
 using ComandaModels = RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models;
+using RestaurantePro.Mobile.Core.Services;
+using RestaurantePro.Mobile.Core.Models.DTOs;
 
 namespace RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;
 
@@ -23,11 +25,13 @@ public partial class CrearComandaViewModel : BaseViewModel
     private readonly IComandasService _comandasService;
     private readonly IProductosService _productosService;
     private readonly IMesasService _mesasService;
+    private readonly IDailyPreparationsService _dailyPreparationsService;
     private readonly INavigationService _navigationService;
     private readonly IDialogService _dialogService;
     private readonly Dictionary<Guid, int> _cantidadesOriginales = new();
     private readonly HashSet<Guid> _productosEliminados = new();
     private readonly HashSet<Guid> _itemsEliminados = new();
+    private const int MaxAPrepararPorItem = 10; // Regla de negocio: tope de preparación por ítem
 
     [ObservableProperty]
     private MesaDto _mesa = new();
@@ -55,17 +59,21 @@ public partial class CrearComandaViewModel : BaseViewModel
         IComandasService comandasService,
         IProductosService productosService,
         IMesasService mesasService,
+        IDailyPreparationsService dailyPreparationsService,
         INavigationService navigationService,
         IDialogService dialogService)
     {
         _comandasService = comandasService;
         _productosService = productosService;
         _mesasService = mesasService;
+        _dailyPreparationsService = dailyPreparationsService;
         _navigationService = navigationService;
         _dialogService = dialogService;
 
         ProductosDisponibles = new ObservableCollection<ProductoCarritoDto>();
         ProductosCarrito = new ObservableCollection<ProductoCarritoDto>();
+        PreparacionesDelDia = new ObservableCollection<PreparacionDiariaDto>();
+        _consumosPreparaciones = new Dictionary<Guid, int>();
 
         // Los comandos se generan automáticamente con [RelayCommand]
     }
@@ -84,6 +92,8 @@ public partial class CrearComandaViewModel : BaseViewModel
 
     public ObservableCollection<ProductoCarritoDto> ProductosDisponibles { get; }
     public ObservableCollection<ProductoCarritoDto> ProductosCarrito { get; }
+    public ObservableCollection<PreparacionDiariaDto> PreparacionesDelDia { get; }
+    private readonly Dictionary<Guid, int> _consumosPreparaciones;
 
     #endregion
 
@@ -140,11 +150,150 @@ public partial class CrearComandaViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private void IncrementarCantidad(ProductoCarritoDto producto)
+    private async Task LoadPreparacionesDiaAsync()
+    {
+        try
+        {
+            var result = await _dailyPreparationsService.GetPreparacionesDiariasAsync();
+            if (result.Succeeded && result.Data != null)
+            {
+                PreparacionesDelDia.Clear();
+                foreach (var p in result.Data.Where(x => x.CantidadDisponible > 0 && !x.EstaVencida))
+                {
+                    PreparacionesDelDia.Add(p);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error al cargar preparaciones del día: {ex.Message}");
+        }
+    }
+
+    [RelayCommand]
+    private async Task IncrementarDesdePreparacionAsync(PreparacionDiariaDto? prep)
+    {
+        if (prep == null) return;
+        if (prep.EstaVencida || prep.CantidadDisponible <= 0)
+        {
+            await _dialogService.ShowAlertAsync("No disponible", "La preparación no está disponible o no tiene unidades.");
+            return;
+        }
+
+        // Buscar el producto base en el catálogo disponible
+        var prodBase = ProductosDisponibles.FirstOrDefault(x => Guid.TryParse(x.Id, out var gid) && gid == prep.ProductoId);
+        if (prodBase == null)
+        {
+            // Si no está en la lista visible, intentamos obtenerlo del servicio y agregarlo igual
+            var prodResp = await _productosService.ObtenerProductoPorIdAsync(prep.ProductoId);
+            if (prodResp.Success && prodResp.Data != null)
+            {
+                prodBase = new ProductoCarritoDto
+                {
+                    Id = prodResp.Data.Id.ToString(),
+                    Nombre = prodResp.Data.Nombre,
+                    Descripcion = prodResp.Data.Descripcion,
+                    Precio = prodResp.Data.Precio,
+                    Cantidad = 0,
+                    PreparacionesDisponiblesHoy = -1
+                };
+                ProductosDisponibles.Add(prodBase);
+            }
+            else
+            {
+                await _dialogService.ShowAlertAsync("Producto no disponible", "El producto de la preparación no está disponible.");
+                return;
+            }
+        }
+
+        // Agregar directamente al carrito (o incrementar si ya existe)
+        var existente = ProductosCarrito.FirstOrDefault(p => p.Id == prodBase.Id);
+        if (existente != null)
+        {
+            // Validar límite máximo como en IncrementarCantidadCarrito
+            var maxTotal = (existente.PreparacionesDisponiblesHoy < 0 ? MaxAPrepararPorItem : existente.PreparacionesDisponiblesHoy + MaxAPrepararPorItem);
+            if (existente.Cantidad + 1 > maxTotal)
+            {
+                await _dialogService.ShowAlertAsync(
+                    "Límite alcanzado",
+                    $"Máximo permitido por ítem: {maxTotal} (Disp. hoy: {Math.Max(0, existente.PreparacionesDisponiblesHoy)}, A preparar: {MaxAPrepararPorItem}).");
+                return;
+            }
+            existente.Cantidad++;
+        }
+        else
+        {
+            var nuevo = new ProductoCarritoDto
+            {
+                Id = prodBase.Id,
+                Nombre = prodBase.Nombre,
+                Descripcion = prodBase.Descripcion,
+                Precio = prodBase.Precio,
+                Cantidad = 1,
+                PreparacionesDisponiblesHoy = prodBase.PreparacionesDisponiblesHoy
+            };
+            ProductosCarrito.Add(nuevo);
+        }
+
+        // Registrar consumo tentativo por preparación (se confirmará al crear la comanda)
+        if (_consumosPreparaciones.ContainsKey(prep.Id))
+            _consumosPreparaciones[prep.Id] += 1;
+        else
+            _consumosPreparaciones[prep.Id] = 1;
+
+        // Reflejar inmediatamente en la UI la reducción de disponibilidad de la preparación
+        prep.CantidadDisponible -= 1;
+        var idx = PreparacionesDelDia.IndexOf(prep);
+        if (idx >= 0)
+        {
+            // Asignar de nuevo para notificar CollectionChanged
+            PreparacionesDelDia[idx] = prep;
+        }
+
+        OnPropertyChanged(nameof(TotalCarrito));
+        OnPropertyChanged(nameof(PuedeGuardar));
+    }
+
+    [RelayCommand]
+    private async Task IncrementarCantidadAsync(ProductoCarritoDto producto)
     {
         if (producto != null)
         {
+            // Cargar disponibilidad de preparaciones una sola vez por producto
+            if (producto.PreparacionesDisponiblesHoy < 0 && Guid.TryParse(producto.Id, out var prodId))
+            {
+                var preps = await _dailyPreparationsService.GetPreparacionesDiariasPorProductoAsync(prodId);
+                if (preps.Succeeded && preps.Data != null)
+                {
+                    producto.PreparacionesDisponiblesHoy = preps.Data.Sum(p => p.CantidadDisponible);
+                }
+                else
+                {
+                    producto.PreparacionesDisponiblesHoy = 0;
+                }
+            }
+
+            var maxTotal = (producto.PreparacionesDisponiblesHoy < 0 ? MaxAPrepararPorItem : producto.PreparacionesDisponiblesHoy + MaxAPrepararPorItem);
+            if (producto.Cantidad + 1 > maxTotal)
+            {
+                await _dialogService.ShowAlertAsync(
+                    "Límite alcanzado",
+                    $"Máximo permitido por ítem: {maxTotal} (Disp. hoy: {Math.Max(0, producto.PreparacionesDisponiblesHoy)}, A preparar: {MaxAPrepararPorItem}).");
+                return;
+            }
+
             producto.Cantidad++;
+
+            // Intentar reservar 1 unidad desde preparaciones disponibles para este producto
+            if (Guid.TryParse(producto.Id, out var productoId))
+            {
+                if (ReservarDesdePreparaciones(productoId))
+                {
+                    // Refrescar indicador local
+                    if (producto.PreparacionesDisponiblesHoy >= 0)
+                        producto.PreparacionesDisponiblesHoy = Math.Max(0, producto.PreparacionesDisponiblesHoy - 1);
+                }
+            }
         }
     }
 
@@ -154,6 +303,15 @@ public partial class CrearComandaViewModel : BaseViewModel
         if (producto != null && producto.Cantidad > 0)
         {
             producto.Cantidad--;
+            // Liberar reserva de preparación si existe para este producto
+            if (Guid.TryParse(producto.Id, out var productoId))
+            {
+                if (LiberarReservaDePreparaciones(productoId))
+                {
+                    if (producto.PreparacionesDisponiblesHoy >= 0)
+                        producto.PreparacionesDisponiblesHoy += 1;
+                }
+            }
         }
     }
 
@@ -179,7 +337,8 @@ public partial class CrearComandaViewModel : BaseViewModel
                     Nombre = producto.Nombre,
                     Descripcion = producto.Descripcion,
                     Precio = producto.Precio,
-                    Cantidad = producto.Cantidad
+                    Cantidad = producto.Cantidad,
+                    PreparacionesDisponiblesHoy = producto.PreparacionesDisponiblesHoy
                 };
                 
                 ProductosCarrito.Add(nuevoProducto);
@@ -196,11 +355,44 @@ public partial class CrearComandaViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private void IncrementarCantidadCarrito(ProductoCarritoDto producto)
+    private async Task IncrementarCantidadCarrito(ProductoCarritoDto producto)
     {
         if (producto != null)
         {
+            // Asegurar disponibilidad cargada también para items del carrito (edición)
+            if (producto.PreparacionesDisponiblesHoy < 0 && Guid.TryParse(producto.Id, out var prodId))
+            {
+                var preps = await _dailyPreparationsService.GetPreparacionesDiariasPorProductoAsync(prodId);
+                if (preps.Succeeded && preps.Data != null)
+                {
+                    producto.PreparacionesDisponiblesHoy = preps.Data.Sum(p => p.CantidadDisponible);
+                }
+                else
+                {
+                    producto.PreparacionesDisponiblesHoy = 0;
+                }
+            }
+
+            var maxTotal = (producto.PreparacionesDisponiblesHoy < 0 ? MaxAPrepararPorItem : producto.PreparacionesDisponiblesHoy + MaxAPrepararPorItem);
+            if (producto.Cantidad + 1 > maxTotal)
+            {
+                await _dialogService.ShowAlertAsync(
+                    "Límite alcanzado",
+                    $"Máximo permitido por ítem: {maxTotal} (Disp. hoy: {Math.Max(0, producto.PreparacionesDisponiblesHoy)}, A preparar: {MaxAPrepararPorItem}).");
+                return;
+            }
+
             producto.Cantidad++;
+
+            // Intentar reservar 1 unidad desde preparaciones disponibles para este producto
+            if (Guid.TryParse(producto.Id, out var productoId))
+            {
+                if (ReservarDesdePreparaciones(productoId))
+                {
+                    if (producto.PreparacionesDisponiblesHoy >= 0)
+                        producto.PreparacionesDisponiblesHoy = Math.Max(0, producto.PreparacionesDisponiblesHoy - 1);
+                }
+            }
             OnPropertyChanged(nameof(TotalCarrito));
             OnPropertyChanged(nameof(PuedeGuardar));
         }
@@ -212,9 +404,58 @@ public partial class CrearComandaViewModel : BaseViewModel
         if (producto != null && producto.Cantidad > 1)
         {
             producto.Cantidad--;
+            if (Guid.TryParse(producto.Id, out var productoId))
+            {
+                if (LiberarReservaDePreparaciones(productoId))
+                {
+                    if (producto.PreparacionesDisponiblesHoy >= 0)
+                        producto.PreparacionesDisponiblesHoy += 1;
+                }
+            }
             OnPropertyChanged(nameof(TotalCarrito));
             OnPropertyChanged(nameof(PuedeGuardar));
         }
+    }
+
+    private bool ReservarDesdePreparaciones(Guid productoId)
+    {
+        // Orden simple: priorizar las que vencen antes
+        var prep = PreparacionesDelDia
+            .Where(p => p.ProductoId == productoId && p.CantidadDisponible > 0 && !p.EstaVencida)
+            .OrderBy(p => p.FechaVencimiento)
+            .FirstOrDefault();
+        if (prep == null)
+            return false;
+
+        prep.CantidadDisponible -= 1;
+        if (_consumosPreparaciones.ContainsKey(prep.Id))
+            _consumosPreparaciones[prep.Id] += 1;
+        else
+            _consumosPreparaciones[prep.Id] = 1;
+
+        // refrescar item en la colección para notificar cambios
+        var idx = PreparacionesDelDia.IndexOf(prep);
+        if (idx >= 0)
+            PreparacionesDelDia[idx] = prep;
+        return true;
+    }
+
+    private bool LiberarReservaDePreparaciones(Guid productoId)
+    {
+        // Buscar una preparación del mismo producto que tenga consumo registrado
+        var prep = PreparacionesDelDia
+            .Where(p => p.ProductoId == productoId && _consumosPreparaciones.TryGetValue(p.Id, out var c) && c > 0)
+            .OrderByDescending(p => p.FechaVencimiento) // devolver de la que vence más tarde para mantener primeras agotadas
+            .FirstOrDefault();
+        if (prep == null)
+            return false;
+
+        _consumosPreparaciones[prep.Id] -= 1;
+        prep.CantidadDisponible += 1;
+        var idx = PreparacionesDelDia.IndexOf(prep);
+        if (idx >= 0)
+            PreparacionesDelDia[idx] = prep;
+        return true;
     }
 
     [RelayCommand]
@@ -273,6 +514,25 @@ public partial class CrearComandaViewModel : BaseViewModel
                 Cantidad = p.Cantidad,
                 Precio = p.Precio
             }).ToList();
+
+            // Si hubo consumos desde preparaciones, consumir en backend antes de crear la comanda
+            if (_consumosPreparaciones.Any())
+            {
+                foreach (var kvp in _consumosPreparaciones.ToList())
+                {
+                    var prepId = kvp.Key;
+                    var cant = kvp.Value;
+                    if (cant <= 0) continue;
+                    var consumir = await _dailyPreparationsService.ConsumirPreparacionDiariaAsync(prepId, cant, $"Consumo por creación de comanda {DateTime.Now:HH:mm}");
+                    if (!consumir.Succeeded)
+                    {
+                        await _dialogService.ShowAlertAsync("Error", $"No se pudo consumir la preparación {prepId}: {consumir.Error}");
+                        IsLoading = false;
+                        OnPropertyChanged(nameof(PuedeGuardar));
+                        return;
+                    }
+                }
+            }
 
             if (EsEdicion)
             {

@@ -193,5 +193,153 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
             // Assert
             Assert.Equal(busqueda, _viewModel.FiltroBusqueda);
         }
+
+        [Fact]
+        public async Task CargarCategoriasAsync_SinDatos_DebeQuedarVacioYEstadisticasEnCero()
+        {
+            // Arrange
+            _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<bool>()))
+                .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(new List<CategoriaProductoDto>()));
+
+            // Act
+            await _viewModel.CargarCategoriasCommand.ExecuteAsync(null);
+
+            // Assert
+            Assert.Empty(_viewModel.Categorias);
+            Assert.Equal(0, _viewModel.TotalCategorias);
+            Assert.Equal(0, _viewModel.CategoriasActivas);
+            Assert.Equal(0, _viewModel.CategoriasInactivas);
+        }
+
+        [Fact]
+        public async Task BuscarCategoriasAsync_SinResultados_DebeQuedarVacio()
+        {
+            // Arrange
+            _viewModel.FiltroBusqueda = "Inexistente";
+            _mockCategoriasService.Setup(x => x.BuscarCategoriasAsync(It.IsAny<string>()))
+                .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(new List<CategoriaProductoDto>()));
+
+            // Act
+            await _viewModel.BuscarCategoriasCommand.ExecuteAsync(null);
+
+            // Assert
+            Assert.Empty(_viewModel.Categorias);
+        }
+
+        [Fact]
+        public async Task CargarCategoriasAsync_DobleEjecucion_NoDebeReentrar()
+        {
+            var categorias = new List<CategoriaProductoDto>
+            {
+                new() { Id = Guid.NewGuid(), Nombre = "Entradas", Activa = true }
+            };
+
+            _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<bool>()))
+                .Returns(async () =>
+                {
+                    await Task.Delay(200);
+                    return ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias);
+                });
+
+            var t1 = _viewModel.CargarCategoriasCommand.ExecuteAsync(null);
+            var t2 = _viewModel.CargarCategoriasCommand.ExecuteAsync(null);
+            await t1;
+
+            _mockCategoriasService.Verify(x => x.ObtenerCategoriasAsync(It.IsAny<bool>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task BuscarCategoriasAsync_DobleEjecucion_NoDebeReentrar()
+        {
+            _viewModel.FiltroBusqueda = "Entradas";
+            var categorias = new List<CategoriaProductoDto> { new() { Id = Guid.NewGuid(), Nombre = "Entradas", Activa = true } };
+
+            _mockCategoriasService.Setup(x => x.BuscarCategoriasAsync(It.IsAny<string>()))
+                .Returns(async () =>
+                {
+                    await Task.Delay(200);
+                    return ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias);
+                });
+
+            var t1 = _viewModel.BuscarCategoriasCommand.ExecuteAsync(null);
+            var t2 = _viewModel.BuscarCategoriasCommand.ExecuteAsync(null);
+            await t1;
+
+            _mockCategoriasService.Verify(x => x.BuscarCategoriasAsync(It.IsAny<string>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task BuscarCategoriasAsync_WithError_ShouldShowError()
+        {
+            // Arrange
+            _viewModel.FiltroBusqueda = "Entradas";
+            _mockCategoriasService.Setup(x => x.BuscarCategoriasAsync(It.IsAny<string>()))
+                .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.ErrorResponse("Error al buscar categorías"));
+
+            // Act
+            await _viewModel.BuscarCategoriasCommand.ExecuteAsync(null);
+
+            // Assert
+            _mockDialogService.Verify(d => d.ShowErrorAsync(It.IsAny<string>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task BuscarCategoriasAsync_EmptyQuery_NoDebeInvocarServicio()
+        {
+            // Arrange
+            _viewModel.FiltroBusqueda = "   ";
+
+            // Act
+            await _viewModel.BuscarCategoriasCommand.ExecuteAsync(null);
+
+            // Assert
+            _mockCategoriasService.Verify(s => s.BuscarCategoriasAsync(It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task SeleccionarCategoriaAsync_Null_NoDebeNavegar()
+        {
+            // Act
+            await _viewModel.SeleccionarCategoriaCommand.ExecuteAsync(null);
+
+            // Assert
+            _mockNavigationService.Verify(n => n.NavigateToAsync(It.IsAny<string>(), It.IsAny<Dictionary<string, object>>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task CargarCategoriasAsync_Exception_ShouldSetHasError()
+        {
+            // Arrange
+            _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<bool>()))
+                .ThrowsAsync(new InvalidOperationException("Fallo inesperado"));
+
+            // Act
+            await _viewModel.CargarCategoriasCommand.ExecuteAsync(null);
+
+            // Assert
+            Assert.True(_viewModel.HasError);
+            Assert.Equal("Fallo inesperado", _viewModel.ErrorMessage);
+        }
+
+        [Fact]
+        public async Task BuscarCategoriasAsync_SuccessPeroDataNull_ShouldShowError()
+        {
+            // Arrange
+            _viewModel.FiltroBusqueda = "Entradas";
+            var response = new ApiResponse<List<CategoriaProductoDto>>
+            {
+                Success = true,
+                Data = null,
+                Message = null
+            };
+            _mockCategoriasService.Setup(s => s.BuscarCategoriasAsync(It.IsAny<string>()))
+                .ReturnsAsync(response);
+
+            // Act
+            await _viewModel.BuscarCategoriasCommand.ExecuteAsync(null);
+
+            // Assert
+            _mockDialogService.Verify(d => d.ShowErrorAsync(It.IsAny<string>()), Times.Once);
+        }
     }
 } 

@@ -229,6 +229,55 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Analytics.ViewModels
         }
 
         [Fact]
+        public async Task CargarMetricasDiaAsync_DobleEjecucion_NoDebeReentrar()
+        {
+            // Arrange
+            _mockAnalyticsService.Setup(x => x.ObtenerMetricasDiaAsync())
+                .Returns(async () =>
+                {
+                    await Task.Delay(200);
+                    return ApiResponse<MetricasDiaDto>.SuccessResponse(new MetricasDiaDto());
+                });
+
+            // Act
+            var t1 = _viewModel.CargarMetricasDiaCommand.ExecuteAsync(null);
+            var t2 = _viewModel.CargarMetricasDiaCommand.ExecuteAsync(null);
+            await t1;
+
+            // Assert
+            _mockAnalyticsService.Verify(x => x.ObtenerMetricasDiaAsync(), Times.Once);
+        }
+
+        [Fact]
+        public async Task CargarTopProductosAsync_SinDatos_DebeQuedarVacio()
+        {
+            // Arrange
+            _mockAnalyticsService.Setup(x => x.ObtenerTopProductosAsync(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+                .ReturnsAsync(ApiResponse<List<TopProductoDto>>.SuccessResponse(new List<TopProductoDto>()));
+
+            // Act
+            await _viewModel.CargarTopProductosAsync();
+
+            // Assert
+            _viewModel.TopProductos.Should().BeEmpty();
+            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task CargarTiempoPreparacionAsync_Error_DeberiaMostrarError()
+        {
+            // Arrange
+            _mockAnalyticsService.Setup(x => x.ObtenerTiempoPreparacionAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+                .ReturnsAsync(ApiResponse<TiempoPreparacionDto>.Failure("Fallo servicio"));
+
+            // Act
+            await _viewModel.CargarTiempoPreparacionCommand.ExecuteAsync(null);
+
+            // Assert
+            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>()), Times.Once);
+        }
+
+        [Fact]
         public async Task RefrescarAsync_ShouldReloadAllMetrics()
         {
             // Arrange

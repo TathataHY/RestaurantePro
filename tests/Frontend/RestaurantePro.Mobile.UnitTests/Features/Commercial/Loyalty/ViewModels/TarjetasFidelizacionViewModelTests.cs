@@ -204,5 +204,78 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Loyalty.ViewModels
             _mockTarjetasService.Verify(x => x.BloquearTarjetaAsync(tarjetaId), Times.Once);
             _mockDialogService.Verify(x => x.ShowSuccessAsync("Tarjeta bloqueada correctamente"), Times.Once);
         }
+
+        [Fact]
+        public async Task BuscarTarjetaAsync_DobleEjecucion_NoDebeReentrar()
+        {
+            // Arrange
+            _viewModel.CodigoTarjeta = "123";
+            var tarjeta = new TarjetaFidelizacionDto { Id = Guid.NewGuid(), CodigoTarjeta = "123" };
+            _mockTarjetasService.Setup(x => x.ObtenerTarjetaPorCodigoAsync(It.IsAny<string>()))
+                .Returns(async () =>
+                {
+                    await Task.Delay(200);
+                    return ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(tarjeta);
+                });
+            _mockTarjetasService.Setup(x => x.ObtenerHistorialAsync(It.IsAny<Guid>()))
+                .ReturnsAsync(ApiResponse<List<TransaccionPuntosDto>>.SuccessResponse(new List<TransaccionPuntosDto>()));
+
+            // Act
+            var t1 = _viewModel.BuscarTarjetaCommand.ExecuteAsync(null);
+            var t2 = _viewModel.BuscarTarjetaCommand.ExecuteAsync(null);
+            await t1;
+
+            // Assert
+            _mockTarjetasService.Verify(x => x.ObtenerTarjetaPorCodigoAsync(It.IsAny<string>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task CargarHistorialAsync_SinTransacciones_NoDebeFallarYQuedaVacio()
+        {
+            // Arrange
+            var tarjetaId = Guid.NewGuid();
+            _viewModel.TarjetaActual = new TarjetaFidelizacionDto { Id = tarjetaId, CodigoTarjeta = "123" };
+            _mockTarjetasService.Setup(x => x.ObtenerHistorialAsync(tarjetaId))
+                .ReturnsAsync(ApiResponse<List<TransaccionPuntosDto>>.SuccessResponse(new List<TransaccionPuntosDto>()));
+
+            // Act
+            await _viewModel.CargarHistorialCommand.ExecuteAsync(null);
+
+            // Assert
+            Assert.Empty(_viewModel.Historial);
+            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task BloquearTarjetaAsync_Cancelado_NoDebeInvocarServicio()
+        {
+            // Arrange
+            var tarjetaId = Guid.NewGuid();
+            _viewModel.TarjetaActual = new TarjetaFidelizacionDto { Id = tarjetaId, CodigoTarjeta = "123" };
+            _mockDialogService.Setup(x => x.ShowConfirmationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+                .ReturnsAsync(false);
+
+            // Act
+            await _viewModel.BloquearTarjetaCommand.ExecuteAsync(null);
+
+            // Assert
+            _mockTarjetasService.Verify(x => x.BloquearTarjetaAsync(It.IsAny<Guid>()), Times.Never);
+            _mockDialogService.Verify(x => x.ShowSuccessAsync(It.IsAny<string>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task BuscarTarjetaAsync_ErrorServicio_MuestraError()
+        {
+            // Arrange
+            _viewModel.CodigoTarjeta = "123";
+            _mockTarjetasService.Setup(x => x.ObtenerTarjetaPorCodigoAsync(It.IsAny<string>()))
+                .ReturnsAsync(ApiResponse<TarjetaFidelizacionDto>.Failure("Fallo de servicio"));
+
+            // Act
+            await _viewModel.BuscarTarjetaCommand.ExecuteAsync(null);
+
+            // Assert
+            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>()), Times.Once);
+        }
     }
 } 

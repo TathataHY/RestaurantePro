@@ -56,16 +56,22 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerPr
                         FechaVencimiento = p.FechaVencimiento,
                         Observaciones = p.Observaciones ?? string.Empty,
                         FechaPreparacion = p.FechaPreparacion,
-                        Estado = p.Estado.ToString(),
+                        Estado = p.Estado,
                         // Nombres mediante joins
                         NombreProducto = _context.Productos
                             .Where(prod => prod.Id == p.ProductoId)
                             .Select(prod => prod.Nombre)
                             .FirstOrDefault() ?? string.Empty,
-                        NombreChef = _context.Usuarios
-                            .Where(u => u.Id == p.ChefId)
-                            .Select(u => u.NombreCompleto)
-                            .FirstOrDefault() ?? string.Empty
+                        NombreChef = (
+                            _context.Usuarios
+                                .Where(u => u.Id == p.ChefId)
+                                .Select(u => u.NombreCompleto)
+                                .FirstOrDefault()
+                            ?? _context.Usuarios
+                                .Where(u => u.IdentityId == p.ChefId.ToString())
+                                .Select(u => u.NombreCompleto)
+                                .FirstOrDefault()
+                        ) ?? string.Empty
                     })
                     .ToListAsync(cancellationToken);
 

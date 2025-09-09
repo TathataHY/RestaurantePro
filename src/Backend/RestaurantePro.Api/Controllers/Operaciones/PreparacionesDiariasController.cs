@@ -338,13 +338,15 @@ public class PreparacionesDiariasController : ControllerBase
             var estadisticas = new EstadisticasPreparacionesDiariasDto
             {
                 TotalPreparaciones = preparaciones.Count,
-                PreparacionesDisponibles = preparaciones.Count(p => p.Estado == EstadoPreparacion.Disponible),
-                PreparacionesPorVencer = preparaciones.Count(p => p.Estado == EstadoPreparacion.PorVencer),
+                // Disponibles: suma total de cantidad disponible (más útil en el header)
+                PreparacionesDisponibles = preparaciones.Sum(p => p.CantidadDisponible),
+                // Por vencer: conteo basado en la regla EstaPorVencer
+                PreparacionesPorVencer = preparaciones.Count(p => p.EstaPorVencer),
                 PreparacionesAgotadas = preparaciones.Count(p => p.Estado == EstadoPreparacion.Agotada),
                 PreparacionesVencidas = preparaciones.Count(p => p.Estado == EstadoPreparacion.Vencida),
                 PreparacionesEnPreparacion = preparaciones.Count(p => p.Estado == EstadoPreparacion.Preparando),
                 CantidadTotalPreparada = preparaciones.Sum(p => p.CantidadPreparada),
-                CantidadDisponible = preparaciones.Where(p => p.Estado == EstadoPreparacion.Disponible).Sum(p => p.CantidadDisponible),
+                CantidadDisponible = preparaciones.Sum(p => p.CantidadDisponible),
                 CantidadConsumida = preparaciones.Sum(p => p.CantidadPreparada - p.CantidadDisponible),
                 CantidadDesperdiciada = preparaciones.Where(p => p.Estado == EstadoPreparacion.Vencida).Sum(p => p.CantidadDisponible),
                 PorcentajeEficiencia = preparaciones.Any() ? 

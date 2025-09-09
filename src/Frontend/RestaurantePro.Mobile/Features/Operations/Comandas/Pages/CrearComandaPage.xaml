@@ -4,8 +4,10 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;assembly=RestaurantePro.Mobile.Core"
              xmlns:models="clr-namespace:RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models;assembly=RestaurantePro.Mobile.Core"
+             xmlns:dto="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
 
              x:DataType="vm:CrearComandaViewModel"
+             x:Name="CrearComandaRoot"
              Title="{Binding TituloPagina}"
              BackgroundColor="{AppThemeBinding Light=#F8F9FA, Dark=#1A1A1A}">
 
@@ -116,7 +118,7 @@
                                             </Frame>
                                         </Grid>
                                         
-                                        <!-- Controles de cantidad -->
+                                        <!-- Controles de cantidad + indicadores de preparaciones -->
                                         <StackLayout Grid.Row="1" 
                                                      Orientation="Horizontal" 
                                                      HorizontalOptions="Center"
@@ -159,6 +161,22 @@
                                                     BorderWidth="2"
                                                     Clicked="OnIncrementarCantidadClicked"/>
                                         </StackLayout>
+
+                                        <!-- Indicadores de preparaciones disponibles y a preparar -->
+                                        <StackLayout Grid.Row="1" Orientation="Horizontal" Spacing="12" Margin="0,60,0,0" HorizontalOptions="Center">
+                                            <Frame BackgroundColor="{AppThemeBinding Light=#E3F2FD, Dark=#1E3A8A}" CornerRadius="10" Padding="10,6" HasShadow="False"
+                                                   IsVisible="{Binding TieneDatosPreparacion}">
+                                                <Label Text="{Binding PreparacionesDisponiblesHoy, StringFormat='Disp. hoy: {0}'}" FontSize="12" TextColor="{AppThemeBinding Light=#1976D2, Dark=#64B5F6}"/>
+                                            </Frame>
+                                            <Frame BackgroundColor="{AppThemeBinding Light=#FFF8E1, Dark=#5D4037}" CornerRadius="10" Padding="10,6" HasShadow="False"
+                                                   IsVisible="{Binding TieneDatosPreparacion}">
+                                                <Label Text="{Binding CantidadTomadaDePreparaciones, StringFormat='Prep: {0}'}" FontSize="12" TextColor="{AppThemeBinding Light=#FF8F00, Dark=#FFCC80}"/>
+                                            </Frame>
+                                            <Frame BackgroundColor="{AppThemeBinding Light=#FBE9E7, Dark=#4E342E}" CornerRadius="10" Padding="10,6" HasShadow="False"
+                                                   IsVisible="{Binding TieneDatosPreparacion}">
+                                                <Label Text="{Binding CantidadAPreparar, StringFormat='A preparar: {0}'}" FontSize="12" TextColor="{AppThemeBinding Light=#D84315, Dark=#FFAB91}"/>
+                                            </Frame>
+                                        </StackLayout>
                                         
                                         <!-- Botón agregar al carrito -->
                                         <Button Grid.Row="2"
@@ -170,6 +188,55 @@
                                                 CornerRadius="25"
                                                 HeightRequest="48"
                                                 Clicked="OnAgregarAlCarritoClicked"/>
+                                    </Grid>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </StackLayout>
+            </Frame>
+
+            <!-- Preparaciones del Día -->
+            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark=#2D2D2D}" 
+                   CornerRadius="12" 
+                   Padding="16"
+                   HasShadow="True">
+                <StackLayout>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Text="🍳 Preparaciones del Día" 
+                               FontSize="16" 
+                               FontAttributes="Bold" 
+                               TextColor="{AppThemeBinding Light=#424242, Dark=#E0E0E0}"/>
+                        <Button Grid.Column="1" Text="Refrescar" Command="{Binding LoadPreparacionesDiaCommand}" Style="{StaticResource SecondaryButtonStyle}"/>
+                    </Grid>
+
+                    <CollectionView ItemsSource="{Binding PreparacionesDelDia}"
+                                    SelectionMode="None"
+                                    HeightRequest="200">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="dto:PreparacionDiariaDto">
+                                <Frame BackgroundColor="{AppThemeBinding Light=#F9FAFB, Dark=#1F2937}"
+                                       CornerRadius="12"
+                                       Padding="12"
+                                       Margin="0,6"
+                                       HasShadow="True">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackLayout>
+                                            <Label Text="{Binding NombreProducto}" FontAttributes="Bold"/>
+                                            <Label Text="{Binding CantidadDisponible, StringFormat='Disp.: {0}'}" FontSize="12"/>
+                                            <Label Text="{Binding NombreChef, StringFormat='Chef: {0}'}" FontSize="12"/>
+                                        </StackLayout>
+                                        <Button Grid.Column="1" Text="Usar +1"
+                                                Command="{Binding BindingContext.IncrementarDesdePreparacionCommand, Source={x:Reference Name=CrearComandaRoot}}"
+                                                CommandParameter="{Binding .}"/>
                                     </Grid>
                                 </Frame>
                             </DataTemplate>

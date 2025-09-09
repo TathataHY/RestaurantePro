@@ -72,7 +72,7 @@ public partial class AnalyticsViewModel : BaseViewModel
     /// <summary>
     /// Cargar analytics al aparecer la página
     /// </summary>
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     public async Task OnAppearingAsync()
     {
         if (IsBusy) return;
@@ -90,7 +90,7 @@ public partial class AnalyticsViewModel : BaseViewModel
     /// <summary>
     /// Cargar métricas del día
     /// </summary>
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     public async Task CargarMetricasDiaAsync()
     {
         if (IsBusy) return;
@@ -107,13 +107,13 @@ public partial class AnalyticsViewModel : BaseViewModel
             {
                 await _dialogService.ShowErrorAsync(response.Message ?? "Error al cargar métricas del día");
             }
-        }, showLoading: false);
+        });
     }
 
     /// <summary>
     /// Cargar top productos
     /// </summary>
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     public async Task CargarTopProductosAsync()
     {
         if (IsBusy) return;
@@ -134,13 +134,13 @@ public partial class AnalyticsViewModel : BaseViewModel
             {
                 await _dialogService.ShowErrorAsync(response.Message ?? "Error al cargar top productos");
             }
-        }, showLoading: false);
+        });
     }
 
     /// <summary>
     /// Cargar ocupación de mesas
     /// </summary>
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     public async Task CargarOcupacionMesasAsync()
     {
         if (IsBusy) return;
@@ -157,13 +157,13 @@ public partial class AnalyticsViewModel : BaseViewModel
             {
                 await _dialogService.ShowErrorAsync(response.Message ?? "Error al cargar ocupación de mesas");
             }
-        }, showLoading: false);
+        });
     }
 
     /// <summary>
     /// Cargar tiempo de preparación
     /// </summary>
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     public async Task CargarTiempoPreparacionAsync()
     {
         if (IsBusy) return;
@@ -180,13 +180,13 @@ public partial class AnalyticsViewModel : BaseViewModel
             {
                 await _dialogService.ShowErrorAsync(response.Message ?? "Error al cargar tiempo de preparación");
             }
-        }, showLoading: false);
+        });
     }
 
     /// <summary>
     /// Cargar ventas por hora
     /// </summary>
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     public async Task CargarVentasPorHoraAsync()
     {
         if (IsBusy) return;
@@ -207,13 +207,13 @@ public partial class AnalyticsViewModel : BaseViewModel
             {
                 await _dialogService.ShowErrorAsync(response.Message ?? "Error al cargar ventas por hora");
             }
-        }, showLoading: false);
+        });
     }
 
     /// <summary>
     /// Refrescar todas las métricas
     /// </summary>
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     public async Task RefrescarAsync()
     {
         EstaRefrescando = true;
@@ -230,7 +230,7 @@ public partial class AnalyticsViewModel : BaseViewModel
     /// <summary>
     /// Cambiar período de análisis
     /// </summary>
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     public async Task CambiarPeriodoAsync()
     {
         switch (FiltroPeriodo)

@@ -80,7 +80,7 @@ public partial class CategoriasViewModel : BaseViewModel
     /// <summary>
     /// Cargar categorías
     /// </summary>
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     public async Task CargarCategoriasAsync()
     {
         if (IsBusy) return;
@@ -105,7 +105,7 @@ public partial class CategoriasViewModel : BaseViewModel
             {
                 await _dialogService.ShowErrorAsync(response.Message ?? "Error al cargar categorías");
             }
-        }, showLoading: false);
+        });
         
         EstaRefrescando = false;
     }
@@ -131,7 +131,7 @@ public partial class CategoriasViewModel : BaseViewModel
     /// <summary>
     /// Buscar categorías
     /// </summary>
-    [RelayCommand]
+    [RelayCommand(AllowConcurrentExecutions = false)]
     public async Task BuscarCategoriasAsync()
     {
         if (IsBusy || string.IsNullOrWhiteSpace(FiltroBusqueda)) return;
