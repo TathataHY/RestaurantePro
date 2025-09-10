@@ -1,0 +1,643 @@
+@using RestaurantePro.Web.Admin.Models
+@using RestaurantePro.Web.Admin.Services
+@inject ReservacionesApiService ReservacionesApi
+@inject ClientesApiService ClientesApi
+@inject MesasApiService MesasApi
+@inject IJSRuntime JSRuntime
+
+<div class="modal fade @(Mostrar ? "show" : "")" style="display: @(Mostrar ? "block" : "none")" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="oi oi-calendar"></i> @(EsEdicion ? "Editar Reservación" : "Nueva Reservación")
+                </h5>
+                <button type="button" class="btn-close" @onclick="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="Reservacion" OnValidSubmit="GuardarReservacion">
+                    <DataAnnotationsValidator />
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">Número de Reservación *</label>
+                                <InputText @bind-Value="Reservacion.NumeroReservacion" class="form-control" placeholder="R001-000001" />
+                                <ValidationMessage For="@(() => Reservacion.NumeroReservacion)" class="text-danger" />
+                                @if (mostrarValidacionNumero)
+                                {
+                                    <div class="form-text text-info">
+                                        <i class="oi oi-reload"></i> Validando número...
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">Fecha de Reservación *</label>
+                                <InputDate @bind-Value="Reservacion.FechaReservacion" class="form-control" @onchange="FechaCambiada" />
+                                <ValidationMessage For="@(() => Reservacion.FechaReservacion)" class="text-danger" />
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">Hora de Reservación *</label>
+                                <InputText type="time" @bind-Value="horaReservacionString" class="form-control" @onchange="HoraCambiada" />
+                                <ValidationMessage For="@(() => Reservacion.HoraReservacion)" class="text-danger" />
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">Número de Personas *</label>
+                                <InputNumber @bind-Value="Reservacion.NumeroPersonas" class="form-control" min="1" @onchange="PersonasCambiadas" />
+                                <ValidationMessage For="@(() => Reservacion.NumeroPersonas)" class="text-danger" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Cliente *</label>
+                                <InputSelect @bind-Value="Reservacion.ClienteId" class="form-select" @onchange="ClienteSeleccionado">
+                                    <option value="">Seleccionar cliente</option>
+                                    @if (clientes != null)
+                                    {
+                                        @foreach (var cliente in clientes)
+                                        {
+                                            <option value="@cliente.Id">@cliente.NombreCompleto</option>
+                                        }
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => Reservacion.ClienteId)" class="text-danger" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Mesa *</label>
+                                <InputSelect @bind-Value="Reservacion.MesaId" class="form-select" @onchange="MesaSeleccionada">
+                                    <option value="">Seleccionar mesa</option>
+                                    @if (mesasDisponibles != null)
+                                    {
+                                        @foreach (var mesa in mesasDisponibles)
+                                        {
+                                            <option value="@mesa.MesaId">@mesa.MesaNombre - @mesa.Capacidad personas</option>
+                                        }
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => Reservacion.MesaId)" class="text-danger" />
+                                @if (verificandoDisponibilidad)
+                                {
+                                    <div class="form-text text-info">
+                                        <i class="oi oi-reload"></i> Verificando disponibilidad...
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Canal de Reservación</label>
+                                <InputSelect @bind-Value="Reservacion.CanalReservacion" class="form-select">
+                                    <option value="Web">Web</option>
+                                    <option value="Telefono">Teléfono</option>
+                                    <option value="Presencial">Presencial</option>
+                                    <option value="App">App Móvil</option>
+                                </InputSelect>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Observaciones</label>
+                                <InputTextArea @bind-Value="Reservacion.Observaciones" class="form-control" rows="2" placeholder="Observaciones generales" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Notas Especiales</label>
+                                <InputTextArea @bind-Value="Reservacion.NotasEspeciales" class="form-control" rows="2" placeholder="Notas especiales para el servicio" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Requerimientos Especiales</label>
+                                <InputTextArea @bind-Value="Reservacion.RequerimientosEspeciales" class="form-control" rows="2" placeholder="Requerimientos especiales del cliente" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Fuente de Reservación</label>
+                                <InputSelect @bind-Value="Reservacion.FuenteReservacion" class="form-select">
+                                    <option value="Directa">Directa</option>
+                                    <option value="Google">Google</option>
+                                    <option value="Facebook">Facebook</option>
+                                    <option value="TripAdvisor">TripAdvisor</option>
+                                    <option value="Instagram">Instagram</option>
+                                    <option value="Recomendacion">Recomendación</option>
+                                </InputSelect>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información de contacto adicional -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h6 class="m-0">Información de Contacto Adicional</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">Contacto Alternativo</label>
+                                        <InputText @bind-Value="Reservacion.ContactoAlternativo" class="form-control" placeholder="Nombre del contacto" />
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">Teléfono Alternativo</label>
+                                        <InputText @bind-Value="Reservacion.TelefonoAlternativo" class="form-control" placeholder="Número de teléfono" />
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">Email Alternativo</label>
+                                        <InputText @bind-Value="Reservacion.EmailAlternativo" class="form-control" placeholder="Email de contacto" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información de grupo -->
+                    @if (Reservacion.EsGrupo)
+                    {
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6 class="m-0">Información de Grupo</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Nombre del Grupo</label>
+                                            <InputText @bind-Value="Reservacion.NombreGrupo" class="form-control" placeholder="Nombre del grupo" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Empresa</label>
+                                            <InputText @bind-Value="Reservacion.EmpresaGrupo" class="form-control" placeholder="Empresa o organización" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">Tamaño del Grupo</label>
+                                            <InputNumber @bind-Value="Reservacion.TamañoGrupo" class="form-control" min="1" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Opciones adicionales -->
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <InputCheckbox @bind-Value="Reservacion.RequiereConfirmacion" class="form-check-input" />
+                                <label class="form-check-label">
+                                    Requiere Confirmación
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <InputCheckbox @bind-Value="Reservacion.EsUrgente" class="form-check-input" />
+                                <label class="form-check-label">
+                                    Es Urgente
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <InputCheckbox @bind-Value="Reservacion.EsVIP" class="form-check-input" />
+                                <label class="form-check-label">
+                                    Es VIP
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <InputCheckbox @bind-Value="Reservacion.EsGrupo" class="form-check-input" @onchange="EsGrupoChanged" />
+                                <label class="form-check-label">
+                                    Es Grupo
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <InputCheckbox @bind-Value="Reservacion.EsRecurrente" class="form-check-input" />
+                                <label class="form-check-label">
+                                    Es Recurrente
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (Reservacion.EsRecurrente)
+                    {
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6 class="m-0">Configuración de Recurrencia</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Frecuencia</label>
+                                            <InputSelect @bind-Value="Reservacion.FrecuenciaRecurrencia" class="form-select">
+                                                <option value="Diaria">Diaria</option>
+                                                <option value="Semanal">Semanal</option>
+                                                <option value="Mensual">Mensual</option>
+                                            </InputSelect>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Fecha Fin de Recurrencia</label>
+                                            <InputDate @bind-Value="Reservacion.FechaFinRecurrencia" class="form-control" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </EditForm>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="Cerrar">
+                    <i class="oi oi-x"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-info" @onclick="VerificarDisponibilidad" disabled="@verificandoDisponibilidad">
+                    @if (verificandoDisponibilidad)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    }
+                    <i class="oi oi-magnifying-glass"></i> Verificar Disponibilidad
+                </button>
+                <button type="button" class="btn btn-primary" @onclick="GuardarReservacion" disabled="@guardando">
+                    @if (guardando)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    }
+                    <i class="oi oi-check"></i> @(EsEdicion ? "Actualizar" : "Crear")
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Mostrar)
+{
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    [Parameter] public bool Mostrar { get; set; }
+    [Parameter] public EventCallback<bool> MostrarChanged { get; set; }
+    [Parameter] public EventCallback<ReservacionDto> OnReservacionGuardada { get; set; }
+
+    private ReservacionDto Reservacion = new();
+    private bool EsEdicion => Reservacion.Id != Guid.Empty;
+    private bool guardando = false;
+    private bool verificandoDisponibilidad = false;
+    private bool mostrarValidacionNumero = false;
+
+    private List<ClienteDto>? clientes;
+    private List<MesaDisponibleDto>? mesasDisponibles;
+    private string horaReservacionString = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Mostrar && !EsEdicion)
+        {
+            Reservacion = new ReservacionDto
+            {
+                FechaCreacion = DateTime.Now,
+                FechaReservacion = DateTime.Today,
+                HoraReservacion = DateTime.Now.TimeOfDay,
+                Estado = "Pendiente",
+                NumeroPersonas = 2,
+                CanalReservacion = "Web",
+                FuenteReservacion = "Directa",
+                RequiereConfirmacion = true
+            };
+            
+            horaReservacionString = Reservacion.HoraReservacion.ToString("hh\\:mm");
+            
+            await CargarDatos();
+            await GenerarNumeroReservacion();
+        }
+    }
+
+    private async Task CargarDatos()
+    {
+        await Task.WhenAll(
+            CargarClientes()
+        );
+    }
+
+    private async Task CargarClientes()
+    {
+        try
+        {
+            var filtros = new ClienteFiltrosDto { PageSize = 1000 };
+            var resultado = await ClientesApi.ObtenerClientesAsync(filtros);
+            clientes = resultado?.Items?.ToList() ?? new List<ClienteDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar clientes: {ex.Message}");
+            clientes = new List<ClienteDto>();
+        }
+    }
+
+    private async Task GenerarNumeroReservacion()
+    {
+        try
+        {
+            var resultado = await ReservacionesApi.ObtenerSiguienteNumeroReservacionAsync();
+            if (resultado?.Success == true && !string.IsNullOrEmpty(resultado.Data))
+            {
+                Reservacion.NumeroReservacion = resultado.Data;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al generar número de reservación: {ex.Message}");
+        }
+    }
+
+    private async Task FechaCambiada()
+    {
+        await VerificarDisponibilidad();
+    }
+
+    private async Task HoraCambiada()
+    {
+        if (TimeSpan.TryParse(horaReservacionString, out var hora))
+        {
+            Reservacion.HoraReservacion = hora;
+        }
+        await VerificarDisponibilidad();
+    }
+
+    private async Task PersonasCambiadas()
+    {
+        await VerificarDisponibilidad();
+    }
+
+    private async Task ClienteSeleccionado()
+    {
+        if (Reservacion.ClienteId != Guid.Empty && clientes != null)
+        {
+            var cliente = clientes.FirstOrDefault(c => c.Id == Reservacion.ClienteId);
+            if (cliente != null)
+            {
+                Reservacion.ClienteNombre = cliente.NombreCompleto;
+                Reservacion.ClienteEmail = cliente.Email ?? "";
+                Reservacion.ClienteTelefono = cliente.Telefono ?? "";
+            }
+        }
+    }
+
+    private void MesaSeleccionada()
+    {
+        if (Reservacion.MesaId != Guid.Empty && mesasDisponibles != null)
+        {
+            var mesa = mesasDisponibles.FirstOrDefault(m => m.MesaId == Reservacion.MesaId);
+            if (mesa != null)
+            {
+                Reservacion.MesaNombre = mesa.MesaNombre;
+                Reservacion.MesaNumero = mesa.MesaNumero;
+                Reservacion.MesaUbicacion = mesa.MesaUbicacion;
+                Reservacion.MesaCapacidad = mesa.Capacidad;
+            }
+        }
+    }
+
+    private void EsGrupoChanged()
+    {
+        if (!Reservacion.EsGrupo)
+        {
+            Reservacion.NombreGrupo = null;
+            Reservacion.EmpresaGrupo = null;
+            Reservacion.TamañoGrupo = null;
+        }
+    }
+
+    private async Task VerificarDisponibilidad()
+    {
+        if (Reservacion.FechaReservacion == default || Reservacion.HoraReservacion == default || Reservacion.NumeroPersonas <= 0)
+            return;
+
+        verificandoDisponibilidad = true;
+        StateHasChanged();
+
+        try
+        {
+            var request = new VerificarDisponibilidadRequest
+            {
+                Fecha = Reservacion.FechaReservacion,
+                Hora = Reservacion.HoraReservacion,
+                NumeroPersonas = Reservacion.NumeroPersonas,
+                MesaIdExcluir = EsEdicion ? Reservacion.MesaId : null
+            };
+
+            var disponibilidad = await ReservacionesApi.VerificarDisponibilidadAsync(request);
+            if (disponibilidad != null)
+            {
+                mesasDisponibles = disponibilidad.MesasDisponibles;
+                
+                if (!disponibilidad.Disponible)
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", $"No hay disponibilidad para {Reservacion.NumeroPersonas} personas en {Reservacion.FechaReservacion:dd/MM/yyyy} a las {Reservacion.HoraReservacion:hh\\:mm}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al verificar disponibilidad: {ex.Message}");
+        }
+        finally
+        {
+            verificandoDisponibilidad = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task GuardarReservacion()
+    {
+        guardando = true;
+        StateHasChanged();
+
+        try
+        {
+            // Validar número de reservación único
+            if (!string.IsNullOrEmpty(Reservacion.NumeroReservacion))
+            {
+                mostrarValidacionNumero = true;
+                var validacionNumero = await ReservacionesApi.ValidarNumeroReservacionAsync(Reservacion.NumeroReservacion, EsEdicion ? Reservacion.Id : null);
+                mostrarValidacionNumero = false;
+
+                if (validacionNumero?.Data == true)
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", "El número de reservación ya existe.");
+                    guardando = false;
+                    StateHasChanged();
+                    return;
+                }
+            }
+
+            ApiResponse<ReservacionDto>? resultado;
+
+            if (EsEdicion)
+            {
+                var request = new ActualizarReservacionRequest
+                {
+                    Id = Reservacion.Id,
+                    FechaReservacion = Reservacion.FechaReservacion,
+                    HoraReservacion = Reservacion.HoraReservacion,
+                    MesaId = Reservacion.MesaId,
+                    NumeroPersonas = Reservacion.NumeroPersonas,
+                    Observaciones = Reservacion.Observaciones,
+                    NotasEspeciales = Reservacion.NotasEspeciales,
+                    RequerimientosEspeciales = Reservacion.RequerimientosEspeciales,
+                    Estado = Reservacion.Estado,
+                    EsUrgente = Reservacion.EsUrgente,
+                    EsVIP = Reservacion.EsVIP,
+                    ContactoAlternativo = Reservacion.ContactoAlternativo,
+                    TelefonoAlternativo = Reservacion.TelefonoAlternativo,
+                    EmailAlternativo = Reservacion.EmailAlternativo
+                };
+
+                resultado = await ReservacionesApi.ActualizarReservacionAsync(request);
+            }
+            else
+            {
+                var request = new CrearReservacionRequest
+                {
+                    ClienteId = Reservacion.ClienteId,
+                    MesaId = Reservacion.MesaId,
+                    FechaReservacion = Reservacion.FechaReservacion,
+                    HoraReservacion = Reservacion.HoraReservacion,
+                    NumeroPersonas = Reservacion.NumeroPersonas,
+                    Observaciones = Reservacion.Observaciones,
+                    NotasEspeciales = Reservacion.NotasEspeciales,
+                    RequerimientosEspeciales = Reservacion.RequerimientosEspeciales,
+                    CanalReservacion = Reservacion.CanalReservacion,
+                    FuenteReservacion = Reservacion.FuenteReservacion,
+                    EsRecurrente = Reservacion.EsRecurrente,
+                    FrecuenciaRecurrencia = Reservacion.FrecuenciaRecurrencia,
+                    FechaFinRecurrencia = Reservacion.FechaFinRecurrencia,
+                    RequiereConfirmacion = Reservacion.RequiereConfirmacion,
+                    EsUrgente = Reservacion.EsUrgente,
+                    EsVIP = Reservacion.EsVIP,
+                    EsGrupo = Reservacion.EsGrupo,
+                    ContactoAlternativo = Reservacion.ContactoAlternativo,
+                    TelefonoAlternativo = Reservacion.TelefonoAlternativo,
+                    EmailAlternativo = Reservacion.EmailAlternativo,
+                    NombreGrupo = Reservacion.NombreGrupo,
+                    EmpresaGrupo = Reservacion.EmpresaGrupo,
+                    TamañoGrupo = Reservacion.TamañoGrupo
+                };
+
+                resultado = await ReservacionesApi.CrearReservacionAsync(request);
+            }
+
+            if (resultado?.Success == true && resultado.Data != null)
+            {
+                await OnReservacionGuardada.InvokeAsync(resultado.Data);
+                await Cerrar();
+                await JSRuntime.InvokeVoidAsync("alert", EsEdicion ? "Reservación actualizada correctamente" : "Reservación creada correctamente");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al guardar la reservación");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+        finally
+        {
+            guardando = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task Cerrar()
+    {
+        await MostrarChanged.InvokeAsync(false);
+    }
+
+    public void AbrirParaEditar(ReservacionDto reservacion)
+    {
+        Reservacion = new ReservacionDto
+        {
+            Id = reservacion.Id,
+            NumeroReservacion = reservacion.NumeroReservacion,
+            FechaCreacion = reservacion.FechaCreacion,
+            FechaReservacion = reservacion.FechaReservacion,
+            HoraReservacion = reservacion.HoraReservacion,
+            ClienteId = reservacion.ClienteId,
+            ClienteNombre = reservacion.ClienteNombre,
+            ClienteEmail = reservacion.ClienteEmail,
+            ClienteTelefono = reservacion.ClienteTelefono,
+            MesaId = reservacion.MesaId,
+            MesaNombre = reservacion.MesaNombre,
+            MesaNumero = reservacion.MesaNumero,
+            MesaUbicacion = reservacion.MesaUbicacion,
+            MesaCapacidad = reservacion.MesaCapacidad,
+            NumeroPersonas = reservacion.NumeroPersonas,
+            Estado = reservacion.Estado,
+            Observaciones = reservacion.Observaciones,
+            NotasEspeciales = reservacion.NotasEspeciales,
+            RequerimientosEspeciales = reservacion.RequerimientosEspeciales,
+            CanalReservacion = reservacion.CanalReservacion,
+            FuenteReservacion = reservacion.FuenteReservacion,
+            EsRecurrente = reservacion.EsRecurrente,
+            FrecuenciaRecurrencia = reservacion.FrecuenciaRecurrencia,
+            FechaFinRecurrencia = reservacion.FechaFinRecurrencia,
+            RequiereConfirmacion = reservacion.RequiereConfirmacion,
+            EsUrgente = reservacion.EsUrgente,
+            EsVIP = reservacion.EsVIP,
+            EsGrupo = reservacion.EsGrupo,
+            ContactoAlternativo = reservacion.ContactoAlternativo,
+            TelefonoAlternativo = reservacion.TelefonoAlternativo,
+            EmailAlternativo = reservacion.EmailAlternativo,
+            NombreGrupo = reservacion.NombreGrupo,
+            EmpresaGrupo = reservacion.EmpresaGrupo,
+            TamañoGrupo = reservacion.TamañoGrupo
+        };
+        Mostrar = true;
+        StateHasChanged();
+    }
+
+    public void AbrirParaCrear()
+    {
+        Reservacion = new ReservacionDto
+        {
+            FechaCreacion = DateTime.Now,
+            FechaReservacion = DateTime.Today,
+            HoraReservacion = DateTime.Now.TimeOfDay,
+            Estado = "Pendiente",
+            NumeroPersonas = 2,
+            CanalReservacion = "Web",
+            FuenteReservacion = "Directa",
+            RequiereConfirmacion = true
+        };
+        Mostrar = true;
+        StateHasChanged();
+    }
+}

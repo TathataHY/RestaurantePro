@@ -1,0 +1,385 @@
+@using RestaurantePro.Web.Admin.Models
+@using RestaurantePro.Web.Admin.Services
+@inject ReservacionesApiService ReservacionesApi
+@inject ClientesApiService ClientesApi
+@inject MesasApiService MesasApi
+
+<div class="card">
+    <div class="card-header">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="oi oi-magnifying-glass"></i> Filtros de Búsqueda
+        </h6>
+    </div>
+    <div class="card-body">
+        <EditForm Model="Filtros" OnValidSubmit="AplicarFiltros">
+            <DataAnnotationsValidator />
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Buscar</label>
+                        <InputText @bind-Value="Filtros.Busqueda" class="form-control" placeholder="Número, cliente, mesa..." />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Estado</label>
+                        <InputSelect @bind-Value="Filtros.Estado" class="form-select">
+                            <option value="">Todos los estados</option>
+                            @if (estados != null)
+                            {
+                                @foreach (var estado in estados)
+                                {
+                                    <option value="@estado">@estado</option>
+                                }
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Canal</label>
+                        <InputSelect @bind-Value="Filtros.CanalReservacion" class="form-select">
+                            <option value="">Todos los canales</option>
+                            @if (canales != null)
+                            {
+                                @foreach (var canal in canales)
+                                {
+                                    <option value="@canal">@canal</option>
+                                }
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Cliente</label>
+                        <InputSelect @bind-Value="Filtros.ClienteId" class="form-select">
+                            <option value="">Todos los clientes</option>
+                            @if (clientes != null)
+                            {
+                                @foreach (var cliente in clientes)
+                                {
+                                    <option value="@cliente.Id">@cliente.NombreCompleto</option>
+                                }
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Mesa</label>
+                        <InputSelect @bind-Value="Filtros.MesaId" class="form-select">
+                            <option value="">Todas las mesas</option>
+                            @if (mesas != null)
+                            {
+                                @foreach (var mesa in mesas)
+                                {
+                                    <option value="@mesa.Id">Mesa @mesa.Numero</option>
+                                }
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Fecha Inicio</label>
+                        <InputDate @bind-Value="Filtros.FechaInicio" class="form-control" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Fecha Fin</label>
+                        <InputDate @bind-Value="Filtros.FechaFin" class="form-control" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Hora Inicio</label>
+                        <InputText type="time" @bind-Value="horaInicioString" class="form-control" @onchange="HoraInicioCambiada" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Hora Fin</label>
+                        <InputText type="time" @bind-Value="horaFinString" class="form-control" @onchange="HoraFinCambiada" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Personas Mínimo</label>
+                        <InputNumber @bind-Value="Filtros.NumeroPersonasMinimo" class="form-control" placeholder="1" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Personas Máximo</label>
+                        <InputNumber @bind-Value="Filtros.NumeroPersonasMaximo" class="form-control" placeholder="10" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Ordenar Por</label>
+                        <InputSelect @bind-Value="Filtros.OrdenarPor" class="form-select">
+                            <option value="FechaHoraCompleta">Fecha y Hora</option>
+                            <option value="NumeroReservacion">Número de Reservación</option>
+                            <option value="ClienteNombre">Cliente</option>
+                            <option value="MesaNumero">Mesa</option>
+                            <option value="Estado">Estado</option>
+                            <option value="NumeroPersonas">Número de Personas</option>
+                            <option value="CanalReservacion">Canal</option>
+                        </InputSelect>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Dirección</label>
+                        <InputSelect @bind-Value="Filtros.DireccionOrden" class="form-select">
+                            <option value="asc">Ascendente</option>
+                            <option value="desc">Descendente</option>
+                        </InputSelect>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-2">
+                    <div class="form-check">
+                        <InputCheckbox @bind-Value="esUrgente" class="form-check-input" />
+                        <label class="form-check-label">
+                            Solo Urgentes
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-check">
+                        <InputCheckbox @bind-Value="esVIP" class="form-check-input" />
+                        <label class="form-check-label">
+                            Solo VIP
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-check">
+                        <InputCheckbox @bind-Value="esGrupo" class="form-check-input" />
+                        <label class="form-check-label">
+                            Solo Grupos
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-check">
+                        <InputCheckbox @bind-Value="esRecurrente" class="form-check-input" />
+                        <label class="form-check-label">
+                            Solo Recurrentes
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-check">
+                        <InputCheckbox @bind-Value="esHoy" class="form-check-input" />
+                        <label class="form-check-label">
+                            Solo Hoy
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-check">
+                        <InputCheckbox @bind-Value="esFutura" class="form-check-input" />
+                        <label class="form-check-label">
+                            Solo Futuras
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <div>
+                    <button type="button" class="btn btn-outline-secondary" @onclick="LimpiarFiltros">
+                        <i class="oi oi-reload"></i> Limpiar
+                    </button>
+                    <button type="button" class="btn btn-outline-info" @onclick="FiltrosHoy">
+                        <i class="oi oi-calendar"></i> Solo Hoy
+                    </button>
+                    <button type="button" class="btn btn-outline-warning" @onclick="FiltrosUrgentes">
+                        <i class="oi oi-warning"></i> Solo Urgentes
+                    </button>
+                    <button type="button" class="btn btn-outline-success" @onclick="FiltrosRequierenAtencion">
+                        <i class="oi oi-bell"></i> Requieren Atención
+                    </button>
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-primary" disabled="@aplicando">
+                        @if (aplicando)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        <i class="oi oi-magnifying-glass"></i> Buscar
+                    </button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [Parameter] public ReservacionFiltrosDto Filtros { get; set; } = new();
+    [Parameter] public EventCallback<ReservacionFiltrosDto> OnFiltrosAplicados { get; set; }
+    [Parameter] public bool Aplicando { get; set; }
+
+    private List<string>? estados;
+    private List<string>? canales;
+    private List<ClienteDto>? clientes;
+    private List<MesaDto>? mesas;
+    private bool aplicando => Aplicando;
+    private bool esUrgente = false;
+    private bool esVIP = false;
+    private bool esGrupo = false;
+    private bool esRecurrente = false;
+    private bool esHoy = false;
+    private bool esFutura = false;
+    private string horaInicioString = "";
+    private string horaFinString = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        await Task.WhenAll(
+            CargarEstados(),
+            CargarCanales(),
+            CargarClientes(),
+            CargarMesas()
+        );
+    }
+
+    private async Task CargarEstados()
+    {
+        try
+        {
+            estados = await ReservacionesApi.ObtenerEstadosAsync() ?? new List<string>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar estados: {ex.Message}");
+            estados = new List<string>();
+        }
+    }
+
+    private async Task CargarCanales()
+    {
+        try
+        {
+            canales = await ReservacionesApi.ObtenerCanalesAsync() ?? new List<string>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar canales: {ex.Message}");
+            canales = new List<string>();
+        }
+    }
+
+    private async Task CargarClientes()
+    {
+        try
+        {
+            var filtros = new ClienteFiltrosDto { PageSize = 1000 };
+            var resultado = await ClientesApi.ObtenerClientesAsync(filtros);
+            clientes = resultado?.Items?.ToList() ?? new List<ClienteDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar clientes: {ex.Message}");
+            clientes = new List<ClienteDto>();
+        }
+    }
+
+    private async Task CargarMesas()
+    {
+        try
+        {
+            mesas = await MesasApi.ObtenerAsync() ?? new List<MesaDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar mesas: {ex.Message}");
+            mesas = new List<MesaDto>();
+        }
+    }
+
+    private async Task AplicarFiltros()
+    {
+        Filtros.EsUrgente = esUrgente;
+        Filtros.EsVIP = esVIP;
+        Filtros.EsGrupo = esGrupo;
+        Filtros.EsRecurrente = esRecurrente;
+        Filtros.EsHoy = esHoy;
+        Filtros.EsFutura = esFutura;
+        await OnFiltrosAplicados.InvokeAsync(Filtros);
+    }
+
+    private void LimpiarFiltros()
+    {
+        Filtros = new ReservacionFiltrosDto
+        {
+            OrdenarPor = "FechaHoraCompleta",
+            DireccionOrden = "asc",
+            PageNumber = 1,
+            PageSize = 20
+        };
+        esUrgente = false;
+        esVIP = false;
+        esGrupo = false;
+        esRecurrente = false;
+        esHoy = false;
+        esFutura = false;
+    }
+
+    private async Task FiltrosHoy()
+    {
+        Filtros.EsHoy = true;
+        Filtros.FechaInicio = DateTime.Today;
+        Filtros.FechaFin = DateTime.Today;
+        await AplicarFiltros();
+    }
+
+    private async Task FiltrosUrgentes()
+    {
+        esUrgente = true;
+        await AplicarFiltros();
+    }
+
+    private async Task FiltrosRequierenAtencion()
+    {
+        Filtros.RequiereAtencion = true;
+        await AplicarFiltros();
+    }
+
+    private void HoraInicioCambiada()
+    {
+        if (TimeSpan.TryParse(horaInicioString, out var hora))
+        {
+            Filtros.HoraInicio = hora;
+        }
+    }
+
+    private void HoraFinCambiada()
+    {
+        if (TimeSpan.TryParse(horaFinString, out var hora))
+        {
+            Filtros.HoraFin = hora;
+        }
+    }
+}

@@ -1,0 +1,293 @@
+@using RestaurantePro.Web.Admin.Models
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="oi oi-calendar"></i> Lista de Reservaciones (@(Reservaciones?.Count ?? 0))
+        </h6>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-success" @onclick="OnExportarExcel">
+                <i class="oi oi-spreadsheet"></i> Excel
+            </button>
+            <button class="btn btn-sm btn-outline-info" @onclick="OnNuevaReservacion">
+                <i class="oi oi-plus"></i> Nueva Reservación
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (Reservaciones == null)
+        {
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2 text-muted">Cargando reservaciones...</p>
+            </div>
+        }
+        else if (!Reservaciones.Any())
+        {
+            <div class="text-center py-4">
+                <i class="oi oi-calendar text-muted" style="font-size: 3rem;"></i>
+                <h5 class="text-muted mt-3">No hay reservaciones</h5>
+                <p class="text-muted">Comienza creando tu primera reservación</p>
+                <button class="btn btn-primary" @onclick="OnNuevaReservacion">
+                    <i class="oi oi-plus"></i> Crear Reservación
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Reservación</th>
+                            <th>Cliente</th>
+                            <th>Mesa</th>
+                            <th>Fecha y Hora</th>
+                            <th>Personas</th>
+                            <th>Estado</th>
+                            <th>Tiempo</th>
+                            <th>Canal</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var reservacion in Reservaciones)
+                        {
+                            <tr class="@(reservacion.EsUrgente ? "table-warning" : reservacion.RequiereAtencion ? "table-info" : "")">
+                                <td>
+                                    <div>
+                                        <strong>@reservacion.NumeroReservacion</strong>
+                                        @if (reservacion.EsUrgente)
+                                        {
+                                            <br><span class="badge bg-danger">Urgente</span>
+                                        }
+                                        @if (reservacion.EsVIP)
+                                        {
+                                            <br><span class="badge bg-warning">VIP</span>
+                                        }
+                                        @if (reservacion.EsGrupo)
+                                        {
+                                            <br><span class="badge bg-info">Grupo</span>
+                                        }
+                                        @if (reservacion.EsRecurrente)
+                                        {
+                                            <br><span class="badge bg-secondary">Recurrente</span>
+                                        }
+                                        @if (reservacion.RequiereAtencion)
+                                        {
+                                            <br><span class="badge bg-warning">Requiere Atención</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>@reservacion.ClienteNombre</strong>
+                                        @if (!string.IsNullOrEmpty(reservacion.ClienteTelefono))
+                                        {
+                                            <br><small class="text-muted">@reservacion.ClienteTelefono</small>
+                                        }
+                                        @if (!string.IsNullOrEmpty(reservacion.ClienteEmail))
+                                        {
+                                            <br><small class="text-muted">@reservacion.ClienteEmail</small>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <span class="badge bg-secondary">@reservacion.MesaNombre</span>
+                                        @if (!string.IsNullOrEmpty(reservacion.MesaUbicacion))
+                                        {
+                                            <br><small class="text-muted">@reservacion.MesaUbicacion</small>
+                                        }
+                                        <br><small class="text-muted">Cap: @reservacion.MesaCapacidad</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>@reservacion.FechaReservacion.ToString("dd/MM/yyyy")</strong>
+                                        <br><span class="text-muted">@reservacion.HoraReservacion.ToString("hh\\:mm")</span>
+                                        @if (reservacion.EsHoy)
+                                        {
+                                            <br><span class="badge bg-success">Hoy</span>
+                                        }
+                                        else if (reservacion.EsFutura)
+                                        {
+                                            <br><span class="badge bg-primary">Futura</span>
+                                        }
+                                        else
+                                        {
+                                            <br><span class="badge bg-secondary">Pasada</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <span class="badge bg-info">@reservacion.NumeroPersonas</span>
+                                        @if (reservacion.EsGrupo && reservacion.TamañoGrupo.HasValue)
+                                        {
+                                            <br><small class="text-muted">Grupo: @reservacion.TamañoGrupo</small>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-@reservacion.ClaseEstado">@reservacion.EstadoVisual</span>
+                                    @if (reservacion.RequiereConfirmacion && reservacion.EstaPendiente)
+                                    {
+                                        <br><small class="text-warning">Pendiente confirmación</small>
+                                    }
+                                </td>
+                                <td>
+                                    <div>
+                                        @if (reservacion.EsFutura)
+                                        {
+                                            <small>En @reservacion.MinutosHastaReservacion min</small>
+                                            @if (reservacion.EsPronto)
+                                            {
+                                                <br><span class="badge bg-warning">Pronto</span>
+                                            }
+                                            @if (reservacion.EsMuyPronto)
+                                            {
+                                                <br><span class="badge bg-danger">Muy Pronto</span>
+                                            }
+                                        }
+                                        else if (reservacion.EsPasada)
+                                        {
+                                            <small class="text-muted">Hace @Math.Abs(reservacion.MinutosHastaReservacion) min</small>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-success">Ahora</small>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <span class="badge bg-secondary">@reservacion.CanalReservacion</span>
+                                        @if (!string.IsNullOrEmpty(reservacion.FuenteReservacion))
+                                        {
+                                            <br><small class="text-muted">@reservacion.FuenteReservacion</small>
+                                        }
+                                    </div>
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary" 
+                                                @onclick="() => OnVerDetalles.InvokeAsync(reservacion)"
+                                                title="Ver detalles">
+                                            <i class="oi oi-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-warning" 
+                                                @onclick="() => OnEditarReservacion.InvokeAsync(reservacion)"
+                                                title="Editar">
+                                            <i class="oi oi-pencil"></i>
+                                        </button>
+                                        @if (reservacion.EstaPendiente)
+                                        {
+                                            <button class="btn btn-sm btn-outline-success" 
+                                                    @onclick="() => OnConfirmar.InvokeAsync(reservacion)"
+                                                    title="Confirmar">
+                                                <i class="oi oi-check"></i>
+                                            </button>
+                                        }
+                                        @if (reservacion.EstaConfirmada && !reservacion.EstaCompletada)
+                                        {
+                                            <button class="btn btn-sm btn-outline-info" 
+                                                    @onclick="() => OnMarcarLlegada.InvokeAsync(reservacion)"
+                                                    title="Marcar llegada">
+                                                <i class="oi oi-arrow-right"></i>
+                                            </button>
+                                        }
+                                        @if (reservacion.EstaEnProceso)
+                                        {
+                                            <button class="btn btn-sm btn-outline-primary" 
+                                                    @onclick="() => OnMarcarSalida.InvokeAsync(reservacion)"
+                                                    title="Marcar salida">
+                                                <i class="oi oi-arrow-left"></i>
+                                            </button>
+                                        }
+                                        @if (!reservacion.EstaCompletada && !reservacion.EstaCancelada)
+                                        {
+                                            <button class="btn btn-sm btn-outline-secondary" 
+                                                    @onclick="() => OnReasignarMesa.InvokeAsync(reservacion)"
+                                                    title="Reasignar mesa">
+                                                <i class="oi oi-home"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-info" 
+                                                    @onclick="() => OnCambiarHora.InvokeAsync(reservacion)"
+                                                    title="Cambiar hora">
+                                                <i class="oi oi-clock"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-success" 
+                                                    @onclick="() => OnDuplicar.InvokeAsync(reservacion)"
+                                                    title="Duplicar">
+                                                <i class="oi oi-copy"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" 
+                                                    @onclick="() => OnCancelar.InvokeAsync(reservacion)"
+                                                    title="Cancelar">
+                                                <i class="oi oi-x"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (Paginacion != null)
+            {
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div class="text-muted">
+                        Mostrando @Paginacion.PageNumber de @Paginacion.TotalPages páginas
+                        (@Paginacion.TotalCount reservaciones en total)
+                    </div>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item @(Paginacion.HasPreviousPage ? "" : "disabled")">
+                                <button class="page-link" @onclick="() => OnCambiarPagina.InvokeAsync(Paginacion.PageNumber - 1)" 
+                                        disabled="@(!Paginacion.HasPreviousPage)">
+                                    <i class="oi oi-chevron-left"></i>
+                                </button>
+                            </li>
+                            
+                            @for (int i = Math.Max(1, Paginacion.PageNumber - 2); i <= Math.Min(Paginacion.TotalPages, Paginacion.PageNumber + 2); i++)
+                            {
+                                <li class="page-item @(i == Paginacion.PageNumber ? "active" : "")">
+                                    <button class="page-link" @onclick="() => OnCambiarPagina.InvokeAsync(i)">@i</button>
+                                </li>
+                            }
+                            
+                            <li class="page-item @(Paginacion.HasNextPage ? "" : "disabled")">
+                                <button class="page-link" @onclick="() => OnCambiarPagina.InvokeAsync(Paginacion.PageNumber + 1)" 
+                                        disabled="@(!Paginacion.HasNextPage)">
+                                    <i class="oi oi-chevron-right"></i>
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<ReservacionDto>? Reservaciones { get; set; }
+    [Parameter] public PaginatedList<ReservacionDto>? Paginacion { get; set; }
+    [Parameter] public EventCallback<ReservacionDto> OnEditarReservacion { get; set; }
+    [Parameter] public EventCallback<ReservacionDto> OnCancelar { get; set; }
+    [Parameter] public EventCallback<ReservacionDto> OnConfirmar { get; set; }
+    [Parameter] public EventCallback<ReservacionDto> OnMarcarLlegada { get; set; }
+    [Parameter] public EventCallback<ReservacionDto> OnMarcarSalida { get; set; }
+    [Parameter] public EventCallback<ReservacionDto> OnReasignarMesa { get; set; }
+    [Parameter] public EventCallback<ReservacionDto> OnCambiarHora { get; set; }
+    [Parameter] public EventCallback<ReservacionDto> OnDuplicar { get; set; }
+    [Parameter] public EventCallback<ReservacionDto> OnVerDetalles { get; set; }
+    [Parameter] public EventCallback OnNuevaReservacion { get; set; }
+    [Parameter] public EventCallback<int> OnCambiarPagina { get; set; }
+    [Parameter] public EventCallback OnExportarExcel { get; set; }
+}
