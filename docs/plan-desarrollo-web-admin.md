@@ -5,7 +5,7 @@
 
 ## 📋 **INFORMACIÓN DEL DOCUMENTO**
 - **Objetivo**: Desarrollar completamente la web administrativa según la distribución definida
-- **Estado Actual**: 40% completado (8/20 funcionalidades)
+- **Estado Actual**: 50% completado (10/20 funcionalidades)
 - **Estado Objetivo**: 100% completado (20/20 funcionalidades)
 - **Tiempo Estimado**: 8-12 semanas
 - **Prioridad**: ALTA - Es el centro de control del sistema
@@ -13,6 +13,31 @@
 ---
 
 ## 🎉 **LOGROS RECIENTES**
+
+### **✅ Semana 6 Completada - Gestión de Comandas**
+- **Sistema completo de gestión de comandas** implementado en `/comandas`
+- **Dashboard de estadísticas** con 6 tarjetas de métricas de comandas
+- **CRUD completo** con formulario modal y validaciones robustas
+- **Filtros avanzados** (estado, prioridad, tipo, mesa, cliente, mesero, fechas, tiempos)
+- **Gestión de detalles de comanda** con productos y cálculos automáticos
+- **Sistema de estados y prioridades** (Pendiente, EnProceso, Lista, Entregada, Cancelada)
+- **Tipos de comanda especializados** (Mesa, Domicilio, Mostrador)
+- **Gestión de domicilios** con información completa de entrega
+- **Reasignación de mesas** y cambio de prioridades en tiempo real
+- **Vista de detalles** con información operativa completa
+- **Integración completa** con backend API
+
+### **✅ Semana 5 Completada - Gestión de Facturas**
+- **Sistema completo de gestión de facturas** implementado en `/facturas`
+- **Dashboard de estadísticas** con 6 tarjetas de métricas de facturación
+- **CRUD completo** con formulario modal y validaciones robustas
+- **Filtros avanzados** (estado, tipo pago, cliente, mesa, mesero, fechas, montos)
+- **Gestión de detalles de factura** con productos y cálculos automáticos
+- **Sistema de pagos y estados** de factura integrado
+- **Reimpresión de facturas** y facturación electrónica
+- **Exportación a Excel** para análisis externos
+- **Vista de detalles** completa con información comercial
+- **Integración completa** con backend API
 
 ### **✅ Semana 4 Completada - Gestión de Clientes**
 - **Sistema completo de gestión de clientes** implementado en `/clientes`
@@ -67,7 +92,7 @@ La web administrativa debe ser el **"centro de control administrativo"** con ges
 
 ## 📊 **ESTADO ACTUAL DETALLADO**
 
-### ✅ **IMPLEMENTADO (8/20 - 40%)**
+### ✅ **IMPLEMENTADO (10/20 - 50%)**
 | Funcionalidad | Estado | Completitud | Notas |
 |---------------|--------|-------------|-------|
 | **Dashboard** | ✅ Completo | 100% | Dashboard ejecutivo con métricas y gráficos |
@@ -78,12 +103,12 @@ La web administrativa debe ser el **"centro de control administrativo"** con ges
 | **Promociones** | ✅ Completo | 100% | Sistema completo de gestión de promociones |
 | **Reportes** | ✅ Completo | 100% | Sistema completo de reportes operativos |
 | **Clientes** | ✅ Completo | 100% | Sistema completo de gestión de clientes |
+| **Facturas** | ✅ Completo | 100% | Sistema completo de gestión de facturas |
+| **Comandas** | ✅ Completo | 100% | Sistema completo de gestión de comandas |
 
-### ❌ **FALTANTE (12/20 - 60%)**
+### ❌ **FALTANTE (10/20 - 50%)**
 | Funcionalidad | Estado | Prioridad | Complejidad | Tiempo Est. |
 |---------------|--------|-----------|-------------|-------------|
-| **Facturas** | ❌ No existe | 🟡 ALTA | Media | 1 semana |
-| **Comandas** | ❌ No existe | 🟡 ALTA | Alta | 2 semanas |
 | **Reservaciones** | ❌ No existe | 🟡 ALTA | Media | 1 semana |
 | **Preparaciones** | ❌ No existe | 🟡 ALTA | Media | 1 semana |
 | **Inventario** | ❌ No existe | 🟠 MEDIA | Alta | 2 semanas |
@@ -235,43 +260,70 @@ La web administrativa debe ser el **"centro de control administrativo"** con ges
 - ✅ Vista de detalles con información comercial completa
 - ✅ Integración completa con backend API
 
-#### **Semana 5: Gestión de Facturas**
+#### **Semana 5: Gestión de Facturas** ✅ **COMPLETADO**
 **Objetivo**: Sistema de facturación y gestión de pagos
 
 **Entregables**:
-- [ ] Página Facturas (`/facturas`)
-- [ ] Funcionalidades:
-  - [ ] Listado de facturas con filtros
-  - [ ] Generación de facturas
-  - [ ] Estados de pago
-  - [ ] Reimpresión de facturas
-  - [ ] Análisis de pagos
-- [ ] Servicio `FacturasApiService`
-- [ ] Componentes:
-  - [ ] `FacturaList.razor`
-  - [ ] `FacturaDetail.razor`
-  - [ ] `PagoForm.razor`
+- [x] Página Facturas (`/facturas`)
+- [x] Funcionalidades:
+  - [x] Listado de facturas con filtros
+  - [x] Generación de facturas
+  - [x] Estados de pago
+  - [x] Reimpresión de facturas
+  - [x] Análisis de pagos
+- [x] Servicio `FacturasApiService`
+- [x] Componentes:
+  - [x] `FacturaList.razor`
+  - [x] `FacturaForm.razor`
+  - [x] `FacturaFiltros.razor`
 
 **APIs Backend**: `api/comercial/facturas` (ya existe)
 
-#### **Semana 6: Gestión de Comandas**
+**Tecnologías**: Blazor Server, Bootstrap, OpenIconic
+
+**Notas de implementación**:
+- ✅ Dashboard de estadísticas con 6 tarjetas de métricas
+- ✅ CRUD completo con validaciones robustas
+- ✅ Filtros avanzados (estado, tipo pago, cliente, mesa, mesero, fechas, montos)
+- ✅ Gestión de detalles de factura con productos
+- ✅ Sistema de pagos y estados de factura
+- ✅ Reimpresión de facturas y facturación electrónica
+- ✅ Exportación a Excel para análisis externos
+- ✅ Vista de detalles completa con información comercial
+- ✅ Integración completa con backend API
+
+#### **Semana 6: Gestión de Comandas** ✅ **COMPLETADO**
 **Objetivo**: Sistema de gestión de comandas y órdenes
 
 **Entregables**:
-- [ ] Página Comandas (`/comandas`)
-- [ ] Funcionalidades:
-  - [ ] Listado de comandas activas
-  - [ ] Creación de comandas
-  - [ ] Estados de comandas
-  - [ ] Asignación a mesas
-  - [ ] Historial de comandas
-- [ ] Servicio `ComandasApiService`
-- [ ] Componentes:
-  - [ ] `ComandaList.razor`
-  - [ ] `ComandaForm.razor`
-  - [ ] `ComandaDetail.razor`
+- [x] Página Comandas (`/comandas`)
+- [x] Funcionalidades:
+  - [x] Listado de comandas activas
+  - [x] Creación de comandas
+  - [x] Estados de comandas
+  - [x] Asignación a mesas
+  - [x] Historial de comandas
+- [x] Servicio `ComandasApiService`
+- [x] Componentes:
+  - [x] `ComandaList.razor`
+  - [x] `ComandaForm.razor`
+  - [x] `ComandaFiltros.razor`
 
 **APIs Backend**: `api/operaciones/comandas` (ya existe)
+
+**Tecnologías**: Blazor Server, Bootstrap, OpenIconic
+
+**Notas de implementación**:
+- ✅ Dashboard de estadísticas con 6 tarjetas de métricas
+- ✅ CRUD completo con validaciones robustas
+- ✅ Filtros avanzados (estado, prioridad, tipo, mesa, cliente, mesero, fechas, tiempos)
+- ✅ Gestión de detalles de comanda con productos
+- ✅ Sistema de estados y prioridades (Pendiente, EnProceso, Lista, Entregada, Cancelada)
+- ✅ Tipos de comanda especializados (Mesa, Domicilio, Mostrador)
+- ✅ Gestión de domicilios con información completa
+- ✅ Reasignación de mesas y cambio de prioridades
+- ✅ Vista de detalles con información operativa completa
+- ✅ Integración completa con backend API
 
 ---
 
