@@ -1,0 +1,411 @@
+@using RestaurantePro.Web.Admin.Models
+
+<div class="preparaciones-container">
+    <!-- Cola de Preparaciones -->
+    <div class="row">
+        <!-- Preparaciones Pendientes -->
+        <div class="col-md-3">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">
+                        <i class="oi oi-clock"></i> Pendientes (@Preparaciones.Count(p => p.Estado == EstadoPreparacion.Pendiente))
+                    </h6>
+                </div>
+                <div class="card-body p-2">
+                    @foreach (var preparacion in Preparaciones.Where(p => p.Estado == EstadoPreparacion.Pendiente).OrderBy(p => p.Prioridad).ThenBy(p => p.FechaCreacion))
+                    {
+                        <div class="preparacion-card mb-2 @GetPrioridadClass(preparacion.Prioridad)" @onclick="() => VerDetalles(preparacion)">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold">@preparacion.ProductoNombre</div>
+                                    <small class="text-muted">
+                                        Mesa @preparacion.MesaNumero • Cant: @preparacion.Cantidad
+                                    </small>
+                                    @if (preparacion.TiempoEstimadoMinutos > 0)
+                                    {
+                                        <div class="small">
+                                            <i class="oi oi-timer"></i> @preparacion.TiempoEstimadoMinutos min
+                                        </div>
+                                    }
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge @GetPrioridadBadgeClass(preparacion.Prioridad)">
+                                        @preparacion.Prioridad.ToString()
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Preparaciones En Proceso -->
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">
+                        <i class="oi oi-play-circle"></i> En Proceso (@Preparaciones.Count(p => p.Estado == EstadoPreparacion.EnProceso))
+                    </h6>
+                </div>
+                <div class="card-body p-2">
+                    @foreach (var preparacion in Preparaciones.Where(p => p.Estado == EstadoPreparacion.EnProceso).OrderBy(p => p.FechaInicio))
+                    {
+                        <div class="preparacion-card mb-2 @GetPrioridadClass(preparacion.Prioridad)" @onclick="() => VerDetalles(preparacion)">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold">@preparacion.ProductoNombre</div>
+                                    <small class="text-muted">
+                                        Mesa @preparacion.MesaNumero • Cant: @preparacion.Cantidad
+                                    </small>
+                                    @if (preparacion.CocineroNombre != null)
+                                    {
+                                        <div class="small">
+                                            <i class="oi oi-person"></i> @preparacion.CocineroNombre
+                                        </div>
+                                    }
+                                    @if (preparacion.TiempoTranscurridoMinutos.HasValue)
+                                    {
+                                        <div class="small @(preparacion.EstaAtrasada ? "text-danger" : "text-muted")">
+                                            <i class="oi oi-timer"></i> @preparacion.TiempoTranscurridoMinutos min
+                                        </div>
+                                    }
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge @GetPrioridadBadgeClass(preparacion.Prioridad)">
+                                        @preparacion.Prioridad.ToString()
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Preparaciones Listas -->
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">
+                        <i class="oi oi-check"></i> Listas (@Preparaciones.Count(p => p.Estado == EstadoPreparacion.Lista))
+                    </h6>
+                </div>
+                <div class="card-body p-2">
+                    @foreach (var preparacion in Preparaciones.Where(p => p.Estado == EstadoPreparacion.Lista).OrderByDescending(p => p.FechaFin))
+                    {
+                        <div class="preparacion-card mb-2 @GetPrioridadClass(preparacion.Prioridad)" @onclick="() => VerDetalles(preparacion)">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold">@preparacion.ProductoNombre</div>
+                                    <small class="text-muted">
+                                        Mesa @preparacion.MesaNumero • Cant: @preparacion.Cantidad
+                                    </small>
+                                    @if (preparacion.CocineroNombre != null)
+                                    {
+                                        <div class="small">
+                                            <i class="oi oi-person"></i> @preparacion.CocineroNombre
+                                        </div>
+                                    }
+                                    @if (preparacion.TiempoRealMinutos.HasValue)
+                                    {
+                                        <div class="small text-muted">
+                                            <i class="oi oi-timer"></i> @preparacion.TiempoRealMinutos min
+                                        </div>
+                                    }
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-success">Lista</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Preparaciones Entregadas -->
+        <div class="col-md-3">
+            <div class="card border-secondary">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0">
+                        <i class="oi oi-check-circle"></i> Entregadas (@Preparaciones.Count(p => p.Estado == EstadoPreparacion.Entregada))
+                    </h6>
+                </div>
+                <div class="card-body p-2">
+                    @foreach (var preparacion in Preparaciones.Where(p => p.Estado == EstadoPreparacion.Entregada).OrderByDescending(p => p.FechaFin).Take(10))
+                    {
+                        <div class="preparacion-card mb-2 @GetPrioridadClass(preparacion.Prioridad)" @onclick="() => VerDetalles(preparacion)">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold">@preparacion.ProductoNombre</div>
+                                    <small class="text-muted">
+                                        Mesa @preparacion.MesaNumero • Cant: @preparacion.Cantidad
+                                    </small>
+                                    @if (preparacion.CocineroNombre != null)
+                                    {
+                                        <div class="small">
+                                            <i class="oi oi-person"></i> @preparacion.CocineroNombre
+                                        </div>
+                                    }
+                                    @if (preparacion.TiempoRealMinutos.HasValue)
+                                    {
+                                        <div class="small text-muted">
+                                            <i class="oi oi-timer"></i> @preparacion.TiempoRealMinutos min
+                                        </div>
+                                    }
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-secondary">Entregada</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista Tabular (Vista Alternativa) -->
+    @if (MostrarVistaTabular)
+    {
+        <div class="mt-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Vista Detallada</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Mesa</th>
+                                    <th>Cantidad</th>
+                                    <th>Estado</th>
+                                    <th>Prioridad</th>
+                                    <th>Cocinero</th>
+                                    <th>Tiempo</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var preparacion in Preparaciones.OrderBy(p => p.Estado).ThenBy(p => p.Prioridad).ThenBy(p => p.FechaCreacion))
+                                {
+                                    <tr class="@(preparacion.EstaAtrasada ? "table-warning" : "")">
+                                        <td>
+                                            <div class="fw-bold">@preparacion.ProductoNombre</div>
+                                            <small class="text-muted">@preparacion.CategoriaNombre</small>
+                                        </td>
+                                        <td>
+                                            @if (preparacion.MesaNumero.HasValue)
+                                            {
+                                                <span class="badge bg-info">@preparacion.MesaNumero</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">@preparacion.Cantidad</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge @GetEstadoBadgeClass(preparacion.Estado)">
+                                                @preparacion.Estado.ToString()
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge @GetPrioridadBadgeClass(preparacion.Prioridad)">
+                                                @preparacion.Prioridad.ToString()
+                                            </span>
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(preparacion.CocineroNombre))
+                                            {
+                                                <small>@preparacion.CocineroNombre</small>
+                                            }
+                                            else
+                                            {
+                                                <small class="text-muted">Sin asignar</small>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (preparacion.TiempoRealMinutos.HasValue)
+                                            {
+                                                <span class="text-success">@preparacion.TiempoRealMinutos min</span>
+                                            }
+                                            else if (preparacion.TiempoTranscurridoMinutos.HasValue)
+                                            {
+                                                <span class="@(preparacion.EstaAtrasada ? "text-danger" : "text-primary")">
+                                                    @preparacion.TiempoTranscurridoMinutos min
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">@preparacion.TiempoEstimadoMinutos min est.</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary btn-sm" @onclick="() => Editar(preparacion)" title="Editar">
+                                                    <i class="oi oi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-outline-info btn-sm" @onclick="() => VerDetalles(preparacion)" title="Ver detalles">
+                                                    <i class="oi oi-eye"></i>
+                                                </button>
+                                                @if (preparacion.Estado == EstadoPreparacion.Pendiente)
+                                                {
+                                                    <button class="btn btn-outline-success btn-sm" @onclick="() => IniciarPreparacion(preparacion)" title="Iniciar">
+                                                        <i class="oi oi-play-circle"></i>
+                                                    </button>
+                                                }
+                                                @if (preparacion.Estado == EstadoPreparacion.EnProceso)
+                                                {
+                                                    <button class="btn btn-outline-success btn-sm" @onclick="() => CompletarPreparacion(preparacion)" title="Completar">
+                                                        <i class="oi oi-check"></i>
+                                                    </button>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Paginación -->
+    @if (Paginacion != null && Paginacion.TotalPages > 1)
+    {
+        <nav aria-label="Paginación de preparaciones" class="mt-3">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(Paginacion.HasPreviousPage ? "" : "disabled")">
+                    <button class="page-link" @onclick="() => CambiarPagina(Paginacion.PageNumber - 1)" disabled="@(!Paginacion.HasPreviousPage)">
+                        <i class="oi oi-chevron-left"></i> Anterior
+                    </button>
+                </li>
+                
+                @for (int i = Math.Max(1, Paginacion.PageNumber - 2); i <= Math.Min(Paginacion.TotalPages, Paginacion.PageNumber + 2); i++)
+                {
+                    <li class="page-item @(i == Paginacion.PageNumber ? "active" : "")">
+                        <button class="page-link" @onclick="() => CambiarPagina(i)">@i</button>
+                    </li>
+                }
+                
+                <li class="page-item @(Paginacion.HasNextPage ? "" : "disabled")">
+                    <button class="page-link" @onclick="() => CambiarPagina(Paginacion.PageNumber + 1)" disabled="@(!Paginacion.HasNextPage)">
+                        Siguiente <i class="oi oi-chevron-right"></i>
+                    </button>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
+
+<style>
+    .preparacion-card {
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+        transition: all 0.2s ease;
+    }
+
+    .preparacion-card:hover {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transform: translateY(-1px);
+    }
+
+    .preparacion-card.prioridad-urgente {
+        border-left: 4px solid #dc3545;
+        background-color: #fff5f5;
+    }
+
+    .preparacion-card.prioridad-alta {
+        border-left: 4px solid #fd7e14;
+        background-color: #fff8f0;
+    }
+
+    .preparacion-card.prioridad-normal {
+        border-left: 4px solid #198754;
+        background-color: #f8fff9;
+    }
+
+    .preparacion-card.prioridad-baja {
+        border-left: 4px solid #6c757d;
+        background-color: #f8f9fa;
+    }
+</style>
+
+@code {
+    [Parameter] public List<PreparacionDto> Preparaciones { get; set; } = new();
+    [Parameter] public PaginatedList<PreparacionDto>? Paginacion { get; set; }
+    [Parameter] public bool MostrarVistaTabular { get; set; } = false;
+    [Parameter] public EventCallback<PreparacionDto> OnEditar { get; set; }
+    [Parameter] public EventCallback<PreparacionDto> OnVerDetalles { get; set; }
+    [Parameter] public EventCallback<PreparacionDto> OnIniciarPreparacion { get; set; }
+    [Parameter] public EventCallback<PreparacionDto> OnCompletarPreparacion { get; set; }
+    [Parameter] public EventCallback<int> OnCambiarPagina { get; set; }
+
+    private string GetPrioridadClass(PrioridadPreparacion prioridad)
+    {
+        return prioridad switch
+        {
+            PrioridadPreparacion.Urgente => "prioridad-urgente",
+            PrioridadPreparacion.Alta => "prioridad-alta",
+            PrioridadPreparacion.Normal => "prioridad-normal",
+            PrioridadPreparacion.Baja => "prioridad-baja",
+            _ => ""
+        };
+    }
+
+    private string GetPrioridadBadgeClass(PrioridadPreparacion prioridad)
+    {
+        return prioridad switch
+        {
+            PrioridadPreparacion.Urgente => "bg-danger",
+            PrioridadPreparacion.Alta => "bg-warning",
+            PrioridadPreparacion.Normal => "bg-success",
+            PrioridadPreparacion.Baja => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetEstadoBadgeClass(EstadoPreparacion estado)
+    {
+        return estado switch
+        {
+            EstadoPreparacion.Pendiente => "bg-warning",
+            EstadoPreparacion.EnProceso => "bg-primary",
+            EstadoPreparacion.Lista => "bg-success",
+            EstadoPreparacion.Entregada => "bg-secondary",
+            EstadoPreparacion.Cancelada => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private async Task Editar(PreparacionDto preparacion)
+    {
+        await OnEditar.InvokeAsync(preparacion);
+    }
+
+    private async Task VerDetalles(PreparacionDto preparacion)
+    {
+        await OnVerDetalles.InvokeAsync(preparacion);
+    }
+
+    private async Task IniciarPreparacion(PreparacionDto preparacion)
+    {
+        await OnIniciarPreparacion.InvokeAsync(preparacion);
+    }
+
+    private async Task CompletarPreparacion(PreparacionDto preparacion)
+    {
+        await OnCompletarPreparacion.InvokeAsync(preparacion);
+    }
+
+    private async Task CambiarPagina(int pagina)
+    {
+        await OnCambiarPagina.InvokeAsync(pagina);
+    }
+}

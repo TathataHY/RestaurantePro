@@ -45,6 +45,7 @@ builder.Services.AddScoped<ClientesApiService>();
 builder.Services.AddScoped<FacturasApiService>();
 builder.Services.AddScoped<ComandasApiService>();
 builder.Services.AddScoped<ReservacionesApiService>();
+builder.Services.AddScoped<PreparacionesApiService>(); // Added for Semana 8
 builder.Services.AddScoped<JwtAuthenticationStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<JwtAuthenticationStateProvider>());
 

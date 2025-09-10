@@ -1,0 +1,259 @@
+@using RestaurantePro.Web.Admin.Models
+@using RestaurantePro.Web.Admin.Services
+@inject PreparacionesApiService PreparacionesApi
+
+<div class="card">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="oi oi-funnel"></i> Filtros de Preparaciones
+        </h6>
+    </div>
+    <div class="card-body">
+        <EditForm Model="Filtros" OnValidSubmit="AplicarFiltros">
+            <div class="row">
+                <!-- Estado -->
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Estado</label>
+                        <InputSelect @bind-Value="Filtros.Estado" class="form-select">
+                            <option value="">Todos los estados</option>
+                            <option value="@EstadoPreparacion.Pendiente">Pendiente</option>
+                            <option value="@EstadoPreparacion.EnProceso">En Proceso</option>
+                            <option value="@EstadoPreparacion.Lista">Lista</option>
+                            <option value="@EstadoPreparacion.Entregada">Entregada</option>
+                            <option value="@EstadoPreparacion.Cancelada">Cancelada</option>
+                        </InputSelect>
+                    </div>
+                </div>
+
+                <!-- Prioridad -->
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Prioridad</label>
+                        <InputSelect @bind-Value="Filtros.Prioridad" class="form-select">
+                            <option value="">Todas las prioridades</option>
+                            <option value="@PrioridadPreparacion.Baja">Baja</option>
+                            <option value="@PrioridadPreparacion.Normal">Normal</option>
+                            <option value="@PrioridadPreparacion.Alta">Alta</option>
+                            <option value="@PrioridadPreparacion.Urgente">Urgente</option>
+                        </InputSelect>
+                    </div>
+                </div>
+
+                <!-- Cocinero -->
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Cocinero</label>
+                        <InputSelect @bind-Value="Filtros.CocineroId" class="form-select">
+                            <option value="">Todos los cocineros</option>
+                            @if (cocineros != null)
+                            {
+                                @foreach (var cocinero in cocineros)
+                                {
+                                    <option value="@cocinero.Id">@cocinero.Nombre</option>
+                                }
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+
+                <!-- Mesa -->
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Número de Mesa</label>
+                        <InputNumber @bind-Value="Filtros.MesaNumero" class="form-control" placeholder="Ej: 5" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Fecha Inicio -->
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Fecha Inicio</label>
+                        <InputDate @bind-Value="Filtros.FechaInicio" class="form-control" />
+                    </div>
+                </div>
+
+                <!-- Fecha Fin -->
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Fecha Fin</label>
+                        <InputDate @bind-Value="Filtros.FechaFin" class="form-control" />
+                    </div>
+                </div>
+
+                <!-- Comanda ID -->
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">ID Comanda</label>
+                        <InputNumber @bind-Value="Filtros.ComandaId" class="form-control" placeholder="Ej: 123" />
+                    </div>
+                </div>
+
+                <!-- Producto ID -->
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">ID Producto</label>
+                        <InputNumber @bind-Value="Filtros.ProductoId" class="form-control" placeholder="Ej: 456" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Búsqueda -->
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Búsqueda</label>
+                        <InputText @bind-Value="Filtros.Busqueda" class="form-control" placeholder="Buscar por producto, mesa, cliente..." />
+                    </div>
+                </div>
+
+                <!-- Preparaciones Atrasadas -->
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Estado Especial</label>
+                        <div class="form-check">
+                            <InputCheckbox @bind-Value="mostrarSoloAtrasadas" class="form-check-input" />
+                            <label class="form-check-label">
+                                Solo preparaciones atrasadas
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones -->
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="oi oi-magnifying-glass"></i> Aplicar Filtros
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtros Rápidos -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="mb-3">
+                        <label class="form-label">Filtros Rápidos</label>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-primary btn-sm" @onclick="FiltrarHoy">
+                                <i class="oi oi-calendar"></i> Hoy
+                            </button>
+                            <button type="button" class="btn btn-outline-warning btn-sm" @onclick="FiltrarPendientes">
+                                <i class="oi oi-clock"></i> Pendientes
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" @onclick="FiltrarAtrasadas">
+                                <i class="oi oi-warning"></i> Atrasadas
+                            </button>
+                            <button type="button" class="btn btn-outline-success btn-sm" @onclick="FiltrarCompletadas">
+                                <i class="oi oi-check"></i> Completadas
+                            </button>
+                            <button type="button" class="btn btn-outline-info btn-sm" @onclick="FiltrarEnProceso">
+                                <i class="oi oi-play-circle"></i> En Proceso
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [Parameter] public PreparacionFiltrosDto Filtros { get; set; } = new();
+    [Parameter] public EventCallback<PreparacionFiltrosDto> OnFiltrosAplicados { get; set; }
+    [Parameter] public EventCallback OnLimpiarFiltros { get; set; }
+
+    private List<dynamic>? cocineros;
+    private bool mostrarSoloAtrasadas = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await CargarCocineros();
+    }
+
+    private async Task CargarCocineros()
+    {
+        try
+        {
+            cocineros = await PreparacionesApi.ObtenerCocinerosAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar cocineros: {ex.Message}");
+        }
+    }
+
+    private async Task AplicarFiltros()
+    {
+        // Aplicar filtro de atrasadas si está marcado
+        if (mostrarSoloAtrasadas)
+        {
+            Filtros.EstaAtrasada = true;
+        }
+        else
+        {
+            Filtros.EstaAtrasada = null;
+        }
+
+        await OnFiltrosAplicados.InvokeAsync(Filtros);
+    }
+
+    private async Task FiltrarHoy()
+    {
+        Filtros = new PreparacionFiltrosDto
+        {
+            FechaInicio = DateTime.Today,
+            FechaFin = DateTime.Today.AddDays(1).AddTicks(-1)
+        };
+        await OnFiltrosAplicados.InvokeAsync(Filtros);
+    }
+
+    private async Task FiltrarPendientes()
+    {
+        Filtros = new PreparacionFiltrosDto
+        {
+            Estado = EstadoPreparacion.Pendiente
+        };
+        await OnFiltrosAplicados.InvokeAsync(Filtros);
+    }
+
+    private async Task FiltrarAtrasadas()
+    {
+        Filtros = new PreparacionFiltrosDto
+        {
+            EstaAtrasada = true
+        };
+        await OnFiltrosAplicados.InvokeAsync(Filtros);
+    }
+
+    private async Task FiltrarCompletadas()
+    {
+        Filtros = new PreparacionFiltrosDto
+        {
+            Estado = EstadoPreparacion.Lista
+        };
+        await OnFiltrosAplicados.InvokeAsync(Filtros);
+    }
+
+    private async Task FiltrarEnProceso()
+    {
+        Filtros = new PreparacionFiltrosDto
+        {
+            Estado = EstadoPreparacion.EnProceso
+        };
+        await OnFiltrosAplicados.InvokeAsync(Filtros);
+    }
+
+    private async Task LimpiarFiltros()
+    {
+        Filtros = new PreparacionFiltrosDto();
+        mostrarSoloAtrasadas = false;
+        await OnLimpiarFiltros.InvokeAsync();
+    }
+}

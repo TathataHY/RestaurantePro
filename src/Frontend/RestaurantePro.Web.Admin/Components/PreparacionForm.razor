@@ -1,0 +1,321 @@
+@using RestaurantePro.Web.Admin.Models
+@using RestaurantePro.Web.Admin.Services
+@inject PreparacionesApiService PreparacionesApi
+@inject IJSRuntime JSRuntime
+
+<div class="modal fade @(Mostrar ? "show d-block" : "")" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    @if (Preparacion.Id == 0)
+                    {
+                        <span>Nueva Preparación</span>
+                    }
+                    else
+                    {
+                        <span>Editar Preparación</span>
+                    }
+                </h5>
+                <button type="button" class="btn-close" @onclick="Cancelar"></button>
+            </div>
+
+            <EditForm Model="Preparacion" OnValidSubmit="Guardar">
+                <DataAnnotationsValidator />
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Información de la Comanda -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Número de Comanda</label>
+                                <InputText @bind-Value="Preparacion.ComandaNumero" class="form-control" readonly />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Mesa</label>
+                                <InputText @bind-Value="mesaInfo" class="form-control" readonly />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Información del Producto -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Producto</label>
+                                <InputText @bind-Value="Preparacion.ProductoNombre" class="form-control" readonly />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Cantidad</label>
+                                <InputNumber @bind-Value="Preparacion.Cantidad" class="form-control" />
+                                <ValidationMessage For="@(() => Preparacion.Cantidad)" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Estado y Prioridad -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Estado</label>
+                                <InputSelect @bind-Value="Preparacion.Estado" class="form-select">
+                                    <option value="@EstadoPreparacion.Pendiente">Pendiente</option>
+                                    <option value="@EstadoPreparacion.EnProceso">En Proceso</option>
+                                    <option value="@EstadoPreparacion.Lista">Lista</option>
+                                    <option value="@EstadoPreparacion.Entregada">Entregada</option>
+                                    <option value="@EstadoPreparacion.Cancelada">Cancelada</option>
+                                </InputSelect>
+                                <ValidationMessage For="@(() => Preparacion.Estado)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Prioridad</label>
+                                <InputSelect @bind-Value="Preparacion.Prioridad" class="form-select">
+                                    <option value="@PrioridadPreparacion.Baja">Baja</option>
+                                    <option value="@PrioridadPreparacion.Normal">Normal</option>
+                                    <option value="@PrioridadPreparacion.Alta">Alta</option>
+                                    <option value="@PrioridadPreparacion.Urgente">Urgente</option>
+                                </InputSelect>
+                                <ValidationMessage For="@(() => Preparacion.Prioridad)" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Cocinero Asignado -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Cocinero</label>
+                                <InputSelect @bind-Value="Preparacion.CocineroId" class="form-select">
+                                    <option value="">Seleccionar cocinero</option>
+                                    @if (cocineros != null)
+                                    {
+                                        @foreach (var cocinero in cocineros)
+                                        {
+                                            <option value="@cocinero.Id">@cocinero.Nombre</option>
+                                        }
+                                    }
+                                </InputSelect>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Tiempo Estimado (minutos)</label>
+                                <InputNumber @bind-Value="Preparacion.TiempoEstimadoMinutos" class="form-control" />
+                                <ValidationMessage For="@(() => Preparacion.TiempoEstimadoMinutos)" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Tiempos -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Tiempo Real (minutos)</label>
+                                <InputNumber @bind-Value="Preparacion.TiempoRealMinutos" class="form-control" />
+                                <ValidationMessage For="@(() => Preparacion.TiempoRealMinutos)" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Tiempo Transcurrido</label>
+                                <InputText @bind-Value="tiempoTranscurrido" class="form-control" readonly />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Observaciones -->
+                    <div class="mb-3">
+                        <label class="form-label">Observaciones</label>
+                        <InputTextArea @bind-Value="Preparacion.Observaciones" class="form-control" rows="3" />
+                        <ValidationMessage For="@(() => Preparacion.Observaciones)" />
+                    </div>
+
+                    <!-- Notas del Cocinero -->
+                    <div class="mb-3">
+                        <label class="form-label">Notas del Cocinero</label>
+                        <InputTextArea @bind-Value="Preparacion.NotasCocinero" class="form-control" rows="3" />
+                        <ValidationMessage For="@(() => Preparacion.NotasCocinero)" />
+                    </div>
+
+                    <!-- Información Adicional -->
+                    @if (Preparacion.Id > 0)
+                    {
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Fecha de Creación</label>
+                                    <InputDate @bind-Value="Preparacion.FechaCreacion" class="form-control" readonly />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Cliente</label>
+                                    <InputText @bind-Value="Preparacion.ClienteNombre" class="form-control" readonly />
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Alertas -->
+                    @if (Preparacion.EstaAtrasada)
+                    {
+                        <div class="alert alert-warning">
+                            <i class="oi oi-warning"></i>
+                            <strong>¡Atención!</strong> Esta preparación está atrasada.
+                        </div>
+                    }
+
+                    @if (Preparacion.TiempoRestanteMinutos.HasValue && Preparacion.TiempoRestanteMinutos < 5)
+                    {
+                        <div class="alert alert-danger">
+                            <i class="oi oi-warning"></i>
+                            <strong>¡Urgente!</strong> Tiempo restante: @Preparacion.TiempoRestanteMinutos minutos
+                        </div>
+                    }
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="Cancelar">
+                        <i class="oi oi-x"></i> Cancelar
+                    </button>
+                    
+                    @if (Preparacion.Estado == EstadoPreparacion.Pendiente)
+                    {
+                        <button type="button" class="btn btn-primary" @onclick="IniciarPreparacion">
+                            <i class="oi oi-play-circle"></i> Iniciar
+                        </button>
+                    }
+                    
+                    @if (Preparacion.Estado == EstadoPreparacion.EnProceso)
+                    {
+                        <button type="button" class="btn btn-success" @onclick="CompletarPreparacion">
+                            <i class="oi oi-check"></i> Completar
+                        </button>
+                    }
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="oi oi-check"></i> Guardar
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public PreparacionDto Preparacion { get; set; } = new();
+    [Parameter] public bool Mostrar { get; set; }
+    [Parameter] public EventCallback OnSubmit { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private List<dynamic>? cocineros;
+    private string mesaInfo = string.Empty;
+    private string tiempoTranscurrido = string.Empty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Mostrar)
+        {
+            await CargarCocineros();
+            ActualizarInformacionAdicional();
+        }
+    }
+
+    private async Task CargarCocineros()
+    {
+        try
+        {
+            cocineros = await PreparacionesApi.ObtenerCocinerosAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar cocineros: {ex.Message}");
+        }
+    }
+
+    private void ActualizarInformacionAdicional()
+    {
+        // Información de mesa
+        if (Preparacion.MesaNumero.HasValue)
+        {
+            mesaInfo = $"Mesa {Preparacion.MesaNumero.Value}";
+        }
+
+        // Tiempo transcurrido
+        if (Preparacion.FechaInicio.HasValue)
+        {
+            var tiempo = DateTime.Now - Preparacion.FechaInicio.Value;
+            tiempoTranscurrido = $"{(int)tiempo.TotalMinutes} minutos";
+        }
+        else
+        {
+            tiempoTranscurrido = "No iniciada";
+        }
+    }
+
+    private async Task Guardar()
+    {
+        try
+        {
+            await OnSubmit.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al guardar: {ex.Message}");
+        }
+    }
+
+    private async Task Cancelar()
+    {
+        await OnCancel.InvokeAsync();
+    }
+
+    private async Task IniciarPreparacion()
+    {
+        try
+        {
+            var exito = await PreparacionesApi.IniciarPreparacionAsync(Preparacion.Id);
+            if (exito)
+            {
+                Preparacion.Estado = EstadoPreparacion.EnProceso;
+                Preparacion.FechaInicio = DateTime.Now;
+                await JSRuntime.InvokeVoidAsync("alert", "Preparación iniciada exitosamente");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error al iniciar la preparación");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+    }
+
+    private async Task CompletarPreparacion()
+    {
+        try
+        {
+            var exito = await PreparacionesApi.CompletarPreparacionAsync(Preparacion.Id, Preparacion.NotasCocinero);
+            if (exito)
+            {
+                Preparacion.Estado = EstadoPreparacion.Lista;
+                Preparacion.FechaFin = DateTime.Now;
+                await JSRuntime.InvokeVoidAsync("alert", "Preparación completada exitosamente");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error al completar la preparación");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+    }
+}

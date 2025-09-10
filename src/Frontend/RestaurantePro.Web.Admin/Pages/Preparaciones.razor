@@ -1,0 +1,328 @@
+@page "/preparaciones"
+@using RestaurantePro.Web.Admin.Models
+@using RestaurantePro.Web.Admin.Services
+@using RestaurantePro.Web.Admin.Components
+@inject PreparacionesApiService PreparacionesApi
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Gestión de Preparaciones - RestaurantePro</PageTitle>
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="oi oi-cog"></i> Gestión de Preparaciones</h2>
+            <p class="text-muted">Control de cocina y preparaciones en tiempo real</p>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-outline-primary" @onclick="ToggleVistaTabular">
+                <i class="oi @(mostrarVistaTabular ? "oi-list" : "oi-grid-three-up")"></i>
+                @(mostrarVistaTabular ? "Vista Cola" : "Vista Tabla")
+            </button>
+            <button class="btn btn-outline-success" @onclick="ExportarExcel">
+                <i class="oi oi-document"></i> Exportar Excel
+            </button>
+            <button class="btn btn-primary" @onclick="RefrescarDatos">
+                <i class="oi oi-reload"></i> Actualizar
+            </button>
+        </div>
+    </div>
+
+    <!-- Estadísticas -->
+    @if (estadisticas != null)
+    {
+        <div class="row mb-4">
+            <div class="col-md-2">
+                <div class="card text-center border-primary">
+                    <div class="card-body">
+                        <h5 class="card-title text-primary">@estadisticas.PreparacionesHoy</h5>
+                        <p class="card-text small">Preparaciones Hoy</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card text-center border-warning">
+                    <div class="card-body">
+                        <h5 class="card-title text-warning">@estadisticas.PreparacionesPendientes</h5>
+                        <p class="card-text small">Pendientes</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card text-center border-info">
+                    <div class="card-body">
+                        <h5 class="card-title text-info">@estadisticas.PreparacionesEnProceso</h5>
+                        <p class="card-text small">En Proceso</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card text-center border-success">
+                    <div class="card-body">
+                        <h5 class="card-title text-success">@estadisticas.PreparacionesCompletadas</h5>
+                        <p class="card-text small">Completadas</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card text-center border-danger">
+                    <div class="card-body">
+                        <h5 class="card-title text-danger">@estadisticas.PreparacionesAtrasadas</h5>
+                        <p class="card-text small">Atrasadas</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card text-center border-secondary">
+                    <div class="card-body">
+                        <h5 class="card-title text-secondary">@estadisticas.TiempoPromedioPreparacion.ToString("F1")</h5>
+                        <p class="card-text small">Tiempo Promedio (min)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Filtros -->
+    <PreparacionFiltros Filtros="filtros" 
+                        OnFiltrosAplicados="AplicarFiltros" 
+                        OnLimpiarFiltros="LimpiarFiltros" />
+
+    <!-- Lista de Preparaciones -->
+    <div class="mt-4">
+        @if (cargando)
+        {
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2">Cargando preparaciones...</p>
+            </div>
+        }
+        else if (preparaciones.Any())
+        {
+            <PreparacionList Preparaciones="preparaciones"
+                            Paginacion="paginacion"
+                            MostrarVistaTabular="mostrarVistaTabular"
+                            OnEditar="EditarPreparacion"
+                            OnVerDetalles="VerDetallesPreparacion"
+                            OnIniciarPreparacion="IniciarPreparacion"
+                            OnCompletarPreparacion="CompletarPreparacion"
+                            OnCambiarPagina="CambiarPagina" />
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <i class="oi oi-clipboard display-1 text-muted"></i>
+                <h4 class="text-muted mt-3">No hay preparaciones</h4>
+                <p class="text-muted">No se encontraron preparaciones con los filtros aplicados.</p>
+                <button class="btn btn-primary" @onclick="RefrescarDatos">
+                    <i class="oi oi-reload"></i> Actualizar
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal de Preparación -->
+<PreparacionForm Preparacion="preparacionSeleccionada"
+                 Mostrar="mostrarModal"
+                 OnSubmit="GuardarPreparacion"
+                 OnCancel="CerrarModal" />
+
+@code {
+    private List<PreparacionDto> preparaciones = new();
+    private PaginatedList<PreparacionDto>? paginacion;
+    private PreparacionFiltrosDto filtros = new();
+    private PreparacionEstadisticasDto? estadisticas;
+    private PreparacionDto preparacionSeleccionada = new();
+    private bool mostrarModal = false;
+    private bool cargando = false;
+    private bool mostrarVistaTabular = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        cargando = true;
+        StateHasChanged();
+
+        try
+        {
+            // Cargar preparaciones
+            var preparacionesTask = PreparacionesApi.ObtenerPreparacionesPaginadasAsync(1, 20, filtros);
+            var estadisticasTask = PreparacionesApi.ObtenerEstadisticasAsync();
+
+            await Task.WhenAll(preparacionesTask, estadisticasTask);
+
+            paginacion = await preparacionesTask;
+            preparaciones = paginacion?.Data ?? new();
+
+            estadisticas = await estadisticasTask;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar datos: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al cargar datos: {ex.Message}");
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task AplicarFiltros(PreparacionFiltrosDto nuevosFiltros)
+    {
+        filtros = nuevosFiltros;
+        await CargarDatos();
+    }
+
+    private async Task LimpiarFiltros()
+    {
+        filtros = new PreparacionFiltrosDto();
+        await CargarDatos();
+    }
+
+    private async Task RefrescarDatos()
+    {
+        await CargarDatos();
+    }
+
+    private async Task EditarPreparacion(PreparacionDto preparacion)
+    {
+        preparacionSeleccionada = preparacion;
+        mostrarModal = true;
+        StateHasChanged();
+    }
+
+    private async Task VerDetallesPreparacion(PreparacionDto preparacion)
+    {
+        try
+        {
+            var detalles = await PreparacionesApi.ObtenerPreparacionAsync(preparacion.Id);
+            if (detalles != null)
+            {
+                // Aquí podrías mostrar un modal de detalles más completo
+                await JSRuntime.InvokeVoidAsync("alert", 
+                    $"Detalles de {preparacion.ProductoNombre}\n" +
+                    $"Mesa: {preparacion.MesaNumero}\n" +
+                    $"Estado: {preparacion.Estado}\n" +
+                    $"Cocinero: {preparacion.CocineroNombre ?? "Sin asignar"}\n" +
+                    $"Tiempo: {preparacion.TiempoRealMinutos ?? preparacion.TiempoEstimadoMinutos} min");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al obtener detalles: {ex.Message}");
+        }
+    }
+
+    private async Task IniciarPreparacion(PreparacionDto preparacion)
+    {
+        try
+        {
+            var exito = await PreparacionesApi.IniciarPreparacionAsync(preparacion.Id);
+            if (exito)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Preparación iniciada exitosamente");
+                await CargarDatos();
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error al iniciar la preparación");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+    }
+
+    private async Task CompletarPreparacion(PreparacionDto preparacion)
+    {
+        try
+        {
+            var exito = await PreparacionesApi.CompletarPreparacionAsync(preparacion.Id);
+            if (exito)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Preparación completada exitosamente");
+                await CargarDatos();
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error al completar la preparación");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+    }
+
+    private async Task GuardarPreparacion()
+    {
+        try
+        {
+            // Aquí implementarías la lógica de guardado
+            // Por ahora solo cerramos el modal
+            await CerrarModal();
+            await CargarDatos();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al guardar: {ex.Message}");
+        }
+    }
+
+    private async Task CerrarModal()
+    {
+        mostrarModal = false;
+        preparacionSeleccionada = new();
+        StateHasChanged();
+    }
+
+    private async Task CambiarPagina(int pagina)
+    {
+        try
+        {
+            paginacion = await PreparacionesApi.ObtenerPreparacionesPaginadasAsync(pagina, 20, filtros);
+            preparaciones = paginacion?.Data ?? new();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al cambiar página: {ex.Message}");
+        }
+    }
+
+    private void ToggleVistaTabular()
+    {
+        mostrarVistaTabular = !mostrarVistaTabular;
+        StateHasChanged();
+    }
+
+    private async Task ExportarExcel()
+    {
+        try
+        {
+            var datos = await PreparacionesApi.ExportarExcelAsync(filtros);
+            if (datos != null)
+            {
+                var fileName = $"preparaciones_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                await JSRuntime.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(datos));
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error al exportar datos");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al exportar: {ex.Message}");
+        }
+    }
+}
