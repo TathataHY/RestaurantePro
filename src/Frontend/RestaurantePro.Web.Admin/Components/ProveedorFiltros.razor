@@ -1,0 +1,222 @@
+@using RestaurantePro.Web.Admin.Models
+
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+                <span class="oi oi-magnifying-glass" aria-hidden="true"></span>
+                Filtros de Búsqueda
+            </h6>
+            <button class="btn btn-sm btn-outline-secondary" @onclick="ToggleFiltros">
+                <span class="oi @(MostrarFiltros ? "oi-chevron-up" : "oi-chevron-down")" aria-hidden="true"></span>
+                @(MostrarFiltros ? "Ocultar" : "Mostrar") Filtros
+            </button>
+        </div>
+    </div>
+    
+    @if (MostrarFiltros)
+    {
+        <div class="card-body">
+            <EditForm Model="Filtros" OnValidSubmit="AplicarFiltros">
+                <div class="row g-3">
+                    <!-- Filtros Básicos -->
+                    <div class="col-md-4">
+                        <label for="nombre" class="form-label">Nombre</label>
+                        <InputText id="nombre" class="form-control" @bind-Value="Filtros.Nombre" placeholder="Buscar por nombre" />
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="ruc" class="form-label">RUC</label>
+                        <InputText id="ruc" class="form-control" @bind-Value="Filtros.Ruc" placeholder="Buscar por RUC" />
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="ciudad" class="form-label">Ciudad</label>
+                        <InputText id="ciudad" class="form-control" @bind-Value="Filtros.Ciudad" placeholder="Buscar por ciudad" />
+                    </div>
+                    
+                    <!-- Filtros de Ubicación -->
+                    <div class="col-md-4">
+                        <label for="pais" class="form-label">País</label>
+                        <InputText id="pais" class="form-control" @bind-Value="Filtros.Pais" placeholder="Buscar por país" />
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="estado" class="form-label">Estado</label>
+                        <InputSelect id="estado" class="form-select" @bind-Value="EstadoSeleccionado">
+                            <option value="">Todos</option>
+                            <option value="true">Activos</option>
+                            <option value="false">Inactivos</option>
+                        </InputSelect>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="fechaCreacionDesde" class="form-label">Fecha Creación Desde</label>
+                        <InputDate id="fechaCreacionDesde" class="form-control" @bind-Value="Filtros.FechaCreacionDesde" />
+                    </div>
+                    
+                    <!-- Filtros de Rendimiento -->
+                    <div class="col-md-4">
+                        <label for="fechaCreacionHasta" class="form-label">Fecha Creación Hasta</label>
+                        <InputDate id="fechaCreacionHasta" class="form-control" @bind-Value="Filtros.FechaCreacionHasta" />
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="montoMinimo" class="form-label">Monto Mínimo Compras</label>
+                        <InputNumber id="montoMinimo" class="form-control" @bind-Value="Filtros.MontoMinimoCompras" placeholder="0.00" />
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label for="montoMaximo" class="form-label">Monto Máximo Compras</label>
+                        <InputNumber id="montoMaximo" class="form-control" @bind-Value="Filtros.MontoMaximoCompras" placeholder="0.00" />
+                    </div>
+                    
+                    <!-- Filtros de Relaciones -->
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <InputCheckbox id="tieneContactos" class="form-check-input" @bind-Value="Filtros.TieneContactos" />
+                            <label class="form-check-label" for="tieneContactos">
+                                Solo con contactos
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <InputCheckbox id="tieneOrdenes" class="form-check-input" @bind-Value="Filtros.TieneOrdenesCompra" />
+                            <label class="form-check-label" for="tieneOrdenes">
+                                Solo con órdenes de compra
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <span class="oi oi-magnifying-glass" aria-hidden="true"></span>
+                                Aplicar Filtros
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" @onclick="LimpiarFiltros">
+                                <span class="oi oi-reload" aria-hidden="true"></span>
+                                Limpiar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </EditForm>
+        </div>
+    }
+</div>
+
+<!-- Filtros Rápidos -->
+<div class="row mt-3">
+    <div class="col-12">
+        <h6 class="text-muted mb-2">Filtros Rápidos</h6>
+        <div class="d-flex flex-wrap gap-2">
+            <button class="btn btn-sm btn-outline-primary" @onclick="@(() => AplicarFiltroRapido("activos"))">
+                <span class="oi oi-check" aria-hidden="true"></span>
+                Activos
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" @onclick="@(() => AplicarFiltroRapido("inactivos"))">
+                <span class="oi oi-x" aria-hidden="true"></span>
+                Inactivos
+            </button>
+            <button class="btn btn-sm btn-outline-success" @onclick="@(() => AplicarFiltroRapido("con-contactos"))">
+                <span class="oi oi-people" aria-hidden="true"></span>
+                Con Contactos
+            </button>
+            <button class="btn btn-sm btn-outline-info" @onclick="@(() => AplicarFiltroRapido("con-ordenes"))">
+                <span class="oi oi-cart" aria-hidden="true"></span>
+                Con Órdenes
+            </button>
+            <button class="btn btn-sm btn-outline-warning" @onclick="@(() => AplicarFiltroRapido("sin-contactos"))">
+                <span class="oi oi-warning" aria-hidden="true"></span>
+                Sin Contactos
+            </button>
+            <button class="btn btn-sm btn-outline-danger" @onclick="@(() => AplicarFiltroRapido("sin-ordenes"))">
+                <span class="oi oi-warning" aria-hidden="true"></span>
+                Sin Órdenes
+            </button>
+            <button class="btn btn-sm btn-outline-dark" @onclick="@(() => AplicarFiltroRapido("hoy"))">
+                <span class="oi oi-calendar" aria-hidden="true"></span>
+                Creados Hoy
+            </button>
+            <button class="btn btn-sm btn-outline-primary" @onclick="@(() => AplicarFiltroRapido("esta-semana"))">
+                <span class="oi oi-calendar" aria-hidden="true"></span>
+                Esta Semana
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public ProveedorFiltrosDto Filtros { get; set; } = new();
+    [Parameter] public EventCallback<ProveedorFiltrosDto> OnFiltrosAplicados { get; set; }
+    [Parameter] public EventCallback OnLimpiarFiltros { get; set; }
+
+    private bool MostrarFiltros = true;
+    private string EstadoSeleccionado = "";
+
+    private async Task AplicarFiltros()
+    {
+        if (!string.IsNullOrEmpty(EstadoSeleccionado))
+        {
+            Filtros.EstaActivo = EstadoSeleccionado == "true";
+        }
+        await OnFiltrosAplicados.InvokeAsync(Filtros);
+    }
+
+    private async Task LimpiarFiltros()
+    {
+        Filtros = new ProveedorFiltrosDto();
+        EstadoSeleccionado = "";
+        await OnLimpiarFiltros.InvokeAsync();
+    }
+
+    private async Task AplicarFiltroRapido(string tipo)
+    {
+        Filtros = new ProveedorFiltrosDto();
+        
+        switch (tipo)
+        {
+            case "activos":
+                Filtros.EstaActivo = true;
+                EstadoSeleccionado = "true";
+                break;
+            case "inactivos":
+                Filtros.EstaActivo = false;
+                EstadoSeleccionado = "false";
+                break;
+            case "con-contactos":
+                Filtros.TieneContactos = true;
+                break;
+            case "con-ordenes":
+                Filtros.TieneOrdenesCompra = true;
+                break;
+            case "sin-contactos":
+                Filtros.TieneContactos = false;
+                break;
+            case "sin-ordenes":
+                Filtros.TieneOrdenesCompra = false;
+                break;
+            case "hoy":
+                Filtros.FechaCreacionDesde = DateTime.Today;
+                Filtros.FechaCreacionHasta = DateTime.Today;
+                break;
+            case "esta-semana":
+                var inicioSemana = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
+                Filtros.FechaCreacionDesde = inicioSemana;
+                Filtros.FechaCreacionHasta = DateTime.Today;
+                break;
+        }
+        
+        await OnFiltrosAplicados.InvokeAsync(Filtros);
+    }
+
+    private void ToggleFiltros()
+    {
+        MostrarFiltros = !MostrarFiltros;
+    }
+}

@@ -1,0 +1,610 @@
+@page "/proveedores"
+@using RestaurantePro.Web.Admin.Models
+@using RestaurantePro.Web.Admin.Services
+@using RestaurantePro.Web.Admin.Components
+@inject ProveedoresApiService ProveedoresApi
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Gestión de Proveedores - RestaurantePro</PageTitle>
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <span class="oi oi-people text-primary" aria-hidden="true"></span>
+                        Gestión de Proveedores
+                    </h2>
+                    <p class="text-muted mb-0">Administra proveedores, contactos y relaciones comerciales</p>
+                </div>
+                <div>
+                    <button class="btn btn-primary" @onclick="NuevoProveedor">
+                        <span class="oi oi-plus" aria-hidden="true"></span>
+                        Nuevo Proveedor
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard de Estadísticas -->
+    @if (Estadisticas != null)
+    {
+        <div class="row mb-4">
+            <div class="col-md-2">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <div class="display-6 fw-bold">@Estadisticas.TotalProveedores</div>
+                        <div class="small">Total Proveedores</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <div class="display-6 fw-bold">@Estadisticas.ProveedoresActivos</div>
+                        <div class="small">Activos</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <div class="display-6 fw-bold">@Estadisticas.TotalContactos</div>
+                        <div class="small">Total Contactos</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center">
+                        <div class="display-6 fw-bold">@Estadisticas.TotalOrdenesCompra</div>
+                        <div class="small">Órdenes de Compra</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-danger text-white">
+                    <div class="card-body text-center">
+                        <div class="display-6 fw-bold">@Estadisticas.MontoTotalCompras.ToString("C0")</div>
+                        <div class="small">Monto Total</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card bg-secondary text-white">
+                    <div class="card-body text-center">
+                        <div class="display-6 fw-bold">@Estadisticas.MontoPromedioCompras.ToString("C0")</div>
+                        <div class="small">Promedio</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Filtros -->
+    <ProveedorFiltros Filtros="Filtros" 
+                      OnFiltrosAplicados="AplicarFiltros" 
+                      OnLimpiarFiltros="LimpiarFiltros" />
+
+    <!-- Controles de Vista -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="btn-group" role="group">
+                <button class="btn btn-sm @(VistaActual == "tabla" ? "btn-primary" : "btn-outline-primary")" 
+                        @onclick="@(() => CambiarVista("tabla"))">
+                    <span class="oi oi-list" aria-hidden="true"></span> Tabla
+                </button>
+                <button class="btn btn-sm @(VistaActual == "tarjetas" ? "btn-primary" : "btn-outline-primary")" 
+                        @onclick="@(() => CambiarVista("tarjetas"))">
+                    <span class="oi oi-grid-three-up" aria-hidden="true"></span> Tarjetas
+                </button>
+            </div>
+        </div>
+        <div class="col-md-6 text-end">
+            <div class="btn-group" role="group">
+                <button class="btn btn-sm btn-outline-success" @onclick="ExportarExcel">
+                    <span class="oi oi-document" aria-hidden="true"></span>
+                    Exportar Excel
+                </button>
+                <button class="btn btn-sm btn-outline-info" @onclick="ActualizarDatos">
+                    <span class="oi oi-reload" aria-hidden="true"></span>
+                    Actualizar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido Principal -->
+    @if (Cargando)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-2 text-muted">Cargando proveedores...</p>
+        </div>
+    }
+    else
+    {
+        @if (VistaActual == "tabla")
+        {
+            <ProveedorList Proveedores="ListaProveedores" 
+                           Paginacion="Paginacion"
+                           OnVerDetalles="VerDetallesProveedor"
+                           OnEditar="EditarProveedor"
+                           OnGestionarContactos="GestionarContactosProveedor"
+                           OnEliminar="EliminarProveedor"
+                           OnCambiarPagina="CambiarPagina" />
+        }
+        else
+        {
+            <!-- Vista de Tarjetas -->
+            <div class="row">
+                @if (ListaProveedores != null && ListaProveedores.Any())
+                {
+                    @foreach (var proveedor in ListaProveedores)
+                    {
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                             style="width: 35px; height: 35px; font-size: 1.2rem;">
+                                            @proveedor.Nombre.Substring(0, 1).ToUpper()
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0">@proveedor.Nombre</h6>
+                                            <small class="text-muted">@proveedor.Ciudad</small>
+                                        </div>
+                                    </div>
+                                    @if (proveedor.EstaActivo)
+                                    {
+                                        <span class="badge bg-success">Activo</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Inactivo</span>
+                                    }
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-6">
+                                            <div class="text-center">
+                                                <div class="fw-bold text-primary">@proveedor.TotalContactos</div>
+                                                <small class="text-muted">Contactos</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-center">
+                                                <div class="fw-bold text-success">@proveedor.TotalOrdenesCompra</div>
+                                                <small class="text-muted">Órdenes</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-center mb-3">
+                                        <div class="fw-bold text-info">@proveedor.MontoTotalCompras.ToString("C0")</div>
+                                        <small class="text-muted">Monto Total</small>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(proveedor.Telefono))
+                                    {
+                                        <div class="d-flex align-items-center mb-1">
+                                            <span class="oi oi-phone me-2" aria-hidden="true"></span>
+                                            <small>@proveedor.Telefono</small>
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(proveedor.Email))
+                                    {
+                                        <div class="d-flex align-items-center">
+                                            <span class="oi oi-envelope-closed me-2" aria-hidden="true"></span>
+                                            <small>@proveedor.Email</small>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="card-footer">
+                                    <div class="btn-group w-100" role="group">
+                                        <button class="btn btn-sm btn-outline-primary" @onclick="@(() => VerDetallesProveedor(proveedor))">
+                                            <span class="oi oi-eye" aria-hidden="true"></span>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-warning" @onclick="@(() => EditarProveedor(proveedor))">
+                                            <span class="oi oi-pencil" aria-hidden="true"></span>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-info" @onclick="@(() => GestionarContactosProveedor(proveedor))">
+                                            <span class="oi oi-people" aria-hidden="true"></span>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" @onclick="@(() => EliminarProveedor(proveedor))">
+                                            <span class="oi oi-trash" aria-hidden="true"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="col-12">
+                        <div class="text-center py-5">
+                            <div class="text-muted">
+                                <span class="oi oi-people" style="font-size: 3rem;" aria-hidden="true"></span>
+                                <h4 class="mt-3">No hay proveedores</h4>
+                                <p>No se encontraron proveedores con los filtros aplicados.</p>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+
+    <!-- Paginación para vista de tarjetas -->
+    @if (VistaActual == "tarjetas" && Paginacion != null)
+    {
+        <div class="d-flex justify-content-center mt-4">
+            <nav aria-label="Navegación de páginas">
+                <ul class="pagination">
+                    <li class="page-item @(Paginacion.HasPreviousPage ? "" : "disabled")">
+                        <button class="page-link" @onclick="@(() => CambiarPagina(Paginacion.PageNumber - 1))" 
+                                disabled="@(!Paginacion.HasPreviousPage)">
+                            <span class="oi oi-chevron-left" aria-hidden="true"></span>
+                        </button>
+                    </li>
+                    
+                    @for (int i = Math.Max(1, Paginacion.PageNumber - 2); i <= Math.Min(Paginacion.TotalPages, Paginacion.PageNumber + 2); i++)
+                    {
+                        var pageNumber = i;
+                        <li class="page-item @(pageNumber == Paginacion.PageNumber ? "active" : "")">
+                            <button class="page-link" @onclick="@(() => CambiarPagina(pageNumber))">
+                                @pageNumber
+                            </button>
+                        </li>
+                    }
+                    
+                    <li class="page-item @(Paginacion.HasNextPage ? "" : "disabled")">
+                        <button class="page-link" @onclick="@(() => CambiarPagina(Paginacion.PageNumber + 1))" 
+                                disabled="@(!Paginacion.HasNextPage)">
+                            <span class="oi oi-chevron-right" aria-hidden="true"></span>
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    }
+</div>
+
+<!-- Modal de Formulario -->
+<ProveedorForm Proveedor="ProveedorActual" 
+                MostrarModal="MostrarModalFormulario" 
+                OnSubmit="GuardarProveedor" 
+                OnCancel="CerrarModalFormulario" />
+
+<!-- Modal de Contactos -->
+<ContactosProveedor Proveedor="ProveedorSeleccionado" 
+                    Contactos="ContactosProveedor" 
+                    MostrarModal="MostrarModalContactos" 
+                    OnCerrar="CerrarModalContactos"
+                    OnAgregarContacto="AgregarContactoProveedor"
+                    OnEditarContacto="EditarContactoProveedor"
+                    OnEliminarContacto="EliminarContactoProveedor" />
+
+@code {
+    private List<ProveedorDto>? ListaProveedores;
+    private PaginatedList<ProveedorDto>? Paginacion;
+    private ProveedorEstadisticasDto? Estadisticas;
+    private ProveedorFiltrosDto Filtros = new();
+    private ProveedorDto ProveedorActual = new();
+    private ProveedorDto? ProveedorSeleccionado;
+    private List<ContactoProveedorDto>? ContactosProveedor;
+    
+    private bool Cargando = true;
+    private bool MostrarModalFormulario = false;
+    private bool MostrarModalContactos = false;
+    private string VistaActual = "tabla";
+    
+    private int PaginaActual = 1;
+    private const int TamañoPagina = 20;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        Cargando = true;
+        
+        try
+        {
+            // Cargar estadísticas
+            Estadisticas = await ProveedoresApi.GetProveedorEstadisticas();
+            
+            // Cargar proveedores
+            await CargarProveedores();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al cargar datos: {ex.Message}");
+        }
+        finally
+        {
+            Cargando = false;
+        }
+    }
+
+    private async Task CargarProveedores()
+    {
+        var resultado = await ProveedoresApi.GetProveedoresPaginados(PaginaActual, TamañoPagina, Filtros);
+        if (resultado != null)
+        {
+            ListaProveedores = resultado.Items;
+            Paginacion = resultado;
+        }
+    }
+
+    private async Task AplicarFiltros(ProveedorFiltrosDto filtros)
+    {
+        Filtros = filtros;
+        PaginaActual = 1;
+        await CargarProveedores();
+    }
+
+    private async Task LimpiarFiltros()
+    {
+        Filtros = new ProveedorFiltrosDto();
+        PaginaActual = 1;
+        await CargarProveedores();
+    }
+
+    private async Task CambiarPagina(int pagina)
+    {
+        PaginaActual = pagina;
+        await CargarProveedores();
+    }
+
+    private void CambiarVista(string vista)
+    {
+        VistaActual = vista;
+    }
+
+    private void NuevoProveedor()
+    {
+        ProveedorActual = new ProveedorDto();
+        MostrarModalFormulario = true;
+    }
+
+    private void EditarProveedor(ProveedorDto proveedor)
+    {
+        ProveedorActual = new ProveedorDto
+        {
+            Id = proveedor.Id,
+            Nombre = proveedor.Nombre,
+            Ruc = proveedor.Ruc,
+            Direccion = proveedor.Direccion,
+            Ciudad = proveedor.Ciudad,
+            Pais = proveedor.Pais,
+            Telefono = proveedor.Telefono,
+            Email = proveedor.Email,
+            Observaciones = proveedor.Observaciones,
+            EstaActivo = proveedor.EstaActivo,
+            TotalContactos = proveedor.TotalContactos,
+            TotalOrdenesCompra = proveedor.TotalOrdenesCompra,
+            MontoTotalCompras = proveedor.MontoTotalCompras,
+            UltimaCompra = proveedor.UltimaCompra
+        };
+        MostrarModalFormulario = true;
+    }
+
+    private async Task GuardarProveedor()
+    {
+        try
+        {
+            ProveedorDto? resultado;
+            
+            if (ProveedorActual.Id == Guid.Empty)
+            {
+                var request = new CrearProveedorRequest
+                {
+                    Nombre = ProveedorActual.Nombre,
+                    Ruc = ProveedorActual.Ruc,
+                    Direccion = ProveedorActual.Direccion,
+                    Ciudad = ProveedorActual.Ciudad,
+                    Pais = ProveedorActual.Pais,
+                    Telefono = ProveedorActual.Telefono,
+                    Email = ProveedorActual.Email,
+                    Observaciones = ProveedorActual.Observaciones,
+                    EstaActivo = ProveedorActual.EstaActivo
+                };
+                
+                resultado = await ProveedoresApi.CreateProveedor(request);
+            }
+            else
+            {
+                var request = new CrearProveedorRequest
+                {
+                    Nombre = ProveedorActual.Nombre,
+                    Ruc = ProveedorActual.Ruc,
+                    Direccion = ProveedorActual.Direccion,
+                    Ciudad = ProveedorActual.Ciudad,
+                    Pais = ProveedorActual.Pais,
+                    Telefono = ProveedorActual.Telefono,
+                    Email = ProveedorActual.Email,
+                    Observaciones = ProveedorActual.Observaciones,
+                    EstaActivo = ProveedorActual.EstaActivo
+                };
+                
+                resultado = await ProveedoresApi.UpdateProveedor(ProveedorActual.Id, request);
+            }
+
+            if (resultado != null)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Proveedor guardado exitosamente");
+                MostrarModalFormulario = false;
+                await CargarDatos();
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error al guardar el proveedor");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+    }
+
+    private void CerrarModalFormulario()
+    {
+        MostrarModalFormulario = false;
+        ProveedorActual = new();
+    }
+
+    private async Task VerDetallesProveedor(ProveedorDto proveedor)
+    {
+        // Implementar vista de detalles si es necesario
+        await JSRuntime.InvokeVoidAsync("alert", $"Detalles de {proveedor.Nombre}");
+    }
+
+    private async Task GestionarContactosProveedor(ProveedorDto proveedor)
+    {
+        ProveedorSeleccionado = proveedor;
+        ContactosProveedor = await ProveedoresApi.GetContactosProveedor(proveedor.Id);
+        MostrarModalContactos = true;
+    }
+
+    private async Task AgregarContactoProveedor(ContactoProveedorDto contacto)
+    {
+        try
+        {
+            var request = new CrearContactoProveedorRequest
+            {
+                Nombre = contacto.Nombre,
+                Apellido = contacto.Apellido,
+                Cargo = contacto.Cargo,
+                Telefono = contacto.Telefono,
+                Email = contacto.Email,
+                Celular = contacto.Celular,
+                EsContactoPrincipal = contacto.EsContactoPrincipal,
+                ProveedorId = contacto.ProveedorId
+            };
+
+            var resultado = await ProveedoresApi.CreateContactoProveedor(request);
+            if (resultado != null)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Contacto agregado exitosamente");
+                ContactosProveedor = await ProveedoresApi.GetContactosProveedor(ProveedorSeleccionado!.Id);
+                await CargarDatos(); // Actualizar estadísticas
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+    }
+
+    private async Task EditarContactoProveedor(ContactoProveedorDto contacto)
+    {
+        try
+        {
+            var request = new CrearContactoProveedorRequest
+            {
+                Nombre = contacto.Nombre,
+                Apellido = contacto.Apellido,
+                Cargo = contacto.Cargo,
+                Telefono = contacto.Telefono,
+                Email = contacto.Email,
+                Celular = contacto.Celular,
+                EsContactoPrincipal = contacto.EsContactoPrincipal,
+                ProveedorId = contacto.ProveedorId
+            };
+
+            var resultado = await ProveedoresApi.UpdateContactoProveedor(ProveedorSeleccionado!.Id, contacto.Id, request);
+            if (resultado != null)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Contacto actualizado exitosamente");
+                ContactosProveedor = await ProveedoresApi.GetContactosProveedor(ProveedorSeleccionado.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+    }
+
+    private async Task EliminarContactoProveedor(ContactoProveedorDto contacto)
+    {
+        if (await JSRuntime.InvokeAsync<bool>("confirm", $"¿Estás seguro de eliminar el contacto {contacto.Nombre}?"))
+        {
+            try
+            {
+                var resultado = await ProveedoresApi.DeleteContactoProveedor(ProveedorSeleccionado!.Id, contacto.Id);
+                if (resultado)
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", "Contacto eliminado exitosamente");
+                    ContactosProveedor = await ProveedoresApi.GetContactosProveedor(ProveedorSeleccionado.Id);
+                    await CargarDatos(); // Actualizar estadísticas
+                }
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            }
+        }
+    }
+
+    private void CerrarModalContactos()
+    {
+        MostrarModalContactos = false;
+        ProveedorSeleccionado = null;
+        ContactosProveedor = null;
+    }
+
+    private async Task EliminarProveedor(ProveedorDto proveedor)
+    {
+        if (await JSRuntime.InvokeAsync<bool>("confirm", $"¿Estás seguro de eliminar el proveedor {proveedor.Nombre}?"))
+        {
+            try
+            {
+                var resultado = await ProveedoresApi.DeleteProveedor(proveedor.Id);
+                if (resultado)
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", "Proveedor eliminado exitosamente");
+                    await CargarDatos();
+                }
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task ExportarExcel()
+    {
+        try
+        {
+            var request = new ExportarProveedoresRequest
+            {
+                Filtros = Filtros,
+                Columnas = new List<string> { "Nombre", "Ruc", "Ciudad", "Telefono", "Email", "TotalOrdenesCompra", "MontoTotalCompras" },
+                Formato = "Excel"
+            };
+
+            var archivo = await ProveedoresApi.ExportarProveedoresExcel(request);
+            if (archivo != null)
+            {
+                await JSRuntime.InvokeVoidAsync("descargarArchivo", archivo, "proveedores.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al exportar: {ex.Message}");
+        }
+    }
+
+    private async Task ActualizarDatos()
+    {
+        await CargarDatos();
+    }
+}
