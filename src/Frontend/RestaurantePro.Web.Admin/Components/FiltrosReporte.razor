@@ -1,0 +1,240 @@
+@using RestaurantePro.Web.Admin.Models
+@inject RestaurantePro.Web.Admin.Services.UsuariosApiService UsuariosApi
+@inject RestaurantePro.Web.Admin.Services.MesasApiService MesasApi
+@inject RestaurantePro.Web.Admin.Services.CategoriasApiService CategoriasApi
+
+<div class="card">
+    <div class="card-header">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="oi oi-magnifying-glass"></i> Filtros de Reporte
+        </h6>
+    </div>
+    <div class="card-body">
+        <EditForm Model="Filtros" OnValidSubmit="AplicarFiltros">
+            <DataAnnotationsValidator />
+            
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Reporte *</label>
+                        <InputSelect @bind-Value="Filtros.Tipo" class="form-select">
+                            <option value="">Seleccionar tipo</option>
+                            <option value="@TipoReporte.VentasPorPeriodo">Ventas por Período</option>
+                            <option value="@TipoReporte.ProductosMasVendidos">Productos Más Vendidos</option>
+                            <option value="@TipoReporte.RendimientoMesas">Rendimiento de Mesas</option>
+                            <option value="@TipoReporte.ResumenComandas">Resumen de Comandas</option>
+                            <option value="@TipoReporte.VentasPorMesero">Ventas por Mesero</option>
+                            <option value="@TipoReporte.VentasPorMesa">Ventas por Mesa</option>
+                            <option value="@TipoReporte.VentasPorHora">Ventas por Hora</option>
+                            <option value="@TipoReporte.VentasPorDia">Ventas por Día</option>
+                            <option value="@TipoReporte.ProductosPorCategoria">Productos por Categoría</option>
+                            <option value="@TipoReporte.ComandasPorEstado">Comandas por Estado</option>
+                        </InputSelect>
+                        <ValidationMessage For="@(() => Filtros.Tipo)" class="text-danger" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Fecha Inicio *</label>
+                        <InputDate @bind-Value="Filtros.FechaInicio" class="form-control" />
+                        <ValidationMessage For="@(() => Filtros.FechaInicio)" class="text-danger" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Fecha Fin *</label>
+                        <InputDate @bind-Value="Filtros.FechaFin" class="form-control" />
+                        <ValidationMessage For="@(() => Filtros.FechaFin)" class="text-danger" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Límite de Resultados</label>
+                        <InputNumber @bind-Value="Filtros.LimiteResultados" class="form-control" placeholder="100" />
+                        <small class="form-text text-muted">Máximo número de resultados</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Mesero</label>
+                        <InputSelect @bind-Value="Filtros.MeseroId" class="form-select">
+                            <option value="">Todos los meseros</option>
+                            @if (meseros != null)
+                            {
+                                @foreach (var mesero in meseros)
+                                {
+                                    <option value="@mesero.Id">@mesero.NombreCompleto</option>
+                                }
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Mesa</label>
+                        <InputSelect @bind-Value="Filtros.MesaId" class="form-select">
+                            <option value="">Todas las mesas</option>
+                            @if (mesas != null)
+                            {
+                                @foreach (var mesa in mesas)
+                                {
+                                    <option value="@mesa.Id">Mesa @mesa.Id - @mesa.NombreCliente</option>
+                                }
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Categoría</label>
+                        <InputSelect @bind-Value="Filtros.CategoriaId" class="form-select">
+                            <option value="">Todas las categorías</option>
+                            @if (categorias != null)
+                            {
+                                @foreach (var categoria in categorias)
+                                {
+                                    <option value="@categoria.Id">@categoria.Nombre</option>
+                                }
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Ordenar Por</label>
+                        <InputSelect @bind-Value="Filtros.OrdenarPor" class="form-select">
+                            <option value="Fecha">Fecha</option>
+                            <option value="TotalVentas">Total de Ventas</option>
+                            <option value="Cantidad">Cantidad</option>
+                            <option value="Nombre">Nombre</option>
+                        </InputSelect>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Dirección</label>
+                        <InputSelect @bind-Value="Filtros.DireccionOrden" class="form-select">
+                            <option value="desc">Descendente</option>
+                            <option value="asc">Ascendente</option>
+                        </InputSelect>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <div>
+                    <button type="button" class="btn btn-outline-secondary" @onclick="LimpiarFiltros">
+                        <i class="oi oi-reload"></i> Limpiar
+                    </button>
+                    <button type="button" class="btn btn-outline-info" @onclick="AplicarFiltrosRapidos">
+                        <i class="oi oi-clock"></i> Últimos 7 días
+                    </button>
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-primary" disabled="@generando">
+                        @if (generando)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        <i class="oi oi-magnifying-glass"></i> Generar Reporte
+                    </button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [Parameter] public ReporteFiltrosDto Filtros { get; set; } = new();
+    [Parameter] public EventCallback<ReporteFiltrosDto> OnFiltrosAplicados { get; set; }
+    [Parameter] public bool Generando { get; set; }
+
+    private List<UsuarioDto>? meseros;
+    private List<MesaDto>? mesas;
+    private List<CategoriaProductoDto>? categorias;
+    private bool generando => Generando;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        await Task.WhenAll(
+            CargarMeseros(),
+            CargarMesas(),
+            CargarCategorias()
+        );
+    }
+
+    private async Task CargarMeseros()
+    {
+        try
+        {
+            meseros = await UsuariosApi.ObtenerUsuariosAsync(1, 1000);
+            meseros = meseros?.Where(u => u.Roles.Contains("Mesero")).ToList() ?? new List<UsuarioDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar meseros: {ex.Message}");
+            meseros = new List<UsuarioDto>();
+        }
+    }
+
+    private async Task CargarMesas()
+    {
+        try
+        {
+            mesas = await MesasApi.ObtenerAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar mesas: {ex.Message}");
+            mesas = new List<MesaDto>();
+        }
+    }
+
+    private async Task CargarCategorias()
+    {
+        try
+        {
+            categorias = await CategoriasApi.ObtenerAsync() ?? new List<CategoriaProductoDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar categorías: {ex.Message}");
+            categorias = new List<CategoriaProductoDto>();
+        }
+    }
+
+    private async Task AplicarFiltros()
+    {
+        await OnFiltrosAplicados.InvokeAsync(Filtros);
+    }
+
+    private void LimpiarFiltros()
+    {
+        Filtros = new ReporteFiltrosDto
+        {
+            FechaInicio = DateTime.Today.AddDays(-30),
+            FechaFin = DateTime.Today,
+            OrdenarPor = "Fecha",
+            DireccionOrden = "desc",
+            LimiteResultados = 100
+        };
+    }
+
+    private async Task AplicarFiltrosRapidos()
+    {
+        Filtros.FechaInicio = DateTime.Today.AddDays(-7);
+        Filtros.FechaFin = DateTime.Today;
+        await AplicarFiltros();
+    }
+}

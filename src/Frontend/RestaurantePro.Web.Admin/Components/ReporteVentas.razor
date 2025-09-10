@@ -1,0 +1,217 @@
+@using RestaurantePro.Web.Admin.Models
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="oi oi-bar-chart"></i> Reporte de Ventas
+        </h6>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-success" @onclick="ExportarPDF">
+                <i class="oi oi-document"></i> PDF
+            </button>
+            <button class="btn btn-sm btn-outline-info" @onclick="ExportarExcel">
+                <i class="oi oi-spreadsheet"></i> Excel
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (Reporte == null)
+        {
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2 text-muted">Generando reporte de ventas...</p>
+            </div>
+        }
+        else
+        {
+            <!-- Resumen general -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card border-left-primary">
+                        <div class="card-body">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Ventas</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Reporte.TotalVentas.ToString("C0")</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-left-success">
+                        <div class="card-body">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Comandas</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Reporte.TotalComandas</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-left-info">
+                        <div class="card-body">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Facturas</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Reporte.TotalFacturas</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-left-warning">
+                        <div class="card-body">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Promedio por Comanda</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Reporte.PromedioVentaPorComanda.ToString("C0")</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Período del reporte -->
+            <div class="alert alert-info">
+                <strong>Período:</strong> @Reporte.FechaInicio.ToString("dd/MM/yyyy") - @Reporte.FechaFin.ToString("dd/MM/yyyy")
+            </div>
+
+            <!-- Ventas por día -->
+            @if (Reporte.VentasPorDia.Any())
+            {
+                <div class="mb-4">
+                    <h6 class="font-weight-bold text-gray-800 mb-3">Ventas por Día</h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th class="text-end">Total Ventas</th>
+                                    <th class="text-end">Comandas</th>
+                                    <th class="text-end">Facturas</th>
+                                    <th class="text-end">Promedio</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var venta in Reporte.VentasPorDia)
+                                {
+                                    <tr>
+                                        <td>@venta.Fecha.ToString("dd/MM/yyyy")</td>
+                                        <td class="text-end">@venta.TotalVentas.ToString("C0")</td>
+                                        <td class="text-end">@venta.TotalComandas</td>
+                                        <td class="text-end">@venta.TotalFacturas</td>
+                                        <td class="text-end">@venta.PromedioVenta.ToString("C0")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+
+            <!-- Ventas por hora -->
+            @if (Reporte.VentasPorHora.Any())
+            {
+                <div class="mb-4">
+                    <h6 class="font-weight-bold text-gray-800 mb-3">Ventas por Hora</h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Hora</th>
+                                    <th class="text-end">Total Ventas</th>
+                                    <th class="text-end">Comandas</th>
+                                    <th class="text-end">Promedio</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var venta in Reporte.VentasPorHora)
+                                {
+                                    <tr>
+                                        <td>@venta.Hora:00</td>
+                                        <td class="text-end">@venta.TotalVentas.ToString("C0")</td>
+                                        <td class="text-end">@venta.TotalComandas</td>
+                                        <td class="text-end">@venta.PromedioVenta.ToString("C0")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+
+            <!-- Ventas por mesero -->
+            @if (Reporte.VentasPorMesero.Any())
+            {
+                <div class="mb-4">
+                    <h6 class="font-weight-bold text-gray-800 mb-3">Ventas por Mesero</h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Mesero</th>
+                                    <th class="text-end">Total Ventas</th>
+                                    <th class="text-end">Comandas</th>
+                                    <th class="text-end">Promedio</th>
+                                    <th class="text-end">Comisión</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var venta in Reporte.VentasPorMesero)
+                                {
+                                    <tr>
+                                        <td>@venta.MeseroNombre</td>
+                                        <td class="text-end">@venta.TotalVentas.ToString("C0")</td>
+                                        <td class="text-end">@venta.TotalComandas</td>
+                                        <td class="text-end">@venta.PromedioVenta.ToString("C0")</td>
+                                        <td class="text-end">@venta.Comision.ToString("C0")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+
+            <!-- Ventas por mesa -->
+            @if (Reporte.VentasPorMesa.Any())
+            {
+                <div class="mb-4">
+                    <h6 class="font-weight-bold text-gray-800 mb-3">Ventas por Mesa</h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Mesa</th>
+                                    <th class="text-end">Total Ventas</th>
+                                    <th class="text-end">Comandas</th>
+                                    <th class="text-end">Promedio</th>
+                                    <th class="text-end">Tiempo Promedio</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var venta in Reporte.VentasPorMesa)
+                                {
+                                    <tr>
+                                        <td>@venta.MesaNombre</td>
+                                        <td class="text-end">@venta.TotalVentas.ToString("C0")</td>
+                                        <td class="text-end">@venta.TotalComandas</td>
+                                        <td class="text-end">@venta.PromedioVenta.ToString("C0")</td>
+                                        <td class="text-end">@venta.TiempoPromedioOcupacion.ToString(@"hh\:mm")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public ReporteVentasDto? Reporte { get; set; }
+    [Parameter] public EventCallback OnExportarPDF { get; set; }
+    [Parameter] public EventCallback OnExportarExcel { get; set; }
+
+    private async Task ExportarPDF()
+    {
+        await OnExportarPDF.InvokeAsync();
+    }
+
+    private async Task ExportarExcel()
+    {
+        await OnExportarExcel.InvokeAsync();
+    }
+}

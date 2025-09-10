@@ -1,9 +1,218 @@
 @attribute [Authorize]
 @page "/reportes"
+@inject RestaurantePro.Web.Admin.Services.ReportesApiService ReportesApi
+@using RestaurantePro.Web.Admin.Models
+@using RestaurantePro.Web.Admin.Components
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Reportes</PageTitle>
 
-<h3>Reportes</h3>
-<p class="text-muted">Análisis y reportes operativos y comerciales.</p>
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Reportes y Análisis</h1>
+    <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-outline-info" @onclick="MostrarHistorial">
+            <i class="oi oi-clock"></i> Historial
+        </button>
+        <button class="btn btn-primary" @onclick="NuevoReporte">
+            <i class="oi oi-plus"></i> Nuevo Reporte
+        </button>
+    </div>
+</div>
 
+<!-- Estadísticas generales -->
+@if (estadisticas != null)
+{
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card border-left-primary">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Reportes</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.TotalReportesGenerados</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-left-success">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Hoy</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.ReportesHoy</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-left-info">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Esta Semana</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.ReportesEstaSemana</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-left-warning">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Este Mes</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.ReportesEsteMes</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-left-danger">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Tipo Más Usado</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@ObtenerTipoTexto(estadisticas.TipoMasSolicitado)</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-left-primary">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Último Reporte</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.UltimoReporteGenerado.ToString("dd/MM")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
+<!-- Filtros de reporte -->
+<FiltrosReporte Filtros="filtros" 
+                OnFiltrosAplicados="AplicarFiltros"
+                Generando="generando" />
+
+<!-- Contenido del reporte -->
+@if (mostrarReporte)
+{
+    <div class="mt-4">
+        @switch (filtros.Tipo)
+        {
+            case TipoReporte.VentasPorPeriodo:
+                <ReporteVentas Reporte="reporteVentas" 
+                              OnExportarPDF="ExportarPDF"
+                              OnExportarExcel="ExportarExcel" />
+                break;
+            case TipoReporte.ProductosMasVendidos:
+            case TipoReporte.ProductosPorCategoria:
+                <ReporteProductos Reporte="reporteProductos" 
+                                 OnExportarPDF="ExportarPDF"
+                                 OnExportarExcel="ExportarExcel" />
+                break;
+            default:
+                <div class="alert alert-info">
+                    <i class="oi oi-info"></i> Selecciona un tipo de reporte para generar el análisis correspondiente.
+                </div>
+                break;
+        }
+    </div>
+}
+
+@code {
+    private ReporteFiltrosDto filtros = new();
+    private ReporteEstadisticasDto? estadisticas;
+    
+    // Reportes específicos
+    private ReporteVentasDto? reporteVentas;
+    private ReporteProductosDto? reporteProductos;
+    
+    private bool mostrarReporte = false;
+    private bool generando = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarEstadisticas();
+    }
+
+    private async Task CargarEstadisticas()
+    {
+        try
+        {
+            estadisticas = await ReportesApi.ObtenerEstadisticasAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar estadísticas: {ex.Message}");
+        }
+    }
+
+    private async Task AplicarFiltros(ReporteFiltrosDto filtrosAplicados)
+    {
+        filtros = filtrosAplicados;
+        generando = true;
+        mostrarReporte = true;
+        StateHasChanged();
+
+        try
+        {
+            await GenerarReporte();
+        }
+        finally
+        {
+            generando = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task GenerarReporte()
+    {
+        // Limpiar reportes anteriores
+        reporteVentas = null;
+        reporteProductos = null;
+
+        switch (filtros.Tipo)
+        {
+            case TipoReporte.VentasPorPeriodo:
+                reporteVentas = await ReportesApi.GenerarReporteVentasAsync(filtros);
+                break;
+            case TipoReporte.ProductosMasVendidos:
+            case TipoReporte.ProductosPorCategoria:
+                reporteProductos = await ReportesApi.GenerarReporteProductosAsync(filtros);
+                break;
+        }
+    }
+
+    private async Task MostrarHistorial()
+    {
+        await JSRuntime.InvokeVoidAsync("alert", "Función de historial pendiente");
+    }
+
+    private void NuevoReporte()
+    {
+        mostrarReporte = false;
+        filtros = new ReporteFiltrosDto
+        {
+            FechaInicio = DateTime.Today.AddDays(-30),
+            FechaFin = DateTime.Today,
+            OrdenarPor = "Fecha",
+            DireccionOrden = "desc",
+            LimiteResultados = 100
+        };
+        StateHasChanged();
+    }
+
+    private async Task ExportarPDF()
+    {
+        await JSRuntime.InvokeVoidAsync("alert", "Función de exportación PDF pendiente");
+    }
+
+    private async Task ExportarExcel()
+    {
+        await JSRuntime.InvokeVoidAsync("alert", "Función de exportación Excel pendiente");
+    }
+
+    private string ObtenerTipoTexto(TipoReporte tipo)
+    {
+        return tipo switch
+        {
+            TipoReporte.VentasPorPeriodo => "Ventas por Período",
+            TipoReporte.ProductosMasVendidos => "Productos Más Vendidos",
+            TipoReporte.RendimientoMesas => "Rendimiento de Mesas",
+            TipoReporte.ResumenComandas => "Resumen de Comandas",
+            TipoReporte.VentasPorMesero => "Ventas por Mesero",
+            TipoReporte.VentasPorMesa => "Ventas por Mesa",
+            TipoReporte.VentasPorHora => "Ventas por Hora",
+            TipoReporte.VentasPorDia => "Ventas por Día",
+            TipoReporte.ProductosPorCategoria => "Productos por Categoría",
+            TipoReporte.ComandasPorEstado => "Comandas por Estado",
+            _ => "Desconocido"
+        };
+    }
+}

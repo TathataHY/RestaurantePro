@@ -1,0 +1,248 @@
+@using RestaurantePro.Web.Admin.Models
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="oi oi-list"></i> Reporte de Productos
+        </h6>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-success" @onclick="ExportarPDF">
+                <i class="oi oi-document"></i> PDF
+            </button>
+            <button class="btn btn-sm btn-outline-info" @onclick="ExportarExcel">
+                <i class="oi oi-spreadsheet"></i> Excel
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (Reporte == null)
+        {
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2 text-muted">Generando reporte de productos...</p>
+            </div>
+        }
+        else
+        {
+            <!-- Resumen general -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card border-left-primary">
+                        <div class="card-body">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Ingresos</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Reporte.TotalIngresos.ToString("C0")</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-left-success">
+                        <div class="card-body">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Total Productos Vendidos</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Reporte.TotalProductosVendidos</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-left-info">
+                        <div class="card-body">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Período</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@Reporte.FechaInicio.ToString("dd/MM") - @Reporte.FechaFin.ToString("dd/MM")</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Productos más vendidos -->
+            @if (Reporte.ProductosMasVendidos.Any())
+            {
+                <div class="mb-4">
+                    <h6 class="font-weight-bold text-gray-800 mb-3">
+                        <i class="oi oi-arrow-top text-success"></i> Productos Más Vendidos
+                    </h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Producto</th>
+                                    <th>Categoría</th>
+                                    <th class="text-end">Precio</th>
+                                    <th class="text-end">Cantidad</th>
+                                    <th class="text-end">Total Ventas</th>
+                                    <th class="text-end">% del Total</th>
+                                    <th class="text-end">Veces Pedido</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < Reporte.ProductosMasVendidos.Count; i++)
+                                {
+                                    var producto = Reporte.ProductosMasVendidos[i];
+                                    <tr>
+                                        <td>@(i + 1)</td>
+                                        <td>
+                                            <strong>@producto.ProductoNombre</strong>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">@producto.CategoriaNombre</span>
+                                        </td>
+                                        <td class="text-end">@producto.Precio.ToString("C0")</td>
+                                        <td class="text-end">
+                                            <span class="badge bg-primary">@producto.CantidadVendida</span>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong>@producto.TotalVentas.ToString("C0")</strong>
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar bg-success" 
+                                                     style="width: @(producto.PorcentajeDelTotal)%"
+                                                     role="progressbar">
+                                                    @producto.PorcentajeDelTotal.ToString("F1")%
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-end">@producto.VecesPedido</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+
+            <!-- Productos menos vendidos -->
+            @if (Reporte.ProductosMenosVendidos.Any())
+            {
+                <div class="mb-4">
+                    <h6 class="font-weight-bold text-gray-800 mb-3">
+                        <i class="oi oi-arrow-bottom text-warning"></i> Productos Menos Vendidos
+                    </h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Producto</th>
+                                    <th>Categoría</th>
+                                    <th class="text-end">Precio</th>
+                                    <th class="text-end">Cantidad</th>
+                                    <th class="text-end">Total Ventas</th>
+                                    <th class="text-end">% del Total</th>
+                                    <th class="text-end">Veces Pedido</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < Reporte.ProductosMenosVendidos.Count; i++)
+                                {
+                                    var producto = Reporte.ProductosMenosVendidos[i];
+                                    <tr>
+                                        <td>@(i + 1)</td>
+                                        <td>
+                                            <strong>@producto.ProductoNombre</strong>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">@producto.CategoriaNombre</span>
+                                        </td>
+                                        <td class="text-end">@producto.Precio.ToString("C0")</td>
+                                        <td class="text-end">
+                                            <span class="badge bg-warning">@producto.CantidadVendida</span>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong>@producto.TotalVentas.ToString("C0")</strong>
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar bg-warning" 
+                                                     style="width: @(producto.PorcentajeDelTotal)%"
+                                                     role="progressbar">
+                                                    @producto.PorcentajeDelTotal.ToString("F1")%
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-end">@producto.VecesPedido</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+
+            <!-- Productos por categoría -->
+            @if (Reporte.ProductosPorCategoria.Any())
+            {
+                <div class="mb-4">
+                    <h6 class="font-weight-bold text-gray-800 mb-3">
+                        <i class="oi oi-tags text-info"></i> Productos por Categoría
+                    </h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Producto</th>
+                                    <th>Categoría</th>
+                                    <th class="text-end">Precio</th>
+                                    <th class="text-end">Cantidad</th>
+                                    <th class="text-end">Total Ventas</th>
+                                    <th class="text-end">% del Total</th>
+                                    <th class="text-end">Veces Pedido</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < Reporte.ProductosPorCategoria.Count; i++)
+                                {
+                                    var producto = Reporte.ProductosPorCategoria[i];
+                                    <tr>
+                                        <td>@(i + 1)</td>
+                                        <td>
+                                            <strong>@producto.ProductoNombre</strong>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">@producto.CategoriaNombre</span>
+                                        </td>
+                                        <td class="text-end">@producto.Precio.ToString("C0")</td>
+                                        <td class="text-end">
+                                            <span class="badge bg-primary">@producto.CantidadVendida</span>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong>@producto.TotalVentas.ToString("C0")</strong>
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="progress" style="height: 20px;">
+                                                <div class="progress-bar bg-info" 
+                                                     style="width: @(producto.PorcentajeDelTotal)%"
+                                                     role="progressbar">
+                                                    @producto.PorcentajeDelTotal.ToString("F1")%
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-end">@producto.VecesPedido</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public ReporteProductosDto? Reporte { get; set; }
+    [Parameter] public EventCallback OnExportarPDF { get; set; }
+    [Parameter] public EventCallback OnExportarExcel { get; set; }
+
+    private async Task ExportarPDF()
+    {
+        await OnExportarPDF.InvokeAsync();
+    }
+
+    private async Task ExportarExcel()
+    {
+        await OnExportarExcel.InvokeAsync();
+    }
+}
