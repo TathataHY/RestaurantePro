@@ -1,0 +1,667 @@
+@using RestaurantePro.Web.Admin.Models
+@using RestaurantePro.Web.Admin.Services
+@inject ComandasApiService ComandasApi
+@inject ClientesApiService ClientesApi
+@inject MesasApiService MesasApi
+@inject IJSRuntime JSRuntime
+
+<div class="modal fade @(Mostrar ? "show" : "")" style="display: @(Mostrar ? "block" : "none")" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="oi oi-clipboard"></i> @(EsEdicion ? "Editar Comanda" : "Nueva Comanda")
+                </h5>
+                <button type="button" class="btn-close" @onclick="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="Comanda" OnValidSubmit="GuardarComanda">
+                    <DataAnnotationsValidator />
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">Número de Comanda *</label>
+                                <InputText @bind-Value="Comanda.NumeroComanda" class="form-control" placeholder="C001-000001" />
+                                <ValidationMessage For="@(() => Comanda.NumeroComanda)" class="text-danger" />
+                                @if (mostrarValidacionNumero)
+                                {
+                                    <div class="form-text text-info">
+                                        <i class="oi oi-reload"></i> Validando número...
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">Tipo de Comanda *</label>
+                                <InputSelect @bind-Value="Comanda.TipoComanda" class="form-select">
+                                    <option value="Mesa">Mesa</option>
+                                    <option value="Domicilio">Domicilio</option>
+                                    <option value="Mostrador">Mostrador</option>
+                                </InputSelect>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">Prioridad *</label>
+                                <InputSelect @bind-Value="Comanda.Prioridad" class="form-select">
+                                    <option value="Baja">Baja</option>
+                                    <option value="Normal">Normal</option>
+                                    <option value="Alta">Alta</option>
+                                    <option value="Urgente">Urgente</option>
+                                </InputSelect>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">Número de Personas *</label>
+                                <InputNumber @bind-Value="Comanda.NumeroPersonas" class="form-control" min="1" />
+                                <ValidationMessage For="@(() => Comanda.NumeroPersonas)" class="text-danger" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Mesa *</label>
+                                <InputSelect @bind-Value="Comanda.MesaId" class="form-select" @onchange="MesaSeleccionada">
+                                    <option value="">Seleccionar mesa</option>
+                                    @if (mesas != null)
+                                    {
+                                        @foreach (var mesa in mesas)
+                                        {
+                                            <option value="@mesa.Id">Mesa @mesa.Numero</option>
+                                        }
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => Comanda.MesaId)" class="text-danger" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Mesero *</label>
+                                <InputSelect @bind-Value="Comanda.MeseroId" class="form-select">
+                                    <option value="">Seleccionar mesero</option>
+                                    @if (meseros != null)
+                                    {
+                                        @foreach (var mesero in meseros)
+                                        {
+                                            <option value="@mesero.Id">@mesero.NombreCompleto</option>
+                                        }
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="@(() => Comanda.MeseroId)" class="text-danger" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Cliente</label>
+                                <InputSelect @bind-Value="Comanda.ClienteId" class="form-select" @onchange="ClienteSeleccionado">
+                                    <option value="">Seleccionar cliente</option>
+                                    @if (clientes != null)
+                                    {
+                                        @foreach (var cliente in clientes)
+                                        {
+                                            <option value="@cliente.Id">@cliente.NombreCompleto</option>
+                                        }
+                                    }
+                                </InputSelect>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (Comanda.EsDomicilio)
+                    {
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6 class="m-0">Información de Domicilio</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Dirección *</label>
+                                            <InputText @bind-Value="Comanda.DireccionDomicilio" class="form-control" placeholder="Dirección completa" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Teléfono *</label>
+                                            <InputText @bind-Value="Comanda.TelefonoDomicilio" class="form-control" placeholder="Número de teléfono" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Referencias</label>
+                                            <InputText @bind-Value="Comanda.ReferenciasDomicilio" class="form-control" placeholder="Referencias de ubicación" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Tiempo Estimado de Entrega</label>
+                                            <InputDate @bind-Value="Comanda.TiempoEstimadoEntrega" class="form-control" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Detalles de la comanda -->
+                    <div class="card mt-3">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="m-0">Detalles de la Comanda</h6>
+                            <button type="button" class="btn btn-sm btn-primary" @onclick="AgregarDetalle">
+                                <i class="oi oi-plus"></i> Agregar Producto
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            @if (Comanda.Detalles.Any())
+                            {
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Producto</th>
+                                                <th>Cantidad</th>
+                                                <th>Precio Unit.</th>
+                                                <th>Descuento</th>
+                                                <th>Impuesto</th>
+                                                <th>Subtotal</th>
+                                                <th>Prioridad</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @for (int i = 0; i < Comanda.Detalles.Count; i++)
+                                            {
+                                                var detalle = Comanda.Detalles[i];
+                                                <tr>
+                                                    <td>
+                                                        <InputSelect @bind-Value="detalle.ProductoId" class="form-select form-select-sm">
+                                                            <option value="">Seleccionar producto</option>
+                                                            @if (productos != null)
+                                                            {
+                                                                @foreach (var producto in productos)
+                                                                {
+                                                                    <option value="@producto.Id">@producto.Nombre</option>
+                                                                }
+                                                            }
+                                                        </InputSelect>
+                                                    </td>
+                                                    <td>
+                                                        <InputNumber @bind-Value="detalle.Cantidad" class="form-control form-control-sm" min="1" />
+                                                    </td>
+                                                    <td>
+                                                        <InputNumber @bind-Value="detalle.PrecioUnitario" class="form-control form-control-sm" min="0" step="0.01" />
+                                                    </td>
+                                                    <td>
+                                                        <InputNumber @bind-Value="detalle.Descuento" class="form-control form-control-sm" min="0" step="0.01" />
+                                                    </td>
+                                                    <td>
+                                                        <InputNumber @bind-Value="detalle.Impuesto" class="form-control form-control-sm" min="0" step="0.01" />
+                                                    </td>
+                                                    <td>
+                                                        <span class="fw-bold">@((detalle.Cantidad * detalle.PrecioUnitario).ToString("C2"))</span>
+                                                    </td>
+                                                    <td>
+                                                        <InputSelect @bind-Value="detalle.Prioridad" class="form-select form-select-sm">
+                                                            <option value="Baja">Baja</option>
+                                                            <option value="Normal">Normal</option>
+                                                            <option value="Alta">Alta</option>
+                                                            <option value="Urgente">Urgente</option>
+                                                        </InputSelect>
+                                                    </td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => EliminarDetalle(i)">
+                                                            <i class="oi oi-trash"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center py-3 text-muted">
+                                    <i class="oi oi-clipboard" style="font-size: 2rem;"></i>
+                                    <p>No hay productos agregados</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Totales y opciones -->
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Observaciones</label>
+                                <InputTextArea @bind-Value="Comanda.Observaciones" class="form-control" rows="3" placeholder="Observaciones generales" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6>Resumen de Totales</h6>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Subtotal:</span>
+                                        <span>@Comanda.Subtotal.ToString("C2")</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Descuento:</span>
+                                        <span class="text-danger">-@Comanda.TotalDescuentos.ToString("C2")</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Impuesto:</span>
+                                        <span>@Comanda.TotalImpuestos.ToString("C2")</span>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between fw-bold">
+                                        <span>Total:</span>
+                                        <span>@Comanda.Total.ToString("C2")</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Notas de Cocina</label>
+                                <InputTextArea @bind-Value="Comanda.NotasCocina" class="form-control" rows="2" placeholder="Instrucciones especiales para la cocina" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check mt-4">
+                                <InputCheckbox @bind-Value="Comanda.EsUrgente" class="form-check-input" />
+                                <label class="form-check-label">
+                                    Es Urgente
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <InputCheckbox @bind-Value="Comanda.RequiereFactura" class="form-check-input" />
+                                <label class="form-check-label">
+                                    Requiere Factura
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <InputCheckbox @bind-Value="Comanda.EsDomicilio" class="form-check-input" @onchange="TipoComandaChanged" />
+                                <label class="form-check-label">
+                                    Es Domicilio
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </EditForm>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="Cerrar">
+                    <i class="oi oi-x"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" @onclick="GuardarComanda" disabled="@guardando">
+                    @if (guardando)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    }
+                    <i class="oi oi-check"></i> @(EsEdicion ? "Actualizar" : "Crear")
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Mostrar)
+{
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    [Parameter] public bool Mostrar { get; set; }
+    [Parameter] public EventCallback<bool> MostrarChanged { get; set; }
+    [Parameter] public EventCallback<ComandaDto> OnComandaGuardada { get; set; }
+
+    private ComandaDto Comanda = new();
+    private bool EsEdicion => Comanda.Id != Guid.Empty;
+    private bool guardando = false;
+    private bool mostrarValidacionNumero = false;
+
+    private List<ClienteDto>? clientes;
+    private List<MesaDto>? mesas;
+    private List<UsuarioDto>? meseros;
+    private List<ProductoDto>? productos;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Mostrar && !EsEdicion)
+        {
+            Comanda = new ComandaDto
+            {
+                FechaCreacion = DateTime.Now,
+                Estado = "Pendiente",
+                Prioridad = "Normal",
+                TipoComanda = "Mesa",
+                NumeroPersonas = 1,
+                Detalles = new List<ComandaDetalleDto>()
+            };
+            
+            await CargarDatos();
+            await GenerarNumeroComanda();
+        }
+    }
+
+    private async Task CargarDatos()
+    {
+        await Task.WhenAll(
+            CargarClientes(),
+            CargarMesas(),
+            CargarMeseros(),
+            CargarProductos()
+        );
+    }
+
+    private async Task CargarClientes()
+    {
+        try
+        {
+            var filtros = new ClienteFiltrosDto { PageSize = 1000 };
+            var resultado = await ClientesApi.ObtenerClientesAsync(filtros);
+            clientes = resultado?.Items?.ToList() ?? new List<ClienteDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar clientes: {ex.Message}");
+            clientes = new List<ClienteDto>();
+        }
+    }
+
+    private async Task CargarMesas()
+    {
+        try
+        {
+            mesas = await MesasApi.ObtenerAsync() ?? new List<MesaDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar mesas: {ex.Message}");
+            mesas = new List<MesaDto>();
+        }
+    }
+
+    private async Task CargarMeseros()
+    {
+        try
+        {
+            // Por ahora usamos una lista vacía hasta que tengamos el servicio de usuarios
+            meseros = new List<UsuarioDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar meseros: {ex.Message}");
+            meseros = new List<UsuarioDto>();
+        }
+    }
+
+    private async Task CargarProductos()
+    {
+        try
+        {
+            // Por ahora usamos una lista vacía hasta que tengamos el servicio de productos
+            productos = new List<ProductoDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar productos: {ex.Message}");
+            productos = new List<ProductoDto>();
+        }
+    }
+
+    private async Task GenerarNumeroComanda()
+    {
+        try
+        {
+            var resultado = await ComandasApi.ObtenerSiguienteNumeroComandaAsync();
+            if (resultado?.Success == true && !string.IsNullOrEmpty(resultado.Data))
+            {
+                Comanda.NumeroComanda = resultado.Data;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al generar número de comanda: {ex.Message}");
+        }
+    }
+
+    private void MesaSeleccionada()
+    {
+        if (Comanda.MesaId != Guid.Empty && mesas != null)
+        {
+            var mesa = mesas.FirstOrDefault(m => m.Id == Comanda.MesaId);
+            if (mesa != null)
+            {
+                Comanda.MesaNombre = $"Mesa {mesa.Numero}";
+                Comanda.MesaNumero = int.Parse(mesa.Numero.ToString());
+                Comanda.MesaUbicacion = "";
+            }
+        }
+    }
+
+    private void ClienteSeleccionado()
+    {
+        if (Comanda.ClienteId != Guid.Empty && clientes != null)
+        {
+            var cliente = clientes.FirstOrDefault(c => c.Id == Comanda.ClienteId);
+            if (cliente != null)
+            {
+                Comanda.ClienteNombre = cliente.NombreCompleto;
+                Comanda.ClienteTelefono = cliente.Telefono ?? "";
+            }
+        }
+    }
+
+    private void TipoComandaChanged()
+    {
+        if (Comanda.EsDomicilio)
+        {
+            Comanda.TipoComanda = "Domicilio";
+        }
+        else
+        {
+            Comanda.TipoComanda = "Mesa";
+        }
+    }
+
+    private void AgregarDetalle()
+    {
+        Comanda.Detalles.Add(new ComandaDetalleDto
+        {
+            Cantidad = 1,
+            PrecioUnitario = 0,
+            Descuento = 0,
+            Impuesto = 0,
+            Prioridad = "Normal"
+        });
+    }
+
+    private void EliminarDetalle(int index)
+    {
+        if (index >= 0 && index < Comanda.Detalles.Count)
+        {
+            Comanda.Detalles.RemoveAt(index);
+        }
+    }
+
+    private async Task GuardarComanda()
+    {
+        guardando = true;
+        StateHasChanged();
+
+        try
+        {
+            // Validar número de comanda único
+            if (!string.IsNullOrEmpty(Comanda.NumeroComanda))
+            {
+                mostrarValidacionNumero = true;
+                var validacionNumero = await ComandasApi.ValidarNumeroComandaAsync(Comanda.NumeroComanda, EsEdicion ? Comanda.Id : null);
+                mostrarValidacionNumero = false;
+
+                if (validacionNumero?.Data == true)
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", "El número de comanda ya existe.");
+                    guardando = false;
+                    StateHasChanged();
+                    return;
+                }
+            }
+
+            // Calcular totales
+            CalcularTotales();
+
+            ApiResponse<ComandaDto>? resultado;
+
+            if (EsEdicion)
+            {
+                var request = new ActualizarComandaRequest
+                {
+                    Id = Comanda.Id,
+                    Estado = Comanda.Estado,
+                    Prioridad = Comanda.Prioridad,
+                    Observaciones = Comanda.Observaciones,
+                    NotasCocina = Comanda.NotasCocina,
+                    NotasEntrega = Comanda.NotasEntrega,
+                    EsUrgente = Comanda.EsUrgente,
+                    NumeroPersonas = Comanda.NumeroPersonas
+                };
+
+                resultado = await ComandasApi.ActualizarComandaAsync(request);
+            }
+            else
+            {
+                var request = new CrearComandaRequest
+                {
+                    MesaId = Comanda.MesaId,
+                    MeseroId = Comanda.MeseroId,
+                    ClienteId = Comanda.ClienteId,
+                    TipoComanda = Comanda.TipoComanda,
+                    NumeroPersonas = Comanda.NumeroPersonas,
+                    Prioridad = Comanda.Prioridad,
+                    Observaciones = Comanda.Observaciones,
+                    NotasCocina = Comanda.NotasCocina,
+                    EsUrgente = Comanda.EsUrgente,
+                    RequiereFactura = Comanda.RequiereFactura,
+                    EsDomicilio = Comanda.EsDomicilio,
+                    DireccionDomicilio = Comanda.DireccionDomicilio,
+                    TelefonoDomicilio = Comanda.TelefonoDomicilio,
+                    ReferenciasDomicilio = Comanda.ReferenciasDomicilio,
+                    Detalles = Comanda.Detalles.Select(d => new CrearComandaDetalleRequest
+                    {
+                        ProductoId = d.ProductoId,
+                        Cantidad = d.Cantidad,
+                        PrecioUnitario = d.PrecioUnitario,
+                        Descuento = d.Descuento,
+                        Impuesto = d.Impuesto,
+                        Observaciones = d.Observaciones,
+                        Modificaciones = d.Modificaciones,
+                        Prioridad = d.Prioridad
+                    }).ToList()
+                };
+
+                resultado = await ComandasApi.CrearComandaAsync(request);
+            }
+
+            if (resultado?.Success == true && resultado.Data != null)
+            {
+                await OnComandaGuardada.InvokeAsync(resultado.Data);
+                await Cerrar();
+                await JSRuntime.InvokeVoidAsync("alert", EsEdicion ? "Comanda actualizada correctamente" : "Comanda creada correctamente");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al guardar la comanda");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+        finally
+        {
+            guardando = false;
+            StateHasChanged();
+        }
+    }
+
+    private void CalcularTotales()
+    {
+        Comanda.Subtotal = Comanda.Detalles.Sum(d => d.Cantidad * d.PrecioUnitario);
+        Comanda.TotalDescuentos = Comanda.Detalles.Sum(d => d.Descuento);
+        Comanda.TotalImpuestos = Comanda.Detalles.Sum(d => d.Impuesto);
+        Comanda.Total = Comanda.Subtotal - Comanda.TotalDescuentos + Comanda.TotalImpuestos;
+    }
+
+    private async Task Cerrar()
+    {
+        await MostrarChanged.InvokeAsync(false);
+    }
+
+    public void AbrirParaEditar(ComandaDto comanda)
+    {
+        Comanda = new ComandaDto
+        {
+            Id = comanda.Id,
+            NumeroComanda = comanda.NumeroComanda,
+            FechaCreacion = comanda.FechaCreacion,
+            MesaId = comanda.MesaId,
+            MesaNombre = comanda.MesaNombre,
+            MesaNumero = comanda.MesaNumero,
+            MesaUbicacion = comanda.MesaUbicacion,
+            MeseroId = comanda.MeseroId,
+            MeseroNombre = comanda.MeseroNombre,
+            ClienteId = comanda.ClienteId,
+            ClienteNombre = comanda.ClienteNombre,
+            ClienteTelefono = comanda.ClienteTelefono,
+            Estado = comanda.Estado,
+            Prioridad = comanda.Prioridad,
+            TipoComanda = comanda.TipoComanda,
+            NumeroPersonas = comanda.NumeroPersonas,
+            Observaciones = comanda.Observaciones,
+            NotasCocina = comanda.NotasCocina,
+            NotasEntrega = comanda.NotasEntrega,
+            Subtotal = comanda.Subtotal,
+            TotalDescuentos = comanda.TotalDescuentos,
+            TotalImpuestos = comanda.TotalImpuestos,
+            Total = comanda.Total,
+            EsUrgente = comanda.EsUrgente,
+            RequiereFactura = comanda.RequiereFactura,
+            EsDomicilio = comanda.EsDomicilio,
+            DireccionDomicilio = comanda.DireccionDomicilio,
+            TelefonoDomicilio = comanda.TelefonoDomicilio,
+            ReferenciasDomicilio = comanda.ReferenciasDomicilio,
+            TiempoEstimadoEntrega = comanda.TiempoEstimadoEntrega,
+            Detalles = comanda.Detalles.ToList()
+        };
+        Mostrar = true;
+        StateHasChanged();
+    }
+
+    public void AbrirParaCrear()
+    {
+        Comanda = new ComandaDto
+        {
+            FechaCreacion = DateTime.Now,
+            Estado = "Pendiente",
+            Prioridad = "Normal",
+            TipoComanda = "Mesa",
+            NumeroPersonas = 1,
+            Detalles = new List<ComandaDetalleDto>()
+        };
+        Mostrar = true;
+        StateHasChanged();
+    }
+}

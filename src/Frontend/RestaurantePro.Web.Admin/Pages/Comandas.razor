@@ -1,0 +1,578 @@
+@attribute [Authorize]
+@page "/comandas"
+@inject RestaurantePro.Web.Admin.Services.ComandasApiService ComandasApi
+@using RestaurantePro.Web.Admin.Models
+@using RestaurantePro.Web.Admin.Components
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Comandas</PageTitle>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Gestión de Comandas</h1>
+    <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-outline-info" @onclick="MostrarEstadisticas">
+            <i class="oi oi-bar-chart"></i> Estadísticas
+        </button>
+        <button class="btn btn-outline-warning" @onclick="MostrarUrgentes">
+            <i class="oi oi-warning"></i> Urgentes
+        </button>
+        <button class="btn btn-outline-danger" @onclick="MostrarLentas">
+            <i class="oi oi-clock"></i> Lentas
+        </button>
+        <button class="btn btn-primary" @onclick="NuevaComanda">
+            <i class="oi oi-plus"></i> Nueva Comanda
+        </button>
+    </div>
+</div>
+
+<!-- Estadísticas generales -->
+@if (estadisticas != null)
+{
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card border-left-primary">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Comandas</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.TotalComandas</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-left-warning">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pendientes</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.ComandasPendientes</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-left-info">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">En Proceso</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.ComandasEnProceso</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-left-success">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Listas</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.ComandasListas</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-left-primary">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Entregadas</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.ComandasEntregadas</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-left-danger">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Urgentes</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.ComandasUrgentes</div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Filtros de búsqueda -->
+<ComandaFiltros Filtros="filtros" 
+                OnFiltrosAplicados="AplicarFiltros"
+                Aplicando="cargando" />
+
+<!-- Lista de comandas -->
+<ComandaList Comandas="comandas" 
+             Paginacion="paginacion"
+             OnEditarComanda="EditarComanda"
+             OnCancelar="CancelarComanda"
+             OnCambiarEstado="CambiarEstado"
+             OnCambiarPrioridad="CambiarPrioridad"
+             OnReasignarMesa="ReasignarMesa"
+             OnVerDetalles="VerDetalles"
+             OnNuevaComanda="NuevaComanda"
+             OnCambiarPagina="CambiarPagina"
+             OnExportarExcel="ExportarExcel" />
+
+<!-- Formulario de comanda -->
+<ComandaForm Mostrar="mostrarFormulario" 
+             MostrarChanged="MostrarFormularioChanged"
+             OnComandaGuardada="ComandaGuardada" />
+
+<!-- Modal de detalles de la comanda -->
+@if (mostrarDetalles && comandaSeleccionada != null)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="oi oi-clipboard"></i> Detalles de la Comanda: @comandaSeleccionada.NumeroComanda
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="CerrarDetalles"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Información de la Comanda</h6>
+                            <table class="table table-sm">
+                                <tr><td><strong>Número:</strong></td><td>@comandaSeleccionada.NumeroComanda</td></tr>
+                                <tr><td><strong>Fecha Creación:</strong></td><td>@comandaSeleccionada.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td></tr>
+                                <tr><td><strong>Estado:</strong></td><td><span class="badge bg-@comandaSeleccionada.ClaseEstado">@comandaSeleccionada.EstadoVisual</span></td></tr>
+                                <tr><td><strong>Prioridad:</strong></td><td><span class="badge bg-@comandaSeleccionada.ClasePrioridad">@comandaSeleccionada.Prioridad</span></td></tr>
+                                <tr><td><strong>Tipo:</strong></td><td>@comandaSeleccionada.TipoComanda</td></tr>
+                                <tr><td><strong>Personas:</strong></td><td>@comandaSeleccionada.NumeroPersonas</td></tr>
+                                <tr><td><strong>Tiempo Transcurrido:</strong></td><td>@comandaSeleccionada.MinutosTranscurridos minutos</td></tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Información del Cliente y Mesa</h6>
+                            <table class="table table-sm">
+                                <tr><td><strong>Mesa:</strong></td><td>@comandaSeleccionada.MesaNombre</td></tr>
+                                <tr><td><strong>Ubicación:</strong></td><td>@comandaSeleccionada.MesaUbicacion</td></tr>
+                                <tr><td><strong>Cliente:</strong></td><td>@(string.IsNullOrEmpty(comandaSeleccionada.ClienteNombre) ? "Cliente General" : comandaSeleccionada.ClienteNombre)</td></tr>
+                                <tr><td><strong>Teléfono:</strong></td><td>@(comandaSeleccionada.ClienteTelefono ?? "No especificado")</td></tr>
+                                <tr><td><strong>Mesero:</strong></td><td>@comandaSeleccionada.MeseroNombre</td></tr>
+                                <tr><td><strong>Urgente:</strong></td><td>@(comandaSeleccionada.EsUrgente ? "Sí" : "No")</td></tr>
+                                <tr><td><strong>Domicilio:</strong></td><td>@(comandaSeleccionada.EsDomicilio ? "Sí" : "No")</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    @if (comandaSeleccionada.EsDomicilio && !string.IsNullOrEmpty(comandaSeleccionada.DireccionDomicilio))
+                    {
+                        <h6>Información de Domicilio</h6>
+                        <div class="card">
+                            <div class="card-body">
+                                <p><strong>Dirección:</strong> @comandaSeleccionada.DireccionDomicilio</p>
+                                @if (!string.IsNullOrEmpty(comandaSeleccionada.TelefonoDomicilio))
+                                {
+                                    <p><strong>Teléfono:</strong> @comandaSeleccionada.TelefonoDomicilio</p>
+                                }
+                                @if (!string.IsNullOrEmpty(comandaSeleccionada.ReferenciasDomicilio))
+                                {
+                                    <p><strong>Referencias:</strong> @comandaSeleccionada.ReferenciasDomicilio</p>
+                                }
+                                @if (comandaSeleccionada.TiempoEstimadoEntrega.HasValue)
+                                {
+                                    <p><strong>Tiempo Estimado:</strong> @comandaSeleccionada.TiempoEstimadoEntrega.Value.ToString("dd/MM/yyyy HH:mm")</p>
+                                }
+                            </div>
+                        </div>
+                    }
+                    
+                    <h6>Detalles de la Comanda</h6>
+                    @if (comandaSeleccionada.Detalles.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Cantidad</th>
+                                        <th>Precio Unit.</th>
+                                        <th>Descuento</th>
+                                        <th>Impuesto</th>
+                                        <th>Subtotal</th>
+                                        <th>Estado</th>
+                                        <th>Prioridad</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var detalle in comandaSeleccionada.Detalles)
+                                    {
+                                        <tr>
+                                            <td>@detalle.ProductoNombre</td>
+                                            <td>@detalle.Cantidad</td>
+                                            <td>@detalle.PrecioUnitario.ToString("C2")</td>
+                                            <td>@detalle.Descuento.ToString("C2")</td>
+                                            <td>@detalle.Impuesto.ToString("C2")</td>
+                                            <td>@detalle.Subtotal.ToString("C2")</td>
+                                            <td><span class="badge bg-secondary">@detalle.Estado</span></td>
+                                            <td><span class="badge bg-@(detalle.Prioridad == "Urgente" ? "danger" : detalle.Prioridad == "Alta" ? "warning" : "primary")">@detalle.Prioridad</span></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="5"><strong>Subtotal:</strong></td>
+                                        <td><strong>@comandaSeleccionada.Subtotal.ToString("C2")</strong></td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="5"><strong>Descuento:</strong></td>
+                                        <td><strong class="text-danger">-@comandaSeleccionada.TotalDescuentos.ToString("C2")</strong></td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="5"><strong>Impuesto:</strong></td>
+                                        <td><strong>@comandaSeleccionada.TotalImpuestos.ToString("C2")</strong></td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                    <tr class="table-primary">
+                                        <td colspan="5"><strong>TOTAL:</strong></td>
+                                        <td><strong>@comandaSeleccionada.Total.ToString("C2")</strong></td>
+                                        <td colspan="2"></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    }
+                    
+                    @if (!string.IsNullOrEmpty(comandaSeleccionada.Observaciones))
+                    {
+                        <h6>Observaciones</h6>
+                        <p>@comandaSeleccionada.Observaciones</p>
+                    }
+                    
+                    @if (!string.IsNullOrEmpty(comandaSeleccionada.NotasCocina))
+                    {
+                        <h6>Notas de Cocina</h6>
+                        <p>@comandaSeleccionada.NotasCocina</p>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarDetalles">
+                        <i class="oi oi-x"></i> Cerrar
+                    </button>
+                    <button type="button" class="btn btn-warning" @onclick="EditarComandaDesdeDetalles">
+                        <i class="oi oi-pencil"></i> Editar
+                    </button>
+                    @if (!comandaSeleccionada.EstaEntregada && !comandaSeleccionada.EstaCancelada)
+                    {
+                        <button type="button" class="btn btn-info" @onclick="CambiarEstadoDesdeDetalles">
+                            <i class="oi oi-loop-circular"></i> Cambiar Estado
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    private ComandaFiltrosDto filtros = new();
+    private List<ComandaDto>? comandas;
+    private PaginatedList<ComandaDto>? paginacion;
+    private ComandaEstadisticasDto? estadisticas;
+    private ComandaDto? comandaSeleccionada;
+    
+    private bool mostrarFormulario = false;
+    private bool mostrarDetalles = false;
+    private bool cargando = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        await Task.WhenAll(
+            CargarComandas(),
+            CargarEstadisticas()
+        );
+    }
+
+    private async Task CargarComandas()
+    {
+        cargando = true;
+        StateHasChanged();
+
+        try
+        {
+            var resultado = await ComandasApi.ObtenerComandasAsync(filtros);
+            if (resultado != null)
+            {
+                comandas = resultado.Items?.ToList() ?? new List<ComandaDto>();
+                paginacion = resultado;
+            }
+            else
+            {
+                comandas = new List<ComandaDto>();
+                paginacion = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar comandas: {ex.Message}");
+            comandas = new List<ComandaDto>();
+            paginacion = null;
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CargarEstadisticas()
+    {
+        try
+        {
+            estadisticas = await ComandasApi.ObtenerEstadisticasAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar estadísticas: {ex.Message}");
+        }
+    }
+
+    private async Task AplicarFiltros(ComandaFiltrosDto filtrosAplicados)
+    {
+        filtros = filtrosAplicados;
+        await CargarComandas();
+    }
+
+    private async Task CambiarPagina(int pagina)
+    {
+        filtros.PageNumber = pagina;
+        await CargarComandas();
+    }
+
+    private void NuevaComanda()
+    {
+        mostrarFormulario = true;
+        StateHasChanged();
+    }
+
+    private void EditarComanda(ComandaDto comanda)
+    {
+        comandaSeleccionada = comanda;
+        mostrarFormulario = true;
+        StateHasChanged();
+    }
+
+    private void EditarComandaDesdeDetalles()
+    {
+        if (comandaSeleccionada != null)
+        {
+            mostrarDetalles = false;
+            mostrarFormulario = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CancelarComanda(ComandaDto comanda)
+    {
+        var confirmacion = await JSRuntime.InvokeAsync<bool>("confirm", 
+            "¿Estás seguro de que quieres cancelar esta comanda?");
+        
+        if (confirmacion)
+        {
+            try
+            {
+                var request = new CambiarEstadoComandaRequest
+                {
+                    ComandaId = comanda.Id,
+                    NuevoEstado = "Cancelada",
+                    Observaciones = "Comanda cancelada desde el sistema"
+                };
+
+                var resultado = await ComandasApi.CambiarEstadoAsync(request);
+                if (resultado?.Success == true)
+                {
+                    await CargarComandas();
+                    await JSRuntime.InvokeVoidAsync("alert", "Comanda cancelada correctamente");
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al cancelar la comanda");
+                }
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task CambiarEstado(ComandaDto comanda)
+    {
+        var nuevoEstado = await JSRuntime.InvokeAsync<string>("prompt", 
+            "Ingresa el nuevo estado (Pendiente, EnProceso, Lista, Entregada, Cancelada):", 
+            comanda.Estado);
+        
+        if (!string.IsNullOrEmpty(nuevoEstado))
+        {
+            try
+            {
+                var request = new CambiarEstadoComandaRequest
+                {
+                    ComandaId = comanda.Id,
+                    NuevoEstado = nuevoEstado,
+                    Observaciones = "Estado cambiado desde el sistema"
+                };
+
+                var resultado = await ComandasApi.CambiarEstadoAsync(request);
+                if (resultado?.Success == true)
+                {
+                    await CargarComandas();
+                    await JSRuntime.InvokeVoidAsync("alert", "Estado cambiado correctamente");
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al cambiar el estado");
+                }
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            }
+        }
+    }
+
+    private void CambiarEstadoDesdeDetalles()
+    {
+        if (comandaSeleccionada != null)
+        {
+            CambiarEstado(comandaSeleccionada);
+        }
+    }
+
+    private async Task CambiarPrioridad(ComandaDto comanda)
+    {
+        var nuevaPrioridad = await JSRuntime.InvokeAsync<string>("prompt", 
+            "Ingresa la nueva prioridad (Baja, Normal, Alta, Urgente):", 
+            comanda.Prioridad);
+        
+        if (!string.IsNullOrEmpty(nuevaPrioridad))
+        {
+            try
+            {
+                var request = new CambiarPrioridadComandaRequest
+                {
+                    ComandaId = comanda.Id,
+                    NuevaPrioridad = nuevaPrioridad,
+                    Observaciones = "Prioridad cambiada desde el sistema"
+                };
+
+                var resultado = await ComandasApi.CambiarPrioridadAsync(request);
+                if (resultado?.Success == true)
+                {
+                    await CargarComandas();
+                    await JSRuntime.InvokeVoidAsync("alert", "Prioridad cambiada correctamente");
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al cambiar la prioridad");
+                }
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task ReasignarMesa(ComandaDto comanda)
+    {
+        var nuevaMesaId = await JSRuntime.InvokeAsync<string>("prompt", 
+            "Ingresa el ID de la nueva mesa:", "");
+        
+        if (!string.IsNullOrEmpty(nuevaMesaId) && Guid.TryParse(nuevaMesaId, out var mesaId))
+        {
+            try
+            {
+                var request = new ReasignarMesaRequest
+                {
+                    ComandaId = comanda.Id,
+                    NuevaMesaId = mesaId,
+                    Observaciones = "Mesa reasignada desde el sistema"
+                };
+
+                var resultado = await ComandasApi.ReasignarMesaAsync(request);
+                if (resultado?.Success == true)
+                {
+                    await CargarComandas();
+                    await JSRuntime.InvokeVoidAsync("alert", "Mesa reasignada correctamente");
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al reasignar la mesa");
+                }
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            }
+        }
+    }
+
+    private void VerDetalles(ComandaDto comanda)
+    {
+        comandaSeleccionada = comanda;
+        mostrarDetalles = true;
+        StateHasChanged();
+    }
+
+    private void CerrarDetalles()
+    {
+        mostrarDetalles = false;
+        comandaSeleccionada = null;
+        StateHasChanged();
+    }
+
+    private void MostrarFormularioChanged(bool mostrar)
+    {
+        mostrarFormulario = mostrar;
+        if (!mostrar)
+        {
+            comandaSeleccionada = null;
+        }
+        StateHasChanged();
+    }
+
+    private async Task ComandaGuardada(ComandaDto comanda)
+    {
+        await CargarDatos();
+        mostrarFormulario = false;
+        comandaSeleccionada = null;
+        StateHasChanged();
+    }
+
+    private void MostrarEstadisticas()
+    {
+        JSRuntime.InvokeVoidAsync("alert", "Función de estadísticas detalladas pendiente");
+    }
+
+    private async Task MostrarUrgentes()
+    {
+        filtros.EsUrgente = true;
+        await CargarComandas();
+    }
+
+    private async Task MostrarLentas()
+    {
+        filtros.EsLenta = true;
+        await CargarComandas();
+    }
+
+    private async Task ExportarExcel()
+    {
+        try
+        {
+            var resultado = await ComandasApi.ExportarComandasAsync(filtros, "Excel");
+            if (resultado?.Success == true && resultado.Data != null)
+            {
+                await JSRuntime.InvokeVoidAsync("descargarArchivo", 
+                    Convert.ToBase64String(resultado.Data), 
+                    $"comandas_{DateTime.Now:yyyyMMdd}.xlsx", 
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al exportar comandas");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al exportar: {ex.Message}");
+        }
+    }
+}

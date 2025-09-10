@@ -1,0 +1,230 @@
+@using RestaurantePro.Web.Admin.Models
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="oi oi-clipboard"></i> Lista de Comandas (@(Comandas?.Count ?? 0))
+        </h6>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-success" @onclick="OnExportarExcel">
+                <i class="oi oi-spreadsheet"></i> Excel
+            </button>
+            <button class="btn btn-sm btn-outline-info" @onclick="OnNuevaComanda">
+                <i class="oi oi-plus"></i> Nueva Comanda
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (Comandas == null)
+        {
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2 text-muted">Cargando comandas...</p>
+            </div>
+        }
+        else if (!Comandas.Any())
+        {
+            <div class="text-center py-4">
+                <i class="oi oi-clipboard text-muted" style="font-size: 3rem;"></i>
+                <h5 class="text-muted mt-3">No hay comandas</h5>
+                <p class="text-muted">Comienza creando tu primera comanda</p>
+                <button class="btn btn-primary" @onclick="OnNuevaComanda">
+                    <i class="oi oi-plus"></i> Crear Comanda
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Comanda</th>
+                            <th>Mesa</th>
+                            <th>Cliente</th>
+                            <th>Mesero</th>
+                            <th>Estado</th>
+                            <th>Prioridad</th>
+                            <th>Tiempo</th>
+                            <th>Total</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var comanda in Comandas)
+                        {
+                            <tr class="@(comanda.EsUrgente ? "table-warning" : "")">
+                                <td>
+                                    <div>
+                                        <strong>@comanda.NumeroComanda</strong>
+                                        @if (comanda.EsUrgente)
+                                        {
+                                            <br><span class="badge bg-danger">Urgente</span>
+                                        }
+                                        @if (comanda.EsDomicilio)
+                                        {
+                                            <br><span class="badge bg-info">Domicilio</span>
+                                        }
+                                        @if (comanda.EsLenta)
+                                        {
+                                            <br><span class="badge bg-warning">Lenta</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <span class="badge bg-secondary">@comanda.MesaNombre</span>
+                                        @if (!string.IsNullOrEmpty(comanda.MesaUbicacion))
+                                        {
+                                            <br><small class="text-muted">@comanda.MesaUbicacion</small>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        @if (!string.IsNullOrEmpty(comanda.ClienteNombre))
+                                        {
+                                            <strong>@comanda.ClienteNombre</strong>
+                                            @if (!string.IsNullOrEmpty(comanda.ClienteTelefono))
+                                            {
+                                                <br><small class="text-muted">@comanda.ClienteTelefono</small>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Cliente General</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <small>@comanda.MeseroNombre</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-@comanda.ClaseEstado">@comanda.EstadoVisual</span>
+                                    @if (comanda.EsLenta)
+                                    {
+                                        <br><small class="text-warning">@comanda.MinutosTranscurridos min</small>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="badge bg-@comanda.ClasePrioridad">@comanda.Prioridad</span>
+                                </td>
+                                <td>
+                                    <div>
+                                        <small>@comanda.MinutosTranscurridos min</small>
+                                        @if (comanda.TiempoProcesamiento.HasValue)
+                                        {
+                                            <br><small class="text-muted">Proc: @((int)comanda.TiempoProcesamiento.Value.TotalMinutes) min</small>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>@comanda.Total.ToString("C2")</strong>
+                                        <br><small class="text-muted">@comanda.CantidadItems items</small>
+                                    </div>
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary" 
+                                                @onclick="() => OnVerDetalles.InvokeAsync(comanda)"
+                                                title="Ver detalles">
+                                            <i class="oi oi-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-warning" 
+                                                @onclick="() => OnEditarComanda.InvokeAsync(comanda)"
+                                                title="Editar">
+                                            <i class="oi oi-pencil"></i>
+                                        </button>
+                                        @if (!comanda.EstaEntregada && !comanda.EstaCancelada)
+                                        {
+                                            <button class="btn btn-sm btn-outline-info" 
+                                                    @onclick="() => OnCambiarEstado.InvokeAsync(comanda)"
+                                                    title="Cambiar estado">
+                                                <i class="oi oi-loop-circular"></i>
+                                            </button>
+                                        }
+                                        @if (!comanda.EstaEntregada && !comanda.EstaCancelada)
+                                        {
+                                            <button class="btn btn-sm btn-outline-secondary" 
+                                                    @onclick="() => OnCambiarPrioridad.InvokeAsync(comanda)"
+                                                    title="Cambiar prioridad">
+                                                <i class="oi oi-flag"></i>
+                                            </button>
+                                        }
+                                        @if (!comanda.EstaEntregada && !comanda.EstaCancelada)
+                                        {
+                                            <button class="btn btn-sm btn-outline-success" 
+                                                    @onclick="() => OnReasignarMesa.InvokeAsync(comanda)"
+                                                    title="Reasignar mesa">
+                                                <i class="oi oi-home"></i>
+                                            </button>
+                                        }
+                                        @if (!comanda.EstaEntregada && !comanda.EstaCancelada)
+                                        {
+                                            <button class="btn btn-sm btn-outline-danger" 
+                                                    @onclick="() => OnCancelar.InvokeAsync(comanda)"
+                                                    title="Cancelar">
+                                                <i class="oi oi-x"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (Paginacion != null)
+            {
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div class="text-muted">
+                        Mostrando @Paginacion.PageNumber de @Paginacion.TotalPages páginas
+                        (@Paginacion.TotalCount comandas en total)
+                    </div>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item @(Paginacion.HasPreviousPage ? "" : "disabled")">
+                                <button class="page-link" @onclick="() => OnCambiarPagina.InvokeAsync(Paginacion.PageNumber - 1)" 
+                                        disabled="@(!Paginacion.HasPreviousPage)">
+                                    <i class="oi oi-chevron-left"></i>
+                                </button>
+                            </li>
+                            
+                            @for (int i = Math.Max(1, Paginacion.PageNumber - 2); i <= Math.Min(Paginacion.TotalPages, Paginacion.PageNumber + 2); i++)
+                            {
+                                <li class="page-item @(i == Paginacion.PageNumber ? "active" : "")">
+                                    <button class="page-link" @onclick="() => OnCambiarPagina.InvokeAsync(i)">@i</button>
+                                </li>
+                            }
+                            
+                            <li class="page-item @(Paginacion.HasNextPage ? "" : "disabled")">
+                                <button class="page-link" @onclick="() => OnCambiarPagina.InvokeAsync(Paginacion.PageNumber + 1)" 
+                                        disabled="@(!Paginacion.HasNextPage)">
+                                    <i class="oi oi-chevron-right"></i>
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<ComandaDto>? Comandas { get; set; }
+    [Parameter] public PaginatedList<ComandaDto>? Paginacion { get; set; }
+    [Parameter] public EventCallback<ComandaDto> OnEditarComanda { get; set; }
+    [Parameter] public EventCallback<ComandaDto> OnCancelar { get; set; }
+    [Parameter] public EventCallback<ComandaDto> OnCambiarEstado { get; set; }
+    [Parameter] public EventCallback<ComandaDto> OnCambiarPrioridad { get; set; }
+    [Parameter] public EventCallback<ComandaDto> OnReasignarMesa { get; set; }
+    [Parameter] public EventCallback<ComandaDto> OnVerDetalles { get; set; }
+    [Parameter] public EventCallback OnNuevaComanda { get; set; }
+    [Parameter] public EventCallback<int> OnCambiarPagina { get; set; }
+    [Parameter] public EventCallback OnExportarExcel { get; set; }
+}
