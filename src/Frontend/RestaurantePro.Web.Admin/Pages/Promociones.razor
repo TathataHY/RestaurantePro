@@ -1,9 +1,266 @@
 @attribute [Authorize]
 @page "/promociones"
+@inject RestaurantePro.Web.Admin.Services.PromocionesApiService PromocionesApi
+@using RestaurantePro.Web.Admin.Models
+@using RestaurantePro.Web.Admin.Components
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Promociones</PageTitle>
 
-<h3>Promociones</h3>
-<p class="text-muted">Gestión de promociones y campañas.</p>
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Gestión de Promociones</h1>
+    <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-outline-primary" @onclick="MostrarFiltros">
+            <i class="oi oi-magnifying-glass"></i> Filtros
+        </button>
+        <button class="btn btn-primary" @onclick="NuevaPromocion">
+            <i class="oi oi-plus"></i> Nueva Promoción
+        </button>
+    </div>
+</div>
 
+<!-- Estadísticas -->
+@if (estadisticas != null)
+{
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card border-left-primary">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.TotalPromociones</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-left-success">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Activas</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.PromocionesActivas</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-left-warning">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pendientes</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.PromocionesPendientes</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-left-danger">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Expiradas</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.PromocionesExpiradas</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-left-info">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Usos</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.TotalUsos</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-left-primary">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Descuento Total</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.DescuentoTotalAplicado.ToString("C0")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
+<!-- Lista de promociones -->
+<PromocionList Promociones="promociones" 
+               Paginacion="paginacion"
+               OnEditar="EditarPromocion"
+               OnEliminar="EliminarPromocion"
+               OnToggleActivar="ToggleActivar"
+               OnCambiarPagina="CambiarPagina"
+               OnNuevaPromocion="NuevaPromocion"
+               OnAplicarFiltros="MostrarFiltros" />
+
+<!-- Formulario de promoción -->
+<PromocionForm Mostrar="mostrarFormulario" 
+               MostrarChanged="MostrarFormularioChanged"
+               OnGuardar="CrearPromocion"
+               OnActualizar="ActualizarPromocion"
+               Promocion="promocionSeleccionada" />
+
+@code {
+    private List<PromocionDto>? promociones;
+    private PaginatedList<PromocionDto>? paginacion;
+    private PromocionEstadisticasDto? estadisticas;
+    private bool mostrarFormulario = false;
+    private PromocionDto? promocionSeleccionada;
+    private int paginaActual = 1;
+    private const int TAMANO_PAGINA = 20;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        await Task.WhenAll(
+            CargarPromociones(),
+            CargarEstadisticas()
+        );
+    }
+
+    private async Task CargarPromociones()
+    {
+        try
+        {
+            var resultado = await PromocionesApi.ObtenerPromocionesAsync(paginaActual, TAMANO_PAGINA);
+            paginacion = resultado;
+            promociones = resultado?.Items?.ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar promociones: {ex.Message}");
+        }
+    }
+
+    private async Task CargarEstadisticas()
+    {
+        try
+        {
+            estadisticas = await PromocionesApi.ObtenerEstadisticasAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar estadísticas: {ex.Message}");
+        }
+    }
+
+    private async Task CambiarPagina(int pagina)
+    {
+        paginaActual = pagina;
+        await CargarPromociones();
+    }
+
+    private void NuevaPromocion()
+    {
+        promocionSeleccionada = null;
+        mostrarFormulario = true;
+        StateHasChanged();
+    }
+
+    private void EditarPromocion(PromocionDto promocion)
+    {
+        promocionSeleccionada = promocion;
+        mostrarFormulario = true;
+        StateHasChanged();
+    }
+
+    private async Task EliminarPromocion(PromocionDto promocion)
+    {
+        var confirmar = await JSRuntime.InvokeAsync<bool>("confirm", 
+            $"¿Estás seguro de que deseas eliminar la promoción '{promocion.Nombre}'? Esta acción no se puede deshacer.");
+        
+        if (confirmar)
+        {
+            try
+            {
+                var resultado = await PromocionesApi.EliminarPromocionAsync(promocion.Id);
+                if (resultado?.Success == true)
+                {
+                    await CargarDatos();
+                    await JSRuntime.InvokeVoidAsync("alert", "Promoción eliminada correctamente");
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al eliminar la promoción");
+                }
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task ToggleActivar(PromocionDto promocion)
+    {
+        try
+        {
+            var resultado = await PromocionesApi.ToggleActivarPromocionAsync(promocion.Id, !promocion.EstaActiva);
+            if (resultado?.Success == true)
+            {
+                await CargarDatos();
+                await JSRuntime.InvokeVoidAsync("alert", $"Promoción {(promocion.EstaActiva ? "desactivada" : "activada")} correctamente");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al cambiar estado de la promoción");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+    }
+
+    private async Task CrearPromocion(CrearPromocionRequest request)
+    {
+        try
+        {
+            var resultado = await PromocionesApi.CrearPromocionAsync(request);
+            if (resultado?.Success == true)
+            {
+                await CargarDatos();
+                await JSRuntime.InvokeVoidAsync("alert", "Promoción creada correctamente");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al crear la promoción");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+    }
+
+    private async Task ActualizarPromocion(ActualizarPromocionRequest request)
+    {
+        try
+        {
+            var resultado = await PromocionesApi.ActualizarPromocionAsync(request);
+            if (resultado?.Success == true)
+            {
+                await CargarDatos();
+                await JSRuntime.InvokeVoidAsync("alert", "Promoción actualizada correctamente");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al actualizar la promoción");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+    }
+
+    private void MostrarFormularioChanged(bool mostrar)
+    {
+        mostrarFormulario = mostrar;
+        if (!mostrar)
+        {
+            promocionSeleccionada = null;
+        }
+        StateHasChanged();
+    }
+
+    private async Task MostrarFiltros()
+    {
+        await JSRuntime.InvokeVoidAsync("alert", "Función de filtros pendiente");
+    }
+}

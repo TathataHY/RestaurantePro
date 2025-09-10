@@ -1,0 +1,292 @@
+@using RestaurantePro.Web.Admin.Models
+@inject RestaurantePro.Web.Admin.Services.ProductosApiService ProductosApi
+
+<div class="modal fade @(Mostrar ? "show" : "")" style="display: @(Mostrar ? "block" : "none")" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    @(EsEdicion ? "Editar Promoción" : "Nueva Promoción")
+                </h5>
+                <button type="button" class="btn-close" @onclick="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="Modelo" OnValidSubmit="Guardar">
+                    <DataAnnotationsValidator />
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Nombre *</label>
+                                <InputText @bind-Value="Modelo.Nombre" class="form-control" placeholder="Nombre de la promoción" />
+                                <ValidationMessage For="@(() => Modelo.Nombre)" class="text-danger" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Código *</label>
+                                <InputText @bind-Value="Modelo.Codigo" class="form-control" placeholder="CÓDIGO123" />
+                                <ValidationMessage For="@(() => Modelo.Codigo)" class="text-danger" />
+                                <small class="form-text text-muted">Código único para aplicar la promoción</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <InputTextArea @bind-Value="Modelo.Descripcion" class="form-control" rows="3" placeholder="Descripción de la promoción" />
+                        <ValidationMessage For="@(() => Modelo.Descripcion)" class="text-danger" />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Tipo de Promoción *</label>
+                                <InputSelect @bind-Value="Modelo.Tipo" class="form-select">
+                                    <option value="@TipoPromocion.Porcentaje">Porcentaje de descuento</option>
+                                    <option value="@TipoPromocion.MontoFijo">Monto fijo de descuento</option>
+                                    <option value="@TipoPromocion.DescuentoPorCantidad">Descuento por cantidad</option>
+                                    <option value="@TipoPromocion.DescuentoPorCompraMinima">Descuento por compra mínima</option>
+                                    <option value="@TipoPromocion.DescuentoPorProducto">Descuento por producto</option>
+                                </InputSelect>
+                                <ValidationMessage For="@(() => Modelo.Tipo)" class="text-danger" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Valor de Descuento *</label>
+                                <InputNumber @bind-Value="Modelo.ValorDescuento" class="form-control" placeholder="0.00" />
+                                <ValidationMessage For="@(() => Modelo.ValorDescuento)" class="text-danger" />
+                                <small class="form-text text-muted">
+                                    @(Modelo.Tipo == TipoPromocion.Porcentaje ? "Porcentaje (ej: 10)" : "Monto en pesos")
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Compra Mínima</label>
+                                <InputNumber @bind-Value="Modelo.ValorMinimoCompra" class="form-control" placeholder="0.00" />
+                                <ValidationMessage For="@(() => Modelo.ValorMinimoCompra)" class="text-danger" />
+                                <small class="form-text text-muted">Monto mínimo de compra (opcional)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Fecha de Inicio *</label>
+                                <InputDate @bind-Value="Modelo.FechaInicio" class="form-control" />
+                                <ValidationMessage For="@(() => Modelo.FechaInicio)" class="text-danger" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Fecha de Fin *</label>
+                                <InputDate @bind-Value="Modelo.FechaFin" class="form-control" />
+                                <ValidationMessage For="@(() => Modelo.FechaFin)" class="text-danger" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Usos Máximos</label>
+                                <InputNumber @bind-Value="Modelo.CantidadMaximaUsos" class="form-control" placeholder="Sin límite" />
+                                <ValidationMessage For="@(() => Modelo.CantidadMaximaUsos)" class="text-danger" />
+                                <small class="form-text text-muted">Dejar vacío para uso ilimitado</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check mt-4">
+                                    <InputCheckbox @bind-Value="Modelo.EstaActiva" class="form-check-input" />
+                                    <label class="form-check-label">Promoción activa</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Selección de productos -->
+                    <div class="mb-3">
+                        <label class="form-label">Productos Asociados</label>
+                        <div class="border rounded p-3" style="max-height: 200px; overflow-y: auto;">
+                            @if (productos == null)
+                            {
+                                <div class="text-center text-muted">
+                                    <div class="spinner-border spinner-border-sm" role="status">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </div>
+                                    Cargando productos...
+                                </div>
+                            }
+                            else if (!productos.Any())
+                            {
+                                <div class="text-center text-muted">No hay productos disponibles</div>
+                            }
+                            else
+                            {
+                                @foreach (var producto in productos)
+                                {
+                                    <div class="form-check">
+                                        <input type="checkbox" 
+                                               @onchange="@((e) => ToggleProducto(producto.Id, (bool)e.Value!))"
+                                               class="form-check-input" />
+                                        <label class="form-check-label">
+                                            @producto.Nombre - @producto.Precio.ToString("C0")
+                                            <small class="text-muted">(@producto.CategoriaNombre)</small>
+                                        </label>
+                                    </div>
+                                }
+                            }
+                        </div>
+                        <small class="form-text text-muted">Selecciona los productos que aplicarán para esta promoción</small>
+                    </div>
+                </EditForm>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="Cerrar">Cancelar</button>
+                <button type="button" class="btn btn-primary" @onclick="Guardar" disabled="@guardando">
+                    @if (guardando)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    }
+                    @(EsEdicion ? "Actualizar" : "Crear")
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Mostrar)
+{
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    [Parameter] public bool Mostrar { get; set; }
+    [Parameter] public EventCallback<bool> MostrarChanged { get; set; }
+    [Parameter] public EventCallback<CrearPromocionRequest> OnGuardar { get; set; }
+    [Parameter] public EventCallback<ActualizarPromocionRequest> OnActualizar { get; set; }
+    [Parameter] public PromocionDto? Promocion { get; set; }
+
+    private CrearPromocionRequest Modelo = new();
+    private bool EsEdicion => Promocion != null;
+    private bool guardando = false;
+    private List<ProductoDto>? productos;
+    private List<Guid> productoSeleccionados = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Mostrar)
+        {
+            await CargarProductos();
+            InicializarModelo();
+        }
+    }
+
+    private async Task CargarProductos()
+    {
+        try
+        {
+            var resultado = await ProductosApi.ObtenerProductosPaginadosAsync(1, 1000, null, null, true, "Nombre", "asc");
+            productos = resultado?.Items?.ToList() ?? new List<ProductoDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar productos: {ex.Message}");
+            productos = new List<ProductoDto>();
+        }
+    }
+
+    private void InicializarModelo()
+    {
+        if (EsEdicion && Promocion != null)
+        {
+            Modelo = new CrearPromocionRequest
+            {
+                Nombre = Promocion.Nombre,
+                Descripcion = Promocion.Descripcion,
+                Codigo = Promocion.Codigo,
+                Tipo = Promocion.Tipo,
+                ValorDescuento = Promocion.ValorDescuento,
+                ValorMinimoCompra = Promocion.ValorMinimoCompra,
+                CantidadMaximaUsos = Promocion.CantidadMaximaUsos,
+                FechaInicio = Promocion.FechaInicio,
+                FechaFin = Promocion.FechaFin,
+                EstaActiva = Promocion.EstaActiva
+            };
+        }
+        else
+        {
+            Modelo = new CrearPromocionRequest
+            {
+                FechaInicio = DateTime.Today,
+                FechaFin = DateTime.Today.AddDays(30),
+                EstaActiva = true
+            };
+        }
+        productoSeleccionados.Clear();
+    }
+
+    private async Task Guardar()
+    {
+        guardando = true;
+        StateHasChanged();
+
+        try
+        {
+            Modelo.ProductosIds = productoSeleccionados;
+
+            if (EsEdicion)
+            {
+                var request = new ActualizarPromocionRequest
+                {
+                    Id = Promocion!.Id,
+                    Nombre = Modelo.Nombre,
+                    Descripcion = Modelo.Descripcion,
+                    Codigo = Modelo.Codigo,
+                    Tipo = Modelo.Tipo,
+                    ValorDescuento = Modelo.ValorDescuento,
+                    ValorMinimoCompra = Modelo.ValorMinimoCompra,
+                    CantidadMaximaUsos = Modelo.CantidadMaximaUsos,
+                    FechaInicio = Modelo.FechaInicio,
+                    FechaFin = Modelo.FechaFin,
+                    EstaActiva = Modelo.EstaActiva,
+                    ProductosIds = Modelo.ProductosIds
+                };
+                await OnActualizar.InvokeAsync(request);
+            }
+            else
+            {
+                await OnGuardar.InvokeAsync(Modelo);
+            }
+
+            await Cerrar();
+        }
+        finally
+        {
+            guardando = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task Cerrar()
+    {
+        await MostrarChanged.InvokeAsync(false);
+    }
+
+    private void ToggleProducto(Guid productoId, bool seleccionado)
+    {
+        if (seleccionado)
+        {
+            if (!productoSeleccionados.Contains(productoId))
+                productoSeleccionados.Add(productoId);
+        }
+        else
+        {
+            productoSeleccionados.Remove(productoId);
+        }
+    }
+}

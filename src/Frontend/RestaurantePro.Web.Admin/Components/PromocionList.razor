@@ -1,0 +1,243 @@
+@using RestaurantePro.Web.Admin.Models
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="oi oi-badge"></i> Promociones (@promociones?.Count ?? 0)
+        </h6>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-primary" @onclick="AplicarFiltros">
+                <i class="oi oi-magnifying-glass"></i> Filtrar
+            </button>
+            <button class="btn btn-sm btn-primary" @onclick="NuevaPromocion">
+                <i class="oi oi-plus"></i> Nueva Promoción
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (promociones == null)
+        {
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2 text-muted">Cargando promociones...</p>
+            </div>
+        }
+        else if (!promociones.Any())
+        {
+            <div class="text-center py-4">
+                <i class="oi oi-badge text-muted" style="font-size: 3rem;"></i>
+                <h5 class="text-muted mt-3">No hay promociones</h5>
+                <p class="text-muted">Crea tu primera promoción para empezar a atraer clientes</p>
+                <button class="btn btn-primary" @onclick="NuevaPromocion">
+                    <i class="oi oi-plus"></i> Crear Promoción
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Código</th>
+                            <th>Tipo</th>
+                            <th>Descuento</th>
+                            <th>Período</th>
+                            <th>Estado</th>
+                            <th>Usos</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var promocion in promociones)
+                        {
+                            <tr>
+                                <td>
+                                    <div>
+                                        <strong>@promocion.Nombre</strong>
+                                        @if (!string.IsNullOrEmpty(promocion.Descripcion))
+                                        {
+                                            <br><small class="text-muted">@promocion.Descripcion</small>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <code class="bg-light px-2 py-1 rounded">@promocion.Codigo</code>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">@ObtenerTipoTexto(promocion.Tipo)</span>
+                                </td>
+                                <td>
+                                    <strong>@ObtenerDescuentoTexto(promocion)</strong>
+                                    @if (promocion.ValorMinimoCompra.HasValue)
+                                    {
+                                        <br><small class="text-muted">Compra mín: @promocion.ValorMinimoCompra.Value.ToString("C0")</small>
+                                    }
+                                </td>
+                                <td>
+                                    <div>
+                                        <small class="text-muted">Inicio:</small> @promocion.FechaInicio.ToString("dd/MM/yyyy")
+                                        <br>
+                                        <small class="text-muted">Fin:</small> @promocion.FechaFin.ToString("dd/MM/yyyy")
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge @ObtenerClaseEstado(promocion.Estado)">@promocion.Estado</span>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>@promocion.UsosRealizados</strong>
+                                        @if (promocion.CantidadMaximaUsos.HasValue)
+                                        {
+                                            <span class="text-muted">/ @promocion.CantidadMaximaUsos.Value</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">/ ∞</span>
+                                        }
+                                    </div>
+                                    @if (promocion.CantidadMaximaUsos.HasValue)
+                                    {
+                                        <div class="progress mt-1" style="height: 4px;">
+                                            <div class="progress-bar" 
+                                                 style="width: @(promocion.CantidadMaximaUsos.Value > 0 ? (promocion.UsosRealizados * 100 / promocion.CantidadMaximaUsos.Value) : 0)%">
+                                            </div>
+                                        </div>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary" 
+                                                @onclick="() => EditarPromocion(promocion)"
+                                                title="Editar">
+                                            <i class="oi oi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-sm @(promocion.EstaActiva ? "btn-outline-warning" : "btn-outline-success")" 
+                                                @onclick="() => ToggleActivar(promocion)"
+                                                title="@(promocion.EstaActiva ? "Desactivar" : "Activar")">
+                                            <i class="oi @(promocion.EstaActiva ? "oi-x" : "oi-check")"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" 
+                                                @onclick="() => EliminarPromocion(promocion)"
+                                                title="Eliminar">
+                                            <i class="oi oi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (paginacion != null)
+            {
+                <nav aria-label="Navegación de promociones">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @(paginacion.HasPreviousPage ? "" : "disabled")">
+                            <button class="page-link" @onclick="() => CambiarPagina(paginacion.PageNumber - 1)" disabled="@(!paginacion.HasPreviousPage)">
+                                Anterior
+                            </button>
+                        </li>
+                        
+                        @for (int i = Math.Max(1, paginacion.PageNumber - 2); i <= Math.Min(paginacion.TotalPages, paginacion.PageNumber + 2); i++)
+                        {
+                            <li class="page-item @(i == paginacion.PageNumber ? "active" : "")">
+                                <button class="page-link" @onclick="() => CambiarPagina(i)">@i</button>
+                            </li>
+                        }
+                        
+                        <li class="page-item @(paginacion.HasNextPage ? "" : "disabled")">
+                            <button class="page-link" @onclick="() => CambiarPagina(paginacion.PageNumber + 1)" disabled="@(!paginacion.HasNextPage)">
+                                Siguiente
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<PromocionDto>? Promociones { get; set; }
+    [Parameter] public PaginatedList<PromocionDto>? Paginacion { get; set; }
+    [Parameter] public EventCallback<PromocionDto> OnEditar { get; set; }
+    [Parameter] public EventCallback<PromocionDto> OnEliminar { get; set; }
+    [Parameter] public EventCallback<PromocionDto> OnToggleActivar { get; set; }
+    [Parameter] public EventCallback<int> OnCambiarPagina { get; set; }
+    [Parameter] public EventCallback OnNuevaPromocion { get; set; }
+    [Parameter] public EventCallback OnAplicarFiltros { get; set; }
+
+    private List<PromocionDto>? promociones => Promociones;
+    private PaginatedList<PromocionDto>? paginacion => Paginacion;
+
+    private string ObtenerTipoTexto(TipoPromocion tipo)
+    {
+        return tipo switch
+        {
+            TipoPromocion.Porcentaje => "Porcentaje",
+            TipoPromocion.MontoFijo => "Monto Fijo",
+            TipoPromocion.DescuentoPorCantidad => "Por Cantidad",
+            TipoPromocion.DescuentoPorCompraMinima => "Por Compra Mínima",
+            TipoPromocion.DescuentoPorProducto => "Por Producto",
+            _ => "Desconocido"
+        };
+    }
+
+    private string ObtenerDescuentoTexto(PromocionDto promocion)
+    {
+        return promocion.Tipo switch
+        {
+            TipoPromocion.Porcentaje => $"{promocion.ValorDescuento}%",
+            _ => promocion.ValorDescuento.ToString("C0")
+        };
+    }
+
+    private string ObtenerClaseEstado(string estado)
+    {
+        return estado switch
+        {
+            "Activa" => "bg-success",
+            "Inactiva" => "bg-secondary",
+            "Expirada" => "bg-danger",
+            "Pendiente" => "bg-warning",
+            "Agotada" => "bg-info",
+            "Eliminada" => "bg-dark",
+            _ => "bg-secondary"
+        };
+    }
+
+    private async Task EditarPromocion(PromocionDto promocion)
+    {
+        await OnEditar.InvokeAsync(promocion);
+    }
+
+    private async Task EliminarPromocion(PromocionDto promocion)
+    {
+        await OnEliminar.InvokeAsync(promocion);
+    }
+
+    private async Task ToggleActivar(PromocionDto promocion)
+    {
+        await OnToggleActivar.InvokeAsync(promocion);
+    }
+
+    private async Task CambiarPagina(int pagina)
+    {
+        await OnCambiarPagina.InvokeAsync(pagina);
+    }
+
+    private async Task NuevaPromocion()
+    {
+        await OnNuevaPromocion.InvokeAsync();
+    }
+
+    private async Task AplicarFiltros()
+    {
+        await OnAplicarFiltros.InvokeAsync();
+    }
+}
