@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="RestaurantePro.Mobile.Views.DebugPage"
+             Title="Debug - RestaurantePro">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+            
+            <!-- Título -->
+            <Label Text="🔧 Página de Debug" 
+                   FontSize="24" 
+                   FontAttributes="Bold" 
+                   HorizontalOptions="Center" 
+                   TextColor="#007ACC" />
+            
+            <!-- Información de la aplicación -->
+            <Frame BackgroundColor="LightGray" Padding="15" CornerRadius="10">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Información de la Aplicación" FontAttributes="Bold" />
+                    <Label x:Name="AppInfoLabel" Text="Cargando..." />
+                </VerticalStackLayout>
+            </Frame>
+            
+            <!-- Logs de debug -->
+            <Frame BackgroundColor="Black" Padding="15" CornerRadius="10">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Logs de Debug" FontAttributes="Bold" TextColor="White" />
+                    <ScrollView HeightRequest="300">
+                        <Label x:Name="DebugLogLabel" 
+                               Text="Iniciando logs..." 
+                               TextColor="Lime" 
+                               FontFamily="Courier" 
+                               FontSize="12" />
+                    </ScrollView>
+                </VerticalStackLayout>
+            </Frame>
+            
+            <!-- Botones de acción -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Button Text="Limpiar Logs" 
+                        Clicked="OnClearLogsClicked"
+                        BackgroundColor="Orange" 
+                        TextColor="White" />
+                <Button Text="Probar Conexión" 
+                        Clicked="OnTestConnectionClicked"
+                        BackgroundColor="Green" 
+                        TextColor="White" />
+            </Grid>
+            
+            <!-- Botón de regreso -->
+            <Button Text="Volver al Login" 
+                    Clicked="OnBackToLoginClicked"
+                    BackgroundColor="#007ACC" 
+                    TextColor="White" />
+            
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

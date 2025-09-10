@@ -47,39 +47,61 @@ public static class MauiProgram
 {
 	public static MauiApp CreateMauiApp()
 	{
-		var builder = MauiApp.CreateBuilder();
-		builder
-			.UseMauiApp<App>()
-			.UseMauiCommunityToolkit()
-			.ConfigureFonts(fonts =>
-			{
-				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
-				fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
-			});
+		try
+		{
+			System.Diagnostics.Debug.WriteLine("[MauiProgram] Iniciando creación de aplicación...");
+			
+			var builder = MauiApp.CreateBuilder();
+			System.Diagnostics.Debug.WriteLine("[MauiProgram] Builder creado");
+			
+			builder
+				.UseMauiApp<App>()
+				.UseMauiCommunityToolkit()
+				.ConfigureFonts(fonts =>
+				{
+					fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+					fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
+				});
+			
+			System.Diagnostics.Debug.WriteLine("[MauiProgram] Configuración básica completada");
 
 		// Configurar HttpClient con URL base del backend y autenticación básica según perfil
-		builder.Services.AddHttpClient<RestaurantePro.Mobile.Core.Services.Api.IApiService, RestaurantePro.Mobile.Core.Services.Api.ApiService>(client =>
+		System.Diagnostics.Debug.WriteLine("[MauiProgram] Configurando HttpClient...");
+		try
 		{
-			// URL del backend por entorno/cliente
-			client.BaseAddress = new Uri(ApiConfig.GetBaseUrl());
-			client.Timeout = ApiConfig.RequestTimeout;
+			var baseUrl = ApiConfig.GetBaseUrl();
+			System.Diagnostics.Debug.WriteLine($"[MauiProgram] URL base: {baseUrl}");
 			
-			// Configurar autenticación básica solo si el perfil lo requiere
-			var basic = ApiConfig.GetEncodedBasicCredentials();
-			if (!string.IsNullOrEmpty(basic))
+			builder.Services.AddHttpClient<RestaurantePro.Mobile.Core.Services.Api.IApiService, RestaurantePro.Mobile.Core.Services.Api.ApiService>(client =>
 			{
-				client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", basic);
-			}
-			// Evitar conexiones mantenidas si el hosting cierra abruptamente
-			client.DefaultRequestHeaders.ConnectionClose = true;
-		})
-		.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-		{
-			// Ignorar errores de certificado SSL en desarrollo (necesario para WSA)
+				// URL del backend por entorno/cliente
+				client.BaseAddress = new Uri(baseUrl);
+				client.Timeout = ApiConfig.RequestTimeout;
+				
+				// Configurar autenticación básica solo si el perfil lo requiere
+				var basic = ApiConfig.GetEncodedBasicCredentials();
+				if (!string.IsNullOrEmpty(basic))
+				{
+					client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", basic);
+				}
+				// Evitar conexiones mantenidas si el hosting cierra abruptamente
+				client.DefaultRequestHeaders.ConnectionClose = true;
+			})
+			.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+			{
+				// Ignorar errores de certificado SSL en desarrollo (necesario para WSA)
 #if DEBUG
-			ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
+				ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
 #endif
-		});
+			});
+			
+			System.Diagnostics.Debug.WriteLine("[MauiProgram] HttpClient configurado");
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"[MauiProgram] Error configurando HttpClient: {ex.Message}");
+			throw;
+		}
 
 		// Configurar HttpClient para AuthService
 		builder.Services.AddHttpClient<RestaurantePro.Mobile.Core.Services.Authentication.AuthService>(client =>
@@ -105,10 +127,30 @@ public static class MauiProgram
 		});
 
 		// Registrar servicios fundamentales - V1
-		RegisterCoreServicesV1(builder.Services);
+		System.Diagnostics.Debug.WriteLine("[MauiProgram] Registrando servicios...");
+		try
+		{
+			RegisterCoreServicesV1(builder.Services);
+			System.Diagnostics.Debug.WriteLine("[MauiProgram] Servicios registrados");
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"[MauiProgram] Error registrando servicios: {ex.Message}");
+			throw;
+		}
 
 		// Registrar páginas y ViewModels - V1
-		RegisterViewsAndViewModelsV1(builder.Services);
+		System.Diagnostics.Debug.WriteLine("[MauiProgram] Registrando vistas y ViewModels...");
+		try
+		{
+			RegisterViewsAndViewModelsV1(builder.Services);
+			System.Diagnostics.Debug.WriteLine("[MauiProgram] Vistas y ViewModels registrados");
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"[MauiProgram] Error registrando vistas: {ex.Message}");
+			throw;
+		}
 
 		// COMENTADO: Las rutas se registran ahora en AppShell.xaml.cs para evitar duplicados
 		// RegisterNavigationRoutesV1();
@@ -117,7 +159,18 @@ public static class MauiProgram
 		builder.Logging.AddDebug();
 #endif
 
-		return builder.Build();
+		System.Diagnostics.Debug.WriteLine("[MauiProgram] Construyendo aplicación...");
+		var app = builder.Build();
+		System.Diagnostics.Debug.WriteLine("[MauiProgram] Aplicación construida exitosamente");
+		
+		return app;
+		}
+		catch (Exception ex)
+		{
+			System.Diagnostics.Debug.WriteLine($"[MauiProgram] ERROR CRÍTICO: {ex.Message}");
+			System.Diagnostics.Debug.WriteLine($"[MauiProgram] Stack Trace: {ex.StackTrace}");
+			throw;
+		}
 	}
 
 	private static void RegisterCoreServicesV1(IServiceCollection services)
@@ -216,6 +269,9 @@ public static class MauiProgram
 	{
 		// Páginas básicas V1
 		services.AddTransient<MainPage>();
+		
+		// Página de Debug
+		services.AddTransient<RestaurantePro.Mobile.Views.DebugPage>();
 		
 		// Authentication Feature - V1 Fundamental
 		services.AddTransient<LoginViewModel>();

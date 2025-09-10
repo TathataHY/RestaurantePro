@@ -106,6 +106,15 @@
                    FontSize="12"
                    HorizontalOptions="Center"
                    TextColor="Gray" />
+            
+            <!-- Botón de Debug - Solo visible en modo DEBUG -->
+            <Button x:Name="DebugButton"
+                    Text="🔧 Debug"
+                    Clicked="OnDebugClicked"
+                    BackgroundColor="Orange"
+                    TextColor="White"
+                    FontSize="14"
+                    IsVisible="False" />
         </VerticalStackLayout>
     </ScrollView>
 

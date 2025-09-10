@@ -36,6 +36,12 @@
         ContentTemplate="{DataTemplate views:SimpleLoginPage}"
         Route="login" />
 
+    <!-- Debug Page -->
+    <ShellContent
+        Title="Debug"
+        ContentTemplate="{DataTemplate views:DebugPage}"
+        Route="debug" />
+
     <!-- Onboarding Page -->
     <ShellContent
         Title="Onboarding"
