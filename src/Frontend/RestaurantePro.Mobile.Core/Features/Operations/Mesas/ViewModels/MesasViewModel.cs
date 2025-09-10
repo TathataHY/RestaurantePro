@@ -145,6 +145,16 @@ public partial class MesasViewModel : BaseViewModel
                     ).ToList();
                 }
 
+                // Ordenar las mesas por número de forma ascendente (1, 2, 3, 4...)
+                data = data.OrderBy(m => 
+                {
+                    // Intentar convertir el número a entero para ordenamiento numérico correcto
+                    if (int.TryParse(m.Numero, out var numero))
+                        return numero;
+                    // Si no se puede convertir, usar ordenamiento alfabético como fallback
+                    return int.MaxValue;
+                }).ThenBy(m => m.Numero).ToList();
+
                 // Configurar buffer de paginado local y pintar primera página
                 _allMesasBuffer = data;
                 _currentBufferIndex = 0;
