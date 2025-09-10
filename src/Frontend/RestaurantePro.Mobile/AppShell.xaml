@@ -104,7 +104,7 @@
         <ShellContent
             Title="Clientes"
             Icon="clientes.png"
-            ContentTemplate="{DataTemplate clientes:ModernClientesPage}"
+            ContentTemplate="{DataTemplate clientes:ClientesPage}"
             Route="clientes" />
 
         <!-- Tarjetas Fidelización Tab -->

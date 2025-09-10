@@ -1,171 +1,147 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage x:Class="RestaurantePro.Mobile.Features.Commercial.Customers.Pages.ClientesPage"
-             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
              xmlns:viewmodels="clr-namespace:RestaurantePro.Mobile.Core.Features.Commercial.Customers.ViewModels;assembly=RestaurantePro.Mobile.Core"
              xmlns:dtos="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
+             x:Class="RestaurantePro.Mobile.Features.Commercial.Customers.Pages.ClientesPage"
              x:DataType="viewmodels:ClientesViewModel"
              Title="Clientes"
-             BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}">
+             BackgroundColor="{StaticResource SurfacePrimary}">
 
-    <Grid RowDefinitions="Auto,*,Auto">
-        
-        <!-- Header con estadísticas -->
-        <Border Grid.Row="0" 
-                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
-                StrokeShape="RoundRectangle 10"
-                Margin="10,10,10,5">
-            <Grid ColumnDefinitions="*,*,*" Padding="15">
-                <VerticalStackLayout Grid.Column="0" HorizontalOptions="Center">
-                    <Label Text="Total" 
-                           TextColor="White" 
-                           FontSize="12" 
-                           HorizontalOptions="Center"/>
-                    <Label Text="{Binding TotalClientes}" 
-                           TextColor="White" 
-                           FontSize="20" 
-                           FontAttributes="Bold"
-                           HorizontalOptions="Center"/>
-                </VerticalStackLayout>
-                
-                <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center">
-                    <Label Text="Activos" 
-                           TextColor="White" 
-                           FontSize="12" 
-                           HorizontalOptions="Center"/>
-                    <Label Text="{Binding ClientesActivos}" 
-                           TextColor="White" 
-                           FontSize="20" 
-                           FontAttributes="Bold"
-                           HorizontalOptions="Center"/>
-                </VerticalStackLayout>
-                
-                <VerticalStackLayout Grid.Column="2" HorizontalOptions="Center">
-                    <Label Text="Nuevos Hoy" 
-                           TextColor="White" 
-                           FontSize="12" 
-                           HorizontalOptions="Center"/>
-                    <Label Text="{Binding ClientesNuevosHoy}" 
-                           TextColor="White" 
-                           FontSize="20" 
-                           FontAttributes="Bold"
-                           HorizontalOptions="Center"/>
-                </VerticalStackLayout>
-            </Grid>
-        </Border>
-
-        <!-- Contenido principal -->
-        <RefreshView Grid.Row="1" 
+    <Grid RowDefinitions="*">
+        <!-- Contenido Principal -->
+        <RefreshView Grid.Row="0"
                      IsRefreshing="{Binding EstaRefrescando}"
                      Command="{Binding RefrescarCommand}">
+            
             <ScrollView>
-                <VerticalStackLayout Spacing="10" Padding="10">
+                <VerticalStackLayout Spacing="12" Padding="16,8,16,16">
                     
-                    <!-- Filtros -->
-                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                            StrokeShape="RoundRectangle 10"
-                            Padding="15">
-                        <VerticalStackLayout Spacing="10">
+                    <!-- Estadísticas Principales -->
+                    <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                        <HorizontalStackLayout Spacing="12">
+                            <controls:ModernCard Padding="16" WidthRequest="140">
+                                <VerticalStackLayout Spacing="8">
+                                    <Label Text="👥" FontSize="28" HorizontalOptions="Center" />
+                                    <Label Text="Total" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
+                                    <Label Text="{Binding TotalClientes}" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </controls:ModernCard>
+                            <controls:ModernCard Padding="16" WidthRequest="140">
+                                <VerticalStackLayout Spacing="8">
+                                    <Label Text="✅" FontSize="28" HorizontalOptions="Center" />
+                                    <Label Text="Activos" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
+                                    <Label Text="{Binding ClientesActivos}" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource SuccessColor}" HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </controls:ModernCard>
+                            <controls:ModernCard Padding="16" WidthRequest="140">
+                                <VerticalStackLayout Spacing="8">
+                                    <Label Text="🆕" FontSize="28" HorizontalOptions="Center" />
+                                    <Label Text="Nuevos Hoy" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
+                                    <Label Text="{Binding ClientesNuevosHoy}" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource InfoColor}" HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </controls:ModernCard>
+                        </HorizontalStackLayout>
+                    </ScrollView>
+
+                    <!-- Filtros de Búsqueda -->
+                    <controls:ModernCard>
+                        <VerticalStackLayout Spacing="16">
+                            <Label Text="🔍 Búsqueda de Clientes" 
+                                   Style="{StaticResource H3Style}"
+                                   TextColor="{StaticResource TextPrimary}" />
                             
                             <!-- Búsqueda -->
-                            <Frame BackgroundColor="Transparent" 
-                                   BorderColor="Transparent" 
-                                   Padding="0">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <Entry Grid.Column="0"
-                                           Placeholder="Buscar clientes..."
-                                           Text="{Binding Busqueda}"
-                                           ReturnCommand="{Binding BuscarClientesCommand}"/>
-                                    <Button Grid.Column="1"
-                                            Text="Buscar"
-                                            Command="{Binding BuscarClientesCommand}"
-                                            Margin="5,0,0,0"/>
-                                </Grid>
-                            </Frame>
+                            <controls:ModernEntry Placeholder="Buscar por nombre, email o teléfono..."
+                                                 Text="{Binding Busqueda}"
+                                                 Icon="🔍" />
                             
                             <!-- Filtro de estado -->
-                            <HorizontalStackLayout>
+                            <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
                                 <CheckBox IsChecked="{Binding SoloActivos}"
                                          CheckedChanged="OnSoloActivosChanged"/>
                                 <Label Text="Solo clientes activos"
-                                       VerticalOptions="Center"
-                                       Margin="5,0,0,0"/>
+                                       Style="{StaticResource BodyStyle}"
+                                       VerticalOptions="Center" />
                             </HorizontalStackLayout>
                         </VerticalStackLayout>
-                    </Border>
+                    </controls:ModernCard>
 
-                    <!-- Lista de clientes -->
+                    <!-- Lista de Clientes -->
                     <CollectionView ItemsSource="{Binding Clientes}"
                                   SelectionMode="Single"
                                   SelectedItem="{Binding ClienteSeleccionado}">
                         <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="dtos:ClienteDto">
-                                <Border BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
-                                        StrokeShape="RoundRectangle 10"
-                                        Margin="0,0,0,10"
-                                        Padding="15">
-                                    <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                            <DataTemplate x:DataType="dtos:ClienteSummaryDto">
+                                <controls:ModernCard Margin="8">
+                                    <Grid RowDefinitions="Auto,Auto,Auto,Auto" 
+                                          ColumnDefinitions="*,Auto">
                                         
-                                        <!-- Información principal -->
-                                        <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
-                                            <Label Text="{Binding NombreCompleto}"
-                                                   FontSize="18"
-                                                   FontAttributes="Bold"
-                                                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
-                                            
-                                            <Label Text="{Binding Email}"
-                                                   FontSize="14"
-                                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"/>
-                                            
-                                            <HorizontalStackLayout Spacing="10">
-                                                <Label Text="{Binding Telefono, StringFormat='Tel: {0}'}"
-                                                       FontSize="12"
-                                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"/>
-                                                
-                                                <Label Text="{Binding TotalComandas, StringFormat='{0} comandas'}"
-                                                       FontSize="12"
-                                                       TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"/>
-                                            </HorizontalStackLayout>
-                                            
-                                            <HorizontalStackLayout Spacing="10">
-                                                <Label Text="{Binding FechaRegistro, StringFormat='Registrado: {0:dd/MM/yyyy}'}"
-                                                       FontSize="12"
-                                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"/>
-                                                
-                                                <Label Text="{Binding Estado, StringFormat='Estado: {0}'}"
-                                                       FontSize="12"
-                                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"/>
-                                            </HorizontalStackLayout>
-                                        </VerticalStackLayout>
-                                        
-                                        <!-- Indicador de estado -->
+                                        <!-- Header de Cliente -->
+                                        <StackLayout Grid.Row="0" Grid.Column="0" 
+                                                     Orientation="Horizontal" 
+                                                     VerticalOptions="Center">
+                                            <Label Text="{Binding NombreCompleto}" 
+                                                   Style="{StaticResource H3Style}" />
+                                        </StackLayout>
+
+                                        <!-- Estado Badge -->
                                         <Border Grid.Row="0" Grid.Column="1"
                                                 BackgroundColor="{Binding Activo, Converter={StaticResource BoolToColorConverter}}"
-                                                StrokeShape="RoundRectangle 5"
-                                                WidthRequest="20"
-                                                HeightRequest="20"
-                                                VerticalOptions="Center"/>
-                                        
-                                        <!-- Acciones -->
-                                        <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
-                                                             Spacing="10" 
-                                                             Margin="0,10,0,0">
-                                            <Button Text="Ver Detalle"
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ClientesViewModel}}, Path=SeleccionarClienteCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
-                                                    TextColor="White"
-                                                    CornerRadius="20"/>
+                                                StrokeShape="RoundRectangle 12"
+                                                Padding="8,4">
+                                            <Label Text="{Binding Activo, Converter={StaticResource BoolToTextConverter}}" 
+                                                   Style="{StaticResource CaptionStyle}"
+                                                   TextColor="White"
+                                                   HorizontalOptions="Center" />
+                                        </Border>
+
+                                        <!-- Información de Cliente -->
+                                        <VerticalStackLayout Grid.Row="1" Grid.ColumnSpan="2" 
+                                                             Spacing="4" Margin="0,12,0,0">
+                                            <Label Text="{Binding Email, StringFormat='📧 {0}'}" 
+                                                   Style="{StaticResource BodyStyle}" />
+                                            <Label Text="{Binding Telefono, StringFormat='📞 {0}'}" 
+                                                   Style="{StaticResource BodyStyle}" />
+                                            <Label Text="{Binding FechaRegistro, StringFormat='📅 Registro: {0:dd/MM/yyyy}'}" 
+                                                   Style="{StaticResource BodyStyle}" />
+                                        </VerticalStackLayout>
+
+                                        <!-- Estadísticas del Cliente -->
+                                        <VerticalStackLayout Grid.Row="2" Grid.ColumnSpan="2" 
+                                                             Spacing="2" Margin="0,8,0,0">
+                                            <Label Text="📊 Estadísticas:" 
+                                                   Style="{StaticResource CaptionStyle}"
+                                                   FontAttributes="Bold" />
+                                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto">
+                                                <Label Grid.Column="0" Grid.Row="0"
+                                                       Text="{Binding TotalComandas, StringFormat='Comandas: {0}'}"
+                                                       Style="{StaticResource CaptionStyle}" />
+                                                <Label Grid.Column="1" Grid.Row="0"
+                                                       Text="{Binding Estado, StringFormat='Estado: {0}'}"
+                                                       Style="{StaticResource CaptionStyle}" />
+                                            </Grid>
+                                        </VerticalStackLayout>
+
+                                        <!-- Botones de Acción (Solo Consulta) -->
+                                        <HorizontalStackLayout Grid.Row="3" Grid.ColumnSpan="2" 
+                                                               Spacing="8" Margin="0,12,0,0">
                                             
-                                            <Button Text="Historial"
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:ClientesViewModel}}, Path=VerHistorialCommand}"
+                                            <Button Text="👁️ Ver Detalle"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.SeleccionarClienteCommand}"
                                                     CommandParameter="{Binding .}"
-                                                    BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
-                                                    TextColor="White"
-                                                    CornerRadius="20"/>
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    HorizontalOptions="FillAndExpand" />
+                                            
+                                            <Button Text="📋 Historial"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.VerHistorialCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    HorizontalOptions="FillAndExpand" />
                                         </HorizontalStackLayout>
                                     </Grid>
-                                </Border>
+                                </controls:ModernCard>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                     </CollectionView>
@@ -174,22 +150,41 @@
         </RefreshView>
 
         <!-- Indicador de carga -->
-        <ActivityIndicator Grid.Row="1"
-                          IsRunning="{Binding IsBusy}"
+        <ActivityIndicator IsRunning="{Binding IsBusy}"
                           IsVisible="{Binding IsBusy}"
                           HorizontalOptions="Center"
-                          VerticalOptions="Center"/>
+                          VerticalOptions="Center"
+                          Color="{StaticResource PrimaryColor}" />
 
         <!-- Mensaje de error -->
-        <Border Grid.Row="2"
-                IsVisible="{Binding HasError}"
-                BackgroundColor="{AppThemeBinding Light={StaticResource Red100}, Dark={StaticResource Red900}}"
+        <Border IsVisible="{Binding HasError}"
+                BackgroundColor="{StaticResource ErrorColor}"
                 StrokeShape="RoundRectangle 10"
-                Margin="10,5,10,10">
+                Margin="16"
+                Padding="16">
             <Label Text="{Binding ErrorMessage}"
-                   TextColor="{AppThemeBinding Light={StaticResource Red600}, Dark={StaticResource Red300}}"
-                   HorizontalOptions="Center"
-                   Padding="15"/>
+                   Style="{StaticResource BodyStyle}"
+                   TextColor="White"
+                   HorizontalOptions="Center" />
         </Border>
+
+        <!-- Estado Vacío -->
+        <CollectionView.EmptyView>
+            <VerticalStackLayout Spacing="16" 
+                                 VerticalOptions="Center"
+                                 HorizontalOptions="Center"
+                                 Padding="32">
+                <Label Text="👥" 
+                       FontSize="64" 
+                       HorizontalOptions="Center" />
+                <Label Text="No hay clientes registrados" 
+                       Style="{StaticResource H2Style}" 
+                       HorizontalOptions="Center" />
+                <Label Text="Los clientes aparecerán aquí cuando estén disponibles" 
+                       Style="{StaticResource BodyStyle}" 
+                       TextColor="{StaticResource TextSecondary}"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
+        </CollectionView.EmptyView>
     </Grid>
 </ContentPage> 

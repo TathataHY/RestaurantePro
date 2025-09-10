@@ -1,212 +1,212 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage x:Class="RestaurantePro.Mobile.Features.Commercial.Loyalty.Pages.TarjetasFidelizacionPage"
-             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
              xmlns:viewmodels="clr-namespace:RestaurantePro.Mobile.Core.Features.Commercial.Loyalty.ViewModels;assembly=RestaurantePro.Mobile.Core"
              xmlns:dtos="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
+             x:Class="RestaurantePro.Mobile.Features.Commercial.Loyalty.Pages.TarjetasFidelizacionPage"
              x:DataType="viewmodels:TarjetasFidelizacionViewModel"
              Title="Fidelización"
-             BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}">
+             BackgroundColor="{StaticResource SurfacePrimary}">
 
-    <Grid RowDefinitions="Auto,*,Auto">
-        
-        <!-- Header con información de tarjeta -->
-        <Border Grid.Row="0" 
-                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
-                StrokeShape="RoundRectangle 10"
-                Margin="10,10,10,5"
-                IsVisible="{Binding TarjetaActual, Converter={StaticResource IsNotNullConverter}}">
-            <VerticalStackLayout Padding="15" Spacing="10">
-                
-                <!-- Información de tarjeta -->
-                <HorizontalStackLayout>
-                    <Label Text="Tarjeta:" 
-                           TextColor="White" 
-                           VerticalOptions="Center"
-                           Margin="0,0,10,0"/>
-                    <Label Text="{Binding TarjetaActual.CodigoTarjeta}"
-                           TextColor="White"
-                           FontAttributes="Bold"
-                           VerticalOptions="Center"/>
-                </HorizontalStackLayout>
-                
-                <!-- Puntos y estado -->
-                <Grid ColumnDefinitions="*,*">
-                    <VerticalStackLayout Grid.Column="0" HorizontalOptions="Center">
-                        <Label Text="Puntos Disponibles" 
-                               TextColor="White" 
-                               FontSize="12" 
-                               HorizontalOptions="Center"/>
-                        <Label Text="{Binding TarjetaActual.PuntosDisponibles}" 
-                               TextColor="White" 
-                               FontSize="24" 
-                               FontAttributes="Bold"
-                               HorizontalOptions="Center"/>
-                    </VerticalStackLayout>
-                    
-                    <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center">
-                        <Label Text="Estado" 
-                               TextColor="White" 
-                               FontSize="12" 
-                               HorizontalOptions="Center"/>
-                        <Label Text="{Binding TarjetaActual.Estado}" 
-                               TextColor="White" 
-                               FontSize="16" 
-                               FontAttributes="Bold"
-                               HorizontalOptions="Center"/>
-                    </VerticalStackLayout>
-                </Grid>
-            </VerticalStackLayout>
-        </Border>
-
-        <!-- Contenido principal -->
-        <RefreshView Grid.Row="1" 
+    <Grid RowDefinitions="*">
+        <!-- Contenido Principal -->
+        <RefreshView Grid.Row="0"
                      IsRefreshing="{Binding EstaRefrescando}"
                      Command="{Binding RefrescarCommand}">
+            
             <ScrollView>
-                <VerticalStackLayout Spacing="15" Padding="10">
+                <VerticalStackLayout Spacing="12" Padding="16,8,16,16">
                     
-                    <!-- Búsqueda de tarjeta -->
-                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                            StrokeShape="RoundRectangle 10"
-                            Padding="15">
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="Buscar Tarjeta" 
-                                   FontSize="16" 
-                                   FontAttributes="Bold"
-                                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
+                    <!-- Información de Tarjeta Actual -->
+                    <controls:ModernCard IsVisible="{Binding TarjetaActual, Converter={StaticResource IsNotNullConverter}}">
+                        <VerticalStackLayout Spacing="16">
+                            <Label Text="💳 Tarjeta de Fidelización" 
+                                   Style="{StaticResource H3Style}"
+                                   TextColor="{StaticResource TextPrimary}" />
                             
-                            <Frame BackgroundColor="Transparent" 
-                                   BorderColor="Transparent" 
-                                   Padding="0">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <Entry Grid.Column="0"
-                                           Placeholder="Ingrese código de tarjeta..."
-                                           Text="{Binding CodigoTarjeta}"
-                                           ReturnCommand="{Binding BuscarTarjetaCommand}"/>
-                                    <Button Grid.Column="1"
-                                            Text="Buscar"
-                                            Command="{Binding BuscarTarjetaCommand}"
-                                            Margin="5,0,0,0"/>
-                                </Grid>
-                            </Frame>
+                            <!-- Código de Tarjeta -->
+                            <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
+                                <Label Text="Código:" 
+                                       Style="{StaticResource BodyStyle}"
+                                       VerticalOptions="Center" />
+                                <Label Text="{Binding TarjetaActual.CodigoTarjeta}"
+                                       Style="{StaticResource H3Style}"
+                                       TextColor="{StaticResource PrimaryColor}"
+                                       VerticalOptions="Center" />
+                            </HorizontalStackLayout>
                             
-                            <Button Text="Activar Nueva Tarjeta"
-                                    Command="{Binding ActivarTarjetaCommand}"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
-                                    TextColor="White"
-                                    CornerRadius="20"/>
-                        </VerticalStackLayout>
-                    </Border>
-
-                    <!-- Acciones de tarjeta -->
-                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
-                            StrokeShape="RoundRectangle 10"
-                            Padding="15"
-                            IsVisible="{Binding TarjetaActual, Converter={StaticResource IsNotNullConverter}}">
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="Acciones" 
-                                   FontSize="16" 
-                                   FontAttributes="Bold"
-                                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
-                            
-                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="10" RowSpacing="10">
-                                <Button Grid.Row="0" Grid.Column="0"
-                                        Text="Aplicar Descuento"
-                                        Command="{Binding AplicarDescuentoCommand}"
-                                        BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
-                                        TextColor="White"
-                                        CornerRadius="20"/>
+                            <!-- Puntos y Estado -->
+                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="16" RowSpacing="8">
+                                <VerticalStackLayout Grid.Column="0" Grid.Row="0" HorizontalOptions="Center">
+                                    <Label Text="🎯 Puntos Disponibles" 
+                                           Style="{StaticResource CaptionStyle}"
+                                           HorizontalOptions="Center" />
+                                    <Label Text="{Binding TarjetaActual.PuntosDisponibles}" 
+                                           Style="{StaticResource H2Style}"
+                                           TextColor="{StaticResource SuccessColor}"
+                                           HorizontalOptions="Center" />
+                                </VerticalStackLayout>
                                 
-                                <Button Grid.Row="0" Grid.Column="1"
-                                        Text="Ver Historial"
-                                        Command="{Binding CargarHistorialCommand}"
-                                        BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource Secondary}}"
-                                        TextColor="White"
-                                        CornerRadius="20"/>
-                                
-                                <Button Grid.Row="1" Grid.Column="0"
-                                        Text="Recargar Puntos"
-                                        Command="{Binding RecargarPuntosCommand}"
-                                        BackgroundColor="{AppThemeBinding Light={StaticResource Green}, Dark={StaticResource Green}}"
-                                        TextColor="White"
-                                        CornerRadius="20"/>
-                                
-                                <Button Grid.Row="1" Grid.Column="1"
-                                        Text="Bloquear Tarjeta"
-                                        Command="{Binding BloquearTarjetaCommand}"
-                                        BackgroundColor="{AppThemeBinding Light={StaticResource Red}, Dark={StaticResource Red}}"
-                                        TextColor="White"
-                                        CornerRadius="20"
-                                        IsVisible="{Binding TarjetaActual.Activa}"/>
+                                <VerticalStackLayout Grid.Column="1" Grid.Row="0" HorizontalOptions="Center">
+                                    <Label Text="📊 Estado" 
+                                           Style="{StaticResource CaptionStyle}"
+                                           HorizontalOptions="Center" />
+                                    <Border BackgroundColor="{Binding TarjetaActual.Activa, Converter={StaticResource BoolToColorConverter}}"
+                                            StrokeShape="RoundRectangle 12"
+                                            Padding="8,4">
+                                        <Label Text="{Binding TarjetaActual.Estado}" 
+                                               Style="{StaticResource CaptionStyle}"
+                                               TextColor="White"
+                                               HorizontalOptions="Center" />
+                                    </Border>
+                                </VerticalStackLayout>
                             </Grid>
                         </VerticalStackLayout>
-                    </Border>
+                    </controls:ModernCard>
 
-                    <!-- Historial de transacciones -->
-                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
-                            StrokeShape="RoundRectangle 10"
-                            Padding="15"
-                            IsVisible="{Binding Historial, Converter={StaticResource IsNotNullConverter}}">
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="Historial de Transacciones" 
-                                   FontSize="16" 
-                                   FontAttributes="Bold"
-                                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
+                    <!-- Búsqueda de Tarjeta -->
+                    <controls:ModernCard>
+                        <VerticalStackLayout Spacing="16">
+                            <Label Text="🔍 Buscar Tarjeta de Fidelización" 
+                                   Style="{StaticResource H3Style}"
+                                   TextColor="{StaticResource TextPrimary}" />
+                            
+                            <!-- Búsqueda -->
+                            <controls:ModernEntry Placeholder="Ingrese código de tarjeta..."
+                                                 Text="{Binding CodigoTarjeta}"
+                                                 Icon="🔍" />
+                            
+                            <!-- Botón de búsqueda -->
+                            <Button Text="🔍 Buscar Tarjeta"
+                                    Command="{Binding BuscarTarjetaCommand}"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    HorizontalOptions="FillAndExpand" />
+                        </VerticalStackLayout>
+                    </controls:ModernCard>
+
+                    <!-- Acciones de Uso (Solo Consulta y Uso) -->
+                    <controls:ModernCard IsVisible="{Binding TarjetaActual, Converter={StaticResource IsNotNullConverter}}">
+                        <VerticalStackLayout Spacing="16">
+                            <Label Text="⚡ Acciones de Uso" 
+                                   Style="{StaticResource H3Style}"
+                                   TextColor="{StaticResource TextPrimary}" />
+                            
+                            <!-- Botones de Acción -->
+                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto" ColumnSpacing="12" RowSpacing="12">
+                                <Button Grid.Row="0" Grid.Column="0"
+                                        Text="💰 Aplicar Descuento"
+                                        Command="{Binding AplicarDescuentoCommand}"
+                                        Style="{StaticResource PrimaryButtonStyle}"
+                                        HorizontalOptions="FillAndExpand" />
+                                
+                                <Button Grid.Row="0" Grid.Column="1"
+                                        Text="📋 Ver Historial"
+                                        Command="{Binding CargarHistorialCommand}"
+                                        Style="{StaticResource SecondaryButtonStyle}"
+                                        HorizontalOptions="FillAndExpand" />
+                            </Grid>
+                            
+                            <!-- Información adicional -->
+                            <VerticalStackLayout Spacing="8" Margin="0,8,0,0">
+                                <Label Text="ℹ️ Información" 
+                                       Style="{StaticResource CaptionStyle}"
+                                       FontAttributes="Bold" />
+                                <Label Text="Esta tarjeta permite aplicar descuentos y consultar el historial de transacciones. La gestión completa está disponible en la Web Administrativa." 
+                                       Style="{StaticResource CaptionStyle}"
+                                       TextColor="{StaticResource TextSecondary}" />
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </controls:ModernCard>
+
+                    <!-- Historial de Transacciones -->
+                    <controls:ModernCard IsVisible="{Binding Historial, Converter={StaticResource IsNotNullConverter}}">
+                        <VerticalStackLayout Spacing="16">
+                            <Label Text="📊 Historial de Transacciones" 
+                                   Style="{StaticResource H3Style}"
+                                   TextColor="{StaticResource TextPrimary}" />
                             
                             <CollectionView ItemsSource="{Binding Historial}"
-                                          HeightRequest="200">
+                                          HeightRequest="250">
                                 <CollectionView.ItemTemplate>
                                     <DataTemplate x:DataType="dtos:TransaccionPuntosDto">
-                                        <Grid ColumnDefinitions="*,Auto,Auto" Padding="5">
-                                            <VerticalStackLayout Grid.Column="0" Spacing="2">
-                                                <Label Text="{Binding TipoTransaccion}"
-                                                       FontSize="14"
-                                                       FontAttributes="Bold"/>
-                                                <Label Text="{Binding FechaTransaccion, StringFormat='{0:dd/MM/yyyy HH:mm}'}"
-                                                       FontSize="12"
-                                                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"/>
-                                            </VerticalStackLayout>
-                                            
-                                            <Label Grid.Column="1" 
-                                                   Text="{Binding Puntos, StringFormat='{0} pts'}"
-                                                   FontSize="14"
-                                                   FontAttributes="Bold"
-                                                   VerticalOptions="Center"
-                                                   Margin="0,0,10,0"/>
-                                            
-                                            <Label Grid.Column="2" 
-                                                   Text="{Binding Monto, StringFormat='${0:N2}'}"
-                                                   FontSize="14"
-                                                   FontAttributes="Bold"
-                                                   VerticalOptions="Center"/>
-                                        </Grid>
+                                        <controls:ModernCard Margin="4">
+                                            <Grid ColumnDefinitions="*,Auto,Auto" Padding="12">
+                                                <VerticalStackLayout Grid.Column="0" Spacing="4">
+                                                    <Label Text="{Binding TipoTransaccion}"
+                                                           Style="{StaticResource BodyStyle}"
+                                                           FontAttributes="Bold" />
+                                                    <Label Text="{Binding FechaTransaccion, StringFormat='📅 {0:dd/MM/yyyy HH:mm}'}"
+                                                           Style="{StaticResource CaptionStyle}"
+                                                           TextColor="{StaticResource TextSecondary}" />
+                                                </VerticalStackLayout>
+                                                
+                                                <VerticalStackLayout Grid.Column="1" 
+                                                                     HorizontalOptions="Center"
+                                                                     VerticalOptions="Center"
+                                                                     Margin="8,0">
+                                                    <Label Text="{Binding Puntos, StringFormat='{0} pts'}"
+                                                           Style="{StaticResource BodyStyle}"
+                                                           FontAttributes="Bold"
+                                                           TextColor="{StaticResource SuccessColor}"
+                                                           HorizontalOptions="Center" />
+                                                </VerticalStackLayout>
+                                                
+                                                <VerticalStackLayout Grid.Column="2" 
+                                                                     HorizontalOptions="Center"
+                                                                     VerticalOptions="Center">
+                                                    <Label Text="{Binding Monto, StringFormat='${0:N2}'}"
+                                                           Style="{StaticResource BodyStyle}"
+                                                           FontAttributes="Bold"
+                                                           TextColor="{StaticResource PrimaryColor}"
+                                                           HorizontalOptions="Center" />
+                                                </VerticalStackLayout>
+                                            </Grid>
+                                        </controls:ModernCard>
                                     </DataTemplate>
                                 </CollectionView.ItemTemplate>
                             </CollectionView>
                         </VerticalStackLayout>
-                    </Border>
+                    </controls:ModernCard>
                 </VerticalStackLayout>
             </ScrollView>
         </RefreshView>
 
         <!-- Indicador de carga -->
-        <ActivityIndicator Grid.Row="1"
-                          IsRunning="{Binding IsBusy}"
+        <ActivityIndicator IsRunning="{Binding IsBusy}"
                           IsVisible="{Binding IsBusy}"
                           HorizontalOptions="Center"
-                          VerticalOptions="Center"/>
+                          VerticalOptions="Center"
+                          Color="{StaticResource PrimaryColor}" />
 
         <!-- Mensaje de error -->
-        <Border Grid.Row="2"
-                IsVisible="{Binding HasError}"
-                BackgroundColor="{AppThemeBinding Light={StaticResource Red100}, Dark={StaticResource Red900}}"
+        <Border IsVisible="{Binding HasError}"
+                BackgroundColor="{StaticResource ErrorColor}"
                 StrokeShape="RoundRectangle 10"
-                Margin="10,5,10,10">
+                Margin="16"
+                Padding="16">
             <Label Text="{Binding ErrorMessage}"
-                   TextColor="{AppThemeBinding Light={StaticResource Red600}, Dark={StaticResource Red300}}"
-                   HorizontalOptions="Center"
-                   Padding="15"/>
+                   Style="{StaticResource BodyStyle}"
+                   TextColor="White"
+                   HorizontalOptions="Center" />
         </Border>
+
+        <!-- Estado Vacío -->
+        <VerticalStackLayout Spacing="16" 
+                             VerticalOptions="Center"
+                             HorizontalOptions="Center"
+                             Padding="32"
+                             IsVisible="{Binding TarjetaActual, Converter={StaticResource IsNotNullConverter}, ConverterParameter=Invert}">
+            <Label Text="💳" 
+                   FontSize="64" 
+                   HorizontalOptions="Center" />
+            <Label Text="No hay tarjeta seleccionada" 
+                   Style="{StaticResource H2Style}" 
+                   HorizontalOptions="Center" />
+            <Label Text="Busca una tarjeta de fidelización para ver su información y realizar acciones" 
+                   Style="{StaticResource BodyStyle}" 
+                   TextColor="{StaticResource TextSecondary}"
+                   HorizontalOptions="Center" />
+        </VerticalStackLayout>
     </Grid>
 </ContentPage> 
