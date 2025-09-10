@@ -24,10 +24,10 @@ namespace RestaurantePro.Web.Admin.Services
             };
         }
 
-        private async Task<HttpClient> CreateClientAsync()
+        private HttpClient CreateClient()
         {
             var client = _httpClient;
-            var token = await _tokenStore.GetTokenAsync();
+            var token = _tokenStore.Token;
             if (!string.IsNullOrEmpty(token))
             {
                 client.DefaultRequestHeaders.Authorization = 
@@ -46,7 +46,7 @@ namespace RestaurantePro.Web.Admin.Services
         {
             try
             {
-                var client = await CreateClientAsync();
+                var client = CreateClient();
                 var queryParams = new List<string>
                 {
                     $"pageNumber={pageNumber}",
@@ -102,7 +102,7 @@ namespace RestaurantePro.Web.Admin.Services
         {
             try
             {
-                var client = await CreateClientAsync();
+                var client = CreateClient();
                 var response = await client.GetAsync($"api/operaciones/preparaciones/{id}");
 
                 if (response.IsSuccessStatusCode)
@@ -127,7 +127,7 @@ namespace RestaurantePro.Web.Admin.Services
         {
             try
             {
-                var client = await CreateClientAsync();
+                var client = CreateClient();
                 var response = await client.GetAsync("api/operaciones/preparaciones/cola");
 
                 if (response.IsSuccessStatusCode)
@@ -152,7 +152,7 @@ namespace RestaurantePro.Web.Admin.Services
         {
             try
             {
-                var client = await CreateClientAsync();
+                var client = CreateClient();
                 var response = await client.GetAsync("api/operaciones/preparaciones/estadisticas");
 
                 if (response.IsSuccessStatusCode)
@@ -177,7 +177,7 @@ namespace RestaurantePro.Web.Admin.Services
         {
             try
             {
-                var client = await CreateClientAsync();
+                var client = CreateClient();
                 var response = await client.GetAsync("api/operaciones/preparaciones/estados");
 
                 if (response.IsSuccessStatusCode)
@@ -202,7 +202,7 @@ namespace RestaurantePro.Web.Admin.Services
         {
             try
             {
-                var client = await CreateClientAsync();
+                var client = CreateClient();
                 var response = await client.GetAsync("api/operaciones/preparaciones/prioridades");
 
                 if (response.IsSuccessStatusCode)
@@ -227,7 +227,7 @@ namespace RestaurantePro.Web.Admin.Services
         {
             try
             {
-                var client = await CreateClientAsync();
+                var client = CreateClient();
                 var response = await client.GetAsync("api/operaciones/preparaciones/cocineros");
 
                 if (response.IsSuccessStatusCode)
@@ -252,7 +252,7 @@ namespace RestaurantePro.Web.Admin.Services
         {
             try
             {
-                var client = await CreateClientAsync();
+                var client = CreateClient();
                 var json = JsonSerializer.Serialize(request, _jsonOptions);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -273,7 +273,7 @@ namespace RestaurantePro.Web.Admin.Services
         {
             try
             {
-                var client = await CreateClientAsync();
+                var client = CreateClient();
                 var json = JsonSerializer.Serialize(request, _jsonOptions);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -294,7 +294,7 @@ namespace RestaurantePro.Web.Admin.Services
         {
             try
             {
-                var client = await CreateClientAsync();
+                var client = CreateClient();
                 var json = JsonSerializer.Serialize(request, _jsonOptions);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
@@ -315,7 +315,7 @@ namespace RestaurantePro.Web.Admin.Services
         {
             try
             {
-                var client = await CreateClientAsync();
+                var client = CreateClient();
                 var response = await client.PostAsync($"api/operaciones/preparaciones/{preparacionId}/iniciar", null);
                 return response.IsSuccessStatusCode;
             }
@@ -333,7 +333,7 @@ namespace RestaurantePro.Web.Admin.Services
         {
             try
             {
-                var client = await CreateClientAsync();
+                var client = CreateClient();
                 var request = new { notas };
                 var json = JsonSerializer.Serialize(request, _jsonOptions);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -355,7 +355,7 @@ namespace RestaurantePro.Web.Admin.Services
         {
             try
             {
-                var client = await CreateClientAsync();
+                var client = CreateClient();
                 var request = new { motivo };
                 var json = JsonSerializer.Serialize(request, _jsonOptions);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -377,7 +377,7 @@ namespace RestaurantePro.Web.Admin.Services
         {
             try
             {
-                var client = await CreateClientAsync();
+                var client = CreateClient();
                 var queryParams = new List<string>();
 
                 if (filtros != null)

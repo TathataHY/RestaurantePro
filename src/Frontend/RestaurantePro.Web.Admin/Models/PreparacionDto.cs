@@ -96,19 +96,6 @@ namespace RestaurantePro.Web.Admin.Models
         public double EficienciaCocina { get; set; }
     }
 
-    /// <summary>
-    /// DTO para lista paginada de preparaciones
-    /// </summary>
-    public class PaginatedList<T>
-    {
-        public List<T> Data { get; set; } = new();
-        public int TotalCount { get; set; }
-        public int PageNumber { get; set; }
-        public int PageSize { get; set; }
-        public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
-        public bool HasPreviousPage => PageNumber > 1;
-        public bool HasNextPage => PageNumber < TotalPages;
-    }
 
     /// <summary>
     /// DTO para cola de preparaciones
@@ -125,17 +112,6 @@ namespace RestaurantePro.Web.Admin.Models
         public int TotalAtrasadas { get; set; }
     }
 
-    /// <summary>
-    /// DTO para asignar cocinero a preparación
-    /// </summary>
-    public class AsignarCocineroRequest
-    {
-        [Required(ErrorMessage = "El ID de la preparación es requerido")]
-        public int PreparacionId { get; set; }
-
-        [Required(ErrorMessage = "El ID del cocinero es requerido")]
-        public int CocineroId { get; set; }
-    }
 
     /// <summary>
     /// DTO para actualizar estado de preparación

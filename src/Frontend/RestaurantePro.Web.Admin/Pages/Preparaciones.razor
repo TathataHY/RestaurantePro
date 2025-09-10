@@ -159,7 +159,7 @@
             await Task.WhenAll(preparacionesTask, estadisticasTask);
 
             paginacion = await preparacionesTask;
-            preparaciones = paginacion?.Data ?? new();
+            preparaciones = paginacion?.Items ?? new();
 
             estadisticas = await estadisticasTask;
         }
@@ -192,7 +192,7 @@
         await CargarDatos();
     }
 
-    private async Task EditarPreparacion(PreparacionDto preparacion)
+    private void EditarPreparacion(PreparacionDto preparacion)
     {
         preparacionSeleccionada = preparacion;
         mostrarModal = true;
@@ -269,7 +269,7 @@
         {
             // Aquí implementarías la lógica de guardado
             // Por ahora solo cerramos el modal
-            await CerrarModal();
+            CerrarModal();
             await CargarDatos();
         }
         catch (Exception ex)
@@ -278,7 +278,7 @@
         }
     }
 
-    private async Task CerrarModal()
+    private void CerrarModal()
     {
         mostrarModal = false;
         preparacionSeleccionada = new();
@@ -290,7 +290,7 @@
         try
         {
             paginacion = await PreparacionesApi.ObtenerPreparacionesPaginadasAsync(pagina, 20, filtros);
-            preparaciones = paginacion?.Data ?? new();
+            preparaciones = paginacion?.Items ?? new();
             StateHasChanged();
         }
         catch (Exception ex)
