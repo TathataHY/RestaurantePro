@@ -1,0 +1,238 @@
+@using RestaurantePro.Web.Admin.Models
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="oi oi-people"></i> Lista de Clientes (@(Clientes?.Count ?? 0))
+        </h6>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-success" @onclick="OnExportarExcel">
+                <i class="oi oi-spreadsheet"></i> Excel
+            </button>
+            <button class="btn btn-sm btn-outline-info" @onclick="OnNuevoCliente">
+                <i class="oi oi-plus"></i> Nuevo Cliente
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (Clientes == null)
+        {
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2 text-muted">Cargando clientes...</p>
+            </div>
+        }
+        else if (!Clientes.Any())
+        {
+            <div class="text-center py-4">
+                <i class="oi oi-people text-muted" style="font-size: 3rem;"></i>
+                <h5 class="text-muted mt-3">No hay clientes</h5>
+                <p class="text-muted">Comienza agregando tu primer cliente</p>
+                <button class="btn btn-primary" @onclick="OnNuevoCliente">
+                    <i class="oi oi-plus"></i> Agregar Cliente
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Contacto</th>
+                            <th>Ubicación</th>
+                            <th>Estadísticas</th>
+                            <th>Segmento</th>
+                            <th>Estado</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var cliente in Clientes)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle me-3">
+                                            @cliente.NombreCompleto.Substring(0, 1).ToUpper()
+                                        </div>
+                                        <div>
+                                            <strong>@cliente.NombreCompleto</strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                @cliente.Edad años • Registrado: @cliente.FechaRegistro.ToString("dd/MM/yyyy")
+                                            </small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <i class="oi oi-envelope-closed text-muted"></i> @cliente.Email
+                                        @if (!string.IsNullOrEmpty(cliente.Telefono))
+                                        {
+                                            <br><i class="oi oi-phone text-muted"></i> @cliente.Telefono
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(cliente.Ciudad))
+                                    {
+                                        <div>
+                                            <i class="oi oi-location text-muted"></i> @cliente.Ciudad
+                                            @if (!string.IsNullOrEmpty(cliente.Pais))
+                                            {
+                                                <br><small class="text-muted">@cliente.Pais</small>
+                                            }
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No especificada</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="small">
+                                        <div><strong>@cliente.TotalGastado.ToString("C0")</strong> gastado</div>
+                                        <div>@cliente.TotalCompras compras</div>
+                                        <div>@cliente.TotalVisitas visitas</div>
+                                        @if (cliente.PromedioGasto > 0)
+                                        {
+                                            <div>Promedio: @cliente.PromedioGasto.ToString("C0")</div>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <span class="badge @ObtenerClaseSegmento(cliente.Segmento)">@cliente.Segmento</span>
+                                        <br>
+                                        <small class="text-muted">@cliente.NivelFidelizacion</small>
+                                        @if (cliente.PuntosFidelizacion > 0)
+                                        {
+                                            <br><small class="text-info">@cliente.PuntosFidelizacion pts</small>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <span class="badge @(cliente.EstaActivo ? "bg-success" : "bg-secondary")">
+                                            @cliente.EstadoCliente
+                                        </span>
+                                        @if (cliente.EsClienteVIP)
+                                        {
+                                            <br><span class="badge bg-warning">VIP</span>
+                                        }
+                                        @if (cliente.EsClienteFrecuente)
+                                        {
+                                            <br><span class="badge bg-info">Frecuente</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary" 
+                                                @onclick="() => OnVerDetalles.InvokeAsync(cliente)"
+                                                title="Ver detalles">
+                                            <i class="oi oi-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-warning" 
+                                                @onclick="() => OnEditarCliente.InvokeAsync(cliente)"
+                                                title="Editar">
+                                            <i class="oi oi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-sm @(cliente.EstaActivo ? "btn-outline-secondary" : "btn-outline-success")" 
+                                                @onclick="() => OnToggleActivar.InvokeAsync(cliente)"
+                                                title="@(cliente.EstaActivo ? "Desactivar" : "Activar")">
+                                            <i class="oi @(cliente.EstaActivo ? "oi-lock-locked" : "oi-lock-unlocked")"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" 
+                                                @onclick="() => OnEliminarCliente.InvokeAsync(cliente)"
+                                                title="Eliminar">
+                                            <i class="oi oi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (Paginacion != null)
+            {
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div class="text-muted">
+                        Mostrando @Paginacion.PageNumber de @Paginacion.TotalPages páginas
+                        (@Paginacion.TotalCount clientes en total)
+                    </div>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item @(Paginacion.HasPreviousPage ? "" : "disabled")">
+                                <button class="page-link" @onclick="() => OnCambiarPagina.InvokeAsync(Paginacion.PageNumber - 1)" 
+                                        disabled="@(!Paginacion.HasPreviousPage)">
+                                    <i class="oi oi-chevron-left"></i>
+                                </button>
+                            </li>
+                            
+                            @for (int i = Math.Max(1, Paginacion.PageNumber - 2); i <= Math.Min(Paginacion.TotalPages, Paginacion.PageNumber + 2); i++)
+                            {
+                                <li class="page-item @(i == Paginacion.PageNumber ? "active" : "")">
+                                    <button class="page-link" @onclick="() => OnCambiarPagina.InvokeAsync(i)">@i</button>
+                                </li>
+                            }
+                            
+                            <li class="page-item @(Paginacion.HasNextPage ? "" : "disabled")">
+                                <button class="page-link" @onclick="() => OnCambiarPagina.InvokeAsync(Paginacion.PageNumber + 1)" 
+                                        disabled="@(!Paginacion.HasNextPage)">
+                                    <i class="oi oi-chevron-right"></i>
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<style>
+    .avatar-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #007bff;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 16px;
+    }
+</style>
+
+@code {
+    [Parameter] public List<ClienteDto>? Clientes { get; set; }
+    [Parameter] public PaginatedList<ClienteDto>? Paginacion { get; set; }
+    [Parameter] public EventCallback<ClienteDto> OnEditarCliente { get; set; }
+    [Parameter] public EventCallback<ClienteDto> OnEliminarCliente { get; set; }
+    [Parameter] public EventCallback<ClienteDto> OnToggleActivar { get; set; }
+    [Parameter] public EventCallback<ClienteDto> OnVerDetalles { get; set; }
+    [Parameter] public EventCallback OnNuevoCliente { get; set; }
+    [Parameter] public EventCallback<int> OnCambiarPagina { get; set; }
+    [Parameter] public EventCallback OnExportarExcel { get; set; }
+
+    private string ObtenerClaseSegmento(string segmento)
+    {
+        return segmento switch
+        {
+            "VIP" => "bg-warning",
+            "Frecuente" => "bg-info",
+            "Regular" => "bg-primary",
+            "Nuevo" => "bg-success",
+            "Inactivo" => "bg-secondary",
+            _ => "bg-light text-dark"
+        };
+    }
+}

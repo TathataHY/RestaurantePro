@@ -41,6 +41,7 @@ builder.Services.AddScoped<MesasApiService>();
 builder.Services.AddScoped<DashboardApiService>();
 builder.Services.AddScoped<PromocionesApiService>();
 builder.Services.AddScoped<ReportesApiService>();
+builder.Services.AddScoped<ClientesApiService>();
 builder.Services.AddScoped<JwtAuthenticationStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<JwtAuthenticationStateProvider>());
 

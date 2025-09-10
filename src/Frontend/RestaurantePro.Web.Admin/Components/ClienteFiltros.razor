@@ -1,0 +1,240 @@
+@using RestaurantePro.Web.Admin.Models
+@inject RestaurantePro.Web.Admin.Services.ClientesApiService ClientesApi
+
+<div class="card">
+    <div class="card-header">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="oi oi-magnifying-glass"></i> Filtros de Búsqueda
+        </h6>
+    </div>
+    <div class="card-body">
+        <EditForm Model="Filtros" OnValidSubmit="AplicarFiltros">
+            <DataAnnotationsValidator />
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Buscar</label>
+                        <InputText @bind-Value="Filtros.Busqueda" class="form-control" placeholder="Nombre, email, teléfono..." />
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Segmento</label>
+                        <InputSelect @bind-Value="Filtros.Segmento" class="form-select">
+                            <option value="">Todos los segmentos</option>
+                            @if (segmentos != null)
+                            {
+                                @foreach (var segmento in segmentos)
+                                {
+                                    <option value="@segmento">@segmento</option>
+                                }
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label class="form-label">Ciudad</label>
+                        <InputSelect @bind-Value="Filtros.Ciudad" class="form-select">
+                            <option value="">Todas las ciudades</option>
+                            @if (ciudades != null)
+                            {
+                                @foreach (var ciudad in ciudades)
+                                {
+                                    <option value="@ciudad">@ciudad</option>
+                                }
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Estado</label>
+                        <InputSelect @bind-Value="Filtros.Estado" class="form-select">
+                            <option value="">Todos</option>
+                            <option value="Activo">Activo</option>
+                            <option value="Inactivo">Inactivo</option>
+                        </InputSelect>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Nivel Fidelización</label>
+                        <InputSelect @bind-Value="Filtros.NivelFidelizacion" class="form-select">
+                            <option value="">Todos</option>
+                            <option value="Oro">Oro</option>
+                            <option value="Plata">Plata</option>
+                            <option value="Bronce">Bronce</option>
+                            <option value="Básico">Básico</option>
+                        </InputSelect>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Fecha Inicio</label>
+                        <InputDate @bind-Value="Filtros.FechaInicio" class="form-control" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Fecha Fin</label>
+                        <InputDate @bind-Value="Filtros.FechaFin" class="form-control" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Gasto Mínimo</label>
+                        <InputNumber @bind-Value="Filtros.GastoMinimo" class="form-control" placeholder="0" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Gasto Máximo</label>
+                        <InputNumber @bind-Value="Filtros.GastoMaximo" class="form-control" placeholder="10000" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Visitas Mínimas</label>
+                        <InputNumber @bind-Value="Filtros.VisitasMinimas" class="form-control" placeholder="0" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label class="form-label">Marketing</label>
+                        <InputSelect @bind-Value="Filtros.AceptaMarketing" class="form-select">
+                            <option value="">Todos</option>
+                            <option value="true">Acepta Marketing</option>
+                            <option value="false">No Acepta Marketing</option>
+                        </InputSelect>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Ordenar Por</label>
+                        <InputSelect @bind-Value="Filtros.OrdenarPor" class="form-select">
+                            <option value="NombreCompleto">Nombre</option>
+                            <option value="Email">Email</option>
+                            <option value="FechaRegistro">Fecha de Registro</option>
+                            <option value="TotalGastado">Total Gastado</option>
+                            <option value="TotalCompras">Total Compras</option>
+                            <option value="TotalVisitas">Total Visitas</option>
+                            <option value="Ciudad">Ciudad</option>
+                        </InputSelect>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Dirección</label>
+                        <InputSelect @bind-Value="Filtros.DireccionOrden" class="form-select">
+                            <option value="asc">Ascendente</option>
+                            <option value="desc">Descendente</option>
+                        </InputSelect>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <div>
+                    <button type="button" class="btn btn-outline-secondary" @onclick="LimpiarFiltros">
+                        <i class="oi oi-reload"></i> Limpiar
+                    </button>
+                    <button type="button" class="btn btn-outline-info" @onclick="FiltrosRapidos">
+                        <i class="oi oi-clock"></i> Últimos 30 días
+                    </button>
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-primary" disabled="@aplicando">
+                        @if (aplicando)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        <i class="oi oi-magnifying-glass"></i> Buscar
+                    </button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [Parameter] public ClienteFiltrosDto Filtros { get; set; } = new();
+    [Parameter] public EventCallback<ClienteFiltrosDto> OnFiltrosAplicados { get; set; }
+    [Parameter] public bool Aplicando { get; set; }
+
+    private List<string>? segmentos;
+    private List<string>? ciudades;
+    private bool aplicando => Aplicando;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        await Task.WhenAll(
+            CargarSegmentos(),
+            CargarCiudades()
+        );
+    }
+
+    private async Task CargarSegmentos()
+    {
+        try
+        {
+            segmentos = await ClientesApi.ObtenerSegmentosAsync() ?? new List<string>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar segmentos: {ex.Message}");
+            segmentos = new List<string>();
+        }
+    }
+
+    private async Task CargarCiudades()
+    {
+        try
+        {
+            ciudades = await ClientesApi.ObtenerCiudadesAsync() ?? new List<string>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar ciudades: {ex.Message}");
+            ciudades = new List<string>();
+        }
+    }
+
+    private async Task AplicarFiltros()
+    {
+        await OnFiltrosAplicados.InvokeAsync(Filtros);
+    }
+
+    private void LimpiarFiltros()
+    {
+        Filtros = new ClienteFiltrosDto
+        {
+            OrdenarPor = "NombreCompleto",
+            DireccionOrden = "asc",
+            PageNumber = 1,
+            PageSize = 20
+        };
+    }
+
+    private async Task FiltrosRapidos()
+    {
+        Filtros.FechaInicio = DateTime.Today.AddDays(-30);
+        Filtros.FechaFin = DateTime.Today;
+        await AplicarFiltros();
+    }
+}

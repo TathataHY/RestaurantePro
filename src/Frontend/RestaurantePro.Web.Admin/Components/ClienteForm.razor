@@ -1,0 +1,354 @@
+@using RestaurantePro.Web.Admin.Models
+@inject RestaurantePro.Web.Admin.Services.ClientesApiService ClientesApi
+@inject IJSRuntime JSRuntime
+
+<div class="modal fade @(Mostrar ? "show" : "")" style="display: @(Mostrar ? "block" : "none")" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="oi oi-person"></i> @(EsEdicion ? "Editar Cliente" : "Nuevo Cliente")
+                </h5>
+                <button type="button" class="btn-close" @onclick="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <EditForm Model="Cliente" OnValidSubmit="GuardarCliente">
+                    <DataAnnotationsValidator />
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Nombre *</label>
+                                <InputText @bind-Value="Cliente.Nombre" class="form-control" placeholder="Ingrese el nombre" />
+                                <ValidationMessage For="@(() => Cliente.Nombre)" class="text-danger" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Apellidos *</label>
+                                <InputText @bind-Value="Cliente.Apellidos" class="form-control" placeholder="Ingrese los apellidos" />
+                                <ValidationMessage For="@(() => Cliente.Apellidos)" class="text-danger" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Email *</label>
+                                <InputText @bind-Value="Cliente.Email" class="form-control" placeholder="cliente@ejemplo.com" />
+                                <ValidationMessage For="@(() => Cliente.Email)" class="text-danger" />
+                                @if (mostrarValidacionEmail)
+                                {
+                                    <div class="form-text text-info">
+                                        <i class="oi oi-reload"></i> Validando email...
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Teléfono</label>
+                                <InputText @bind-Value="Cliente.Telefono" class="form-control" placeholder="+1 234 567 8900" />
+                                <ValidationMessage For="@(() => Cliente.Telefono)" class="text-danger" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Fecha de Nacimiento *</label>
+                                <InputDate @bind-Value="Cliente.FechaNacimiento" class="form-control" />
+                                <ValidationMessage For="@(() => Cliente.FechaNacimiento)" class="text-danger" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Ciudad</label>
+                                <InputText @bind-Value="Cliente.Ciudad" class="form-control" placeholder="Ciudad" />
+                                <ValidationMessage For="@(() => Cliente.Ciudad)" class="text-danger" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Dirección</label>
+                        <InputTextArea @bind-Value="Cliente.Direccion" class="form-control" rows="2" placeholder="Dirección completa" />
+                        <ValidationMessage For="@(() => Cliente.Direccion)" class="text-danger" />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Código Postal</label>
+                                <InputText @bind-Value="Cliente.CodigoPostal" class="form-control" placeholder="12345" />
+                                <ValidationMessage For="@(() => Cliente.CodigoPostal)" class="text-danger" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">País</label>
+                                <InputText @bind-Value="Cliente.Pais" class="form-control" placeholder="País" />
+                                <ValidationMessage For="@(() => Cliente.Pais)" class="text-danger" />
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Estado</label>
+                                <div class="form-check form-switch">
+                                    <InputCheckbox @bind-Value="Cliente.EstaActivo" class="form-check-input" />
+                                    <label class="form-check-label">
+                                        @(Cliente.EstaActivo ? "Activo" : "Inactivo")
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Preferencias Alimentarias</label>
+                                <InputTextArea @bind-Value="Cliente.PreferenciasAlimentarias" class="form-control" rows="2" placeholder="Ej: Vegetariano, Sin gluten, etc." />
+                                <ValidationMessage For="@(() => Cliente.PreferenciasAlimentarias)" class="text-danger" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Alergias</label>
+                                <InputTextArea @bind-Value="Cliente.Alergias" class="form-control" rows="2" placeholder="Ej: Nuts, Mariscos, etc." />
+                                <ValidationMessage For="@(() => Cliente.Alergias)" class="text-danger" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Notas Especiales</label>
+                        <InputTextArea @bind-Value="Cliente.NotasEspeciales" class="form-control" rows="3" placeholder="Información adicional sobre el cliente" />
+                        <ValidationMessage For="@(() => Cliente.NotasEspeciales)" class="text-danger" />
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <InputCheckbox @bind-Value="Cliente.AceptaMarketing" class="form-check-input" />
+                                <label class="form-check-label">
+                                    Acepta recibir comunicaciones de marketing
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check">
+                                <InputCheckbox @bind-Value="Cliente.AceptaTerminos" class="form-check-input" />
+                                <label class="form-check-label">
+                                    Acepta términos y condiciones
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (EsEdicion && Cliente != null)
+                    {
+                        <div class="alert alert-info">
+                            <h6><i class="oi oi-info"></i> Información del Cliente</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <small><strong>Total Gastado:</strong> @Cliente.TotalGastado.ToString("C0")</small><br>
+                                    <small><strong>Total Compras:</strong> @Cliente.TotalCompras</small><br>
+                                    <small><strong>Total Visitas:</strong> @Cliente.TotalVisitas</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <small><strong>Promedio Gasto:</strong> @Cliente.PromedioGasto.ToString("C0")</small><br>
+                                    <small><strong>Segmento:</strong> @Cliente.Segmento</small><br>
+                                    <small><strong>Puntos Fidelización:</strong> @Cliente.PuntosFidelizacion</small>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </EditForm>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="Cerrar">
+                    <i class="oi oi-x"></i> Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" @onclick="GuardarCliente" disabled="@guardando">
+                    @if (guardando)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    }
+                    <i class="oi oi-check"></i> @(EsEdicion ? "Actualizar" : "Crear")
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Mostrar)
+{
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    [Parameter] public bool Mostrar { get; set; }
+    [Parameter] public EventCallback<bool> MostrarChanged { get; set; }
+    [Parameter] public EventCallback<ClienteDto> OnClienteGuardado { get; set; }
+
+    private ClienteDto Cliente = new();
+    private bool EsEdicion => Cliente.Id != Guid.Empty;
+    private bool guardando = false;
+    private bool mostrarValidacionEmail = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Mostrar && !EsEdicion)
+        {
+            Cliente = new ClienteDto
+            {
+                FechaNacimiento = DateTime.Today.AddYears(-25),
+                EstaActivo = true,
+                AceptaTerminos = true
+            };
+        }
+    }
+
+    private async Task GuardarCliente()
+    {
+        guardando = true;
+        StateHasChanged();
+
+        try
+        {
+            // Validar email único
+            if (!string.IsNullOrEmpty(Cliente.Email))
+            {
+                mostrarValidacionEmail = true;
+                var validacionEmail = await ClientesApi.ValidarEmailAsync(Cliente.Email, EsEdicion ? Cliente.Id : null);
+                mostrarValidacionEmail = false;
+
+                if (validacionEmail?.Data == true)
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", "El email ya está registrado por otro cliente.");
+                    guardando = false;
+                    StateHasChanged();
+                    return;
+                }
+            }
+
+            ApiResponse<ClienteDto>? resultado;
+
+            if (EsEdicion)
+            {
+                var request = new ActualizarClienteRequest
+                {
+                    Id = Cliente.Id,
+                    Nombre = Cliente.Nombre,
+                    Apellidos = Cliente.Apellidos,
+                    Email = Cliente.Email,
+                    Telefono = Cliente.Telefono,
+                    Direccion = Cliente.Direccion,
+                    Ciudad = Cliente.Ciudad,
+                    CodigoPostal = Cliente.CodigoPostal,
+                    Pais = Cliente.Pais,
+                    FechaNacimiento = Cliente.FechaNacimiento,
+                    EstaActivo = Cliente.EstaActivo,
+                    AceptaMarketing = Cliente.AceptaMarketing,
+                    PreferenciasAlimentarias = Cliente.PreferenciasAlimentarias,
+                    Alergias = Cliente.Alergias,
+                    NotasEspeciales = Cliente.NotasEspeciales
+                };
+
+                resultado = await ClientesApi.ActualizarClienteAsync(request);
+            }
+            else
+            {
+                var request = new CrearClienteRequest
+                {
+                    Nombre = Cliente.Nombre,
+                    Apellidos = Cliente.Apellidos,
+                    Email = Cliente.Email,
+                    Telefono = Cliente.Telefono,
+                    Direccion = Cliente.Direccion,
+                    Ciudad = Cliente.Ciudad,
+                    CodigoPostal = Cliente.CodigoPostal,
+                    Pais = Cliente.Pais,
+                    FechaNacimiento = Cliente.FechaNacimiento,
+                    AceptaMarketing = Cliente.AceptaMarketing,
+                    AceptaTerminos = Cliente.AceptaTerminos,
+                    PreferenciasAlimentarias = Cliente.PreferenciasAlimentarias,
+                    Alergias = Cliente.Alergias,
+                    NotasEspeciales = Cliente.NotasEspeciales
+                };
+
+                resultado = await ClientesApi.CrearClienteAsync(request);
+            }
+
+            if (resultado?.Success == true && resultado.Data != null)
+            {
+                await OnClienteGuardado.InvokeAsync(resultado.Data);
+                await Cerrar();
+                await JSRuntime.InvokeVoidAsync("alert", EsEdicion ? "Cliente actualizado correctamente" : "Cliente creado correctamente");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al guardar el cliente");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+        finally
+        {
+            guardando = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task Cerrar()
+    {
+        await MostrarChanged.InvokeAsync(false);
+    }
+
+    public void AbrirParaEditar(ClienteDto cliente)
+    {
+        Cliente = new ClienteDto
+        {
+            Id = cliente.Id,
+            Nombre = cliente.Nombre,
+            Apellidos = cliente.Apellidos,
+            Email = cliente.Email,
+            Telefono = cliente.Telefono,
+            Direccion = cliente.Direccion,
+            Ciudad = cliente.Ciudad,
+            CodigoPostal = cliente.CodigoPostal,
+            Pais = cliente.Pais,
+            FechaNacimiento = cliente.FechaNacimiento,
+            EstaActivo = cliente.EstaActivo,
+            AceptaMarketing = cliente.AceptaMarketing,
+            PreferenciasAlimentarias = cliente.PreferenciasAlimentarias,
+            Alergias = cliente.Alergias,
+            NotasEspeciales = cliente.NotasEspeciales,
+            TotalGastado = cliente.TotalGastado,
+            TotalCompras = cliente.TotalCompras,
+            TotalVisitas = cliente.TotalVisitas,
+            PromedioGasto = cliente.PromedioGasto,
+            Segmento = cliente.Segmento,
+            PuntosFidelizacion = cliente.PuntosFidelizacion
+        };
+        Mostrar = true;
+        StateHasChanged();
+    }
+
+    public void AbrirParaCrear()
+    {
+        Cliente = new ClienteDto
+        {
+            FechaNacimiento = DateTime.Today.AddYears(-25),
+            EstaActivo = true,
+            AceptaTerminos = true
+        };
+        Mostrar = true;
+        StateHasChanged();
+    }
+}
