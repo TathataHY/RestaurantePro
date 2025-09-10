@@ -120,8 +120,8 @@ public partial class CategoriasViewModel : BaseViewModel
 
         CategoriaSeleccionada = categoria;
         
-        // Navegar a productos de la categoría
-        await _navigationService.NavigateToAsync("productos", new Dictionary<string, object>
+        // Navegar a productos de la categoría específica
+        await _navigationService.NavigateToAsync("productos-por-categoria", new Dictionary<string, object>
         {
             { "categoriaId", categoria.Id },
             { "categoriaNombre", categoria.Nombre }

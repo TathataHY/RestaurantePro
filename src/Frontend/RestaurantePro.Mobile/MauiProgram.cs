@@ -244,6 +244,7 @@ public static class MauiProgram
 		services.AddTransient<ComandaDetalleViewModel>();
 		services.AddTransient<CrearComandaViewModel>();
 		services.AddTransient<ProductosViewModel>();
+		services.AddTransient<ProductosPorCategoriaViewModel>();
 		services.AddTransient<ProductoDetalleViewModel>();
 		services.AddTransient<ProductoEditorViewModel>();
 		services.AddTransient<RestaurantePro.Mobile.Core.Features.Operations.Cocina.ViewModels.ModernCocinaViewModel>();
@@ -273,6 +274,7 @@ public static class MauiProgram
 		services.AddTransient<ComandaDetallePage>();
 		services.AddTransient<CrearComandaPage>();
 		services.AddTransient<ProductosPage>();
+		services.AddTransient<ProductosPorCategoriaPage>();
 		services.AddTransient<ProductoDetallePage>();
 		services.AddTransient<ProductoEditorPage>();
 

@@ -16,6 +16,8 @@
             <converters:PercentageChangeColorConverter x:Key="PercentageChangeColorConverter" />
             <converters:IsNotNullOrEmptyConverter x:Key="IsNotNullOrEmptyConverter" />
             <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
+            <converters:BoolToTextConverter x:Key="BoolToTextConverter" />
+            <converters:StringToColorConverter x:Key="StringToColorConverter" />
 
             <!-- Estilos Globales V4 -->
             <ResourceDictionary.MergedDictionaries>

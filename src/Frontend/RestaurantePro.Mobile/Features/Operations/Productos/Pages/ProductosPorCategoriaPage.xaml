@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
+             xmlns:viewmodels="clr-namespace:RestaurantePro.Mobile.Core.Features.Operations.Productos.ViewModels;assembly=RestaurantePro.Mobile.Core"
+             xmlns:dtos="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
+             x:Class="RestaurantePro.Mobile.Features.Operations.Productos.Pages.ProductosPorCategoriaPage"
+             x:DataType="viewmodels:ProductosPorCategoriaViewModel"
+             Title="{Binding TituloPagina}"
+             BackgroundColor="{StaticResource SurfacePrimary}">
+
+    <Grid RowDefinitions="*">
+        <!-- Contenido Principal -->
+        <Grid Grid.Row="0">
+            <!-- Grid de Productos por Categoría -->
+            <RefreshView Grid.Row="1"
+                         IsRefreshing="{Binding IsRefreshing}"
+                         Command="{Binding RefreshProductosCommand}">
+                
+                <CollectionView ItemsSource="{Binding Productos}"
+                               SelectionMode="None">
+                    
+                    <CollectionView.Header>
+                        <VerticalStackLayout Spacing="12" Padding="16,8,16,0">
+                            <!-- Header de Categoría -->
+                            <controls:ModernCard>
+                                <VerticalStackLayout Spacing="12">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                                        <!-- Icono de Categoría -->
+                                        <Border Grid.Column="0"
+                                                BackgroundColor="{StaticResource PrimaryColor}"
+                                                StrokeShape="RoundRectangle 8"
+                                                WidthRequest="60"
+                                                HeightRequest="60">
+                                            <Label Text="🍽️" 
+                                                   FontSize="24" 
+                                                   HorizontalOptions="Center"
+                                                   VerticalOptions="Center" />
+                                        </Border>
+                                        
+                                        <!-- Información de Categoría -->
+                                        <VerticalStackLayout Grid.Column="1" Spacing="6">
+                                            <Label Text="{Binding CategoriaNombre, TargetNullValue='Categoría'}" 
+                                                   FontSize="20"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{StaticResource TextPrimary}" />
+                                            <Label Text="Productos de esta categoría" 
+                                                   FontSize="14"
+                                                   TextColor="{StaticResource TextSecondary}" />
+                                            <Label Text="{Binding Estadisticas.TotalProductos, StringFormat='{0} productos disponibles'}" 
+                                                   FontSize="12"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{StaticResource PrimaryColor}" />
+                                        </VerticalStackLayout>
+                                        
+                                        <!-- Estado Badge -->
+                                        <Border Grid.Column="2"
+                                                BackgroundColor="{StaticResource SuccessColor}"
+                                                StrokeShape="RoundRectangle 16"
+                                                Padding="12,6"
+                                                VerticalOptions="Start">
+                                            <Label Text="Activa" 
+                                                   FontSize="12"
+                                                   FontAttributes="Bold"
+                                                   TextColor="White"
+                                                   HorizontalOptions="Center"
+                                                   VerticalOptions="Center" />
+                                        </Border>
+                                    </Grid>
+                                    
+                                    <!-- Botón de Volver -->
+                                    <Button Text="← Volver a Categorías"
+                                            Command="{Binding VolverACategoriasCommand}"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            FontSize="14"
+                                            FontAttributes="Bold"
+                                            HorizontalOptions="Start" />
+                                </VerticalStackLayout>
+                            </controls:ModernCard>
+
+                            <!-- Estadísticas de Productos -->
+                            <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                                <HorizontalStackLayout Spacing="12">
+                                    <controls:ModernCard Padding="16" WidthRequest="120">
+                                        <VerticalStackLayout Spacing="8">
+                                            <Label Text="📦" FontSize="28" HorizontalOptions="Center" />
+                                            <Label Text="Total" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
+                                            <Label Text="{Binding Estadisticas.TotalProductos}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource TextPrimary}" HorizontalOptions="Center" />
+                                        </VerticalStackLayout>
+                                    </controls:ModernCard>
+                                    <controls:ModernCard Padding="16" WidthRequest="120">
+                                        <VerticalStackLayout Spacing="8">
+                                            <Label Text="✅" FontSize="28" HorizontalOptions="Center" />
+                                            <Label Text="Disponibles" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
+                                            <Label Text="{Binding Estadisticas.ProductosDisponibles}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource SuccessColor}" HorizontalOptions="Center" />
+                                        </VerticalStackLayout>
+                                    </controls:ModernCard>
+                                    <controls:ModernCard Padding="16" WidthRequest="120">
+                                        <VerticalStackLayout Spacing="8">
+                                            <Label Text="❌" FontSize="28" HorizontalOptions="Center" />
+                                            <Label Text="Agotados" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
+                                            <Label Text="{Binding Estadisticas.ProductosAgotados}" FontSize="24" FontAttributes="Bold" TextColor="{StaticResource ErrorColor}" HorizontalOptions="Center" />
+                                        </VerticalStackLayout>
+                                    </controls:ModernCard>
+                                </HorizontalStackLayout>
+                            </ScrollView>
+
+                            <!-- Búsqueda y filtros -->
+                            <controls:ModernCard>
+                                <VerticalStackLayout Spacing="16">
+                                    <controls:ModernEntry Placeholder="Buscar productos en esta categoría..." 
+                                                         Text="{Binding TextoBusqueda}" 
+                                                         Icon="🔍" />
+                                    
+                                    <!-- Filtros -->
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                        <HorizontalStackLayout Grid.Column="0" Spacing="12" VerticalOptions="Center">
+                                            <CheckBox IsChecked="{Binding MostrarSoloDisponibles}"
+                                                     CheckedChanged="OnMostrarSoloDisponiblesChanged"/>
+                                            <Label Text="Solo disponibles"
+                                                   Style="{StaticResource BodyStyle}"
+                                                   VerticalOptions="Center"/>
+                                        </HorizontalStackLayout>
+                                        
+                                        <Button Grid.Column="1"
+                                                Text="Filtrar"
+                                                Command="{Binding AplicarFiltrosCommand}"
+                                                Style="{StaticResource PrimaryButtonStyle}" />
+                                    </Grid>
+                                </VerticalStackLayout>
+                            </controls:ModernCard>
+                        </VerticalStackLayout>
+                    </CollectionView.Header>
+                    
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout Orientation="Vertical" 
+                                         Span="{OnIdiom Phone=2, Tablet=3, Desktop=4}" />
+                    </CollectionView.ItemsLayout>
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="dtos:ProductoDto">
+                            <controls:ModernCard Margin="8">
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" 
+                                      ColumnDefinitions="*,Auto">
+                                    
+                                    <!-- Imagen del Producto -->
+                                    <Border Grid.Row="0" Grid.ColumnSpan="2"
+                                            BackgroundColor="{StaticResource SurfaceSecondary}"
+                                            StrokeShape="RoundRectangle 8"
+                                            HeightRequest="120"
+                                            Margin="0,0,0,8">
+                                        <Border.Shadow>
+                                            <Shadow Brush="{StaticResource ShadowColor}" 
+                                                    Offset="0,2" Radius="4" Opacity="0.1" />
+                                        </Border.Shadow>
+                                        
+                                        <!-- Placeholder para imagen -->
+                                        <VerticalStackLayout
+                                                             VerticalOptions="Center"
+                                                             HorizontalOptions="Center">
+                                            <Label Text="📦" 
+                                                   FontSize="32" 
+                                                   HorizontalOptions="Center" />
+                                            <Label Text="Sin imagen" 
+                                                   Style="{StaticResource CaptionStyle}" 
+                                                   HorizontalOptions="Center" />
+                                        </VerticalStackLayout>
+                                    </Border>
+
+                                    <!-- Header de Producto -->
+                                    <StackLayout Grid.Row="1" Grid.Column="0" 
+                                                 Orientation="Horizontal" 
+                                                 VerticalOptions="Center">
+                                        <Label Text="{Binding Nombre}" 
+                                               Style="{StaticResource H3Style}"
+                                               LineBreakMode="TailTruncation" />
+                                    </StackLayout>
+
+                                    <!-- Estado Badge -->
+                                    <Border Grid.Row="1" Grid.Column="1"
+                                            BackgroundColor="{Binding ColorDisponibilidad, Converter={StaticResource StringToColorConverter}}"
+                                            StrokeShape="RoundRectangle 12"
+                                            Padding="8,4">
+                                        <Label Text="{Binding EstadoDisponibilidad}" 
+                                               Style="{StaticResource CaptionStyle}"
+                                               TextColor="White"
+                                               HorizontalOptions="Center" />
+                                    </Border>
+
+                                    <!-- Información de Producto -->
+                                    <VerticalStackLayout Grid.Row="2" Grid.ColumnSpan="2" 
+                                                         Spacing="4" Margin="0,8,0,0">
+                                        <Label Text="{Binding Precio, StringFormat='💰 {0:C}'}" 
+                                               Style="{StaticResource BodyStyle}"
+                                               FontAttributes="Bold" />
+                                        <Label Text="{Binding CantidadDisponible, StringFormat='📦 Stock: {0}'}" 
+                                               Style="{StaticResource CaptionStyle}" />
+                                        <Label Text="{Binding Descripcion, TargetNullValue='Sin descripción'}" 
+                                               Style="{StaticResource CaptionStyle}"
+                                               LineBreakMode="TailTruncation" />
+                                    </VerticalStackLayout>
+
+                                    <!-- Botones de Acción -->
+                                    <ScrollView Grid.Row="3" Grid.ColumnSpan="2"
+                                                Orientation="Horizontal"
+                                                HorizontalScrollBarVisibility="Never"
+                                                Margin="0,12,0,0">
+                                        <HorizontalStackLayout Spacing="8" Padding="0,0,8,0">
+                                            <Button Text="👁️ Ver Detalle"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.VerProductoCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    HorizontalOptions="Start" />
+                                            <Button Text="➕ Agregar a Comanda"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.AgregarAComandaCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    Style="{StaticResource PrimaryButtonStyle}"
+                                                    HorizontalOptions="Start" />
+                                        </HorizontalStackLayout>
+                                    </ScrollView>
+                                </Grid>
+                            </controls:ModernCard>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+
+                    <!-- Estado Vacío -->
+                    <CollectionView.EmptyView>
+                        <ScrollView>
+                            <VerticalStackLayout Spacing="24" 
+                                                 VerticalOptions="Center"
+                                                 HorizontalOptions="Center"
+                                                 Padding="40,60">
+                                <!-- Icono grande -->
+                                <Border BackgroundColor="{StaticResource SurfaceSecondary}"
+                                        StrokeShape="RoundRectangle 50"
+                                        WidthRequest="100"
+                                        HeightRequest="100"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Center">
+                                    <Label Text="📦" 
+                                           FontSize="48" 
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center" />
+                                </Border>
+                                
+                                <!-- Título -->
+                                <Label Text="{Binding MensajeSinProductos}" 
+                                       Style="{StaticResource H2Style}" 
+                                       HorizontalOptions="Center"
+                                       HorizontalTextAlignment="Center" />
+                                
+                                <!-- Descripción -->
+                                <Label Text="Los productos aparecerán aquí cuando estén disponibles" 
+                                       Style="{StaticResource BodyStyle}" 
+                                       TextColor="{StaticResource TextSecondary}" 
+                                       HorizontalOptions="Center"
+                                       HorizontalTextAlignment="Center" />
+                                
+                                <!-- Botones de acción -->
+                                <VerticalStackLayout Spacing="12" Margin="0,16,0,0">
+                                    <Button Text="🔄 Actualizar"
+                                            Command="{Binding CargarProductosCommand}"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            HorizontalOptions="Center" />
+                                    
+                                    <Button Text="← Volver a Categorías"
+                                            Command="{Binding VolverACategoriasCommand}"
+                                            Style="{StaticResource PrimaryButtonStyle}"
+                                            HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </VerticalStackLayout>
+                        </ScrollView>
+                    </CollectionView.EmptyView>
+                </CollectionView>
+            </RefreshView>
+        </Grid>
+
+        <!-- Indicador de carga -->
+        <ActivityIndicator IsRunning="{Binding IsBusy}"
+                          IsVisible="{Binding IsBusy}"
+                          HorizontalOptions="Center"
+                          VerticalOptions="Center"
+                          Color="{StaticResource PrimaryColor}" />
+
+        <!-- Mensaje de error -->
+        <Border IsVisible="{Binding HasError}"
+                BackgroundColor="{StaticResource ErrorColor}"
+                StrokeShape="RoundRectangle 10"
+                Margin="16"
+                Padding="16">
+            <Label Text="{Binding ErrorMessage}"
+                   Style="{StaticResource BodyStyle}"
+                   TextColor="White"
+                   HorizontalOptions="Center" />
+        </Border>
+    </Grid>
+
+</ContentPage>

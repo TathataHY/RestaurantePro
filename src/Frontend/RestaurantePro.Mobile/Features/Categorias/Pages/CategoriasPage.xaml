@@ -1,179 +1,198 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage x:Class="RestaurantePro.Mobile.Features.Categorias.Pages.CategoriasPage"
-             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
              xmlns:viewmodels="clr-namespace:RestaurantePro.Mobile.Core.Features.Categorias.ViewModels;assembly=RestaurantePro.Mobile.Core"
              xmlns:dtos="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
+             x:Class="RestaurantePro.Mobile.Features.Categorias.Pages.CategoriasPage"
              x:DataType="viewmodels:CategoriasViewModel"
              Title="Categorías"
-             BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}">
+             BackgroundColor="{StaticResource SurfacePrimary}">
 
-    <Grid RowDefinitions="Auto,*,Auto">
-        
-        <!-- Header con estadísticas -->
-        <Border Grid.Row="0" 
-                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
-                StrokeShape="RoundRectangle 10"
-                Margin="10,10,10,5">
-            <Grid ColumnDefinitions="*,*,*" Padding="15">
-                <VerticalStackLayout Grid.Column="0" HorizontalOptions="Center">
-                    <Label Text="Total" 
-                           TextColor="White" 
-                           FontSize="12" 
-                           HorizontalOptions="Center"/>
-                    <Label Text="{Binding TotalCategorias}" 
-                           TextColor="White" 
-                           FontSize="20" 
-                           FontAttributes="Bold"
-                           HorizontalOptions="Center"/>
-                </VerticalStackLayout>
+    <Grid RowDefinitions="*">
+        <!-- Contenido Principal -->
+        <Grid Grid.Row="0">
+            <!-- Grid de Categorías -->
+            <RefreshView Grid.Row="1"
+                         IsRefreshing="{Binding EstaRefrescando}"
+                         Command="{Binding RefrescarCommand}">
                 
-                <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center">
-                    <Label Text="Activas" 
-                           TextColor="White" 
-                           FontSize="12" 
-                           HorizontalOptions="Center"/>
-                    <Label Text="{Binding CategoriasActivas}" 
-                           TextColor="White" 
-                           FontSize="20" 
-                           FontAttributes="Bold"
-                           HorizontalOptions="Center"/>
-                </VerticalStackLayout>
-                
-                <VerticalStackLayout Grid.Column="2" HorizontalOptions="Center">
-                    <Label Text="Inactivas" 
-                           TextColor="White" 
-                           FontSize="12" 
-                           HorizontalOptions="Center"/>
-                    <Label Text="{Binding CategoriasInactivas}" 
-                           TextColor="White" 
-                           FontSize="20" 
-                           FontAttributes="Bold"
-                           HorizontalOptions="Center"/>
-                </VerticalStackLayout>
-            </Grid>
-        </Border>
-
-        <!-- Contenido principal -->
-        <RefreshView Grid.Row="1" 
-                     IsRefreshing="{Binding EstaRefrescando}"
-                     Command="{Binding RefrescarCommand}">
-            <ScrollView>
-                <VerticalStackLayout Spacing="10" Padding="10">
+                <CollectionView ItemsSource="{Binding Categorias}"
+                               SelectionMode="None">
                     
-                    <!-- Filtros -->
-                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                            StrokeShape="RoundRectangle 10"
-                            Padding="15">
-                        <VerticalStackLayout Spacing="10">
-                            
-                            <!-- Búsqueda -->
-                            <Frame BackgroundColor="Transparent" 
-                                   BorderColor="Transparent" 
-                                   Padding="0">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <Entry Grid.Column="0"
-                                           Placeholder="Buscar categorías..."
-                                           Text="{Binding FiltroBusqueda}"
-                                           ReturnCommand="{Binding BuscarCategoriasCommand}"/>
-                                    <Button Grid.Column="1"
-                                            Text="Buscar"
-                                            Command="{Binding BuscarCategoriasCommand}"
-                                            Margin="5,0,0,0"/>
-                                </Grid>
-                            </Frame>
-                            
-                            <!-- Filtro de activas -->
-                            <HorizontalStackLayout>
-                                <CheckBox IsChecked="{Binding MostrarSoloActivas}"
-                                         CheckedChanged="OnMostrarSoloActivasChanged"/>
-                                <Label Text="Solo categorías activas"
-                                       VerticalOptions="Center"
-                                       Margin="5,0,0,0"/>
-                            </HorizontalStackLayout>
-                        </VerticalStackLayout>
-                    </Border>
-
-                    <!-- Lista de categorías -->
-                    <CollectionView ItemsSource="{Binding Categorias}"
-                                  SelectionMode="Single"
-                                  SelectedItem="{Binding CategoriaSeleccionada}">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="dtos:CategoriaProductoDto">
-                                <Border BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
-                                        StrokeShape="RoundRectangle 10"
-                                        Margin="0,0,0,10"
-                                        Padding="15">
-                                    <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
-                                        
-                                        <!-- Información principal -->
-                                        <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="5">
-                                            <Label Text="{Binding Nombre}"
-                                                   FontSize="18"
-                                                   FontAttributes="Bold"
-                                                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
-                                            
-                                            <Label Text="{Binding Descripcion}"
-                                                   FontSize="14"
-                                                   TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"
-                                                   LineBreakMode="TailTruncation"/>
-                                            
-                                            <HorizontalStackLayout Spacing="10">
-                                                <Label Text="{Binding TotalProductos, StringFormat='{0} productos'}"
-                                                       FontSize="12"
-                                                       TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"/>
-                                                
-                                                <Label Text="{Binding Estado, StringFormat='Estado: {0}'}"
-                                                       FontSize="12"
-                                                       TextColor="{AppThemeBinding Light={StaticResource Gray500}, Dark={StaticResource Gray400}}"/>
-                                            </HorizontalStackLayout>
+                    <CollectionView.Header>
+                        <VerticalStackLayout Spacing="12" Padding="16,8,16,0">
+                            <!-- Estadísticas -->
+                            <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                                <HorizontalStackLayout Spacing="12">
+                                    <controls:ModernCard Padding="16" WidthRequest="120">
+                                        <VerticalStackLayout Spacing="8">
+                                            <Label Text="🏷️" FontSize="24" HorizontalOptions="Center" />
+                                            <Label Text="Total" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                                            <Label Text="{Binding TotalCategorias}" Style="{StaticResource H2Style}" TextColor="{StaticResource TextPrimary}" HorizontalOptions="Center" />
                                         </VerticalStackLayout>
-                                        
-                                        <!-- Indicador de estado -->
-                                        <Border Grid.Row="0" Grid.Column="1"
-                                                BackgroundColor="{Binding Activa, Converter={StaticResource BoolToColorConverter}}"
-                                                StrokeShape="RoundRectangle 5"
-                                                WidthRequest="20"
-                                                HeightRequest="20"
-                                                VerticalOptions="Center"/>
-                                        
-                                        <!-- Acciones -->
-                                        <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
-                                                             Spacing="10" 
-                                                             Margin="0,10,0,0">
-                                            <Button Text="Ver Productos"
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:CategoriasViewModel}}, Path=SeleccionarCategoriaCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
-                                                    TextColor="White"
-                                                    CornerRadius="20"/>
+                                    </controls:ModernCard>
+                                    <controls:ModernCard Padding="16" WidthRequest="120">
+                                        <VerticalStackLayout Spacing="8">
+                                            <Label Text="✅" FontSize="24" HorizontalOptions="Center" />
+                                            <Label Text="Activas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                                            <Label Text="{Binding CategoriasActivas}" Style="{StaticResource H2Style}" TextColor="{StaticResource SuccessColor}" HorizontalOptions="Center" />
+                                        </VerticalStackLayout>
+                                    </controls:ModernCard>
+                                    <controls:ModernCard Padding="16" WidthRequest="120">
+                                        <VerticalStackLayout Spacing="8">
+                                            <Label Text="❌" FontSize="24" HorizontalOptions="Center" />
+                                            <Label Text="Inactivas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                                            <Label Text="{Binding CategoriasInactivas}" Style="{StaticResource H2Style}" TextColor="{StaticResource ErrorColor}" HorizontalOptions="Center" />
+                                        </VerticalStackLayout>
+                                    </controls:ModernCard>
+                                </HorizontalStackLayout>
+                            </ScrollView>
+
+                            <!-- Búsqueda y filtros -->
+                            <controls:ModernCard>
+                                <VerticalStackLayout Spacing="16">
+                                    <controls:ModernEntry Placeholder="Buscar categorías..." 
+                                                         Text="{Binding FiltroBusqueda}" 
+                                                         Icon="🔍" />
+                                    
+                                    <!-- Filtros -->
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                        <HorizontalStackLayout Grid.Column="0" Spacing="12" VerticalOptions="Center">
+                                            <CheckBox IsChecked="{Binding MostrarSoloActivas}"
+                                                     CheckedChanged="OnMostrarSoloActivasChanged"/>
+                                            <Label Text="Solo categorías activas"
+                                                   Style="{StaticResource BodyStyle}"
+                                                   VerticalOptions="Center"/>
                                         </HorizontalStackLayout>
+                                        
+                                        <Button Grid.Column="1"
+                                                Text="Buscar"
+                                                Command="{Binding BuscarCategoriasCommand}"
+                                                Style="{StaticResource PrimaryButtonStyle}" />
                                     </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-                </VerticalStackLayout>
-            </ScrollView>
-        </RefreshView>
+                                </VerticalStackLayout>
+                            </controls:ModernCard>
+                        </VerticalStackLayout>
+                    </CollectionView.Header>
+                    
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout Orientation="Vertical" 
+                                         Span="{OnIdiom Phone=2, Tablet=3, Desktop=4}" />
+                    </CollectionView.ItemsLayout>
+
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="dtos:CategoriaProductoDto">
+                            <controls:ModernCard Margin="8">
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" 
+                                      ColumnDefinitions="*,Auto">
+                                    
+                                    <!-- Icono de Categoría -->
+                                    <Border Grid.Row="0" Grid.ColumnSpan="2"
+                                            BackgroundColor="{StaticResource SurfaceSecondary}"
+                                            StrokeShape="RoundRectangle 8"
+                                            HeightRequest="80"
+                                            Margin="0,0,0,8">
+                                        <Border.Shadow>
+                                            <Shadow Brush="{StaticResource ShadowColor}" 
+                                                    Offset="0,2" Radius="4" Opacity="0.1" />
+                                        </Border.Shadow>
+                                        
+                                        <Label Text="{Binding Icono, TargetNullValue='🍽️'}" 
+                                               FontSize="32" 
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center" />
+                                    </Border>
+
+                                    <!-- Header de Categoría -->
+                                    <StackLayout Grid.Row="1" Grid.Column="0" 
+                                                 Orientation="Horizontal" 
+                                                 VerticalOptions="Center">
+                                        <Label Text="{Binding Nombre}" 
+                                               Style="{StaticResource H3Style}"
+                                               LineBreakMode="TailTruncation" />
+                                    </StackLayout>
+
+                                    <!-- Estado Badge -->
+                                    <Border Grid.Row="1" Grid.Column="1"
+                                            BackgroundColor="{Binding Activa, Converter={StaticResource BoolToColorConverter}}"
+                                            StrokeShape="RoundRectangle 12"
+                                            Padding="8,4">
+                                        <Label Text="{Binding Activa, Converter={StaticResource BoolToTextConverter}}" 
+                                               Style="{StaticResource CaptionStyle}"
+                                               TextColor="White"
+                                               HorizontalOptions="Center" />
+                                    </Border>
+
+                                    <!-- Información de Categoría -->
+                                    <VerticalStackLayout Grid.Row="2" Grid.ColumnSpan="2" 
+                                                         Spacing="4" Margin="0,8,0,0">
+                                        <Label Text="{Binding Descripcion, TargetNullValue='Sin descripción'}" 
+                                               Style="{StaticResource BodyStyle}"
+                                               LineBreakMode="TailTruncation" />
+                                        <Label Text="{Binding CantidadProductos, StringFormat='📦 {0} productos'}" 
+                                               Style="{StaticResource CaptionStyle}" />
+                                        <Label Text="{Binding ProductosDisponibles, StringFormat='✅ {0} disponibles'}" 
+                                               Style="{StaticResource CaptionStyle}" />
+                                    </VerticalStackLayout>
+
+                                    <!-- Botones de Acción -->
+                                    <ScrollView Grid.Row="3" Grid.ColumnSpan="2"
+                                                Orientation="Horizontal"
+                                                HorizontalScrollBarVisibility="Never"
+                                                Margin="0,12,0,0">
+                                        <HorizontalStackLayout Spacing="8" Padding="0,0,8,0">
+                                            <Button Text="👁️ Ver Productos"
+                                                    Clicked="OnVerProductosClicked"
+                                                    Style="{StaticResource SecondaryButtonStyle}"
+                                                    HorizontalOptions="Start" />
+                                        </HorizontalStackLayout>
+                                    </ScrollView>
+                                </Grid>
+                            </controls:ModernCard>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+
+                    <!-- Estado Vacío -->
+                    <CollectionView.EmptyView>
+                        <VerticalStackLayout Spacing="16" 
+                                             VerticalOptions="Center"
+                                             HorizontalOptions="Center"
+                                             Padding="32">
+                            <Label Text="🏷️" 
+                                   FontSize="64" 
+                                   HorizontalOptions="Center" />
+                            <Label Text="No hay categorías disponibles" 
+                                   Style="{StaticResource H2Style}" 
+                                   HorizontalOptions="Center" />
+                            <Label Text="Las categorías aparecerán aquí cuando estén configuradas" 
+                                   Style="{StaticResource BodyStyle}" 
+                                   TextColor="{StaticResource TextSecondary}" 
+                                   HorizontalOptions="Center" />
+                        </VerticalStackLayout>
+                    </CollectionView.EmptyView>
+                </CollectionView>
+            </RefreshView>
+        </Grid>
 
         <!-- Indicador de carga -->
-        <ActivityIndicator Grid.Row="1"
-                          IsRunning="{Binding IsBusy}"
+        <ActivityIndicator IsRunning="{Binding IsBusy}"
                           IsVisible="{Binding IsBusy}"
                           HorizontalOptions="Center"
-                          VerticalOptions="Center"/>
+                          VerticalOptions="Center"
+                          Color="{StaticResource PrimaryColor}" />
 
         <!-- Mensaje de error -->
-        <Border Grid.Row="2"
-                IsVisible="{Binding HasError}"
-                BackgroundColor="{AppThemeBinding Light={StaticResource Red100}, Dark={StaticResource Red900}}"
+        <Border IsVisible="{Binding HasError}"
+                BackgroundColor="{StaticResource ErrorColor}"
                 StrokeShape="RoundRectangle 10"
-                Margin="10,5,10,10">
+                Margin="16"
+                Padding="16">
             <Label Text="{Binding ErrorMessage}"
-                   TextColor="{AppThemeBinding Light={StaticResource Red600}, Dark={StaticResource Red300}}"
-                   HorizontalOptions="Center"
-                   Padding="15"/>
+                   Style="{StaticResource BodyStyle}"
+                   TextColor="White"
+                   HorizontalOptions="Center" />
         </Border>
     </Grid>
+
 </ContentPage> 

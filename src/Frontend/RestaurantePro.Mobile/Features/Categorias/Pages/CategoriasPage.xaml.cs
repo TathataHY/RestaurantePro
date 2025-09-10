@@ -27,4 +27,25 @@ public partial class CategoriasPage : ContentPage
         // El ViewModel maneja la lógica del filtro
         // Este método solo existe para satisfacer el binding del XAML
     }
+
+    /// <summary>
+    /// Maneja el clic en el botón "Ver Productos"
+    /// </summary>
+    private async void OnVerProductosClicked(object sender, EventArgs e)
+    {
+        try
+        {
+            // Obtener el contexto de datos del botón (la categoría)
+            if (sender is Button button && button.BindingContext is RestaurantePro.Mobile.Core.Models.DTOs.CategoriaProductoDto categoria)
+            {
+                // Llamar al comando del ViewModel
+                await _viewModel.SeleccionarCategoriaCommand.ExecuteAsync(categoria);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Manejar errores de navegación
+            await DisplayAlert("Error", $"No se pudo navegar a los productos: {ex.Message}", "OK");
+        }
+    }
 } 
