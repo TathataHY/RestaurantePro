@@ -1,233 +1,260 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<ContentPage x:Class="RestaurantePro.Mobile.Features.Analytics.Pages.AnalyticsPage"
-             xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
              xmlns:viewmodels="clr-namespace:RestaurantePro.Mobile.Core.Features.Analytics.ViewModels;assembly=RestaurantePro.Mobile.Core"
              xmlns:dtos="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
+             x:Class="RestaurantePro.Mobile.Features.Analytics.Pages.AnalyticsPage"
              x:DataType="viewmodels:AnalyticsViewModel"
              Title="Analytics"
-             BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Black}}">
+             BackgroundColor="{StaticResource SurfacePrimary}">
 
-    <Grid RowDefinitions="Auto,*,Auto">
-        
-        <!-- Header con filtros -->
-        <Border Grid.Row="0" 
-                BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource Primary}}"
-                StrokeShape="RoundRectangle 10"
-                Margin="10,10,10,5">
-            <VerticalStackLayout Padding="15" Spacing="10">
-                
-                <!-- Filtro de período -->
-                <HorizontalStackLayout>
-                    <Label Text="Período:" 
-                           TextColor="White" 
-                           VerticalOptions="Center"
-                           Margin="0,0,10,0"/>
-                    <Picker Title="Seleccionar período"
-                            SelectedItem="{Binding FiltroPeriodo}"
-                            SelectedIndexChanged="OnPeriodoChanged">
-                        <Picker.Items>
-                            <x:String>Hoy</x:String>
-                            <x:String>Esta Semana</x:String>
-                            <x:String>Este Mes</x:String>
-                            <x:String>Personalizado</x:String>
-                        </Picker.Items>
-                    </Picker>
-                </HorizontalStackLayout>
-                
-                <!-- Fechas personalizadas -->
-                <Grid ColumnDefinitions="*,*" IsVisible="{Binding FiltroPeriodo, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter=Personalizado}">
-                    <DatePicker Grid.Column="0" 
-                                Date="{Binding FechaDesde}"
-                                TextColor="White"/>
-                    <DatePicker Grid.Column="1" 
-                                Date="{Binding FechaHasta}"
-                                TextColor="White"/>
-                </Grid>
-            </VerticalStackLayout>
-        </Border>
-
-        <!-- Contenido principal -->
-        <RefreshView Grid.Row="1" 
+    <Grid RowDefinitions="*">
+        <!-- Contenido Principal -->
+        <RefreshView Grid.Row="0"
                      IsRefreshing="{Binding EstaRefrescando}"
                      Command="{Binding RefrescarCommand}">
+            
             <ScrollView>
-                <VerticalStackLayout Spacing="15" Padding="10">
+                <VerticalStackLayout Spacing="12" Padding="16,8,16,16">
                     
-                    <!-- Métricas del día -->
-                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
-                            StrokeShape="RoundRectangle 10"
-                            Padding="15"
-                            IsVisible="{Binding MetricasDia, Converter={StaticResource IsNotNullConverter}}">
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="Métricas del Día" 
-                                   FontSize="18" 
-                                   FontAttributes="Bold"
-                                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
+                    <!-- Filtros de Período -->
+                    <controls:ModernCard>
+                        <VerticalStackLayout Spacing="16">
+                            <Label Text="📊 Filtros de Período" 
+                                   Style="{StaticResource H3Style}"
+                                   TextColor="{StaticResource TextPrimary}" />
                             
-                            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto">
-                                <VerticalStackLayout Grid.Row="0" Grid.Column="0" HorizontalOptions="Center">
-                                    <Label Text="Ventas" FontSize="12" HorizontalOptions="Center"/>
-                                    <Label Text="{Binding MetricasDia.TotalVentas, StringFormat='${0:N2}'}" 
-                                           FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
-                                </VerticalStackLayout>
-                                
-                                <VerticalStackLayout Grid.Row="0" Grid.Column="1" HorizontalOptions="Center">
-                                    <Label Text="Comandas" FontSize="12" HorizontalOptions="Center"/>
-                                    <Label Text="{Binding MetricasDia.TotalComandas}" 
-                                           FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
-                                </VerticalStackLayout>
-                                
-                                <VerticalStackLayout Grid.Row="0" Grid.Column="2" HorizontalOptions="Center">
-                                    <Label Text="Clientes" FontSize="12" HorizontalOptions="Center"/>
-                                    <Label Text="{Binding MetricasDia.ClientesAtendidos}" 
-                                           FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
-                                </VerticalStackLayout>
-                                
-                                <VerticalStackLayout Grid.Row="1" Grid.Column="0" HorizontalOptions="Center">
-                                    <Label Text="Ocupación" FontSize="12" HorizontalOptions="Center"/>
-                                    <Label Text="{Binding MetricasDia.PorcentajeOcupacionMesas, StringFormat='{0:N1}%'}" 
-                                           FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
-                                </VerticalStackLayout>
-                                
-                                <VerticalStackLayout Grid.Row="1" Grid.Column="1" HorizontalOptions="Center">
-                                    <Label Text="Tiempo Prep." FontSize="12" HorizontalOptions="Center"/>
-                                    <Label Text="{Binding MetricasDia.TiempoPromedioPreparacion, StringFormat='{0} min'}" 
-                                           FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
-                                </VerticalStackLayout>
-                                
-                                <VerticalStackLayout Grid.Row="1" Grid.Column="2" HorizontalOptions="Center">
-                                    <Label Text="Productos" FontSize="12" HorizontalOptions="Center"/>
-                                    <Label Text="{Binding MetricasDia.TotalProductosVendidos}" 
-                                           FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
-                                </VerticalStackLayout>
+                            <!-- Filtro de período -->
+                            <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
+                                <Label Text="Período:" 
+                                       Style="{StaticResource BodyStyle}"
+                                       VerticalOptions="Center" />
+                                <Picker Title="Seleccionar período"
+                                        SelectedItem="{Binding FiltroPeriodo}"
+                                        SelectedIndexChanged="OnPeriodoChanged"
+                                        HorizontalOptions="FillAndExpand">
+                                    <Picker.Items>
+                                        <x:String>Hoy</x:String>
+                                        <x:String>Esta Semana</x:String>
+                                        <x:String>Este Mes</x:String>
+                                        <x:String>Personalizado</x:String>
+                                    </Picker.Items>
+                                </Picker>
+                            </HorizontalStackLayout>
+                            
+                            <!-- Fechas personalizadas -->
+                            <Grid ColumnDefinitions="*,*" 
+                                  ColumnSpacing="12"
+                                  IsVisible="{Binding FiltroPeriodo, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter=Personalizado}">
+                                <DatePicker Grid.Column="0" 
+                                            Date="{Binding FechaDesde}" />
+                                <DatePicker Grid.Column="1" 
+                                            Date="{Binding FechaHasta}" />
                             </Grid>
                         </VerticalStackLayout>
-                    </Border>
+                    </controls:ModernCard>
+
+                    <!-- Estadísticas Principales -->
+                    <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                        <HorizontalStackLayout Spacing="12">
+                            <controls:ModernCard Padding="16" WidthRequest="140">
+                                <VerticalStackLayout Spacing="8">
+                                    <Label Text="💰" FontSize="28" HorizontalOptions="Center" />
+                                    <Label Text="Ventas" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
+                                    <Label Text="{Binding MetricasDia.TotalVentas, StringFormat='${0:N2}'}" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource SuccessColor}" HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </controls:ModernCard>
+                            <controls:ModernCard Padding="16" WidthRequest="140">
+                                <VerticalStackLayout Spacing="8">
+                                    <Label Text="🍽️" FontSize="28" HorizontalOptions="Center" />
+                                    <Label Text="Comandas" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
+                                    <Label Text="{Binding MetricasDia.TotalComandas}" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </controls:ModernCard>
+                            <controls:ModernCard Padding="16" WidthRequest="140">
+                                <VerticalStackLayout Spacing="8">
+                                    <Label Text="👥" FontSize="28" HorizontalOptions="Center" />
+                                    <Label Text="Clientes" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
+                                    <Label Text="{Binding MetricasDia.ClientesAtendidos}" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource WarningColor}" HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </controls:ModernCard>
+                            <controls:ModernCard Padding="16" WidthRequest="140">
+                                <VerticalStackLayout Spacing="8">
+                                    <Label Text="📊" FontSize="28" HorizontalOptions="Center" />
+                                    <Label Text="Ocupación" FontSize="12" FontAttributes="Bold" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
+                                    <Label Text="{Binding MetricasDia.PorcentajeOcupacionMesas, StringFormat='{0:N1}%'}" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource InfoColor}" HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </controls:ModernCard>
+                        </HorizontalStackLayout>
+                    </ScrollView>
+
+                    <!-- Métricas Adicionales -->
+                    <controls:ModernCard>
+                        <VerticalStackLayout Spacing="16">
+                            <Label Text="📈 Métricas del Día" 
+                                   Style="{StaticResource H3Style}"
+                                   TextColor="{StaticResource TextPrimary}" />
+                            
+                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
+                                <controls:ModernCard Grid.Row="0" Grid.Column="0" Padding="12">
+                                    <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
+                                        <Label Text="⏱️" FontSize="20" HorizontalOptions="Center" />
+                                        <Label Text="Tiempo Prep." FontSize="11" FontAttributes="Bold" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
+                                        <Label Text="{Binding MetricasDia.TiempoPromedioPreparacion, StringFormat='{0} min'}" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource WarningColor}" HorizontalOptions="Center" />
+                                    </VerticalStackLayout>
+                                </controls:ModernCard>
+                                
+                                <controls:ModernCard Grid.Row="0" Grid.Column="1" Padding="12">
+                                    <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
+                                        <Label Text="📦" FontSize="20" HorizontalOptions="Center" />
+                                        <Label Text="Productos" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
+                                        <Label Text="{Binding MetricasDia.TotalProductosVendidos}" FontSize="16" FontAttributes="Bold" TextColor="{StaticResource InfoColor}" HorizontalOptions="Center" />
+                                    </VerticalStackLayout>
+                                </controls:ModernCard>
+                            </Grid>
+                        </VerticalStackLayout>
+                    </controls:ModernCard>
 
                     <!-- Top Productos -->
-                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
-                            StrokeShape="RoundRectangle 10"
-                            Padding="15">
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="Top Productos" 
-                                   FontSize="18" 
-                                   FontAttributes="Bold"
-                                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
+                    <controls:ModernCard>
+                        <VerticalStackLayout Spacing="16">
+                            <Label Text="🏆 Top Productos" 
+                                   Style="{StaticResource H3Style}"
+                                   TextColor="{StaticResource TextPrimary}" />
                             
                             <CollectionView ItemsSource="{Binding TopProductos}"
                                           HeightRequest="200">
                                 <CollectionView.ItemTemplate>
                                     <DataTemplate x:DataType="dtos:TopProductoDto">
-                                        <Grid ColumnDefinitions="Auto,*,Auto" Padding="5">
-                                            <Label Grid.Column="0" 
-                                                   Text="{Binding Posicion, StringFormat='#{0}'}"
-                                                   FontSize="14"
-                                                   FontAttributes="Bold"
-                                                   VerticalOptions="Center"
-                                                   Margin="0,0,10,0"/>
-                                            
-                                            <VerticalStackLayout Grid.Column="1" Spacing="2">
-                                                <Label Text="{Binding NombreProducto}"
-                                                       FontSize="14"
-                                                       FontAttributes="Bold"/>
-                                                <Label Text="{Binding CantidadVendida, StringFormat='{0} unidades vendidas'}"
-                                                       FontSize="12"
-                                                       TextColor="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray300}}"/>
-                                            </VerticalStackLayout>
-                                            
-                                            <Label Grid.Column="2" 
-                                                   Text="{Binding TotalVentas, StringFormat='${0:N2}'}"
-                                                   FontSize="14"
-                                                   FontAttributes="Bold"
-                                                   VerticalOptions="Center"/>
-                                        </Grid>
+                                        <controls:ModernCard Margin="0,4">
+                                            <Grid ColumnDefinitions="Auto,*,Auto" Padding="12" ColumnSpacing="12">
+                                                <!-- Posición -->
+                                                <Border Grid.Column="0"
+                                                        BackgroundColor="{StaticResource PrimaryColor}"
+                                                        StrokeShape="RoundRectangle 12"
+                                                        WidthRequest="24"
+                                                        HeightRequest="24">
+                                                    <Label Text="{Binding CantidadVendida, StringFormat='{0}'}"
+                                                           FontSize="12"
+                                                           FontAttributes="Bold"
+                                                           TextColor="White"
+                                                           HorizontalOptions="Center"
+                                                           VerticalOptions="Center"/>
+                                                </Border>
+                                                
+                                                <!-- Información del producto -->
+                                                <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
+                                                    <Label Text="{Binding NombreProducto}"
+                                                           Style="{StaticResource BodyStyle}"
+                                                           FontAttributes="Bold"
+                                                           LineBreakMode="TailTruncation"/>
+                                                    <Label Text="{Binding CantidadVendida, StringFormat='{0} unidades vendidas'}"
+                                                           Style="{StaticResource CaptionStyle}"
+                                                           TextColor="{StaticResource TextSecondary}"/>
+                                                </VerticalStackLayout>
+                                                
+                                                <!-- Total de ventas -->
+                                                <VerticalStackLayout Grid.Column="2" VerticalOptions="Center">
+                                                    <Label Text="{Binding TotalVentas, StringFormat='${0:N2}'}"
+                                                           Style="{StaticResource BodyStyle}"
+                                                           FontAttributes="Bold"
+                                                           TextColor="{StaticResource SuccessColor}"
+                                                           HorizontalOptions="End"/>
+                                                </VerticalStackLayout>
+                                            </Grid>
+                                        </controls:ModernCard>
                                     </DataTemplate>
                                 </CollectionView.ItemTemplate>
                             </CollectionView>
                         </VerticalStackLayout>
-                    </Border>
+                    </controls:ModernCard>
 
                     <!-- Ocupación de Mesas -->
-                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
-                            StrokeShape="RoundRectangle 10"
-                            Padding="15"
-                            IsVisible="{Binding OcupacionMesas, Converter={StaticResource IsNotNullConverter}}">
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="Ocupación de Mesas" 
-                                   FontSize="18" 
-                                   FontAttributes="Bold"
-                                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
+                    <controls:ModernCard IsVisible="{Binding OcupacionMesas, Converter={StaticResource IsNotNullConverter}}">
+                        <VerticalStackLayout Spacing="16">
+                            <Label Text="🏠 Ocupación de Mesas" 
+                                   Style="{StaticResource H3Style}"
+                                   TextColor="{StaticResource TextPrimary}" />
                             
-                            <Grid ColumnDefinitions="*,*,*">
-                                <VerticalStackLayout Grid.Column="0" HorizontalOptions="Center">
-                                    <Label Text="Libres" FontSize="12" HorizontalOptions="Center"/>
-                                    <Label Text="{Binding OcupacionMesas.MesasDisponibles}" 
-                                           FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
-                                </VerticalStackLayout>
+                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                                <controls:ModernCard Padding="12">
+                                    <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
+                                        <Label Text="✅" FontSize="20" HorizontalOptions="Center" />
+                                        <Label Text="Libres" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
+                                        <Label Text="{Binding OcupacionMesas.MesasLibres}" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource SuccessColor}" HorizontalOptions="Center" />
+                                    </VerticalStackLayout>
+                                </controls:ModernCard>
                                 
-                                <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center">
-                                    <Label Text="Ocupadas" FontSize="12" HorizontalOptions="Center"/>
-                                    <Label Text="{Binding OcupacionMesas.MesasOcupadas}" 
-                                           FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
-                                </VerticalStackLayout>
+                                <controls:ModernCard Padding="12">
+                                    <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
+                                        <Label Text="👥" FontSize="20" HorizontalOptions="Center" />
+                                        <Label Text="Ocupadas" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
+                                        <Label Text="{Binding OcupacionMesas.MesasOcupadas}" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource WarningColor}" HorizontalOptions="Center" />
+                                    </VerticalStackLayout>
+                                </controls:ModernCard>
                                 
-                                <VerticalStackLayout Grid.Column="2" HorizontalOptions="Center">
-                                    <Label Text="Reservadas" FontSize="12" HorizontalOptions="Center"/>
-                                    <Label Text="{Binding OcupacionMesas.MesasReservadas}" 
-                                           FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
-                                </VerticalStackLayout>
+                                <controls:ModernCard Padding="12">
+                                    <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
+                                        <Label Text="📅" FontSize="20" HorizontalOptions="Center" />
+                                        <Label Text="Reservadas" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
+                                        <Label Text="{Binding OcupacionMesas.MesasReservadas}" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
+                                    </VerticalStackLayout>
+                                </controls:ModernCard>
                             </Grid>
                         </VerticalStackLayout>
-                    </Border>
+                    </controls:ModernCard>
 
                     <!-- Tiempo de Preparación -->
-                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
-                            StrokeShape="RoundRectangle 10"
-                            Padding="15"
-                            IsVisible="{Binding TiempoPreparacion, Converter={StaticResource IsNotNullConverter}}">
-                        <VerticalStackLayout Spacing="10">
-                            <Label Text="Tiempo de Preparación" 
-                                   FontSize="18" 
-                                   FontAttributes="Bold"
-                                   TextColor="{AppThemeBinding Light={StaticResource Black}, Dark={StaticResource White}}"/>
+                    <controls:ModernCard IsVisible="{Binding TiempoPreparacion, Converter={StaticResource IsNotNullConverter}}">
+                        <VerticalStackLayout Spacing="16">
+                            <Label Text="⏱️ Tiempo de Preparación" 
+                                   Style="{StaticResource H3Style}"
+                                   TextColor="{StaticResource TextPrimary}" />
                             
-                            <Grid ColumnDefinitions="*,*">
-                                <VerticalStackLayout Grid.Column="0" HorizontalOptions="Center">
-                                    <Label Text="Promedio" FontSize="12" HorizontalOptions="Center"/>
-                                    <Label Text="{Binding TiempoPreparacion.TiempoPromedioMinutos, StringFormat='{0} min'}" 
-                                           FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
-                                </VerticalStackLayout>
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                                <controls:ModernCard Padding="12">
+                                    <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
+                                        <Label Text="📊" FontSize="20" HorizontalOptions="Center" />
+                                        <Label Text="Promedio" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
+                                        <Label Text="{Binding TiempoPreparacion.TiempoPromedioMinutos, StringFormat='{0} min'}" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource InfoColor}" HorizontalOptions="Center" />
+                                    </VerticalStackLayout>
+                                </controls:ModernCard>
                                 
-                                <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center">
-                                    <Label Text="Máximo" FontSize="12" HorizontalOptions="Center"/>
-                                    <Label Text="{Binding TiempoPreparacion.TiempoMaximoMinutos, StringFormat='{0} min'}" 
-                                           FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
-                                </VerticalStackLayout>
+                                <controls:ModernCard Padding="12">
+                                    <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
+                                        <Label Text="⏰" FontSize="20" HorizontalOptions="Center" />
+                                        <Label Text="Máximo" FontSize="11" FontAttributes="Bold" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
+                                        <Label Text="{Binding TiempoPreparacion.TiempoMaximoMinutos, StringFormat='{0} min'}" FontSize="18" FontAttributes="Bold" TextColor="{StaticResource WarningColor}" HorizontalOptions="Center" />
+                                    </VerticalStackLayout>
+                                </controls:ModernCard>
                             </Grid>
                         </VerticalStackLayout>
-                    </Border>
+                    </controls:ModernCard>
+
                 </VerticalStackLayout>
             </ScrollView>
         </RefreshView>
 
         <!-- Indicador de carga -->
-        <ActivityIndicator Grid.Row="1"
-                          IsRunning="{Binding IsBusy}"
+        <ActivityIndicator IsRunning="{Binding IsBusy}"
                           IsVisible="{Binding IsBusy}"
                           HorizontalOptions="Center"
-                          VerticalOptions="Center"/>
+                          VerticalOptions="Center"
+                          Color="{StaticResource PrimaryColor}" />
 
         <!-- Mensaje de error -->
-        <Border Grid.Row="2"
-                IsVisible="{Binding HasError}"
-                BackgroundColor="{AppThemeBinding Light={StaticResource Red100}, Dark={StaticResource Red900}}"
+        <Border IsVisible="{Binding HasError}"
+                BackgroundColor="{StaticResource ErrorColor}"
                 StrokeShape="RoundRectangle 10"
-                Margin="10,5,10,10">
+                Margin="16"
+                Padding="16">
             <Label Text="{Binding ErrorMessage}"
-                   TextColor="{AppThemeBinding Light={StaticResource Red600}, Dark={StaticResource Red300}}"
-                   HorizontalOptions="Center"
-                   Padding="15"/>
+                   Style="{StaticResource BodyStyle}"
+                   TextColor="White"
+                   HorizontalOptions="Center" />
         </Border>
+
     </Grid>
-</ContentPage> 
+
+</ContentPage>
