@@ -55,7 +55,7 @@
                 <VerticalStackLayout Spacing="15" Padding="10">
                     
                     <!-- Métricas del día -->
-                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
+                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
                             StrokeShape="RoundRectangle 10"
                             Padding="15"
                             IsVisible="{Binding MetricasDia, Converter={StaticResource IsNotNullConverter}}">
@@ -106,7 +106,7 @@
                     </Border>
 
                     <!-- Top Productos -->
-                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
+                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
                             StrokeShape="RoundRectangle 10"
                             Padding="15">
                         <VerticalStackLayout Spacing="10">
@@ -149,7 +149,7 @@
                     </Border>
 
                     <!-- Ocupación de Mesas -->
-                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
+                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
                             StrokeShape="RoundRectangle 10"
                             Padding="15"
                             IsVisible="{Binding OcupacionMesas, Converter={StaticResource IsNotNullConverter}}">
@@ -162,7 +162,7 @@
                             <Grid ColumnDefinitions="*,*,*">
                                 <VerticalStackLayout Grid.Column="0" HorizontalOptions="Center">
                                     <Label Text="Libres" FontSize="12" HorizontalOptions="Center"/>
-                                    <Label Text="{Binding OcupacionMesas.MesasLibres}" 
+                                    <Label Text="{Binding OcupacionMesas.MesasDisponibles}" 
                                            FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
                                 </VerticalStackLayout>
                                 
@@ -182,7 +182,7 @@
                     </Border>
 
                     <!-- Tiempo de Preparación -->
-                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray800}}"
+                    <Border BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray900}}"
                             StrokeShape="RoundRectangle 10"
                             Padding="15"
                             IsVisible="{Binding TiempoPreparacion, Converter={StaticResource IsNotNullConverter}}">
@@ -195,13 +195,13 @@
                             <Grid ColumnDefinitions="*,*">
                                 <VerticalStackLayout Grid.Column="0" HorizontalOptions="Center">
                                     <Label Text="Promedio" FontSize="12" HorizontalOptions="Center"/>
-                                    <Label Text="{Binding TiempoPreparacion.TiempoPromedio, StringFormat='{0} min'}" 
+                                    <Label Text="{Binding TiempoPreparacion.TiempoPromedioMinutos, StringFormat='{0} min'}" 
                                            FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
                                 </VerticalStackLayout>
                                 
                                 <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center">
                                     <Label Text="Máximo" FontSize="12" HorizontalOptions="Center"/>
-                                    <Label Text="{Binding TiempoPreparacion.TiempoMaximo, StringFormat='{0} min'}" 
+                                    <Label Text="{Binding TiempoPreparacion.TiempoMaximoMinutos, StringFormat='{0} min'}" 
                                            FontSize="16" FontAttributes="Bold" HorizontalOptions="Center"/>
                                 </VerticalStackLayout>
                             </Grid>

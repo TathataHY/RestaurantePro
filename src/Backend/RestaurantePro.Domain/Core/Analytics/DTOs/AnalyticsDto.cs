@@ -108,6 +108,11 @@ public class TopProductoDto
     public Guid ProductoId { get; set; }
 
     /// <summary>
+    /// Posición en el ranking
+    /// </summary>
+    public int Posicion { get; set; }
+
+    /// <summary>
     /// Nombre del producto
     /// </summary>
     public string NombreProducto { get; set; } = string.Empty;
@@ -162,6 +167,11 @@ public class OcupacionMesasDto
     /// Mesas disponibles
     /// </summary>
     public int MesasDisponibles { get; set; }
+
+    /// <summary>
+    /// Mesas reservadas
+    /// </summary>
+    public int MesasReservadas { get; set; }
 
     /// <summary>
     /// Porcentaje de ocupación

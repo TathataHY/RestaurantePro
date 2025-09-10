@@ -24,11 +24,21 @@
     <Color x:Key="TextTertiary">#ADB5BD</Color>      <!-- Texto terciario gris claro -->
     <Color x:Key="BorderColor">#E9ECEF</Color>       <!-- Bordes grises claros -->
     <Color x:Key="ShadowColor">#000000</Color>       <!-- Sombras negras -->
+    
+    <!-- Colores grises adicionales -->
+    <Color x:Key="Gray700">#374151</Color>
+    <Color x:Key="Gray800">#1F2937</Color>
 
     <!-- Estados específicos para Light Theme -->
     <Color x:Key="TableAvailable">#2ECC71</Color>    <!-- Verde - Disponible -->
     <Color x:Key="TableOccupied">#E74C3C</Color>     <!-- Rojo - Ocupada -->
     <Color x:Key="TableReserved">#F39C12</Color>     <!-- Amarillo - Reservada -->
+
+    <!-- Colores rojos para errores en Light Theme -->
+    <Color x:Key="Red100">#FEE2E2</Color>            <!-- Rojo muy claro para fondo de error -->
+    <Color x:Key="Red300">#FCA5A5</Color>            <!-- Rojo claro para texto -->
+    <Color x:Key="Red600">#DC2626</Color>            <!-- Rojo medio para texto -->
+    <Color x:Key="Red900">#7F1D1D</Color>            <!-- Rojo oscuro para fondo -->
 
     <Color x:Key="OrderPending">#F39C12</Color>      <!-- Amarillo - Pendiente -->
     <Color x:Key="OrderInProgress">#3498DB</Color>   <!-- Azul - En progreso -->

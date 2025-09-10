@@ -483,14 +483,14 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             if (productosUnicos != _items.Count)
                 throw new InvalidOperationException("Existen productos duplicados en la comanda. Use la función de modificar cantidad en lugar de agregar el mismo producto múltiples veces");
                 
-            // Validar que el impuesto calculado sea correcto (asumiendo 19% de IVA)
+            // Validar que el impuesto sea cero (IVA desactivado)
             decimal subtotalConDescuento = subtotalCalculado - descuento;
-            decimal impuestoEsperado = Math.Round(subtotalConDescuento * 0.19m, 2);
+            decimal impuestoEsperado = 0; // IVA desactivado
             
             if (Math.Abs(Total.Impuestos - impuestoEsperado) > 0.01m)
                 throw new InvalidOperationException($"Inconsistencia en los impuestos. Esperado: {impuestoEsperado}, Actual: {Total.Impuestos}");
                 
-            // Validar coherencia del total
+            // Validar coherencia del total (sin IVA)
             decimal totalCalculado = subtotalConDescuento + impuestoEsperado;
             
             if (Math.Abs(Total.Total - totalCalculado) > 0.01m)
@@ -564,7 +564,8 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 subtotalConDescuento = subtotal - DescuentoFidelizacion.Value;
             }
             
-            decimal impuesto = subtotalConDescuento * 0.19m; // IVA del 19%
+            // IVA DESACTIVADO - Los precios ya incluyen IVA
+            decimal impuesto = 0; // No se calcula IVA adicional
 
             Total = TotalComanda.Crear(subtotal, impuesto, DescuentoFidelizacion);
         }
