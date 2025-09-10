@@ -1,0 +1,233 @@
+@using RestaurantePro.Web.Admin.Models
+
+@if (Ingredientes == null || !Ingredientes.Any())
+{
+    <div class="text-center py-5">
+        <div class="oi oi-box text-muted" style="font-size: 3rem;"></div>
+        <h5 class="text-muted mt-3">No hay ingredientes</h5>
+        <p class="text-muted">No se encontraron ingredientes con los filtros aplicados.</p>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Ingrediente</th>
+                    <th>Categoría</th>
+                    <th>Stock</th>
+                    <th>Estado</th>
+                    <th>Costo</th>
+                    <th>Vencimiento</th>
+                    <th>Proveedor</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var ingrediente in Ingredientes)
+                {
+                    <tr class="@GetRowClass(ingrediente)">
+                        <td>
+                            <div>
+                                <strong>@ingrediente.Nombre</strong>
+                                @if (!string.IsNullOrEmpty(ingrediente.Descripcion))
+                                {
+                                    <br><small class="text-muted">@ingrediente.Descripcion</small>
+                                }
+                            </div>
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(ingrediente.Categoria))
+                            {
+                                <span class="badge bg-secondary">@ingrediente.Categoria</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="me-2">
+                                    <small class="text-muted">Actual:</small><br>
+                                    <strong>@ingrediente.StockActual.ToString("N2") @ingrediente.UnidadMedida}</strong>
+                                </div>
+                                <div class="ms-2">
+                                    <small class="text-muted">Min:</small><br>
+                                    <small>@ingrediente.StockMinimo.ToString("N2")</small>
+                                </div>
+                                <div class="ms-2">
+                                    <small class="text-muted">Max:</small><br>
+                                    <small>@ingrediente.StockMaximo.ToString("N2")</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            @if (ingrediente.StockActual <= ingrediente.StockMinimo)
+                            {
+                                <span class="badge bg-danger">Stock Bajo</span>
+                            }
+                            else if (ingrediente.StockActual >= ingrediente.StockMaximo)
+                            {
+                                <span class="badge bg-warning">Stock Alto</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">Normal</span>
+                            }
+                            
+                            @if (ingrediente.FechaVencimiento <= DateTime.Now.AddDays(7))
+                            {
+                                <br><span class="badge bg-warning mt-1">Vence Pronto</span>
+                            }
+                            
+                            @if (ingrediente.FechaVencimiento <= DateTime.Now)
+                            {
+                                <br><span class="badge bg-danger mt-1">Vencido</span>
+                            }
+                            
+                            @if (!ingrediente.EstaActivo)
+                            {
+                                <br><span class="badge bg-secondary mt-1">Inactivo</span>
+                            }
+                        </td>
+                        <td>
+                            <strong>$@ingrediente.CostoUnitario.ToString("N2")</strong>
+                            <br><small class="text-muted">Total: $@((ingrediente.StockActual * ingrediente.CostoUnitario).ToString("N2"))</small>
+                        </td>
+                        <td>
+                            @if (ingrediente.FechaVencimiento != DateTime.MinValue)
+                            {
+                                <span class="@GetVencimientoClass(ingrediente.FechaVencimiento)">
+                                    @ingrediente.FechaVencimiento.ToString("dd/MM/yyyy")
+                                </span>
+                                <br><small class="text-muted">@GetDiasVencimiento(ingrediente.FechaVencimiento)</small>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(ingrediente.Proveedor))
+                            {
+                                <span>@ingrediente.Proveedor</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">-</span>
+                            }
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-outline-primary" @onclick="() => OnEditar.InvokeAsync(ingrediente)" title="Editar">
+                                    <span class="oi oi-pencil" aria-hidden="true"></span>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-info" @onclick="() => OnVerDetalles.InvokeAsync(ingrediente)" title="Ver detalles">
+                                    <span class="oi oi-eye" aria-hidden="true"></span>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-success" @onclick="() => OnCrearMovimiento.InvokeAsync(ingrediente)" title="Crear movimiento">
+                                    <span class="oi oi-plus" aria-hidden="true"></span>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => OnEliminar.InvokeAsync(ingrediente)" title="Eliminar">
+                                    <span class="oi oi-trash" aria-hidden="true"></span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    
+    @if (Paginacion != null)
+    {
+        <nav aria-label="Paginación de ingredientes">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(Paginacion.HasPreviousPage ? "" : "disabled")">
+                    <button class="page-link" @onclick="() => OnPaginaAnterior.InvokeAsync()" disabled="@(!Paginacion.HasPreviousPage)">
+                        <span class="oi oi-chevron-left" aria-hidden="true"></span> Anterior
+                    </button>
+                </li>
+                
+                @for (int i = Math.Max(1, Paginacion.PageNumber - 2); i <= Math.Min(Paginacion.TotalPages, Paginacion.PageNumber + 2); i++)
+                {
+                    var pageNumber = i;
+                    <li class="page-item @(pageNumber == Paginacion.PageNumber ? "active" : "")">
+                        <button class="page-link" @onclick="() => OnCambiarPagina.InvokeAsync(pageNumber)">
+                            @pageNumber
+                        </button>
+                    </li>
+                }
+                
+                <li class="page-item @(Paginacion.HasNextPage ? "" : "disabled")">
+                    <button class="page-link" @onclick="() => OnPaginaSiguiente.InvokeAsync()" disabled="@(!Paginacion.HasNextPage)">
+                        Siguiente <span class="oi oi-chevron-right" aria-hidden="true"></span>
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="text-center text-muted">
+                Mostrando @((Paginacion.PageNumber - 1) * Paginacion.PageSize + 1) a @(Math.Min(Paginacion.PageNumber * Paginacion.PageSize, Paginacion.TotalCount)) 
+                de @Paginacion.TotalCount ingredientes
+            </div>
+        </nav>
+    }
+}
+
+@code {
+    [Parameter] public List<IngredienteDto>? Ingredientes { get; set; }
+    [Parameter] public PaginatedList<IngredienteDto>? Paginacion { get; set; }
+    [Parameter] public EventCallback<IngredienteDto> OnEditar { get; set; }
+    [Parameter] public EventCallback<IngredienteDto> OnVerDetalles { get; set; }
+    [Parameter] public EventCallback<IngredienteDto> OnCrearMovimiento { get; set; }
+    [Parameter] public EventCallback<IngredienteDto> OnEliminar { get; set; }
+    [Parameter] public EventCallback OnPaginaAnterior { get; set; }
+    [Parameter] public EventCallback OnPaginaSiguiente { get; set; }
+    [Parameter] public EventCallback<int> OnCambiarPagina { get; set; }
+
+    private string GetRowClass(IngredienteDto ingrediente)
+    {
+        if (!ingrediente.EstaActivo)
+            return "table-secondary";
+        
+        if (ingrediente.StockActual <= ingrediente.StockMinimo)
+            return "table-danger";
+        
+        if (ingrediente.FechaVencimiento <= DateTime.Now)
+            return "table-danger";
+        
+        if (ingrediente.FechaVencimiento <= DateTime.Now.AddDays(7))
+            return "table-warning";
+        
+        return "";
+    }
+
+    private string GetVencimientoClass(DateTime fechaVencimiento)
+    {
+        if (fechaVencimiento <= DateTime.Now)
+            return "text-danger fw-bold";
+        
+        if (fechaVencimiento <= DateTime.Now.AddDays(7))
+            return "text-warning fw-bold";
+        
+        return "text-success";
+    }
+
+    private string GetDiasVencimiento(DateTime fechaVencimiento)
+    {
+        var dias = (fechaVencimiento - DateTime.Now).Days;
+        
+        if (dias < 0)
+            return $"Vencido hace {Math.Abs(dias)} días";
+        
+        if (dias == 0)
+            return "Vence hoy";
+        
+        if (dias == 1)
+            return "Vence mañana";
+        
+        return $"Vence en {dias} días";
+    }
+}

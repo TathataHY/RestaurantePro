@@ -1,0 +1,256 @@
+@using RestaurantePro.Web.Admin.Models
+
+<div class="card mb-4">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+                <span class="oi oi-magnifying-glass" aria-hidden="true"></span>
+                Filtros de Búsqueda
+            </h6>
+            <button class="btn btn-sm btn-outline-secondary" @onclick="ToggleFiltros">
+                @(MostrarFiltros ? "Ocultar" : "Mostrar") Filtros
+                <span class="oi @(MostrarFiltros ? "oi-chevron-up" : "oi-chevron-down")" aria-hidden="true"></span>
+            </button>
+        </div>
+    </div>
+    
+    @if (MostrarFiltros)
+    {
+        <div class="card-body">
+            <EditForm Model="Filtros" OnValidSubmit="AplicarFiltros">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre</label>
+                            <InputText @bind-Value="Filtros.Nombre" class="form-control" placeholder="Buscar por nombre" />
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Categoría</label>
+                            <InputText @bind-Value="Filtros.Categoria" class="form-control" placeholder="Filtrar por categoría" />
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Proveedor</label>
+                            <InputText @bind-Value="Filtros.Proveedor" class="form-control" placeholder="Filtrar por proveedor" />
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Estado</label>
+                            <InputSelect @bind-Value="EstadoSeleccionado" class="form-select">
+                                <option value="">Todos</option>
+                                <option value="true">Activos</option>
+                                <option value="false">Inactivos</option>
+                            </InputSelect>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Fecha Vencimiento Desde</label>
+                            <InputDate @bind-Value="Filtros.FechaVencimientoDesde" class="form-control" />
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Fecha Vencimiento Hasta</label>
+                            <InputDate @bind-Value="Filtros.FechaVencimientoHasta" class="form-control" />
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Costo Desde</label>
+                            <InputNumber @bind-Value="Filtros.CostoDesde" class="form-control" step="0.01" min="0" placeholder="0.00" />
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Costo Hasta</label>
+                            <InputNumber @bind-Value="Filtros.CostoHasta" class="form-control" step="0.01" min="0" placeholder="0.00" />
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <div class="form-check form-check-inline">
+                                <InputCheckbox @bind-Value="Filtros.StockBajo" class="form-check-input" />
+                                <label class="form-check-label text-danger">
+                                    <span class="oi oi-warning" aria-hidden="true"></span>
+                                    Solo Stock Bajo
+                                </label>
+                            </div>
+                            
+                            <div class="form-check form-check-inline">
+                                <InputCheckbox @bind-Value="Filtros.VencimientoProximo" class="form-check-input" />
+                                <label class="form-check-label text-warning">
+                                    <span class="oi oi-clock" aria-hidden="true"></span>
+                                    Vencimiento Proximo
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <span class="oi oi-magnifying-glass" aria-hidden="true"></span>
+                                Aplicar Filtros
+                            </button>
+                            
+                            <button type="button" class="btn btn-outline-secondary" @onclick="LimpiarFiltros">
+                                <span class="oi oi-x" aria-hidden="true"></span>
+                                Limpiar
+                            </button>
+                            
+                            <button type="button" class="btn btn-outline-info" @onclick="FiltrosRapidos">
+                                <span class="oi oi-lightning" aria-hidden="true"></span>
+                                Filtros Rápidos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </EditForm>
+        </div>
+    }
+</div>
+
+<!-- Filtros Rápidos -->
+@if (MostrarFiltrosRapidos)
+{
+    <div class="card mb-4">
+        <div class="card-header">
+            <h6 class="mb-0">
+                <span class="oi oi-lightning" aria-hidden="true"></span>
+                Filtros Rápidos
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-2">
+                    <button class="btn btn-outline-danger w-100 mb-2" @onclick="@(() => AplicarFiltroRapido("stock-bajo"))">
+                        <span class="oi oi-warning" aria-hidden="true"></span><br>
+                        Stock Bajo
+                    </button>
+                </div>
+                
+                <div class="col-md-2">
+                    <button class="btn btn-outline-warning w-100 mb-2" @onclick="@(() => AplicarFiltroRapido("vencimiento-proximo"))">
+                        <span class="oi oi-clock" aria-hidden="true"></span><br>
+                        Vence Pronto
+                    </button>
+                </div>
+                
+                <div class="col-md-2">
+                    <button class="btn btn-outline-danger w-100 mb-2" @onclick="@(() => AplicarFiltroRapido("vencidos"))">
+                        <span class="oi oi-x" aria-hidden="true"></span><br>
+                        Vencidos
+                    </button>
+                </div>
+                
+                <div class="col-md-2">
+                    <button class="btn btn-outline-success w-100 mb-2" @onclick="@(() => AplicarFiltroRapido("stock-normal"))">
+                        <span class="oi oi-check" aria-hidden="true"></span><br>
+                        Stock Normal
+                    </button>
+                </div>
+                
+                <div class="col-md-2">
+                    <button class="btn btn-outline-primary w-100 mb-2" @onclick="@(() => AplicarFiltroRapido("activos"))">
+                        <span class="oi oi-power-standby" aria-hidden="true"></span><br>
+                        Activos
+                    </button>
+                </div>
+                
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary w-100 mb-2" @onclick="@(() => AplicarFiltroRapido("inactivos"))">
+                        <span class="oi oi-power-standby" aria-hidden="true"></span><br>
+                        Inactivos
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public InventarioFiltrosDto Filtros { get; set; } = new();
+    [Parameter] public EventCallback<InventarioFiltrosDto> OnFiltrosAplicados { get; set; }
+    [Parameter] public EventCallback OnLimpiarFiltros { get; set; }
+
+    private bool MostrarFiltros = true;
+    private bool MostrarFiltrosRapidos = false;
+    private string EstadoSeleccionado = "";
+
+    private void ToggleFiltros()
+    {
+        MostrarFiltros = !MostrarFiltros;
+    }
+
+    private async Task AplicarFiltros()
+    {
+        // Aplicar el estado seleccionado
+        if (!string.IsNullOrEmpty(EstadoSeleccionado))
+        {
+            Filtros.EstaActivo = EstadoSeleccionado == "true";
+        }
+        
+        await OnFiltrosAplicados.InvokeAsync(Filtros);
+    }
+
+    private async Task LimpiarFiltros()
+    {
+        Filtros = new InventarioFiltrosDto();
+        EstadoSeleccionado = "";
+        await OnLimpiarFiltros.InvokeAsync();
+    }
+
+    private void FiltrosRapidos()
+    {
+        MostrarFiltrosRapidos = !MostrarFiltrosRapidos;
+    }
+
+    private async Task AplicarFiltroRapido(string tipo)
+    {
+        // Limpiar filtros primero
+        Filtros = new InventarioFiltrosDto();
+        
+        switch (tipo)
+        {
+            case "stock-bajo":
+                Filtros.StockBajo = true;
+                break;
+            case "vencimiento-proximo":
+                Filtros.VencimientoProximo = true;
+                break;
+            case "vencidos":
+                Filtros.FechaVencimientoHasta = DateTime.Now;
+                break;
+            case "stock-normal":
+                Filtros.EstaActivo = true;
+                break;
+            case "activos":
+                Filtros.EstaActivo = true;
+                break;
+            case "inactivos":
+                Filtros.EstaActivo = false;
+                break;
+        }
+        
+        await OnFiltrosAplicados.InvokeAsync(Filtros);
+    }
+}

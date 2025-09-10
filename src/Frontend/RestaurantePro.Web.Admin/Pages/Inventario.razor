@@ -1,0 +1,594 @@
+@page "/inventario"
+@using RestaurantePro.Web.Admin.Models
+@using RestaurantePro.Web.Admin.Services
+@using RestaurantePro.Web.Admin.Components
+@inject InventarioApiService InventarioService
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Gestión de Inventario - RestaurantePro</PageTitle>
+
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>
+                <span class="oi oi-box" aria-hidden="true"></span>
+                Gestión de Inventario
+            </h2>
+            <p class="text-muted mb-0">Administra ingredientes, movimientos y órdenes de compra</p>
+        </div>
+        <div>
+            <button class="btn btn-primary me-2" @onclick="NuevoIngrediente">
+                <span class="oi oi-plus" aria-hidden="true"></span>
+                Nuevo Ingrediente
+            </button>
+            <button class="btn btn-outline-success me-2" @onclick="NuevaOrdenCompra">
+                <span class="oi oi-cart" aria-hidden="true"></span>
+                Nueva Orden
+            </button>
+            <button class="btn btn-outline-info" @onclick="ExportarInventario">
+                <span class="oi oi-data-transfer-download" aria-hidden="true"></span>
+                Exportar
+            </button>
+        </div>
+    </div>
+
+    <!-- Dashboard de Estadísticas -->
+    @if (Estadisticas != null)
+    {
+        <div class="row mb-4">
+            <div class="col-md-2">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <div class="oi oi-box text-primary" style="font-size: 2rem;"></div>
+                        <h5 class="card-title mt-2">@Estadisticas.TotalIngredientes</h5>
+                        <p class="card-text text-muted">Total Ingredientes</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-2">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <div class="oi oi-check text-success" style="font-size: 2rem;"></div>
+                        <h5 class="card-title mt-2">@Estadisticas.IngredientesActivos</h5>
+                        <p class="card-text text-muted">Activos</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-2">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <div class="oi oi-warning text-danger" style="font-size: 2rem;"></div>
+                        <h5 class="card-title mt-2">@Estadisticas.StockBajo</h5>
+                        <p class="card-text text-muted">Stock Bajo</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-2">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <div class="oi oi-clock text-warning" style="font-size: 2rem;"></div>
+                        <h5 class="card-title mt-2">@Estadisticas.VencimientoProximo</h5>
+                        <p class="card-text text-muted">Vence Pronto</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-2">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <div class="oi oi-dollar text-success" style="font-size: 2rem;"></div>
+                        <h5 class="card-title mt-2">$@Estadisticas.ValorTotalInventario.ToString("N0")</h5>
+                        <p class="card-text text-muted">Valor Total</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-2">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <div class="oi oi-arrow-thick-right text-info" style="font-size: 2rem;"></div>
+                        <h5 class="card-title mt-2">@Estadisticas.MovimientosHoy</h5>
+                        <p class="card-text text-muted">Movimientos Hoy</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Alertas de Inventario -->
+    @if (Alertas != null && Alertas.Any())
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <h6 class="alert-heading">
+                <span class="oi oi-warning" aria-hidden="true"></span>
+                Alertas de Inventario
+            </h6>
+            <div class="row">
+                @foreach (var alerta in Alertas.Take(3))
+                {
+                    <div class="col-md-4">
+                        <div class="alert alert-@GetAlertaClass(alerta.Severidad) mb-2">
+                            <strong>@alerta.IngredienteNombre:</strong> @alerta.Mensaje
+                        </div>
+                    </div>
+                }
+            </div>
+            @if (Alertas.Count > 3)
+            {
+                <small class="text-muted">Y @(Alertas.Count - 3) alertas más...</small>
+            }
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Filtros -->
+    <InventarioFiltros Filtros="Filtros" 
+                       OnFiltrosAplicados="AplicarFiltros" 
+                       OnLimpiarFiltros="LimpiarFiltros" />
+
+    <!-- Lista de Ingredientes -->
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <span class="oi oi-list" aria-hidden="true"></span>
+                    Ingredientes (@(Paginacion?.TotalCount ?? 0))
+                </h6>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-sm @(VistaActual == "tabla" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => CambiarVista("tabla"))">
+                        <span class="oi oi-list" aria-hidden="true"></span> Tabla
+                    </button>
+                    <button class="btn btn-sm @(VistaActual == "kanban" ? "btn-primary" : "btn-outline-primary")" @onclick="@(() => CambiarVista("kanban"))">
+                        <span class="oi oi-grid-three-up" aria-hidden="true"></span> Kanban
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-body">
+            @if (Cargando)
+            {
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Cargando inventario...</p>
+                </div>
+            }
+            else
+            {
+                @if (VistaActual == "tabla")
+                {
+                    <InventarioList Ingredientes="Ingredientes"
+                                    Paginacion="Paginacion"
+                                    OnEditar="EditarIngrediente"
+                                    OnVerDetalles="VerDetallesIngrediente"
+                                    OnCrearMovimiento="CrearMovimientoIngrediente"
+                                    OnEliminar="EliminarIngrediente"
+                                    OnPaginaAnterior="PaginaAnterior"
+                                    OnPaginaSiguiente="PaginaSiguiente"
+                                    OnCambiarPagina="CambiarPagina" />
+                }
+                else
+                {
+                    <InventarioKanban Ingredientes="Ingredientes" 
+                                       OnEditar="EditarIngrediente"
+                                       OnVerDetalles="VerDetallesIngrediente"
+                                       OnCrearMovimiento="CrearMovimientoIngrediente" />
+                }
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Ingrediente -->
+<InventarioForm Mostrar="MostrarModalIngrediente"
+                 Ingrediente="IngredienteSeleccionado"
+                 Cargando="CargandoModal"
+                 OnSubmit="GuardarIngrediente"
+                 OnCancel="CerrarModal" />
+
+<!-- Modal de Confirmación -->
+@if (MostrarModalConfirmacion)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <span class="oi oi-warning text-warning" aria-hidden="true"></span>
+                        Confirmar Eliminación
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="CancelarEliminacion"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Estás seguro de que deseas eliminar el ingrediente <strong>@IngredienteSeleccionado?.Nombre</strong>?</p>
+                    <p class="text-muted">Esta acción no se puede deshacer.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CancelarEliminacion">
+                        <span class="oi oi-x" aria-hidden="true"></span> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-danger" @onclick="ConfirmarEliminacion" disabled="@CargandoModal">
+                        @if (CargandoModal)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        else
+                        {
+                            <span class="oi oi-trash" aria-hidden="true"></span>
+                        }
+                        Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<IngredienteDto>? Ingredientes;
+    private PaginatedList<IngredienteDto>? Paginacion;
+    private InventarioEstadisticasDto? Estadisticas;
+    private List<AlertaInventarioDto>? Alertas;
+    private InventarioFiltrosDto Filtros = new();
+    
+    private bool Cargando = true;
+    private bool MostrarModalIngrediente = false;
+    private bool MostrarModalConfirmacion = false;
+    private bool CargandoModal = false;
+    private IngredienteDto IngredienteSeleccionado = new();
+    private string VistaActual = "tabla";
+    
+    private int PaginaActual = 1;
+    private int TamañoPagina = 20;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        Cargando = true;
+        StateHasChanged();
+        
+        try
+        {
+            var tareas = new[]
+            {
+                CargarIngredientes(),
+                CargarEstadisticas(),
+                CargarAlertas()
+            };
+            
+            await Task.WhenAll(tareas);
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al cargar datos: {ex.Message}");
+        }
+        finally
+        {
+            Cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CargarIngredientes()
+    {
+        var resultado = await InventarioService.ObtenerIngredientesPaginadosAsync(PaginaActual, TamañoPagina, Filtros);
+        if (resultado != null)
+        {
+            Ingredientes = resultado.Items?.ToList();
+            Paginacion = resultado;
+        }
+    }
+
+    private async Task CargarEstadisticas()
+    {
+        Estadisticas = await InventarioService.ObtenerEstadisticasAsync();
+    }
+
+    private async Task CargarAlertas()
+    {
+        Alertas = await InventarioService.ObtenerAlertasAsync();
+    }
+
+    private async Task AplicarFiltros(InventarioFiltrosDto filtros)
+    {
+        Filtros = filtros;
+        PaginaActual = 1;
+        await CargarIngredientes();
+    }
+
+    private async Task LimpiarFiltros()
+    {
+        Filtros = new InventarioFiltrosDto();
+        PaginaActual = 1;
+        await CargarIngredientes();
+    }
+
+    private void NuevoIngrediente()
+    {
+        IngredienteSeleccionado = new IngredienteDto
+        {
+            FechaVencimiento = DateTime.Now.AddDays(30),
+            EstaActivo = true
+        };
+        MostrarModalIngrediente = true;
+    }
+
+    private void EditarIngrediente(IngredienteDto ingrediente)
+    {
+        IngredienteSeleccionado = ingrediente;
+        MostrarModalIngrediente = true;
+    }
+
+    private void VerDetallesIngrediente(IngredienteDto ingrediente)
+    {
+        // TODO: Implementar vista de detalles
+        JSRuntime.InvokeVoidAsync("alert", $"Detalles de {ingrediente.Nombre}");
+    }
+
+    private void CrearMovimientoIngrediente(IngredienteDto ingrediente)
+    {
+        // TODO: Implementar creación de movimiento
+        JSRuntime.InvokeVoidAsync("alert", $"Crear movimiento para {ingrediente.Nombre}");
+    }
+
+    private async Task GuardarIngrediente()
+    {
+        CargandoModal = true;
+        StateHasChanged();
+        
+        try
+        {
+            IngredienteDto? resultado;
+            
+            if (IngredienteSeleccionado.Id == Guid.Empty)
+            {
+                resultado = await InventarioService.CrearIngredienteAsync(IngredienteSeleccionado);
+            }
+            else
+            {
+                resultado = await InventarioService.ActualizarIngredienteAsync(IngredienteSeleccionado.Id, IngredienteSeleccionado);
+            }
+            
+            if (resultado != null)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Ingrediente guardado exitosamente");
+                CerrarModal();
+                await CargarDatos();
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error al guardar el ingrediente");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+        finally
+        {
+            CargandoModal = false;
+            StateHasChanged();
+        }
+    }
+
+    private void CerrarModal()
+    {
+        MostrarModalIngrediente = false;
+        IngredienteSeleccionado = new();
+    }
+
+    private void EliminarIngrediente(IngredienteDto ingrediente)
+    {
+        IngredienteSeleccionado = ingrediente;
+        MostrarModalConfirmacion = true;
+    }
+
+    private async Task ConfirmarEliminacion()
+    {
+        CargandoModal = true;
+        StateHasChanged();
+        
+        try
+        {
+            var resultado = await InventarioService.EliminarIngredienteAsync(IngredienteSeleccionado.Id);
+            
+            if (resultado)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Ingrediente eliminado exitosamente");
+                CancelarEliminacion();
+                await CargarDatos();
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error al eliminar el ingrediente");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+        finally
+        {
+            CargandoModal = false;
+            StateHasChanged();
+        }
+    }
+
+    private void CancelarEliminacion()
+    {
+        MostrarModalConfirmacion = false;
+        IngredienteSeleccionado = new();
+    }
+
+    private async Task PaginaAnterior()
+    {
+        if (Paginacion?.HasPreviousPage == true)
+        {
+            PaginaActual--;
+            await CargarIngredientes();
+        }
+    }
+
+    private async Task PaginaSiguiente()
+    {
+        if (Paginacion?.HasNextPage == true)
+        {
+            PaginaActual++;
+            await CargarIngredientes();
+        }
+    }
+
+    private async Task CambiarPagina(int pagina)
+    {
+        PaginaActual = pagina;
+        await CargarIngredientes();
+    }
+
+    private void CambiarVista(string vista)
+    {
+        VistaActual = vista;
+    }
+
+    private void NuevaOrdenCompra()
+    {
+        // TODO: Implementar nueva orden de compra
+        JSRuntime.InvokeVoidAsync("alert", "Nueva orden de compra - En desarrollo");
+    }
+
+    private async Task ExportarInventario()
+    {
+        try
+        {
+            var datos = await InventarioService.ExportarInventarioAsync(Filtros);
+            if (datos != null)
+            {
+                await JSRuntime.InvokeVoidAsync("descargarArchivo", datos, "inventario.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+                await JSRuntime.InvokeVoidAsync("alert", "Inventario exportado exitosamente");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error al exportar el inventario");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+        }
+    }
+
+    private string GetAlertaClass(string severidad)
+    {
+        return severidad.ToLower() switch
+        {
+            "critica" => "danger",
+            "alta" => "warning",
+            "media" => "info",
+            "baja" => "secondary",
+            _ => "secondary"
+        };
+    }
+}
+
+<!-- Componente Kanban temporal -->
+@if (VistaActual == "kanban")
+{
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h6 class="mb-0">Stock Bajo (@(Ingredientes?.Count(i => i.StockActual <= i.StockMinimo) ?? 0))</h6>
+                </div>
+                <div class="card-body">
+                    @if (Ingredientes != null)
+                    {
+                        @foreach (var ingrediente in Ingredientes.Where(i => i.StockActual <= i.StockMinimo))
+                        {
+                            <div class="card mb-2">
+                                <div class="card-body p-2">
+                                    <h6 class="card-title">@ingrediente.Nombre</h6>
+                                    <p class="card-text small">Stock: @ingrediente.StockActual @ingrediente.UnidadMedida}</p>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h6 class="mb-0">Vence Pronto (@(Ingredientes?.Count(i => i.FechaVencimiento <= DateTime.Now.AddDays(7) && i.FechaVencimiento > DateTime.Now) ?? 0))</h6>
+                </div>
+                <div class="card-body">
+                    @if (Ingredientes != null)
+                    {
+                        @foreach (var ingrediente in Ingredientes.Where(i => i.FechaVencimiento <= DateTime.Now.AddDays(7) && i.FechaVencimiento > DateTime.Now))
+                        {
+                            <div class="card mb-2">
+                                <div class="card-body p-2">
+                                    <h6 class="card-title">@ingrediente.Nombre</h6>
+                                    <p class="card-text small">Vence: @ingrediente.FechaVencimiento.ToString("dd/MM/yyyy")</p>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0">Stock Normal (@(Ingredientes?.Count(i => i.StockActual > i.StockMinimo && i.StockActual < i.StockMaximo) ?? 0))</h6>
+                </div>
+                <div class="card-body">
+                    @if (Ingredientes != null)
+                    {
+                        @foreach (var ingrediente in Ingredientes.Where(i => i.StockActual > i.StockMinimo && i.StockActual < i.StockMaximo))
+                        {
+                            <div class="card mb-2">
+                                <div class="card-body p-2">
+                                    <h6 class="card-title">@ingrediente.Nombre</h6>
+                                    <p class="card-text small">Stock: @ingrediente.StockActual @ingrediente.UnidadMedida}</p>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0">Inactivos (@(Ingredientes?.Count(i => !i.EstaActivo) ?? 0))</h6>
+                </div>
+                <div class="card-body">
+                    @if (Ingredientes != null)
+                    {
+                        @foreach (var ingrediente in Ingredientes.Where(i => !i.EstaActivo))
+                        {
+                            <div class="card mb-2">
+                                <div class="card-body p-2">
+                                    <h6 class="card-title">@ingrediente.Nombre</h6>
+                                    <p class="card-text small">Inactivo</p>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
