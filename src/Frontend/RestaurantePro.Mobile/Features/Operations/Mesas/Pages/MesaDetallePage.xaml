@@ -51,13 +51,16 @@
                         Text="🔄" 
                         Command="{Binding RefreshCommand}" 
                         IsEnabled="{Binding IsBusy, Converter={StaticResource InverseBooleanConverter}}"
-                        BackgroundColor="Transparent" 
-                        TextColor="#666" 
-                        FontSize="20" 
-                        WidthRequest="40" 
-                        HeightRequest="40" 
-                        CornerRadius="20" 
-                        Margin="8,0,0,0" />
+                        BackgroundColor="#F5F5F5" 
+                        TextColor="#2196F3" 
+                        FontSize="18" 
+                        FontAttributes="Bold"
+                        WidthRequest="44" 
+                        HeightRequest="44" 
+                        CornerRadius="22" 
+                        Margin="8,0,0,0"
+                        BorderWidth="1"
+                        BorderColor="#E0E0E0" />
 
                 <Label Grid.Row="1" Grid.Column="0" 
                        Text="{Binding Mesa.Capacidad, StringFormat='Capacidad: {0} personas'}" 

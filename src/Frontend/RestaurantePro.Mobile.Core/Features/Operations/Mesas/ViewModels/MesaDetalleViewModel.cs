@@ -1,11 +1,15 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using CommunityToolkit.Mvvm.Messaging.Messages;
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Models.ViewModels;
 using RestaurantePro.Mobile.Core.Services.Mesas;
 using RestaurantePro.Mobile.Core.Services.Comandas;
 using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Navigation;
+using RestaurantePro.Mobile.Core.Services.Realtime;
+using RestaurantePro.Mobile.Core.Services.Notifications;
 using System.Collections.ObjectModel;
 using System.Linq;
 
@@ -20,6 +24,8 @@ public partial class MesaDetalleViewModel : BaseViewModel
     private readonly IComandasService _comandasService;
     private readonly IDialogService _dialogService;
     private readonly INavigationService _navigationService;
+    private readonly IComandaRealtimeService _realtimeService;
+    private readonly INotificationService _notificationService;
 
     [ObservableProperty]
     private MesaDto mesa;
@@ -43,12 +49,16 @@ public partial class MesaDetalleViewModel : BaseViewModel
         IMesasService mesasService,
         IComandasService comandasService,
         IDialogService dialogService,
-        INavigationService navigationService)
+        INavigationService navigationService,
+        IComandaRealtimeService realtimeService,
+        INotificationService notificationService)
     {
         _mesasService = mesasService;
         _comandasService = comandasService;
         _dialogService = dialogService;
         _navigationService = navigationService;
+        _realtimeService = realtimeService;
+        _notificationService = notificationService;
         
         Title = "Detalle de Mesa";
         Mesa = new MesaDto();
@@ -58,6 +68,9 @@ public partial class MesaDetalleViewModel : BaseViewModel
         EntregarComandaCommand = new AsyncRelayCommand<ComandaDto>(EntregarComandaAsync);
         CobrarComandaCommand = new AsyncRelayCommand<ComandaDto>(CobrarComandaAsync);
         VerComandaCommand = new AsyncRelayCommand<ComandaDto>(AbrirComandaDetalleAsync);
+        
+        // Configurar listeners de tiempo real
+        SetupRealtimeListeners();
     }
 
     /// <summary>
@@ -66,6 +79,36 @@ public partial class MesaDetalleViewModel : BaseViewModel
     public bool PuedeAsignar => Mesa?.Estado?.ToLowerInvariant() == "disponible";
     public bool PuedeLiberar => Mesa?.Estado?.ToLowerInvariant() == "ocupada" && !TieneComandasActivas;
     public bool TieneComandasActivas => ComandasActivas?.Any() == true;
+    
+    /// <summary>
+    /// Configurar listeners de tiempo real para comandas
+    /// </summary>
+    private void SetupRealtimeListeners()
+    {
+        // Escuchar nuevas comandas
+        _realtimeService.OnNuevaComanda += async () =>
+        {
+            await _notificationService.VibrateAsync(60);
+            await _notificationService.ShowToastAsync("Nueva comanda en tiempo real");
+            await LoadComandasActivasAsync();
+        };
+        
+        // Escuchar comandas actualizadas
+        _realtimeService.OnComandaActualizada += async () =>
+        {
+            await LoadComandasActivasAsync();
+        };
+        
+        // Escuchar mensajes de actualización de comanda
+        WeakReferenceMessenger.Default.Register<ValueChangedMessage<string>>(this, (r, m) =>
+        {
+            if (m.Value == Messages.ComandaActualizada)
+            {
+                _ = LoadComandasActivasAsync();
+            }
+        });
+    }
+    
     
     /// <summary>
     /// Comandas listas para entregar (estado "Lista")
@@ -609,12 +652,26 @@ public partial class MesaDetalleViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Limpiar recursos
+    /// Limpiar recursos y listeners
     /// </summary>
     public void Cleanup()
     {
-        ComandasActivas?.Clear();
-        Mesa = new MesaDto();
+        try
+        {
+            // Limpiar datos
+            ComandasActivas?.Clear();
+            Mesa = new MesaDto();
+            
+            // Desregistrar mensajería
+            WeakReferenceMessenger.Default.UnregisterAll(this);
+            
+            // Detener servicio de tiempo real si es necesario
+            // _realtimeService?.StopAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[DEBUG] Error en Cleanup: {ex.Message}");
+        }
     }
 
     partial void OnSelectedComandaChanged(ComandaDto? value)

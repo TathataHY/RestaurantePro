@@ -34,7 +34,8 @@ public partial class MesaDetallePage : ContentPage, IQueryAttributable
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _viewModel.InitializeAsync();
+        // Forzar refresh cuando regresamos a la página (especialmente después de crear una comanda)
+        await _viewModel.InitializeAsync(force: true);
     }
 
     /// <summary>
