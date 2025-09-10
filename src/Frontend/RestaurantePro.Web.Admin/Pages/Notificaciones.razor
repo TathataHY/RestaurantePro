@@ -1,0 +1,449 @@
+@attribute [Authorize]
+@page "/notificaciones"
+@using RestaurantePro.Web.Admin.Services
+
+<PageTitle>Notificaciones</PageTitle>
+
+@inject NotificacionesApiService NotificacionesApi
+@inject IJSRuntime JSRuntime
+
+<h3>🔔 Notificaciones</h3>
+<p class="text-muted">Centro de notificaciones del sistema.</p>
+
+<!-- Dashboard de estadísticas -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">@totalNotificaciones</h4>
+                        <p class="card-text">Total</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="oi oi-bell" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">@notificacionesNoLeidas</h4>
+                        <p class="card-text">No Leidas</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="oi oi-warning" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">@notificacionesLeidas</h4>
+                        <p class="card-text">Leidas</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="oi oi-check" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">@notificacionesHoy</h4>
+                        <p class="card-text">Hoy</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="oi oi-calendar" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros y acciones -->
+<div class="row mb-3">
+    <div class="col-md-4">
+        <select class="form-select" @bind="filtroTipo" @bind:after="FiltrarNotificaciones">
+            <option value="">Todos los tipos</option>
+            <option value="Informativa">Informativa</option>
+            <option value="Advertencia">Advertencia</option>
+            <option value="Error">Error</option>
+            <option value="Exito">Exito</option>
+        </select>
+    </div>
+    <div class="col-md-4">
+        <select class="form-select" @bind="filtroEstado" @bind:after="FiltrarNotificaciones">
+            <option value="">Todas</option>
+            <option value="NoLeidas">No Leidas</option>
+            <option value="Leidas">Leidas</option>
+        </select>
+    </div>
+    <div class="col-md-4 text-end">
+        <div class="btn-group">
+            <button class="btn btn-outline-primary" @onclick="MarcarTodasComoLeidasAsync">
+                <i class="oi oi-check"></i> Marcar todas como leidas
+            </button>
+            <button class="btn btn-success" @onclick="AbrirCrear">
+                <i class="oi oi-plus"></i> Nueva Notificacion
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de notificaciones -->
+<div class="row">
+    @if (notificaciones is null)
+    {
+        <div class="col-12">
+            <div class="text-center p-4">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2">Cargando notificaciones...</p>
+            </div>
+        </div>
+    }
+    else if (!notificaciones.Any())
+    {
+        <div class="col-12">
+            <div class="text-center p-4">
+                <i class="oi oi-bell" style="font-size: 3rem; color: #6c757d;"></i>
+                <p class="mt-2 text-muted">No hay notificaciones disponibles</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        @foreach (var notificacion in notificacionesFiltradas)
+        {
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card @(notificacion.EstaLeida ? "" : "border-warning") h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="badge @GetTipoBadgeClass(notificacion.Tipo)">@notificacion.Tipo</span>
+                        <div class="btn-group btn-group-sm">
+                            @if (!notificacion.EstaLeida)
+                            {
+                                <button class="btn btn-outline-success btn-sm" @onclick="(() => MarcarComoLeidaAsync(notificacion.Id))" title="Marcar como leida">
+                                    <i class="oi oi-check"></i>
+                                </button>
+                            }
+                            <button class="btn btn-outline-danger btn-sm" @onclick="(() => ConfirmarEliminar(notificacion))" title="Eliminar">
+                                <i class="oi oi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-title @(notificacion.EstaLeida ? "" : "fw-bold")">@notificacion.Titulo</h6>
+                        <p class="card-text">@notificacion.Mensaje</p>
+                        <small class="text-muted">
+                            <i class="oi oi-clock"></i> @notificacion.FechaCreacion.ToString("dd/MM/yyyy HH:mm")
+                        </small>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+<!-- Modal para crear/editar notificación -->
+@if (mostrandoModal)
+{
+    <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@modalTitulo</h5>
+                    <button type="button" class="btn-close" @onclick="CerrarModal"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="editModel" OnValidSubmit="GuardarAsync">
+                        <DataAnnotationsValidator />
+                        <div class="mb-3">
+                            <label class="form-label">Titulo</label>
+                            <InputText class="form-control" @bind-Value="editModel.Titulo" placeholder="Titulo de la notificacion" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Mensaje</label>
+                            <InputTextArea class="form-control" @bind-Value="editModel.Mensaje" rows="4" placeholder="Mensaje de la notificacion" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Tipo</label>
+                            <InputSelect class="form-select" @bind-Value="editModel.Tipo">
+                                <option value="Informativa">Informativa</option>
+                                <option value="Advertencia">Advertencia</option>
+                                <option value="Error">Error</option>
+                                <option value="Exito">Exito</option>
+                            </InputSelect>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">ID Entidad Relacionada (opcional)</label>
+                            <input type="text" class="form-control" @bind="entidadRelacionadaIdString" placeholder="ID de la entidad relacionada" />
+                        </div>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-secondary me-2" @onclick="CerrarModal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" disabled="@guardando">
+                                @if (guardando)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                }
+                                Guardar
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal de confirmación de eliminación -->
+@if (mostrandoConfirmacion)
+{
+    <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Eliminacion</h5>
+                    <button type="button" class="btn-close" @onclick="CerrarConfirmacion"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Esta seguro de que desea eliminar esta notificacion?</p>
+                    <div class="alert alert-warning">
+                        <strong>@notificacionAEliminar?.Titulo</strong><br>
+                        @notificacionAEliminar?.Mensaje
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarConfirmacion">Cancelar</button>
+                    <button type="button" class="btn btn-danger" @onclick="EliminarAsync" disabled="@eliminando">
+                        @if (eliminando)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<NotificacionDto>? notificaciones;
+    private List<NotificacionDto> notificacionesFiltradas = new();
+    private string filtroTipo = "";
+    private string filtroEstado = "";
+    
+    // Estadísticas
+    private int totalNotificaciones = 0;
+    private int notificacionesNoLeidas = 0;
+    private int notificacionesLeidas = 0;
+    private int notificacionesHoy = 0;
+    
+    // Modal
+    private bool mostrandoModal = false;
+    private bool mostrandoConfirmacion = false;
+    private string modalTitulo = "";
+    private bool guardando = false;
+    private bool eliminando = false;
+    private NotificacionDto? notificacionAEliminar;
+    
+    // Modelo de edición
+    private CrearNotificacionRequest editModel = new();
+    private string entidadRelacionadaIdString = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarNotificacionesAsync();
+    }
+
+    private async Task CargarNotificacionesAsync()
+    {
+        try
+        {
+            notificaciones = await NotificacionesApi.ObtenerNotificacionesAsync();
+            notificacionesFiltradas = notificaciones.ToList();
+            CalcularEstadisticas();
+            FiltrarNotificaciones();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error al cargar notificaciones:", ex.Message);
+        }
+    }
+
+    private void CalcularEstadisticas()
+    {
+        if (notificaciones == null) return;
+        
+        totalNotificaciones = notificaciones.Count;
+        notificacionesNoLeidas = notificaciones.Count(n => !n.EstaLeida);
+        notificacionesLeidas = notificaciones.Count(n => n.EstaLeida);
+        notificacionesHoy = notificaciones.Count(n => n.FechaCreacion.Date == DateTime.Today);
+    }
+
+    private void FiltrarNotificaciones()
+    {
+        if (notificaciones == null) return;
+        
+        notificacionesFiltradas = notificaciones.Where(n =>
+            (string.IsNullOrEmpty(filtroTipo) || n.Tipo == filtroTipo) &&
+            (string.IsNullOrEmpty(filtroEstado) || 
+             (filtroEstado == "NoLeidas" && !n.EstaLeida) ||
+             (filtroEstado == "Leidas" && n.EstaLeida))
+        ).OrderByDescending(n => n.FechaCreacion).ToList();
+    }
+
+    private async Task MarcarComoLeidaAsync(Guid id)
+    {
+        try
+        {
+            var exito = await NotificacionesApi.MarcarComoLeidaAsync(id);
+            if (exito)
+            {
+                await CargarNotificacionesAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error al marcar como leida:", ex.Message);
+        }
+    }
+
+    private async Task MarcarTodasComoLeidasAsync()
+    {
+        try
+        {
+            var cantidad = await NotificacionesApi.MarcarTodasComoLeidasAsync();
+            if (cantidad > 0)
+            {
+                await CargarNotificacionesAsync();
+                await JSRuntime.InvokeVoidAsync("alert", $"{cantidad} notificaciones marcadas como leidas");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error al marcar todas como leidas:", ex.Message);
+        }
+    }
+
+    private void AbrirCrear()
+    {
+        editModel = new CrearNotificacionRequest();
+        modalTitulo = "Nueva Notificacion";
+        mostrandoModal = true;
+    }
+
+    private void CerrarModal()
+    {
+        mostrandoModal = false;
+        editModel = new CrearNotificacionRequest();
+        entidadRelacionadaIdString = "";
+    }
+
+    private async Task GuardarAsync()
+    {
+        guardando = true;
+        try
+        {
+            // Convertir string a Guid?
+            if (!string.IsNullOrWhiteSpace(entidadRelacionadaIdString) && Guid.TryParse(entidadRelacionadaIdString, out var guid))
+            {
+                editModel.EntidadRelacionadaId = guid;
+            }
+            else
+            {
+                editModel.EntidadRelacionadaId = null;
+            }
+            
+            var resultado = await NotificacionesApi.CrearNotificacionAsync(editModel);
+            if (resultado != null)
+            {
+                await CargarNotificacionesAsync();
+                CerrarModal();
+                await JSRuntime.InvokeVoidAsync("alert", "Notificacion creada exitosamente");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error al crear la notificacion");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error al guardar:", ex.Message);
+            await JSRuntime.InvokeVoidAsync("alert", "Error al crear la notificacion");
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private void ConfirmarEliminar(NotificacionDto notificacion)
+    {
+        notificacionAEliminar = notificacion;
+        mostrandoConfirmacion = true;
+    }
+
+    private void CerrarConfirmacion()
+    {
+        mostrandoConfirmacion = false;
+        notificacionAEliminar = null;
+    }
+
+    private async Task EliminarAsync()
+    {
+        if (notificacionAEliminar == null) return;
+        
+        eliminando = true;
+        try
+        {
+            var exito = await NotificacionesApi.EliminarNotificacionAsync(notificacionAEliminar.Id);
+            if (exito)
+            {
+                await CargarNotificacionesAsync();
+                CerrarConfirmacion();
+                await JSRuntime.InvokeVoidAsync("alert", "Notificacion eliminada exitosamente");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error al eliminar la notificacion");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error al eliminar:", ex.Message);
+            await JSRuntime.InvokeVoidAsync("alert", "Error al eliminar la notificacion");
+        }
+        finally
+        {
+            eliminando = false;
+        }
+    }
+
+    private string GetTipoBadgeClass(string tipo)
+    {
+        return tipo switch
+        {
+            "Informativa" => "bg-info",
+            "Advertencia" => "bg-warning",
+            "Error" => "bg-danger",
+            "Exito" => "bg-success",
+            _ => "bg-secondary"
+        };
+    }
+}
