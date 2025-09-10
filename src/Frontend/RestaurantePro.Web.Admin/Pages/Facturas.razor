@@ -1,0 +1,481 @@
+@attribute [Authorize]
+@page "/facturas"
+@inject RestaurantePro.Web.Admin.Services.FacturasApiService FacturasApi
+@using RestaurantePro.Web.Admin.Models
+@using RestaurantePro.Web.Admin.Components
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Facturas</PageTitle>
+
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Gestión de Facturas</h1>
+    <div class="d-flex align-items-center gap-2">
+        <button class="btn btn-outline-info" @onclick="MostrarEstadisticas">
+            <i class="oi oi-bar-chart"></i> Estadísticas
+        </button>
+        <button class="btn btn-primary" @onclick="NuevaFactura">
+            <i class="oi oi-plus"></i> Nueva Factura
+        </button>
+    </div>
+</div>
+
+<!-- Estadísticas generales -->
+@if (estadisticas != null)
+{
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="card border-left-primary">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Facturas</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.TotalFacturas</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-left-success">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Pagadas</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.FacturasPagadas</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-left-warning">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pendientes</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.FacturasPendientes</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-left-danger">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Vencidas</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.FacturasVencidas</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-left-info">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Total Ventas</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.TotalVentas.ToString("C0")</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="card border-left-primary">
+                <div class="card-body">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Cobrado</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.TotalCobrado.ToString("C0")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Filtros de búsqueda -->
+<FacturaFiltros Filtros="filtros" 
+                OnFiltrosAplicados="AplicarFiltros"
+                Aplicando="cargando" />
+
+<!-- Lista de facturas -->
+<FacturaList Facturas="facturas" 
+             Paginacion="paginacion"
+             OnEditarFactura="EditarFactura"
+             OnCancelar="CancelarFactura"
+             OnRegistrarPago="RegistrarPago"
+             OnReimprimir="ReimprimirFactura"
+             OnVerDetalles="VerDetalles"
+             OnNuevaFactura="NuevaFactura"
+             OnCambiarPagina="CambiarPagina"
+             OnExportarExcel="ExportarExcel" />
+
+<!-- Formulario de factura -->
+<FacturaForm Mostrar="mostrarFormulario" 
+             MostrarChanged="MostrarFormularioChanged"
+             OnFacturaGuardada="FacturaGuardada" />
+
+<!-- Modal de detalles de la factura -->
+@if (mostrarDetalles && facturaSeleccionada != null)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-xl" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="oi oi-document"></i> Detalles de la Factura: @facturaSeleccionada.NumeroFactura
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="CerrarDetalles"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Información de la Factura</h6>
+                            <table class="table table-sm">
+                                <tr><td><strong>Número:</strong></td><td>@facturaSeleccionada.NumeroFactura</td></tr>
+                                <tr><td><strong>Fecha Emisión:</strong></td><td>@facturaSeleccionada.FechaEmision.ToString("dd/MM/yyyy HH:mm")</td></tr>
+                                <tr><td><strong>Fecha Vencimiento:</strong></td><td>@(facturaSeleccionada.FechaVencimiento?.ToString("dd/MM/yyyy") ?? "No especificada")</td></tr>
+                                <tr><td><strong>Estado:</strong></td><td><span class="badge bg-@facturaSeleccionada.ClaseEstado">@facturaSeleccionada.EstadoVisual</span></td></tr>
+                                <tr><td><strong>Tipo Pago:</strong></td><td>@facturaSeleccionada.TipoPago</td></tr>
+                                <tr><td><strong>Método Pago:</strong></td><td>@(facturaSeleccionada.MetodoPago ?? "No especificado")</td></tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Información del Cliente</h6>
+                            <table class="table table-sm">
+                                <tr><td><strong>Cliente:</strong></td><td>@facturaSeleccionada.ClienteNombre</td></tr>
+                                <tr><td><strong>Email:</strong></td><td>@facturaSeleccionada.ClienteEmail</td></tr>
+                                <tr><td><strong>Teléfono:</strong></td><td>@(facturaSeleccionada.ClienteTelefono ?? "No especificado")</td></tr>
+                                <tr><td><strong>Mesa:</strong></td><td>@facturaSeleccionada.MesaNombre</td></tr>
+                                <tr><td><strong>Mesero:</strong></td><td>@facturaSeleccionada.MeseroNombre</td></tr>
+                                <tr><td><strong>Factura Electrónica:</strong></td><td>@(facturaSeleccionada.EsFacturaElectronica ? "Sí" : "No")</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <h6>Detalles de la Factura</h6>
+                    @if (facturaSeleccionada.Detalles.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Producto</th>
+                                        <th>Cantidad</th>
+                                        <th>Precio Unit.</th>
+                                        <th>Descuento</th>
+                                        <th>Impuesto</th>
+                                        <th>Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var detalle in facturaSeleccionada.Detalles)
+                                    {
+                                        <tr>
+                                            <td>@detalle.ProductoNombre</td>
+                                            <td>@detalle.Cantidad</td>
+                                            <td>@detalle.PrecioUnitario.ToString("C2")</td>
+                                            <td>@detalle.Descuento.ToString("C2")</td>
+                                            <td>@detalle.Impuesto.ToString("C2")</td>
+                                            <td>@detalle.Subtotal.ToString("C2")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="5"><strong>Subtotal:</strong></td>
+                                        <td><strong>@facturaSeleccionada.Subtotal.ToString("C2")</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="5"><strong>Descuento:</strong></td>
+                                        <td><strong class="text-danger">-@facturaSeleccionada.Descuento.ToString("C2")</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="5"><strong>Impuesto:</strong></td>
+                                        <td><strong>@facturaSeleccionada.Impuesto.ToString("C2")</strong></td>
+                                    </tr>
+                                    <tr class="table-primary">
+                                        <td colspan="5"><strong>TOTAL:</strong></td>
+                                        <td><strong>@facturaSeleccionada.Total.ToString("C2")</strong></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    }
+                    
+                    @if (!string.IsNullOrEmpty(facturaSeleccionada.Observaciones))
+                    {
+                        <h6>Observaciones</h6>
+                        <p>@facturaSeleccionada.Observaciones</p>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarDetalles">
+                        <i class="oi oi-x"></i> Cerrar
+                    </button>
+                    <button type="button" class="btn btn-warning" @onclick="EditarFacturaDesdeDetalles">
+                        <i class="oi oi-pencil"></i> Editar
+                    </button>
+                    <button type="button" class="btn btn-info" @onclick="ReimprimirFacturaDesdeDetalles">
+                        <i class="oi oi-print"></i> Reimprimir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    private FacturaFiltrosDto filtros = new();
+    private List<FacturaDto>? facturas;
+    private PaginatedList<FacturaDto>? paginacion;
+    private FacturaEstadisticasDto? estadisticas;
+    private FacturaDto? facturaSeleccionada;
+    
+    private bool mostrarFormulario = false;
+    private bool mostrarDetalles = false;
+    private bool cargando = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        await Task.WhenAll(
+            CargarFacturas(),
+            CargarEstadisticas()
+        );
+    }
+
+    private async Task CargarFacturas()
+    {
+        cargando = true;
+        StateHasChanged();
+
+        try
+        {
+            var resultado = await FacturasApi.ObtenerFacturasAsync(filtros);
+            if (resultado != null)
+            {
+                facturas = resultado.Items?.ToList() ?? new List<FacturaDto>();
+                paginacion = resultado;
+            }
+            else
+            {
+                facturas = new List<FacturaDto>();
+                paginacion = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar facturas: {ex.Message}");
+            facturas = new List<FacturaDto>();
+            paginacion = null;
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CargarEstadisticas()
+    {
+        try
+        {
+            estadisticas = await FacturasApi.ObtenerEstadisticasAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar estadísticas: {ex.Message}");
+        }
+    }
+
+    private async Task AplicarFiltros(FacturaFiltrosDto filtrosAplicados)
+    {
+        filtros = filtrosAplicados;
+        await CargarFacturas();
+    }
+
+    private async Task CambiarPagina(int pagina)
+    {
+        filtros.PageNumber = pagina;
+        await CargarFacturas();
+    }
+
+    private void NuevaFactura()
+    {
+        mostrarFormulario = true;
+        StateHasChanged();
+    }
+
+    private void EditarFactura(FacturaDto factura)
+    {
+        facturaSeleccionada = factura;
+        mostrarFormulario = true;
+        StateHasChanged();
+    }
+
+    private void EditarFacturaDesdeDetalles()
+    {
+        if (facturaSeleccionada != null)
+        {
+            mostrarDetalles = false;
+            mostrarFormulario = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CancelarFactura(FacturaDto factura)
+    {
+        var motivo = await JSRuntime.InvokeAsync<string>("prompt", 
+            "Ingresa el motivo de cancelación:", "Cancelación por solicitud del cliente");
+        
+        if (!string.IsNullOrEmpty(motivo))
+        {
+            try
+            {
+                var request = new CancelarFacturaRequest
+                {
+                    FacturaId = factura.Id,
+                    Motivo = motivo,
+                    Reembolsar = false
+                };
+
+                var resultado = await FacturasApi.CancelarFacturaAsync(request);
+                if (resultado?.Success == true)
+                {
+                    await CargarFacturas();
+                    await JSRuntime.InvokeVoidAsync("alert", "Factura cancelada correctamente");
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al cancelar la factura");
+                }
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task RegistrarPago(FacturaDto factura)
+    {
+        var monto = await JSRuntime.InvokeAsync<decimal>("prompt", 
+            "Ingresa el monto del pago:", factura.SaldoPendiente.ToString("F2"));
+        
+        if (monto > 0)
+        {
+            try
+            {
+                var request = new RegistrarPagoRequest
+                {
+                    FacturaId = factura.Id,
+                    Monto = monto,
+                    MetodoPago = factura.TipoPago,
+                    Referencia = "",
+                    Observaciones = "Pago registrado desde el sistema"
+                };
+
+                var resultado = await FacturasApi.RegistrarPagoAsync(request);
+                if (resultado?.Success == true)
+                {
+                    await CargarFacturas();
+                    await JSRuntime.InvokeVoidAsync("alert", "Pago registrado correctamente");
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al registrar el pago");
+                }
+            }
+            catch (Exception ex)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task ReimprimirFactura(FacturaDto factura)
+    {
+        try
+        {
+            var request = new ReimprimirFacturaRequest
+            {
+                FacturaId = factura.Id,
+                Motivo = "Reimpresión",
+                IncluirQR = true,
+                IncluirCodigoBarras = true
+            };
+
+            var resultado = await FacturasApi.ReimprimirFacturaAsync(request);
+            if (resultado?.Success == true && resultado.Data != null)
+            {
+                await JSRuntime.InvokeVoidAsync("descargarArchivo", 
+                    Convert.ToBase64String(resultado.Data), 
+                    $"factura_{factura.NumeroFactura}.pdf", 
+                    "application/pdf");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al reimprimir la factura");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al reimprimir: {ex.Message}");
+        }
+    }
+
+    private void ReimprimirFacturaDesdeDetalles()
+    {
+        if (facturaSeleccionada != null)
+        {
+            ReimprimirFactura(facturaSeleccionada);
+        }
+    }
+
+    private void VerDetalles(FacturaDto factura)
+    {
+        facturaSeleccionada = factura;
+        mostrarDetalles = true;
+        StateHasChanged();
+    }
+
+    private void CerrarDetalles()
+    {
+        mostrarDetalles = false;
+        facturaSeleccionada = null;
+        StateHasChanged();
+    }
+
+    private void MostrarFormularioChanged(bool mostrar)
+    {
+        mostrarFormulario = mostrar;
+        if (!mostrar)
+        {
+            facturaSeleccionada = null;
+        }
+        StateHasChanged();
+    }
+
+    private async Task FacturaGuardada(FacturaDto factura)
+    {
+        await CargarDatos();
+        mostrarFormulario = false;
+        facturaSeleccionada = null;
+        StateHasChanged();
+    }
+
+    private void MostrarEstadisticas()
+    {
+        JSRuntime.InvokeVoidAsync("alert", "Función de estadísticas detalladas pendiente");
+    }
+
+    private async Task ExportarExcel()
+    {
+        try
+        {
+            var resultado = await FacturasApi.ExportarFacturasAsync(filtros, "Excel");
+            if (resultado?.Success == true && resultado.Data != null)
+            {
+                await JSRuntime.InvokeVoidAsync("descargarArchivo", 
+                    Convert.ToBase64String(resultado.Data), 
+                    $"facturas_{DateTime.Now:yyyyMMdd}.xlsx", 
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al exportar facturas");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al exportar: {ex.Message}");
+        }
+    }
+}

@@ -1,0 +1,210 @@
+@using RestaurantePro.Web.Admin.Models
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="oi oi-document"></i> Lista de Facturas (@(Facturas?.Count ?? 0))
+        </h6>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-success" @onclick="OnExportarExcel">
+                <i class="oi oi-spreadsheet"></i> Excel
+            </button>
+            <button class="btn btn-sm btn-outline-info" @onclick="OnNuevaFactura">
+                <i class="oi oi-plus"></i> Nueva Factura
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (Facturas == null)
+        {
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2 text-muted">Cargando facturas...</p>
+            </div>
+        }
+        else if (!Facturas.Any())
+        {
+            <div class="text-center py-4">
+                <i class="oi oi-document text-muted" style="font-size: 3rem;"></i>
+                <h5 class="text-muted mt-3">No hay facturas</h5>
+                <p class="text-muted">Comienza creando tu primera factura</p>
+                <button class="btn btn-primary" @onclick="OnNuevaFactura">
+                    <i class="oi oi-plus"></i> Crear Factura
+                </button>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Factura</th>
+                            <th>Cliente</th>
+                            <th>Mesa</th>
+                            <th>Mesero</th>
+                            <th>Fecha</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th>Pago</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var factura in Facturas)
+                        {
+                            <tr>
+                                <td>
+                                    <div>
+                                        <strong>@factura.NumeroFactura</strong>
+                                        @if (factura.EsFacturaElectronica)
+                                        {
+                                            <br><span class="badge bg-info">Electrónica</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>@factura.ClienteNombre</strong>
+                                        @if (!string.IsNullOrEmpty(factura.ClienteEmail))
+                                        {
+                                            <br><small class="text-muted">@factura.ClienteEmail</small>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">@factura.MesaNombre</span>
+                                </td>
+                                <td>
+                                    <small>@factura.MeseroNombre</small>
+                                </td>
+                                <td>
+                                    <div>
+                                        <small>@factura.FechaEmision.ToString("dd/MM/yyyy")</small>
+                                        @if (factura.FechaVencimiento.HasValue)
+                                        {
+                                            <br><small class="text-muted">Vence: @factura.FechaVencimiento.Value.ToString("dd/MM/yyyy")</small>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>@factura.Total.ToString("C2")</strong>
+                                        @if (factura.Descuento > 0)
+                                        {
+                                            <br><small class="text-success">-@factura.Descuento.ToString("C2") desc.</small>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-@factura.ClaseEstado">@factura.EstadoVisual</span>
+                                    @if (factura.EstaVencida)
+                                    {
+                                        <br><small class="text-danger">@factura.DiasVencimiento días vencida</small>
+                                    }
+                                </td>
+                                <td>
+                                    <div>
+                                        <small>@factura.TipoPago</small>
+                                        @if (!string.IsNullOrEmpty(factura.MetodoPago))
+                                        {
+                                            <br><small class="text-muted">@factura.MetodoPago</small>
+                                        }
+                                        @if (factura.MontoPagado > 0)
+                                        {
+                                            <br><small class="text-success">Pagado: @factura.MontoPagado.ToString("C2")</small>
+                                        }
+                                    </div>
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary" 
+                                                @onclick="() => OnVerDetalles.InvokeAsync(factura)"
+                                                title="Ver detalles">
+                                            <i class="oi oi-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-warning" 
+                                                @onclick="() => OnEditarFactura.InvokeAsync(factura)"
+                                                title="Editar">
+                                            <i class="oi oi-pencil"></i>
+                                        </button>
+                                        @if (!factura.EstaPagada && !factura.EstaCancelada)
+                                        {
+                                            <button class="btn btn-sm btn-outline-success" 
+                                                    @onclick="() => OnRegistrarPago.InvokeAsync(factura)"
+                                                    title="Registrar pago">
+                                                <i class="oi oi-credit-card"></i>
+                                            </button>
+                                        }
+                                        <button class="btn btn-sm btn-outline-info" 
+                                                @onclick="() => OnReimprimir.InvokeAsync(factura)"
+                                                title="Reimprimir">
+                                            <i class="oi oi-print"></i>
+                                        </button>
+                                        @if (!factura.EstaCancelada)
+                                        {
+                                            <button class="btn btn-sm btn-outline-danger" 
+                                                    @onclick="() => OnCancelar.InvokeAsync(factura)"
+                                                    title="Cancelar">
+                                                <i class="oi oi-x"></i>
+                                            </button>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (Paginacion != null)
+            {
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div class="text-muted">
+                        Mostrando @Paginacion.PageNumber de @Paginacion.TotalPages páginas
+                        (@Paginacion.TotalCount facturas en total)
+                    </div>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item @(Paginacion.HasPreviousPage ? "" : "disabled")">
+                                <button class="page-link" @onclick="() => OnCambiarPagina.InvokeAsync(Paginacion.PageNumber - 1)" 
+                                        disabled="@(!Paginacion.HasPreviousPage)">
+                                    <i class="oi oi-chevron-left"></i>
+                                </button>
+                            </li>
+                            
+                            @for (int i = Math.Max(1, Paginacion.PageNumber - 2); i <= Math.Min(Paginacion.TotalPages, Paginacion.PageNumber + 2); i++)
+                            {
+                                <li class="page-item @(i == Paginacion.PageNumber ? "active" : "")">
+                                    <button class="page-link" @onclick="() => OnCambiarPagina.InvokeAsync(i)">@i</button>
+                                </li>
+                            }
+                            
+                            <li class="page-item @(Paginacion.HasNextPage ? "" : "disabled")">
+                                <button class="page-link" @onclick="() => OnCambiarPagina.InvokeAsync(Paginacion.PageNumber + 1)" 
+                                        disabled="@(!Paginacion.HasNextPage)">
+                                    <i class="oi oi-chevron-right"></i>
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<FacturaDto>? Facturas { get; set; }
+    [Parameter] public PaginatedList<FacturaDto>? Paginacion { get; set; }
+    [Parameter] public EventCallback<FacturaDto> OnEditarFactura { get; set; }
+    [Parameter] public EventCallback<FacturaDto> OnCancelar { get; set; }
+    [Parameter] public EventCallback<FacturaDto> OnRegistrarPago { get; set; }
+    [Parameter] public EventCallback<FacturaDto> OnReimprimir { get; set; }
+    [Parameter] public EventCallback<FacturaDto> OnVerDetalles { get; set; }
+    [Parameter] public EventCallback OnNuevaFactura { get; set; }
+    [Parameter] public EventCallback<int> OnCambiarPagina { get; set; }
+    [Parameter] public EventCallback OnExportarExcel { get; set; }
+}
