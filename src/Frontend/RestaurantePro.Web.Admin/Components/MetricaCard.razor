@@ -1,0 +1,42 @@
+@using RestaurantePro.Web.Admin.Models
+
+<div class="col-md-3 mb-3">
+    <div class="card @CardClass h-100">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="card-title text-muted mb-1">@Titulo</h6>
+                    <h4 class="mb-0 @ValorClass">@Valor</h4>
+                    @if (!string.IsNullOrEmpty(Subtexto))
+                    {
+                        <small class="text-muted">@Subtexto</small>
+                    }
+                </div>
+                <div class="text-end">
+                    <i class="@Icono fa-2x @IconoClass"></i>
+                </div>
+            </div>
+            @if (MostrarCambio && Cambio != null)
+            {
+                <div class="mt-2">
+                    <small class="@(Cambio >= 0 ? "text-success" : "text-danger")">
+                        <i class="@(Cambio >= 0 ? "oi oi-arrow-top" : "oi oi-arrow-bottom")"></i>
+                        @Math.Abs(Cambio.Value).ToString("F1")%
+                    </small>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Titulo { get; set; } = string.Empty;
+    [Parameter] public string Valor { get; set; } = string.Empty;
+    [Parameter] public string? Subtexto { get; set; }
+    [Parameter] public string Icono { get; set; } = "oi oi-bar-chart";
+    [Parameter] public string CardClass { get; set; } = "border-left-primary";
+    [Parameter] public string ValorClass { get; set; } = "text-primary";
+    [Parameter] public string IconoClass { get; set; } = "text-primary";
+    [Parameter] public bool MostrarCambio { get; set; } = false;
+    [Parameter] public decimal? Cambio { get; set; }
+}

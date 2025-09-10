@@ -1,0 +1,65 @@
+@using RestaurantePro.Web.Admin.Models
+
+<div class="card">
+    <div class="card-header">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="oi oi-star"></i> Productos Más Vendidos
+        </h6>
+    </div>
+    <div class="card-body">
+        @if (Productos == null || !Productos.Any())
+        {
+            <div class="text-center text-muted py-3">
+                <i class="oi oi-warning"></i> No hay datos disponibles
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th class="text-center">Cantidad</th>
+                            <th class="text-end">Ingresos</th>
+                            <th class="text-center">%</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var producto in Productos)
+                        {
+                            <tr>
+                                <td>
+                                    <strong>@producto.Nombre</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">@producto.CategoriaNombre</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary">@producto.CantidadVendida</span>
+                                </td>
+                                <td class="text-end">
+                                    <strong>@producto.Ingresos.ToString("C0")</strong>
+                                </td>
+                                <td class="text-center">
+                                    <div class="progress" style="height: 8px; width: 60px;">
+                                        <div class="progress-bar bg-success" 
+                                             style="width: @(producto.PorcentajeTotal)%" 
+                                             role="progressbar">
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">@producto.PorcentajeTotal.ToString("F1")%</small>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<ProductoMasVendidoDto>? Productos { get; set; }
+}

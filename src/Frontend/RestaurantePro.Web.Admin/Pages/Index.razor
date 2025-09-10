@@ -1,14 +1,261 @@
 ﻿@page "/"
+@attribute [Authorize]
+@inject RestaurantePro.Web.Admin.Services.DashboardApiService DashboardApi
+@using RestaurantePro.Web.Admin.Models
+@using RestaurantePro.Web.Admin.Components
+@inject IJSRuntime JSRuntime
 
 <PageTitle>Dashboard</PageTitle>
 
-<h3>Dashboard</h3>
-<p class="text-muted">Accesos rápidos:</p>
-<ul>
-    <li><a href="/productos">Productos</a></li>
-    <li><a href="/categorias">Categorías</a></li>
-    <li><a href="/usuarios">Usuarios</a></li>
-    <li><a href="/promociones">Promociones</a></li>
-    <li><a href="/reportes">Reportes</a></li>
-    <li><a href="/configuracion">Configuración</a></li>
- </ul>
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
+    <div class="d-flex align-items-center">
+        <small class="text-muted me-3">
+            <i class="oi oi-clock"></i> Última actualización: @(resumen?.Metricas.UltimaActualizacion.ToString("HH:mm") ?? "Cargando...")
+        </small>
+        <button class="btn btn-sm btn-outline-primary" @onclick="ActualizarDatos">
+            <i class="oi oi-reload"></i> Actualizar
+        </button>
+    </div>
+</div>
+
+@if (cargando)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+        <p class="mt-2 text-muted">Cargando métricas del dashboard...</p>
+    </div>
+}
+else if (resumen != null)
+{
+    <!-- Métricas principales -->
+    <div class="row mb-4">
+        <MetricaCard Titulo="Ventas Hoy" 
+                     Valor="@resumen.Metricas.VentasHoy.ToString("C0")" 
+                     Subtexto="@($"vs ayer: {resumen.Metricas.VentasAyer.ToString("C0")}")"
+                     Icono="oi oi-dollar" 
+                     CardClass="border-left-success"
+                     ValorClass="text-success"
+                     IconoClass="text-success"
+                     MostrarCambio="true"
+                     Cambio="@resumen.Metricas.CrecimientoVentas" />
+
+        <MetricaCard Titulo="Mesas Ocupadas" 
+                     Valor="@($"{resumen.Metricas.MesasOcupadas} de {resumen.Metricas.TotalMesas}")" 
+                     Subtexto="@($"{resumen.Metricas.MesasDisponibles} disponibles")"
+                     Icono="oi oi-grid-three-up" 
+                     CardClass="border-left-info"
+                     ValorClass="text-info"
+                     IconoClass="text-info" />
+
+        <MetricaCard Titulo="Comandas Activas" 
+                     Valor="@resumen.Metricas.ComandasActivas.ToString()" 
+                     Subtexto="@($"{resumen.Metricas.ComandasCompletadas} completadas hoy")"
+                     Icono="oi oi-list-rich" 
+                     CardClass="border-left-warning"
+                     ValorClass="text-warning"
+                     IconoClass="text-warning" />
+
+        <MetricaCard Titulo="Promedio Ticket" 
+                     Valor="@resumen.Metricas.PromedioTicket.ToString("C0")" 
+                     Subtexto="@($"{resumen.Metricas.ClientesAtendidosHoy} clientes atendidos")"
+                     Icono="oi oi-people" 
+                     CardClass="border-left-primary"
+                     ValorClass="text-primary"
+                     IconoClass="text-primary" />
+    </div>
+
+    <!-- Gráficos y tablas -->
+    <div class="row">
+        <!-- Gráfico de ventas -->
+        <div class="col-xl-8 col-lg-7 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="oi oi-bar-chart"></i> Ventas de los Últimos 7 Días
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div style="height: 300px;">
+                        <canvas id="graficoVentas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estado de mesas -->
+        <div class="col-xl-4 col-lg-5 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="oi oi-grid-three-up"></i> Estado de Mesas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div style="height: 300px;">
+                        <canvas id="graficoMesas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Productos más vendidos -->
+        <div class="col-xl-6 mb-4">
+            <ProductosMasVendidos Productos="resumen.ProductosMasVendidos" />
+        </div>
+
+        <!-- Comandas por estado -->
+        <div class="col-xl-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="oi oi-list-rich"></i> Comandas por Estado
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div style="height: 300px;">
+                        <canvas id="graficoComandas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen de ingresos por hora -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="oi oi-clock"></i> Ingresos por Hora (Hoy)
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div style="height: 250px;">
+                        <canvas id="graficoIngresosHora"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-danger" role="alert">
+        <h4 class="alert-heading">Error al cargar el dashboard</h4>
+        <p>No se pudieron cargar las métricas del dashboard. Por favor, inténtalo de nuevo.</p>
+        <hr>
+        <button class="btn btn-outline-danger" @onclick="ActualizarDatos">
+            <i class="oi oi-reload"></i> Reintentar
+        </button>
+    </div>
+}
+
+@code {
+    private DashboardResumenDto? resumen;
+    private bool cargando = true;
+    private object? graficoVentas;
+    private object? graficoMesas;
+    private object? graficoComandas;
+    private object? graficoIngresosHora;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CargarDatos()
+    {
+        cargando = true;
+        StateHasChanged();
+
+        try
+        {
+            resumen = await DashboardApi.ObtenerResumenAsync();
+            
+            if (resumen != null)
+            {
+                await Task.Delay(100); // Pequeña pausa para asegurar que el DOM esté listo
+                await CrearGraficos();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cargar datos del dashboard: {ex.Message}");
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ActualizarDatos()
+    {
+        await CargarDatos();
+    }
+
+    private async Task CrearGraficos()
+    {
+        if (resumen == null) return;
+
+        try
+        {
+            // Destruir gráficos existentes
+            if (graficoVentas != null) await JSRuntime.InvokeVoidAsync("dashboardCharts.destruirGrafico", graficoVentas);
+            if (graficoMesas != null) await JSRuntime.InvokeVoidAsync("dashboardCharts.destruirGrafico", graficoMesas);
+            if (graficoComandas != null) await JSRuntime.InvokeVoidAsync("dashboardCharts.destruirGrafico", graficoComandas);
+            if (graficoIngresosHora != null) await JSRuntime.InvokeVoidAsync("dashboardCharts.destruirGrafico", graficoIngresosHora);
+
+            // Crear gráfico de ventas
+            var datosVentas = resumen.VentasUltimos7Dias.Select(v => new { 
+                fecha = v.Fecha.ToString("dd/MM"), 
+                monto = (double)v.Monto 
+            }).ToArray();
+            graficoVentas = await JSRuntime.InvokeAsync<object>("dashboardCharts.crearGraficoVentas", "graficoVentas", datosVentas);
+
+            // Crear gráfico de mesas
+            var datosMesas = new { 
+                disponibles = resumen.EstadoMesas.Disponibles,
+                ocupadas = resumen.EstadoMesas.Ocupadas,
+                reservadas = resumen.EstadoMesas.Reservadas,
+                enLimpieza = resumen.EstadoMesas.EnLimpieza
+            };
+            graficoMesas = await JSRuntime.InvokeAsync<object>("dashboardCharts.crearGraficoMesas", "graficoMesas", datosMesas);
+
+            // Crear gráfico de comandas
+            var datosComandas = new { 
+                pendientes = resumen.ComandasPorEstado.Pendientes,
+                enPreparacion = resumen.ComandasPorEstado.EnPreparacion,
+                listas = resumen.ComandasPorEstado.Listas,
+                completadas = resumen.ComandasPorEstado.Completadas,
+                canceladas = resumen.ComandasPorEstado.Canceladas
+            };
+            graficoComandas = await JSRuntime.InvokeAsync<object>("dashboardCharts.crearGraficoComandas", "graficoComandas", datosComandas);
+
+            // Crear gráfico de ingresos por hora
+            var datosIngresos = resumen.IngresosPorHora.Select(i => new { 
+                hora = i.Hora, 
+                monto = (double)i.Monto 
+            }).ToArray();
+            graficoIngresosHora = await JSRuntime.InvokeAsync<object>("dashboardCharts.crearGraficoIngresosHora", "graficoIngresosHora", datosIngresos);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al crear gráficos: {ex.Message}");
+        }
+    }
+
+    public void Dispose()
+    {
+        // Limpiar gráficos al destruir el componente
+        if (graficoVentas != null) JSRuntime.InvokeVoidAsync("dashboardCharts.destruirGrafico", graficoVentas);
+        if (graficoMesas != null) JSRuntime.InvokeVoidAsync("dashboardCharts.destruirGrafico", graficoMesas);
+        if (graficoComandas != null) JSRuntime.InvokeVoidAsync("dashboardCharts.destruirGrafico", graficoComandas);
+        if (graficoIngresosHora != null) JSRuntime.InvokeVoidAsync("dashboardCharts.destruirGrafico", graficoIngresosHora);
+    }
+}

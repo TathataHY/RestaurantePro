@@ -38,6 +38,7 @@ builder.Services.AddScoped<AuthApiService>();
 builder.Services.AddScoped<UsuariosApiService>();
 builder.Services.AddScoped<CategoriasApiService>();
 builder.Services.AddScoped<MesasApiService>();
+builder.Services.AddScoped<DashboardApiService>();
 builder.Services.AddScoped<JwtAuthenticationStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<JwtAuthenticationStateProvider>());
 
