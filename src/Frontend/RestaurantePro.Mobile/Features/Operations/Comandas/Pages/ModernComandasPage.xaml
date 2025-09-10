@@ -238,13 +238,13 @@
         -->
 
         <!-- Floating Action Button -->
-        <controls:FloatingActionButton Grid.RowSpan="1"
+        <controls:FloatingActionButton Grid.Row="0"
                                        x:Name="MainFab"
                                        Text="➕"
                                        Command="{Binding CrearComandaCommand}"
                                        HorizontalOptions="End"
                                        VerticalOptions="End"
-                                       Margin="16,0,16,80" />
+                                       Margin="16,0,16,16" />
     </Grid>
 
 </ContentPage> 
