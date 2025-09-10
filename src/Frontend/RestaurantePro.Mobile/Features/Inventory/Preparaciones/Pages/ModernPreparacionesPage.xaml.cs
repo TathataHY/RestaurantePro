@@ -17,28 +17,12 @@ public partial class ModernPreparacionesPage : ContentPage
         _viewModel = viewModel;
         BindingContext = _viewModel;
         
-        SetupBottomNavigation();
         SetupFilterTabs();
         
         // Configurar animaciones de entrada
         Loaded += OnPageLoaded;
     }
 
-    private void SetupBottomNavigation()
-    {
-        var tabs = new ObservableCollection<TabItem>
-        {
-            new TabItem("Dashboard", "🏠", "dashboard"),
-            new TabItem("Mesas", "🪑", "tables"),
-            new TabItem("Comandas", "🍽️", "orders"),
-            new TabItem("Preparaciones", "🍳", "preparations"),
-            new TabItem("Perfil", "👤", "profile")
-        };
-
-        BottomTabBar.Tabs = tabs;
-        BottomTabBar.SelectedIndex = 3; // Seleccionar tab de Preparaciones
-        BottomTabBar.TabSelected += OnBottomTabSelected;
-    }
 
     private void SetupFilterTabs()
     {
@@ -79,17 +63,6 @@ public partial class ModernPreparacionesPage : ContentPage
         }
     }
 
-    private async void OnBottomTabSelected(object sender, int tabIndex)
-    {
-        // Animación de transición
-        await this.FadeTo(0, 150);
-        
-        // Aquí implementarías la navegación real
-        var selectedTab = BottomTabBar.Tabs[tabIndex];
-        await Application.Current.MainPage.DisplayAlert("Navegación", $"Navegando a: {selectedTab.Title}", "OK");
-        
-        await this.FadeTo(1, 150);
-    }
 
     private async void OnFilterTabSelected(int tabIndex)
     {
@@ -132,6 +105,5 @@ public partial class ModernPreparacionesPage : ContentPage
         base.OnDisappearing();
         
         // Limpiar recursos si es necesario
-        BottomTabBar.TabSelected -= OnBottomTabSelected;
     }
 } 
