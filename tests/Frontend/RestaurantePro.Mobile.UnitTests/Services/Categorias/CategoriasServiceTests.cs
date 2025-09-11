@@ -199,7 +199,7 @@ public class CategoriasServiceTests
         Assert.NotNull(result.Data);
         Assert.Equal(2, result.Data.Count);
         Assert.All(result.Data, c => Assert.Contains(nombre.ToLower(), c.Nombre.ToLower()));
-        _mockApiService.Verify(x => x.GetAsync<List<CategoriaProductoDto>>($"api/core/categorias?nombre={nombre}", "test-token"), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<CategoriaProductoDto>>($"api/core/categorias?nombre={nombre}", "test-token", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

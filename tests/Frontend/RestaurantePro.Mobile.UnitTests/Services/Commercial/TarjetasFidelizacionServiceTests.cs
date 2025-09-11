@@ -147,7 +147,7 @@ public class TarjetasFidelizacionServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(tarjetaId, result.Data.Id);
-        _mockApiService.Verify(x => x.GetAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -171,7 +171,7 @@ public class TarjetasFidelizacionServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(1, result.Data.Count);
-        _mockApiService.Verify(x => x.GetAsync<List<HistorialPuntosDto>>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/historial", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<HistorialPuntosDto>>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/historial", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -206,8 +206,8 @@ public class TarjetasFidelizacionServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(175, result.Data.PuntosDisponibles);
-        _mockApiService.Verify(x => x.PostAsync<object>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/puntos", It.Is<object>(data => data.ToString().Contains(montoCompra.ToString())), It.IsAny<string>()), Times.Once);
-        _mockApiService.Verify(x => x.GetAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.PostAsync<object>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/puntos", It.Is<object>(data => data.ToString().Contains(montoCompra.ToString())), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -243,8 +243,8 @@ public class TarjetasFidelizacionServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(120, result.Data.PuntosDisponibles);
-        _mockApiService.Verify(x => x.PostAsync<object>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/canjear", It.Is<object>(data => data.ToString().Contains(puntosACanjear.ToString())), It.IsAny<string>()), Times.Once);
-        _mockApiService.Verify(x => x.GetAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.PostAsync<object>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/canjear", It.Is<object>(data => data.ToString().Contains(puntosACanjear.ToString())), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -268,7 +268,7 @@ public class TarjetasFidelizacionServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(2, result.Data.Count);
-        _mockApiService.Verify(x => x.GetAsync<List<TarjetaFidelizacionDto>>("api/comercial/tarjetas-fidelizacion", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<TarjetaFidelizacionDto>>("api/comercial/tarjetas-fidelizacion", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -287,7 +287,7 @@ public class TarjetasFidelizacionServiceTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.True(result.Data);
-        _mockApiService.Verify(x => x.PostAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/desactivar", It.IsAny<object>(), It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.PostAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/desactivar", It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -310,7 +310,7 @@ public class TarjetasFidelizacionServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Single(result.Data);
-        _mockApiService.Verify(x => x.GetAsync<List<TarjetaFidelizacionDto>>("api/comercial/tarjetas-fidelizacion", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<TarjetaFidelizacionDto>>("api/comercial/tarjetas-fidelizacion", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -343,7 +343,7 @@ public class TarjetasFidelizacionServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(2, result.Data.Transacciones.Count);
-        _mockApiService.Verify(x => x.GetAsync<List<HistorialPuntosDto>>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/historial", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<HistorialPuntosDto>>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/historial", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -362,7 +362,7 @@ public class TarjetasFidelizacionServiceTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.True(result.Data);
-        _mockApiService.Verify(x => x.PostAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/desactivar", It.IsAny<object>(), It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.PostAsync<TarjetaFidelizacionDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/desactivar", It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -392,7 +392,7 @@ public class TarjetasFidelizacionServiceTests
         Assert.NotNull(result.Data);
         Assert.Equal(tarjetaId, result.Data.Id);
         Assert.Equal(300, result.Data.PuntosDisponibles);
-        _mockApiService.Verify(x => x.GetAsync<List<HistorialPuntosDto>>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/historial", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<HistorialPuntosDto>>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/historial", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -420,7 +420,7 @@ public class TarjetasFidelizacionServiceTests
         Assert.NotNull(result.Data);
         Assert.Equal(tarjetaId, result.Data.TarjetaId);
         Assert.Equal(1000, result.Data.PuntosAcumulados);
-        _mockApiService.Verify(x => x.GetAsync<EstadisticasTarjetaDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/estadisticas", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<EstadisticasTarjetaDto>($"api/comercial/tarjetas-fidelizacion/{tarjetaId}/estadisticas", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -439,7 +439,7 @@ public class TarjetasFidelizacionServiceTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.True(result.Data);
-        _mockApiService.Verify(x => x.DeleteAsync($"api/comercial/tarjetas-fidelizacion/{tarjetaId}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.DeleteAsync($"api/comercial/tarjetas-fidelizacion/{tarjetaId}", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

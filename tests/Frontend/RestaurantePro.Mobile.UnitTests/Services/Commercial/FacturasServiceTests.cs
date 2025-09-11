@@ -182,7 +182,7 @@ public class FacturasServiceTests
         };
 
         var apiResponse = ApiResponse<bool>.SuccessResponse(true);
-        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -440,7 +440,7 @@ public class FacturasServiceTests
         var anulacionDto = new AnularFacturaDto { MotivoAnulacion = "Error en el pedido" };
         var errorResponse = ApiResponse<bool>.ErrorResponse(new List<string> { "Error de anulación" }, "Error de anulación", 400);
         
-        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(errorResponse);
 
         // Act

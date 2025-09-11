@@ -173,7 +173,7 @@ public class ClientesServiceTests
         var clienteId = Guid.NewGuid();
         var apiResponse = ApiResponse<bool>.SuccessResponse(true);
         
-        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -359,7 +359,7 @@ public class ClientesServiceTests
         var clienteId = Guid.NewGuid();
         var apiResponse = ApiResponse<bool>.SuccessResponse(true);
         
-        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -454,7 +454,7 @@ public class ClientesServiceTests
     {
         // Arrange
         var clienteId = Guid.NewGuid();
-        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act
@@ -489,7 +489,7 @@ public class ClientesServiceTests
         // Arrange
         var clienteId = Guid.NewGuid();
         var errorResponse = ApiResponse<bool>.ErrorResponse(new List<string> { "Forbidden" }, "Forbidden", 403);
-        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(errorResponse);
 
         // Act

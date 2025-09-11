@@ -9,7 +9,7 @@ namespace RestaurantePro.Application.Core.Productos.Commands.CrearProducto;
 /// </summary>
 public class CrearProductoHandler : IRequestHandler<CrearProductoCommand, Result<ProductoDto>>
 {
-    private static readonly object _lockObject = new object();
+    private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
     private readonly IProductoRepository _repository;
     private readonly IProductoCategoriaRepository _categoriaRepository;
     private readonly ProductoBuilder _builder;
@@ -56,9 +56,13 @@ public class CrearProductoHandler : IRequestHandler<CrearProductoCommand, Result
                 return Result.Failure<ProductoDto>($"Categoría con ID {request.CategoriaId} no encontrada");
             }
 
-            // 2. Validar unicidad del nombre con lock para concurrencia
+            // 2. Validar unicidad del nombre con semáforo para concurrencia
             ProductoDto productoDto;
-            lock (_lockObject)
+            Guid productoId;
+            string productoNombre;
+            
+            await _semaphore.WaitAsync(cancellationToken);
+            try
             {
                 var productoExistente = await _repository.ObtenerPorNombreAsync(nombreSanitizado);
                 if (productoExistente != null)
@@ -82,6 +86,8 @@ public class CrearProductoHandler : IRequestHandler<CrearProductoCommand, Result
                 }
 
                 var producto = resultado.Value;
+                productoId = producto.Id;
+                productoNombre = producto.Nombre;
                 
                 // 4. Persistir en repositorio
                 await _repository.AgregarAsync(producto);
@@ -90,6 +96,10 @@ public class CrearProductoHandler : IRequestHandler<CrearProductoCommand, Result
                 // 5. Mapear a DTO para respuesta
                 productoDto = _mapper.Map<ProductoDto>(producto);
             }
+            finally
+            {
+                _semaphore.Release();
+            }
 
             try
             {
@@ -97,10 +107,10 @@ public class CrearProductoHandler : IRequestHandler<CrearProductoCommand, Result
             }
             catch (Exception cacheEx)
             {
-                _logger.LogWarning(cacheEx, "No se pudo invalidar caché de listados tras crear producto {Id}", producto.Id);
+                _logger.LogWarning(cacheEx, "No se pudo invalidar caché de listados tras crear producto {Id}", productoId);
             }
 
-            _logger.LogInformation("✅ Producto creado exitosamente: {Id} - {Nombre}", producto.Id, producto.Nombre);
+            _logger.LogInformation("✅ Producto creado exitosamente: {Id} - {Nombre}", productoId, productoNombre);
             return Result.Success(productoDto);
         }
         catch (Exception ex)

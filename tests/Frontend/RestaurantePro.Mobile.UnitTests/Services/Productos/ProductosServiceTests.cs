@@ -186,7 +186,7 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<ProductoDto>.SuccessResponse(producto);
         
         _mockApiService
-            .Setup(x => x.GetAsync<ProductoDto>($"api/core/productos/{productoId}", It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<ProductoDto>($"api/core/productos/{productoId}", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -224,7 +224,7 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<List<ProductoDto>>.SuccessResponse(productos);
         
         _mockApiService
-            .Setup(x => x.GetAsync<List<ProductoDto>>($"api/core/productos/categoria/{categoriaId}?soloActivos=True", It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<List<ProductoDto>>($"api/core/productos/categoria/{categoriaId}?soloActivos=True", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -263,7 +263,7 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<DisponibilidadProductoDto>.SuccessResponse(disponibilidad);
         
         _mockApiService
-            .Setup(x => x.GetAsync<DisponibilidadProductoDto>($"api/core/productos/{productoId}/disponibilidad", It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<DisponibilidadProductoDto>($"api/core/productos/{productoId}/disponibilidad", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -350,7 +350,7 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<List<ProductoDto>>.SuccessResponse(productos);
         
         _mockApiService
-            .Setup(x => x.GetAsync<List<ProductoDto>>($"api/core/productos/populares?limite={limite}", It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<List<ProductoDto>>($"api/core/productos/populares?limite={limite}", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -398,7 +398,7 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<List<ProductoDto>>.SuccessResponse(productos);
         
         _mockApiService
-            .Setup(x => x.GetAsync<List<ProductoDto>>("api/core/productos/disponibles-comandas", It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<List<ProductoDto>>("api/core/productos/disponibles-comandas", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -419,7 +419,7 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<List<ProductoDto>>.SuccessResponse(productos);
         
         _mockApiService
-            .Setup(x => x.GetAsync<List<ProductoDto>>($"api/core/productos/disponibles-comandas?categoriaId={categoriaId}", It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<List<ProductoDto>>($"api/core/productos/disponibles-comandas?categoriaId={categoriaId}", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -443,7 +443,7 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias);
         
         _mockApiService
-            .Setup(x => x.GetAsync<List<CategoriaProductoDto>>("api/core/categorias", It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<List<CategoriaProductoDto>>("api/core/categorias", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -460,7 +460,7 @@ public class ProductosServiceTests
     {
         // Arrange
         _mockApiService
-            .Setup(x => x.GetAsync<List<CategoriaProductoDto>>("api/core/categorias", It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<List<CategoriaProductoDto>>("api/core/categorias", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Error de red"));
 
         // Act

@@ -280,7 +280,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
             await _viewModel.BuscarCategoriasCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(d => d.ShowErrorAsync(It.IsAny<string>()), Times.Once);
+            _mockDialogService.Verify(d => d.ShowErrorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -293,7 +293,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
             await _viewModel.BuscarCategoriasCommand.ExecuteAsync(null);
 
             // Assert
-            _mockCategoriasService.Verify(s => s.BuscarCategoriasAsync(It.IsAny<string>()), Times.Never);
+            _mockCategoriasService.Verify(s => s.BuscarCategoriasAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
@@ -332,14 +332,14 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
                 Data = null,
                 Message = null
             };
-            _mockCategoriasService.Setup(s => s.BuscarCategoriasAsync(It.IsAny<string>()))
+            _mockCategoriasService.Setup(s => s.BuscarCategoriasAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(response);
 
             // Act
             await _viewModel.BuscarCategoriasCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(d => d.ShowErrorAsync(It.IsAny<string>()), Times.Once);
+            _mockDialogService.Verify(d => d.ShowErrorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 } 

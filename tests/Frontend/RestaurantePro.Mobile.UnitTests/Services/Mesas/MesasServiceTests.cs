@@ -205,7 +205,7 @@ public class MesasServiceTests
         _mockApiService.Verify(x => x.PostAsync<object>(
             $"api/operaciones/mesas/{mesaId}/asignar",
             It.IsAny<object>(),
-            It.IsAny<string?>()), Times.Once);
+            It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -237,7 +237,7 @@ public class MesasServiceTests
         _mockApiService.Verify(x => x.PostAsync<MesaDto>(
             $"api/operaciones/mesas/{mesaId}/liberar",
             It.IsAny<object>(),
-            It.IsAny<string?>()), Times.Once);
+            It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -271,7 +271,7 @@ public class MesasServiceTests
         _mockApiService.Verify(x => x.PutAsync<MesaDto>(
             $"api/operaciones/mesas/{mesaId}/estado",
             It.IsAny<object>(),
-            It.IsAny<string?>()), Times.Once);
+            It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -348,7 +348,7 @@ public class MesasServiceTests
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
         result.Data.Should().BeEquivalentTo(expectedMesa);
-        _mockApiService.Verify(x => x.GetAsync<MesaDto>($"api/operaciones/mesas/buscar-mejor?numeroPersonas={numeroPersonas}&ubicacionPreferida=Terraza", It.IsAny<string?>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<MesaDto>($"api/operaciones/mesas/buscar-mejor?numeroPersonas={numeroPersonas}&ubicacionPreferida=Terraza", It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -369,7 +369,7 @@ public class MesasServiceTests
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
         result.Data.Should().BeEquivalentTo(expectedMesa);
-        _mockApiService.Verify(x => x.GetAsync<MesaDto>($"api/operaciones/mesas/buscar-mejor?numeroPersonas={numeroPersonas}", It.IsAny<string?>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<MesaDto>($"api/operaciones/mesas/buscar-mejor?numeroPersonas={numeroPersonas}", It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion

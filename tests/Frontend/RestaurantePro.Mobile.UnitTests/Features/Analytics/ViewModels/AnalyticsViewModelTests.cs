@@ -260,7 +260,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Analytics.ViewModels
 
             // Assert
             _viewModel.TopProductos.Should().BeEmpty();
-            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>()), Times.Never);
+            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
@@ -274,7 +274,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Analytics.ViewModels
             await _viewModel.CargarTiempoPreparacionCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>()), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
