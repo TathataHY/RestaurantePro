@@ -43,6 +43,55 @@ public class CategoriasApiService
             $"api/core/categorias/buscar?nombre={Uri.EscapeDataString(nombre)}");
         return resp?.Data ?? new List<CategoriaProductoDto>();
     }
+
+    public async Task<CategoriaProductoDto?> ObtenerPorIdAsync(Guid id)
+    {
+        var http = CreateClient();
+        var resp = await http.GetFromJsonAsync<ApiResponse<CategoriaProductoDto>>(
+            $"api/core/categorias/{id}");
+        return resp?.Data;
+    }
+
+    public async Task<ApiResponse<CategoriaProductoDto>?> CrearAsync(CreateCategoriaRequest request)
+    {
+        var http = CreateClient();
+        var resp = await http.PostAsJsonAsync("api/core/categorias", request);
+        if (resp.IsSuccessStatusCode)
+        {
+            return await resp.Content.ReadFromJsonAsync<ApiResponse<CategoriaProductoDto>>();
+        }
+        return null;
+    }
+
+    public async Task<ApiResponse<CategoriaProductoDto>?> ActualizarAsync(Guid id, UpdateCategoriaRequest request)
+    {
+        var http = CreateClient();
+        var resp = await http.PutAsJsonAsync($"api/core/categorias/{id}", request);
+        if (resp.IsSuccessStatusCode)
+        {
+            return await resp.Content.ReadFromJsonAsync<ApiResponse<CategoriaProductoDto>>();
+        }
+        return null;
+    }
+
+    public async Task<bool> EliminarAsync(Guid id)
+    {
+        var http = CreateClient();
+        var resp = await http.DeleteAsync($"api/core/categorias/{id}");
+        return resp.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> ValidarNombreUnicoAsync(string nombre, Guid? idExcluir = null)
+    {
+        var http = CreateClient();
+        var url = $"api/core/categorias/validar-nombre?nombre={Uri.EscapeDataString(nombre)}";
+        if (idExcluir.HasValue)
+        {
+            url += $"&idExcluir={idExcluir.Value}";
+        }
+        var resp = await http.GetFromJsonAsync<ApiResponse<bool>>(url);
+        return resp?.Data ?? false;
+    }
 }
 
 
