@@ -55,9 +55,15 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
                 cfg.RegisterServicesFromAssembly(typeof(RestaurantePro.Application.Comercial.Clientes.Commands.CrearCliente.CrearClienteCommand).Assembly);
             });
 
+            // Configurar AutoMapper para pruebas
+            services.AddAutoMapper(typeof(RestaurantePro.Application.Comercial.Clientes.Commands.CrearCliente.CrearClienteCommand).Assembly);
+
+            // Configurar DbContext genérico para repositorios
+            services.AddScoped<DbContext>(provider => provider.GetRequiredService<RestauranteProDbContext>());
+
             // Configurar repositorios para pruebas
             services.AddScoped<RestaurantePro.Domain.Comercial.Clientes.Interfaces.IClienteRepository, 
-                RestaurantePro.Infrastructure.Persistence.Repositories.ClienteRepository>();
+                RestaurantePro.Infrastructure.Persistence.Repositories.Comercial.ClienteRepository>();
 
             // Configurar logging para pruebas
             services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning));

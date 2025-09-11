@@ -412,4 +412,299 @@ public class AuthApiServiceTests
         // Assert
         resultado.Should().BeNull();
     }
+
+    // ===== PRUEBAS DE SEGURIDAD =====
+
+    [Fact]
+    public async Task LoginAsync_ConInyeccionSQL_DeberiaRechazarCredenciales()
+    {
+        // Arrange
+        var loginRequest = new LoginRequest
+        {
+            Email = "admin'; DROP TABLE usuarios; --",
+            Password = "password"
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest,
+                Content = new StringContent("Credenciales inválidas", Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.LoginAsync(loginRequest);
+
+        // Assert
+        resultado.Should().BeNull(); // Debe rechazar la inyección SQL
+    }
+
+    [Fact]
+    public async Task LoginAsync_ConXSS_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var loginRequest = new LoginRequest
+        {
+            Email = "<script>alert('XSS')</script>admin@test.com",
+            Password = "<img src=x onerror=alert('XSS')>password"
+        };
+
+        var authResponse = new AuthResponse
+        {
+            Success = true,
+            Token = "token_seguro",
+            Expiration = DateTime.UtcNow.AddHours(1),
+            UserId = Guid.NewGuid().ToString(),
+            UserName = "admin",
+            Roles = new List<string> { "Administrador" }
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<AuthResponse>
+        {
+            Success = true,
+            Data = authResponse
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.LoginAsync(loginRequest);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Success.Should().BeTrue();
+        resultado.Token.Should().Be("token_seguro");
+    }
+
+    [Fact]
+    public async Task LoginAsync_ConCredencialesVulnerables_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var loginRequest = new LoginRequest
+        {
+            Email = "admin@test.com",
+            Password = "123456" // Contraseña débil
+        };
+
+        var authResponse = new AuthResponse
+        {
+            Success = true,
+            Token = "token_seguro",
+            Expiration = DateTime.UtcNow.AddHours(1),
+            UserId = Guid.NewGuid().ToString(),
+            UserName = "admin",
+            Roles = new List<string> { "Administrador" }
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<AuthResponse>
+        {
+            Success = true,
+            Data = authResponse
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.LoginAsync(loginRequest);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Success.Should().BeTrue();
+        resultado.Token.Should().Be("token_seguro");
+    }
+
+    [Fact]
+    public async Task GetProfileAsync_ConTokenMalicioso_DeberiaRetornarNull()
+    {
+        // Arrange
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Unauthorized,
+                Content = new StringContent("Token inválido", Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.GetProfileAsync();
+
+        // Assert
+        resultado.Should().BeNull(); // Debe rechazar token malicioso
+    }
+
+    // ===== PRUEBAS DE CONCURRENCIA =====
+
+    [Fact]
+    public async Task LoginAsync_ConConcurrencia_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var loginRequest = new LoginRequest
+        {
+            Email = "admin@test.com",
+            Password = "password123"
+        };
+
+        var authResponse = new AuthResponse
+        {
+            Success = true,
+            Token = "token_concurrencia",
+            Expiration = DateTime.UtcNow.AddHours(1),
+            UserId = Guid.NewGuid().ToString(),
+            UserName = "admin",
+            Roles = new List<string> { "Administrador" }
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<AuthResponse>
+        {
+            Success = true,
+            Data = authResponse
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act - Simular múltiples intentos de login simultáneos
+        var tasks = new List<Task<AuthResponse?>>();
+        for (int i = 0; i < 15; i++)
+        {
+            tasks.Add(_service.LoginAsync(loginRequest));
+        }
+
+        var resultados = await Task.WhenAll(tasks);
+
+        // Assert
+        resultados.Should().HaveCount(15);
+        resultados.Should().AllSatisfy(r => r.Should().NotBeNull());
+        resultados.Should().AllSatisfy(r => r!.Success.Should().BeTrue());
+    }
+
+    [Fact]
+    public async Task GetProfileAsync_ConConcurrencia_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var perfilEsperado = new AuthUserDto
+        {
+            Id = Guid.NewGuid().ToString(),
+            Email = "admin@test.com",
+            UserName = "admin",
+            Roles = new List<string> { "Administrador" }
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<AuthUserDto>
+        {
+            Success = true,
+            Data = perfilEsperado
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act - Simular múltiples consultas de perfil simultáneas
+        var tasks = new List<Task<AuthUserDto?>>();
+        for (int i = 0; i < 25; i++)
+        {
+            tasks.Add(_service.GetProfileAsync());
+        }
+
+        var resultados = await Task.WhenAll(tasks);
+
+        // Assert
+        resultados.Should().HaveCount(25);
+        resultados.Should().AllSatisfy(r => r.Should().NotBeNull());
+        resultados.Should().AllSatisfy(r => r!.Email.Should().Be("admin@test.com"));
+    }
+
+    // ===== PRUEBAS DE LÍMITES Y RENDIMIENTO =====
+
+    [Fact]
+    public async Task LoginAsync_ConCredencialesMasivas_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var loginRequest = new LoginRequest
+        {
+            Email = "A".PadRight(1000, 'A') + "@test.com", // Email de 1000 caracteres
+            Password = "B".PadRight(1000, 'B') // Contraseña de 1000 caracteres
+        };
+
+        var authResponse = new AuthResponse
+        {
+            Success = true,
+            Token = "C".PadRight(2000, 'C'), // Token de 2000 caracteres
+            Expiration = DateTime.UtcNow.AddHours(1),
+            UserId = Guid.NewGuid().ToString(),
+            UserName = "D".PadRight(500, 'D'), // Username de 500 caracteres
+            Roles = new List<string> { "Administrador", "SuperUsuario", "Moderador", "Editor", "Lector" }
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<AuthResponse>
+        {
+            Success = true,
+            Data = authResponse
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.LoginAsync(loginRequest);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Success.Should().BeTrue();
+        resultado.Token.Should().HaveLength(2000);
+        resultado.Roles.Should().HaveCount(5);
+    }
+
+    [Fact]
+    public async Task LoginAsync_ConRateLimiting_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var loginRequest = new LoginRequest
+        {
+            Email = "admin@test.com",
+            Password = "password123"
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.TooManyRequests,
+                Content = new StringContent("Rate limit exceeded", Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.LoginAsync(loginRequest);
+
+        // Assert
+        resultado.Should().BeNull(); // Debe manejar rate limiting
+    }
 }

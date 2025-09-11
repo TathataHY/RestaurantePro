@@ -480,4 +480,316 @@ public class ProductosApiServiceTests
         await Assert.ThrowsAsync<HttpRequestException>(() => 
             _service.ObtenerProductosPaginadosAsync(1, 10, null, null, true, "Nombre", "asc"));
     }
+
+    // ===== PRUEBAS DE SEGURIDAD =====
+
+    [Fact]
+    public async Task ObtenerProductosPaginadosAsync_ConInyeccionSQL_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var productosEsperados = new PaginatedList<ProductoDto>
+        {
+            Items = new List<ProductoDto>(),
+            TotalCount = 0,
+            PageNumber = 1,
+            PageSize = 10
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<PaginatedList<ProductoDto>>
+        {
+            Success = true,
+            Data = productosEsperados
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act - Intentar inyección SQL en filtros
+        var resultado = await _service.ObtenerProductosPaginadosAsync(
+            pageNumber: 1,
+            pageSize: 10,
+            filtro: "'; DROP TABLE productos; --",
+            categoriaId: null,
+            soloActivos: true,
+            orderBy: "Nombre",
+            orderDirection: "asc"
+        );
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado.Items.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task CrearAsync_ConXSS_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var productoRequest = new CreateProductoRequest
+        {
+            Nombre = "<script>alert('XSS')</script>Pizza",
+            Descripcion = "Pizza con <img src=x onerror=alert('XSS')>",
+            Precio = 15.99m
+        };
+
+        var productoEsperado = new ProductoDto
+        {
+            Id = Guid.NewGuid(),
+            Nombre = productoRequest.Nombre,
+            Descripcion = productoRequest.Descripcion,
+            Precio = productoRequest.Precio
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<ProductoDto>
+        {
+            Success = true,
+            Data = productoEsperado
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.CrearAsync(productoRequest);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Nombre.Should().Be(productoRequest.Nombre);
+        resultado.Descripcion.Should().Be(productoRequest.Descripcion);
+    }
+
+    [Fact]
+    public async Task ObtenerProductosPaginadosAsync_ConCaracteresEspecialesExtremos_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var productosEsperados = new PaginatedList<ProductoDto>
+        {
+            Items = new List<ProductoDto>(),
+            TotalCount = 0,
+            PageNumber = 1,
+            PageSize = 10
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<PaginatedList<ProductoDto>>
+        {
+            Success = true,
+            Data = productosEsperados
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act - Caracteres especiales extremos
+        var resultado = await _service.ObtenerProductosPaginadosAsync(
+            pageNumber: 1,
+            pageSize: 10,
+            filtro: "!@#$%^&*()_+-=[]{}|;':\",./<>?`~",
+            categoriaId: null,
+            soloActivos: true,
+            orderBy: "Nombre",
+            orderDirection: "asc"
+        );
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado.Items.Should().BeEmpty();
+    }
+
+    // ===== PRUEBAS DE CONCURRENCIA =====
+
+    [Fact]
+    public async Task CrearAsync_ConConcurrencia_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var productoRequest = new CreateProductoRequest
+        {
+            Nombre = "Producto Concurrencia",
+            Descripcion = "Descripción de concurrencia",
+            Precio = 10.99m
+        };
+
+        var productoEsperado = new ProductoDto
+        {
+            Id = Guid.NewGuid(),
+            Nombre = productoRequest.Nombre,
+            Descripcion = productoRequest.Descripcion,
+            Precio = productoRequest.Precio
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<ProductoDto>
+        {
+            Success = true,
+            Data = productoEsperado
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act - Simular concurrencia con múltiples tareas
+        var tasks = new List<Task<ProductoDto?>>();
+        for (int i = 0; i < 10; i++)
+        {
+            tasks.Add(_service.CrearAsync(productoRequest));
+        }
+
+        var resultados = await Task.WhenAll(tasks);
+
+        // Assert
+        resultados.Should().HaveCount(10);
+        resultados.Should().AllSatisfy(r => r.Should().NotBeNull());
+        resultados.Should().AllSatisfy(r => r!.Nombre.Should().Be("Producto Concurrencia"));
+    }
+
+    [Fact]
+    public async Task ObtenerProductosPaginadosAsync_ConConcurrencia_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var productosEsperados = new PaginatedList<ProductoDto>
+        {
+            Items = new List<ProductoDto>
+            {
+                new() { Id = Guid.NewGuid(), Nombre = "Producto 1", Precio = 10.99m },
+                new() { Id = Guid.NewGuid(), Nombre = "Producto 2", Precio = 15.99m }
+            },
+            TotalCount = 2,
+            PageNumber = 1,
+            PageSize = 10
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<PaginatedList<ProductoDto>>
+        {
+            Success = true,
+            Data = productosEsperados
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act - Simular concurrencia con múltiples consultas
+        var tasks = new List<Task<PaginatedList<ProductoDto>?>>();
+        for (int i = 0; i < 20; i++)
+        {
+            tasks.Add(_service.ObtenerProductosPaginadosAsync(1, 10, null, null, true, "Nombre", "asc"));
+        }
+
+        var resultados = await Task.WhenAll(tasks);
+
+        // Assert
+        resultados.Should().HaveCount(20);
+        resultados.Should().AllSatisfy(r => r.Should().NotBeNull());
+        resultados.Should().AllSatisfy(r => r!.Items.Should().HaveCount(2));
+    }
+
+    // ===== PRUEBAS DE LÍMITES Y RENDIMIENTO =====
+
+    [Fact]
+    public async Task ObtenerProductosPaginadosAsync_ConPaginacionMasiva_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var productosEsperados = new PaginatedList<ProductoDto>
+        {
+            Items = new List<ProductoDto>(),
+            TotalCount = 1000000, // 1 millón de productos
+            PageNumber = 500000,
+            PageSize = 1000
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<PaginatedList<ProductoDto>>
+        {
+            Success = true,
+            Data = productosEsperados
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerProductosPaginadosAsync(
+            pageNumber: 500000,
+            pageSize: 1000,
+            filtro: null,
+            categoriaId: null,
+            soloActivos: true,
+            orderBy: "Nombre",
+            orderDirection: "asc"
+        );
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.TotalCount.Should().Be(1000000);
+        resultado.PageNumber.Should().Be(500000);
+        resultado.PageSize.Should().Be(1000);
+    }
+
+    [Fact]
+    public async Task CrearAsync_ConDatosMasivos_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var productoRequest = new CreateProductoRequest
+        {
+            Nombre = "A".PadRight(1000, 'A'), // Nombre de 1000 caracteres
+            Descripcion = "B".PadRight(5000, 'B'), // Descripción de 5000 caracteres
+            Precio = 999999.99m // Precio máximo
+        };
+
+        var productoEsperado = new ProductoDto
+        {
+            Id = Guid.NewGuid(),
+            Nombre = productoRequest.Nombre,
+            Descripcion = productoRequest.Descripcion,
+            Precio = productoRequest.Precio
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<ProductoDto>
+        {
+            Success = true,
+            Data = productoEsperado
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.CrearAsync(productoRequest);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Nombre.Should().HaveLength(1000);
+        resultado.Descripcion.Should().HaveLength(5000);
+        resultado.Precio.Should().Be(999999.99m);
+    }
 }

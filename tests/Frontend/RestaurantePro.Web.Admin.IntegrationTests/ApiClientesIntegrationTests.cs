@@ -89,6 +89,7 @@ public class ApiClientesIntegrationTests : IClassFixture<WebApplicationFactory>
             Nombre = "Cliente",
             Apellidos = "Uno",
             Email = "duplicado@test.com",
+            Telefono = "+1234567890",
             FechaNacimiento = DateTime.Today.AddYears(-25),
             AceptaTerminos = true
         };
@@ -98,6 +99,7 @@ public class ApiClientesIntegrationTests : IClassFixture<WebApplicationFactory>
             Nombre = "Cliente",
             Apellidos = "Dos",
             Email = "duplicado@test.com", // Mismo email
+            Telefono = "+1234567891",
             FechaNacimiento = DateTime.Today.AddYears(-25),
             AceptaTerminos = true
         };
@@ -117,11 +119,12 @@ public class ApiClientesIntegrationTests : IClassFixture<WebApplicationFactory>
         // Arrange
         var clienteInvalido = new CrearClienteRequest
         {
-            Nombre = "", // Nombre vacío
-            Apellidos = "", // Apellidos vacíos
-            Email = "email-invalido", // Email inválido
-            FechaNacimiento = DateTime.Today.AddYears(1), // Fecha futura
-            AceptaTerminos = false // No acepta términos
+            Nombre = "Test", // Nombre válido
+            Apellidos = "Usuario", // Apellidos válidos
+            Email = "email-invalido", // Email inválido (sin @)
+            Telefono = "+1234567890", // Teléfono válido
+            FechaNacimiento = DateTime.Today.AddYears(1), // Fecha futura (inválida)
+            AceptaTerminos = false // No acepta términos (inválido)
         };
 
         // Act
