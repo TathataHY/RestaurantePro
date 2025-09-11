@@ -13,6 +13,41 @@
     <link href="css/site.css?v=6" rel="stylesheet" />
     <link href="RestaurantePro.Web.Admin.styles.css" rel="stylesheet" />
     <link rel="icon" type="image/png" href="favicon.png"/>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'background-light': 'var(--background-light)',
+                        'text-light': 'var(--text-light)',
+                        'sidebar-bg-light': 'var(--sidebar-bg-light)',
+                        'border-light': 'var(--border-light)',
+                        'input-bg-light': 'var(--input-bg-light)',
+                        'primary-color': 'var(--primary-color)',
+                        'success-color': 'var(--success-color)',
+                        'warning-color': 'var(--warning-color)',
+                        'background-dark': 'var(--background-dark)',
+                        'text-dark': 'var(--text-dark)',
+                        'sidebar-bg-dark': 'var(--sidebar-bg-dark)',
+                        'border-dark': 'var(--border-dark)',
+                        'input-bg-dark': 'var(--input-bg-dark)',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+    
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    
     <component type="typeof(HeadOutlet)" render-mode="ServerPrerendered" />
 </head>
 <body>

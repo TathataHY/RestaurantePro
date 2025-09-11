@@ -1,33 +1,122 @@
 ﻿<div class="navbar">
     <div class="navbar-brand">
-        <span class="oi oi-restaurant" aria-hidden="true"></span>
+        <span class="material-symbols-outlined">restaurant_menu</span>
         RestaurantePro
     </div>
 </div>
 
 <div class="nav-scrollable">
     <nav class="flex-column">
-        <!-- Categorías -->
+        <!-- Dashboard -->
         <div class="nav-section">
-            <div class="nav-section-title">Categorías</div>
             <div class="nav-item">
-                <NavLink class="nav-link" href="productos" Match="NavLinkMatch.All">
-                    <span class="oi oi-tapas" aria-hidden="true"></span> Entradas
+                <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
+                    <span class="material-symbols-outlined">dashboard</span> Dashboard
+                </NavLink>
+            </div>
+        </div>
+
+        <!-- Gestión de Productos -->
+        <div class="nav-section">
+            <div class="nav-section-title">Productos</div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="productos">
+                    <span class="material-symbols-outlined">inventory_2</span> Productos
                 </NavLink>
             </div>
             <div class="nav-item">
-                <NavLink class="nav-link" href="productos">
-                    <span class="oi oi-dinner-dining" aria-hidden="true"></span> Platos principales
+                <NavLink class="nav-link" href="categorias">
+                    <span class="material-symbols-outlined">category</span> Categorías
                 </NavLink>
             </div>
             <div class="nav-item">
-                <NavLink class="nav-link" href="productos">
-                    <span class="oi oi-cake" aria-hidden="true"></span> Postres
+                <NavLink class="nav-link" href="recetas">
+                    <span class="material-symbols-outlined">restaurant</span> Recetas
+                </NavLink>
+            </div>
+        </div>
+
+        <!-- Operaciones -->
+        <div class="nav-section">
+            <div class="nav-section-title">Operaciones</div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="mesas">
+                    <span class="material-symbols-outlined">table_restaurant</span> Mesas
                 </NavLink>
             </div>
             <div class="nav-item">
-                <NavLink class="nav-link" href="productos">
-                    <span class="oi oi-local-bar" aria-hidden="true"></span> Bebidas
+                <NavLink class="nav-link" href="comandas">
+                    <span class="material-symbols-outlined">receipt_long</span> Comandas
+                </NavLink>
+            </div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="reservaciones">
+                    <span class="material-symbols-outlined">event_available</span> Reservaciones
+                </NavLink>
+            </div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="preparaciones">
+                    <span class="material-symbols-outlined">kitchen</span> Preparaciones
+                </NavLink>
+            </div>
+        </div>
+
+        <!-- Comercial -->
+        <div class="nav-section">
+            <div class="nav-section-title">Comercial</div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="clientes">
+                    <span class="material-symbols-outlined">people</span> Clientes
+                </NavLink>
+            </div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="facturas">
+                    <span class="material-symbols-outlined">receipt</span> Facturas
+                </NavLink>
+            </div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="promociones">
+                    <span class="material-symbols-outlined">local_offer</span> Promociones
+                </NavLink>
+            </div>
+        </div>
+
+        <!-- Inventario -->
+        <div class="nav-section">
+            <div class="nav-section-title">Inventario</div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="inventario">
+                    <span class="material-symbols-outlined">inventory</span> Inventario
+                </NavLink>
+            </div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="proveedores">
+                    <span class="material-symbols-outlined">local_shipping</span> Proveedores
+                </NavLink>
+            </div>
+        </div>
+
+        <!-- Reportes -->
+        <div class="nav-section">
+            <div class="nav-section-title">Reportes</div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="reportes">
+                    <span class="material-symbols-outlined">analytics</span> Reportes
+                </NavLink>
+            </div>
+        </div>
+
+        <!-- Sistema -->
+        <div class="nav-section">
+            <div class="nav-section-title">Sistema</div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="usuarios">
+                    <span class="material-symbols-outlined">person</span> Usuarios
+                </NavLink>
+            </div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="notificaciones">
+                    <span class="material-symbols-outlined">notifications</span> Notificaciones
                 </NavLink>
             </div>
         </div>
@@ -38,13 +127,13 @@
     @if (isAuthenticated)
     {
         <button class="logout-btn" @onclick="Logout">
-            <span class="oi oi-account-logout" aria-hidden="true"></span> Salir
+            <span class="material-symbols-outlined">logout</span> Salir
         </button>
     }
     else
     {
         <NavLink class="login-btn" href="login">
-            <span class="oi oi-account-login" aria-hidden="true"></span> Entrar
+            <span class="material-symbols-outlined">login</span> Entrar
         </NavLink>
     }
 </div>

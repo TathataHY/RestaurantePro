@@ -109,6 +109,21 @@
   --transition-fast: 0.15s ease-in-out;
   --transition-normal: 0.3s ease-in-out;
   --transition-slow: 0.5s ease-in-out;
+  
+  /* Variables para el diseño moderno */
+  --background-light: #ffffff;
+  --text-light: #111827;
+  --sidebar-bg-light: #f9fafb;
+  --border-light: #e5e7eb;
+  --input-bg-light: #f3f4f6;
+  --primary-color: #2563eb;
+  --success-color: #16a34a;
+  --warning-color: #f97316;
+  --background-dark: #1f2937;
+  --text-dark: #f9fafb;
+  --sidebar-bg-dark: #111827;
+  --border-dark: #374151;
+  --input-bg-dark: #374151;
 }
 
 /* ===== TEMA OSCURO ===== */
