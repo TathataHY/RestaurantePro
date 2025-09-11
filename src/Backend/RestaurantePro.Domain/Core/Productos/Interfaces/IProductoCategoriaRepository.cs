@@ -34,5 +34,10 @@ namespace RestaurantePro.Domain.Core.Productos.Interfaces
         /// Actualiza una categoría existente
         /// </summary>
         Task ActualizarAsync(ProductoCategoria categoria, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Verifica si existe una categoría con el nombre especificado
+        /// </summary>
+        Task<bool> ExisteConNombreAsync(string nombre, Guid? idExcluir = null, CancellationToken cancellationToken = default);
     }
 } 

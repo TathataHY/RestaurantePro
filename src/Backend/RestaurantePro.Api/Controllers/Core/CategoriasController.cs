@@ -398,4 +398,44 @@ public class CategoriasController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
         }
     }
+
+    /// <summary>
+    /// Valida si un nombre de categoría es único
+    /// </summary>
+    /// <param name="nombre">Nombre a validar</param>
+    /// <param name="idExcluir">ID de categoría a excluir de la validación (para edición)</param>
+    /// <returns>True si el nombre es único, false si ya existe</returns>
+    [HttpGet("validar-nombre")]
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ApiResponse<bool>>> ValidarNombreUnico([FromQuery] string nombre, [FromQuery] Guid? idExcluir = null)
+    {
+        _logger.LogInformation("🔍 GET /api/core/categorias/validar-nombre - Nombre: {Nombre}, IdExcluir: {IdExcluir}", nombre, idExcluir);
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(nombre))
+            {
+                var errorResponse = ApiResponse<object>.ErrorResponse(
+                    new List<string> { "El nombre es requerido" },
+                    "El nombre es requerido",
+                    StatusCodes.Status400BadRequest);
+                return BadRequest(errorResponse);
+            }
+
+            var existe = await _categoriaRepository.ExisteConNombreAsync(nombre, idExcluir);
+            var response = ApiResponse<bool>.SuccessResponse(!existe, "Validación completada");
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al validar nombre único de categoría: {Nombre}", nombre);
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error al validar el nombre",
+                StatusCodes.Status500InternalServerError);
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
+    }
 } 

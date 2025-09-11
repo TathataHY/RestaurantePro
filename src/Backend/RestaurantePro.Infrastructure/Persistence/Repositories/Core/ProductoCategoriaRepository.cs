@@ -41,5 +41,17 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
         {
             await base.ActualizarAsync(categoria, cancellationToken);
         }
+
+        public async Task<bool> ExisteConNombreAsync(string nombre, Guid? idExcluir = null, CancellationToken cancellationToken = default)
+        {
+            var query = _dbSet.Where(c => c.Nombre == nombre);
+            
+            if (idExcluir.HasValue)
+            {
+                query = query.Where(c => c.Id != idExcluir.Value);
+            }
+            
+            return await query.AnyAsync(cancellationToken);
+        }
     }
 } 
