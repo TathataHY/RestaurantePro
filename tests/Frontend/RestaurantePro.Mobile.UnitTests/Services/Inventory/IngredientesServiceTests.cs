@@ -159,7 +159,7 @@ public class IngredientesServiceTests
         var ingredienteId = Guid.NewGuid();
         var apiResponse = ApiResponse<bool>.SuccessResponse(true);
         
-        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -168,7 +168,7 @@ public class IngredientesServiceTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.True(result.Data);
-        _mockApiService.Verify(x => x.DeleteAsync($"api/inventario/ingredientes/{ingredienteId}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.DeleteAsync($"api/inventario/ingredientes/{ingredienteId}", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -339,7 +339,7 @@ public class IngredientesServiceTests
     {
         // Arrange
         var ingredienteId = Guid.NewGuid();
-        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act

@@ -252,7 +252,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
 
             // Assert
             _mockDialogService.Verify(x => x.ShowSuccessAsync("Preparación iniciada exitosamente"), Times.AtLeastOnce);
-            _mockPreparacionesService.Verify(x => x.IniciarPreparacionAsync(preparacion.Id, It.IsAny<IniciarPreparacionDto>()), Times.Once);
+            _mockPreparacionesService.Verify(x => x.IniciarPreparacionAsync(preparacion.Id, It.IsAny<IniciarPreparacionDto>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -365,7 +365,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
 
             // Assert
             _mockDialogService.Verify(x => x.ShowSuccessAsync("Preparación cancelada exitosamente"), Times.AtLeastOnce);
-            _mockPreparacionesService.Verify(x => x.CancelarPreparacionAsync(preparacion.Id, It.IsAny<CancelarPreparacionDto>()), Times.Once);
+            _mockPreparacionesService.Verify(x => x.CancelarPreparacionAsync(preparacion.Id, It.IsAny<CancelarPreparacionDto>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]

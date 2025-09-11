@@ -430,7 +430,7 @@ public class TarjetasFidelizacionServiceTests
         var tarjetaId = Guid.NewGuid();
         var apiResponse = ApiResponse<bool>.SuccessResponse(true);
         
-        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -549,7 +549,7 @@ public class TarjetasFidelizacionServiceTests
     {
         // Arrange
         var tarjetaId = Guid.NewGuid();
-        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.DeleteAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act

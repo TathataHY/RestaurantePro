@@ -252,7 +252,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Analytics.ViewModels
         public async Task CargarTopProductosAsync_SinDatos_DebeQuedarVacio()
         {
             // Arrange
-            _mockAnalyticsService.Setup(x => x.ObtenerTopProductosAsync(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            _mockAnalyticsService.Setup(x => x.ObtenerTopProductosAsync(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<TopProductoDto>>.SuccessResponse(new List<TopProductoDto>()));
 
             // Act
@@ -267,7 +267,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Analytics.ViewModels
         public async Task CargarTiempoPreparacionAsync_Error_DeberiaMostrarError()
         {
             // Arrange
-            _mockAnalyticsService.Setup(x => x.ObtenerTiempoPreparacionAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            _mockAnalyticsService.Setup(x => x.ObtenerTiempoPreparacionAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<TiempoPreparacionDto>.Failure("Fallo servicio"));
 
             // Act

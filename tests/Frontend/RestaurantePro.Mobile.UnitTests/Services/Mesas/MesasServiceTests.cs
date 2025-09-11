@@ -193,7 +193,8 @@ public class MesasServiceTests
         _mockApiService.Setup(x => x.PostAsync<object>(
             $"api/operaciones/mesas/{mesaId}/asignar",
             It.IsAny<object>(),
-            It.IsAny<string?>()))
+            It.IsAny<string?>(),
+            It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -224,7 +225,8 @@ public class MesasServiceTests
         _mockApiService.Setup(x => x.PostAsync<MesaDto>(
             $"api/operaciones/mesas/{mesaId}/liberar",
             It.IsAny<object>(),
-            It.IsAny<string?>()))
+            It.IsAny<string?>(),
+            It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
