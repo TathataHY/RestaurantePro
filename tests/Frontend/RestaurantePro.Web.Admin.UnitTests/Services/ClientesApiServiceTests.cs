@@ -140,7 +140,7 @@ public class ClientesApiServiceTests
         resultado.Should().NotBeNull();
         resultado!.Id.Should().Be(id);
         resultado.Nombre.Should().Be("María");
-        resultado.Apellido.Should().Be("González");
+        resultado.Apellidos.Should().Be("González");
         resultado.Email.Should().Be("maria@email.com");
     }
 
@@ -172,7 +172,7 @@ public class ClientesApiServiceTests
         var clienteRequest = new CrearClienteRequest
         {
             Nombre = "Carlos",
-            Apellido = "López",
+            Apellidos = "López",
             Email = "carlos@email.com",
             Telefono = "666666666",
             FechaNacimiento = new DateTime(1985, 8, 20),
@@ -185,7 +185,7 @@ public class ClientesApiServiceTests
         {
             Id = Guid.NewGuid(),
             Nombre = "Carlos",
-            Apellido = "López",
+            Apellidos = "López",
             Email = "carlos@email.com",
             Telefono = "666666666"
         };
@@ -213,7 +213,7 @@ public class ClientesApiServiceTests
         resultado!.Success.Should().BeTrue();
         resultado.Data.Should().NotBeNull();
         resultado.Data!.Nombre.Should().Be("Carlos");
-        resultado.Data.Apellido.Should().Be("López");
+        resultado.Data.Apellidos.Should().Be("López");
         resultado.Data.Email.Should().Be("carlos@email.com");
         resultado.Message.Should().Be("Cliente creado correctamente");
     }
@@ -225,7 +225,7 @@ public class ClientesApiServiceTests
         var clienteRequest = new CrearClienteRequest
         {
             Nombre = "",
-            Apellido = "",
+            Apellidos = "",
             Email = "email_invalido",
             Telefono = "123"
         };
@@ -262,7 +262,7 @@ public class ClientesApiServiceTests
         {
             Id = id,
             Nombre = "Carlos Actualizado",
-            Apellido = "López Actualizado",
+            Apellidos = "López Actualizado",
             Email = "carlos.actualizado@email.com",
             Telefono = "777777777"
         };
@@ -271,7 +271,7 @@ public class ClientesApiServiceTests
         {
             Id = id,
             Nombre = "Carlos Actualizado",
-            Apellido = "López Actualizado",
+            Apellidos = "López Actualizado",
             Email = "carlos.actualizado@email.com",
             Telefono = "777777777"
         };
@@ -375,11 +375,9 @@ public class ClientesApiServiceTests
             TotalClientes = 150,
             ClientesActivos = 120,
             ClientesInactivos = 30,
-            NuevosClientesEsteMes = 25,
+            ClientesNuevos = 25,
             ClientesFrecuentes = 45,
-            PromedioGastoPorCliente = 85.50m,
-            ClienteConMayorGasto = "María González",
-            ClienteMasFrecuente = "Juan Pérez"
+            PromedioGasto = 85.50m
         };
 
         var responseContent = JsonSerializer.Serialize(new ApiResponse<ClienteEstadisticasDto>
@@ -404,8 +402,8 @@ public class ClientesApiServiceTests
         resultado!.TotalClientes.Should().Be(150);
         resultado.ClientesActivos.Should().Be(120);
         resultado.ClientesInactivos.Should().Be(30);
-        resultado.NuevosClientesEsteMes.Should().Be(25);
-        resultado.PromedioGastoPorCliente.Should().Be(85.50m);
+        resultado.ClientesNuevos.Should().Be(25);
+        resultado.PromedioGasto.Should().Be(85.50m);
     }
 
     [Fact]

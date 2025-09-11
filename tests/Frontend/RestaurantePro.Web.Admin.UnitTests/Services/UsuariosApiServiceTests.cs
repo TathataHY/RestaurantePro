@@ -154,7 +154,7 @@ public class UsuariosApiServiceTests
     }
 
     [Fact]
-    public async Task ObtenerPorIdAsync_ConIdInexistente_DeberiaRetornarNull()
+    public async Task ObtenerPorIdAsync_ConIdInexistente_DeberiaLanzarExcepcion()
     {
         // Arrange
         var id = Guid.NewGuid();
@@ -167,11 +167,8 @@ public class UsuariosApiServiceTests
                 Content = new StringContent("Usuario no encontrado", Encoding.UTF8, "application/json")
             });
 
-        // Act
-        var resultado = await _service.ObtenerPorIdAsync(id);
-
-        // Assert
-        resultado.Should().BeNull();
+        // Act & Assert
+        await Assert.ThrowsAsync<HttpRequestException>(() => _service.ObtenerPorIdAsync(id));
     }
 
     [Fact]
@@ -264,10 +261,9 @@ public class UsuariosApiServiceTests
         {
             Id = id,
             Email = "admin@restaurante.com",
-            Nombre = "Usuario Actualizado",
-            Apellido = "Apellido Actualizado",
-            Rol = "Cocinero",
-            Activo = true
+            NombreCompleto = "Usuario Actualizado",
+            NombreUsuario = "usuario",
+            Rol = "Cocinero"
         };
 
         var responseContent = JsonSerializer.Serialize(new ApiResponse<UsuarioDto>
