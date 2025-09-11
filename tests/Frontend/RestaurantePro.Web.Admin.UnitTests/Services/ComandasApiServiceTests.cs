@@ -214,7 +214,6 @@ public class ComandasApiServiceTests
         // Arrange
         var request = new CrearComandaRequest
         {
-            NumeroComanda = "CMD-001",
             MesaId = Guid.NewGuid(),
             MeseroId = Guid.NewGuid(),
             ClienteId = Guid.NewGuid(),
@@ -226,7 +225,7 @@ public class ComandasApiServiceTests
         var comandaCreada = new ComandaDto
         {
             Id = Guid.NewGuid(),
-            NumeroComanda = request.NumeroComanda,
+            NumeroComanda = "CMD-001",
             Estado = "Pendiente",
             Prioridad = request.Prioridad
         };
@@ -261,8 +260,8 @@ public class ComandasApiServiceTests
         // Arrange
         var request = new CrearComandaRequest
         {
-            NumeroComanda = "CMD-001",
-            MesaId = Guid.NewGuid()
+            MesaId = Guid.NewGuid(),
+            MeseroId = Guid.NewGuid()
         };
 
         _httpMessageHandlerMock.Protected()
@@ -386,10 +385,10 @@ public class ComandasApiServiceTests
         {
             TotalComandas = 100,
             ComandasPendientes = 20,
-            ComandasEnPreparacion = 30,
+            ComandasEnProceso = 30,
             ComandasListas = 25,
             ComandasEntregadas = 25,
-            TiempoPromedioPreparacion = 25.5,
+            TiempoPromedioPreparacion = 25.5m,
             ComandasUrgentes = 5
         };
 
@@ -414,7 +413,7 @@ public class ComandasApiServiceTests
         resultado.Should().NotBeNull();
         resultado!.TotalComandas.Should().Be(100);
         resultado.ComandasPendientes.Should().Be(20);
-        resultado.TiempoPromedioPreparacion.Should().Be(25.5);
+        resultado.TiempoPromedioPreparacion.Should().Be(25.5m);
     }
 
     [Fact]
@@ -542,8 +541,8 @@ public class ComandasApiServiceTests
         // Arrange
         var request = new CrearComandaRequest
         {
-            NumeroComanda = "CMD-001",
-            MesaId = Guid.NewGuid()
+            MesaId = Guid.NewGuid(),
+            MeseroId = Guid.NewGuid()
         };
 
         _httpMessageHandlerMock.Protected()

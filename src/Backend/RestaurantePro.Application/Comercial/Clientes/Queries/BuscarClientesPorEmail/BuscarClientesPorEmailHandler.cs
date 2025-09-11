@@ -1,3 +1,5 @@
+using RestaurantePro.Domain.Comercial.Clientes.Enums;
+
 namespace RestaurantePro.Application.Comercial.Clientes.Queries.BuscarClientesPorEmail;
 
 public class BuscarClientesPorEmailHandler : IRequestHandler<BuscarClientesPorEmailQuery, Result<PaginatedList<ClienteSummaryDto>>>
@@ -78,7 +80,7 @@ public class BuscarClientesPorEmailHandler : IRequestHandler<BuscarClientesPorEm
                 Ciudad = "", // TODO: Implementar cuando esté disponible
                 Pais = "", // TODO: Implementar cuando esté disponible
                 PuntosFidelizacion = c.PuntosAcumulados,
-                NivelFidelizacion = "Bronce", // TODO: Calcular desde fidelización
+                NivelFidelizacion = NivelFidelizacion.Basico.ToString(), // TODO: Calcular desde fidelización
                 TotalOrdenes = c.CantidadVisitas,
                 MontoTotalCompras = 0m, // TODO: Calcular desde histórico
                 FechaUltimaOrden = null, // TODO: Calcular desde histórico

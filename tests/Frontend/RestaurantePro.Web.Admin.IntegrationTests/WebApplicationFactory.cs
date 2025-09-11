@@ -6,6 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 using System.Data.Common;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Http.Json;
 
 namespace RestaurantePro.Web.Admin.IntegrationTests;
 
@@ -57,6 +59,12 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
 
             // Configurar AutoMapper para pruebas
             services.AddAutoMapper(typeof(RestaurantePro.Application.Comercial.Clientes.Commands.CrearCliente.CrearClienteCommand).Assembly);
+
+            // Configurar serialización JSON para pruebas (enums como strings)
+            services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
+            {
+                options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            });
 
             // Configurar DbContext genérico para repositorios
             services.AddScoped<DbContext>(provider => provider.GetRequiredService<RestauranteProDbContext>());

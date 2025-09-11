@@ -58,7 +58,7 @@ public class ComercialMappingProfile : Profile
             .ForMember(dest => dest.Ciudad, opt => opt.MapFrom(src => "")) // TODO: Implementar en entidad
             .ForMember(dest => dest.Pais, opt => opt.MapFrom(src => "")) // TODO: Implementar en entidad
             .ForMember(dest => dest.PuntosFidelizacion, opt => opt.MapFrom(src => 0)) // TODO: Calcular desde fidelización
-            .ForMember(dest => dest.NivelFidelizacion, opt => opt.MapFrom(src => "Bronce")) // TODO: Calcular desde fidelización
+            .ForMember(dest => dest.NivelFidelizacion, opt => opt.MapFrom(src => NivelFidelizacion.Basico)) // TODO: Calcular desde fidelización
             .ForMember(dest => dest.TotalOrdenes, opt => opt.MapFrom(src => 0)) // TODO: Calcular desde histórico
             .ForMember(dest => dest.MontoTotalCompras, opt => opt.MapFrom(src => 0)) // TODO: Calcular desde histórico
             .ForMember(dest => dest.FechaUltimaOrden, opt => opt.MapFrom(src => (DateTime?)null)) // TODO: Calcular desde histórico

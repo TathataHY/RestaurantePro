@@ -18,7 +18,10 @@ public class CategoriasApiServiceTests
         _httpClientFactoryMock = new Mock<IHttpClientFactory>();
         _tokenStoreMock = new Mock<TokenStore>();
 
-        var httpClient = new HttpClient(_httpMessageHandlerMock.Object);
+        var httpClient = new HttpClient(_httpMessageHandlerMock.Object)
+        {
+            BaseAddress = new Uri("http://localhost:8080")
+        };
         _httpClientFactoryMock.Setup(x => x.CreateClient("Api")).Returns(httpClient);
 
         _service = new CategoriasApiService(_httpClientFactoryMock.Object, _tokenStoreMock.Object);
