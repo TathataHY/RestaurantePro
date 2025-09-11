@@ -43,7 +43,7 @@ public class ClientesServiceTests
             PageSize = 10
         };
         var apiResponse = ApiResponse<PaginatedList<ClienteSummaryDto>>.SuccessResponse(paginatedResponse);
-        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -61,7 +61,7 @@ public class ClientesServiceTests
     {
         // Arrange
         var errorResponse = ApiResponse<PaginatedList<ClienteSummaryDto>>.ErrorResponse(new List<string> { "Error de API" }, "Error de API", 500);
-        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(errorResponse);
 
         // Act
@@ -111,7 +111,7 @@ public class ClientesServiceTests
             PageSize = 10
         };
         var apiResponse = ApiResponse<PaginatedList<ClienteSummaryDto>>.SuccessResponse(paginatedResponse);
-        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -215,7 +215,7 @@ public class ClientesServiceTests
             PageSize = 10
         };
         var apiResponse = ApiResponse<PaginatedList<ClienteSummaryDto>>.SuccessResponse(paginatedResponse);
-        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -246,7 +246,7 @@ public class ClientesServiceTests
             PageSize = 10
         };
         var apiResponse = ApiResponse<PaginatedList<ClienteSummaryDto>>.SuccessResponse(paginatedResponse);
-        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -277,7 +277,7 @@ public class ClientesServiceTests
             PageSize = 10
         };
         var apiResponse = ApiResponse<PaginatedList<ClienteSummaryDto>>.SuccessResponse(paginatedResponse);
-        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -307,7 +307,7 @@ public class ClientesServiceTests
             PageSize = 10
         };
         var apiResponse = ApiResponse<PaginatedList<ClienteSummaryDto>>.SuccessResponse(paginatedResponse);
-        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -339,7 +339,7 @@ public class ClientesServiceTests
             PageSize = 10
         };
         var apiResponse = ApiResponse<PaginatedList<ClienteSummaryDto>>.SuccessResponse(paginatedResponse);
-        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -389,7 +389,7 @@ public class ClientesServiceTests
     public async Task ObtenerClientesAsync_WhenExceptionOccurs_ShouldReturnFailure()
     {
         // Arrange
-        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act
@@ -531,7 +531,7 @@ public class ClientesServiceTests
             PageSize = 10
         };
         var apiResponse = ApiResponse<PaginatedList<ClienteSummaryDto>>.SuccessResponse(paginatedResponse);
-        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -548,7 +548,7 @@ public class ClientesServiceTests
     {
         // Arrange
         var apiResponse = ApiResponse<PaginatedList<ClienteSummaryDto>>.SuccessResponse(null);
-        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act

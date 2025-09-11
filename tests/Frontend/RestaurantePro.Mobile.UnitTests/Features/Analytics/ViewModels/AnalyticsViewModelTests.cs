@@ -73,16 +73,16 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Analytics.ViewModels
             _mockAnalyticsService.Setup(x => x.ObtenerMetricasDiaAsync())
                 .ReturnsAsync(ApiResponse<MetricasDiaDto>.SuccessResponse(metricasDia));
 
-            _mockAnalyticsService.Setup(x => x.ObtenerTopProductosAsync(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            _mockAnalyticsService.Setup(x => x.ObtenerTopProductosAsync(It.IsAny<int>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<TopProductoDto>>.SuccessResponse(topProductos));
 
-            _mockAnalyticsService.Setup(x => x.ObtenerOcupacionMesasAsync(It.IsAny<DateTime>()))
+            _mockAnalyticsService.Setup(x => x.ObtenerOcupacionMesasAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<OcupacionMesasDto>.SuccessResponse(ocupacionMesas));
 
-            _mockAnalyticsService.Setup(x => x.ObtenerTiempoPreparacionAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            _mockAnalyticsService.Setup(x => x.ObtenerTiempoPreparacionAsync(It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<TiempoPreparacionDto>.SuccessResponse(tiempoPreparacion));
 
-            _mockAnalyticsService.Setup(x => x.ObtenerVentasPorHoraAsync(It.IsAny<DateTime>()))
+            _mockAnalyticsService.Setup(x => x.ObtenerVentasPorHoraAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<VentasHoraDto>>.SuccessResponse(ventasPorHora));
 
             // Act
@@ -147,7 +147,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Analytics.ViewModels
                 new() { ProductoId = Guid.NewGuid(), NombreProducto = "Hamburguesa", CantidadVendida = 20 }
             };
 
-            _mockAnalyticsService.Setup(x => x.ObtenerTopProductosAsync(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            _mockAnalyticsService.Setup(x => x.ObtenerTopProductosAsync(It.IsAny<int>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<TopProductoDto>>.SuccessResponse(topProductos));
 
             // Act
@@ -170,7 +170,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Analytics.ViewModels
                 PorcentajeOcupacion = 0.67m
             };
 
-            _mockAnalyticsService.Setup(x => x.ObtenerOcupacionMesasAsync(It.IsAny<DateTime>()))
+            _mockAnalyticsService.Setup(x => x.ObtenerOcupacionMesasAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<OcupacionMesasDto>.SuccessResponse(ocupacionMesas));
 
             // Act
@@ -193,7 +193,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Analytics.ViewModels
                 TiempoMaximoMinutos = 30
             };
 
-            _mockAnalyticsService.Setup(x => x.ObtenerTiempoPreparacionAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            _mockAnalyticsService.Setup(x => x.ObtenerTiempoPreparacionAsync(It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<TiempoPreparacionDto>.SuccessResponse(tiempoPreparacion));
 
             // Act
@@ -215,7 +215,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Analytics.ViewModels
                 new() { Hora = 13, TotalVentas = 750.00m }
             };
 
-            _mockAnalyticsService.Setup(x => x.ObtenerVentasPorHoraAsync(It.IsAny<DateTime>()))
+            _mockAnalyticsService.Setup(x => x.ObtenerVentasPorHoraAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<VentasHoraDto>>.SuccessResponse(ventasPorHora));
 
             // Act
@@ -289,13 +289,13 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Analytics.ViewModels
 
             _mockAnalyticsService.Setup(x => x.ObtenerMetricasDiaAsync())
                 .ReturnsAsync(ApiResponse<MetricasDiaDto>.SuccessResponse(metricasDia));
-            _mockAnalyticsService.Setup(x => x.ObtenerTopProductosAsync(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            _mockAnalyticsService.Setup(x => x.ObtenerTopProductosAsync(It.IsAny<int>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<TopProductoDto>>.SuccessResponse(topProductos));
-            _mockAnalyticsService.Setup(x => x.ObtenerOcupacionMesasAsync(It.IsAny<DateTime>()))
+            _mockAnalyticsService.Setup(x => x.ObtenerOcupacionMesasAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<OcupacionMesasDto>.SuccessResponse(ocupacionMesas));
-            _mockAnalyticsService.Setup(x => x.ObtenerTiempoPreparacionAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            _mockAnalyticsService.Setup(x => x.ObtenerTiempoPreparacionAsync(It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<TiempoPreparacionDto>.SuccessResponse(tiempoPreparacion));
-            _mockAnalyticsService.Setup(x => x.ObtenerVentasPorHoraAsync(It.IsAny<DateTime>()))
+            _mockAnalyticsService.Setup(x => x.ObtenerVentasPorHoraAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<VentasHoraDto>>.SuccessResponse(ventasPorHora));
 
             // Act

@@ -34,7 +34,7 @@ public class ComandasService_NewBehaviorTests
         };
 
         _apiServiceMock
-            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(paged));
 
         var result = await _service.BuscarComandasAsync();
@@ -48,7 +48,7 @@ public class ComandasService_NewBehaviorTests
     public async Task BuscarComandasAsync_WhenApiReturnsNoContent_ShouldReturnErrorWithMessage()
     {
         _apiServiceMock
-            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.ErrorResponse(new List<string>{"No content"}, "No content", 204));
 
         var result = await _service.BuscarComandasAsync();
@@ -65,7 +65,7 @@ public class ComandasService_NewBehaviorTests
     {
         var comandaId = Guid.NewGuid();
         _apiServiceMock
-            .Setup(x => x.PostAsync<ComandaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>()))
+            .Setup(x => x.PostAsync<ComandaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<ComandaDto>.ErrorResponse(new List<string>{message}, message, status));
 
         var result = await _service.FinalizarComandaAsync(comandaId, "Efectivo");
@@ -97,7 +97,7 @@ public class ComandasService_NewBehaviorTests
     public async Task ObtenerComandasActivasAsync_WhenApiReturnsNullData_ShouldReturnError()
     {
         _apiServiceMock
-            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.ErrorResponse("No content", "No content", 204));
 
         var result = await _service.ObtenerComandasActivasAsync();

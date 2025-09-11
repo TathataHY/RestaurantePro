@@ -112,7 +112,7 @@ public class CategoriasServiceTests
         };
 
         var apiResponse = ApiResponse<List<ProductoDto>>.SuccessResponse(productos);
-        _mockApiService.Setup(x => x.GetAsync<List<ProductoDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<ProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -138,7 +138,7 @@ public class CategoriasServiceTests
         };
 
         var apiResponse = ApiResponse<List<ProductoDto>>.SuccessResponse(productos);
-        _mockApiService.Setup(x => x.GetAsync<List<ProductoDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<ProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -207,7 +207,7 @@ public class CategoriasServiceTests
     {
         // Arrange
         var errorResponse = ApiResponse<List<CategoriaProductoDto>>.ErrorResponse(new List<string> { "Error de API" }, "Error de API", 500);
-        _mockApiService.Setup(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(errorResponse);
 
         // Act
@@ -244,7 +244,7 @@ public class CategoriasServiceTests
         var productos = new List<ProductoDto>();
 
         var apiResponse = ApiResponse<List<ProductoDto>>.SuccessResponse(productos);
-        _mockApiService.Setup(x => x.GetAsync<List<ProductoDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<ProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -354,7 +354,7 @@ public class CategoriasServiceTests
     public async Task ObtenerCategoriasAsync_WithTooManyRequests_ShouldPropagate429()
     {
         // Arrange
-        var apiResponse = ApiResponse<List<CategoriaProductoDto>>.ErrorResponse("Too Many Requests", 429);
+        var apiResponse = ApiResponse<List<CategoriaProductoDto>>.ErrorResponse(new List<string> { "Too Many Requests" }, "Too Many Requests", 429);
         _mockApiService.Setup(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 

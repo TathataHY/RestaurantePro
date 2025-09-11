@@ -36,7 +36,7 @@ public class ComandasServiceTests
         };
         var expectedResponse = ApiResponse<List<ComandaDto>>.SuccessResponse(expectedComandas);
 
-        _apiServiceMock.Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>()))
+        _apiServiceMock.Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(new PaginatedList<ComandaDto> { Items = expectedComandas }));
 
         // Act
@@ -52,7 +52,7 @@ public class ComandasServiceTests
     public async Task ObtenerComandasActivasAsync_ShouldReturnError_WhenApiCallFails()
     {
         // Arrange
-        _apiServiceMock.Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>()))
+        _apiServiceMock.Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("API error"));
 
         // Act
@@ -143,7 +143,7 @@ public class ComandasServiceTests
         var result = await _comandasService.ObtenerComandasActivasAsync();
 
         result.Success.Should().BeTrue();
-        _apiServiceMock.Verify(x => x.GetAsync<PaginatedList<ComandaDto>>(It.Is<string>(s => s.Contains("soloActivas=true") && s.Contains("incluirItems=true")), It.IsAny<string?>()), Times.Once);
+        _apiServiceMock.Verify(x => x.GetAsync<PaginatedList<ComandaDto>>(It.Is<string>(s => s.Contains("soloActivas=true") && s.Contains("incluirItems=true")), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -162,7 +162,7 @@ public class ComandasServiceTests
         var expectedResponse = ApiResponse<List<ComandaDto>>.SuccessResponse(expectedComandas);
 
         var pagedMesa = new PaginatedList<ComandaDto> { Items = expectedComandas };
-        _apiServiceMock.Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>()))
+        _apiServiceMock.Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(pagedMesa));
 
         // Act
@@ -198,7 +198,7 @@ public class ComandasServiceTests
 
         var expectedResponse = ApiResponse<ComandaDto>.SuccessResponse(expectedComanda);
 
-        _apiServiceMock.Setup(x => x.PostAsync<ComandaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>()))
+        _apiServiceMock.Setup(x => x.PostAsync<ComandaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -245,7 +245,7 @@ public class ComandasServiceTests
         var expectedComanda = new ComandaDto { Id = comandaId };
         var expectedResponse = ApiResponse<ComandaDto>.SuccessResponse(expectedComanda);
 
-        _apiServiceMock.Setup(x => x.PostAsync<ComandaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>()))
+        _apiServiceMock.Setup(x => x.PostAsync<ComandaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -306,7 +306,7 @@ public class ComandasServiceTests
         var expectedComanda = new ComandaDto { Id = comandaId };
         var expectedResponse = ApiResponse<ComandaDto>.SuccessResponse(expectedComanda);
 
-        _apiServiceMock.Setup(x => x.PutAsync<ComandaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>()))
+        _apiServiceMock.Setup(x => x.PutAsync<ComandaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -325,7 +325,7 @@ public class ComandasServiceTests
         var comandaId = Guid.NewGuid();
         var productoId = Guid.NewGuid();
         var nuevaCantidad = 0;
-        _apiServiceMock.Setup(x => x.PutAsync<ComandaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>()))
+        _apiServiceMock.Setup(x => x.PutAsync<ComandaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<ComandaDto>.SuccessResponse(new ComandaDto { Id = comandaId }));
         var result = await _comandasService.ActualizarCantidadProductoAsync(comandaId, productoId, nuevaCantidad);
         result.Should().NotBeNull();
@@ -389,7 +389,7 @@ public class ComandasServiceTests
         var expectedComanda = new ComandaDto { Id = comandaId, Estado = "finalizada" };
         var expectedResponse = ApiResponse<ComandaDto>.SuccessResponse(expectedComanda);
 
-        _apiServiceMock.Setup(x => x.PostAsync<ComandaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>()))
+        _apiServiceMock.Setup(x => x.PostAsync<ComandaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -430,7 +430,7 @@ public class ComandasServiceTests
         var expectedComanda = new ComandaDto { Id = comandaId, Estado = "cancelada" };
         var expectedResponse = ApiResponse<ComandaDto>.SuccessResponse(expectedComanda);
 
-        _apiServiceMock.Setup(x => x.PostAsync<ComandaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>()))
+        _apiServiceMock.Setup(x => x.PostAsync<ComandaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -474,7 +474,7 @@ public class ComandasServiceTests
         var expectedResponse = ApiResponse<List<ComandaDto>>.SuccessResponse(expectedComandas);
 
         var paged = new PaginatedList<ComandaDto> { Items = expectedComandas };
-        _apiServiceMock.Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>()))
+        _apiServiceMock.Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(paged));
 
         // Act
@@ -492,7 +492,7 @@ public class ComandasServiceTests
         // Arrange
         var expectedComandas = new List<ComandaDto>();
         var pagedEmpty = new PaginatedList<ComandaDto> { Items = expectedComandas };
-        _apiServiceMock.Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>()))
+        _apiServiceMock.Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(pagedEmpty));
 
         // Act
@@ -514,7 +514,7 @@ public class ComandasServiceTests
         // Arrange
         var data = new List<ComandaDto>();
         var pagedStats = new PaginatedList<ComandaDto> { Items = data };
-        _apiServiceMock.Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>()))
+        _apiServiceMock.Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(pagedStats));
 
         // Act
@@ -540,8 +540,8 @@ public class ComandasServiceTests
         string? capturedEndpoint = null;
         var expected = new PaginatedList<ComandaDto> { Items = new List<ComandaDto>() };
         _apiServiceMock
-            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>()))
-            .Callback<string, string?>((endpoint, token) => capturedEndpoint = endpoint)
+            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, string?, CancellationToken>((endpoint, token, cancellationToken) => capturedEndpoint = endpoint)
             .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(expected));
 
         // Act
@@ -562,8 +562,8 @@ public class ComandasServiceTests
         string? capturedEndpoint = null;
         var expected = new PaginatedList<ComandaDto> { Items = new List<ComandaDto>() };
         _apiServiceMock
-            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>()))
-            .Callback<string, string?>((endpoint, token) => capturedEndpoint = endpoint)
+            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, string?, CancellationToken>((endpoint, token, cancellationToken) => capturedEndpoint = endpoint)
             .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(expected));
 
         // Act
@@ -586,8 +586,8 @@ public class ComandasServiceTests
         string? capturedEndpoint = null;
         var expected = new PaginatedList<ComandaDto> { Items = new List<ComandaDto>() };
         _apiServiceMock
-            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>()))
-            .Callback<string, string?>((endpoint, token) => capturedEndpoint = endpoint)
+            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+            .Callback<string, string?, CancellationToken>((endpoint, token, cancellationToken) => capturedEndpoint = endpoint)
             .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(expected));
 
         // Act
@@ -613,7 +613,7 @@ public class ComandasServiceTests
         cts.Cancel();
         var calls = 0;
         _apiServiceMock
-            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .Callback(() => calls++)
             .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(new PaginatedList<ComandaDto>()));
 
@@ -635,7 +635,7 @@ public class ComandasServiceTests
         var comandaId = Guid.NewGuid();
         var calls = 0;
         _apiServiceMock
-            .Setup(x => x.PostAsync<ComandaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>()))
+            .Setup(x => x.PostAsync<ComandaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .Callback(() => calls++)
             .ReturnsAsync(ApiResponse<ComandaDto>.SuccessResponse(new ComandaDto { Id = comandaId }));
 

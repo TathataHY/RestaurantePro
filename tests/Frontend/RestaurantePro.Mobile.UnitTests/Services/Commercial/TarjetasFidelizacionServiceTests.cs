@@ -77,7 +77,7 @@ public class TarjetasFidelizacionServiceTests
         // Mock para PostAsync (segunda llamada)
         var activarResponse = ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(tarjeta);
         
-        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(buscarResponse);
         _mockApiService.Setup(x => x.PostAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(activarResponse);
@@ -109,7 +109,7 @@ public class TarjetasFidelizacionServiceTests
 
         var tarjetas = new List<TarjetaFidelizacionDto> { tarjeta };
         var apiResponse = ApiResponse<List<TarjetaFidelizacionDto>>.SuccessResponse(tarjetas);
-        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -161,7 +161,7 @@ public class TarjetasFidelizacionServiceTests
         };
 
         var apiResponse = ApiResponse<List<HistorialPuntosDto>>.SuccessResponse(historialPuntos);
-        _mockApiService.Setup(x => x.GetAsync<List<HistorialPuntosDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<HistorialPuntosDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -258,7 +258,7 @@ public class TarjetasFidelizacionServiceTests
         };
 
         var apiResponse = ApiResponse<List<TarjetaFidelizacionDto>>.SuccessResponse(tarjetas);
-        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -300,7 +300,7 @@ public class TarjetasFidelizacionServiceTests
         };
 
         var apiResponse = ApiResponse<List<TarjetaFidelizacionDto>>.SuccessResponse(tarjetas);
-        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -333,7 +333,7 @@ public class TarjetasFidelizacionServiceTests
 
         var historialList = new List<HistorialPuntosDto> { historial };
         var apiResponse = ApiResponse<List<HistorialPuntosDto>>.SuccessResponse(historialList);
-        _mockApiService.Setup(x => x.GetAsync<List<HistorialPuntosDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<HistorialPuntosDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -381,7 +381,7 @@ public class TarjetasFidelizacionServiceTests
 
         var historialList = new List<HistorialPuntosDto> { historial };
         var apiResponse = ApiResponse<List<HistorialPuntosDto>>.SuccessResponse(historialList);
-        _mockApiService.Setup(x => x.GetAsync<List<HistorialPuntosDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<HistorialPuntosDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -448,7 +448,7 @@ public class TarjetasFidelizacionServiceTests
         // Arrange
         var numeroTarjeta = "123456789";
         var errorResponse = ApiResponse<List<TarjetaFidelizacionDto>>.ErrorResponse(new List<string> { "Tarjeta no encontrada" }, "Tarjeta no encontrada", 404);
-        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(errorResponse);
 
         // Act
@@ -464,7 +464,7 @@ public class TarjetasFidelizacionServiceTests
     {
         // Arrange
         var numeroTarjeta = "123456789";
-        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act
@@ -494,7 +494,7 @@ public class TarjetasFidelizacionServiceTests
         // Mock para la primera llamada (BuscarTarjetaAsync) - exitosa
         var tarjetas = new List<TarjetaFidelizacionDto> { tarjeta };
         var buscarResponse = ApiResponse<List<TarjetaFidelizacionDto>>.SuccessResponse(tarjetas);
-        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(buscarResponse);
 
         // Mock para la segunda llamada (PostAsync) - lanza excepción
@@ -566,7 +566,7 @@ public class TarjetasFidelizacionServiceTests
     {
         // Arrange
         var numeroTarjeta = "123456789";
-        var apiResponse = ApiResponse<List<TarjetaFidelizacionDto>>.ErrorResponse("Unauthorized", 401);
+        var apiResponse = ApiResponse<List<TarjetaFidelizacionDto>>.ErrorResponse(new List<string> { "Unauthorized" }, "Unauthorized", 401);
         _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
@@ -584,7 +584,7 @@ public class TarjetasFidelizacionServiceTests
     {
         // Arrange
         var numeroTarjeta = "123456789";
-        var apiResponse = ApiResponse<List<TarjetaFidelizacionDto>>.ErrorResponse("Forbidden", 403);
+        var apiResponse = ApiResponse<List<TarjetaFidelizacionDto>>.ErrorResponse(new List<string> { "Forbidden" }, "Forbidden", 403);
         _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
@@ -602,7 +602,7 @@ public class TarjetasFidelizacionServiceTests
     {
         // Arrange
         var numeroTarjeta = "123456789";
-        var apiResponse = ApiResponse<List<TarjetaFidelizacionDto>>.ErrorResponse("Too Many Requests", 429);
+        var apiResponse = ApiResponse<List<TarjetaFidelizacionDto>>.ErrorResponse(new List<string> { "Too Many Requests" }, "Too Many Requests", 429);
         _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 

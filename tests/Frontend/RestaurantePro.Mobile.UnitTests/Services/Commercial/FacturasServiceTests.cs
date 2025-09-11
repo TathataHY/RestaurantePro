@@ -260,7 +260,7 @@ public class FacturasServiceTests
         cts.Cancel();
         var calls = 0;
         _mockApiService
-            .Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>()))
+            .Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Callback(() => calls++)
             .ReturnsAsync(ApiResponse<List<FacturaDto>>.SuccessResponse(new List<FacturaDto>()));
 

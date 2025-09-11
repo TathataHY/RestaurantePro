@@ -53,7 +53,7 @@ public class ReservacionesServiceTests
 
         var apiResponse = ApiResponse<List<ReservacionDto>>.SuccessResponse(reservaciones);
 
-        _mockApiService.Setup(x => x.GetAsync<List<ReservacionDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<ReservacionDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -141,7 +141,7 @@ public class ReservacionesServiceTests
         // Arrange
         var apiResponse = ApiResponse<List<ReservacionDto>>.ErrorResponse(new List<string> { "Error del servidor" });
 
-        _mockApiService.Setup(x => x.GetAsync<List<ReservacionDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<ReservacionDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act

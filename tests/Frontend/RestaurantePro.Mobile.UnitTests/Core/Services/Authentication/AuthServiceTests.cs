@@ -29,7 +29,7 @@ public class AuthServiceTests
         var expectedApiResponse = ApiResponse<AuthResponse>.SuccessResponse(expectedAuthResponse);
 
         _mockApiService
-            .Setup(x => x.PostAsync<AuthResponse>("api/auth/login", It.IsAny<object>(), It.IsAny<string?>()))
+            .Setup(x => x.PostAsync<AuthResponse>("api/auth/login", It.IsAny<object>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedApiResponse);
 
         // Act
@@ -55,7 +55,7 @@ public class AuthServiceTests
             401);
 
         _mockApiService
-            .Setup(x => x.PostAsync<AuthResponse>("api/auth/login", It.IsAny<object>(), It.IsAny<string?>()))
+            .Setup(x => x.PostAsync<AuthResponse>("api/auth/login", It.IsAny<object>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedApiResponse);
 
         // Act
@@ -111,7 +111,7 @@ public class AuthServiceTests
         var expectedException = new HttpRequestException("Error de red");
 
         _mockApiService
-            .Setup(x => x.PostAsync<AuthResponse>("api/auth/login", It.IsAny<object>(), It.IsAny<string?>()))
+            .Setup(x => x.PostAsync<AuthResponse>("api/auth/login", It.IsAny<object>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(expectedException);
 
         // Act
@@ -143,7 +143,7 @@ public class AuthServiceTests
         var apiResponse = ApiResponse<AuthResponse>.SuccessResponse(authResponse);
         
         _mockApiService
-            .Setup(x => x.PostAsync<AuthResponse>("api/auth/login", It.IsAny<object>(), It.IsAny<string?>()))
+            .Setup(x => x.PostAsync<AuthResponse>("api/auth/login", It.IsAny<object>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(apiResponse);
 
         // Hacer login primero para establecer el token
@@ -169,7 +169,7 @@ public class AuthServiceTests
         var apiResponse = ApiResponse<AuthResponse>.SuccessResponse(authResponse);
         
         _mockApiService
-            .Setup(x => x.PostAsync<AuthResponse>("api/auth/login", It.IsAny<object>(), It.IsAny<string?>()))
+            .Setup(x => x.PostAsync<AuthResponse>("api/auth/login", It.IsAny<object>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(apiResponse);
 
         // Hacer login primero
@@ -205,7 +205,7 @@ public class AuthServiceTests
         var apiResponse = ApiResponse<AuthResponse>.SuccessResponse(authResponse);
         
         _mockApiService
-            .Setup(x => x.PostAsync<AuthResponse>("api/auth/login", It.IsAny<object>(), It.IsAny<string?>()))
+            .Setup(x => x.PostAsync<AuthResponse>("api/auth/login", It.IsAny<object>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(apiResponse);
 
         // Hacer login primero

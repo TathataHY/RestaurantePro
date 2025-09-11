@@ -104,7 +104,7 @@ public class AnalyticsServiceTests
 
         _mockAuthService.Setup(x => x.GetTokenAsync()).ReturnsAsync("test-token");
         var apiResponse = ApiResponse<List<TopProductoDto>>.SuccessResponse(productos);
-        _mockApiService.Setup(x => x.GetAsync<List<TopProductoDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<TopProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -135,7 +135,7 @@ public class AnalyticsServiceTests
 
         _mockAuthService.Setup(x => x.GetTokenAsync()).ReturnsAsync("test-token");
         var apiResponse = ApiResponse<List<TopProductoDto>>.SuccessResponse(productos);
-        _mockApiService.Setup(x => x.GetAsync<List<TopProductoDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<TopProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -253,7 +253,7 @@ public class AnalyticsServiceTests
 
         _mockAuthService.Setup(x => x.GetTokenAsync()).ReturnsAsync("test-token");
         var apiResponse = ApiResponse<List<VentasHoraDto>>.SuccessResponse(ventasPorHora);
-        _mockApiService.Setup(x => x.GetAsync<List<VentasHoraDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<VentasHoraDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -314,7 +314,7 @@ public class AnalyticsServiceTests
 
         _mockAuthService.Setup(x => x.GetTokenAsync()).ReturnsAsync("test-token");
         var apiResponse = ApiResponse<List<TopProductoDto>>.SuccessResponse(productos);
-        _mockApiService.Setup(x => x.GetAsync<List<TopProductoDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<TopProductoDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -367,7 +367,7 @@ public class AnalyticsServiceTests
 
         _mockAuthService.Setup(x => x.GetTokenAsync()).ReturnsAsync("test-token");
         var apiResponse = ApiResponse<List<VentasHoraDto>>.SuccessResponse(ventasPorHora);
-        _mockApiService.Setup(x => x.GetAsync<List<VentasHoraDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<VentasHoraDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act

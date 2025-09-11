@@ -133,7 +133,7 @@ public class PreparacionesServiceTests
 
         var apiResponse = ApiResponse<PreparacionDto>.SuccessResponse(preparacionCreada);
 
-        _mockApiService.Setup(x => x.PostAsync<PreparacionDto>(It.IsAny<string>(), It.IsAny<PreparacionDto>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<PreparacionDto>(It.IsAny<string>(), It.IsAny<PreparacionDto>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -283,7 +283,7 @@ public class PreparacionesServiceTests
 
         var apiResponse = ApiResponse<List<PreparacionDto>>.SuccessResponse(colaPreparaciones);
 
-        _mockApiService.Setup(x => x.GetAsync<List<PreparacionDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<PreparacionDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act

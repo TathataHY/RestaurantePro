@@ -54,7 +54,7 @@ public class IngredientesServiceTests
     {
         // Arrange
         var errorResponse = ApiResponse<List<IngredienteSummaryDto>>.ErrorResponse(new List<string> { "Error de API" }, "Error de API", 500);
-        _mockApiService.Setup(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(errorResponse);
 
         // Act
@@ -257,7 +257,7 @@ public class IngredientesServiceTests
         };
 
         var apiResponse = ApiResponse<List<MovimientoInventarioDto>>.SuccessResponse(movimientos);
-        _mockApiService.Setup(x => x.GetAsync<List<MovimientoInventarioDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<MovimientoInventarioDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -274,7 +274,7 @@ public class IngredientesServiceTests
     public async Task ObtenerIngredientesAsync_WhenExceptionOccurs_ShouldReturnFailure()
     {
         // Arrange
-        _mockApiService.Setup(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act
@@ -355,7 +355,7 @@ public class IngredientesServiceTests
     {
         // Arrange
         var termino = "tomate";
-        _mockApiService.Setup(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act

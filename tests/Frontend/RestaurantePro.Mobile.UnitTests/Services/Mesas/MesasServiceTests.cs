@@ -35,7 +35,7 @@ public class MesasServiceTests
         var expectedMesas = _fixture.CreateMany<MesaDto>(5).ToList();
         var expectedResponse = ApiResponse<List<MesaDto>>.SuccessResponse(expectedMesas);
 
-        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas", It.IsAny<string?>()))
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
                        .ReturnsAsync(expectedResponse);
 
         // Act
@@ -45,7 +45,7 @@ public class MesasServiceTests
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
         result.Data.Should().BeEquivalentTo(expectedMesas);
-        _mockApiService.Verify(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas", It.IsAny<string?>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas", It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -284,7 +284,7 @@ public class MesasServiceTests
     public async Task ObtenerMesasAsync_ShouldPropagateStatusAndMessage_OnApiError(int status, string message)
     {
         _mockApiService
-            .Setup(x => x.GetAsync<List<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<List<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<MesaDto>>.ErrorResponse(new List<string> { message }, message, status));
 
         var result = await _mesasService.ObtenerMesasAsync();
@@ -298,7 +298,7 @@ public class MesasServiceTests
     public async Task ObtenerMesasDisponiblesAsync_ShouldReturnError_OnNoContent()
     {
         _mockApiService
-            .Setup(x => x.GetAsync<PaginatedList<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<PaginatedList<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<PaginatedList<MesaDto>>.ErrorResponse(new List<string> { "No Content" }, "No Content", 204));
 
         var result = await _mesasService.ObtenerMesasDisponiblesAsync();
@@ -314,7 +314,7 @@ public class MesasServiceTests
     public async Task CambiarEstadoMesaAsync_ShouldPropagateStatusAndMessage_OnApiError(int status, string message)
     {
         _mockApiService
-            .Setup(x => x.PutAsync<MesaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>()))
+            .Setup(x => x.PutAsync<MesaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<MesaDto>.ErrorResponse(new List<string> { message }, message, status));
 
         var result = await _mesasService.CambiarEstadoMesaAsync(Guid.NewGuid(), "Fuera de servicio", "mantención");

@@ -39,7 +39,7 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<PaginatedList<ProductoDto>>.SuccessResponse(paginatedList);
         
         _mockApiService
-            .Setup(x => x.GetAsync<PaginatedList<ProductoDto>>(It.IsAny<string>(), It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<PaginatedList<ProductoDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -107,7 +107,7 @@ public class ProductosServiceTests
     {
         // Arrange
         _mockApiService
-            .Setup(x => x.GetAsync<PaginatedList<ProductoDto>>(It.IsAny<string>(), It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<PaginatedList<ProductoDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Error de red"));
 
         // Act
@@ -130,7 +130,7 @@ public class ProductosServiceTests
     public async Task ObtenerProductosPaginadosAsync_ShouldPropagateStatusAndMessage_OnApiError(int status, string message)
     {
         _mockApiService
-            .Setup(x => x.GetAsync<PaginatedList<ProductoDto>>(It.IsAny<string>(), It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<PaginatedList<ProductoDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<PaginatedList<ProductoDto>>.ErrorResponse(new List<string> { message }, message, status));
 
         var result = await _productosService.ObtenerProductosPaginadosAsync(1, 20, null, true);
@@ -144,7 +144,7 @@ public class ProductosServiceTests
     public async Task ObtenerProductosPaginadosAsync_ShouldReturnError_OnNoContent()
     {
         _mockApiService
-            .Setup(x => x.GetAsync<PaginatedList<ProductoDto>>(It.IsAny<string>(), It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<PaginatedList<ProductoDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<PaginatedList<ProductoDto>>.ErrorResponse(new List<string> { "No Content" }, "No Content", 204));
 
         var result = await _productosService.ObtenerProductosPaginadosAsync(1, 20, null, true);
@@ -161,7 +161,7 @@ public class ProductosServiceTests
     public async Task ObtenerProductoPorIdAsync_ShouldPropagateStatusAndMessage_OnApiError(int status, string message)
     {
         _mockApiService
-            .Setup(x => x.GetAsync<ProductoDto>(It.IsAny<string>(), It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<ProductoDto>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<ProductoDto>.ErrorResponse(new List<string> { message }, message, status));
 
         var result = await _productosService.ObtenerProductoPorIdAsync(Guid.NewGuid());
