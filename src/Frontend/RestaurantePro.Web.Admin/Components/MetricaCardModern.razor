@@ -1,0 +1,37 @@
+@using RestaurantePro.Web.Admin.Models
+
+<div class="metric-card @CardClass">
+    <div class="metric-header">
+        <div class="metric-title">@Titulo</div>
+        <div class="metric-icon @IconoClass">
+            <span class="@Icono"></span>
+        </div>
+    </div>
+    
+    <div class="metric-value @ValorClass">@Valor</div>
+    
+    @if (!string.IsNullOrEmpty(Subtexto))
+    {
+        <div class="metric-subtitle">@Subtexto</div>
+    }
+    
+    @if (MostrarCambio && Cambio.HasValue)
+    {
+        <div class="metric-change @(Cambio >= 0 ? "positive" : "negative")">
+            <span class="oi @(Cambio >= 0 ? "oi-arrow-top" : "oi-arrow-bottom")"></span>
+            <span>@Math.Abs(Cambio.Value).ToString("P1")</span>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Titulo { get; set; } = string.Empty;
+    [Parameter] public string Valor { get; set; } = string.Empty;
+    [Parameter] public string Subtexto { get; set; } = string.Empty;
+    [Parameter] public string Icono { get; set; } = string.Empty;
+    [Parameter] public string CardClass { get; set; } = "primary";
+    [Parameter] public string ValorClass { get; set; } = "text-primary";
+    [Parameter] public string IconoClass { get; set; } = "primary";
+    [Parameter] public bool MostrarCambio { get; set; } = false;
+    [Parameter] public decimal? Cambio { get; set; }
+}

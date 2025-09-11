@@ -5,139 +5,141 @@
 @using RestaurantePro.Web.Admin.Components
 @inject IJSRuntime JSRuntime
 
-<PageTitle>Dashboard</PageTitle>
+<PageTitle>Dashboard Ejecutivo</PageTitle>
 
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
-    <div class="d-flex align-items-center">
-        <small class="text-muted me-3">
-            <i class="oi oi-clock"></i> Última actualización: @(resumen?.Metricas.UltimaActualizacion.ToString("HH:mm") ?? "Cargando...")
-        </small>
-        <button class="btn btn-sm btn-outline-primary" @onclick="ActualizarDatos">
-            <i class="oi oi-reload"></i> Actualizar
-        </button>
+<div class="dashboard-header">
+    <div class="d-flex align-items-center justify-content-between">
+        <div>
+            <h1 class="dashboard-title">Dashboard Ejecutivo</h1>
+            <p class="dashboard-subtitle">Resumen de operaciones en tiempo real</p>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <div class="last-update">
+                <span class="oi oi-clock text-muted"></span>
+                <small class="text-muted ms-1">
+                    Última actualización: @(resumen?.Metricas.UltimaActualizacion.ToString("HH:mm") ?? "Cargando...")
+                </small>
+            </div>
+            <button class="btn btn-primary btn-sm" @onclick="ActualizarDatos">
+                <span class="oi oi-reload"></span> Actualizar
+            </button>
+        </div>
     </div>
 </div>
 
 @if (cargando)
 {
-    <div class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Cargando...</span>
+    <div class="loading-container">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
         </div>
-        <p class="mt-2 text-muted">Cargando métricas del dashboard...</p>
+        <h3 class="loading-title">Cargando Dashboard</h3>
+        <p class="loading-subtitle">Obteniendo métricas en tiempo real...</p>
     </div>
 }
 else if (resumen != null)
 {
     <!-- Métricas principales -->
-    <div class="row mb-4">
-        <MetricaCard Titulo="Ventas Hoy" 
-                     Valor="@resumen.Metricas.VentasHoy.ToString("C0")" 
-                     Subtexto="@($"vs ayer: {resumen.Metricas.VentasAyer.ToString("C0")}")"
-                     Icono="oi oi-dollar" 
-                     CardClass="border-left-success"
-                     ValorClass="text-success"
-                     IconoClass="text-success"
-                     MostrarCambio="true"
-                     Cambio="@resumen.Metricas.CrecimientoVentas" />
+    <div class="metrics-grid">
+        <MetricaCardModern Titulo="Ventas Hoy" 
+                          Valor="@resumen.Metricas.VentasHoy.ToString("C0")" 
+                          Subtexto="@($"vs ayer: {resumen.Metricas.VentasAyer.ToString("C0")}")"
+                          Icono="oi oi-dollar" 
+                          CardClass="success"
+                          ValorClass="text-success"
+                          IconoClass="success"
+                          MostrarCambio="true"
+                          Cambio="@resumen.Metricas.CrecimientoVentas" />
 
-        <MetricaCard Titulo="Mesas Ocupadas" 
-                     Valor="@($"{resumen.Metricas.MesasOcupadas} de {resumen.Metricas.TotalMesas}")" 
-                     Subtexto="@($"{resumen.Metricas.MesasDisponibles} disponibles")"
-                     Icono="oi oi-grid-three-up" 
-                     CardClass="border-left-info"
-                     ValorClass="text-info"
-                     IconoClass="text-info" />
+        <MetricaCardModern Titulo="Mesas Ocupadas" 
+                          Valor="@($"{resumen.Metricas.MesasOcupadas} de {resumen.Metricas.TotalMesas}")" 
+                          Subtexto="@($"{resumen.Metricas.MesasDisponibles} disponibles")"
+                          Icono="oi oi-grid-three-up" 
+                          CardClass="info"
+                          ValorClass="text-info"
+                          IconoClass="info" />
 
-        <MetricaCard Titulo="Comandas Activas" 
-                     Valor="@resumen.Metricas.ComandasActivas.ToString()" 
-                     Subtexto="@($"{resumen.Metricas.ComandasCompletadas} completadas hoy")"
-                     Icono="oi oi-list-rich" 
-                     CardClass="border-left-warning"
-                     ValorClass="text-warning"
-                     IconoClass="text-warning" />
+        <MetricaCardModern Titulo="Comandas Activas" 
+                          Valor="@resumen.Metricas.ComandasActivas.ToString()" 
+                          Subtexto="@($"{resumen.Metricas.ComandasCompletadas} completadas hoy")"
+                          Icono="oi oi-list-rich" 
+                          CardClass="warning"
+                          ValorClass="text-warning"
+                          IconoClass="warning" />
 
-        <MetricaCard Titulo="Promedio Ticket" 
-                     Valor="@resumen.Metricas.PromedioTicket.ToString("C0")" 
-                     Subtexto="@($"{resumen.Metricas.ClientesAtendidosHoy} clientes atendidos")"
-                     Icono="oi oi-people" 
-                     CardClass="border-left-primary"
-                     ValorClass="text-primary"
-                     IconoClass="text-primary" />
+        <MetricaCardModern Titulo="Promedio Ticket" 
+                          Valor="@resumen.Metricas.PromedioTicket.ToString("C0")" 
+                          Subtexto="@($"{resumen.Metricas.ClientesAtendidosHoy} clientes atendidos")"
+                          Icono="oi oi-people" 
+                          CardClass="primary"
+                          ValorClass="text-primary"
+                          IconoClass="primary" />
     </div>
 
-    <!-- Gráficos y tablas -->
-    <div class="row">
+    <!-- Gráficos principales -->
+    <div class="charts-grid">
         <!-- Gráfico de ventas -->
-        <div class="col-xl-8 col-lg-7 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="oi oi-bar-chart"></i> Ventas de los Últimos 7 Días
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div style="height: 300px;">
-                        <canvas id="graficoVentas"></canvas>
-                    </div>
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <span class="oi oi-bar-chart"></span> Ventas de los Últimos 7 Días
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="graficoVentas"></canvas>
                 </div>
             </div>
         </div>
 
         <!-- Estado de mesas -->
-        <div class="col-xl-4 col-lg-5 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="oi oi-grid-three-up"></i> Estado de Mesas
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div style="height: 300px;">
-                        <canvas id="graficoMesas"></canvas>
-                    </div>
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <span class="oi oi-grid-three-up"></span> Estado de Mesas
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="graficoMesas"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row">
+    <!-- Gráficos secundarios -->
+    <div class="charts-row">
         <!-- Productos más vendidos -->
-        <div class="col-xl-6 mb-4">
+        <div class="card">
             <ProductosMasVendidos Productos="resumen.ProductosMasVendidos" />
         </div>
 
         <!-- Comandas por estado -->
-        <div class="col-xl-6 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="oi oi-list-rich"></i> Comandas por Estado
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div style="height: 300px;">
-                        <canvas id="graficoComandas"></canvas>
-                    </div>
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <span class="oi oi-list-rich"></span> Comandas por Estado
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="graficoComandas"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Resumen de ingresos por hora -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="oi oi-clock"></i> Ingresos por Hora (Hoy)
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div style="height: 250px;">
-                        <canvas id="graficoIngresosHora"></canvas>
-                    </div>
+    <!-- Gráfico de ingresos por hora -->
+    <div class="charts-full">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <span class="oi oi-clock"></span> Ingresos por Hora (Hoy)
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="graficoIngresosHora"></canvas>
                 </div>
             </div>
         </div>
@@ -145,12 +147,14 @@ else if (resumen != null)
 }
 else
 {
-    <div class="alert alert-danger" role="alert">
-        <h4 class="alert-heading">Error al cargar el dashboard</h4>
-        <p>No se pudieron cargar las métricas del dashboard. Por favor, inténtalo de nuevo.</p>
-        <hr>
-        <button class="btn btn-outline-danger" @onclick="ActualizarDatos">
-            <i class="oi oi-reload"></i> Reintentar
+    <div class="error-container">
+        <div class="error-icon">
+            <span class="oi oi-warning"></span>
+        </div>
+        <h3 class="error-title">Error al cargar el dashboard</h3>
+        <p class="error-message">No se pudieron cargar las métricas del dashboard. Por favor, inténtalo de nuevo.</p>
+        <button class="btn btn-primary" @onclick="ActualizarDatos">
+            <span class="oi oi-reload"></span> Reintentar
         </button>
     </div>
 }

@@ -1,111 +1,52 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">RestaurantePro Admin</a>
-        <span class="text-light">@userName</span>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+﻿<div class="navbar">
+    <div class="navbar-brand">
+        <span class="oi oi-restaurant" aria-hidden="true"></span>
+        RestaurantePro
     </div>
 </div>
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+<div class="nav-scrollable">
     <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Dashboard
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="productos">
-                <span class="oi oi-fork" aria-hidden="true"></span> Productos
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="categorias">
-                <span class="oi oi-tags" aria-hidden="true"></span> Categorías
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="mesas">
-                <span class="oi oi-grid-three-up" aria-hidden="true"></span> Mesas
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="usuarios">
-                <span class="oi oi-people" aria-hidden="true"></span> Usuarios
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="clientes">
-                <span class="oi oi-person" aria-hidden="true"></span> Clientes
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="facturas">
-                <span class="oi oi-document" aria-hidden="true"></span> Facturas
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="comandas">
-                <span class="oi oi-clipboard" aria-hidden="true"></span> Comandas
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="reservaciones">
-                <span class="oi oi-calendar" aria-hidden="true"></span> Reservaciones
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="preparaciones">
-                <span class="oi oi-cog" aria-hidden="true"></span> Preparaciones
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="inventario">
-                <span class="oi oi-box" aria-hidden="true"></span> Inventario
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="proveedores">
-                <span class="oi oi-people" aria-hidden="true"></span> Proveedores
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="notificaciones">
-                <span class="oi oi-bell" aria-hidden="true"></span> Notificaciones
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="recetas">
-                <span class="oi oi-book" aria-hidden="true"></span> Recetas
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="promociones">
-                <span class="oi oi-badge" aria-hidden="true"></span> Promociones
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="reportes">
-                <span class="oi oi-bar-chart" aria-hidden="true"></span> Reportes
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="configuracion">
-                <span class="oi oi-cog" aria-hidden="true"></span> Configuración
-            </NavLink>
-        </div>
-        <div class="nav-item px-3 mt-3">
-            @if (isAuthenticated)
-            {
-                <button class="btn btn-sm btn-outline-light" @onclick="Logout">Salir</button>
-            }
-            else
-            {
-                <NavLink class="btn btn-sm btn-outline-light" href="login">Entrar</NavLink>
-            }
+        <!-- Categorías -->
+        <div class="nav-section">
+            <div class="nav-section-title">Categorías</div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="productos" Match="NavLinkMatch.All">
+                    <span class="oi oi-tapas" aria-hidden="true"></span> Entradas
+                </NavLink>
+            </div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="productos">
+                    <span class="oi oi-dinner-dining" aria-hidden="true"></span> Platos principales
+                </NavLink>
+            </div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="productos">
+                    <span class="oi oi-cake" aria-hidden="true"></span> Postres
+                </NavLink>
+            </div>
+            <div class="nav-item">
+                <NavLink class="nav-link" href="productos">
+                    <span class="oi oi-local-bar" aria-hidden="true"></span> Bebidas
+                </NavLink>
+            </div>
         </div>
     </nav>
+</div>
+
+<div class="nav-bottom">
+    @if (isAuthenticated)
+    {
+        <button class="logout-btn" @onclick="Logout">
+            <span class="oi oi-account-logout" aria-hidden="true"></span> Salir
+        </button>
+    }
+    else
+    {
+        <NavLink class="login-btn" href="login">
+            <span class="oi oi-account-login" aria-hidden="true"></span> Entrar
+        </NavLink>
+    }
 </div>
 
 @code {
