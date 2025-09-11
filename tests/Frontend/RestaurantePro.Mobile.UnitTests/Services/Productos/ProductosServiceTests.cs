@@ -111,7 +111,7 @@ public class ProductosServiceTests
             .ThrowsAsync(new Exception("Error de red"));
 
         // Act
-        var result = await _productosService.ObtenerProductosPaginadosAsync();
+        var result = await _productosService.ObtenerProductosPaginadosAsync(1, 20, null, true);
 
         // Assert
         result.Should().NotBeNull();
@@ -133,7 +133,7 @@ public class ProductosServiceTests
             .Setup(x => x.GetAsync<PaginatedList<ProductoDto>>(It.IsAny<string>(), It.IsAny<string?>()))
             .ReturnsAsync(ApiResponse<PaginatedList<ProductoDto>>.ErrorResponse(new List<string> { message }, message, status));
 
-        var result = await _productosService.ObtenerProductosPaginadosAsync();
+        var result = await _productosService.ObtenerProductosPaginadosAsync(1, 20, null, true);
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(status);
@@ -147,7 +147,7 @@ public class ProductosServiceTests
             .Setup(x => x.GetAsync<PaginatedList<ProductoDto>>(It.IsAny<string>(), It.IsAny<string?>()))
             .ReturnsAsync(ApiResponse<PaginatedList<ProductoDto>>.ErrorResponse(new List<string> { "No Content" }, "No Content", 204));
 
-        var result = await _productosService.ObtenerProductosPaginadosAsync();
+        var result = await _productosService.ObtenerProductosPaginadosAsync(1, 20, null, true);
 
         result.Success.Should().BeFalse();
         result.StatusCode.Should().Be(204);

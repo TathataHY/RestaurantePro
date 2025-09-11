@@ -37,7 +37,7 @@ public class FacturasServiceTests
         };
         
         var apiResponse = ApiResponse<List<FacturaDto>>.SuccessResponse(facturas);
-        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -61,7 +61,7 @@ public class FacturasServiceTests
         };
         
         var apiResponse = ApiResponse<List<FacturaDto>>.SuccessResponse(facturas);
-        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -87,7 +87,7 @@ public class FacturasServiceTests
         };
         
         var apiResponse = ApiResponse<EstadisticasFacturasDto>.SuccessResponse(estadisticas);
-        _mockApiService.Setup(x => x.GetAsync<EstadisticasFacturasDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<EstadisticasFacturasDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -108,7 +108,7 @@ public class FacturasServiceTests
         var facturaId = Guid.NewGuid();
         var apiResponse = ApiResponse<bool>.SuccessResponse(true);
         
-        _mockApiService.Setup(x => x.PostAsync<bool>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<bool>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -131,7 +131,7 @@ public class FacturasServiceTests
         };
 
         var apiResponse = ApiResponse<List<FacturaDto>>.SuccessResponse(facturas);
-        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -158,7 +158,7 @@ public class FacturasServiceTests
         };
 
         var apiResponse = ApiResponse<bool>.SuccessResponse(true);
-        _mockApiService.Setup(x => x.PostAsync<bool>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<bool>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -202,7 +202,7 @@ public class FacturasServiceTests
         var pdfUrl = "https://api.example.com/facturas/FAC001.pdf";
         var apiResponse = ApiResponse<string>.SuccessResponse(pdfUrl);
         
-        _mockApiService.Setup(x => x.GetAsync<string>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<string>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -223,7 +223,7 @@ public class FacturasServiceTests
         var mensaje = "Factura enviada exitosamente";
         var apiResponse = ApiResponse<string>.SuccessResponse(mensaje);
         
-        _mockApiService.Setup(x => x.PostAsync<string>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<string>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -241,7 +241,7 @@ public class FacturasServiceTests
         // Arrange
         var fecha = new DateTime(2024, 12, 15);
         var errorResponse = ApiResponse<List<FacturaDto>>.ErrorResponse(new List<string> { "Error de API" }, "Error de API", 500);
-        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(errorResponse);
 
         // Act
@@ -281,7 +281,7 @@ public class FacturasServiceTests
         cts.Cancel();
         var calls = 0;
         _mockApiService
-            .Setup(x => x.PostAsync<bool>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+            .Setup(x => x.PostAsync<bool>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .Callback(() => calls++)
             .ReturnsAsync(ApiResponse<bool>.SuccessResponse(true));
 
@@ -299,7 +299,7 @@ public class FacturasServiceTests
     {
         // Arrange
         var fecha = new DateTime(2024, 12, 15);
-        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act
@@ -317,7 +317,7 @@ public class FacturasServiceTests
         var facturaId = Guid.NewGuid();
         var pagoDto = new RegistrarPagoDto { MetodoPago = "Efectivo", MontoPagado = 150.00m };
         
-        _mockApiService.Setup(x => x.PostAsync<bool>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<bool>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act
@@ -336,7 +336,7 @@ public class FacturasServiceTests
         var facturas = new List<FacturaDto>();
         
         var apiResponse = ApiResponse<List<FacturaDto>>.SuccessResponse(facturas);
-        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -362,7 +362,7 @@ public class FacturasServiceTests
         };
         
         var apiResponse = ApiResponse<EstadisticasFacturasDto>.SuccessResponse(estadisticas);
-        _mockApiService.Setup(x => x.GetAsync<EstadisticasFacturasDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<EstadisticasFacturasDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -383,7 +383,7 @@ public class FacturasServiceTests
         var factura = new FacturaDto { Id = facturaId, NumeroFactura = "FAC001", Total = 150.00m, Estado = "Pagada" };
         var apiResponse = ApiResponse<FacturaDto>.SuccessResponse(factura);
         
-        _mockApiService.Setup(x => x.GetAsync<FacturaDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<FacturaDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -402,7 +402,7 @@ public class FacturasServiceTests
     {
         // Arrange
         var facturaId = Guid.NewGuid();
-        _mockApiService.Setup(x => x.GetAsync<FacturaDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<FacturaDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act
@@ -421,7 +421,7 @@ public class FacturasServiceTests
         var pagoDto = new RegistrarPagoDto { MetodoPago = "Efectivo", MontoPagado = 150.00m };
         var errorResponse = ApiResponse<bool>.ErrorResponse(new List<string> { "Error de pago" }, "Error de pago", 400);
         
-        _mockApiService.Setup(x => x.PostAsync<bool>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<bool>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(errorResponse);
 
         // Act
@@ -458,7 +458,7 @@ public class FacturasServiceTests
         var facturaId = Guid.NewGuid();
         var errorResponse = ApiResponse<string>.ErrorResponse(new List<string> { "PDF no disponible" }, "PDF no disponible", 404);
         
-        _mockApiService.Setup(x => x.GetAsync<string>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<string>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(errorResponse);
 
         // Act
@@ -477,7 +477,7 @@ public class FacturasServiceTests
         var email = "cliente@test.com";
         var errorResponse = ApiResponse<string>.ErrorResponse(new List<string> { "Error al enviar email" }, "Error al enviar email", 500);
         
-        _mockApiService.Setup(x => x.PostAsync<string>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<string>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(errorResponse);
 
         // Act
@@ -494,7 +494,7 @@ public class FacturasServiceTests
         // Arrange
         var fecha = DateTime.Today;
         var errorResponse = ApiResponse<List<FacturaDto>>.ErrorResponse(new List<string> { "Unauthorized" }, "Unauthorized", 401);
-        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(errorResponse);
 
         // Act
@@ -512,7 +512,7 @@ public class FacturasServiceTests
         // Arrange
         var fecha = DateTime.Today;
         var errorResponse = ApiResponse<List<FacturaDto>>.ErrorResponse(new List<string> { "Forbidden" }, "Forbidden", 403);
-        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(errorResponse);
 
         // Act
@@ -530,7 +530,7 @@ public class FacturasServiceTests
         // Arrange
         var fecha = DateTime.Today;
         var errorResponse = ApiResponse<List<FacturaDto>>.ErrorResponse(new List<string> { "Too Many Requests" }, "Too Many Requests", 429);
-        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(errorResponse);
 
         // Act
@@ -548,7 +548,7 @@ public class FacturasServiceTests
         // Arrange
         var fecha = DateTime.Today;
         var apiResponse = ApiResponse<List<FacturaDto>>.SuccessResponse(new List<FacturaDto>());
-        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<List<FacturaDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act

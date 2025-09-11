@@ -74,7 +74,7 @@ public class AnalyticsServiceTests
 
         _mockAuthService.Setup(x => x.GetTokenAsync()).ReturnsAsync("test-token");
         var apiResponse = ApiResponse<MetricasRangoDto>.SuccessResponse(metricas);
-        _mockApiService.Setup(x => x.GetAsync<MetricasRangoDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<MetricasRangoDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -165,7 +165,7 @@ public class AnalyticsServiceTests
 
         _mockAuthService.Setup(x => x.GetTokenAsync()).ReturnsAsync("test-token");
         var apiResponse = ApiResponse<OcupacionMesasDto>.SuccessResponse(ocupacion);
-        _mockApiService.Setup(x => x.GetAsync<OcupacionMesasDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<OcupacionMesasDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -194,7 +194,7 @@ public class AnalyticsServiceTests
 
         _mockAuthService.Setup(x => x.GetTokenAsync()).ReturnsAsync("test-token");
         var apiResponse = ApiResponse<TiempoPreparacionDto>.SuccessResponse(tiempoPreparacion);
-        _mockApiService.Setup(x => x.GetAsync<TiempoPreparacionDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<TiempoPreparacionDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -223,7 +223,7 @@ public class AnalyticsServiceTests
 
         _mockAuthService.Setup(x => x.GetTokenAsync()).ReturnsAsync("test-token");
         var apiResponse = ApiResponse<TiempoPreparacionDto>.SuccessResponse(tiempoPreparacion);
-        _mockApiService.Setup(x => x.GetAsync<TiempoPreparacionDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<TiempoPreparacionDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -274,7 +274,7 @@ public class AnalyticsServiceTests
         // Arrange
         _mockAuthService.Setup(x => x.GetTokenAsync()).ReturnsAsync("test-token");
         var errorResponse = ApiResponse<MetricasDiaDto>.ErrorResponse(new List<string> { "Error de API" }, "Error de API", 500);
-        _mockApiService.Setup(x => x.GetAsync<MetricasDiaDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<MetricasDiaDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(errorResponse);
 
         // Act
@@ -293,7 +293,7 @@ public class AnalyticsServiceTests
         var fechaHasta = new DateTime(2024, 12, 15);
         
         _mockAuthService.Setup(x => x.GetTokenAsync()).ReturnsAsync("test-token");
-        _mockApiService.Setup(x => x.GetAsync<MetricasRangoDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<MetricasRangoDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act
@@ -344,7 +344,7 @@ public class AnalyticsServiceTests
 
         _mockAuthService.Setup(x => x.GetTokenAsync()).ReturnsAsync("test-token");
         var apiResponse = ApiResponse<OcupacionMesasDto>.SuccessResponse(ocupacion);
-        _mockApiService.Setup(x => x.GetAsync<OcupacionMesasDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<OcupacionMesasDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -385,7 +385,7 @@ public class AnalyticsServiceTests
     public async Task ObtenerMetricasDiaAsync_WithUnauthorized_ShouldPropagate401()
     {
         // Arrange
-        var apiResponse = ApiResponse<MetricasDiaDto>.ErrorResponse("Unauthorized", 401);
+        var apiResponse = ApiResponse<MetricasDiaDto>.ErrorResponse(new List<string> { "Unauthorized" }, "Unauthorized", 401);
         _mockApiService.Setup(x => x.GetAsync<MetricasDiaDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
@@ -402,7 +402,7 @@ public class AnalyticsServiceTests
     public async Task ObtenerMetricasDiaAsync_WithForbidden_ShouldPropagate403()
     {
         // Arrange
-        var apiResponse = ApiResponse<MetricasDiaDto>.ErrorResponse("Forbidden", 403);
+        var apiResponse = ApiResponse<MetricasDiaDto>.ErrorResponse(new List<string> { "Forbidden" }, "Forbidden", 403);
         _mockApiService.Setup(x => x.GetAsync<MetricasDiaDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
@@ -419,7 +419,7 @@ public class AnalyticsServiceTests
     public async Task ObtenerMetricasDiaAsync_WithTooManyRequests_ShouldPropagate429()
     {
         // Arrange
-        var apiResponse = ApiResponse<MetricasDiaDto>.ErrorResponse("Too Many Requests", 429);
+        var apiResponse = ApiResponse<MetricasDiaDto>.ErrorResponse(new List<string> { "Too Many Requests" }, "Too Many Requests", 429);
         _mockApiService.Setup(x => x.GetAsync<MetricasDiaDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 

@@ -83,7 +83,7 @@ public class ReservacionesServiceTests
         };
         var apiResponse = ApiResponse<ReservacionDto>.SuccessResponse(reservacion);
 
-        _mockApiService.Setup(x => x.GetAsync<ReservacionDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<ReservacionDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -123,7 +123,7 @@ public class ReservacionesServiceTests
         };
         var apiResponse = ApiResponse<ReservacionDto>.SuccessResponse(reservacionCreada);
 
-        _mockApiService.Setup(x => x.PostAsync<ReservacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<ReservacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act

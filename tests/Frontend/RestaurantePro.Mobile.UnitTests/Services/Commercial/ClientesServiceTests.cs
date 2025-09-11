@@ -80,7 +80,7 @@ public class ClientesServiceTests
         var cliente = new ClienteDto { Id = clienteId, NombreCompleto = "Juan Pérez", Email = "juan@test.com" };
         var apiResponse = ApiResponse<ClienteDto>.SuccessResponse(cliente);
         
-        _mockApiService.Setup(x => x.GetAsync<ClienteDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<ClienteDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -132,7 +132,7 @@ public class ClientesServiceTests
         var clienteCreado = new ClienteDto { Id = Guid.NewGuid(), NombreCompleto = "Nuevo Cliente", Email = "nuevo@test.com" };
         var apiResponse = ApiResponse<ClienteDto>.SuccessResponse(clienteCreado);
         
-        _mockApiService.Setup(x => x.PostAsync<ClienteDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<ClienteDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -153,7 +153,7 @@ public class ClientesServiceTests
         var cliente = new ClienteDto { Id = clienteId, NombreCompleto = "Juan Pérez Actualizado", Email = "juan.actualizado@test.com" };
         var apiResponse = ApiResponse<ClienteDto>.SuccessResponse(cliente);
         
-        _mockApiService.Setup(x => x.PutAsync<ClienteDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PutAsync<ClienteDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -405,7 +405,7 @@ public class ClientesServiceTests
     {
         // Arrange
         var clienteId = Guid.NewGuid();
-        _mockApiService.Setup(x => x.GetAsync<ClienteDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<ClienteDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act
@@ -421,7 +421,7 @@ public class ClientesServiceTests
     {
         // Arrange
         var cliente = new ClienteDto { NombreCompleto = "Test", Email = "test@test.com" };
-        _mockApiService.Setup(x => x.PostAsync<ClienteDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<ClienteDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act
@@ -438,7 +438,7 @@ public class ClientesServiceTests
         // Arrange
         var clienteId = Guid.NewGuid();
         var cliente = new ClienteDto { Id = clienteId, NombreCompleto = "Test", Email = "test@test.com" };
-        _mockApiService.Setup(x => x.PutAsync<ClienteDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PutAsync<ClienteDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act
@@ -471,7 +471,7 @@ public class ClientesServiceTests
         // Arrange
         var clienteId = Guid.NewGuid();
         var errorResponse = ApiResponse<ClienteDto>.ErrorResponse(new List<string> { "Unauthorized" }, "Unauthorized", 401);
-        _mockApiService.Setup(x => x.GetAsync<ClienteDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<ClienteDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(errorResponse);
 
         // Act
@@ -507,7 +507,7 @@ public class ClientesServiceTests
         // Arrange
         var cliente = new ClienteDto { NombreCompleto = "Rate Limited", Email = "rate@test.com" };
         var errorResponse = ApiResponse<ClienteDto>.ErrorResponse(new List<string> { "Too Many Requests" }, "Too Many Requests", 429);
-        _mockApiService.Setup(x => x.PostAsync<ClienteDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<ClienteDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(errorResponse);
 
         // Act

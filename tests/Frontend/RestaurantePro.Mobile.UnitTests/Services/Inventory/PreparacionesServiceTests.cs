@@ -108,7 +108,7 @@ public class PreparacionesServiceTests
     public async Task ObtenerPreparacionesAsync_WithApiError_ShouldReturnFailure()
     {
         // Arrange
-        var apiResponse = ApiResponse<PreparacionesPaginadasDto>.ErrorResponse("Error de API", 500);
+        var apiResponse = ApiResponse<PreparacionesPaginadasDto>.ErrorResponse(new List<string> { "Error de API" }, "Error de API", 500);
         _mockApiService.Setup(x => x.GetAsync<PreparacionesPaginadasDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
@@ -140,7 +140,7 @@ public class PreparacionesServiceTests
     public async Task ObtenerPreparacionesAsync_WithUnauthorized_ShouldPropagate401()
     {
         // Arrange
-        var apiResponse = ApiResponse<PreparacionesPaginadasDto>.ErrorResponse("Unauthorized", 401);
+        var apiResponse = ApiResponse<PreparacionesPaginadasDto>.ErrorResponse(new List<string> { "Unauthorized" }, "Unauthorized", 401);
         _mockApiService.Setup(x => x.GetAsync<PreparacionesPaginadasDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
@@ -157,7 +157,7 @@ public class PreparacionesServiceTests
     public async Task ObtenerPreparacionesAsync_WithForbidden_ShouldPropagate403()
     {
         // Arrange
-        var apiResponse = ApiResponse<PreparacionesPaginadasDto>.ErrorResponse("Forbidden", 403);
+        var apiResponse = ApiResponse<PreparacionesPaginadasDto>.ErrorResponse(new List<string> { "Forbidden" }, "Forbidden", 403);
         _mockApiService.Setup(x => x.GetAsync<PreparacionesPaginadasDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
@@ -174,7 +174,7 @@ public class PreparacionesServiceTests
     public async Task ObtenerPreparacionesAsync_WithTooManyRequests_ShouldPropagate429()
     {
         // Arrange
-        var apiResponse = ApiResponse<PreparacionesPaginadasDto>.ErrorResponse("Too Many Requests", 429);
+        var apiResponse = ApiResponse<PreparacionesPaginadasDto>.ErrorResponse(new List<string> { "Too Many Requests" }, "Too Many Requests", 429);
         _mockApiService.Setup(x => x.GetAsync<PreparacionesPaginadasDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 

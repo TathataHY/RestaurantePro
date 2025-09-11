@@ -59,7 +59,7 @@ public class PreparacionesServiceTests
 
         var apiResponse = ApiResponse<PreparacionesPaginadasDto>.SuccessResponse(preparacionesPaginadas);
 
-        _mockApiService.Setup(x => x.GetAsync<PreparacionesPaginadasDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<PreparacionesPaginadasDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -91,7 +91,7 @@ public class PreparacionesServiceTests
 
         var apiResponse = ApiResponse<PreparacionDto>.SuccessResponse(preparacion);
 
-        _mockApiService.Setup(x => x.GetAsync<PreparacionDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<PreparacionDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -170,7 +170,7 @@ public class PreparacionesServiceTests
 
         var apiResponse = ApiResponse<PreparacionDto>.SuccessResponse(preparacionIniciada);
 
-        _mockApiService.Setup(x => x.PostAsync<PreparacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<PreparacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -201,7 +201,7 @@ public class PreparacionesServiceTests
 
         var apiResponse = ApiResponse<PreparacionDto>.SuccessResponse(preparacionCompletada);
 
-        _mockApiService.Setup(x => x.PostAsync<PreparacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<PreparacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -239,7 +239,7 @@ public class PreparacionesServiceTests
 
         var apiResponse = ApiResponse<PreparacionDto>.SuccessResponse(preparacionCancelada);
 
-        _mockApiService.Setup(x => x.PostAsync<PreparacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<PreparacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -301,7 +301,7 @@ public class PreparacionesServiceTests
         // Arrange
         var apiResponse = ApiResponse<PreparacionesPaginadasDto>.ErrorResponse(new List<string> { "Error de conexión" });
 
-        _mockApiService.Setup(x => x.GetAsync<PreparacionesPaginadasDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<PreparacionesPaginadasDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -317,7 +317,7 @@ public class PreparacionesServiceTests
     {
         // Arrange
         var id = Guid.NewGuid();
-        _mockApiService.Setup(x => x.GetAsync<PreparacionDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<PreparacionDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new HttpRequestException("Error de red"));
 
         // Act

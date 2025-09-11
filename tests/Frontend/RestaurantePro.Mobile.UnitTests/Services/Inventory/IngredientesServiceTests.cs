@@ -73,7 +73,7 @@ public class IngredientesServiceTests
         var ingrediente = new IngredienteDto { Id = ingredienteId, Nombre = "Tomate", StockActual = 50, UnidadMedida = "kg" };
         var apiResponse = ApiResponse<IngredienteDto>.SuccessResponse(ingrediente);
         
-        _mockApiService.Setup(x => x.GetAsync<IngredienteDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<IngredienteDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -118,7 +118,7 @@ public class IngredientesServiceTests
         var ingredienteCreado = new IngredienteDto { Id = Guid.NewGuid(), Nombre = "Nuevo Ingrediente", StockActual = 100, UnidadMedida = "kg" };
         var apiResponse = ApiResponse<IngredienteDto>.SuccessResponse(ingredienteCreado);
         
-        _mockApiService.Setup(x => x.PostAsync<IngredienteDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<IngredienteDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -139,7 +139,7 @@ public class IngredientesServiceTests
         var ingrediente = new IngredienteDto { Id = ingredienteId, Nombre = "Ingrediente Actualizado", StockActual = 75, UnidadMedida = "kg" };
         var apiResponse = ApiResponse<IngredienteDto>.SuccessResponse(ingrediente);
         
-        _mockApiService.Setup(x => x.PutAsync<IngredienteDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PutAsync<IngredienteDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -185,7 +185,7 @@ public class IngredientesServiceTests
         };
 
         var apiResponse = ApiResponse<EstadisticasIngredientesDto>.SuccessResponse(estadisticas);
-        _mockApiService.Setup(x => x.GetAsync<EstadisticasIngredientesDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<EstadisticasIngredientesDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -290,7 +290,7 @@ public class IngredientesServiceTests
     {
         // Arrange
         var ingredienteId = Guid.NewGuid();
-        _mockApiService.Setup(x => x.GetAsync<IngredienteDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<IngredienteDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act
@@ -306,7 +306,7 @@ public class IngredientesServiceTests
     {
         // Arrange
         var ingrediente = new IngredienteDto { Nombre = "Nuevo Ingrediente", StockActual = 100, UnidadMedida = "kg" };
-        _mockApiService.Setup(x => x.PostAsync<IngredienteDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<IngredienteDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act
@@ -323,7 +323,7 @@ public class IngredientesServiceTests
         // Arrange
         var ingredienteId = Guid.NewGuid();
         var ingrediente = new IngredienteDto { Id = ingredienteId, Nombre = "Ingrediente Actualizado", StockActual = 75, UnidadMedida = "kg" };
-        _mockApiService.Setup(x => x.PutAsync<IngredienteDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PutAsync<IngredienteDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act
@@ -370,7 +370,7 @@ public class IngredientesServiceTests
     public async Task ObtenerEstadisticasAsync_WhenExceptionOccurs_ShouldReturnFailure()
     {
         // Arrange
-        _mockApiService.Setup(x => x.GetAsync<EstadisticasIngredientesDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<EstadisticasIngredientesDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act
@@ -386,7 +386,7 @@ public class IngredientesServiceTests
     public async Task ObtenerIngredientesAsync_WithUnauthorized_ShouldPropagate401()
     {
         // Arrange
-        var apiResponse = ApiResponse<List<IngredienteSummaryDto>>.ErrorResponse("Unauthorized", 401);
+        var apiResponse = ApiResponse<List<IngredienteSummaryDto>>.ErrorResponse(new List<string> { "Unauthorized" }, "Unauthorized", 401);
         _mockApiService.Setup(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
@@ -403,7 +403,7 @@ public class IngredientesServiceTests
     public async Task ObtenerIngredientesAsync_WithForbidden_ShouldPropagate403()
     {
         // Arrange
-        var apiResponse = ApiResponse<List<IngredienteSummaryDto>>.ErrorResponse("Forbidden", 403);
+        var apiResponse = ApiResponse<List<IngredienteSummaryDto>>.ErrorResponse(new List<string> { "Forbidden" }, "Forbidden", 403);
         _mockApiService.Setup(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
@@ -420,7 +420,7 @@ public class IngredientesServiceTests
     public async Task ObtenerIngredientesAsync_WithTooManyRequests_ShouldPropagate429()
     {
         // Arrange
-        var apiResponse = ApiResponse<List<IngredienteSummaryDto>>.ErrorResponse("Too Many Requests", 429);
+        var apiResponse = ApiResponse<List<IngredienteSummaryDto>>.ErrorResponse(new List<string> { "Too Many Requests" }, "Too Many Requests", 429);
         _mockApiService.Setup(x => x.GetAsync<List<IngredienteSummaryDto>>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 

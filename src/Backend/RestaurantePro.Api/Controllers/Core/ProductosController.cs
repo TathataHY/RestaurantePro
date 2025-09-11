@@ -48,14 +48,18 @@ public class ProductosController : ControllerBase
         if (pagina < 1)
         {
             var errorResponse = ApiResponse<PaginatedList<ProductoDto>>.ErrorResponse(
-                "El número de página debe ser mayor a 0", StatusCodes.Status400BadRequest);
+                new List<string> { "El número de página debe ser mayor a 0" }, 
+                "Parámetros de paginación inválidos", 
+                StatusCodes.Status400BadRequest);
             return BadRequest(errorResponse);
         }
 
         if (tamanoPagina < 1 || tamanoPagina > 100)
         {
             var errorResponse = ApiResponse<PaginatedList<ProductoDto>>.ErrorResponse(
-                "El tamaño de página debe estar entre 1 y 100", StatusCodes.Status400BadRequest);
+                new List<string> { "El tamaño de página debe estar entre 1 y 100" }, 
+                "Parámetros de paginación inválidos", 
+                StatusCodes.Status400BadRequest);
             return BadRequest(errorResponse);
         }
 

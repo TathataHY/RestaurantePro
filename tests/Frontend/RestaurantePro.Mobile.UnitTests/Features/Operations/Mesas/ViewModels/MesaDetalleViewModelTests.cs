@@ -7,6 +7,8 @@ using RestaurantePro.Mobile.Core.Services.Comandas;
 using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Mesas;
 using RestaurantePro.Mobile.Core.Services.Navigation;
+using RestaurantePro.Mobile.Core.Services.Realtime;
+using RestaurantePro.Mobile.Core.Services.Notifications;
 
 namespace RestaurantePro.Mobile.UnitTests.Features.Operations.Mesas.ViewModels;
 
@@ -17,11 +19,13 @@ public class MesaDetalleViewModelTests
     private readonly Mock<IComandasService> _mockComandasService = new();
     private readonly Mock<IDialogService> _mockDialog = new();
     private readonly Mock<INavigationService> _mockNav = new();
+    private readonly Mock<IComandaRealtimeService> _mockRealtimeService = new();
+    private readonly Mock<INotificationService> _mockNotificationService = new();
 
     [Fact]
     public void Constructor_InitializesProperties()
     {
-        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
+        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object, _mockRealtimeService.Object, _mockNotificationService.Object);
         
         vm.Title.Should().Be("Detalle de Mesa");
         vm.Mesa.Should().NotBeNull();
@@ -36,7 +40,7 @@ public class MesaDetalleViewModelTests
     public async Task InitializeAsync_WithMesaId_ShouldSetMesaIdAndLoadData()
     {
         var mesaId = Guid.NewGuid();
-        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
+        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object, _mockRealtimeService.Object, _mockNotificationService.Object);
 
         await vm.InitializeAsync(mesaId);
 
@@ -47,7 +51,7 @@ public class MesaDetalleViewModelTests
     [Fact]
     public async Task InitializeAsync_WithEmptyMesaId_ShouldNotLoadData()
     {
-        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
+        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object, _mockRealtimeService.Object, _mockNotificationService.Object);
 
         await vm.InitializeAsync(Guid.Empty);
 
@@ -62,7 +66,7 @@ public class MesaDetalleViewModelTests
         _mockMesasService.Setup(x => x.ObtenerMesaAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<MesaDto>.SuccessResponse(mesa));
 
-        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
+        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object, _mockRealtimeService.Object, _mockNotificationService.Object);
         vm.MesaId = mesaId;
         await vm.LoadMesaCommand.ExecuteAsync(null);
 
@@ -78,7 +82,7 @@ public class MesaDetalleViewModelTests
         _mockMesasService.Setup(x => x.ObtenerMesaAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<MesaDto>.ErrorResponse(new List<string> { "Error" }, "Error", 500));
 
-        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
+        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object, _mockRealtimeService.Object, _mockNotificationService.Object);
         vm.MesaId = mesaId;
         await vm.LoadMesaCommand.ExecuteAsync(null);
 
@@ -98,7 +102,7 @@ public class MesaDetalleViewModelTests
         _mockComandasService.Setup(x => x.ObtenerComandasPorMesaAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ComandaDto>>.SuccessResponse(comandas));
 
-        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
+        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object, _mockRealtimeService.Object, _mockNotificationService.Object);
         vm.MesaId = mesaId;
         await vm.LoadComandasActivasCommand.ExecuteAsync(null);
 
@@ -113,7 +117,7 @@ public class MesaDetalleViewModelTests
         _mockComandasService.Setup(x => x.ObtenerComandasPorMesaAsync(mesaId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>()));
 
-        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
+        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object, _mockRealtimeService.Object, _mockNotificationService.Object);
         vm.MesaId = mesaId;
         vm.ComandasActivas.Add(new ComandaDto()); // Agregar una comanda para verificar que se limpia
         await vm.LoadComandasActivasCommand.ExecuteAsync(null);
@@ -142,7 +146,7 @@ public class MesaDetalleViewModelTests
                 return promptCall == 1 ? "Juan Pérez" : "4";
             });
 
-        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
+        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object, _mockRealtimeService.Object, _mockNotificationService.Object);
         vm.MesaId = mesaId;
         vm.Mesa = mesa;
         await vm.AsignarMesaCommand.ExecuteAsync(null);
@@ -162,7 +166,7 @@ public class MesaDetalleViewModelTests
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
             .ReturnsAsync((string?)null);
 
-        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
+        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object, _mockRealtimeService.Object, _mockNotificationService.Object);
         vm.MesaId = mesaId;
         vm.Mesa = mesa;
         await vm.AsignarMesaCommand.ExecuteAsync(null);
@@ -189,7 +193,7 @@ public class MesaDetalleViewModelTests
                 return promptCall == 1 ? "Juan Pérez" : "invalid";
             });
 
-        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
+        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object, _mockRealtimeService.Object, _mockNotificationService.Object);
         vm.MesaId = mesaId;
         vm.Mesa = mesa;
         await vm.AsignarMesaCommand.ExecuteAsync(null);
@@ -221,7 +225,7 @@ public class MesaDetalleViewModelTests
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
             .ReturnsAsync("Finalización del servicio");
 
-        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
+        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object, _mockRealtimeService.Object, _mockNotificationService.Object);
         vm.MesaId = mesaId;
         vm.Mesa = mesa;
         await vm.LiberarMesaCommand.ExecuteAsync(null);
@@ -241,7 +245,7 @@ public class MesaDetalleViewModelTests
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(false);
 
-        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
+        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object, _mockRealtimeService.Object, _mockNotificationService.Object);
         vm.MesaId = mesaId;
         vm.Mesa = mesa;
         await vm.LiberarMesaCommand.ExecuteAsync(null);
@@ -264,7 +268,7 @@ public class MesaDetalleViewModelTests
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string[]>()))
             .ReturnsAsync("mantenimiento");
 
-        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
+        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object, _mockRealtimeService.Object, _mockNotificationService.Object);
         vm.MesaId = mesaId;
         vm.Mesa = mesa;
         await vm.CambiarEstadoCommand.ExecuteAsync(null);
@@ -284,7 +288,7 @@ public class MesaDetalleViewModelTests
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string[]>()))
             .ReturnsAsync((string?)null);
 
-        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
+        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object, _mockRealtimeService.Object, _mockNotificationService.Object);
         vm.MesaId = mesaId;
         vm.Mesa = mesa;
         await vm.CambiarEstadoCommand.ExecuteAsync(null);
@@ -297,7 +301,7 @@ public class MesaDetalleViewModelTests
     public async Task VerComandasAsync_ShouldNavigateToComandas()
     {
         var mesaId = Guid.NewGuid();
-        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
+        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object, _mockRealtimeService.Object, _mockNotificationService.Object);
         vm.MesaId = mesaId;
 
         await vm.VerComandasCommand.ExecuteAsync(null);
@@ -308,7 +312,7 @@ public class MesaDetalleViewModelTests
     [Fact]
     public void Cleanup_ShouldClearCollections()
     {
-        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
+        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object, _mockRealtimeService.Object, _mockNotificationService.Object);
         vm.ComandasActivas.Add(new ComandaDto());
 
         vm.Cleanup();
@@ -323,7 +327,7 @@ public class MesaDetalleViewModelTests
     [InlineData("reservada", false, false)]
     public void PropertiesCalculadas_ShouldReturnCorrectValues(string estado, bool puedeAsignar, bool puedeLiberar)
     {
-        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
+        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object, _mockRealtimeService.Object, _mockNotificationService.Object);
         vm.Mesa = new MesaDto { Estado = estado };
 
         vm.PuedeAsignar.Should().Be(puedeAsignar);
@@ -334,7 +338,7 @@ public class MesaDetalleViewModelTests
     public void MesaId_WhenSet_ShouldUpdateProperty()
     {
         var mesaId = Guid.NewGuid();
-        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
+        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object, _mockRealtimeService.Object, _mockNotificationService.Object);
         
         vm.MesaId = mesaId;
         
@@ -345,7 +349,7 @@ public class MesaDetalleViewModelTests
     public void Mesa_WhenSet_ShouldUpdateProperty()
     {
         var mesa = new MesaDto { Id = Guid.NewGuid(), Numero = "1", Estado = "disponible" };
-        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object);
+        var vm = new MesaDetalleViewModel(_mockMesasService.Object, _mockComandasService.Object, _mockDialog.Object, _mockNav.Object, _mockRealtimeService.Object, _mockNotificationService.Object);
         
         vm.Mesa = mesa;
         

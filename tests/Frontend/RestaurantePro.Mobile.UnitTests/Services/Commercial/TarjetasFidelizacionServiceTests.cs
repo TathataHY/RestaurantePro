@@ -79,7 +79,7 @@ public class TarjetasFidelizacionServiceTests
         
         _mockApiService.Setup(x => x.GetAsync<List<TarjetaFidelizacionDto>>(It.IsAny<string>(), It.IsAny<string>()))
                       .ReturnsAsync(buscarResponse);
-        _mockApiService.Setup(x => x.PostAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(activarResponse);
 
         // Act
@@ -137,7 +137,7 @@ public class TarjetasFidelizacionServiceTests
         };
 
         var apiResponse = ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(tarjeta);
-        _mockApiService.Setup(x => x.GetAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -191,12 +191,12 @@ public class TarjetasFidelizacionServiceTests
 
         // Mock para la primera llamada (acumular puntos)
         var acumularResponse = ApiResponse<object>.SuccessResponse(new { });
-        _mockApiService.Setup(x => x.PostAsync<object>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<object>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(acumularResponse);
 
         // Mock para la segunda llamada (obtener tarjeta actualizada)
         var tarjetaResponse = ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(tarjeta);
-        _mockApiService.Setup(x => x.GetAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(tarjetaResponse);
 
         // Act
@@ -228,12 +228,12 @@ public class TarjetasFidelizacionServiceTests
 
         // Mock para la primera llamada (canjear puntos)
         var canjearResponse = ApiResponse<object>.SuccessResponse(new { });
-        _mockApiService.Setup(x => x.PostAsync<object>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<object>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(canjearResponse);
 
         // Mock para la segunda llamada (obtener tarjeta actualizada)
         var tarjetaResponse = ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(tarjeta);
-        _mockApiService.Setup(x => x.GetAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(tarjetaResponse);
 
         // Act
@@ -278,7 +278,7 @@ public class TarjetasFidelizacionServiceTests
         var tarjetaId = Guid.NewGuid();
         var apiResponse = ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(new TarjetaFidelizacionDto());
         
-        _mockApiService.Setup(x => x.PostAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -353,7 +353,7 @@ public class TarjetasFidelizacionServiceTests
         var tarjetaId = Guid.NewGuid();
         var apiResponse = ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(new TarjetaFidelizacionDto());
         
-        _mockApiService.Setup(x => x.PostAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -409,7 +409,7 @@ public class TarjetasFidelizacionServiceTests
         };
 
         var apiResponse = ApiResponse<EstadisticasTarjetaDto>.SuccessResponse(estadisticas);
-        _mockApiService.Setup(x => x.GetAsync<EstadisticasTarjetaDto>(It.IsAny<string>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.GetAsync<EstadisticasTarjetaDto>(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ReturnsAsync(apiResponse);
 
         // Act
@@ -498,7 +498,7 @@ public class TarjetasFidelizacionServiceTests
                       .ReturnsAsync(buscarResponse);
 
         // Mock para la segunda llamada (PostAsync) - lanza excepción
-        _mockApiService.Setup(x => x.PostAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<TarjetaFidelizacionDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act
@@ -515,7 +515,7 @@ public class TarjetasFidelizacionServiceTests
         // Arrange
         var tarjetaId = Guid.NewGuid();
         var montoCompra = 25.0m;
-        _mockApiService.Setup(x => x.PostAsync<object>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<object>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act
@@ -533,7 +533,7 @@ public class TarjetasFidelizacionServiceTests
         var tarjetaId = Guid.NewGuid();
         var puntosACanjear = 30;
         var descuento = 10.0m;
-        _mockApiService.Setup(x => x.PostAsync<object>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>()))
+        _mockApiService.Setup(x => x.PostAsync<object>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
                       .ThrowsAsync(new Exception("Error de red"));
 
         // Act
