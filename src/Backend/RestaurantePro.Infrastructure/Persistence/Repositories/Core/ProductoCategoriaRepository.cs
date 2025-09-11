@@ -14,6 +14,11 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
 
         public async Task<ProductoCategoria?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
+            return await _dbSet.Where(c => c.Id == id && c.EstaActivo).FirstOrDefaultAsync(cancellationToken);
+        }
+
+        public async Task<ProductoCategoria?> ObtenerPorIdIncluyendoInactivasAsync(Guid id, CancellationToken cancellationToken = default)
+        {
             return await base.ObtenerPorIdAsync(id, cancellationToken);
         }
 

@@ -540,7 +540,7 @@ public abstract class ApiIntegrationTestBase : IAsyncLifetime, IDisposable
         var nombreFinal = nombre == "Producto Test" ? $"Producto_{timestamp}_{guid.Substring(0, 6)}" : nombre;
 
         // Crear y persistir una categoría de producto real usando el método de fábrica
-        var categoria = ProductoCategoria.Crear($"Categoria_{timestamp}_{guid.Substring(0, 4)}", $"Descripción de la categoría {nombreFinal}", 0);
+        var categoria = ProductoCategoria.Crear($"Categoria_{timestamp}_{guid.Substring(0, 4)}", $"Descripción de la categoría {nombreFinal}", 0, "#FF5722", "🍽️");
         DbContext.ProductoCategorias.Add(categoria);
         await DbContext.SaveChangesAsync();
 

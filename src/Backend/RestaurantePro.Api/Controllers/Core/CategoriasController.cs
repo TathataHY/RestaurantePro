@@ -298,6 +298,7 @@ public class CategoriasController : ControllerBase
         Guid id, [FromBody] ActualizarCategoriaDto request)
     {
         _logger.LogInformation("✏️ PUT /api/core/categorias/{Id} - Nombre: {Nombre}", id, request.Nombre);
+        _logger.LogInformation("🔍 Datos recibidos - Icono: '{Icono}', Color: '{Color}'", request.Icono, request.Color);
 
         try
         {

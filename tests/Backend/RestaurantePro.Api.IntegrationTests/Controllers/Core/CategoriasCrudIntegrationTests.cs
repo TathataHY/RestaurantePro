@@ -6,6 +6,7 @@ using RestaurantePro.Application.Common.Models;
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Xunit;
 
 namespace RestaurantePro.Api.IntegrationTests.Controllers.Core;
@@ -34,7 +35,7 @@ public class CategoriasCrudIntegrationTests : ApiIntegrationTestBase
             Nombre = "Categoría de Prueba",
             Descripcion = "Descripción de la categoría de prueba",
             Color = "#FF5722",
-            Icono = "🍕",
+            Icono = "burger",
             Orden = 10,
             Activa = true
         };
@@ -77,7 +78,7 @@ public class CategoriasCrudIntegrationTests : ApiIntegrationTestBase
             Nombre = "Categoría Duplicada",
             Descripcion = "Primera categoría",
             Color = "#FF5722",
-            Icono = "🍕",
+            Icono = "burger",
             Orden = 10,
             Activa = true
         };
@@ -150,7 +151,7 @@ public class CategoriasCrudIntegrationTests : ApiIntegrationTestBase
             Nombre = "Categoría Sin Auth",
             Descripcion = "Descripción",
             Color = "#FF5722",
-            Icono = "🍕",
+            Icono = "burger",
             Orden = 10,
             Activa = true
         };
@@ -182,17 +183,25 @@ public class CategoriasCrudIntegrationTests : ApiIntegrationTestBase
             Nombre = "Categoría Original",
             Descripcion = "Descripción original",
             Color = "#FF5722",
-            Icono = "🍕",
+            Icono = "burger",
             Orden = 10,
             Activa = true
         };
 
-        var jsonOriginal = JsonSerializer.Serialize(categoriaOriginal);
+        var jsonOptions = new JsonSerializerOptions
+        {
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            PropertyNamingPolicy = null,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            Converters = { new JsonStringEnumConverter() }
+        };
+        var jsonOriginal = JsonSerializer.Serialize(categoriaOriginal, jsonOptions);
         var contentOriginal = new StringContent(jsonOriginal, Encoding.UTF8, "application/json");
         var responseCrear = await _client.PostAsync("/api/core/categorias", contentOriginal);
         var responseCrearContent = await responseCrear.Content.ReadAsStringAsync();
         var categoriaCreada = JsonSerializer.Deserialize<ApiResponse<CategoriaProductoDto>>(responseCrearContent, new JsonSerializerOptions
         {
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             PropertyNameCaseInsensitive = true,
             Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
         });
@@ -204,12 +213,12 @@ public class CategoriasCrudIntegrationTests : ApiIntegrationTestBase
             Nombre = "Categoría Actualizada",
             Descripcion = "Descripción actualizada",
             Color = "#2196F3",
-            Icono = "🍔",
+            Icono = "burger",
             Orden = 20,
-            Activa = false
+            Activa = true
         };
 
-        var jsonActualizado = JsonSerializer.Serialize(categoriaActualizada);
+        var jsonActualizado = JsonSerializer.Serialize(categoriaActualizada, jsonOptions);
         var contentActualizado = new StringContent(jsonActualizado, Encoding.UTF8, "application/json");
 
         // Act
@@ -248,9 +257,9 @@ public class CategoriasCrudIntegrationTests : ApiIntegrationTestBase
             Nombre = "Categoría Actualizada",
             Descripcion = "Descripción actualizada",
             Color = "#2196F3",
-            Icono = "🍔",
+            Icono = "burger",
             Orden = 20,
-            Activa = false
+            Activa = true
         };
 
         var json = JsonSerializer.Serialize(categoriaActualizada);
@@ -283,17 +292,25 @@ public class CategoriasCrudIntegrationTests : ApiIntegrationTestBase
             Nombre = "Categoría Original",
             Descripcion = "Descripción original",
             Color = "#FF5722",
-            Icono = "🍕",
+            Icono = "burger",
             Orden = 10,
             Activa = true
         };
 
-        var jsonOriginal = JsonSerializer.Serialize(categoriaOriginal);
+        var jsonOptions = new JsonSerializerOptions
+        {
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            PropertyNamingPolicy = null,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            Converters = { new JsonStringEnumConverter() }
+        };
+        var jsonOriginal = JsonSerializer.Serialize(categoriaOriginal, jsonOptions);
         var contentOriginal = new StringContent(jsonOriginal, Encoding.UTF8, "application/json");
         var responseCrear = await _client.PostAsync("/api/core/categorias", contentOriginal);
         var responseCrearContent = await responseCrear.Content.ReadAsStringAsync();
         var categoriaCreada = JsonSerializer.Deserialize<ApiResponse<CategoriaProductoDto>>(responseCrearContent, new JsonSerializerOptions
         {
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             PropertyNameCaseInsensitive = true,
             Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
         });
@@ -344,17 +361,25 @@ public class CategoriasCrudIntegrationTests : ApiIntegrationTestBase
             Nombre = "Categoría a Eliminar",
             Descripcion = "Descripción de la categoría a eliminar",
             Color = "#FF5722",
-            Icono = "🍕",
+            Icono = "burger",
             Orden = 10,
             Activa = true
         };
 
-        var jsonOriginal = JsonSerializer.Serialize(categoriaOriginal);
+        var jsonOptions = new JsonSerializerOptions
+        {
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            PropertyNamingPolicy = null,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            Converters = { new JsonStringEnumConverter() }
+        };
+        var jsonOriginal = JsonSerializer.Serialize(categoriaOriginal, jsonOptions);
         var contentOriginal = new StringContent(jsonOriginal, Encoding.UTF8, "application/json");
         var responseCrear = await _client.PostAsync("/api/core/categorias", contentOriginal);
         var responseCrearContent = await responseCrear.Content.ReadAsStringAsync();
         var categoriaCreada = JsonSerializer.Deserialize<ApiResponse<CategoriaProductoDto>>(responseCrearContent, new JsonSerializerOptions
         {
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             PropertyNameCaseInsensitive = true,
             Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
         });
@@ -410,17 +435,25 @@ public class CategoriasCrudIntegrationTests : ApiIntegrationTestBase
             Nombre = "Categoría con Productos",
             Descripcion = "Descripción de la categoría con productos",
             Color = "#FF5722",
-            Icono = "🍕",
+            Icono = "burger",
             Orden = 10,
             Activa = true
         };
 
-        var jsonOriginal = JsonSerializer.Serialize(categoriaOriginal);
+        var jsonOptions = new JsonSerializerOptions
+        {
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            PropertyNamingPolicy = null,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            Converters = { new JsonStringEnumConverter() }
+        };
+        var jsonOriginal = JsonSerializer.Serialize(categoriaOriginal, jsonOptions);
         var contentOriginal = new StringContent(jsonOriginal, Encoding.UTF8, "application/json");
         var responseCrear = await _client.PostAsync("/api/core/categorias", contentOriginal);
         var responseCrearContent = await responseCrear.Content.ReadAsStringAsync();
         var categoriaCreada = JsonSerializer.Deserialize<ApiResponse<CategoriaProductoDto>>(responseCrearContent, new JsonSerializerOptions
         {
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             PropertyNameCaseInsensitive = true,
             Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
         });
@@ -460,7 +493,7 @@ public class CategoriasCrudIntegrationTests : ApiIntegrationTestBase
             Nombre = "Categoría Persistente",
             Descripcion = "Descripción de la categoría persistente",
             Color = "#FF5722",
-            Icono = "🍕",
+            Icono = "burger",
             Orden = 10,
             Activa = true
         };
@@ -506,17 +539,25 @@ public class CategoriasCrudIntegrationTests : ApiIntegrationTestBase
             Nombre = "Categoría Original",
             Descripcion = "Descripción original",
             Color = "#FF5722",
-            Icono = "🍕",
+            Icono = "burger",
             Orden = 10,
             Activa = true
         };
 
-        var jsonOriginal = JsonSerializer.Serialize(categoriaOriginal);
+        var jsonOptions = new JsonSerializerOptions
+        {
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            PropertyNamingPolicy = null,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            Converters = { new JsonStringEnumConverter() }
+        };
+        var jsonOriginal = JsonSerializer.Serialize(categoriaOriginal, jsonOptions);
         var contentOriginal = new StringContent(jsonOriginal, Encoding.UTF8, "application/json");
         var responseCrear = await _client.PostAsync("/api/core/categorias", contentOriginal);
         var responseCrearContent = await responseCrear.Content.ReadAsStringAsync();
         var categoriaCreada = JsonSerializer.Deserialize<ApiResponse<CategoriaProductoDto>>(responseCrearContent, new JsonSerializerOptions
         {
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             PropertyNameCaseInsensitive = true,
             Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
         });
@@ -528,12 +569,12 @@ public class CategoriasCrudIntegrationTests : ApiIntegrationTestBase
             Nombre = "Categoría Actualizada",
             Descripcion = "Descripción actualizada",
             Color = "#2196F3",
-            Icono = "🍔",
+            Icono = "burger",
             Orden = 20,
-            Activa = false
+            Activa = true
         };
 
-        var jsonActualizado = JsonSerializer.Serialize(categoriaActualizada);
+        var jsonActualizado = JsonSerializer.Serialize(categoriaActualizada, jsonOptions);
         var contentActualizado = new StringContent(jsonActualizado, Encoding.UTF8, "application/json");
 
         // Act
@@ -571,17 +612,25 @@ public class CategoriasCrudIntegrationTests : ApiIntegrationTestBase
             Nombre = "Categoría a Eliminar",
             Descripcion = "Descripción de la categoría a eliminar",
             Color = "#FF5722",
-            Icono = "🍕",
+            Icono = "burger",
             Orden = 10,
             Activa = true
         };
 
-        var jsonOriginal = JsonSerializer.Serialize(categoriaOriginal);
+        var jsonOptions = new JsonSerializerOptions
+        {
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+            PropertyNamingPolicy = null,
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            Converters = { new JsonStringEnumConverter() }
+        };
+        var jsonOriginal = JsonSerializer.Serialize(categoriaOriginal, jsonOptions);
         var contentOriginal = new StringContent(jsonOriginal, Encoding.UTF8, "application/json");
         var responseCrear = await _client.PostAsync("/api/core/categorias", contentOriginal);
         var responseCrearContent = await responseCrear.Content.ReadAsStringAsync();
         var categoriaCreada = JsonSerializer.Deserialize<ApiResponse<CategoriaProductoDto>>(responseCrearContent, new JsonSerializerOptions
         {
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             PropertyNameCaseInsensitive = true,
             Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
         });

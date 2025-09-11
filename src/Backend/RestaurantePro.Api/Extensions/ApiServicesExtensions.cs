@@ -33,6 +33,8 @@ namespace RestaurantePro.Api.Extensions
                 options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
                 // Convertir enums a strings
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                // Configurar codificación UTF-8 para caracteres especiales
+                options.JsonSerializerOptions.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
             });
 
             // Configurar reglas de validación de modelo

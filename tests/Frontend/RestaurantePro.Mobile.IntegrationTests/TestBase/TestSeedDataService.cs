@@ -179,10 +179,10 @@ public class TestSeedDataService : ISeedDataService
             // 🔧 CREAR CATEGORÍAS DE PRODUCTOS USANDO EL MÉTODO DE FÁBRICA
             var categorias = new[]
             {
-                RestaurantePro.Domain.Core.Productos.Entities.ProductoCategoria.Crear("Platos Principales", "Platos principales del menú", 1),
-                RestaurantePro.Domain.Core.Productos.Entities.ProductoCategoria.Crear("Entradas", "Entradas y aperitivos", 2),
-                RestaurantePro.Domain.Core.Productos.Entities.ProductoCategoria.Crear("Postres", "Postres y dulces", 3),
-                RestaurantePro.Domain.Core.Productos.Entities.ProductoCategoria.Crear("Bebidas", "Bebidas y refrescos", 4)
+                RestaurantePro.Domain.Core.Productos.Entities.ProductoCategoria.Crear("Platos Principales", "Platos principales del menú", 1, "#F44336", "🍽️"),
+                RestaurantePro.Domain.Core.Productos.Entities.ProductoCategoria.Crear("Entradas", "Entradas y aperitivos", 2, "#FF5722", "🥗"),
+                RestaurantePro.Domain.Core.Productos.Entities.ProductoCategoria.Crear("Postres", "Postres y dulces", 3, "#E91E63", "🍰"),
+                RestaurantePro.Domain.Core.Productos.Entities.ProductoCategoria.Crear("Bebidas", "Bebidas y refrescos", 4, "#00BCD4", "🥤")
             };
 
             foreach (var categoria in categorias)

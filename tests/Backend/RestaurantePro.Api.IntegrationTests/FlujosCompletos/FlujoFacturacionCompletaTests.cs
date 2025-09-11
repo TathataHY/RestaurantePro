@@ -348,7 +348,7 @@ public class FlujoFacturacionCompletaTests : ApiIntegrationTestBase
     {
         // Crear categoría en la base de datos
         await using var context = CreateNewDbContext();
-        var categoria = ProductoCategoria.Crear("Categoría Test", "Descripción de categoría test", 1);
+        var categoria = ProductoCategoria.Crear("Categoría Test", "Descripción de categoría test", 1, "#FF5722", "🍽️");
         context.ProductoCategorias.Add(categoria);
         await context.SaveChangesAsync();
 

@@ -284,7 +284,7 @@ public class ProductosControllerTests : ApiIntegrationTestBase
     {
         var guid = Guid.NewGuid();
         var sufijoUnico = sufijo ?? guid.ToString().Substring(0, 8);
-        return ProductoCategoria.Crear($"Categoría {sufijoUnico}", $"Descripción {sufijoUnico}", 1);
+        return ProductoCategoria.Crear($"Categoría {sufijoUnico}", $"Descripción {sufijoUnico}", 1, "#FF5722", "🍽️");
     }
 
     private static Producto CrearProductoTest(string? sufijo = null, Guid? categoriaId = null)

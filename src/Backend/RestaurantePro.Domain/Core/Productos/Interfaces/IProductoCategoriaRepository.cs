@@ -6,9 +6,14 @@ namespace RestaurantePro.Domain.Core.Productos.Interfaces
     public interface IProductoCategoriaRepository
     {
         /// <summary>
-        /// Obtiene una categoría por su ID
+        /// Obtiene una categoría por su ID (solo activas)
         /// </summary>
         Task<ProductoCategoria?> ObtenerPorIdAsync(Guid id, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Obtiene una categoría por su ID (incluyendo inactivas)
+        /// </summary>
+        Task<ProductoCategoria?> ObtenerPorIdIncluyendoInactivasAsync(Guid id, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// Obtiene todas las categorías activas

@@ -27,8 +27,8 @@ public class EliminarCategoriaCommandHandler : IRequestHandler<EliminarCategoria
         {
             _logger.LogInformation("Iniciando eliminación de categoría con ID: {Id}", request.Id);
 
-            // Buscar la categoría existente
-            var categoria = await _categoriaRepository.ObtenerPorIdAsync(request.Id, cancellationToken);
+            // Buscar la categoría existente (incluyendo inactivas para poder eliminarlas)
+            var categoria = await _categoriaRepository.ObtenerPorIdIncluyendoInactivasAsync(request.Id, cancellationToken);
 
             if (categoria == null)
             {
