@@ -1,6 +1,8 @@
 @attribute [Authorize]
 @page "/reportes"
 @inject RestaurantePro.Web.Admin.Services.ReportesApiService ReportesApi
+@inject RestaurantePro.Web.Admin.Services.ReportesComercialesApiService ReportesComercialesApi
+@inject RestaurantePro.Web.Admin.Services.ReportesInventarioApiService ReportesInventarioApi
 @using RestaurantePro.Web.Admin.Models
 @using RestaurantePro.Web.Admin.Components
 @inject IJSRuntime JSRuntime
@@ -79,31 +81,229 @@
                 OnFiltrosAplicados="AplicarFiltros"
                 Generando="generando" />
 
-<!-- Contenido del reporte -->
-@if (mostrarReporte)
-{
-    <div class="mt-4">
-        @switch (filtros.Tipo)
+<!-- Navegación por pestañas -->
+<ul class="nav nav-tabs mb-4" id="reportTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="operativos-tab" data-bs-toggle="tab" data-bs-target="#operativos" type="button" role="tab">
+            <i class="oi oi-bar-chart"></i> Reportes Operativos
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="comerciales-tab" data-bs-toggle="tab" data-bs-target="#comerciales" type="button" role="tab">
+            <i class="oi oi-graph"></i> Reportes Comerciales
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="inventario-tab" data-bs-toggle="tab" data-bs-target="#inventario" type="button" role="tab">
+            <i class="oi oi-box"></i> Reportes de Inventario
+        </button>
+    </li>
+</ul>
+
+<!-- Contenido de las pestañas -->
+<div class="tab-content" id="reportTabsContent">
+    <!-- Pestaña Reportes Operativos -->
+    <div class="tab-pane fade show active" id="operativos" role="tabpanel">
+        <!-- Filtros de reporte -->
+        <FiltrosReporte Filtros="filtros" 
+                        OnFiltrosAplicados="AplicarFiltros"
+                        Generando="generando" />
+
+        <!-- Contenido del reporte -->
+        @if (mostrarReporte)
         {
-            case TipoReporte.VentasPorPeriodo:
-                <ReporteVentas Reporte="reporteVentas" 
-                              OnExportarPDF="ExportarPDF"
-                              OnExportarExcel="ExportarExcel" />
-                break;
-            case TipoReporte.ProductosMasVendidos:
-            case TipoReporte.ProductosPorCategoria:
-                <ReporteProductos Reporte="reporteProductos" 
-                                 OnExportarPDF="ExportarPDF"
-                                 OnExportarExcel="ExportarExcel" />
-                break;
-            default:
-                <div class="alert alert-info">
-                    <i class="oi oi-info"></i> Selecciona un tipo de reporte para generar el análisis correspondiente.
-                </div>
-                break;
+            <div class="mt-4">
+                @switch (filtros.Tipo)
+                {
+                    case TipoReporte.VentasPorPeriodo:
+                        <ReporteVentas Reporte="reporteVentas" 
+                                      OnExportarPDF="ExportarPDF"
+                                      OnExportarExcel="ExportarExcel" />
+                        break;
+                    case TipoReporte.ProductosMasVendidos:
+                    case TipoReporte.ProductosPorCategoria:
+                        <ReporteProductos Reporte="reporteProductos" 
+                                         OnExportarPDF="ExportarPDF"
+                                         OnExportarExcel="ExportarExcel" />
+                        break;
+                    default:
+                        <div class="alert alert-info">
+                            <i class="oi oi-info"></i> Selecciona un tipo de reporte para generar el análisis correspondiente.
+                        </div>
+                        break;
+                }
+            </div>
         }
     </div>
-}
+    
+    <!-- Pestaña Reportes Comerciales -->
+    <div class="tab-pane fade" id="comerciales" role="tabpanel">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">Análisis de Clientes</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Análisis detallado del comportamiento y preferencias de los clientes.</p>
+                        <button class="btn btn-primary btn-sm" @onclick="@(() => GenerarReporteComercial("analisis-clientes"))">
+                            <i class="oi oi-people"></i> Generar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">Segmentación de Clientes</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Clasificación de clientes por segmentos y comportamiento.</p>
+                        <button class="btn btn-primary btn-sm" @onclick="@(() => GenerarReporteComercial("segmentacion-clientes"))">
+                            <i class="oi oi-tags"></i> Generar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">Análisis de Productos</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Análisis de rendimiento y popularidad de productos.</p>
+                        <button class="btn btn-primary btn-sm" @onclick="@(() => GenerarReporteComercial("analisis-productos"))">
+                            <i class="oi oi-fork"></i> Generar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">Rentabilidad por Producto</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Análisis de rentabilidad y márgenes por producto.</p>
+                        <button class="btn btn-primary btn-sm" @onclick="@(() => GenerarReporteComercial("rentabilidad-productos"))">
+                            <i class="oi oi-dollar"></i> Generar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">Análisis de Promociones</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Efectividad y rendimiento de promociones activas.</p>
+                        <button class="btn btn-primary btn-sm" @onclick="@(() => GenerarReporteComercial("analisis-promociones"))">
+                            <i class="oi oi-badge"></i> Generar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">Tendencias de Ventas</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Análisis de tendencias y patrones de ventas.</p>
+                        <button class="btn btn-primary btn-sm" @onclick="@(() => GenerarReporteComercial("tendencias-ventas"))">
+                            <i class="oi oi-graph"></i> Generar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pestaña Reportes de Inventario -->
+    <div class="tab-pane fade" id="inventario" role="tabpanel">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">Análisis de Stock</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Análisis completo del estado actual del inventario.</p>
+                        <button class="btn btn-primary btn-sm" @onclick="@(() => GenerarReporteInventario("analisis-stock"))">
+                            <i class="oi oi-box"></i> Generar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">Movimientos de Inventario</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Historial detallado de movimientos de inventario.</p>
+                        <button class="btn btn-primary btn-sm" @onclick="@(() => GenerarReporteInventario("movimientos"))">
+                            <i class="oi oi-transfer"></i> Generar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">Productos Próximos a Vencer</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Lista de productos con vencimiento próximo.</p>
+                        <button class="btn btn-warning btn-sm" @onclick="@(() => GenerarReporteInventario("proximos-vencer"))">
+                            <i class="oi oi-warning"></i> Generar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">Rotación de Inventario</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Análisis de velocidad de rotación de productos.</p>
+                        <button class="btn btn-primary btn-sm" @onclick="@(() => GenerarReporteInventario("rotacion"))">
+                            <i class="oi oi-reload"></i> Generar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">Análisis de Costos</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Análisis detallado de costos de inventario.</p>
+                        <button class="btn btn-primary btn-sm" @onclick="@(() => GenerarReporteInventario("analisis-costos"))">
+                            <i class="oi oi-dollar"></i> Generar
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">Predicción de Demanda</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">Proyecciones de demanda futura basadas en datos históricos.</p>
+                        <button class="btn btn-info btn-sm" @onclick="@(() => GenerarReporteInventario("prediccion-demanda"))">
+                            <i class="oi oi-graph"></i> Generar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 @code {
     private ReporteFiltrosDto filtros = new();
@@ -196,6 +396,118 @@
     private async Task ExportarExcel()
     {
         await JSRuntime.InvokeVoidAsync("alert", "Función de exportación Excel pendiente");
+    }
+
+    private async Task GenerarReporteComercial(string tipoReporte)
+    {
+        try
+        {
+            generando = true;
+            StateHasChanged();
+
+            var fechaInicio = DateTime.Today.AddDays(-30);
+            var fechaFin = DateTime.Today;
+
+            object? resultado = null;
+
+            switch (tipoReporte)
+            {
+                case "analisis-clientes":
+                    resultado = await ReportesComercialesApi.ObtenerAnalisisClientesAsync(fechaInicio, fechaFin);
+                    break;
+                case "segmentacion-clientes":
+                    resultado = await ReportesComercialesApi.ObtenerSegmentacionClientesAsync();
+                    break;
+                case "analisis-productos":
+                    resultado = await ReportesComercialesApi.ObtenerAnalisisProductosAsync(fechaInicio, fechaFin);
+                    break;
+                case "rentabilidad-productos":
+                    resultado = await ReportesComercialesApi.ObtenerRentabilidadProductosAsync(fechaInicio, fechaFin);
+                    break;
+                case "analisis-promociones":
+                    resultado = await ReportesComercialesApi.ObtenerAnalisisPromocionesAsync(fechaInicio, fechaFin);
+                    break;
+                case "tendencias-ventas":
+                    resultado = await ReportesComercialesApi.ObtenerTendenciasVentasAsync(fechaInicio, fechaFin);
+                    break;
+            }
+
+            if (resultado != null)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Reporte {tipoReporte} generado exitosamente");
+                // Aquí podrías mostrar el resultado en un modal o en una sección específica
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error al generar el reporte {tipoReporte}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", $"Error al generar reporte comercial {tipoReporte}:", ex.Message);
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al generar el reporte {tipoReporte}");
+        }
+        finally
+        {
+            generando = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task GenerarReporteInventario(string tipoReporte)
+    {
+        try
+        {
+            generando = true;
+            StateHasChanged();
+
+            var fechaInicio = DateTime.Today.AddDays(-30);
+            var fechaFin = DateTime.Today;
+
+            object? resultado = null;
+
+            switch (tipoReporte)
+            {
+                case "analisis-stock":
+                    resultado = await ReportesInventarioApi.ObtenerAnalisisStockAsync();
+                    break;
+                case "movimientos":
+                    resultado = await ReportesInventarioApi.ObtenerMovimientosInventarioAsync(fechaInicio, fechaFin);
+                    break;
+                case "proximos-vencer":
+                    resultado = await ReportesInventarioApi.ObtenerProductosProximosVencerAsync(7);
+                    break;
+                case "rotacion":
+                    resultado = await ReportesInventarioApi.ObtenerRotacionInventarioAsync(fechaInicio, fechaFin);
+                    break;
+                case "analisis-costos":
+                    resultado = await ReportesInventarioApi.ObtenerAnalisisCostosAsync(fechaInicio, fechaFin);
+                    break;
+                case "prediccion-demanda":
+                    resultado = await ReportesInventarioApi.ObtenerPrediccionDemandaAsync(3);
+                    break;
+            }
+
+            if (resultado != null)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Reporte de inventario {tipoReporte} generado exitosamente");
+                // Aquí podrías mostrar el resultado en un modal o en una sección específica
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", $"Error al generar el reporte de inventario {tipoReporte}");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", $"Error al generar reporte de inventario {tipoReporte}:", ex.Message);
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al generar el reporte de inventario {tipoReporte}");
+        }
+        finally
+        {
+            generando = false;
+            StateHasChanged();
+        }
     }
 
     private string ObtenerTipoTexto(TipoReporte tipo)

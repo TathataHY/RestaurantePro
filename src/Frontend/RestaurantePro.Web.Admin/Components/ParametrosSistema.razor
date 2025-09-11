@@ -1,0 +1,105 @@
+@using RestaurantePro.Web.Admin.Models
+@namespace RestaurantePro.Web.Admin.Components
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="oi oi-cog"></i> Parámetros del Sistema
+        </h5>
+    </div>
+    <div class="card-body">
+        @if (parametros is null)
+        {
+            <div class="text-center p-4">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2">Cargando parámetros...</p>
+            </div>
+        }
+        else if (!parametros.Any())
+        {
+            <div class="text-center p-4">
+                <i class="oi oi-cog" style="font-size: 3rem; color: #6c757d;"></i>
+                <p class="mt-2 text-muted">No hay parámetros configurados</p>
+            </div>
+        }
+        else
+        {
+            <div class="row">
+                @foreach (var parametro in parametros)
+                {
+                    <div class="col-md-6 mb-3">
+                        <div class="card @(parametro.EsEditable ? "border-primary" : "border-secondary")">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="card-title">@parametro.Clave</h6>
+                                    <span class="badge @(parametro.EsEditable ? "bg-primary" : "bg-secondary")">
+                                        @(parametro.EsEditable ? "Editable" : "Solo lectura")
+                                    </span>
+                                </div>
+                                <p class="card-text text-muted small">@parametro.Descripcion</p>
+                                <div class="input-group">
+                                    @if (parametro.EsEditable)
+                                    {
+                                        <input type="@GetInputType(parametro.TipoDato)" 
+                                               class="form-control" 
+                                               @bind="parametro.Valor" 
+                                               @bind:after="(() => ActualizarParametro(parametro))" />
+                                        <button class="btn btn-outline-success" 
+                                                @onclick="(() => ActualizarParametro(parametro))"
+                                                disabled="@actualizando">
+                                            <i class="oi oi-check"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <input type="text" class="form-control" value="@parametro.Valor" readonly />
+                                    }
+                                </div>
+                                <small class="text-muted">
+                                    <i class="oi oi-tag"></i> @parametro.Categoria | 
+                                    <i class="oi oi-code"></i> @parametro.TipoDato
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<ConfiguracionDto>? parametros { get; set; }
+    [Parameter] public EventCallback<ConfiguracionDto> OnActualizarParametro { get; set; }
+    
+    private bool actualizando = false;
+
+    private string GetInputType(string tipoDato)
+    {
+        return tipoDato.ToLower() switch
+        {
+            "int" or "integer" => "number",
+            "decimal" or "double" or "float" => "number",
+            "bool" or "boolean" => "checkbox",
+            "date" or "datetime" => "datetime-local",
+            _ => "text"
+        };
+    }
+
+    private async Task ActualizarParametro(ConfiguracionDto parametro)
+    {
+        if (!parametro.EsEditable) return;
+        
+        actualizando = true;
+        try
+        {
+            await OnActualizarParametro.InvokeAsync(parametro);
+        }
+        finally
+        {
+            actualizando = false;
+        }
+    }
+}

@@ -1,0 +1,130 @@
+@using RestaurantePro.Web.Admin.Models
+@namespace RestaurantePro.Web.Admin.Components
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="oi oi-bell"></i> Configuración de Notificaciones
+        </h5>
+    </div>
+    <div class="card-body">
+        @if (configuracion is null)
+        {
+            <div class="text-center p-4">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2">Cargando configuración...</p>
+            </div>
+        }
+        else
+        {
+            <EditForm Model="configuracion" OnValidSubmit="GuardarConfiguracion">
+                <DataAnnotationsValidator />
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Tipos de Notificaciones</h6>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" @bind="configuracion.NotificacionesEmail" id="notifEmail">
+                            <label class="form-check-label" for="notifEmail">
+                                Notificaciones por Email
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" @bind="configuracion.NotificacionesSistema" id="notifSistema">
+                            <label class="form-check-label" for="notifSistema">
+                                Notificaciones del Sistema
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" @bind="configuracion.NotificacionesStockBajo" id="notifStock">
+                            <label class="form-check-label" for="notifStock">
+                                Alertas de Stock Bajo
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" @bind="configuracion.NotificacionesVencimiento" id="notifVencimiento">
+                            <label class="form-check-label" for="notifVencimiento">
+                                Alertas de Vencimiento
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" @bind="configuracion.NotificacionesReservaciones" id="notifReservaciones">
+                            <label class="form-check-label" for="notifReservaciones">
+                                Notificaciones de Reservaciones
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" @bind="configuracion.NotificacionesComandas" id="notifComandas">
+                            <label class="form-check-label" for="notifComandas">
+                                Notificaciones de Comandas
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Configuración de Alertas</h6>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Días antes del vencimiento para alertar</label>
+                            <input type="number" class="form-control" @bind="configuracion.DiasAntesVencimiento" min="1" max="30">
+                            <div class="form-text">Número de días antes del vencimiento para enviar alertas</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Stock mínimo para alerta</label>
+                            <input type="number" class="form-control" @bind="configuracion.StockMinimoAlerta" min="1" max="100">
+                            <div class="form-text">Cantidad mínima de stock para activar alertas</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-end mt-4">
+                    <button type="button" class="btn btn-secondary me-2" @onclick="ResetearConfiguracion">
+                        <i class="oi oi-reload"></i> Resetear
+                    </button>
+                    <button type="submit" class="btn btn-primary" disabled="@guardando">
+                        @if (guardando)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        <i class="oi oi-check"></i> Guardar Configuración
+                    </button>
+                </div>
+            </EditForm>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public ConfiguracionNotificacionesDto? configuracion { get; set; }
+    [Parameter] public EventCallback<ConfiguracionNotificacionesDto> OnGuardar { get; set; }
+    [Parameter] public EventCallback OnResetear { get; set; }
+    
+    private bool guardando = false;
+
+    private async Task GuardarConfiguracion()
+    {
+        guardando = true;
+        try
+        {
+            await OnGuardar.InvokeAsync(configuracion);
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private async Task ResetearConfiguracion()
+    {
+        await OnResetear.InvokeAsync();
+    }
+}

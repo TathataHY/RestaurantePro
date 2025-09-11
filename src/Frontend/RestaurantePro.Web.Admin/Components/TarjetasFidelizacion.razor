@@ -1,0 +1,142 @@
+@using RestaurantePro.Web.Admin.Models
+@namespace RestaurantePro.Web.Admin.Components
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">
+            <i class="oi oi-badge"></i> Sistema de Tarjetas de Fidelización
+        </h5>
+    </div>
+    <div class="card-body">
+        @if (configuracion is null)
+        {
+            <div class="text-center p-4">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="mt-2">Cargando configuración...</p>
+            </div>
+        }
+        else
+        {
+            <EditForm Model="configuracion" OnValidSubmit="GuardarConfiguracion">
+                <DataAnnotationsValidator />
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Configuración General</h6>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" @bind="configuracion.SistemaActivo" id="sistemaActivo">
+                            <label class="form-check-label" for="sistemaActivo">
+                                <strong>Sistema de Fidelización Activo</strong>
+                            </label>
+                            <div class="form-text">Activar o desactivar el sistema completo de fidelización</div>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" @bind="configuracion.CanjeAutomatico" id="canjeAutomatico">
+                            <label class="form-check-label" for="canjeAutomatico">
+                                Canje Automático de Puntos
+                            </label>
+                            <div class="form-text">Permitir canje automático cuando se alcance el mínimo</div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6 class="text-primary">Sistema de Puntos</h6>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Puntos por peso gastado</label>
+                            <input type="number" class="form-control" @bind="configuracion.PuntosPorPeso" min="1" max="10">
+                            <div class="form-text">Puntos que se otorgan por cada peso gastado</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Peso por punto (para canje)</label>
+                            <input type="number" class="form-control" @bind="configuracion.PesoPorPunto" min="1" max="1000" step="0.01">
+                            <div class="form-text">Peso que equivale a 1 punto para canjes</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Puntos mínimos para canje</label>
+                            <input type="number" class="form-control" @bind="configuracion.PuntosMinimosCanje" min="100" max="10000">
+                            <div class="form-text">Puntos mínimos requeridos para realizar un canje</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Descuento máximo (%)</label>
+                            <input type="number" class="form-control" @bind="configuracion.DescuentoMaximo" min="1" max="100" step="0.01">
+                            <div class="form-text">Porcentaje máximo de descuento por puntos</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Días de vencimiento de puntos</label>
+                            <input type="number" class="form-control" @bind="configuracion.DiasVencimientoPuntos" min="30" max="1095">
+                            <div class="form-text">Días antes de que los puntos expiren</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Resumen de configuración -->
+                <div class="alert alert-info mt-4">
+                    <h6><i class="oi oi-info"></i> Resumen de Configuración</h6>
+                    <p class="mb-1">
+                        <strong>Puntos por peso:</strong> @configuracion.PuntosPorPeso punto(s) por cada peso gastado
+                    </p>
+                    <p class="mb-1">
+                        <strong>Valor del punto:</strong> $@configuracion.PesoPorPunto pesos por punto
+                    </p>
+                    <p class="mb-1">
+                        <strong>Canje mínimo:</strong> @configuracion.PuntosMinimosCanje puntos
+                    </p>
+                    <p class="mb-1">
+                        <strong>Descuento máximo:</strong> @configuracion.DescuentoMaximo%
+                    </p>
+                    <p class="mb-0">
+                        <strong>Vencimiento:</strong> @configuracion.DiasVencimientoPuntos días
+                    </p>
+                </div>
+                
+                <div class="text-end mt-4">
+                    <button type="button" class="btn btn-secondary me-2" @onclick="ResetearConfiguracion">
+                        <i class="oi oi-reload"></i> Resetear
+                    </button>
+                    <button type="submit" class="btn btn-primary" disabled="@guardando">
+                        @if (guardando)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        <i class="oi oi-check"></i> Guardar Configuración
+                    </button>
+                </div>
+            </EditForm>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public ConfiguracionFidelizacionDto? configuracion { get; set; }
+    [Parameter] public EventCallback<ConfiguracionFidelizacionDto> OnGuardar { get; set; }
+    [Parameter] public EventCallback OnResetear { get; set; }
+    
+    private bool guardando = false;
+
+    private async Task GuardarConfiguracion()
+    {
+        guardando = true;
+        try
+        {
+            await OnGuardar.InvokeAsync(configuracion);
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private async Task ResetearConfiguracion()
+    {
+        await OnResetear.InvokeAsync();
+    }
+}

@@ -1,9 +1,348 @@
 @attribute [Authorize]
 @page "/configuracion"
+@using RestaurantePro.Web.Admin.Services
+@using RestaurantePro.Web.Admin.Components
 
 <PageTitle>Configuración</PageTitle>
 
-<h3>Configuración</h3>
+@inject ConfiguracionApiService ConfiguracionApi
+@inject IJSRuntime JSRuntime
+
+<h3>⚙️ Configuración del Sistema</h3>
 <p class="text-muted">Parámetros de sistema, notificaciones y preferencias.</p>
 
+<!-- Dashboard de estadísticas -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">@totalParametros</h4>
+                        <p class="card-text">Parámetros</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="oi oi-cog" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">@parametrosEditables</h4>
+                        <p class="card-text">Editables</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="oi oi-pencil" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">@categoriasActivas</h4>
+                        <p class="card-text">Categorías</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="oi oi-tags" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">@ultimaActualizacion</h4>
+                        <p class="card-text">Última Actualización</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="oi oi-clock" style="font-size: 2rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
+<!-- Navegación por pestañas -->
+<ul class="nav nav-tabs mb-4" id="configTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="parametros-tab" data-bs-toggle="tab" data-bs-target="#parametros" type="button" role="tab">
+            <i class="oi oi-cog"></i> Parámetros del Sistema
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="notificaciones-tab" data-bs-toggle="tab" data-bs-target="#notificaciones" type="button" role="tab">
+            <i class="oi oi-bell"></i> Notificaciones
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="fidelizacion-tab" data-bs-toggle="tab" data-bs-target="#fidelizacion" type="button" role="tab">
+            <i class="oi oi-badge"></i> Fidelización
+        </button>
+    </li>
+</ul>
+
+<!-- Contenido de las pestañas -->
+<div class="tab-content" id="configTabsContent">
+    <!-- Pestaña Parámetros del Sistema -->
+    <div class="tab-pane fade show active" id="parametros" role="tabpanel">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <select class="form-select" @bind="categoriaFiltro" @bind:after="FiltrarParametros">
+                    <option value="">Todas las categorías</option>
+                    <option value="Sistema">Sistema</option>
+                    <option value="Notificaciones">Notificaciones</option>
+                    <option value="Fidelizacion">Fidelización</option>
+                    <option value="Seguridad">Seguridad</option>
+                    <option value="Comercial">Comercial</option>
+                </select>
+            </div>
+            <div class="col-md-6 text-end">
+                <button class="btn btn-outline-primary" @onclick="CargarParametrosAsync">
+                    <i class="oi oi-reload"></i> Actualizar
+                </button>
+            </div>
+        </div>
+        
+        <ParametrosSistema parametros="parametrosFiltrados" OnActualizarParametro="ActualizarParametroAsync" />
+    </div>
+    
+    <!-- Pestaña Notificaciones -->
+    <div class="tab-pane fade" id="notificaciones" role="tabpanel">
+        <ConfiguracionNotificaciones 
+            configuracion="configuracionNotificaciones" 
+            OnGuardar="GuardarConfiguracionNotificacionesAsync"
+            OnResetear="ResetearConfiguracionNotificacionesAsync" />
+    </div>
+    
+    <!-- Pestaña Fidelización -->
+    <div class="tab-pane fade" id="fidelizacion" role="tabpanel">
+        <TarjetasFidelizacion 
+            configuracion="configuracionFidelizacion" 
+            OnGuardar="GuardarConfiguracionFidelizacionAsync"
+            OnResetear="ResetearConfiguracionFidelizacionAsync" />
+    </div>
+</div>
+
+@code {
+    private List<ConfiguracionDto>? parametros;
+    private List<ConfiguracionDto> parametrosFiltrados = new();
+    private ConfiguracionNotificacionesDto? configuracionNotificaciones;
+    private ConfiguracionFidelizacionDto? configuracionFidelizacion;
+    
+    private string categoriaFiltro = "";
+    
+    // Estadísticas
+    private int totalParametros = 0;
+    private int parametrosEditables = 0;
+    private int categoriasActivas = 0;
+    private string ultimaActualizacion = "N/A";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarDatosAsync();
+    }
+
+    private async Task CargarDatosAsync()
+    {
+        await Task.WhenAll(
+            CargarParametrosAsync(),
+            CargarConfiguracionNotificacionesAsync(),
+            CargarConfiguracionFidelizacionAsync()
+        );
+    }
+
+    private async Task CargarParametrosAsync()
+    {
+        try
+        {
+            parametros = await ConfiguracionApi.ObtenerConfiguracionAsync();
+            parametrosFiltrados = parametros.ToList();
+            CalcularEstadisticas();
+            FiltrarParametros();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error al cargar parámetros:", ex.Message);
+        }
+    }
+
+    private async Task CargarConfiguracionNotificacionesAsync()
+    {
+        try
+        {
+            configuracionNotificaciones = await ConfiguracionApi.ObtenerConfiguracionNotificacionesAsync();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error al cargar configuración de notificaciones:", ex.Message);
+        }
+    }
+
+    private async Task CargarConfiguracionFidelizacionAsync()
+    {
+        try
+        {
+            configuracionFidelizacion = await ConfiguracionApi.ObtenerConfiguracionFidelizacionAsync();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error al cargar configuración de fidelización:", ex.Message);
+        }
+    }
+
+    private void CalcularEstadisticas()
+    {
+        if (parametros == null) return;
+        
+        totalParametros = parametros.Count;
+        parametrosEditables = parametros.Count(p => p.EsEditable);
+        categoriasActivas = parametros.Select(p => p.Categoria).Distinct().Count();
+        
+        var ultimaActualizacionParam = parametros
+            .Where(p => p.FechaActualizacion.HasValue)
+            .OrderByDescending(p => p.FechaActualizacion)
+            .FirstOrDefault();
+            
+        ultimaActualizacion = ultimaActualizacionParam?.FechaActualizacion?.ToString("dd/MM/yyyy") ?? "N/A";
+    }
+
+    private void FiltrarParametros()
+    {
+        if (parametros == null) return;
+        
+        parametrosFiltrados = string.IsNullOrEmpty(categoriaFiltro) 
+            ? parametros.ToList()
+            : parametros.Where(p => p.Categoria == categoriaFiltro).ToList();
+    }
+
+    private async Task ActualizarParametroAsync(ConfiguracionDto parametro)
+    {
+        try
+        {
+            var request = new ActualizarConfiguracionRequest
+            {
+                Clave = parametro.Clave,
+                Valor = parametro.Valor
+            };
+            
+            var exito = await ConfiguracionApi.ActualizarParametroAsync(request);
+            if (exito)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Parámetro actualizado exitosamente");
+                await CargarParametrosAsync();
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error al actualizar el parámetro");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error al actualizar parámetro:", ex.Message);
+            await JSRuntime.InvokeVoidAsync("alert", "Error al actualizar el parámetro");
+        }
+    }
+
+    private async Task GuardarConfiguracionNotificacionesAsync(ConfiguracionNotificacionesDto? config)
+    {
+        if (config == null) return;
+        
+        try
+        {
+            var exito = await ConfiguracionApi.ActualizarConfiguracionNotificacionesAsync(config);
+            if (exito)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Configuración de notificaciones guardada exitosamente");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error al guardar la configuración de notificaciones");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error al guardar configuración de notificaciones:", ex.Message);
+            await JSRuntime.InvokeVoidAsync("alert", "Error al guardar la configuración de notificaciones");
+        }
+    }
+
+    private async Task ResetearConfiguracionNotificacionesAsync()
+    {
+        try
+        {
+            var exito = await ConfiguracionApi.ResetearConfiguracionAsync("Notificaciones");
+            if (exito)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Configuración de notificaciones reseteada");
+                await CargarConfiguracionNotificacionesAsync();
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error al resetear la configuración de notificaciones");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error al resetear configuración de notificaciones:", ex.Message);
+            await JSRuntime.InvokeVoidAsync("alert", "Error al resetear la configuración de notificaciones");
+        }
+    }
+
+    private async Task GuardarConfiguracionFidelizacionAsync(ConfiguracionFidelizacionDto? config)
+    {
+        if (config == null) return;
+        
+        try
+        {
+            var exito = await ConfiguracionApi.ActualizarConfiguracionFidelizacionAsync(config);
+            if (exito)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Configuración de fidelización guardada exitosamente");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error al guardar la configuración de fidelización");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error al guardar configuración de fidelización:", ex.Message);
+            await JSRuntime.InvokeVoidAsync("alert", "Error al guardar la configuración de fidelización");
+        }
+    }
+
+    private async Task ResetearConfiguracionFidelizacionAsync()
+    {
+        try
+        {
+            var exito = await ConfiguracionApi.ResetearConfiguracionAsync("Fidelizacion");
+            if (exito)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Configuración de fidelización reseteada");
+                await CargarConfiguracionFidelizacionAsync();
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Error al resetear la configuración de fidelización");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", "Error al resetear configuración de fidelización:", ex.Message);
+            await JSRuntime.InvokeVoidAsync("alert", "Error al resetear la configuración de fidelización");
+        }
+    }
+}

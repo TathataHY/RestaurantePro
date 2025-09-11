@@ -50,6 +50,9 @@ builder.Services.AddScoped<InventarioApiService>(); // Added for Semana 9
 builder.Services.AddScoped<ProveedoresApiService>(); // Added for Semana 10
 builder.Services.AddScoped<NotificacionesApiService>(); // Added for Semana 11
 builder.Services.AddScoped<RecetasApiService>(); // Added for Semana 11
+builder.Services.AddScoped<ConfiguracionApiService>(); // Added for Semana 12
+builder.Services.AddScoped<ReportesComercialesApiService>(); // Added for Semana 12
+builder.Services.AddScoped<ReportesInventarioApiService>(); // Added for Semana 12
 builder.Services.AddScoped<JwtAuthenticationStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<JwtAuthenticationStateProvider>());
 
