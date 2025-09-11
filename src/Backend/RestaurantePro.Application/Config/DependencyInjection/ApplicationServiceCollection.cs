@@ -5,6 +5,7 @@ using AutoMapper;
 using FluentValidation;
 using MediatR;
 using RestaurantePro.Application.Common.Behaviors;
+using RestaurantePro.Application.Common.Services;
 using RestaurantePro.Application.Config.Mappings;
 using RestaurantePro.Application.Config.Settings;
 using RestaurantePro.Application.Comercial.Promociones.Commands.ActivarPromocion;
@@ -190,6 +191,10 @@ public static class ApplicationServiceCollection
     /// </summary>
     private static IServiceCollection AddCoreServices(this IServiceCollection services)
     {
+        // ✅ SERVICIOS DE SEGURIDAD
+        // Servicio de sanitización HTML para prevenir ataques XSS
+        services.AddScoped<IHtmlSanitizerService, HtmlSanitizerService>();
+        
         // ✅ SERVICIOS DE PRODUCTOS
         // Servicios de negocio para gestión de productos
         // TODO: Agregar cuando se implementen servicios específicos como:

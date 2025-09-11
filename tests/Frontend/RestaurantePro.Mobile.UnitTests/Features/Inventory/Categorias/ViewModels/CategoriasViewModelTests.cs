@@ -65,7 +65,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
             await _viewModel.CargarCategoriasCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync("Error en la operación", It.IsAny<CancellationToken>()), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Error en la operación"), Times.Once);
         }
 
         [Fact]

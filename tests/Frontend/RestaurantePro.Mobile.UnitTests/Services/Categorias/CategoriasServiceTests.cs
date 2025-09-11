@@ -43,7 +43,7 @@ public class CategoriasServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(3, result.Data.Count);
-        _mockApiService.Verify(x => x.GetAsync<List<CategoriaProductoDto>>("api/core/categorias?soloActivas=True", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<CategoriaProductoDto>>("api/core/categorias?soloActivas=True", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -67,7 +67,7 @@ public class CategoriasServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(2, result.Data.Count);
-        _mockApiService.Verify(x => x.GetAsync<List<CategoriaProductoDto>>("api/core/categorias?soloActivas=False", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<CategoriaProductoDto>>("api/core/categorias?soloActivas=False", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public class CategoriasServiceTests
         Assert.Equal(categoriaId, result.Data.Id);
         Assert.Equal("Entradas", result.Data.Nombre);
         Assert.Equal(15, result.Data.CantidadProductos);
-        _mockApiService.Verify(x => x.GetAsync<CategoriaProductoDto>($"api/core/categorias/{categoriaId}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<CategoriaProductoDto>($"api/core/categorias/{categoriaId}", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -123,7 +123,7 @@ public class CategoriasServiceTests
         Assert.NotNull(result.Data);
         Assert.Equal(3, result.Data.Count);
         Assert.All(result.Data, p => Assert.Equal(categoriaId, p.CategoriaId));
-        _mockApiService.Verify(x => x.GetAsync<List<ProductoDto>>($"api/core/productos/categoria/{categoriaId}?soloActivos=True", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<ProductoDto>>($"api/core/productos/categoria/{categoriaId}?soloActivos=True", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -148,7 +148,7 @@ public class CategoriasServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(2, result.Data.Count);
-        _mockApiService.Verify(x => x.GetAsync<List<ProductoDto>>($"api/core/productos/categoria/{categoriaId}?soloActivos=False", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<ProductoDto>>($"api/core/productos/categoria/{categoriaId}?soloActivos=False", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -173,7 +173,7 @@ public class CategoriasServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(3, result.Data.Count);
-        _mockApiService.Verify(x => x.GetAsync<List<CategoriaProductoDto>>("api/core/categorias?soloActivas=true&ocultarVacias=true", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<CategoriaProductoDto>>("api/core/categorias?soloActivas=true&ocultarVacias=true", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -254,7 +254,7 @@ public class CategoriasServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Empty(result.Data);
-        _mockApiService.Verify(x => x.GetAsync<List<ProductoDto>>($"api/core/productos/categoria/{categoriaId}?soloActivos=True", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<ProductoDto>>($"api/core/productos/categoria/{categoriaId}?soloActivos=True", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -275,7 +275,7 @@ public class CategoriasServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Empty(result.Data);
-        _mockApiService.Verify(x => x.GetAsync<List<CategoriaProductoDto>>($"api/core/categorias?nombre={nombre}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<CategoriaProductoDto>>($"api/core/categorias?nombre={nombre}", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -295,7 +295,7 @@ public class CategoriasServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Empty(result.Data);
-        _mockApiService.Verify(x => x.GetAsync<List<CategoriaProductoDto>>("api/core/categorias?soloActivas=true&ocultarVacias=true", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<CategoriaProductoDto>>("api/core/categorias?soloActivas=true&ocultarVacias=true", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

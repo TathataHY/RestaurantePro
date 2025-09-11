@@ -91,6 +91,10 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
             services.AddScoped<RestaurantePro.Domain.Core.SharedKernel.Services.Cache.ICacheService, 
                 TestCacheService>();
 
+            // Configurar servicio de sanitización HTML para pruebas
+            services.AddScoped<RestaurantePro.Application.Common.Services.IHtmlSanitizerService, 
+                RestaurantePro.Application.Common.Services.HtmlSanitizerService>();
+
             // Configurar logging para pruebas
             services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning));
         });

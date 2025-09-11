@@ -52,7 +52,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Reservaciones.ViewModels
             _viewModel.Reservaciones.Should().NotBeNull();
             _viewModel.Reservaciones.Count.Should().Be(2);
             _viewModel.IsLoading.Should().BeFalse();
-            _mockReservacionesService.Verify(x => x.ObtenerReservacionesAsync(It.IsAny<CancellationToken>()), Times.Once);
+            _mockReservacionesService.Verify(x => x.ObtenerReservacionesAsync(), Times.Once);
         }
 
         [Fact]
@@ -72,7 +72,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Reservaciones.ViewModels
 
             // Assert
             _viewModel.IsLoading.Should().BeFalse();
-            _mockDialogService.Verify(x => x.ShowAlertAsync("Error", "Error", "OK", It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+            _mockDialogService.Verify(x => x.ShowAlertAsync("Error", "Error", "OK"), Times.AtLeastOnce);
         }
 
         [Fact]
@@ -86,7 +86,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Reservaciones.ViewModels
 
             var response = ApiResponse<List<ReservacionDto>>.SuccessResponse(reservaciones);
 
-            _mockReservacionesService.Setup(x => x.ObtenerReservacionesHoyAsync(It.IsAny<CancellationToken>()))
+            _mockReservacionesService.Setup(x => x.ObtenerReservacionesHoyAsync())
                                     .ReturnsAsync(response);
 
             // Act
@@ -95,7 +95,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Reservaciones.ViewModels
             // Assert
             _viewModel.Reservaciones.Should().NotBeNull();
             _viewModel.Reservaciones.Count.Should().Be(1);
-            _mockReservacionesService.Verify(x => x.ObtenerReservacionesHoyAsync(It.IsAny<CancellationToken>()), Times.Once);
+            _mockReservacionesService.Verify(x => x.ObtenerReservacionesHoyAsync(), Times.Once);
         }
 
         [Fact]
@@ -112,7 +112,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Reservaciones.ViewModels
 
             var response = ApiResponse<EstadisticasReservacionesDto>.SuccessResponse(estadisticas);
 
-            _mockReservacionesService.Setup(x => x.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()))
+            _mockReservacionesService.Setup(x => x.ObtenerEstadisticasAsync())
                                     .ReturnsAsync(response);
 
             // Act
@@ -121,7 +121,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Reservaciones.ViewModels
             // Assert
             _viewModel.Estadisticas.Should().NotBeNull();
             _viewModel.Estadisticas!.TotalReservaciones.Should().Be(10);
-            _mockReservacionesService.Verify(x => x.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()), Times.Once);
+            _mockReservacionesService.Verify(x => x.ObtenerEstadisticasAsync(), Times.Once);
         }
 
         [Fact]
@@ -305,7 +305,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Reservaciones.ViewModels
             _viewModel.FechaSeleccionada = DateTime.Today.AddDays(1);
 
             // Assert
-            _mockReservacionesService.Verify(x => x.ObtenerReservacionesAsync(It.IsAny<CancellationToken>()), Times.Once);
+            _mockReservacionesService.Verify(x => x.ObtenerReservacionesAsync(), Times.Once);
         }
 
         [Fact]

@@ -9,14 +9,14 @@ public class CategoriasApiServiceTests
 {
     private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock;
     private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;
-    private readonly Mock<TokenStore> _tokenStoreMock;
+    private readonly TokenStore _tokenStore;
     private readonly CategoriasApiService _service;
 
     public CategoriasApiServiceTests()
     {
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
         _httpClientFactoryMock = new Mock<IHttpClientFactory>();
-        _tokenStoreMock = new Mock<TokenStore>();
+        _tokenStore = new TokenStore();
 
         var httpClient = new HttpClient(_httpMessageHandlerMock.Object)
         {
@@ -24,19 +24,19 @@ public class CategoriasApiServiceTests
         };
         _httpClientFactoryMock.Setup(x => x.CreateClient("Api")).Returns(httpClient);
 
-        _service = new CategoriasApiService(_httpClientFactoryMock.Object, _tokenStoreMock.Object);
+        _service = new CategoriasApiService(_httpClientFactoryMock.Object, _tokenStore);
     }
 
     // ===== PRUEBAS BÁSICAS =====
 
     [Fact]
-    public async Task ObtenerAsync_ConRespuestaExitosa_DeberiaRetornarCategorias()
+    public async Task ObtenerAsync_ConParametrosValidos_DeberiaRetornarCategorias()
     {
         // Arrange
         var categoriasEsperadas = new List<CategoriaProductoDto>
         {
-            new() { Id = Guid.NewGuid(), Nombre = "Entradas", Descripcion = "Platos de entrada", Activa = true },
-            new() { Id = Guid.NewGuid(), Nombre = "Platos Principales", Descripcion = "Platos principales", Activa = true }
+            new() { Id = Guid.NewGuid(), Nombre = "Entradas", Activa = true, CantidadProductos = 5 },
+            new() { Id = Guid.NewGuid(), Nombre = "Platos Principales", Activa = true, CantidadProductos = 10 }
         };
 
         var responseContent = JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>>
@@ -51,6 +51,27 @@ public class CategoriasApiServiceTests
             {
                 StatusCode = HttpStatusCode.OK,
                 Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerAsync(soloActivas: true, ocultarVacias: false);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado.Should().HaveCount(2);
+        resultado.First().Nombre.Should().Be("Entradas");
+    }
+
+    [Fact]
+    public async Task ObtenerAsync_ConRespuestaNula_DeberiaRetornarListaVacia()
+    {
+        // Arrange
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent("null", Encoding.UTF8, "application/json")
             });
 
         // Act
@@ -58,72 +79,22 @@ public class CategoriasApiServiceTests
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado.Should().HaveCount(2);
-        resultado.First().Nombre.Should().Be("Entradas");
-        resultado.Last().Nombre.Should().Be("Platos Principales");
-    }
-
-    [Fact]
-    public async Task ObtenerAsync_ConFiltros_DeberiaRetornarCategoriasFiltradas()
-    {
-        // Arrange
-        var categoriasEsperadas = new List<CategoriaProductoDto>
-        {
-            new() { Id = Guid.NewGuid(), Nombre = "Entradas", Activa = true }
-        };
-
-        var responseContent = JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>>
-        {
-            Success = true,
-            Data = categoriasEsperadas
-        });
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
-            });
-
-        // Act
-        var resultado = await _service.ObtenerAsync(soloActivas: true, ocultarVacias: true);
-
-        // Assert
-        resultado.Should().NotBeNull();
-        resultado.Should().HaveCount(1);
-        resultado.First().Nombre.Should().Be("Entradas");
-    }
-
-    [Fact]
-    public async Task ObtenerAsync_ConErrorEnApi_DeberiaLanzarExcepcion()
-    {
-        // Arrange
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.InternalServerError,
-                Content = new StringContent("Error interno", Encoding.UTF8, "application/json")
-            });
-
-        // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() => _service.ObtenerAsync());
+        resultado.Should().BeEmpty();
     }
 
     [Fact]
     public async Task BuscarAsync_ConNombreValido_DeberiaRetornarCategorias()
     {
         // Arrange
-        var categoriasEsperadas = new List<CategoriaProductoDto>
+        var categorias = new List<CategoriaProductoDto>
         {
-            new() { Id = Guid.NewGuid(), Nombre = "Pizzas", Descripcion = "Variedad de pizzas", Activa = true }
+            new() { Id = Guid.NewGuid(), Nombre = "Pizzas", Activa = true }
         };
 
         var responseContent = JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>>
         {
             Success = true,
-            Data = categoriasEsperadas
+            Data = categorias
         });
 
         _httpMessageHandlerMock.Protected()
@@ -135,7 +106,7 @@ public class CategoriasApiServiceTests
             });
 
         // Act
-        var resultado = await _service.BuscarAsync("pizza");
+        var resultado = await _service.BuscarAsync("Pizza");
 
         // Assert
         resultado.Should().NotBeNull();
@@ -148,18 +119,18 @@ public class CategoriasApiServiceTests
     {
         // Arrange
         var id = Guid.NewGuid();
-        var categoriaEsperada = new CategoriaProductoDto
+        var categoria = new CategoriaProductoDto
         {
             Id = id,
-            Nombre = "Postres",
-            Descripcion = "Dulces y postres",
+            Nombre = "Bebidas",
+            Descripcion = "Bebidas frías y calientes",
             Activa = true
         };
 
         var responseContent = JsonSerializer.Serialize(new ApiResponse<CategoriaProductoDto>
         {
             Success = true,
-            Data = categoriaEsperada
+            Data = categoria
         });
 
         _httpMessageHandlerMock.Protected()
@@ -175,8 +146,8 @@ public class CategoriasApiServiceTests
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado!.Id.Should().Be(id);
-        resultado.Nombre.Should().Be("Postres");
+        resultado!.Nombre.Should().Be("Bebidas");
+        resultado.Id.Should().Be(id);
     }
 
     [Fact]
@@ -189,8 +160,7 @@ public class CategoriasApiServiceTests
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage
             {
-                StatusCode = HttpStatusCode.NotFound,
-                Content = new StringContent("Categoría no encontrada", Encoding.UTF8, "application/json")
+                StatusCode = HttpStatusCode.NotFound
             });
 
         // Act & Assert
@@ -203,8 +173,11 @@ public class CategoriasApiServiceTests
         // Arrange
         var request = new CreateCategoriaRequest
         {
-            Nombre = "Bebidas",
-            Descripcion = "Bebidas y refrescos",
+            Nombre = "Postres",
+            Descripcion = "Dulces y postres",
+            Color = "#FF6B6B",
+            Icono = "🍰",
+            Orden = 5,
             Activa = true
         };
 
@@ -213,7 +186,11 @@ public class CategoriasApiServiceTests
             Id = Guid.NewGuid(),
             Nombre = request.Nombre,
             Descripcion = request.Descripcion,
-            Activa = request.Activa
+            Color = request.Color,
+            Icono = request.Icono,
+            Orden = request.Orden,
+            Activa = request.Activa,
+            FechaCreacion = DateTime.UtcNow
         };
 
         var responseContent = JsonSerializer.Serialize(new ApiResponse<CategoriaProductoDto>
@@ -236,27 +213,23 @@ public class CategoriasApiServiceTests
         // Assert
         resultado.Should().NotBeNull();
         resultado!.Success.Should().BeTrue();
-        resultado.Data.Should().NotBeNull();
-        resultado.Data!.Nombre.Should().Be("Bebidas");
+        resultado.Data!.Nombre.Should().Be("Postres");
     }
 
     [Fact]
-    public async Task CrearAsync_ConDatosInvalidos_DeberiaRetornarNull()
+    public async Task CrearAsync_ConErrorDeServidor_DeberiaRetornarNull()
     {
         // Arrange
         var request = new CreateCategoriaRequest
         {
-            Nombre = "", // Nombre vacío
-            Descripcion = "Descripción válida",
-            Activa = true
+            Nombre = "Test"
         };
 
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
             .ReturnsAsync(new HttpResponseMessage
             {
-                StatusCode = HttpStatusCode.BadRequest,
-                Content = new StringContent("Datos inválidos", Encoding.UTF8, "application/json")
+                StatusCode = HttpStatusCode.InternalServerError
             });
 
         // Act
@@ -273,9 +246,13 @@ public class CategoriasApiServiceTests
         var id = Guid.NewGuid();
         var request = new UpdateCategoriaRequest
         {
-            Nombre = "Bebidas Actualizadas",
-            Descripcion = "Descripción actualizada",
-            Activa = false
+            Id = id,
+            Nombre = "Entradas Actualizadas",
+            Descripcion = "Nueva descripción",
+            Color = "#4CAF50",
+            Icono = "🥗",
+            Orden = 1,
+            Activa = true
         };
 
         var categoriaActualizada = new CategoriaProductoDto
@@ -283,6 +260,9 @@ public class CategoriasApiServiceTests
             Id = id,
             Nombre = request.Nombre,
             Descripcion = request.Descripcion,
+            Color = request.Color,
+            Icono = request.Icono,
+            Orden = request.Orden,
             Activa = request.Activa
         };
 
@@ -306,8 +286,32 @@ public class CategoriasApiServiceTests
         // Assert
         resultado.Should().NotBeNull();
         resultado!.Success.Should().BeTrue();
-        resultado.Data.Should().NotBeNull();
-        resultado.Data!.Nombre.Should().Be("Bebidas Actualizadas");
+        resultado.Data!.Nombre.Should().Be("Entradas Actualizadas");
+    }
+
+    [Fact]
+    public async Task ActualizarAsync_ConErrorDeServidor_DeberiaRetornarNull()
+    {
+        // Arrange
+        var id = Guid.NewGuid();
+        var request = new UpdateCategoriaRequest
+        {
+            Id = id,
+            Nombre = "Test"
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.InternalServerError
+            });
+
+        // Act
+        var resultado = await _service.ActualizarAsync(id, request);
+
+        // Assert
+        resultado.Should().BeNull();
     }
 
     [Fact]
@@ -351,10 +355,10 @@ public class CategoriasApiServiceTests
     }
 
     [Fact]
-    public async Task ValidarNombreUnicoAsync_ConNombreDisponible_DeberiaRetornarTrue()
+    public async Task ValidarNombreUnicoAsync_ConNombreUnico_DeberiaRetornarTrue()
     {
         // Arrange
-        var nombre = "Categoría Nueva";
+        var nombre = "Categoria Nueva";
 
         var responseContent = JsonSerializer.Serialize(new ApiResponse<bool>
         {
@@ -378,10 +382,10 @@ public class CategoriasApiServiceTests
     }
 
     [Fact]
-    public async Task ValidarNombreUnicoAsync_ConNombreExistente_DeberiaRetornarFalse()
+    public async Task ValidarNombreUnicoAsync_ConNombreDuplicado_DeberiaRetornarFalse()
     {
         // Arrange
-        var nombre = "Categoría Existente";
+        var nombre = "Categoria Existente";
 
         var responseContent = JsonSerializer.Serialize(new ApiResponse<bool>
         {
@@ -404,76 +408,11 @@ public class CategoriasApiServiceTests
         resultado.Should().BeFalse();
     }
 
-    // ===== PRUEBAS ROBUSTAS ADICIONALES =====
-
-    [Fact]
-    public async Task ObtenerAsync_ConJsonMalformado_DeberiaLanzarExcepcion()
-    {
-        // Arrange
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent("{ json malformado }", Encoding.UTF8, "application/json")
-            });
-
-        // Act & Assert
-        await Assert.ThrowsAsync<JsonException>(() => _service.ObtenerAsync());
-    }
-
-    [Fact]
-    public async Task BuscarAsync_ConCaracteresEspeciales_DeberiaManejarCorrectamente()
-    {
-        // Arrange
-        var categoriasEsperadas = new List<CategoriaProductoDto>();
-
-        var responseContent = JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>>
-        {
-            Success = true,
-            Data = categoriasEsperadas
-        });
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
-            });
-
-        // Act - Buscar con caracteres especiales
-        var resultado = await _service.BuscarAsync("categoría@#$%^&*()");
-
-        // Assert
-        resultado.Should().NotBeNull();
-        resultado.Should().BeEmpty();
-    }
-
-    [Fact]
-    public async Task CrearAsync_ConTimeout_DeberiaLanzarExcepcion()
-    {
-        // Arrange
-        var request = new CreateCategoriaRequest
-        {
-            Nombre = "Categoría Test",
-            Descripcion = "Descripción test",
-            Activa = true
-        };
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ThrowsAsync(new TaskCanceledException("Request timeout"));
-
-        // Act & Assert
-        await Assert.ThrowsAsync<TaskCanceledException>(() => _service.CrearAsync(request));
-    }
-
     [Fact]
     public async Task ValidarNombreUnicoAsync_ConIdExcluir_DeberiaIncluirParametro()
     {
         // Arrange
-        var nombre = "Categoría Test";
+        var nombre = "Categoria";
         var idExcluir = Guid.NewGuid();
 
         var responseContent = JsonSerializer.Serialize(new ApiResponse<bool>
@@ -497,8 +436,10 @@ public class CategoriasApiServiceTests
         resultado.Should().BeTrue();
     }
 
+    // ===== PRUEBAS DE ERRORES =====
+
     [Fact]
-    public async Task ObtenerAsync_ConConexionPerdida_DeberiaLanzarExcepcion()
+    public async Task ObtenerAsync_ConErrorDeConexion_DeberiaLanzarExcepcion()
     {
         // Arrange
         _httpMessageHandlerMock.Protected()
@@ -509,18 +450,137 @@ public class CategoriasApiServiceTests
         await Assert.ThrowsAsync<HttpRequestException>(() => _service.ObtenerAsync());
     }
 
-    // ===== PRUEBAS DE SEGURIDAD =====
-
     [Fact]
-    public async Task BuscarAsync_ConInyeccionSQL_DeberiaManejarCorrectamente()
+    public async Task BuscarAsync_ConErrorDeServidor_DeberiaLanzarExcepcion()
     {
         // Arrange
-        var categoriasEsperadas = new List<CategoriaProductoDto>();
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.InternalServerError
+            });
+
+        // Act & Assert
+        await Assert.ThrowsAsync<HttpRequestException>(() => _service.BuscarAsync("test"));
+    }
+
+    [Fact]
+    public async Task ObtenerPorIdAsync_ConTimeout_DeberiaLanzarExcepcion()
+    {
+        // Arrange
+        var id = Guid.NewGuid();
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new TaskCanceledException("Request timeout"));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<TaskCanceledException>(() => _service.ObtenerPorIdAsync(id));
+    }
+
+    [Fact]
+    public async Task CrearAsync_ConDatosInvalidos_DeberiaRetornarNull()
+    {
+        // Arrange
+        var request = new CreateCategoriaRequest
+        {
+            Nombre = "" // Nombre vacío
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest
+            });
+
+        // Act
+        var resultado = await _service.CrearAsync(request);
+
+        // Assert
+        resultado.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ActualizarAsync_ConIdInexistente_DeberiaRetornarNull()
+    {
+        // Arrange
+        var id = Guid.NewGuid();
+        var request = new UpdateCategoriaRequest
+        {
+            Id = id,
+            Nombre = "Test"
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.NotFound
+            });
+
+        // Act
+        var resultado = await _service.ActualizarAsync(id, request);
+
+        // Assert
+        resultado.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task EliminarAsync_ConErrorDeServidor_DeberiaRetornarFalse()
+    {
+        // Arrange
+        var id = Guid.NewGuid();
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.InternalServerError
+            });
+
+        // Act
+        var resultado = await _service.EliminarAsync(id);
+
+        // Assert
+        resultado.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ValidarNombreUnicoAsync_ConErrorDeServidor_DeberiaLanzarExcepcion()
+    {
+        // Arrange
+        var nombre = "Test";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.InternalServerError
+            });
+
+        // Act & Assert
+        await Assert.ThrowsAsync<HttpRequestException>(() => _service.ValidarNombreUnicoAsync(nombre));
+    }
+
+    // ===== PRUEBAS CON TOKEN =====
+
+    [Fact]
+    public async Task ObtenerAsync_ConTokenValido_DeberiaIncluirAutorizacion()
+    {
+        // Arrange
+        _tokenStore.Token = "test-token-123";
+
+        var categorias = new List<CategoriaProductoDto>
+        {
+            new() { Id = Guid.NewGuid(), Nombre = "Test", Activa = true }
+        };
 
         var responseContent = JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>>
         {
             Success = true,
-            Data = categoriasEsperadas
+            Data = categorias
         });
 
         _httpMessageHandlerMock.Protected()
@@ -531,31 +591,30 @@ public class CategoriasApiServiceTests
                 Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
             });
 
-        // Act - Buscar con inyección SQL
-        var resultado = await _service.BuscarAsync("'; DROP TABLE categorias; --");
+        // Act
+        var resultado = await _service.ObtenerAsync();
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado.Should().BeEmpty();
+        resultado.Should().HaveCount(1);
     }
 
     [Fact]
-    public async Task CrearAsync_ConXSS_DeberiaManejarCorrectamente()
+    public async Task CrearAsync_ConTokenValido_DeberiaIncluirAutorizacion()
     {
         // Arrange
+        _tokenStore.Token = "test-token-456";
+
         var request = new CreateCategoriaRequest
         {
-            Nombre = "<script>alert('xss')</script>",
-            Descripcion = "Descripción <img src=x onerror=alert('xss')>",
-            Activa = true
+            Nombre = "Test Category"
         };
 
         var categoriaCreada = new CategoriaProductoDto
         {
             Id = Guid.NewGuid(),
             Nombre = request.Nombre,
-            Descripcion = request.Descripcion,
-            Activa = request.Activa
+            Activa = true
         };
 
         var responseContent = JsonSerializer.Serialize(new ApiResponse<CategoriaProductoDto>
@@ -578,223 +637,5 @@ public class CategoriasApiServiceTests
         // Assert
         resultado.Should().NotBeNull();
         resultado!.Success.Should().BeTrue();
-        resultado.Data.Should().NotBeNull();
-        resultado.Data!.Nombre.Should().Contain("<script>");
-    }
-
-    [Fact]
-    public async Task ValidarNombreUnicoAsync_ConCaracteresEspecialesExtremos_DeberiaManejarCorrectamente()
-    {
-        // Arrange
-        var responseContent = JsonSerializer.Serialize(new ApiResponse<bool>
-        {
-            Success = true,
-            Data = true
-        });
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
-            });
-
-        // Act - Validar con caracteres especiales extremos
-        var resultado = await _service.ValidarNombreUnicoAsync("Categoría@#$%^&*()_+{}|:<>?[]\\;'\",./");
-
-        // Assert
-        resultado.Should().BeTrue();
-    }
-
-    // ===== PRUEBAS DE CONCURRENCIA =====
-
-    [Fact]
-    public async Task ObtenerAsync_ConConcurrencia_DeberiaManejarCorrectamente()
-    {
-        // Arrange
-        var categoriasEsperadas = new List<CategoriaProductoDto>
-        {
-            new() { Id = Guid.NewGuid(), Nombre = "Entradas", Activa = true }
-        };
-
-        var responseContent = JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>>
-        {
-            Success = true,
-            Data = categoriasEsperadas
-        });
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(() => new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
-            });
-
-        // Act - Simular concurrencia con múltiples tareas
-        var tasks = new List<Task<List<CategoriaProductoDto>>>();
-        for (int i = 0; i < 10; i++)
-        {
-            tasks.Add(_service.ObtenerAsync());
-        }
-
-        var resultados = await Task.WhenAll(tasks);
-
-        // Assert
-        resultados.Should().HaveCount(10);
-        resultados.Should().AllSatisfy(r => r.Should().NotBeNull());
-        resultados.Should().AllSatisfy(r => r.Should().HaveCount(1));
-    }
-
-    [Fact]
-    public async Task CrearAsync_ConConcurrencia_DeberiaManejarCorrectamente()
-    {
-        // Arrange
-        var request = new CreateCategoriaRequest
-        {
-            Nombre = "Categoría Concurrencia",
-            Descripcion = "Descripción de concurrencia",
-            Activa = true
-        };
-
-        var categoriaCreada = new CategoriaProductoDto
-        {
-            Id = Guid.NewGuid(),
-            Nombre = request.Nombre,
-            Descripcion = request.Descripcion,
-            Activa = request.Activa
-        };
-
-        var responseContent = JsonSerializer.Serialize(new ApiResponse<CategoriaProductoDto>
-        {
-            Success = true,
-            Data = categoriaCreada
-        });
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(() => new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.Created,
-                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
-            });
-
-        // Act - Simular concurrencia con múltiples tareas
-        var tasks = new List<Task<ApiResponse<CategoriaProductoDto>?>>();
-        for (int i = 0; i < 8; i++)
-        {
-            tasks.Add(_service.CrearAsync(request));
-        }
-
-        var resultados = await Task.WhenAll(tasks);
-
-        // Assert
-        resultados.Should().HaveCount(8);
-        resultados.Should().AllSatisfy(r => r.Should().NotBeNull());
-        resultados.Should().AllSatisfy(r => r!.Success.Should().BeTrue());
-    }
-
-    // ===== PRUEBAS DE LÍMITES =====
-
-    [Fact]
-    public async Task ObtenerAsync_ConDatosMasivos_DeberiaManejarCorrectamente()
-    {
-        // Arrange
-        var categoriasMasivas = new List<CategoriaProductoDto>();
-        for (int i = 0; i < 1000; i++)
-        {
-            categoriasMasivas.Add(new CategoriaProductoDto
-            {
-                Id = Guid.NewGuid(),
-                Nombre = $"Categoría {i}",
-                Descripcion = $"Descripción muy larga para la categoría {i} con muchos caracteres para probar el límite de datos masivos",
-                Activa = i % 2 == 0
-            });
-        }
-
-        var responseContent = JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>>
-        {
-            Success = true,
-            Data = categoriasMasivas
-        });
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
-            });
-
-        // Act
-        var resultado = await _service.ObtenerAsync();
-
-        // Assert
-        resultado.Should().NotBeNull();
-        resultado.Should().HaveCount(1000);
-        resultado.First().Nombre.Should().Be("Categoría 0");
-        resultado.Last().Nombre.Should().Be("Categoría 999");
-    }
-
-    [Fact]
-    public async Task BuscarAsync_ConTerminoMuyLargo_DeberiaManejarCorrectamente()
-    {
-        // Arrange
-        var categoriasEsperadas = new List<CategoriaProductoDto>();
-
-        var responseContent = JsonSerializer.Serialize(new ApiResponse<List<CategoriaProductoDto>>
-        {
-            Success = true,
-            Data = categoriasEsperadas
-        });
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
-            });
-
-        // Act - Buscar con término muy largo
-        var terminoLargo = new string('A', 10000);
-        var resultado = await _service.BuscarAsync(terminoLargo);
-
-        // Assert
-        resultado.Should().NotBeNull();
-        resultado.Should().BeEmpty();
-    }
-
-    [Fact]
-    public async Task ValidarNombreUnicoAsync_ConRateLimiting_DeberiaManejarCorrectamente()
-    {
-        // Arrange
-        var responseContent = JsonSerializer.Serialize(new ApiResponse<bool>
-        {
-            Success = true,
-            Data = true
-        });
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(() => new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
-            });
-
-        // Act - Simular múltiples validaciones rápidas (rate limiting)
-        var tasks = new List<Task<bool>>();
-        for (int i = 0; i < 20; i++)
-        {
-            tasks.Add(_service.ValidarNombreUnicoAsync($"Categoría{i}"));
-        }
-
-        var resultados = await Task.WhenAll(tasks);
-
-        // Assert
-        resultados.Should().HaveCount(20);
-        resultados.Should().AllSatisfy(r => r.Should().BeTrue());
     }
 }

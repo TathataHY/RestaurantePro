@@ -123,7 +123,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
             await _viewModel.CargarPreparacionesAsync();
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync("Error de conexión", It.IsAny<CancellationToken>()), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Error de conexión"), Times.Once);
             _viewModel.IsBusy.Should().BeFalse();
         }
 
@@ -251,7 +251,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
             await _viewModel.IniciarPreparacionCommand.ExecuteAsync(preparacion);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowSuccessAsync("Preparación iniciada exitosamente", It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+            _mockDialogService.Verify(x => x.ShowSuccessAsync("Preparación iniciada exitosamente"), Times.AtLeastOnce);
             _mockPreparacionesService.Verify(x => x.IniciarPreparacionAsync(preparacion.Id, It.IsAny<IniciarPreparacionDto>()), Times.Once);
         }
 
@@ -319,7 +319,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
             await _viewModel.CompletarPreparacionCommand.ExecuteAsync(preparacion);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowSuccessAsync("Preparación completada exitosamente", It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+            _mockDialogService.Verify(x => x.ShowSuccessAsync("Preparación completada exitosamente"), Times.AtLeastOnce);
             _mockPreparacionesService.Verify(x => x.CompletarPreparacionAsync(preparacion.Id, It.IsAny<CancellationToken>()), Times.Once);
         }
 
@@ -364,7 +364,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
             await _viewModel.CancelarPreparacionCommand.ExecuteAsync(preparacion);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowSuccessAsync("Preparación cancelada exitosamente", It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+            _mockDialogService.Verify(x => x.ShowSuccessAsync("Preparación cancelada exitosamente"), Times.AtLeastOnce);
             _mockPreparacionesService.Verify(x => x.CancelarPreparacionAsync(preparacion.Id, It.IsAny<CancelarPreparacionDto>()), Times.Once);
         }
 

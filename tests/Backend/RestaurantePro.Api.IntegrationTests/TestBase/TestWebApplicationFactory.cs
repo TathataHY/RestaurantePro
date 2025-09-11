@@ -295,6 +295,9 @@ public class TestWebApplicationFactory : WebApplicationFactory<Program>
             // 🔧 CONFIGURAR SERVICIOS DE APLICACIÓN PARA TESTS
             services.AddApplicationServices(config);
             
+            // 🔧 REGISTRAR SERVICIO DE SANITIZACIÓN HTML PARA TESTS
+            services.AddScoped<RestaurantePro.Application.Common.Services.IHtmlSanitizerService, RestaurantePro.Application.Common.Services.HtmlSanitizerService>();
+            
             // 🔧 CONFIGURAR SERVICIOS DE DOMINIO PARA TESTS
             services.AddDomainServices();
             

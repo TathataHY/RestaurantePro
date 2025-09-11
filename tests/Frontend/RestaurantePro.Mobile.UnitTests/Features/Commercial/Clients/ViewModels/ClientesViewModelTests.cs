@@ -65,7 +65,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
             await _viewModel.CargarClientesCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync("Error al cargar clientes", It.IsAny<CancellationToken>()), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Error al cargar clientes"), Times.Once);
         }
 
         [Fact]
@@ -228,7 +228,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
             await _viewModel.BuscarClientesCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync("Error al buscar clientes", It.IsAny<CancellationToken>()), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Error al buscar clientes"), Times.Once);
         }
 
         [Fact]
@@ -311,7 +311,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
             await _viewModel.DesactivarClienteCommand.ExecuteAsync(cliente);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync("No se pudo desactivar", It.IsAny<CancellationToken>()), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync("No se pudo desactivar"), Times.Once);
             _mockDialogService.Verify(x => x.ShowSuccessAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         }
     }

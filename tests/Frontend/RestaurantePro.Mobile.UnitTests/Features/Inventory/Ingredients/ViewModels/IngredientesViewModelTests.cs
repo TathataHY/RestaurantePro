@@ -74,7 +74,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
             await _viewModel.CargarIngredientesCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync("Error", It.IsAny<CancellationToken>()), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Error"), Times.Once);
         }
 
         [Fact]
@@ -168,7 +168,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
             await _viewModel.VerMovimientosCommand.ExecuteAsync(ingrediente);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync("Error", It.IsAny<CancellationToken>()), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Error"), Times.Once);
         }
 
         [Fact]
@@ -217,7 +217,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
 
             _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ingredientesResponse);
-            _mockIngredientesService.Setup(x => x.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()))
+            _mockIngredientesService.Setup(x => x.ObtenerEstadisticasAsync())
                 .ReturnsAsync(estadisticasResponse);
 
             // Act
@@ -293,7 +293,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
 
             _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ingredientesResponse);
-            _mockIngredientesService.Setup(x => x.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()))
+            _mockIngredientesService.Setup(x => x.ObtenerEstadisticasAsync())
                 .ReturnsAsync(estadisticasResponse);
 
             // Act
@@ -301,7 +301,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
 
             // Assert
             _mockIngredientesService.Verify(x => x.ObtenerIngredientesAsync(_viewModel.SoloDisponibles, It.IsAny<CancellationToken>()), Times.Once);
-            _mockIngredientesService.Verify(x => x.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()), Times.Once);
+            _mockIngredientesService.Verify(x => x.ObtenerEstadisticasAsync(), Times.Once);
         }
 
         [Fact]
@@ -391,7 +391,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
             await _viewModel.BuscarIngredientesCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync("Error", It.IsAny<CancellationToken>()), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Error"), Times.Once);
         }
 
         [Fact]
@@ -479,7 +479,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
             await _viewModel.LoadAlertasStockCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync("Error", It.IsAny<CancellationToken>()), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Error"), Times.Once);
         }
 
         [Fact]

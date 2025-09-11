@@ -134,7 +134,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Analytics.ViewModels
             await _viewModel.CargarMetricasDiaAsync();
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync("Error", It.IsAny<CancellationToken>()), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Error"), Times.Once);
         }
 
         [Fact]

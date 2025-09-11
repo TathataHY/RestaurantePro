@@ -52,7 +52,7 @@ public class ComandasViewModelTests
             .ReturnsAsync(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>()))
             .Callback(() => calls++);
         mockService
-            .Setup(s => s.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()))
+            .Setup(s => s.ObtenerEstadisticasAsync())
             .ReturnsAsync(ApiResponse<EstadisticasComandasDto>.SuccessResponse(new EstadisticasComandasDto()));
 
         var vm = CreateVm(mockService.Object, _mockDialog.Object);
@@ -74,7 +74,7 @@ public class ComandasViewModelTests
         var mockService = new Mock<IComandasService>();
         var statCalls = 0;
         mockService
-            .Setup(s => s.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()))
+            .Setup(s => s.ObtenerEstadisticasAsync())
             .ReturnsAsync(ApiResponse<EstadisticasComandasDto>.SuccessResponse(new EstadisticasComandasDto()))
             .Callback(() => statCalls++);
         mockService
@@ -553,7 +553,7 @@ public class ComandasViewModelTests
             .ReturnsAsync(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>()))
             .Callback(() => calls++);
         mockService
-            .Setup(s => s.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()))
+            .Setup(s => s.ObtenerEstadisticasAsync())
             .ReturnsAsync(ApiResponse<EstadisticasComandasDto>.SuccessResponse(new EstadisticasComandasDto()));
         var vm = CreateVm(mockService.Object, _mockDialog.Object);
         await Task.Delay(50);
@@ -572,7 +572,7 @@ public class ComandasViewModelTests
             .ReturnsAsync(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>()))
             .Callback(() => calls++);
         mockService
-            .Setup(s => s.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()))
+            .Setup(s => s.ObtenerEstadisticasAsync())
             .ReturnsAsync(ApiResponse<EstadisticasComandasDto>.SuccessResponse(new EstadisticasComandasDto()));
 
         var vm = CreateVm(mockService.Object, _mockDialog.Object);

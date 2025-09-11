@@ -404,7 +404,7 @@ public class ProductoDetalleViewModelTests
 
         _mockDialogService.Verify(x => x.ShowAlertAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
-        _mockNavigationService.Verify(x => x.GoBackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _mockNavigationService.Verify(x => x.GoBackAsync(), Times.Once);
     }
 
     [Fact]
@@ -426,7 +426,7 @@ public class ProductoDetalleViewModelTests
 
         _mockDialogService.Verify(x => x.ShowAlertAsync(
             It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-        _mockNavigationService.Verify(x => x.GoBackAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _mockNavigationService.Verify(x => x.GoBackAsync(), Times.Never);
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 using RestaurantePro.Domain.Core.SharedKernel.Services.Cache;
+using RestaurantePro.Application.Common.Services;
 
 namespace RestaurantePro.Application.Core.Productos.Commands.ActualizarProducto;
 
@@ -9,19 +10,22 @@ public class ActualizarProductoHandler : IRequestHandler<ActualizarProductoComma
     private readonly IMapper _mapper;
     private readonly ILogger<ActualizarProductoHandler> _logger;
     private readonly ICacheService _cache;
+    private readonly IHtmlSanitizerService _sanitizer;
 
     public ActualizarProductoHandler(
         IProductoRepository repository,
         IProductoCategoriaRepository categoriaRepository,
         IMapper mapper,
         ILogger<ActualizarProductoHandler> logger,
-        ICacheService cache)
+        ICacheService cache,
+        IHtmlSanitizerService sanitizer)
     {
         _repository = repository;
         _categoriaRepository = categoriaRepository;
         _mapper = mapper;
         _logger = logger;
         _cache = cache;
+        _sanitizer = sanitizer;
     }
 
     public async Task<Result<ProductoDto>> Handle(ActualizarProductoCommand request, CancellationToken cancellationToken)
@@ -46,9 +50,15 @@ public class ActualizarProductoHandler : IRequestHandler<ActualizarProductoComma
                 return Result.Failure<ProductoDto>($"Categoría con ID {request.CategoriaId} no encontrada");
             }
 
+            // Sanitizar datos de entrada para prevenir XSS
+            var nombreSanitizado = _sanitizer.SanitizeText(request.Nombre);
+            var descripcionSanitizada = string.IsNullOrEmpty(request.Descripcion) 
+                ? request.Descripcion 
+                : _sanitizer.SanitizeText(request.Descripcion);
+
             // Actualizar los datos básicos del producto
             var nuevoPrecio = new PrecioProducto(request.Precio);
-            producto.Actualizar(request.Nombre, request.Descripcion, nuevoPrecio);
+            producto.Actualizar(nombreSanitizado, descripcionSanitizada, nuevoPrecio);
 
             // Actualizar la categoría si ha cambiado
             if (producto.CategoriaId != request.CategoriaId)
