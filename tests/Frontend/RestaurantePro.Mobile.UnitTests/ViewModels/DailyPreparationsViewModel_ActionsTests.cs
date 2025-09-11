@@ -21,12 +21,12 @@ public class DailyPreparationsViewModel_ActionsTests
             .Setup(x => x.ShowPromptAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
             .ReturnsAsync("2");
         _mockService
-            .Setup(x => x.ConsumirPreparacionDiariaAsync(prep.Id, 2, null, It.IsAny<CancellationToken>()))
+            .Setup(x => x.ConsumirPreparacionDiariaAsync(prep.Id, 2, null))
             .ReturnsAsync(Result<PreparacionDiariaDto>.Success(prep));
 
         await vm.ConsumirPreparacionCommand.ExecuteAsync(prep);
 
-        _mockService.Verify(x => x.ConsumirPreparacionDiariaAsync(prep.Id, 2, null, It.IsAny<CancellationToken>()), Times.Once);
+        _mockService.Verify(x => x.ConsumirPreparacionDiariaAsync(prep.Id, 2, null), Times.Once);
         _mockDialog.Verify(x => x.ShowSuccessAsync(It.Is<string>(m => m.Contains("consumida"))), Times.Once);
     }
 
@@ -39,12 +39,12 @@ public class DailyPreparationsViewModel_ActionsTests
             .Setup(x => x.ShowConfirmationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(true);
         _mockService
-            .Setup(x => x.MarcarComoDisponibleAsync(prep.Id, It.IsAny<CancellationToken>()))
+            .Setup(x => x.MarcarComoDisponibleAsync(prep.Id))
             .ReturnsAsync(Result<PreparacionDiariaDto>.Success(prep));
 
         await vm.MarcarComoDisponibleCommand.ExecuteAsync(prep);
 
-        _mockService.Verify(x => x.MarcarComoDisponibleAsync(prep.Id, It.IsAny<CancellationToken>()), Times.Once);
+        _mockService.Verify(x => x.MarcarComoDisponibleAsync(prep.Id), Times.Once);
         _mockDialog.Verify(x => x.ShowSuccessAsync(It.Is<string>(m => m.Contains("disponible"))), Times.Once);
     }
 
@@ -57,12 +57,12 @@ public class DailyPreparationsViewModel_ActionsTests
             .Setup(x => x.ShowConfirmationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(true);
         _mockService
-            .Setup(x => x.EliminarPreparacionDiariaAsync(prep.Id, It.IsAny<CancellationToken>()))
+            .Setup(x => x.EliminarPreparacionDiariaAsync(prep.Id))
             .ReturnsAsync(Result.Success());
 
         await vm.EliminarPreparacionCommand.ExecuteAsync(prep);
 
-        _mockService.Verify(x => x.EliminarPreparacionDiariaAsync(prep.Id, It.IsAny<CancellationToken>()), Times.Once);
+        _mockService.Verify(x => x.EliminarPreparacionDiariaAsync(prep.Id), Times.Once);
         _mockDialog.Verify(x => x.ShowSuccessAsync(It.Is<string>(m => m.Contains("eliminada"))), Times.Once);
     }
 }

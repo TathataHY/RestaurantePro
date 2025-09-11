@@ -193,7 +193,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
             Assert.NotNull(_viewModel.Clientes);
             Assert.Empty(_viewModel.Clientes);
             Assert.Equal(0, _viewModel.TotalClientes);
-            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>()), Times.Never);
         }
 
         [Fact]
@@ -212,7 +212,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
             Assert.NotNull(_viewModel.Clientes);
             Assert.Empty(_viewModel.Clientes);
             Assert.Equal(0, _viewModel.TotalClientes);
-            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>()), Times.Never);
         }
 
         [Fact]
@@ -255,7 +255,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
 
             // Assert
             _mockClientesService.Verify(x => x.DesactivarClienteAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
-            _mockDialogService.Verify(x => x.ShowSuccessAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            _mockDialogService.Verify(x => x.ShowSuccessAsync(It.IsAny<string>()), Times.Never);
         }
 
         [Fact]
@@ -278,7 +278,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
 
             // Assert
             _mockClientesService.Verify(x => x.DesactivarClienteAsync(cliente.Id, It.IsAny<CancellationToken>()), Times.Once);
-            _mockDialogService.Verify(x => x.ShowSuccessAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            _mockDialogService.Verify(x => x.ShowSuccessAsync(It.IsAny<string>()), Times.Once);
             _mockClientesService.Verify(x => x.ObtenerClientesAsync(It.IsAny<FiltroClientesDto>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
         }
 
@@ -312,7 +312,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Clients.ViewModels
 
             // Assert
             _mockDialogService.Verify(x => x.ShowErrorAsync("No se pudo desactivar"), Times.Once);
-            _mockDialogService.Verify(x => x.ShowSuccessAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            _mockDialogService.Verify(x => x.ShowSuccessAsync(It.IsAny<string>()), Times.Never);
         }
     }
 } 

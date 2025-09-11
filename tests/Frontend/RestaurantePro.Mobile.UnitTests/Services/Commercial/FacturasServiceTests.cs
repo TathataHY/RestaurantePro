@@ -47,7 +47,7 @@ public class FacturasServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(2, result.Data.Count);
-        _mockApiService.Verify(x => x.GetAsync<List<FacturaDto>>($"api/comercial/facturas?fecha={fecha:yyyy-MM-dd}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<FacturaDto>>($"api/comercial/facturas?fecha={fecha:yyyy-MM-dd}", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public class FacturasServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Single(result.Data);
-        _mockApiService.Verify(x => x.GetAsync<List<FacturaDto>>($"api/comercial/facturas/buscar-por-termino?busqueda={termino}&fecha={DateTime.Today:yyyy-MM-dd}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<FacturaDto>>($"api/comercial/facturas/buscar-por-termino?busqueda={termino}&fecha={DateTime.Today:yyyy-MM-dd}", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public class FacturasServiceTests
         Assert.NotNull(result.Data);
         Assert.Equal(25, result.Data.TotalFacturas);
         Assert.Equal(20, result.Data.FacturasPagadas);
-        _mockApiService.Verify(x => x.GetAsync<EstadisticasFacturasDto>($"api/comercial/facturas/estadisticas?fecha={fecha:yyyy-MM-dd}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<EstadisticasFacturasDto>($"api/comercial/facturas/estadisticas?fecha={fecha:yyyy-MM-dd}", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -117,7 +117,7 @@ public class FacturasServiceTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.True(result.Data);
-        _mockApiService.Verify(x => x.PostAsync<bool>($"api/comercial/facturas/{facturaId}/imprimir", It.IsAny<object>(), It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.PostAsync<bool>($"api/comercial/facturas/{facturaId}/imprimir", It.IsAny<object>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -142,7 +142,7 @@ public class FacturasServiceTests
         Assert.NotNull(result.Data);
         Assert.Equal(2, result.Data.Count);
         Assert.All(result.Data, f => Assert.Equal("Pendiente", f.Estado));
-        _mockApiService.Verify(x => x.GetAsync<List<FacturaDto>>("api/comercial/facturas/pendientes", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<FacturaDto>>("api/comercial/facturas/pendientes", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -167,7 +167,7 @@ public class FacturasServiceTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.True(result.Data);
-        _mockApiService.Verify(x => x.PostAsync<bool>($"api/comercial/facturas/{facturaId}/pagar", pagoDto, It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.PostAsync<bool>($"api/comercial/facturas/{facturaId}/pagar", pagoDto, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -191,7 +191,7 @@ public class FacturasServiceTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.True(result.Data);
-        _mockApiService.Verify(x => x.DeleteAsync($"api/comercial/facturas/{facturaId}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.DeleteAsync($"api/comercial/facturas/{facturaId}", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -211,7 +211,7 @@ public class FacturasServiceTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.Equal(pdfUrl, result.Data);
-        _mockApiService.Verify(x => x.GetAsync<string>($"api/comercial/facturas/{facturaId}/pdf", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<string>($"api/comercial/facturas/{facturaId}/pdf", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -232,7 +232,7 @@ public class FacturasServiceTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.Equal(mensaje, result.Data);
-        _mockApiService.Verify(x => x.PostAsync<string>($"api/comercial/facturas/{facturaId}/enviar-email", It.Is<object>(data => data.ToString().Contains(email)), It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.PostAsync<string>($"api/comercial/facturas/{facturaId}/enviar-email", It.Is<object>(data => data.ToString().Contains(email)), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -346,7 +346,7 @@ public class FacturasServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Empty(result.Data);
-        _mockApiService.Verify(x => x.GetAsync<List<FacturaDto>>($"api/comercial/facturas/buscar-por-termino?busqueda={termino}&fecha={DateTime.Today:yyyy-MM-dd}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<FacturaDto>>($"api/comercial/facturas/buscar-por-termino?busqueda={termino}&fecha={DateTime.Today:yyyy-MM-dd}", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -372,7 +372,7 @@ public class FacturasServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(0, result.Data.TotalFacturas);
-        _mockApiService.Verify(x => x.GetAsync<EstadisticasFacturasDto>($"api/comercial/facturas/estadisticas?fecha={fecha:yyyy-MM-dd}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<EstadisticasFacturasDto>($"api/comercial/facturas/estadisticas?fecha={fecha:yyyy-MM-dd}", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -394,7 +394,7 @@ public class FacturasServiceTests
         Assert.NotNull(result.Data);
         Assert.Equal(facturaId, result.Data.Id);
         Assert.Equal("FAC001", result.Data.NumeroFactura);
-        _mockApiService.Verify(x => x.GetAsync<FacturaDto>($"api/comercial/facturas/{facturaId}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<FacturaDto>($"api/comercial/facturas/{facturaId}", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

@@ -28,7 +28,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Core
             builder.OwnsOne(p => p.Precio, priceBuilder => {
                 priceBuilder.Property(p => p.Valor)
                     .HasColumnName("Precio")
-                    .HasPrecision(18, 2)
+                    .HasPrecision(18, 6)
                     .IsRequired();
             });
 

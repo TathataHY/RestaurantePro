@@ -243,7 +243,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Loyalty.ViewModels
 
             // Assert
             Assert.Empty(_viewModel.Historial);
-            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>()), Times.Never);
         }
 
         [Fact]
@@ -260,7 +260,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Loyalty.ViewModels
 
             // Assert
             _mockTarjetasService.Verify(x => x.BloquearTarjetaAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
-            _mockDialogService.Verify(x => x.ShowSuccessAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            _mockDialogService.Verify(x => x.ShowSuccessAsync(It.IsAny<string>()), Times.Never);
         }
 
         [Fact]
@@ -275,7 +275,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Loyalty.ViewModels
             await _viewModel.BuscarTarjetaCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>()), Times.Once);
         }
     }
 } 

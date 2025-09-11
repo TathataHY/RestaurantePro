@@ -161,11 +161,13 @@ public class ProductosErrorHandlingTests : BaseIntegrationTest
         // Arrange
         var categoriaIds = await CrearCategoriasDePruebaAsync();
         var categoriaId = GetFirstCategoriaId(categoriaIds);
-        var idValido = Guid.NewGuid();
+        
+        // Crear un producto primero
+        var productoId = await CrearUnProductoDePruebaAsync(categoriaId);
 
         var request = new ActualizarProductoCommand
         {
-            Id = idValido,
+            Id = productoId,
             Nombre = "", // Nombre vacío
             Descripcion = "Descripción válida",
             Precio = -5.00m, // Precio negativo
@@ -176,7 +178,7 @@ public class ProductosErrorHandlingTests : BaseIntegrationTest
         // Act
         var json = JsonSerializer.Serialize(request, GetJsonOptions());
         var content = new StringContent(json, Encoding.UTF8, MediaTypeHeaderValue.Parse("application/json"));
-        var response = await _client.PutAsync($"/api/core/productos/{idValido}", content);
+        var response = await _client.PutAsync($"/api/core/productos/{productoId}", content);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -318,11 +320,13 @@ public class ProductosErrorHandlingTests : BaseIntegrationTest
         var categoriaIds = await CrearCategoriasDePruebaAsync();
         var categoriaId = GetFirstCategoriaId(categoriaIds);
         var categoriaInexistente = Guid.NewGuid();
-        var idValido = Guid.NewGuid();
+        
+        // Crear un producto primero
+        var productoId = await CrearUnProductoDePruebaAsync(categoriaId);
 
         var request = new ActualizarProductoCommand
         {
-            Id = idValido,
+            Id = productoId,
             Nombre = "Producto Válido",
             Descripcion = "Descripción válida",
             Precio = 20.00m,
@@ -333,7 +337,7 @@ public class ProductosErrorHandlingTests : BaseIntegrationTest
         // Act
         var json = JsonSerializer.Serialize(request, GetJsonOptions());
         var content = new StringContent(json, Encoding.UTF8, MediaTypeHeaderValue.Parse("application/json"));
-        var response = await _client.PutAsync($"/api/core/productos/{idValido}", content);
+        var response = await _client.PutAsync($"/api/core/productos/{productoId}", content);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -414,5 +418,40 @@ public class ProductosErrorHandlingTests : BaseIntegrationTest
         var responseContent = await response.Content.ReadAsStringAsync();
         var responseData = JsonSerializer.Deserialize<ApiResponse<object>>(responseContent, GetJsonOptions());
         responseData.Success.Should().BeTrue();
+    }
+
+    /// <summary>
+    /// Helper para crear un producto de prueba y devolver su ID
+    /// </summary>
+    private async Task<Guid> CrearUnProductoDePruebaAsync(Guid categoriaId)
+    {
+        var request = new CrearProductoCommand
+        {
+            Nombre = "Producto Prueba",
+            Descripcion = "Descripción de prueba",
+            Precio = 10.00m,
+            CategoriaId = categoriaId,
+            Activo = true
+        };
+
+        var json = JsonSerializer.Serialize(request, GetJsonOptions());
+        var content = new StringContent(json, Encoding.UTF8, MediaTypeHeaderValue.Parse("application/json"));
+        var response = await _client.PostAsync("/api/core/productos", content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        
+        var responseContent = await response.Content.ReadAsStringAsync();
+        var responseData = JsonSerializer.Deserialize<ApiResponse<CrearProductoCommand>>(responseContent, GetJsonOptions());
+        
+        // Extraer el ID del Location header o de la respuesta
+        var locationHeader = response.Headers.Location?.ToString();
+        if (!string.IsNullOrEmpty(locationHeader))
+        {
+            var idString = locationHeader.Split('/').Last();
+            return Guid.Parse(idString);
+        }
+        
+        // Si no hay Location header, usar un ID generado
+        return Guid.NewGuid();
     }
 }

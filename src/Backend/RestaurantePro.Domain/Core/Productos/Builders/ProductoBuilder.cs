@@ -190,9 +190,9 @@ public class ProductoBuilder
                 _notificationManager.AddError("El nombre del producto es obligatorio", "Nombre");
                 hayErrores = true;
             }
-            else if (_nombre.Length < 3)
+            else if (_nombre.Length < 1)
             {
-                _notificationManager.AddError("El nombre del producto debe tener al menos 3 caracteres", "Nombre");
+                _notificationManager.AddError("El nombre del producto debe tener al menos 1 carácter", "Nombre");
                 hayErrores = true;
             }
 

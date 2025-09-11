@@ -53,7 +53,7 @@ public class ClientesServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(2, result.Data.Count);
-        _mockApiService.Verify(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>("api/comercial/clientes?soloActivos=True", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>("api/comercial/clientes?soloActivos=True", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -90,7 +90,7 @@ public class ClientesServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(clienteId, result.Data.Id);
-        _mockApiService.Verify(x => x.GetAsync<ClienteDto>($"api/comercial/clientes/{clienteId}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<ClienteDto>($"api/comercial/clientes/{clienteId}", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -121,7 +121,7 @@ public class ClientesServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Single(result.Data);
-        _mockApiService.Verify(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?filtroTexto={termino}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?filtroTexto={termino}", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -142,7 +142,7 @@ public class ClientesServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal("Nuevo Cliente", result.Data.NombreCompleto);
-        _mockApiService.Verify(x => x.PostAsync<ClienteDto>("api/comercial/clientes", cliente, It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.PostAsync<ClienteDto>("api/comercial/clientes", cliente, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -163,7 +163,7 @@ public class ClientesServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal("Juan Pérez Actualizado", result.Data.NombreCompleto);
-        _mockApiService.Verify(x => x.PutAsync<ClienteDto>($"api/comercial/clientes/{clienteId}", cliente, It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.PutAsync<ClienteDto>($"api/comercial/clientes/{clienteId}", cliente, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -182,7 +182,7 @@ public class ClientesServiceTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.True(result.Data);
-        _mockApiService.Verify(x => x.DeleteAsync($"api/comercial/clientes/{clienteId}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.DeleteAsync($"api/comercial/clientes/{clienteId}", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -225,7 +225,7 @@ public class ClientesServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(2, result.Data.Count);
-        _mockApiService.Verify(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?soloClientesFrecuentes=true&pageSize={cantidad}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?soloClientesFrecuentes=true&pageSize={cantidad}", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -256,7 +256,7 @@ public class ClientesServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Single(result.Data);
-        _mockApiService.Verify(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>("api/comercial/clientes?soloActivos=True", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>("api/comercial/clientes?soloActivos=True", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -287,7 +287,7 @@ public class ClientesServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Single(result.Data);
-        _mockApiService.Verify(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?segmento={segmento}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?segmento={segmento}", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -317,7 +317,7 @@ public class ClientesServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Single(result.Data);
-        _mockApiService.Verify(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>("api/comercial/clientes?soloConTarjetaFidelizacion=true", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>("api/comercial/clientes?soloConTarjetaFidelizacion=true", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -349,7 +349,7 @@ public class ClientesServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Single(result.Data);
-        _mockApiService.Verify(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?fechaRegistroDesde={fechaDesde:yyyy-MM-dd}&fechaRegistroHasta={fechaHasta:yyyy-MM-dd}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<PaginatedList<ClienteSummaryDto>>($"api/comercial/clientes?fechaRegistroDesde={fechaDesde:yyyy-MM-dd}&fechaRegistroHasta={fechaHasta:yyyy-MM-dd}", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -368,7 +368,7 @@ public class ClientesServiceTests
         // Assert
         Assert.True(result.Succeeded);
         Assert.True(result.Data);
-        _mockApiService.Verify(x => x.DeleteAsync($"api/comercial/clientes/{clienteId}", It.IsAny<string>()), Times.Once);
+        _mockApiService.Verify(x => x.DeleteAsync($"api/comercial/clientes/{clienteId}", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

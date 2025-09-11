@@ -113,7 +113,7 @@ public class FacturasViewModelTests
 
         // Assert
         _viewModel.Facturas.Should().BeEmpty();
-        _mockDialogService.Verify(x => x.ShowErrorAsync(errorMessage, It.IsAny<CancellationToken>()), Times.Once);
+        _mockDialogService.Verify(x => x.ShowErrorAsync(errorMessage), Times.Once);
     }
 
     [Fact]
