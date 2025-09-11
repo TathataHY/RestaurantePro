@@ -245,11 +245,11 @@ public class ProductosRegressionTests : BaseIntegrationTest
 
         var casosPaginacion = new[]
         {
-            new { Pagina = 1, Tamano = 5, Esperado = 5 },
-            new { Pagina = 2, Tamano = 5, Esperado = 5 },
-            new { Pagina = 3, Tamano = 5, Esperado = 5 },
-            new { Pagina = 1, Tamano = 20, Esperado = 15 },
-            new { Pagina = 2, Tamano = 20, Esperado = 0 }
+            new { Pagina = 1, Tamano = 5, EsperadoMax = 5 },
+            new { Pagina = 2, Tamano = 5, EsperadoMax = 5 },
+            new { Pagina = 3, Tamano = 5, EsperadoMax = 5 },
+            new { Pagina = 1, Tamano = 20, EsperadoMax = 15 },
+            new { Pagina = 2, Tamano = 20, EsperadoMax = 0 }
         };
 
         // Act & Assert
@@ -266,36 +266,13 @@ public class ProductosRegressionTests : BaseIntegrationTest
             apiResponse.Should().NotBeNull();
             apiResponse!.Success.Should().BeTrue();
             apiResponse.Data.Should().NotBeNull();
-            apiResponse.Data!.Items.Count.Should().BeLessOrEqualTo(caso.Esperado);
+            apiResponse.Data!.Items.Count.Should().BeLessOrEqualTo(caso.EsperadoMax);
         }
     }
 
     #region Helper Methods
 
-    /// <summary>
-    /// Crea una categoría de prueba para usar en las pruebas de productos
-    /// </summary>
-    private async Task<Guid> CrearCategoriaDePrueba()
-    {
-        // Por ahora retornamos un GUID fijo, en una implementación real
-        // se crearía una categoría de prueba en la base de datos
-        return Guid.Parse("11111111-1111-1111-1111-111111111111");
-    }
-
-    /// <summary>
-    /// Crea un request válido para crear un producto
-    /// </summary>
-    private static CrearProductoCommand CreateValidProductoRequest(Guid categoriaId, string? nombre = null, decimal? precio = null)
-    {
-        return new CrearProductoCommand
-        {
-            Nombre = nombre ?? "Producto Prueba",
-            Descripcion = "Descripción del producto de prueba",
-            Precio = precio ?? 15.99m,
-            CategoriaId = categoriaId,
-            Activo = true
-        };
-    }
+    // Los métodos helper ahora están en la clase base BaseIntegrationTest
 
     /// <summary>
     /// Crea productos de prueba y retorna la lista de productos creados

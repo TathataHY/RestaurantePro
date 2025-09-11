@@ -56,6 +56,13 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
             return await _restauranteProDbContext.Productos.AnyAsync(p => p.Nombre == nombre && !p.EstaEliminado, cancellationToken);
         }
 
+        public async Task<Producto?> ObtenerPorNombreAsync(string nombre, CancellationToken cancellationToken = default)
+        {
+            return await _restauranteProDbContext.Productos
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Nombre == nombre && !p.EstaEliminado, cancellationToken);
+        }
+
         public async Task EliminarAsync(Guid id, CancellationToken cancellationToken = default)
         {
             var producto = await _dbSet.FindAsync(new object[] { id }, cancellationToken);

@@ -74,6 +74,14 @@ namespace RestaurantePro.Domain.Core.Productos.Interfaces
         /// <returns>True si el producto existe, false en caso contrario</returns>
         Task<bool> ExisteProductoPorNombre(string nombre, CancellationToken cancellationToken = default);
 
+        /// <summary>
+        /// Obtiene un producto por su nombre
+        /// </summary>
+        /// <param name="nombre">Nombre del producto</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Producto si existe, null en caso contrario</returns>
+        Task<Producto?> ObtenerPorNombreAsync(string nombre, CancellationToken cancellationToken = default);
+
         Task<List<Producto>> ObtenerProductosPorCategoriaAsync(Guid categoriaId, CancellationToken cancellationToken);
         Task<bool> ExisteProductoConNombreAsync(string nombre, CancellationToken cancellationToken);
         Task<List<Producto>> BuscarAsync(Expression<Func<Producto, bool>> predicate, CancellationToken cancellationToken);

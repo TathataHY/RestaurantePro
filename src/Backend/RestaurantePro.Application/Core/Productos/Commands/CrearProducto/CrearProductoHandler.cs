@@ -9,6 +9,7 @@ namespace RestaurantePro.Application.Core.Productos.Commands.CrearProducto;
 public class CrearProductoHandler : IRequestHandler<CrearProductoCommand, Result<ProductoDto>>
 {
     private readonly IProductoRepository _repository;
+    private readonly IProductoCategoriaRepository _categoriaRepository;
     private readonly ProductoBuilder _builder;
     private readonly IMapper _mapper;
     private readonly ILogger<CrearProductoHandler> _logger;
@@ -16,12 +17,14 @@ public class CrearProductoHandler : IRequestHandler<CrearProductoCommand, Result
 
     public CrearProductoHandler(
         IProductoRepository repository,
+        IProductoCategoriaRepository categoriaRepository,
         ProductoBuilder builder,
         IMapper mapper,
         ILogger<CrearProductoHandler> logger,
         ICacheService cache)
     {
         _repository = repository;
+        _categoriaRepository = categoriaRepository;
         _builder = builder;
         _mapper = mapper;
         _logger = logger;
@@ -34,7 +37,23 @@ public class CrearProductoHandler : IRequestHandler<CrearProductoCommand, Result
 
         try
         {
-            // 1. Usar builder del dominio para crear el producto
+            // 1. Validar que la categoría existe
+            var categoria = await _categoriaRepository.ObtenerPorIdAsync(request.CategoriaId, cancellationToken);
+            if (categoria == null)
+            {
+                _logger.LogWarning("❌ Categoría no encontrada: {CategoriaId}", request.CategoriaId);
+                return Result.Failure<ProductoDto>($"Categoría con ID {request.CategoriaId} no encontrada");
+            }
+
+            // 2. Validar que no exista un producto con el mismo nombre
+            var productoExistente = await _repository.ObtenerPorNombreAsync(request.Nombre);
+            if (productoExistente != null)
+            {
+                _logger.LogWarning("❌ Ya existe un producto con el nombre: {Nombre}", request.Nombre);
+                return Result.Failure<ProductoDto>($"Ya existe un producto con el nombre '{request.Nombre}'");
+            }
+
+            // 3. Usar builder del dominio para crear el producto
             var resultado = _builder
                 .ConNombre(request.Nombre)
                 .ConDescripcion(request.Descripcion)

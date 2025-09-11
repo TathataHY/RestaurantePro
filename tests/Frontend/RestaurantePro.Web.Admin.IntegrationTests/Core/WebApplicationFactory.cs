@@ -80,6 +80,16 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
             // Configurar repositorios para pruebas
             services.AddScoped<RestaurantePro.Domain.Comercial.Clientes.Interfaces.IClienteRepository, 
                 RestaurantePro.Infrastructure.Persistence.Repositories.Comercial.ClienteRepository>();
+            
+            services.AddScoped<RestaurantePro.Domain.Core.Productos.Interfaces.IProductoRepository, 
+                RestaurantePro.Infrastructure.Persistence.Repositories.Core.ProductoRepository>();
+            
+            services.AddScoped<RestaurantePro.Domain.Core.Productos.Interfaces.IProductoCategoriaRepository, 
+                RestaurantePro.Infrastructure.Persistence.Repositories.Core.ProductoCategoriaRepository>();
+            
+            // Configurar servicios adicionales para pruebas
+            services.AddScoped<RestaurantePro.Domain.Core.SharedKernel.Services.Cache.ICacheService, 
+                TestCacheService>();
 
             // Configurar logging para pruebas
             services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning));

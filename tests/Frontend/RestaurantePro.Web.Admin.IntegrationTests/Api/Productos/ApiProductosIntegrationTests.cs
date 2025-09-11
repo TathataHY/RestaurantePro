@@ -115,7 +115,8 @@ public class ApiProductosIntegrationTests : BaseIntegrationTest
     public async Task ObtenerProductosPorCategoria_ConCategoriaValida_DeberiaRetornarLista()
     {
         // Arrange
-        var categoriaId = Guid.NewGuid();
+        var categoriaIds = await CrearCategoriasDePruebaAsync();
+        var categoriaId = GetFirstCategoriaId(categoriaIds);
         var query = "?soloActivos=true&ordenarPorPopularidad=false";
 
         // Act

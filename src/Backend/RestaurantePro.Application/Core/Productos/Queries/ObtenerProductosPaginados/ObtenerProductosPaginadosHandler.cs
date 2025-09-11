@@ -23,6 +23,19 @@ public class ObtenerProductosPaginadosHandler : IRequestHandler<ObtenerProductos
 
         try
         {
+            // Validar parámetros de paginación
+            if (request.PageNumber < 1)
+            {
+                _logger.LogWarning("❌ Número de página inválido: {PageNumber}", request.PageNumber);
+                return Result.Failure<PaginatedList<ProductoDto>>("El número de página debe ser mayor a 0");
+            }
+
+            if (request.PageSize < 1 || request.PageSize > 100)
+            {
+                _logger.LogWarning("❌ Tamaño de página inválido: {PageSize}", request.PageSize);
+                return Result.Failure<PaginatedList<ProductoDto>>("El tamaño de página debe estar entre 1 y 100");
+            }
+
             // Obtener productos según los filtros
             IEnumerable<Producto> productos;
 

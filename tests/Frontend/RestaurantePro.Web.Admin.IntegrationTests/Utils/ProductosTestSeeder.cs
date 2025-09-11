@@ -47,81 +47,81 @@ public static class ProductosTestSeeder
         var productos = new List<Producto>
         {
             // Bebidas
-            new Producto(
+            Producto.Crear(
                 "Coca Cola",
                 "Refresco de cola 350ml",
-                3.50m,
+                new PrecioProducto(3.50m),
                 bebidasId,
-                true
+                "Bebidas"
             ),
-            new Producto(
+            Producto.Crear(
                 "Café Americano",
                 "Café negro americano",
-                2.50m,
+                new PrecioProducto(2.50m),
                 bebidasId,
-                true
+                "Bebidas"
             ),
-            new Producto(
+            Producto.Crear(
                 "Jugo de Naranja",
                 "Jugo natural de naranja",
-                4.00m,
+                new PrecioProducto(4.00m),
                 bebidasId,
-                true
+                "Bebidas"
             ),
 
             // Entradas
-            new Producto(
+            Producto.Crear(
                 "Ceviche de Pescado",
                 "Ceviche fresco de pescado con cebolla y ají",
-                18.00m,
+                new PrecioProducto(18.00m),
                 entradasId,
-                true
+                "Entradas"
             ),
-            new Producto(
+            Producto.Crear(
                 "Anticuchos",
                 "Brochetas de corazón de res con ají panca",
-                15.00m,
+                new PrecioProducto(15.00m),
                 entradasId,
-                true
+                "Entradas"
             ),
 
             // Platos Principales
-            new Producto(
+            Producto.Crear(
                 "Lomo Saltado",
                 "Lomo de res salteado con papas fritas y arroz",
-                25.00m,
+                new PrecioProducto(25.00m),
                 platosId,
-                true
+                "Platos Principales"
             ),
-            new Producto(
+            Producto.Crear(
                 "Arroz con Pollo",
                 "Arroz con pollo y verduras",
-                20.00m,
+                new PrecioProducto(20.00m),
                 platosId,
-                true
+                "Platos Principales"
             ),
-            new Producto(
+            Producto.Crear(
                 "Pollo a la Brasa",
                 "Pollo asado con papas fritas y ensalada",
-                22.00m,
+                new PrecioProducto(22.00m),
                 platosId,
-                true
+                "Platos Principales"
             ),
 
             // Postres
-            new Producto(
+            Producto.Crear(
                 "Suspiro a la Limeña",
                 "Postre tradicional de manjar blanco y merengue",
-                8.00m,
+                new PrecioProducto(8.00m),
                 postresId,
-                true
+                "Postres"
             ),
-            new Producto(
+            Producto.Crear(
                 "Mazamorra Morada",
                 "Postre de maíz morado con frutas",
-                6.00m,
+                new PrecioProducto(6.00m),
                 postresId,
-                true
+                "Postres"
             )
         };
 
