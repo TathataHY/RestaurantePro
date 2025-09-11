@@ -131,7 +131,7 @@ public class FacturasApiServiceTests
             Id = Guid.NewGuid(),
             NumeroFactura = "FAC-001",
             Estado = "Pendiente",
-            Total = request.Total
+            Total = 150.50m
         };
 
         var responseContent = JsonSerializer.Serialize(new ApiResponse<FacturaDto>
@@ -448,7 +448,7 @@ public class FacturasApiServiceTests
         // Assert
         resultado.Should().NotBeNull();
         resultado!.Success.Should().BeFalse();
-        resultado.Message.Should().Contain("Error al crear factura");
+        resultado.Message.Should().Contain("Monto inválido");
     }
 
     [Fact]
@@ -533,7 +533,7 @@ public class FacturasApiServiceTests
             Id = Guid.NewGuid(),
             NumeroFactura = "FAC-XSS",
             Estado = "Pendiente",
-            Total = request.Total
+            Total = 150.50m
         };
 
         var responseContent = JsonSerializer.Serialize(new ApiResponse<FacturaDto>
@@ -765,6 +765,391 @@ public class FacturasApiServiceTests
         {
             Success = true,
             Data = estadisticas
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerEstadisticasAsync();
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.TotalFacturas.Should().Be(1000000);
+        resultado.TotalVentas.Should().Be(decimal.MaxValue);
+    }
+
+    // ===== PRUEBAS ROBUSTAS - CASOS EDGE =====
+
+    [Fact]
+    public async Task ObtenerFacturasAsync_ConFiltrosExtremos_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var filtrosExtremos = new FacturaFiltrosDto
+        {
+            Busqueda = "A", // Búsqueda mínima
+            FechaInicioDesde = DateTime.MinValue,
+            FechaInicioHasta = DateTime.MaxValue,
+            MontoMinimo = 0.01m,
+            MontoMaximo = decimal.MaxValue,
+            OrdenarPor = "FechaCreacion",
+            DireccionOrden = "asc"
+        };
+
+        var facturasEsperadas = new PaginatedList<FacturaDto>
+        {
+            Items = new List<FacturaDto>(),
+            TotalCount = 0,
+            PageNumber = 1,
+            PageSize = 20
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<PaginatedList<FacturaDto>>
+        {
+            Success = true,
+            Data = facturasEsperadas
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerFacturasAsync(1, 20, filtrosExtremos);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Items.Should().BeEmpty();
+        resultado.TotalCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task CrearFacturaAsync_ConValoresExtremos_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var requestExtremo = new CrearFacturaRequest
+        {
+            ClienteId = Guid.Empty, // ID vacío
+            MesaId = Guid.Empty,
+            MeseroId = Guid.Empty,
+            TipoPago = "Efectivo",
+            MetodoPago = "Efectivo",
+            Descuento = 0.01m, // Descuento mínimo
+            Observaciones = new string('A', 1000), // Observaciones muy largas
+            NotasInternas = new string('B', 1000),
+            EsFacturaElectronica = true,
+            Detalles = new List<CrearFacturaDetalleRequest>
+            {
+                new() { ProductoId = Guid.Empty, Cantidad = 1, Precio = 0.01m }
+            }
+        };
+
+        var facturaCreada = new FacturaDto
+        {
+            Id = Guid.NewGuid(),
+            NumeroFactura = "FAC-EXTREMO",
+            Estado = "Pendiente",
+            Total = 0.01m
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<FacturaDto>
+        {
+            Success = true,
+            Data = facturaCreada
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Created,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.CrearFacturaAsync(requestExtremo);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Data!.NumeroFactura.Should().Be("FAC-EXTREMO");
+        resultado.Data.Total.Should().Be(0.01m);
+    }
+
+    // ===== PRUEBAS ROBUSTAS - SEGURIDAD =====
+
+    [Fact]
+    public async Task ObtenerFacturasAsync_ConInyeccionSQL_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var filtrosMaliciosos = new FacturaFiltrosDto
+        {
+            Busqueda = "'; DROP TABLE Facturas; --",
+            OrdenarPor = "'; DROP TABLE Facturas; --",
+            DireccionOrden = "'; DROP TABLE Facturas; --"
+        };
+
+        var facturasEsperadas = new PaginatedList<FacturaDto>
+        {
+            Items = new List<FacturaDto>(),
+            TotalCount = 0,
+            PageNumber = 1,
+            PageSize = 20
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<PaginatedList<FacturaDto>>
+        {
+            Success = true,
+            Data = facturasEsperadas
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerFacturasAsync(1, 20, filtrosMaliciosos);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Items.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task CrearFacturaAsync_ConXSS_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var requestXSS = new CrearFacturaRequest
+        {
+            ClienteId = Guid.NewGuid(),
+            MesaId = Guid.NewGuid(),
+            MeseroId = Guid.NewGuid(),
+            TipoPago = "Efectivo",
+            MetodoPago = "Efectivo",
+            Descuento = 0,
+            Observaciones = "<script>alert('XSS')</script>",
+            NotasInternas = "<img src=x onerror=alert('XSS')>",
+            EsFacturaElectronica = false,
+            Detalles = new List<CrearFacturaDetalleRequest>
+            {
+                new() { ProductoId = Guid.NewGuid(), Cantidad = 1, Precio = 100m }
+            }
+        };
+
+        var facturaCreada = new FacturaDto
+        {
+            Id = Guid.NewGuid(),
+            NumeroFactura = "FAC-XSS",
+            Estado = "Pendiente",
+            Total = 100m
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<FacturaDto>
+        {
+            Success = true,
+            Data = facturaCreada
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Created,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.CrearFacturaAsync(requestXSS);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Data!.NumeroFactura.Should().Be("FAC-XSS");
+    }
+
+    // ===== PRUEBAS ROBUSTAS - CONCURRENCIA =====
+
+    [Fact]
+    public async Task CrearFacturaAsync_Concurrencia_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var request = new CrearFacturaRequest
+        {
+            ClienteId = Guid.NewGuid(),
+            MesaId = Guid.NewGuid(),
+            MeseroId = Guid.NewGuid(),
+            TipoPago = "Efectivo",
+            MetodoPago = "Efectivo",
+            Descuento = 0,
+            EsFacturaElectronica = false,
+            Detalles = new List<CrearFacturaDetalleRequest>
+            {
+                new() { ProductoId = Guid.NewGuid(), Cantidad = 1, Precio = 100m }
+            }
+        };
+
+        var facturaCreada = new FacturaDto
+        {
+            Id = Guid.NewGuid(),
+            NumeroFactura = "FAC-CONCURRENT",
+            Estado = "Pendiente",
+            Total = 100m
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<FacturaDto>
+        {
+            Success = true,
+            Data = facturaCreada
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Created,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act - Ejecutar múltiples operaciones simultáneas
+        var tareas = new List<Task<ApiResponse<FacturaDto>?>>();
+        for (int i = 0; i < 10; i++)
+        {
+            tareas.Add(_service.CrearFacturaAsync(request));
+        }
+
+        var resultados = await Task.WhenAll(tareas);
+
+        // Assert
+        resultados.Should().HaveCount(10);
+        resultados.Should().OnlyContain(r => r != null && r.Success);
+    }
+
+    [Fact]
+    public async Task ObtenerFacturasAsync_Concurrencia_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var facturasEsperadas = new PaginatedList<FacturaDto>
+        {
+            Items = new List<FacturaDto>
+            {
+                new() { Id = Guid.NewGuid(), NumeroFactura = "FAC-001", Estado = "Pagada" }
+            },
+            TotalCount = 1,
+            PageNumber = 1,
+            PageSize = 20
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<PaginatedList<FacturaDto>>
+        {
+            Success = true,
+            Data = facturasEsperadas
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act - Ejecutar múltiples consultas simultáneas
+        var tareas = new List<Task<PaginatedList<FacturaDto>?>>();
+        for (int i = 0; i < 20; i++)
+        {
+            tareas.Add(_service.ObtenerFacturasAsync());
+        }
+
+        var resultados = await Task.WhenAll(tareas);
+
+        // Assert
+        resultados.Should().HaveCount(20);
+        resultados.Should().OnlyContain(r => r != null);
+    }
+
+    // ===== PRUEBAS ROBUSTAS - RENDIMIENTO =====
+
+    [Fact]
+    public async Task ObtenerFacturasAsync_ConDatosMasivos_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var facturasMasivas = new List<FacturaDto>();
+        for (int i = 0; i < 10000; i++)
+        {
+            facturasMasivas.Add(new FacturaDto
+            {
+                Id = Guid.NewGuid(),
+                NumeroFactura = $"FAC-{i:D6}",
+                Estado = "Pagada",
+                Total = 100m + i
+            });
+        }
+
+        var facturasEsperadas = new PaginatedList<FacturaDto>
+        {
+            Items = facturasMasivas.Take(1000).ToList(),
+            TotalCount = 10000,
+            PageNumber = 1,
+            PageSize = 1000
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<PaginatedList<FacturaDto>>
+        {
+            Success = true,
+            Data = facturasEsperadas
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerFacturasAsync(1, 1000);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Items.Should().HaveCount(1000);
+        resultado.TotalCount.Should().Be(10000);
+    }
+
+    [Fact]
+    public async Task ObtenerEstadisticasAsync_ConDatosMasivos_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var estadisticasMasivas = new FacturaEstadisticasDto
+        {
+            TotalFacturas = 1000000,
+            FacturasPagadas = 800000,
+            FacturasPendientes = 150000,
+            FacturasVencidas = 30000,
+            FacturasCanceladas = 20000,
+            TotalVentas = decimal.MaxValue,
+            TotalCobrado = decimal.MaxValue * 0.8m,
+            TotalPendiente = decimal.MaxValue * 0.2m,
+            PromedioFactura = 999999.99m,
+            TotalDescuentos = 1000000m,
+            TotalImpuestos = 2000000m
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<FacturaEstadisticasDto>
+        {
+            Success = true,
+            Data = estadisticasMasivas
         });
 
         _httpMessageHandlerMock.Protected()

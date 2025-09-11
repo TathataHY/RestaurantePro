@@ -1,6 +1,6 @@
 using RestaurantePro.Application.Common.Interfaces;
 
-namespace RestaurantePro.Web.Admin.IntegrationTests;
+namespace RestaurantePro.Web.Admin.IntegrationTests.Services;
 
 /// <summary>
 /// Implementación de prueba para IEmailService

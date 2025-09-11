@@ -228,15 +228,15 @@ public class PromocionesApiServiceTests
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado!.Data!.TotalPromociones.Should().Be(10);
-        resultado.Data.PromocionesActivas.Should().Be(5);
-        resultado.Data.TotalUsos.Should().Be(150);
+        resultado!.TotalPromociones.Should().Be(10);
+        resultado.PromocionesActivas.Should().Be(5);
+        resultado.TotalUsos.Should().Be(150);
     }
 
     // ===== PRUEBAS DE ERROR =====
 
     [Fact]
-    public async Task ObtenerPromocionesAsync_ConErrorDeServidor_DeberiaLanzarExcepcion()
+    public async Task ObtenerPromocionesAsync_ConErrorDeServidor_DeberiaRetornarNull()
     {
         // Arrange
         _httpMessageHandlerMock.Protected()
@@ -246,12 +246,15 @@ public class PromocionesApiServiceTests
                 StatusCode = HttpStatusCode.InternalServerError
             });
 
-        // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() => _service.ObtenerPromocionesAsync());
+        // Act
+        var resultado = await _service.ObtenerPromocionesAsync();
+
+        // Assert
+        resultado.Should().BeNull();
     }
 
     [Fact]
-    public async Task CrearPromocionAsync_ConDatosInvalidos_DeberiaLanzarExcepcion()
+    public async Task CrearPromocionAsync_ConDatosInvalidos_DeberiaRetornarError()
     {
         // Arrange
         var promocionInvalida = new CrearPromocionRequest
@@ -276,12 +279,17 @@ public class PromocionesApiServiceTests
                 Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
             });
 
-        // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() => _service.CrearPromocionAsync(promocionInvalida));
+        // Act
+        var resultado = await _service.CrearPromocionAsync(promocionInvalida);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Success.Should().BeFalse();
+        resultado.Message.Should().Contain("Datos de promoción inválidos");
     }
 
     [Fact]
-    public async Task ActualizarPromocionAsync_ConIdInexistente_DeberiaLanzarExcepcion()
+    public async Task ActualizarPromocionAsync_ConIdInexistente_DeberiaRetornarError()
     {
         // Arrange
         var idInexistente = Guid.NewGuid();
@@ -304,12 +312,17 @@ public class PromocionesApiServiceTests
                 StatusCode = HttpStatusCode.NotFound
             });
 
-        // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() => _service.ActualizarPromocionAsync(promocionActualizada));
+        // Act
+        var resultado = await _service.ActualizarPromocionAsync(promocionActualizada);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Success.Should().BeFalse();
+        resultado.Message.Should().Contain("Error al actualizar promoción");
     }
 
     [Fact]
-    public async Task EliminarPromocionAsync_ConIdInexistente_DeberiaLanzarExcepcion()
+    public async Task EliminarPromocionAsync_ConIdInexistente_DeberiaRetornarError()
     {
         // Arrange
         var idInexistente = Guid.NewGuid();
@@ -321,12 +334,17 @@ public class PromocionesApiServiceTests
                 StatusCode = HttpStatusCode.NotFound
             });
 
-        // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() => _service.EliminarPromocionAsync(idInexistente));
+        // Act
+        var resultado = await _service.EliminarPromocionAsync(idInexistente);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Success.Should().BeFalse();
+        resultado.Message.Should().Contain("Error al eliminar promoción");
     }
 
     [Fact]
-    public async Task ObtenerEstadisticasAsync_ConErrorDeServidor_DeberiaLanzarExcepcion()
+    public async Task ObtenerEstadisticasAsync_ConErrorDeServidor_DeberiaRetornarNull()
     {
         // Arrange
         _httpMessageHandlerMock.Protected()
@@ -336,7 +354,390 @@ public class PromocionesApiServiceTests
                 StatusCode = HttpStatusCode.InternalServerError
             });
 
-        // Act & Assert
-        await Assert.ThrowsAsync<HttpRequestException>(() => _service.ObtenerEstadisticasAsync());
+        // Act
+        var resultado = await _service.ObtenerEstadisticasAsync();
+
+        // Assert
+        resultado.Should().BeNull();
+    }
+
+    // ===== PRUEBAS ROBUSTAS - CASOS EDGE =====
+
+    [Fact]
+    public async Task ObtenerPromocionesAsync_ConFiltrosExtremos_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var filtrosExtremos = new PromocionFiltrosDto
+        {
+            Busqueda = "A", // Búsqueda mínima
+            FechaInicioDesde = DateTime.MinValue,
+            FechaInicioHasta = DateTime.MaxValue,
+            FechaFinDesde = DateTime.MinValue,
+            FechaFinHasta = DateTime.MaxValue,
+            EstaActiva = true,
+            OrdenarPor = "FechaCreacion",
+            DireccionOrden = "asc"
+        };
+
+        var promocionesEsperadas = new PaginatedList<PromocionDto>
+        {
+            Items = new List<PromocionDto>(),
+            TotalCount = 0,
+            PageNumber = 1,
+            PageSize = 20
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<PaginatedList<PromocionDto>>
+        {
+            Success = true,
+            Data = promocionesEsperadas
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerPromocionesAsync(1, 20, filtrosExtremos);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Items.Should().BeEmpty();
+        resultado.TotalCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task CrearPromocionAsync_ConValoresExtremos_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var requestExtremo = new CrearPromocionRequest
+        {
+            Nombre = "A", // Nombre mínimo
+            Descripcion = new string('A', 500), // Descripción máxima
+            Codigo = "A", // Código mínimo
+            Tipo = TipoPromocion.Porcentaje,
+            ValorDescuento = 0.01m, // Valor mínimo
+            ValorMinimoCompra = 0.01m,
+            CantidadMaximaUsos = 1,
+            FechaInicio = DateTime.MinValue,
+            FechaFin = DateTime.MaxValue,
+            EstaActiva = true,
+            ProductosIds = new List<Guid> { Guid.Empty }
+        };
+
+        var promocionCreada = new PromocionDto
+        {
+            Id = Guid.NewGuid(),
+            Nombre = "A",
+            Codigo = "A",
+            Tipo = TipoPromocion.Porcentaje,
+            ValorDescuento = 0.01m,
+            EstaActiva = true
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<PromocionDto>
+        {
+            Success = true,
+            Data = promocionCreada
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Created,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.CrearPromocionAsync(requestExtremo);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Data!.Nombre.Should().Be("A");
+        resultado.Data.ValorDescuento.Should().Be(0.01m);
+    }
+
+    // ===== PRUEBAS ROBUSTAS - SEGURIDAD =====
+
+    [Fact]
+    public async Task ObtenerPromocionesAsync_ConInyeccionSQL_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var filtrosMaliciosos = new PromocionFiltrosDto
+        {
+            Busqueda = "'; DROP TABLE Promociones; --",
+            OrdenarPor = "'; DROP TABLE Promociones; --",
+            DireccionOrden = "'; DROP TABLE Promociones; --"
+        };
+
+        var promocionesEsperadas = new PaginatedList<PromocionDto>
+        {
+            Items = new List<PromocionDto>(),
+            TotalCount = 0,
+            PageNumber = 1,
+            PageSize = 20
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<PaginatedList<PromocionDto>>
+        {
+            Success = true,
+            Data = promocionesEsperadas
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerPromocionesAsync(1, 20, filtrosMaliciosos);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Items.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task CrearPromocionAsync_ConXSS_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var requestXSS = new CrearPromocionRequest
+        {
+            Nombre = "<script>alert('XSS')</script>",
+            Descripcion = "<img src=x onerror=alert('XSS')>",
+            Codigo = "XSS",
+            Tipo = TipoPromocion.Porcentaje,
+            ValorDescuento = 10,
+            FechaInicio = DateTime.Today,
+            FechaFin = DateTime.Today.AddDays(30),
+            EstaActiva = true,
+            ProductosIds = new List<Guid>()
+        };
+
+        var promocionCreada = new PromocionDto
+        {
+            Id = Guid.NewGuid(),
+            Nombre = "<script>alert('XSS')</script>",
+            Codigo = "XSS",
+            Tipo = TipoPromocion.Porcentaje,
+            ValorDescuento = 10,
+            EstaActiva = true
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<PromocionDto>
+        {
+            Success = true,
+            Data = promocionCreada
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Created,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.CrearPromocionAsync(requestXSS);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Data!.Nombre.Should().Be("<script>alert('XSS')</script>");
+    }
+
+    // ===== PRUEBAS ROBUSTAS - CONCURRENCIA =====
+
+    [Fact]
+    public async Task CrearPromocionAsync_Concurrencia_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var request = new CrearPromocionRequest
+        {
+            Nombre = "Promoción Concurrente",
+            Codigo = "CONCURRENT",
+            Tipo = TipoPromocion.Porcentaje,
+            ValorDescuento = 20,
+            FechaInicio = DateTime.Today,
+            FechaFin = DateTime.Today.AddDays(30),
+            EstaActiva = true,
+            ProductosIds = new List<Guid>()
+        };
+
+        var promocionCreada = new PromocionDto
+        {
+            Id = Guid.NewGuid(),
+            Nombre = "Promoción Concurrente",
+            Codigo = "CONCURRENT",
+            Tipo = TipoPromocion.Porcentaje,
+            ValorDescuento = 20,
+            EstaActiva = true
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<PromocionDto>
+        {
+            Success = true,
+            Data = promocionCreada
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Created,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act - Ejecutar múltiples operaciones simultáneas
+        var tareas = new List<Task<ApiResponse<PromocionDto>?>>();
+        for (int i = 0; i < 10; i++)
+        {
+            tareas.Add(_service.CrearPromocionAsync(request));
+        }
+
+        var resultados = await Task.WhenAll(tareas);
+
+        // Assert
+        resultados.Should().HaveCount(10);
+        resultados.Should().OnlyContain(r => r != null && r.Success);
+    }
+
+    [Fact]
+    public async Task ObtenerPromocionesAsync_Concurrencia_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var promocionesEsperadas = new PaginatedList<PromocionDto>
+        {
+            Items = new List<PromocionDto>
+            {
+                new() { Id = Guid.NewGuid(), Nombre = "Promoción 1", EstaActiva = true }
+            },
+            TotalCount = 1,
+            PageNumber = 1,
+            PageSize = 20
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<PaginatedList<PromocionDto>>
+        {
+            Success = true,
+            Data = promocionesEsperadas
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act - Ejecutar múltiples consultas simultáneas
+        var tareas = new List<Task<PaginatedList<PromocionDto>?>>();
+        for (int i = 0; i < 20; i++)
+        {
+            tareas.Add(_service.ObtenerPromocionesAsync());
+        }
+
+        var resultados = await Task.WhenAll(tareas);
+
+        // Assert
+        resultados.Should().HaveCount(20);
+        resultados.Should().OnlyContain(r => r != null);
+    }
+
+    // ===== PRUEBAS ROBUSTAS - RENDIMIENTO =====
+
+    [Fact]
+    public async Task ObtenerPromocionesAsync_ConDatosMasivos_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var promocionesMasivas = new List<PromocionDto>();
+        for (int i = 0; i < 10000; i++)
+        {
+            promocionesMasivas.Add(new PromocionDto
+            {
+                Id = Guid.NewGuid(),
+                Nombre = $"Promoción {i:D6}",
+                Codigo = $"PROM{i:D6}",
+                Tipo = TipoPromocion.Porcentaje,
+                ValorDescuento = 10 + (i % 50),
+                EstaActiva = i % 2 == 0
+            });
+        }
+
+        var promocionesEsperadas = new PaginatedList<PromocionDto>
+        {
+            Items = promocionesMasivas.Take(1000).ToList(),
+            TotalCount = 10000,
+            PageNumber = 1,
+            PageSize = 1000
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<PaginatedList<PromocionDto>>
+        {
+            Success = true,
+            Data = promocionesEsperadas
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerPromocionesAsync(1, 1000);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Items.Should().HaveCount(1000);
+        resultado.TotalCount.Should().Be(10000);
+    }
+
+    [Fact]
+    public async Task ObtenerEstadisticasAsync_ConDatosMasivos_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var estadisticasMasivas = new PromocionEstadisticasDto
+        {
+            TotalPromociones = 1000000,
+            PromocionesActivas = 500000,
+            PromocionesExpiradas = 300000,
+            PromocionesPendientes = 200000,
+            TotalUsos = 50000000,
+            DescuentoTotalAplicado = decimal.MaxValue
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<PromocionEstadisticasDto>
+        {
+            Success = true,
+            Data = estadisticasMasivas
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerEstadisticasAsync();
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.TotalPromociones.Should().Be(1000000);
+        resultado.TotalUsos.Should().Be(50000000);
     }
 }

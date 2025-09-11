@@ -8,8 +8,9 @@ using RestaurantePro.Infrastructure.Persistence.Contexts;
 using System.Data.Common;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http.Json;
+using RestaurantePro.Web.Admin.IntegrationTests.Services;
 
-namespace RestaurantePro.Web.Admin.IntegrationTests;
+namespace RestaurantePro.Web.Admin.IntegrationTests.Core;
 
 /// <summary>
 /// Factory para crear instancias de la API para pruebas de integración con base de datos en memoria
@@ -17,6 +18,7 @@ namespace RestaurantePro.Web.Admin.IntegrationTests;
 public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Program>, IAsyncLifetime
 {
     private DbConnection? _connection;
+    private string _databaseName = string.Empty;
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -31,10 +33,10 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
                 services.Remove(dbContextDescriptor);
             }
 
-            // Agregar base de datos en memoria
+            // Agregar base de datos en memoria con nombre único para cada prueba
             services.AddDbContext<RestauranteProDbContext>(options =>
             {
-                options.UseInMemoryDatabase("RestaurantePro_IntegrationTests");
+                options.UseInMemoryDatabase(_databaseName);
             });
 
             // Configurar autenticación para pruebas
@@ -88,6 +90,9 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
 
     public async Task InitializeAsync()
     {
+        // Generar nombre único para la base de datos de esta instancia
+        _databaseName = $"RestaurantePro_IntegrationTests_{Guid.NewGuid():N}";
+        
         // Crear la base de datos en memoria
         using var scope = Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();

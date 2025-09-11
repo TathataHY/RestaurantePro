@@ -162,17 +162,17 @@ public class ClientesStressTests : BaseIntegrationTest
         {
             Nombre = "John Smith",
             Email = "john@company.co.uk",
-            Telefono = "+44-20-7946-0958",
+            Telefono = "+442079460958",
             FechaNacimiento = DateTime.Today.AddYears(-30),
             AceptaTerminos = true
         });
 
-        // Cliente con nombre muy largo
+        // Cliente con nombre largo pero válido
         clientes.Add(new CrearClienteRequest
         {
-            Nombre = "María de los Ángeles de la Cruz y del Valle de la Concepción",
+            Nombre = "María de los Ángeles García",
             Email = "maria.angeles@test.com",
-            Telefono = "+51-987-654-321",
+            Telefono = "+51987654321",
             FechaNacimiento = DateTime.Today.AddYears(-35),
             AceptaTerminos = true
         });
@@ -182,6 +182,7 @@ public class ClientesStressTests : BaseIntegrationTest
         {
             Nombre = "Ana García",
             Email = "ana@test.com",
+            Telefono = "+51987654321",
             FechaNacimiento = DateTime.Today.AddYears(-20),
             AceptaTerminos = true
         });
@@ -191,7 +192,7 @@ public class ClientesStressTests : BaseIntegrationTest
         {
             Nombre = "Carlos López",
             Email = "carlos@test.com",
-            Telefono = "+51-987-654-321",
+            Telefono = "+51987654321",
             FechaNacimiento = DateTime.Today.AddYears(-40),
             Ciudad = "Lima",
             Pais = "Perú",

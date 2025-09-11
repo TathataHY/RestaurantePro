@@ -156,7 +156,7 @@ public class ClientesRegressionTests : BaseIntegrationTest
         resultado.Should().NotBeNull();
         resultado!.Success.Should().BeTrue();
         resultado.Data.Should().NotBeNull();
-        resultado.Data!.Nombre.Should().Be("Cliente Actualizado");
+        resultado.Data!.NombreCompleto.Should().Be("Cliente Actualizado");
         resultado.Data.Email.Should().Be("actualizado@test.com");
     }
 

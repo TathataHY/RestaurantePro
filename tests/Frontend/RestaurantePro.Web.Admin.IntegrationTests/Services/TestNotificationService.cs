@@ -1,7 +1,7 @@
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Application.Common.Models;
 
-namespace RestaurantePro.Web.Admin.IntegrationTests;
+namespace RestaurantePro.Web.Admin.IntegrationTests.Services;
 
 /// <summary>
 /// Implementación de prueba para INotificationService

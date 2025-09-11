@@ -3,13 +3,14 @@ using Microsoft.Extensions.DependencyInjection;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using RestaurantePro.Web.Admin.IntegrationTests.Core;
 
-namespace RestaurantePro.Web.Admin.IntegrationTests;
+namespace RestaurantePro.Web.Admin.IntegrationTests.Core;
 
 /// <summary>
 /// Clase base para pruebas de integración con funcionalidades comunes
 /// </summary>
-public abstract class BaseIntegrationTest : IClassFixture<WebApplicationFactory>
+public abstract class BaseIntegrationTest : IClassFixture<WebApplicationFactory>, IAsyncLifetime
 {
     protected readonly WebApplicationFactory _factory;
     protected readonly HttpClient _client;
@@ -35,6 +36,24 @@ public abstract class BaseIntegrationTest : IClassFixture<WebApplicationFactory>
             Converters = { new JsonStringEnumConverter() },
             PropertyNameCaseInsensitive = true
         };
+    }
+
+    /// <summary>
+    /// Inicialización asíncrona para cada prueba
+    /// </summary>
+    public virtual async Task InitializeAsync()
+    {
+        // Limpiar la base de datos antes de cada prueba
+        await CleanupDatabaseAsync();
+    }
+
+    /// <summary>
+    /// Limpieza asíncrona después de cada prueba
+    /// </summary>
+    public virtual async Task DisposeAsync()
+    {
+        // Limpiar la base de datos después de cada prueba
+        await CleanupDatabaseAsync();
     }
 
     /// <summary>
