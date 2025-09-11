@@ -37,6 +37,7 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
             services.AddDbContext<RestauranteProDbContext>(options =>
             {
                 options.UseInMemoryDatabase(_databaseName);
+                options.ConfigureWarnings(warnings => warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning));
             });
 
             // Configurar autenticación para pruebas
@@ -76,6 +77,10 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
 
             // Configurar DbContext genérico para repositorios
             services.AddScoped<DbContext>(provider => provider.GetRequiredService<RestauranteProDbContext>());
+
+            // Configurar UnitOfWork para pruebas
+            services.AddScoped<RestaurantePro.Domain.Core.SharedKernel.Interfaces.IUnitOfWork, 
+                RestaurantePro.Infrastructure.Persistence.Repositories.Base.UnitOfWork>();
 
             // Configurar repositorios para pruebas
             services.AddScoped<RestaurantePro.Domain.Comercial.Clientes.Interfaces.IClienteRepository, 

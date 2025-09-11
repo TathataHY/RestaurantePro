@@ -121,7 +121,7 @@ public class CrearComandaViewModelTests
         _viewModel.Mesa = new MesaDto
         {
             Id = Guid.NewGuid(),
-            Numero = 5,
+            Numero = "5",
             Ubicacion = "Salón Principal",
             Capacidad = 4
         };
@@ -435,7 +435,7 @@ public class CrearComandaViewModelTests
             Precio = 15.99m,
             Cantidad = 1
         });
-        _viewModel.Mesa = new MesaDto { Id = Guid.NewGuid(), Numero = 1 };
+        _viewModel.Mesa = new MesaDto { Id = Guid.NewGuid(), Numero = "1" };
 
         _mockDialogService.Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(false);
@@ -452,7 +452,7 @@ public class CrearComandaViewModelTests
     {
         // Arrange
         var mesaId = Guid.NewGuid();
-        _viewModel.Mesa = new MesaDto { Id = mesaId, Numero = 1 };
+        _viewModel.Mesa = new MesaDto { Id = mesaId, Numero = "1" };
         _viewModel.Observaciones = "Sin cebolla";
         
         _viewModel.ProductosCarrito.Add(new ProductoCarritoDto
@@ -530,7 +530,7 @@ public class CrearComandaViewModelTests
     {
         // Arrange
         var mesaId = Guid.NewGuid().ToString();
-        var mesa = new MesaDto { Id = Guid.Parse(mesaId), Numero = 5, Ubicacion = "Salón", Capacidad = 4 };
+        var mesa = new MesaDto { Id = Guid.Parse(mesaId), Numero = "5", Ubicacion = "Salón", Capacidad = 4 };
         var productos = new List<ProductoDto>
         {
             new ProductoDto { Id = Guid.NewGuid(), Nombre = "Pizza", Precio = 15.99m }

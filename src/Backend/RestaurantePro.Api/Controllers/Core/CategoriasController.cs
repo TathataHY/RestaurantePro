@@ -272,7 +272,7 @@ public class CategoriasController : ControllerBase
             }
 
             var errorResponse = ApiResponse<object>.ErrorResponse(
-                result.Errors.ToList(), "Errores de validación", StatusCodes.Status400BadRequest);
+                result.Errors.ToList(), result.Errors.FirstOrDefault() ?? "Error de validación", StatusCodes.Status400BadRequest);
             return BadRequest(errorResponse);
         }
         catch (Exception ex)

@@ -33,32 +33,41 @@ public class CrearCategoriaCommandHandler : IRequestHandler<CrearCategoriaComman
         {
             _logger.LogInformation("Iniciando creación de categoría: {Nombre}", request.Nombre);
 
-            // Usar UnitOfWork para asegurar que los cambios se guarden correctamente
-            return await _unitOfWork.EjecutarEnTransaccionAsync(async () =>
+            // Verificar si ya existe una categoría con el mismo nombre
+            var categoriasExistentes = await _categoriaRepository.ObtenerTodasAsync(cancellationToken);
+            _logger.LogInformation("Categorías existentes encontradas: {Count}", categoriasExistentes.Count());
+            
+            var categoriaExistente = categoriasExistentes
+                .FirstOrDefault(c => c.Nombre.ToLower() == request.Nombre.ToLower());
+
+            if (categoriaExistente != null)
             {
-                // Verificar si ya existe una categoría con el mismo nombre
-                var categoriasExistentes = await _categoriaRepository.ObtenerTodasAsync(cancellationToken);
-                _logger.LogInformation("Categorías existentes encontradas: {Count}", categoriasExistentes.Count());
-                
-                var categoriaExistente = categoriasExistentes
-                    .FirstOrDefault(c => c.Nombre.ToLower() == request.Nombre.ToLower());
+                _logger.LogWarning("Ya existe una categoría con el nombre: {Nombre} (ID: {Id})", request.Nombre, categoriaExistente.Id);
+                return Result.Failure<CategoriaProductoDto>("Ya existe una categoría con este nombre");
+            }
+            
+            _logger.LogInformation("No se encontró categoría duplicada, procediendo con la creación");
 
-                if (categoriaExistente != null)
-                {
-                    _logger.LogWarning("Ya existe una categoría con el nombre: {Nombre} (ID: {Id})", request.Nombre, categoriaExistente.Id);
-                    return Result.Failure<CategoriaProductoDto>("Ya existe una categoría con este nombre");
-                }
-                
-                _logger.LogInformation("No se encontró categoría duplicada, procediendo con la creación");
-
-                // Crear la nueva categoría
-                var categoria = ProductoCategoria.Crear(
+            // Crear la nueva categoría (esto puede lanzar excepciones de validación)
+            ProductoCategoria categoria;
+            try
+            {
+                categoria = ProductoCategoria.Crear(
                     request.Nombre,
                     request.Descripcion ?? string.Empty,
                     request.Orden,
                     request.Color ?? "#FF5722",
                     request.Icono ?? "🍽️");
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, "Error de validación al crear la categoría: {Nombre}", request.Nombre);
+                return Result.Failure<CategoriaProductoDto>(ex.Message);
+            }
 
+            // Usar UnitOfWork para guardar en la base de datos
+            return await _unitOfWork.EjecutarEnTransaccionAsync(async () =>
+            {
                 await _categoriaRepository.AgregarAsync(categoria, cancellationToken);
 
                 _logger.LogInformation("Categoría creada exitosamente con ID: {Id}", categoria.Id);
@@ -81,9 +90,14 @@ public class CrearCategoriaCommandHandler : IRequestHandler<CrearCategoriaComman
                 return Result.Success(dto);
             }, cancellationToken);
         }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogWarning(ex, "Error de validación al crear la categoría: {Nombre}", request.Nombre);
+            return Result.Failure<CategoriaProductoDto>(ex.Message);
+        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al crear la categoría: {Nombre}", request.Nombre);
+            _logger.LogError(ex, "Error interno al crear la categoría: {Nombre}", request.Nombre);
             return Result.Failure<CategoriaProductoDto>("Error interno al crear la categoría");
         }
     }

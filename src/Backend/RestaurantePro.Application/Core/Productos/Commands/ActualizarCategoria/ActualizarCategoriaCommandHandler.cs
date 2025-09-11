@@ -68,12 +68,20 @@ public class ActualizarCategoriaCommandHandler : IRequestHandler<ActualizarCateg
             }
 
             // Actualizar la categoría
-            categoria.Actualizar(
-                request.Nombre,
-                request.Descripcion ?? string.Empty,
-                request.Orden,
-                request.Color ?? "#FF5722",
-                request.Icono ?? "🍽️");
+            try
+            {
+                categoria.Actualizar(
+                    request.Nombre,
+                    request.Descripcion ?? string.Empty,
+                    request.Orden,
+                    request.Color ?? "#FF5722",
+                    request.Icono ?? "🍽️");
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, "Error de validación al actualizar la categoría: {Id}", request.Id);
+                return Result.Failure<CategoriaProductoDto>(ex.Message);
+            }
 
             // Actualizar el estado activo si es necesario
             if (request.Activa && !categoria.EstaActivo)

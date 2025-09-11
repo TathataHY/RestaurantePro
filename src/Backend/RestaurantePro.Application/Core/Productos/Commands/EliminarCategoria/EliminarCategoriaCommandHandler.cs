@@ -11,13 +11,16 @@ namespace RestaurantePro.Application.Core.Productos.Commands.EliminarCategoria;
 public class EliminarCategoriaCommandHandler : IRequestHandler<EliminarCategoriaCommand, Result>
 {
     private readonly IProductoCategoriaRepository _categoriaRepository;
+    private readonly IProductoRepository _productoRepository;
     private readonly ILogger<EliminarCategoriaCommandHandler> _logger;
 
     public EliminarCategoriaCommandHandler(
         IProductoCategoriaRepository categoriaRepository,
+        IProductoRepository productoRepository,
         ILogger<EliminarCategoriaCommandHandler> logger)
     {
         _categoriaRepository = categoriaRepository;
+        _productoRepository = productoRepository;
         _logger = logger;
     }
 
@@ -36,9 +39,15 @@ public class EliminarCategoriaCommandHandler : IRequestHandler<EliminarCategoria
                 return Result.Failure("Categoría no encontrada");
             }
 
-            // Nota: En una implementación completa, se verificaría si la categoría tiene productos asociados
-            // Por ahora, asumimos que no hay productos asociados o que la verificación se hace en el dominio
-            // En una implementación real, se podría inyectar IProductoRepository para verificar esto
+            // Verificar si la categoría tiene productos asociados
+            var productosAsociados = await _productoRepository.ObtenerPorCategoriaAsync(request.Id, false, cancellationToken);
+            
+            if (productosAsociados.Any())
+            {
+                _logger.LogWarning("No se puede eliminar la categoría {Id} porque tiene {Count} productos asociados", 
+                    request.Id, productosAsociados.Count);
+                return Result.Failure($"No se puede eliminar la categoría porque tiene {productosAsociados.Count} productos asociados");
+            }
 
             // Desactivar la categoría (soft delete)
             categoria.Desactivar();

@@ -16,11 +16,11 @@ public static class ProductosTestSeeder
     {
         var categorias = new List<ProductoCategoria>
         {
-            ProductoCategoria.Crear("Bebidas", "Bebidas frías y calientes", 1),
-            ProductoCategoria.Crear("Entradas", "Aperitivos y entradas", 2),
-            ProductoCategoria.Crear("Platos Principales", "Platos principales del menú", 3),
-            ProductoCategoria.Crear("Postres", "Postres y dulces", 4),
-            ProductoCategoria.Crear("Especialidades", "Platos especiales del chef", 5)
+            ProductoCategoria.Crear("Bebidas", "Bebidas frías y calientes", 1, "#2196F3", "🥤"),
+            ProductoCategoria.Crear("Entradas", "Aperitivos y entradas", 2, "#FF9800", "🍤"),
+            ProductoCategoria.Crear("Platos Principales", "Platos principales del menú", 3, "#4CAF50", "🍽️"),
+            ProductoCategoria.Crear("Postres", "Postres y dulces", 4, "#E91E63", "🍰"),
+            ProductoCategoria.Crear("Especialidades", "Platos especiales del chef", 5, "#9C27B0", "⭐")
         };
 
         // Establecer fecha de creación para las categorías
