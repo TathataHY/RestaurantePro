@@ -8,14 +8,14 @@ using System.Text;
 namespace RestaurantePro.Web.Admin.IntegrationTests;
 
 /// <summary>
-/// Pruebas de integración para la API de clientes usando la API directamente
+/// Pruebas de integración para la API de clientes usando la API con base de datos en memoria
 /// </summary>
-public class ApiClientesIntegrationTests : IClassFixture<WebApplicationFactory<RestaurantePro.Api.Program>>
+public class ApiClientesIntegrationTests : IClassFixture<WebApplicationFactory>
 {
-    private readonly WebApplicationFactory<RestaurantePro.Api.Program> _factory;
+    private readonly WebApplicationFactory _factory;
     private readonly HttpClient _client;
 
-    public ApiClientesIntegrationTests(WebApplicationFactory<RestaurantePro.Api.Program> factory)
+    public ApiClientesIntegrationTests(WebApplicationFactory factory)
     {
         _factory = factory;
         _client = _factory.CreateClient();
@@ -41,12 +41,16 @@ public class ApiClientesIntegrationTests : IClassFixture<WebApplicationFactory<R
         var response = await _client.GetAsync($"/api/comercial/clientes?{queryParams}");
 
         // Assert
-        // Como requiere autenticación, esperamos 401 Unauthorized
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var resultado = await response.Content.ReadFromJsonAsync<ApiResponse<PaginatedList<ClienteDto>>>();
+        resultado.Should().NotBeNull();
+        resultado!.Success.Should().BeTrue();
+        resultado.Data.Should().NotBeNull();
+        resultado.Data!.Items.Should().NotBeNull();
     }
 
     [Fact]
-    public async Task CrearCliente_ConDatosValidos_DeberiaRequerirAutenticacion()
+    public async Task CrearCliente_ConDatosValidos_DeberiaCrearClienteExitosamente()
     {
         // Arrange
         var nuevoCliente = new CrearClienteRequest
@@ -66,12 +70,18 @@ public class ApiClientesIntegrationTests : IClassFixture<WebApplicationFactory<R
         var response = await _client.PostAsJsonAsync("/api/comercial/clientes", nuevoCliente);
 
         // Assert
-        // Como requiere autenticación, esperamos 401 Unauthorized
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var resultado = await response.Content.ReadFromJsonAsync<ApiResponse<ClienteDto>>();
+        resultado.Should().NotBeNull();
+        resultado!.Success.Should().BeTrue();
+        resultado.Data.Should().NotBeNull();
+        resultado.Data!.Nombre.Should().Be("Juan");
+        resultado.Data.Apellidos.Should().Be("Pérez");
+        resultado.Data.Email.Should().Be("juan.perez@test.com");
     }
 
     [Fact]
-    public async Task CrearCliente_ConEmailDuplicado_DeberiaRequerirAutenticacion()
+    public async Task CrearCliente_ConEmailDuplicado_DeberiaRetornarError()
     {
         // Arrange
         var cliente1 = new CrearClienteRequest
@@ -97,13 +107,12 @@ public class ApiClientesIntegrationTests : IClassFixture<WebApplicationFactory<R
         var response2 = await _client.PostAsJsonAsync("/api/comercial/clientes", cliente2);
 
         // Assert
-        // Como requiere autenticación, esperamos 401 Unauthorized
-        response1.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-        response2.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response1.StatusCode.Should().Be(HttpStatusCode.Created);
+        response2.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
-    public async Task CrearCliente_ConDatosInvalidos_DeberiaRequerirAutenticacion()
+    public async Task CrearCliente_ConDatosInvalidos_DeberiaRetornarError()
     {
         // Arrange
         var clienteInvalido = new CrearClienteRequest
@@ -119,8 +128,7 @@ public class ApiClientesIntegrationTests : IClassFixture<WebApplicationFactory<R
         var response = await _client.PostAsJsonAsync("/api/comercial/clientes", clienteInvalido);
 
         // Assert
-        // Como requiere autenticación, esperamos 401 Unauthorized
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]
@@ -135,7 +143,7 @@ public class ApiClientesIntegrationTests : IClassFixture<WebApplicationFactory<R
     }
 
     [Fact]
-    public async Task ObtenerClientePorId_ConIdValido_DeberiaRequerirAutenticacion()
+    public async Task ObtenerClientePorId_ConIdValido_DeberiaRetornarCliente()
     {
         // Arrange
         var clienteId = Guid.NewGuid();
@@ -144,8 +152,8 @@ public class ApiClientesIntegrationTests : IClassFixture<WebApplicationFactory<R
         var response = await _client.GetAsync($"/api/comercial/clientes/{clienteId}");
 
         // Assert
-        // Como requiere autenticación, esperamos 401 Unauthorized
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        // Como el cliente no existe, esperamos 404 Not Found
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]

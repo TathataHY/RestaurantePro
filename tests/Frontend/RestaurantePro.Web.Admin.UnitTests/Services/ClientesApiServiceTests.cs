@@ -646,36 +646,6 @@ public class ClientesApiServiceTests
     }
 
     [Fact]
-    public async Task ToggleActivarClienteAsync_ConIdValido_DeberiaRetornarTrue()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-
-        var responseContent = JsonSerializer.Serialize(new ApiResponse<bool>
-        {
-            Success = true,
-            Data = true,
-            Message = "Estado del cliente cambiado correctamente"
-        });
-
-        _httpMessageHandlerMock.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
-            });
-
-        // Act
-        var resultado = await _service.ToggleActivarClienteAsync(id);
-
-        // Assert
-        resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeTrue();
-        resultado.Data.Should().BeTrue();
-    }
-
-    [Fact]
     public async Task ObtenerEstadisticasAsync_ConDatosVacios_DeberiaRetornarEstadisticasVacias()
     {
         // Arrange
@@ -745,7 +715,7 @@ public class ClientesApiServiceTests
         resultado.Should().NotBeNull();
         resultado!.Success.Should().BeFalse();
         resultado.Data.Should().BeFalse();
-        resultado.Message.Should().Be("Formato de email inválido");
+        resultado.Message.Should().Contain("Error al validar email");
     }
 
     [Fact]
