@@ -18,7 +18,10 @@ public class MesasApiServiceTests
         _httpClientFactoryMock = new Mock<IHttpClientFactory>();
         _tokenStoreMock = new Mock<TokenStore>();
 
-        var httpClient = new HttpClient(_httpMessageHandlerMock.Object);
+        var httpClient = new HttpClient(_httpMessageHandlerMock.Object)
+        {
+            BaseAddress = new Uri("http://localhost:8080")
+        };
         _httpClientFactoryMock.Setup(x => x.CreateClient("Api")).Returns(httpClient);
 
         _service = new MesasApiService(_httpClientFactoryMock.Object, _tokenStoreMock.Object);
@@ -388,4 +391,289 @@ public class MesasApiServiceTests
         resultado.Should().BeNull();
     }
 
+    // ===== PRUEBAS DE SEGURIDAD =====
+
+    [Fact]
+    public async Task ObtenerAsync_ConInyeccionSQL_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var mesasEsperadas = new List<MesaDto>();
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<List<MesaDto>>
+        {
+            Success = true,
+            Data = mesasEsperadas
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act - Buscar con inyección SQL
+        var resultado = await _service.ObtenerAsync(estado: "'; DROP TABLE mesas; --");
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task CrearAsync_ConXSS_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var request = new CrearMesaRequest
+        {
+            Numero = 1,
+            Capacidad = 4,
+            Zona = "<script>alert('xss')</script>",
+            Descripcion = "Descripción <img src=x onerror=alert('xss')>"
+        };
+
+        var mesaCreada = new MesaDto
+        {
+            Id = Guid.NewGuid(),
+            Numero = request.Numero.ToString(),
+            Capacidad = request.Capacidad,
+            Zona = request.Zona,
+            Estado = "Disponible"
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<MesaDto>
+        {
+            Success = true,
+            Data = mesaCreada
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Created,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.CrearAsync(request);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Zona.Should().Contain("<script>");
+    }
+
+    // ===== PRUEBAS DE CONCURRENCIA =====
+
+    [Fact]
+    public async Task ObtenerAsync_ConConcurrencia_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var mesasEsperadas = new List<MesaDto>
+        {
+            new() { Id = Guid.NewGuid(), Numero = "1", Capacidad = 4, Estado = "Disponible", Zona = "Salón Principal" }
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<List<MesaDto>>
+        {
+            Success = true,
+            Data = mesasEsperadas
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act - Simular concurrencia con múltiples tareas
+        var tasks = new List<Task<List<MesaDto>?>>();
+        for (int i = 0; i < 12; i++)
+        {
+            tasks.Add(_service.ObtenerAsync());
+        }
+
+        var resultados = await Task.WhenAll(tasks);
+
+        // Assert
+        resultados.Should().HaveCount(12);
+        resultados.Should().AllSatisfy(r => r.Should().NotBeNull());
+        resultados.Should().AllSatisfy(r => r!.Should().HaveCount(1));
+    }
+
+    [Fact]
+    public async Task CrearAsync_ConConcurrencia_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var request = new CrearMesaRequest
+        {
+            Numero = 10,
+            Capacidad = 6,
+            Zona = "Terraza",
+            Descripcion = "Mesa de concurrencia"
+        };
+
+        var mesaCreada = new MesaDto
+        {
+            Id = Guid.NewGuid(),
+            Numero = request.Numero.ToString(),
+            Capacidad = request.Capacidad,
+            Zona = request.Zona,
+            Estado = "Disponible"
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<MesaDto>
+        {
+            Success = true,
+            Data = mesaCreada
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Created,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act - Simular concurrencia con múltiples tareas
+        var tasks = new List<Task<MesaDto?>>();
+        for (int i = 0; i < 6; i++)
+        {
+            tasks.Add(_service.CrearAsync(request));
+        }
+
+        var resultados = await Task.WhenAll(tasks);
+
+        // Assert
+        resultados.Should().HaveCount(6);
+        resultados.Should().AllSatisfy(r => r.Should().NotBeNull());
+        resultados.Should().AllSatisfy(r => r!.Numero.Should().Be("10"));
+    }
+
+    // ===== PRUEBAS DE LÍMITES =====
+
+    [Fact]
+    public async Task ObtenerAsync_ConDatosMasivos_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var mesasMasivas = new List<MesaDto>();
+        for (int i = 0; i < 500; i++)
+        {
+            mesasMasivas.Add(new MesaDto
+            {
+                Id = Guid.NewGuid(),
+                Numero = i.ToString(),
+                Capacidad = (i % 8) + 2, // Capacidad entre 2 y 9
+                Estado = i % 3 == 0 ? "Ocupada" : "Disponible",
+                Zona = i % 4 == 0 ? "Terraza" : "Salón Principal"
+            });
+        }
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<List<MesaDto>>
+        {
+            Success = true,
+            Data = mesasMasivas
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerAsync();
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado.Should().HaveCount(500);
+        resultado.First().Numero.Should().Be("0");
+        resultado.Last().Numero.Should().Be("499");
+    }
+
+    [Fact]
+    public async Task ObtenerAsync_ConFiltrosExtremosSeguridad_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var mesasEsperadas = new List<MesaDto>();
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<List<MesaDto>>
+        {
+            Success = true,
+            Data = mesasEsperadas
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act - Filtros extremos
+        var resultado = await _service.ObtenerAsync(
+            estado: "EstadoInexistente@#$%^&*()",
+            ubicacion: "UbicacionInexistente@#$%^&*()",
+            capacidadMinima: 999999
+        );
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task CrearAsync_ConDatosExtremos_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var request = new CrearMesaRequest
+        {
+            Numero = int.MaxValue,
+            Capacidad = int.MaxValue,
+            Zona = new string('A', 1000), // Zona muy larga
+            Descripcion = new string('B', 5000), // Descripción muy larga
+            TieneVentana = true,
+            TieneSofa = true,
+            EsAccesible = true,
+            TieneEnchufe = true
+        };
+
+        var mesaCreada = new MesaDto
+        {
+            Id = Guid.NewGuid(),
+            Numero = request.Numero.ToString(),
+            Capacidad = request.Capacidad,
+            Zona = request.Zona,
+            Estado = "Disponible"
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<MesaDto>
+        {
+            Success = true,
+            Data = mesaCreada
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Created,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.CrearAsync(request);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Numero.Should().Be(int.MaxValue.ToString());
+        resultado.Capacidad.Should().Be(int.MaxValue);
+    }
 }

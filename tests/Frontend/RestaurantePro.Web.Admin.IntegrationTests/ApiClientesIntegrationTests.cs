@@ -14,16 +14,10 @@ namespace RestaurantePro.Web.Admin.IntegrationTests;
 /// <summary>
 /// Pruebas de integración para la API de clientes usando la API con base de datos en memoria
 /// </summary>
-public class ApiClientesIntegrationTests : IClassFixture<WebApplicationFactory>
+public class ApiClientesIntegrationTests : BaseIntegrationTest
 {
-    private readonly WebApplicationFactory _factory;
-    private readonly HttpClient _client;
-
-    public ApiClientesIntegrationTests(WebApplicationFactory factory)
+    public ApiClientesIntegrationTests(WebApplicationFactory factory) : base(factory)
     {
-        _factory = factory;
-        _client = _factory.CreateClient();
-        
         // Configurar autenticación para las pruebas
         SetupAuthentication();
     }
@@ -33,15 +27,6 @@ public class ApiClientesIntegrationTests : IClassFixture<WebApplicationFactory>
         // Para las pruebas, vamos a usar un token de prueba o deshabilitar la autenticación
         // Por ahora, vamos a probar sin autenticación para ver si los endpoints existen
         _client.DefaultRequestHeaders.Clear();
-    }
-
-    private JsonSerializerOptions GetJsonOptions()
-    {
-        return new JsonSerializerOptions
-        {
-            Converters = { new JsonStringEnumConverter() },
-            PropertyNameCaseInsensitive = true
-        };
     }
 
     [Fact]
@@ -150,7 +135,7 @@ public class ApiClientesIntegrationTests : IClassFixture<WebApplicationFactory>
     }
 
     [Fact]
-    public async Task CrearCliente_ConDatosInvalidos_DeberiaRetornarError()
+    public async Task CrearCliente_ConDatosInvalidosBasicos_DeberiaRetornarError()
     {
         // Arrange
         var clienteInvalido = new CrearClienteRequest
@@ -309,5 +294,391 @@ public class ApiClientesIntegrationTests : IClassFixture<WebApplicationFactory>
         // Assert
         // El endpoint de estadísticas no existe en el controlador
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task CrearCliente_Concurrencia_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var tareas = new List<Task<HttpResponseMessage>>();
+        var clientes = new List<CrearClienteRequest>();
+
+        // Crear 10 clientes concurrentemente
+        for (int i = 0; i < 10; i++)
+        {
+            var cliente = new CrearClienteRequest
+            {
+                Nombre = $"Cliente Concurrente {i}",
+                Email = $"concurrente{i}@test.com",
+                Telefono = $"+123456789{i}",
+                FechaNacimiento = DateTime.Today.AddYears(-25),
+                AceptaTerminos = true
+            };
+            clientes.Add(cliente);
+            tareas.Add(_client.PostAsJsonAsync("/api/comercial/clientes", cliente));
+        }
+
+        // Act
+        var responses = await Task.WhenAll(tareas);
+
+        // Assert
+        responses.Should().HaveCount(10);
+        responses.All(r => r.StatusCode == HttpStatusCode.Created).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ObtenerClientes_Rendimiento_DeberiaResponderRapidamente()
+    {
+        // Arrange
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        // Act
+        var response = await _client.GetAsync("/api/comercial/clientes?pageNumber=1&pageSize=10");
+
+        // Assert
+        stopwatch.Stop();
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(1000, "La consulta debería responder en menos de 1 segundo");
+    }
+
+    [Fact]
+    public async Task CrearCliente_ConDatosExtremos_DeberiaManejarCorrectamente()
+    {
+        // Arrange - Datos con caracteres especiales y límites
+        var clienteExtremo = new CrearClienteRequest
+        {
+            Nombre = "José María de la Cruz y del Valle", // Nombre muy largo
+            Email = "jose.maria.delacruz@empresa-muy-larga.com.pe", // Email largo
+            Telefono = "+51-987-654-321", // Teléfono con formato especial
+            FechaNacimiento = DateTime.Today.AddYears(-100), // Edad extrema
+            Ciudad = "Lima Metropolitana", // Ciudad larga
+            Pais = "República del Perú", // País largo
+            AceptaMarketing = true,
+            AceptaTerminos = true
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/comercial/clientes", clienteExtremo);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var jsonContent = await response.Content.ReadAsStringAsync();
+        var resultado = JsonSerializer.Deserialize<ApiResponse<ClienteDto>>(jsonContent, GetJsonOptions());
+        resultado.Should().NotBeNull();
+        resultado!.Success.Should().BeTrue();
+        resultado.Data.Should().NotBeNull();
+        resultado.Data!.Nombre.Should().Be("José María de la Cruz y del Valle");
+    }
+
+    [Fact]
+    public async Task ObtenerClientes_ConPaginacionExtrema_DeberiaManejarCorrectamente()
+    {
+        // Arrange - Página muy grande
+        var queryParams = "pageNumber=999999&pageSize=1";
+
+        // Act
+        var response = await _client.GetAsync($"/api/comercial/clientes?{queryParams}");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var jsonContent = await response.Content.ReadAsStringAsync();
+        var resultado = JsonSerializer.Deserialize<ApiResponse<PaginatedList<ClienteDto>>>(jsonContent, GetJsonOptions());
+        resultado.Should().NotBeNull();
+        resultado!.Success.Should().BeTrue();
+        resultado.Data.Should().NotBeNull();
+        resultado.Data!.Items.Should().BeEmpty(); // Página vacía para página muy grande
+    }
+
+    [Fact]
+    public async Task CrearCliente_ConCaracteresEspeciales_DeberiaManejarCorrectamente()
+    {
+        // Arrange - Caracteres especiales en nombre
+        var clienteEspecial = new CrearClienteRequest
+        {
+            Nombre = "José María O'Connor-Smith", // Apóstrofe y guión
+            Email = "jose.oconnor@test.com",
+            Telefono = "+51-987-654-321",
+            FechaNacimiento = DateTime.Today.AddYears(-25),
+            AceptaTerminos = true
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/comercial/clientes", clienteEspecial);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var jsonContent = await response.Content.ReadAsStringAsync();
+        var resultado = JsonSerializer.Deserialize<ApiResponse<ClienteDto>>(jsonContent, GetJsonOptions());
+        resultado.Should().NotBeNull();
+        resultado!.Success.Should().BeTrue();
+        resultado.Data.Should().NotBeNull();
+        resultado.Data!.Nombre.Should().Be("José María O'Connor-Smith");
+    }
+
+    [Fact]
+    public async Task CrearCliente_ConEmailInternacional_DeberiaManejarCorrectamente()
+    {
+        // Arrange - Email con dominio internacional
+        var clienteInternacional = new CrearClienteRequest
+        {
+            Nombre = "Cliente Internacional",
+            Email = "cliente@empresa.co.uk", // Dominio .co.uk
+            Telefono = "+44-20-7946-0958", // Teléfono del Reino Unido
+            FechaNacimiento = DateTime.Today.AddYears(-30),
+            Ciudad = "London",
+            Pais = "United Kingdom",
+            AceptaTerminos = true
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/comercial/clientes", clienteInternacional);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var jsonContent = await response.Content.ReadAsStringAsync();
+        var resultado = JsonSerializer.Deserialize<ApiResponse<ClienteDto>>(jsonContent, GetJsonOptions());
+        resultado.Should().NotBeNull();
+        resultado!.Success.Should().BeTrue();
+        resultado.Data.Should().NotBeNull();
+        resultado.Data!.Email.Should().Be("cliente@empresa.co.uk");
+    }
+
+    [Fact]
+    public async Task CrearCliente_ConInyeccionSQL_DeberiaRechazarCorrectamente()
+    {
+        // Arrange - Intentar inyección SQL en el nombre
+        var clienteMalicioso = new CrearClienteRequest
+        {
+            Nombre = "'; DROP TABLE Clientes; --", // Inyección SQL
+            Email = "hacker@test.com",
+            Telefono = "+1234567890",
+            FechaNacimiento = DateTime.Today.AddYears(-25),
+            AceptaTerminos = true
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/comercial/clientes", clienteMalicioso);
+
+        // Assert
+        // Debería rechazar el nombre malicioso, no ejecutar la inyección
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.Created);
+        
+        // Si se crea, verificar que no se ejecutó la inyección
+        if (response.StatusCode == HttpStatusCode.Created)
+        {
+            var jsonContent = await response.Content.ReadAsStringAsync();
+            var resultado = JsonSerializer.Deserialize<ApiResponse<ClienteDto>>(jsonContent, GetJsonOptions());
+            resultado.Should().NotBeNull();
+            resultado!.Data.Should().NotBeNull();
+            // El nombre debería estar sanitizado o rechazado
+            resultado.Data!.Nombre.Should().NotContain("DROP TABLE");
+        }
+    }
+
+    [Fact]
+    public async Task CrearCliente_ConXSS_DeberiaSanitizarCorrectamente()
+    {
+        // Arrange - Intentar XSS en el nombre
+        var clienteXSS = new CrearClienteRequest
+        {
+            Nombre = "<script>alert('XSS')</script>Juan", // XSS attempt
+            Email = "xss@test.com",
+            Telefono = "+1234567890",
+            FechaNacimiento = DateTime.Today.AddYears(-25),
+            AceptaTerminos = true
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/comercial/clientes", clienteXSS);
+
+        // Assert
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.Created);
+        
+        // Si se crea, verificar que se sanitizó
+        if (response.StatusCode == HttpStatusCode.Created)
+        {
+            var jsonContent = await response.Content.ReadAsStringAsync();
+            var resultado = JsonSerializer.Deserialize<ApiResponse<ClienteDto>>(jsonContent, GetJsonOptions());
+            resultado.Should().NotBeNull();
+            resultado!.Data.Should().NotBeNull();
+            // El nombre debería estar sanitizado
+            resultado.Data!.Nombre.Should().NotContain("<script>");
+            resultado.Data.Nombre.Should().NotContain("alert");
+        }
+    }
+
+    [Fact]
+    public async Task ObtenerClientes_ConParametrosMaliciosos_DeberiaRechazarCorrectamente()
+    {
+        // Arrange - Parámetros maliciosos en la URL
+        var queryParams = "pageNumber=1&pageSize=10&orderBy=<script>alert('XSS')</script>";
+
+        // Act
+        var response = await _client.GetAsync($"/api/comercial/clientes?{queryParams}");
+
+        // Assert
+        // Debería rechazar o sanitizar los parámetros maliciosos
+        response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.OK);
+        
+        if (response.StatusCode == HttpStatusCode.OK)
+        {
+            var jsonContent = await response.Content.ReadAsStringAsync();
+            var resultado = JsonSerializer.Deserialize<ApiResponse<PaginatedList<ClienteDto>>>(jsonContent, GetJsonOptions());
+            resultado.Should().NotBeNull();
+            // Verificar que no se ejecutó el script
+            jsonContent.Should().NotContain("alert('XSS')");
+        }
+    }
+
+    [Fact]
+    public async Task CrearCliente_ConDatosMuyLargos_DeberiaRechazarCorrectamente()
+    {
+        // Arrange - Datos excesivamente largos
+        var clienteLargo = new CrearClienteRequest
+        {
+            Nombre = new string('A', 1000), // Nombre de 1000 caracteres
+            Email = "test@test.com",
+            Telefono = "+1234567890",
+            FechaNacimiento = DateTime.Today.AddYears(-25),
+            AceptaTerminos = true
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/comercial/clientes", clienteLargo);
+
+        // Assert
+        // Debería rechazar datos excesivamente largos
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task CrearCliente_ConTransaccionCompleta_DeberiaMantenerConsistencia()
+    {
+        // Arrange - Crear cliente con datos completos
+        var clienteCompleto = new CrearClienteRequest
+        {
+            Nombre = "Cliente Transaccional",
+            Email = "transaccional@test.com",
+            Telefono = "+1234567890",
+            FechaNacimiento = DateTime.Today.AddYears(-25),
+            Ciudad = "Lima",
+            Pais = "Perú",
+            AceptaMarketing = true,
+            AceptaTerminos = true
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/comercial/clientes", clienteCompleto);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var jsonContent = await response.Content.ReadAsStringAsync();
+        var resultado = JsonSerializer.Deserialize<ApiResponse<ClienteDto>>(jsonContent, GetJsonOptions());
+        resultado.Should().NotBeNull();
+        resultado!.Success.Should().BeTrue();
+        resultado.Data.Should().NotBeNull();
+        
+        var clienteId = resultado.Data!.Id;
+        
+        // Verificar que el cliente se puede recuperar después de la creación
+        var getResponse = await _client.GetAsync($"/api/comercial/clientes/{clienteId}");
+        getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        var getJsonContent = await getResponse.Content.ReadAsStringAsync();
+        var getResultado = JsonSerializer.Deserialize<ApiResponse<ClienteDto>>(getJsonContent, GetJsonOptions());
+        getResultado.Should().NotBeNull();
+        getResultado!.Data.Should().NotBeNull();
+        getResultado.Data!.Id.Should().Be(clienteId);
+        getResultado.Data.Email.Should().Be("transaccional@test.com");
+    }
+
+    [Fact]
+    public async Task ActualizarCliente_ConTransaccionCompleta_DeberiaMantenerConsistencia()
+    {
+        // Arrange - Crear cliente primero
+        var clienteOriginal = new CrearClienteRequest
+        {
+            Nombre = "Cliente Original",
+            Email = "original@test.com",
+            Telefono = "+1234567890",
+            FechaNacimiento = DateTime.Today.AddYears(-25),
+            AceptaTerminos = true
+        };
+
+        var createResponse = await _client.PostAsJsonAsync("/api/comercial/clientes", clienteOriginal);
+        createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        
+        var createJsonContent = await createResponse.Content.ReadAsStringAsync();
+        var createResultado = JsonSerializer.Deserialize<ApiResponse<ClienteDto>>(createJsonContent, GetJsonOptions());
+        var clienteId = createResultado!.Data!.Id;
+
+        // Actualizar cliente
+        var clienteActualizado = new ActualizarClienteRequest
+        {
+            Nombre = "Cliente Actualizado",
+            Apellidos = "Apellido Actualizado",
+            Email = "actualizado@test.com",
+            Telefono = "+9876543210",
+            FechaNacimiento = DateTime.Today.AddYears(-30),
+            Ciudad = "Arequipa",
+            Pais = "Perú",
+            AceptaMarketing = true
+        };
+
+        // Act
+        var updateResponse = await _client.PutAsJsonAsync($"/api/comercial/clientes/{clienteId}", clienteActualizado);
+
+        // Assert
+        updateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        // Verificar que la actualización se mantiene
+        var getResponse = await _client.GetAsync($"/api/comercial/clientes/{clienteId}");
+        getResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        var getJsonContent = await getResponse.Content.ReadAsStringAsync();
+        var getResultado = JsonSerializer.Deserialize<ApiResponse<ClienteDto>>(getJsonContent, GetJsonOptions());
+        getResultado.Should().NotBeNull();
+        getResultado!.Data.Should().NotBeNull();
+        getResultado.Data!.Email.Should().Be("actualizado@test.com");
+        // Nota: Ciudad y Pais no están disponibles en ClienteDto
+    }
+
+    [Fact]
+    public async Task ObtenerClientes_ConFiltrosComplejos_DeberiaFuncionarCorrectamente()
+    {
+        // Arrange - Crear varios clientes con diferentes características
+        var clientes = new[]
+        {
+            new CrearClienteRequest { Nombre = "Ana García", Email = "ana@test.com", Telefono = "+1111111111", FechaNacimiento = DateTime.Today.AddYears(-25), AceptaTerminos = true },
+            new CrearClienteRequest { Nombre = "Carlos López", Email = "carlos@test.com", Telefono = "+2222222222", FechaNacimiento = DateTime.Today.AddYears(-30), AceptaTerminos = true },
+            new CrearClienteRequest { Nombre = "María Rodríguez", Email = "maria@test.com", Telefono = "+3333333333", FechaNacimiento = DateTime.Today.AddYears(-35), AceptaTerminos = true }
+        };
+
+        foreach (var cliente in clientes)
+        {
+            await _client.PostAsJsonAsync("/api/comercial/clientes", cliente);
+        }
+
+        // Act - Probar diferentes combinaciones de filtros
+        var filtros = new[]
+        {
+            "pageNumber=1&pageSize=2&orderBy=NombreCompleto&orderDirection=asc",
+            "pageNumber=1&pageSize=2&orderBy=Email&orderDirection=desc",
+            "pageNumber=2&pageSize=1&orderBy=FechaRegistro&orderDirection=asc"
+        };
+
+        // Assert
+        foreach (var filtro in filtros)
+        {
+            var response = await _client.GetAsync($"/api/comercial/clientes?{filtro}");
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            
+            var jsonContent = await response.Content.ReadAsStringAsync();
+            var resultado = JsonSerializer.Deserialize<ApiResponse<PaginatedList<ClienteDto>>>(jsonContent, GetJsonOptions());
+            resultado.Should().NotBeNull();
+            resultado!.Success.Should().BeTrue();
+            resultado.Data.Should().NotBeNull();
+            resultado.Data!.Items.Should().NotBeNull();
+        }
     }
 }
