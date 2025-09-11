@@ -7,31 +7,100 @@
 
 <PageTitle>Iniciar sesión - Admin</PageTitle>
 
-<div class="row justify-content-center mt-5">
-  <div class="col-md-4">
-    <h3 class="mb-3">Iniciar sesión</h3>
-    @if (!string.IsNullOrEmpty(error))
-    {
-      <div class="alert alert-danger">@error</div>
-    }
-    <EditForm Model="model" OnValidSubmit="LoginAsync">
-      <DataAnnotationsValidator />
-      <div class="mb-3">
-        <label class="form-label">Correo</label>
-        <InputText class="form-control" @bind-Value="model.Email" />
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Contraseña</label>
-        <InputText class="form-control" @bind-Value="model.Password" type="password" />
-      </div>
-      <div class="form-check mb-3">
-        <InputCheckbox class="form-check-input" @bind-Value="model.Recordarme" />
-        <label class="form-check-label">Recordarme</label>
-      </div>
-      <button class="btn btn-primary w-100" disabled="@loading">@("Entrar" + (loading ? "..." : string.Empty))</button>
-    </EditForm>
-  </div>
-  </div>
+<div class="relative flex size-full min-h-screen flex-col bg-cover bg-center group/design-root" style="font-family: Manrope, 'Noto Sans', sans-serif; background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1552566626-52f8b828add9?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+    <div class="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
+        <header class="flex items-center mb-6 text-2xl font-semibold text-white">
+            <svg class="w-8 h-8 mr-2 text-blue-500" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                <g clip-path="url(#clip0_6_319)">
+                    <path d="M8.57829 8.57829C5.52816 11.6284 3.451 15.5145 2.60947 19.7452C1.76794 23.9758 2.19984 28.361 3.85056 32.3462C5.50128 36.3314 8.29667 39.7376 11.8832 42.134C15.4698 44.5305 19.6865 45.8096 24 45.8096C28.3135 45.8096 32.5302 44.5305 36.1168 42.134C39.7033 39.7375 42.4987 36.3314 44.1494 32.3462C45.8002 28.361 46.2321 23.9758 45.3905 19.7452C44.549 15.5145 42.4718 11.6284 39.4217 8.57829L24 24L8.57829 8.57829Z" fill="currentColor"></path>
+                </g>
+                <defs>
+                    <clipPath id="clip0_6_319"><rect fill="white" height="48" width="48"></rect></clipPath>
+                </defs>
+            </svg>
+            RestaurantePro
+        </header>
+        
+        <div class="w-full bg-white rounded-lg shadow-xl dark:border md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
+            <div class="p-6 space-y-4 md:space-y-6 sm:p-8">
+                <h1 class="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">Inicia sesión en tu cuenta</h1>
+                <p class="text-gray-500 dark:text-gray-400">Bienvenido de nuevo a RestaurantePro Admin.</p>
+                
+                @if (!string.IsNullOrEmpty(error))
+                {
+                    <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg dark:bg-red-200 dark:text-red-800">
+                        @error
+                    </div>
+                }
+                
+                <EditForm Model="model" OnValidSubmit="LoginAsync">
+                    <DataAnnotationsValidator />
+                    <div class="space-y-4 md:space-y-6">
+                        <div>
+                            <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="email">Email / Usuario</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    <span class="material-symbols-outlined text-gray-500 dark:text-gray-400">person</span>
+                                </div>
+                                <InputText class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+                                          @bind-Value="model.Email" 
+                                          placeholder="nombre@email.com" 
+                                          type="email" />
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block mb-2 text-sm font-medium text-gray-900 dark:text-white" for="password">Contraseña</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    <span class="material-symbols-outlined text-gray-500 dark:text-gray-400">lock</span>
+                                </div>
+                                <InputText class="bg-gray-50 border border-gray-300 text-gray-900 sm:text-sm rounded-lg focus:ring-blue-600 focus:border-blue-600 block w-full pl-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+                                          @bind-Value="model.Password" 
+                                          placeholder="••••••••" 
+                                          type="password" />
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-start">
+                                <div class="flex items-center h-5">
+                                    <InputCheckbox class="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-3 focus:ring-blue-300 dark:bg-gray-700 dark:border-gray-600 dark:focus:ring-blue-600 dark:ring-offset-gray-800" 
+                                                  @bind-Value="model.Recordarme" />
+                                </div>
+                                <div class="ml-3 text-sm">
+                                    <label class="text-gray-500 dark:text-gray-300">Recordar mi sesión</label>
+                                </div>
+                            </div>
+                            <a class="text-sm font-medium text-blue-600 hover:underline dark:text-blue-500" href="#">¿Olvidaste tu contraseña?</a>
+                        </div>
+                        
+                        <button class="w-full text-white bg-blue-600 hover:bg-blue-700 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 transition-colors duration-200" 
+                                type="submit" 
+                                disabled="@loading">
+                            @if (loading)
+                            {
+                                <div class="flex items-center justify-center">
+                                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                    Iniciando sesión...
+                                </div>
+                            }
+                            else
+                            {
+                                @("Iniciar Sesión")
+                            }
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+        
+        <footer class="mt-8 text-center text-sm text-gray-300">
+            <p>Contacta con nosotros: support@restaurantepro.com</p>
+            <p>Versión 1.2.3</p>
+        </footer>
+    </div>
+</div>
 
 @code {
   private LoginRequest model = new();
