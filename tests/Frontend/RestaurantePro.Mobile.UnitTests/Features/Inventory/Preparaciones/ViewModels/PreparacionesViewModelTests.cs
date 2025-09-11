@@ -51,7 +51,7 @@ public class PreparacionesViewModelTests
         _mockDialog.Verify(d => d.ShowAlertAsync(
             It.Is<string>(t => t == "Error"),
             It.IsAny<string>(),
-            It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -100,7 +100,7 @@ public class PreparacionesViewModelTests
         await vm.CambiarDisponibilidadCommand.ExecuteAsync(item);
 
         _mockService.Verify(s => s.CambiarDisponibilidadAsync(item.Id, false, It.IsAny<CancellationToken>()), Times.Once);
-        _mockDialog.Verify(d => d.ShowAlertAsync(It.Is<string>(t => t == "Éxito"), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockDialog.Verify(d => d.ShowAlertAsync(It.Is<string>(t => t == "Éxito"), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -114,6 +114,6 @@ public class PreparacionesViewModelTests
         var vm = CreateVm();
         await vm.CambiarDisponibilidadCommand.ExecuteAsync(item);
 
-        _mockDialog.Verify(d => d.ShowAlertAsync(It.Is<string>(t => t == "Error"), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockDialog.Verify(d => d.ShowAlertAsync(It.Is<string>(t => t == "Error"), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 }

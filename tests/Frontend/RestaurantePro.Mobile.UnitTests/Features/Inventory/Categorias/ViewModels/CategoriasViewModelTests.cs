@@ -280,7 +280,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
             await _viewModel.BuscarCategoriasCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(d => d.ShowErrorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            _mockDialogService.Verify(d => d.ShowErrorAsync(It.IsAny<string>()), Times.Once);
         }
 
         [Fact]
@@ -339,7 +339,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
             await _viewModel.BuscarCategoriasCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(d => d.ShowErrorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+            _mockDialogService.Verify(d => d.ShowErrorAsync(It.IsAny<string>()), Times.Once);
         }
     }
 } 

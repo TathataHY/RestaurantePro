@@ -241,10 +241,10 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
                 Disponible = true
             };
 
-            _mockDialogService.Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            _mockDialogService.Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                              .ReturnsAsync(true);
 
-            _mockPreparacionesService.Setup(x => x.IniciarPreparacionAsync(preparacion.Id, It.IsAny<IniciarPreparacionDto>(It.IsAny<CancellationToken>())))
+            _mockPreparacionesService.Setup(x => x.IniciarPreparacionAsync(preparacion.Id, It.IsAny<IniciarPreparacionDto>(), It.IsAny<CancellationToken>()))
                                     .ReturnsAsync(ApiResponse<PreparacionDto>.SuccessResponse(preparacionIniciada));
 
             // Act
@@ -271,7 +271,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
                 Disponible = true
             };
 
-            _mockDialogService.Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            _mockDialogService.Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                              .ReturnsAsync(false);
 
             // Act
@@ -309,7 +309,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
                 Disponible = true
             };
 
-            _mockDialogService.Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            _mockDialogService.Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                              .ReturnsAsync(true);
 
             _mockPreparacionesService.Setup(x => x.CompletarPreparacionAsync(preparacion.Id, It.IsAny<CancellationToken>()))
@@ -351,13 +351,13 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
                 Disponible = false
             };
 
-            _mockDialogService.Setup(x => x.ShowPromptAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            _mockDialogService.Setup(x => x.ShowPromptAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
                              .ReturnsAsync("Sin ingredientes");
 
-            _mockDialogService.Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            _mockDialogService.Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                              .ReturnsAsync(true);
 
-            _mockPreparacionesService.Setup(x => x.CancelarPreparacionAsync(preparacion.Id, It.IsAny<CancelarPreparacionDto>(It.IsAny<CancellationToken>())))
+            _mockPreparacionesService.Setup(x => x.CancelarPreparacionAsync(preparacion.Id, It.IsAny<CancelarPreparacionDto>(), It.IsAny<CancellationToken>()))
                                     .ReturnsAsync(ApiResponse<PreparacionDto>.SuccessResponse(preparacionCancelada));
 
             // Act
@@ -384,7 +384,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
                 Disponible = true
             };
 
-            _mockDialogService.Setup(x => x.ShowPromptAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            _mockDialogService.Setup(x => x.ShowPromptAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
                              .ReturnsAsync(string.Empty);
 
             // Act
@@ -552,7 +552,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
             _mockDialogService.Verify(x => x.ShowAlertAsync(
                 It.Is<string>(t => t.Contains("Detalles")),
                 It.Is<string>(m => m.Contains("Nombre:") && m.Contains("Pizza Margherita") && m.Contains("Categoría:") && m.Contains("Pizzas") && m.Contains("Disponible: Sí")),
-                It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+                It.IsAny<string>()), Times.Once);
         }
 
         [Fact]
@@ -565,7 +565,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
             _mockDialogService.Verify(x => x.ShowAlertAsync(
                 It.Is<string>(t => t.Contains("Función no disponible")),
                 It.Is<string>(m => m.Contains("creación de preparaciones") || m.Contains("no está disponible")),
-                It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+                It.IsAny<string>()), Times.Once);
         }
     }
 } 

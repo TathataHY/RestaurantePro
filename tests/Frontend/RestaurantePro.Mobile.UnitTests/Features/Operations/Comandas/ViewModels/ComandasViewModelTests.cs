@@ -168,7 +168,7 @@ public class ComandasViewModelTests
         await vm.CrearComandaCommand.ExecuteAsync(null);
 
         // Assert: muestra error
-        _mockDialog.Verify(d => d.ShowAlertAsync("Error", It.Is<string>(m => m.Contains("No se pudieron cargar")), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mockDialog.Verify(d => d.ShowAlertAsync("Error", It.Is<string>(m => m.Contains("No se pudieron cargar")), It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -536,7 +536,7 @@ public class ComandasViewModelTests
         var comanda = new ComandaDto { Id = Guid.NewGuid(), Estado = "Finalizada" };
         var mockService = new Mock<IComandasService>();
         var mockDialog = new Mock<IDialogService>();
-        mockDialog.Setup(x => x.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        mockDialog.Setup(x => x.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>())).Returns(Task.CompletedTask);
         var vm = CreateVm(mockService.Object, mockDialog.Object);
         await vm.CambiarEstadoComandaCommand.ExecuteAsync(comanda);
         mockService.Verify(s => s.CambiarEstadoComandaAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
