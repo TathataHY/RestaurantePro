@@ -521,6 +521,7 @@ public class CategoriasCrudIntegrationTests : ApiIntegrationTestBase
         var getResponseContent = await getResponse.Content.ReadAsStringAsync();
         var categoriaObtenida = JsonSerializer.Deserialize<ApiResponse<CategoriaProductoDto>>(getResponseContent, new JsonSerializerOptions
         {
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             PropertyNameCaseInsensitive = true,
             Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
         });
@@ -590,6 +591,7 @@ public class CategoriasCrudIntegrationTests : ApiIntegrationTestBase
         var getResponseContent = await getResponse.Content.ReadAsStringAsync();
         var categoriaObtenida = JsonSerializer.Deserialize<ApiResponse<CategoriaProductoDto>>(getResponseContent, new JsonSerializerOptions
         {
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
             PropertyNameCaseInsensitive = true,
             Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
         });

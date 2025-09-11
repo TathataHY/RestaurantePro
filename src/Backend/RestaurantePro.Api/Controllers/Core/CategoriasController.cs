@@ -148,8 +148,8 @@ public class CategoriasController : ControllerBase
                 Id = categoria.Id,
                 Nombre = categoria.Nombre,
                 Descripcion = categoria.Descripcion,
-                Color = "#2196F3", // Color por defecto
-                Icono = "🍽️", // Icono por defecto
+                Color = categoria.Color,
+                Icono = categoria.Icono,
                 Orden = categoria.Orden,
                 Activa = categoria.EstaActivo,
                 CantidadProductos = productosCategoria.Count,
@@ -298,7 +298,6 @@ public class CategoriasController : ControllerBase
         Guid id, [FromBody] ActualizarCategoriaDto request)
     {
         _logger.LogInformation("✏️ PUT /api/core/categorias/{Id} - Nombre: {Nombre}", id, request.Nombre);
-        _logger.LogInformation("🔍 Datos recibidos - Icono: '{Icono}', Color: '{Color}'", request.Icono, request.Color);
 
         try
         {

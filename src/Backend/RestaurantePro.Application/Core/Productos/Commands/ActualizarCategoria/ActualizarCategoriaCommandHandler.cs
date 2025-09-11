@@ -68,16 +68,12 @@ public class ActualizarCategoriaCommandHandler : IRequestHandler<ActualizarCateg
             }
 
             // Actualizar la categoría
-            _logger.LogInformation("Actualizando categoría - Icono recibido: '{Icono}', Color recibido: '{Color}'", request.Icono, request.Color);
-            _logger.LogInformation("Valores antes de actualizar - request.Icono: '{Icono}', request.Color: '{Color}'", request.Icono, request.Color);
             categoria.Actualizar(
                 request.Nombre,
                 request.Descripcion ?? string.Empty,
                 request.Orden,
                 request.Color ?? "#FF5722",
                 request.Icono ?? "🍽️");
-            
-            _logger.LogInformation("Categoría actualizada - Icono después de actualizar: '{Icono}', Color después de actualizar: '{Color}'", categoria.Icono, categoria.Color);
 
             // Actualizar el estado activo si es necesario
             if (request.Activa && !categoria.EstaActivo)

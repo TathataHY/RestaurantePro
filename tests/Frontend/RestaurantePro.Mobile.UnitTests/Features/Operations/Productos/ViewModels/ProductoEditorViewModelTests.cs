@@ -62,14 +62,14 @@ public class ProductoEditorViewModelTests
         };
         var apiResponse = ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias);
 
-        _mockProductosService.Setup(x => x.ObtenerCategoriasAsync())
+        _mockProductosService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(apiResponse);
 
         // Act
         await _viewModel.CargarCategoriasCommand.ExecuteAsync(null);
 
         // Assert
-        _mockProductosService.Verify(x => x.ObtenerCategoriasAsync(), Times.Once);
+        _mockProductosService.Verify(x => x.ObtenerCategoriasAsync(It.IsAny<CancellationToken>()), Times.Once);
         Assert.Equal(2, _viewModel.Categorias.Count);
         Assert.Equal("Bebidas", _viewModel.Categorias.First().Nombre);
         Assert.Equal("Platos Principales", _viewModel.Categorias.Last().Nombre);
@@ -81,12 +81,12 @@ public class ProductoEditorViewModelTests
         // Arrange
         var apiResponse = ApiResponse<List<CategoriaProductoDto>>.Failure("Error de API");
 
-        _mockProductosService.Setup(x => x.ObtenerCategoriasAsync())
+        _mockProductosService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(apiResponse);
 
         // Act & Assert
         await _viewModel.CargarCategoriasCommand.ExecuteAsync(null);
-        _mockProductosService.Verify(x => x.ObtenerCategoriasAsync(), Times.Once);
+        _mockProductosService.Verify(x => x.ObtenerCategoriasAsync(It.IsAny<CancellationToken>()), Times.Once);
         _viewModel.Categorias.Should().BeEmpty();
     }
 
@@ -102,14 +102,14 @@ public class ProductoEditorViewModelTests
         var createdProduct = new ProductoDto { Id = Guid.NewGuid(), Nombre = "Pizza Margherita" };
         var apiResponse = ApiResponse<ProductoDto>.SuccessResponse(createdProduct);
 
-        _mockProductosService.Setup(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>()))
+        _mockProductosService.Setup(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(apiResponse);
 
         // Act
         await _viewModel.GuardarCommand.ExecuteAsync(null);
 
         // Assert
-        _mockProductosService.Verify(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>()), Times.Once);
+        _mockProductosService.Verify(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockDialogService.Verify(x => x.ShowSuccessAsync("Producto guardado"), Times.Once);
         _mockNavigationService.Verify(x => x.GoBackAsync(), Times.Once);
     }
@@ -129,14 +129,14 @@ public class ProductoEditorViewModelTests
         var updatedProduct = new ProductoDto { Id = productoId, Nombre = "Pizza Margherita Actualizada" };
         var apiResponse = ApiResponse<ProductoDto>.SuccessResponse(updatedProduct);
 
-        _mockProductosService.Setup(x => x.ActualizarProductoAsync(It.IsAny<ActualizarProductoRequest>()))
+        _mockProductosService.Setup(x => x.ActualizarProductoAsync(It.IsAny<ActualizarProductoRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(apiResponse);
 
         // Act
         await _viewModel.GuardarCommand.ExecuteAsync(null);
 
         // Assert
-        _mockProductosService.Verify(x => x.ActualizarProductoAsync(It.IsAny<ActualizarProductoRequest>()), Times.Once);
+        _mockProductosService.Verify(x => x.ActualizarProductoAsync(It.IsAny<ActualizarProductoRequest>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockDialogService.Verify(x => x.ShowSuccessAsync("Producto guardado"), Times.Once);
         _mockNavigationService.Verify(x => x.GoBackAsync(), Times.Once);
     }
@@ -151,14 +151,14 @@ public class ProductoEditorViewModelTests
 
         var apiResponse = ApiResponse<ProductoDto>.Failure("Error al guardar producto");
 
-        _mockProductosService.Setup(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>()))
+        _mockProductosService.Setup(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(apiResponse);
 
         // Act
         await _viewModel.GuardarCommand.ExecuteAsync(null);
 
         // Assert
-        _mockProductosService.Verify(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>()), Times.Once);
+        _mockProductosService.Verify(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockDialogService.Verify(x => x.ShowErrorAsync("Error al guardar producto"), Times.Once);
         _mockNavigationService.Verify(x => x.GoBackAsync(), Times.Never);
     }
@@ -182,14 +182,14 @@ public class ProductoEditorViewModelTests
         
         var apiResponse = ApiResponse<ProductoDto>.SuccessResponse(producto);
 
-        _mockProductosService.Setup(x => x.ObtenerProductoPorIdAsync(productoId))
+        _mockProductosService.Setup(x => x.ObtenerProductoPorIdAsync(productoId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(apiResponse);
 
         // Act
         await _viewModel.CargarParaEdicionCommand.ExecuteAsync(productoId);
 
         // Assert
-        _mockProductosService.Verify(x => x.ObtenerProductoPorIdAsync(productoId), Times.Once);
+        _mockProductosService.Verify(x => x.ObtenerProductoPorIdAsync(productoId, It.IsAny<CancellationToken>()), Times.Once);
         _viewModel.Id.Should().Be(productoId);
         _viewModel.Nombre.Should().Be("Pizza Margherita");
         _viewModel.Descripcion.Should().Be("Deliciosa pizza");
@@ -208,14 +208,14 @@ public class ProductoEditorViewModelTests
         var productoId = Guid.NewGuid();
         var apiResponse = ApiResponse<ProductoDto>.Failure("Producto no encontrado");
 
-        _mockProductosService.Setup(x => x.ObtenerProductoPorIdAsync(productoId))
+        _mockProductosService.Setup(x => x.ObtenerProductoPorIdAsync(productoId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(apiResponse);
 
         // Act
         await _viewModel.CargarParaEdicionCommand.ExecuteAsync(productoId);
 
         // Assert
-        _mockProductosService.Verify(x => x.ObtenerProductoPorIdAsync(productoId), Times.Once);
+        _mockProductosService.Verify(x => x.ObtenerProductoPorIdAsync(productoId, It.IsAny<CancellationToken>()), Times.Once);
         _mockDialogService.Verify(x => x.ShowErrorAsync("Producto no encontrado"), Times.Once);
         _viewModel.EsEdicion.Should().BeFalse();
     }
@@ -230,7 +230,7 @@ public class ProductoEditorViewModelTests
         await _viewModel.CargarParaEdicionCommand.ExecuteAsync(emptyGuid);
 
         // Assert
-        _mockProductosService.Verify(x => x.ObtenerProductoPorIdAsync(It.IsAny<Guid>()), Times.Never);
+        _mockProductosService.Verify(x => x.ObtenerProductoPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -255,8 +255,8 @@ public class ProductoEditorViewModelTests
         await _viewModel.GuardarCommand.ExecuteAsync(null);
 
         // Assert
-        _mockDialogService.Verify(x => x.ShowAlertAsync("Validación", "El nombre es obligatorio"), Times.Once);
-        _mockProductosService.Verify(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>()), Times.Never);
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Validación", "El nombre es obligatorio", "OK"), Times.Once);
+        _mockProductosService.Verify(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -271,8 +271,8 @@ public class ProductoEditorViewModelTests
         await _viewModel.GuardarCommand.ExecuteAsync(null);
 
         // Assert
-        _mockDialogService.Verify(x => x.ShowAlertAsync("Validación", "El precio debe ser mayor a 0"), Times.Once);
-        _mockProductosService.Verify(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>()), Times.Never);
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Validación", "El precio debe ser mayor a 0", "OK"), Times.Once);
+        _mockProductosService.Verify(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -287,8 +287,8 @@ public class ProductoEditorViewModelTests
         await _viewModel.GuardarCommand.ExecuteAsync(null);
 
         // Assert
-        _mockDialogService.Verify(x => x.ShowAlertAsync("Validación", "Selecciona una categoría"), Times.Once);
-        _mockProductosService.Verify(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>()), Times.Never);
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Validación", "Selecciona una categoría", "OK"), Times.Once);
+        _mockProductosService.Verify(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -301,14 +301,14 @@ public class ProductoEditorViewModelTests
 
         var apiResponse = ApiResponse<ProductoDto>.SuccessResponse(new ProductoDto { Id = Guid.NewGuid() });
 
-        _mockProductosService.Setup(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>()))
+        _mockProductosService.Setup(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(apiResponse);
 
         // Act
         await _viewModel.GuardarCommand.ExecuteAsync(null);
 
         // Assert
-        _mockProductosService.Verify(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>()), Times.Once);
+        _mockProductosService.Verify(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>(), It.IsAny<CancellationToken>()), Times.Once);
         _viewModel.IsBusy.Should().BeFalse(); // Should be reset after completion
     }
 
@@ -320,7 +320,7 @@ public class ProductoEditorViewModelTests
         var producto = new ProductoDto { Id = productoId, Nombre = "Test" };
         var apiResponse = ApiResponse<ProductoDto>.SuccessResponse(producto);
 
-        _mockProductosService.Setup(x => x.ObtenerProductoPorIdAsync(productoId))
+        _mockProductosService.Setup(x => x.ObtenerProductoPorIdAsync(productoId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(apiResponse);
 
         // Act

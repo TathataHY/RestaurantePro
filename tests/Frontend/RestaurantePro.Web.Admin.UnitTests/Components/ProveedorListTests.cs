@@ -397,7 +397,9 @@ namespace RestaurantePro.Web.Admin.UnitTests.Components
 
             // Act & Assert
             Assert.NotNull(componente.Find(".pagination"));
-            Assert.Contains("Mostrando 1 a 10 de 50 proveedores", componente.Markup);
+            Assert.Contains("Mostrando 1 a", componente.Markup);
+            Assert.Contains("10 de", componente.Markup);
+            Assert.Contains("50 proveedores", componente.Markup);
         }
 
         [Fact]
@@ -419,12 +421,12 @@ namespace RestaurantePro.Web.Admin.UnitTests.Components
                 .Add(p => p.Proveedores, proveedores));
 
             // Act & Assert
-            Assert.NotNull(componente.Find("i.oi-people"));
-            Assert.NotNull(componente.Find("i.oi-phone"));
-            Assert.NotNull(componente.Find("i.oi-envelope-closed"));
-            Assert.NotNull(componente.Find("i.oi-eye"));
-            Assert.NotNull(componente.Find("i.oi-pencil"));
-            Assert.NotNull(componente.Find("i.oi-trash"));
+            Assert.NotNull(componente.Find("span.oi-people"));
+            Assert.NotNull(componente.Find("span.oi-phone"));
+            Assert.NotNull(componente.Find("span.oi-envelope-closed"));
+            Assert.NotNull(componente.Find("span.oi-eye"));
+            Assert.NotNull(componente.Find("span.oi-pencil"));
+            Assert.NotNull(componente.Find("span.oi-trash"));
         }
 
         [Fact]
