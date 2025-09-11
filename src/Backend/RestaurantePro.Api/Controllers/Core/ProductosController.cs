@@ -34,9 +34,41 @@ public class ProductosController : ControllerBase
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedList<ProductoDto>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<PaginatedList<ProductoDto>>>> GetProductos(
-        [FromQuery] ObtenerProductosPaginadosQuery query)
+        [FromQuery] int pagina = 1,
+        [FromQuery] int tamanoPagina = 10,
+        [FromQuery] string? filtro = null,
+        [FromQuery] Guid? categoriaId = null,
+        [FromQuery] bool soloActivos = true,
+        [FromQuery] string orderBy = "Nombre",
+        [FromQuery] string orderDirection = "asc")
     {
         _logger.LogInformation("📋 GET /api/core/productos");
+        
+        // Validar parámetros de paginación
+        if (pagina < 1)
+        {
+            var errorResponse = ApiResponse<PaginatedList<ProductoDto>>.ErrorResponse(
+                "El número de página debe ser mayor a 0", StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+
+        if (tamanoPagina < 1 || tamanoPagina > 100)
+        {
+            var errorResponse = ApiResponse<PaginatedList<ProductoDto>>.ErrorResponse(
+                "El tamaño de página debe estar entre 1 y 100", StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+
+        var query = new ObtenerProductosPaginadosQuery
+        {
+            PageNumber = pagina,
+            PageSize = tamanoPagina,
+            Filtro = filtro,
+            CategoriaId = categoriaId,
+            SoloActivos = soloActivos,
+            OrderBy = orderBy,
+            OrderDirection = orderDirection
+        };
         
         var result = await _mediator.Send(query);
         

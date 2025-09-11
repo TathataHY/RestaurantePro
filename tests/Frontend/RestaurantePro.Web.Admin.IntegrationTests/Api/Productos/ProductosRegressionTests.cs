@@ -241,7 +241,7 @@ public class ProductosRegressionTests : BaseIntegrationTest
         var categoriaId = GetFirstCategoriaId(categoriaIds);
         
         // Crear productos de prueba
-        await CrearProductosDePrueba(categoriaId, 15);
+        await CrearProductosDePruebaAsync(categoriaIds);
 
         var casosPaginacion = new[]
         {
