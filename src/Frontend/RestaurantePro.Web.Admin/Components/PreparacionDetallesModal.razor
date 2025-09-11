@@ -1,0 +1,293 @@
+@using RestaurantePro.Web.Admin.Models
+
+<!-- Modal de Detalles de Preparación -->
+@if (Mostrar)
+{
+    <div class="modal fade show" style="display: block;" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="oi oi-eye"></i> Detalles de Preparación
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarModal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (Preparacion != null)
+                    {
+                        <div class="row">
+                            <!-- Información General -->
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="oi oi-info"></i> Información General
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-sm-4">
+                                                <strong>Número de Comanda:</strong>
+                                            </div>
+                                            <div class="col-sm-8">
+                                                <span class="badge bg-info">@Preparacion.ComandaNumero</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-sm-4">
+                                                <strong>Producto:</strong>
+                                            </div>
+                                            <div class="col-sm-8">
+                                                @Preparacion.ProductoNombre
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-sm-4">
+                                                <strong>Cantidad:</strong>
+                                            </div>
+                                            <div class="col-sm-8">
+                                                <span class="badge bg-secondary">@Preparacion.Cantidad</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-sm-4">
+                                                <strong>Estado:</strong>
+                                            </div>
+                                            <div class="col-sm-8">
+                                                <span class="badge @GetEstadoBadgeClass(Preparacion.Estado)">
+                                                    @Preparacion.Estado.ToString()
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-sm-4">
+                                                <strong>Prioridad:</strong>
+                                            </div>
+                                            <div class="col-sm-8">
+                                                <span class="badge @GetPrioridadBadgeClass(Preparacion.Prioridad)">
+                                                    @Preparacion.Prioridad.ToString()
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-sm-4">
+                                                <strong>Mesa:</strong>
+                                            </div>
+                                            <div class="col-sm-8">
+                                                @if (Preparacion.MesaNumero.HasValue)
+                                                {
+                                                    <span class="badge bg-info">@Preparacion.MesaNumero</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">No asignada</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Información de Cocina -->
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="oi oi-restaurant"></i> Información de Cocina
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-sm-4">
+                                                <strong>Cocinero:</strong>
+                                            </div>
+                                            <div class="col-sm-8">
+                                                @if (!string.IsNullOrEmpty(Preparacion.CocineroNombre))
+                                                {
+                                                    <span class="badge bg-primary">@Preparacion.CocineroNombre</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Sin asignar</span>
+                                                }
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-sm-4">
+                                                <strong>Hora de Inicio:</strong>
+                                            </div>
+                                            <div class="col-sm-8">
+                                                @if (Preparacion.FechaInicio.HasValue)
+                                                {
+                                                    @Preparacion.FechaInicio.Value.ToString("HH:mm")
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">No iniciada</span>
+                                                }
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-sm-4">
+                                                <strong>Tiempo Estimado:</strong>
+                                            </div>
+                                            <div class="col-sm-8">
+                                                @Preparacion.TiempoEstimadoMinutos minutos
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-sm-4">
+                                                <strong>Tiempo Real:</strong>
+                                            </div>
+                                            <div class="col-sm-8">
+                                                @if (Preparacion.TiempoRealMinutos.HasValue)
+                                                {
+                                                    <span class="@(Preparacion.TiempoRealMinutos <= Preparacion.TiempoEstimadoMinutos ? "text-success" : "text-danger")">
+                                                        @Preparacion.TiempoRealMinutos minutos
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">En proceso</span>
+                                                }
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-sm-4">
+                                                <strong>Tiempo Transcurrido:</strong>
+                                            </div>
+                                            <div class="col-sm-8">
+                                                @if (Preparacion.TiempoTranscurridoMinutos.HasValue)
+                                                {
+                                                    <span class="@(Preparacion.EstaAtrasada ? "text-danger" : "text-primary")">
+                                                        @Preparacion.TiempoTranscurridoMinutos minutos
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">No iniciada</span>
+                                                }
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-sm-4">
+                                                <strong>Estado:</strong>
+                                            </div>
+                                            <div class="col-sm-8">
+                                                @if (Preparacion.EstaAtrasada)
+                                                {
+                                                    <span class="badge bg-danger">Atrasada</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-success">A tiempo</span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Observaciones y Notas -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 class="mb-0">
+                                            <i class="oi oi-clipboard"></i> Observaciones y Notas
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <strong>Observaciones:</strong>
+                                                <p class="mt-1">
+                                                    @if (!string.IsNullOrEmpty(Preparacion.Observaciones))
+                                                    {
+                                                        @Preparacion.Observaciones
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">Sin observaciones</span>
+                                                    }
+                                                </p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Notas del Cocinero:</strong>
+                                                <p class="mt-1">
+                                                    @if (!string.IsNullOrEmpty(Preparacion.NotasCocinero))
+                                                    {
+                                                        @Preparacion.NotasCocinero
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">Sin notas</span>
+                                                    }
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CerrarModal">
+                        <i class="oi oi-x"></i> Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Backdrop -->
+    <div class="modal-backdrop fade show"></div>
+}
+
+@code {
+    [Parameter] public PreparacionDto? Preparacion { get; set; }
+    [Parameter] public bool Mostrar { get; set; }
+    [Parameter] public EventCallback OnCerrar { get; set; }
+
+    private string GetEstadoBadgeClass(EstadoPreparacion estado)
+    {
+        return estado switch
+        {
+            EstadoPreparacion.Pendiente => "bg-warning",
+            EstadoPreparacion.EnProceso => "bg-primary",
+            EstadoPreparacion.Lista => "bg-success",
+            EstadoPreparacion.Entregada => "bg-secondary",
+            EstadoPreparacion.Cancelada => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetPrioridadBadgeClass(PrioridadPreparacion prioridad)
+    {
+        return prioridad switch
+        {
+            PrioridadPreparacion.Urgente => "bg-danger",
+            PrioridadPreparacion.Alta => "bg-warning",
+            PrioridadPreparacion.Normal => "bg-success",
+            PrioridadPreparacion.Baja => "bg-secondary",
+            _ => "bg-secondary"
+        };
+    }
+
+    private async Task CerrarModal()
+    {
+        await OnCerrar.InvokeAsync();
+    }
+}

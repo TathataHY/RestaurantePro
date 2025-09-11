@@ -2,10 +2,10 @@
 @using RestaurantePro.Web.Admin.Services
 @inject PreparacionesApiService PreparacionesApi
 
-<div class="card">
+<div class="card filter-card">
     <div class="card-header">
         <h6 class="mb-0">
-            <i class="oi oi-funnel"></i> Filtros de Preparaciones
+            <i class="oi oi-funnel"></i> Filtros Avanzados de Preparaciones
         </h6>
     </div>
     <div class="card-body">
@@ -139,22 +139,25 @@
             <div class="row">
                 <div class="col-12">
                     <div class="mb-3">
-                        <label class="form-label">Filtros Rápidos</label>
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-outline-primary btn-sm" @onclick="FiltrarHoy">
+                        <label class="form-label fw-bold">Filtros Rápidos</label>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-outline-primary btn-sm filter-quick-btn" @onclick="FiltrarHoy">
                                 <i class="oi oi-calendar"></i> Hoy
                             </button>
-                            <button type="button" class="btn btn-outline-warning btn-sm" @onclick="FiltrarPendientes">
+                            <button type="button" class="btn btn-outline-warning btn-sm filter-quick-btn" @onclick="FiltrarPendientes">
                                 <i class="oi oi-clock"></i> Pendientes
                             </button>
-                            <button type="button" class="btn btn-outline-danger btn-sm" @onclick="FiltrarAtrasadas">
+                            <button type="button" class="btn btn-outline-danger btn-sm filter-quick-btn" @onclick="FiltrarAtrasadas">
                                 <i class="oi oi-warning"></i> Atrasadas
                             </button>
-                            <button type="button" class="btn btn-outline-success btn-sm" @onclick="FiltrarCompletadas">
+                            <button type="button" class="btn btn-outline-success btn-sm filter-quick-btn" @onclick="FiltrarCompletadas">
                                 <i class="oi oi-check"></i> Completadas
                             </button>
-                            <button type="button" class="btn btn-outline-info btn-sm" @onclick="FiltrarEnProceso">
+                            <button type="button" class="btn btn-outline-info btn-sm filter-quick-btn" @onclick="FiltrarEnProceso">
                                 <i class="oi oi-play-circle"></i> En Proceso
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm filter-quick-btn" @onclick="FiltrarUrgentes">
+                                <i class="oi oi-bolt"></i> Urgentes
                             </button>
                         </div>
                     </div>
@@ -246,6 +249,15 @@
         Filtros = new PreparacionFiltrosDto
         {
             Estado = EstadoPreparacion.EnProceso
+        };
+        await OnFiltrosAplicados.InvokeAsync(Filtros);
+    }
+
+    private async Task FiltrarUrgentes()
+    {
+        Filtros = new PreparacionFiltrosDto
+        {
+            Prioridad = PrioridadPreparacion.Urgente
         };
         await OnFiltrosAplicados.InvokeAsync(Filtros);
     }

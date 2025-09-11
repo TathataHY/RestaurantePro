@@ -7,140 +7,198 @@
 
 <div class="modal fade @(Mostrar ? "show" : "")" style="display: @(Mostrar ? "block" : "none")" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-xl" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="oi oi-calendar"></i> @(EsEdicion ? "Editar Reservación" : "Nueva Reservación")
-                </h5>
-                <button type="button" class="btn-close" @onclick="Cerrar"></button>
-            </div>
-            <div class="modal-body">
+        <div class="modal-content bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="p-6 sm:p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">
+                        <span class="material-symbols-outlined text-blue-600 mr-2">restaurant</span>
+                        @(EsEdicion ? "Editar Reservación" : "Nueva Reservación")
+                    </h2>
+                    <button type="button" class="text-gray-400 hover:text-gray-600" @onclick="Cerrar">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
                 <EditForm Model="Reservacion" OnValidSubmit="GuardarReservacion">
                     <DataAnnotationsValidator />
                     
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="mb-3">
-                                <label class="form-label">Número de Reservación *</label>
-                                <InputText @bind-Value="Reservacion.NumeroReservacion" class="form-control" placeholder="R001-000001" />
-                                <ValidationMessage For="@(() => Reservacion.NumeroReservacion)" class="text-danger" />
-                                @if (mostrarValidacionNumero)
-                                {
-                                    <div class="form-text text-info">
-                                        <i class="oi oi-reload"></i> Validando número...
-                                    </div>
-                                }
-                            </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                        <!-- Información del Cliente -->
+                        <div class="md:col-span-2">
+                            <h3 class="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Información del Cliente</h3>
                         </div>
-                        <div class="col-md-3">
-                            <div class="mb-3">
-                                <label class="form-label">Fecha de Reservación *</label>
-                                <InputDate @bind-Value="Reservacion.FechaReservacion" class="form-control" @onchange="FechaCambiada" />
-                                <ValidationMessage For="@(() => Reservacion.FechaReservacion)" class="text-danger" />
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="mb-3">
-                                <label class="form-label">Hora de Reservación *</label>
-                                <InputText type="time" @bind-Value="horaReservacionString" class="form-control" @onchange="HoraCambiada" />
-                                <ValidationMessage For="@(() => Reservacion.HoraReservacion)" class="text-danger" />
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="mb-3">
-                                <label class="form-label">Número de Personas *</label>
-                                <InputNumber @bind-Value="Reservacion.NumeroPersonas" class="form-control" min="1" @onchange="PersonasCambiadas" />
-                                <ValidationMessage For="@(() => Reservacion.NumeroPersonas)" class="text-danger" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label class="form-label">Cliente *</label>
-                                <InputSelect @bind-Value="Reservacion.ClienteId" class="form-select" @onchange="ClienteSeleccionado">
-                                    <option value="">Seleccionar cliente</option>
-                                    @if (clientes != null)
-                                    {
-                                        @foreach (var cliente in clientes)
+                        
+                        <div class="md:col-span-2">
+                            <label class="block">
+                                <span class="text-gray-700 font-medium mb-1.5 block">Cliente *</span>
+                                <div class="relative">
+                                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">person</span>
+                                    <InputSelect @bind-Value="Reservacion.ClienteId" class="form-select w-full appearance-none pl-10 bg-white" @onchange="ClienteSeleccionado">
+                                        <option value="">Seleccionar cliente</option>
+                                        @if (clientes != null)
                                         {
-                                            <option value="@cliente.Id">@cliente.NombreCompleto</option>
+                                            @foreach (var cliente in clientes)
+                                            {
+                                                <option value="@cliente.Id">@cliente.NombreCompleto</option>
+                                            }
                                         }
-                                    }
-                                </InputSelect>
-                                <ValidationMessage For="@(() => Reservacion.ClienteId)" class="text-danger" />
-                            </div>
+                                    </InputSelect>
+                                    <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
+                                </div>
+                                <ValidationMessage For="@(() => Reservacion.ClienteId)" class="text-red-500 text-sm mt-1" />
+                            </label>
                         </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label class="form-label">Mesa *</label>
-                                <InputSelect @bind-Value="Reservacion.MesaId" class="form-select" @onchange="MesaSeleccionada">
-                                    <option value="">Seleccionar mesa</option>
-                                    @if (mesasDisponibles != null)
-                                    {
-                                        @foreach (var mesa in mesasDisponibles)
+                        
+                        <div>
+                            <label class="block">
+                                <span class="text-gray-700 font-medium mb-1.5 block">Teléfono</span>
+                                <div class="relative">
+                                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">phone</span>
+                                    <InputText @bind-Value="Reservacion.ClienteTelefono" class="form-input w-full pl-10" placeholder="Ej. 555-123-4567" type="tel" />
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div>
+                            <label class="block">
+                                <span class="text-gray-700 font-medium mb-1.5 block">Email</span>
+                                <div class="relative">
+                                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">email</span>
+                                    <InputText @bind-Value="Reservacion.ClienteEmail" class="form-input w-full pl-10" placeholder="Ej. cliente@email.com" type="email" />
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="md:col-span-2">
+                            <label class="block">
+                                <span class="text-gray-700 font-medium mb-1.5 block">Notas especiales</span>
+                                <InputTextArea @bind-Value="Reservacion.NotasEspeciales" class="form-input w-full min-h-28" placeholder="Ej. Alergia a mariscos, mesa cerca de la ventana" />
+                            </label>
+                        </div>
+                        
+                        <!-- Detalles de la Reservación -->
+                        <div class="md:col-span-2 mt-4">
+                            <h3 class="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Detalles de la Reservación</h3>
+                        </div>
+                        
+                        <div>
+                            <label class="block">
+                                <span class="text-gray-700 font-medium mb-1.5 block">Fecha *</span>
+                                <div class="relative">
+                                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">calendar_today</span>
+                                    <InputDate @bind-Value="Reservacion.FechaReservacion" class="form-input w-full pl-10" @onchange="FechaCambiada" />
+                                </div>
+                                <ValidationMessage For="@(() => Reservacion.FechaReservacion)" class="text-red-500 text-sm mt-1" />
+                            </label>
+                        </div>
+                        
+                        <div>
+                            <label class="block">
+                                <span class="text-gray-700 font-medium mb-1.5 block">Hora *</span>
+                                <div class="relative">
+                                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">schedule</span>
+                                    <InputText type="time" @bind-Value="horaReservacionString" class="form-input w-full pl-10" @onchange="HoraCambiada" />
+                                </div>
+                                <ValidationMessage For="@(() => Reservacion.HoraReservacion)" class="text-red-500 text-sm mt-1" />
+                            </label>
+                        </div>
+                        
+                        <div>
+                            <label class="block">
+                                <span class="text-gray-700 font-medium mb-1.5 block">Número de personas *</span>
+                                <div class="relative">
+                                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">groups</span>
+                                    <InputNumber @bind-Value="Reservacion.NumeroPersonas" class="form-input w-full pl-10" min="1" placeholder="Ej. 2" @onchange="PersonasCambiadas" />
+                                </div>
+                                <ValidationMessage For="@(() => Reservacion.NumeroPersonas)" class="text-red-500 text-sm mt-1" />
+                            </label>
+                        </div>
+                        
+                        <div>
+                            <label class="block">
+                                <span class="text-gray-700 font-medium mb-1.5 block">Mesa preferida *</span>
+                                <div class="relative">
+                                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">table_restaurant</span>
+                                    <InputSelect @bind-Value="Reservacion.MesaId" class="form-select w-full appearance-none pl-10 bg-white" @onchange="MesaSeleccionada">
+                                        <option value="">Seleccionar mesa</option>
+                                        @if (mesasDisponibles != null)
                                         {
-                                            <option value="@mesa.MesaId">@mesa.MesaNombre - @mesa.Capacidad personas</option>
+                                            @foreach (var mesa in mesasDisponibles)
+                                            {
+                                                <option value="@mesa.MesaId">@mesa.MesaNombre - @mesa.Capacidad personas</option>
+                                            }
                                         }
-                                    }
-                                </InputSelect>
-                                <ValidationMessage For="@(() => Reservacion.MesaId)" class="text-danger" />
+                                    </InputSelect>
+                                    <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
+                                </div>
+                                <ValidationMessage For="@(() => Reservacion.MesaId)" class="text-red-500 text-sm mt-1" />
                                 @if (verificandoDisponibilidad)
                                 {
-                                    <div class="form-text text-info">
-                                        <i class="oi oi-reload"></i> Verificando disponibilidad...
+                                    <div class="text-blue-600 text-sm mt-1">
+                                        <span class="material-symbols-outlined text-sm">refresh</span> Verificando disponibilidad...
                                     </div>
                                 }
-                            </div>
+                            </label>
                         </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                <label class="form-label">Canal de Reservación</label>
-                                <InputSelect @bind-Value="Reservacion.CanalReservacion" class="form-select">
-                                    <option value="Web">Web</option>
-                                    <option value="Telefono">Teléfono</option>
-                                    <option value="Presencial">Presencial</option>
-                                    <option value="App">App Móvil</option>
-                                </InputSelect>
-                            </div>
+                        
+                        <div>
+                            <label class="block">
+                                <span class="text-gray-700 font-medium mb-1.5 block">Tipo de evento</span>
+                                <div class="relative">
+                                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">celebration</span>
+                                    <InputSelect @bind-Value="Reservacion.FuenteReservacion" class="form-select w-full appearance-none pl-10 bg-white">
+                                        <option value="Directa">Cena casual</option>
+                                        <option value="Cumpleaños">Cumpleaños</option>
+                                        <option value="Aniversario">Aniversario</option>
+                                        <option value="Reunion">Reunión de negocios</option>
+                                    </InputSelect>
+                                    <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
+                                </div>
+                            </label>
                         </div>
-                    </div>
+                        
+                        <div>
+                            <label class="block">
+                                <span class="text-gray-700 font-medium mb-1.5 block">Prioridad</span>
+                                <div class="relative">
+                                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">priority_high</span>
+                                    <select class="form-select w-full appearance-none pl-10 bg-white" @onchange="OnPrioridadChanged">
+                                        <option value="Normal">Normal</option>
+                                        <option value="Alta">Alta</option>
+                                        <option value="VIP">VIP</option>
+                                    </select>
+                                    <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div>
+                            <label class="block">
+                                <span class="text-gray-700 font-medium mb-1.5 block">Canal de reservación</span>
+                                <div class="relative">
+                                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">rss_feed</span>
+                                    <InputSelect @bind-Value="Reservacion.CanalReservacion" class="form-select w-full appearance-none pl-10 bg-white">
+                                        <option value="Telefono">Teléfono</option>
+                                        <option value="Web">Sitio Web</option>
+                                        <option value="App">App móvil</option>
+                                        <option value="Presencial">En persona</option>
+                                    </InputSelect>
+                                    <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
+                                </div>
+                            </label>
+                        </div>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Observaciones</label>
-                                <InputTextArea @bind-Value="Reservacion.Observaciones" class="form-control" rows="2" placeholder="Observaciones generales" />
-                            </div>
+                        <div class="md:col-span-2">
+                            <label class="block">
+                                <span class="text-gray-700 font-medium mb-1.5 block">Observaciones</span>
+                                <InputTextArea @bind-Value="Reservacion.Observaciones" class="form-input w-full min-h-20" placeholder="Observaciones generales sobre la reservación" />
+                            </label>
                         </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Notas Especiales</label>
-                                <InputTextArea @bind-Value="Reservacion.NotasEspeciales" class="form-control" rows="2" placeholder="Notas especiales para el servicio" />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Requerimientos Especiales</label>
-                                <InputTextArea @bind-Value="Reservacion.RequerimientosEspeciales" class="form-control" rows="2" placeholder="Requerimientos especiales del cliente" />
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Fuente de Reservación</label>
-                                <InputSelect @bind-Value="Reservacion.FuenteReservacion" class="form-select">
-                                    <option value="Directa">Directa</option>
-                                    <option value="Google">Google</option>
-                                    <option value="Facebook">Facebook</option>
-                                    <option value="TripAdvisor">TripAdvisor</option>
-                                    <option value="Instagram">Instagram</option>
-                                    <option value="Recomendacion">Recomendación</option>
-                                </InputSelect>
-                            </div>
+                        
+                        <div class="md:col-span-2">
+                            <label class="block">
+                                <span class="text-gray-700 font-medium mb-1.5 block">Requerimientos Especiales</span>
+                                <InputTextArea @bind-Value="Reservacion.RequerimientosEspeciales" class="form-input w-full min-h-20" placeholder="Requerimientos especiales del cliente" />
+                            </label>
                         </div>
                     </div>
 
@@ -273,23 +331,32 @@
                     }
                 </EditForm>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" @onclick="Cerrar">
-                    <i class="oi oi-x"></i> Cancelar
+            
+            <div class="flex justify-end gap-4 mt-8 pt-6 border-t bg-gray-50 px-6 py-4">
+                <button type="button" class="px-5 py-2.5 rounded-lg bg-gray-100 text-gray-800 text-sm font-bold hover:bg-gray-200 transition-colors" @onclick="Cerrar">
+                    Cancelar
                 </button>
-                <button type="button" class="btn btn-info" @onclick="VerificarDisponibilidad" disabled="@verificandoDisponibilidad">
+                <button type="button" class="px-5 py-2.5 rounded-lg bg-blue-100 text-blue-700 text-sm font-bold hover:bg-blue-200 transition-colors" @onclick="VerificarDisponibilidad" disabled="@verificandoDisponibilidad">
                     @if (verificandoDisponibilidad)
                     {
-                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        <span class="material-symbols-outlined text-sm mr-2 animate-spin">refresh</span>
                     }
-                    <i class="oi oi-magnifying-glass"></i> Verificar Disponibilidad
+                    else
+                    {
+                        <span class="material-symbols-outlined text-sm mr-2">search</span>
+                    }
+                    Verificar Disponibilidad
                 </button>
-                <button type="button" class="btn btn-primary" @onclick="GuardarReservacion" disabled="@guardando">
+                <button type="button" class="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#1e71f6] text-white text-sm font-bold hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg" @onclick="GuardarReservacion" disabled="@guardando">
                     @if (guardando)
                     {
-                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        <span class="material-symbols-outlined text-sm animate-spin">refresh</span>
                     }
-                    <i class="oi oi-check"></i> @(EsEdicion ? "Actualizar" : "Crear")
+                    else
+                    {
+                        <span class="material-symbols-outlined text-sm">save</span>
+                    }
+                    @(EsEdicion ? "Actualizar" : "Guardar Cambios")
                 </button>
             </div>
         </div>
@@ -315,6 +382,7 @@
     private List<ClienteDto>? clientes;
     private List<MesaDisponibleDto>? mesasDisponibles;
     private string horaReservacionString = "";
+    private string prioridadSeleccionada = "Normal";
 
     protected override async Task OnParametersSetAsync()
     {
@@ -432,6 +500,26 @@
             Reservacion.NombreGrupo = null;
             Reservacion.EmpresaGrupo = null;
             Reservacion.TamañoGrupo = null;
+        }
+    }
+
+    private void OnPrioridadChanged(ChangeEventArgs e)
+    {
+        prioridadSeleccionada = e.Value?.ToString() ?? "Normal";
+        switch (prioridadSeleccionada)
+        {
+            case "VIP":
+                Reservacion.EsVIP = true;
+                Reservacion.EsUrgente = false;
+                break;
+            case "Alta":
+                Reservacion.EsUrgente = true;
+                Reservacion.EsVIP = false;
+                break;
+            default:
+                Reservacion.EsUrgente = false;
+                Reservacion.EsVIP = false;
+                break;
         }
     }
 

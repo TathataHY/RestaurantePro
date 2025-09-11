@@ -5,8 +5,8 @@
     <div class="row">
         <!-- Preparaciones Pendientes -->
         <div class="col-md-3">
-            <div class="card border-warning">
-                <div class="card-header bg-warning text-dark">
+            <div class="card border-warning kanban-column">
+                <div class="card-header bg-warning text-dark kanban-header pendientes">
                     <h6 class="mb-0">
                         <i class="oi oi-clock"></i> Pendientes (@Preparaciones.Count(p => p.Estado == EstadoPreparacion.Pendiente))
                     </h6>
@@ -42,8 +42,8 @@
 
         <!-- Preparaciones En Proceso -->
         <div class="col-md-3">
-            <div class="card border-primary">
-                <div class="card-header bg-primary text-white">
+            <div class="card border-primary kanban-column">
+                <div class="card-header bg-primary text-white kanban-header en-proceso">
                     <h6 class="mb-0">
                         <i class="oi oi-play-circle"></i> En Proceso (@Preparaciones.Count(p => p.Estado == EstadoPreparacion.EnProceso))
                     </h6>
@@ -85,8 +85,8 @@
 
         <!-- Preparaciones Listas -->
         <div class="col-md-3">
-            <div class="card border-success">
-                <div class="card-header bg-success text-white">
+            <div class="card border-success kanban-column">
+                <div class="card-header bg-success text-white kanban-header listas">
                     <h6 class="mb-0">
                         <i class="oi oi-check"></i> Listas (@Preparaciones.Count(p => p.Estado == EstadoPreparacion.Lista))
                     </h6>
@@ -126,8 +126,8 @@
 
         <!-- Preparaciones Entregadas -->
         <div class="col-md-3">
-            <div class="card border-secondary">
-                <div class="card-header bg-secondary text-white">
+            <div class="card border-secondary kanban-column">
+                <div class="card-header bg-secondary text-white kanban-header entregadas">
                     <h6 class="mb-0">
                         <i class="oi oi-check-circle"></i> Entregadas (@Preparaciones.Count(p => p.Estado == EstadoPreparacion.Entregada))
                     </h6>
@@ -179,13 +179,16 @@
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
+                                    <th>Comanda</th>
                                     <th>Producto</th>
                                     <th>Mesa</th>
                                     <th>Cantidad</th>
                                     <th>Estado</th>
                                     <th>Prioridad</th>
                                     <th>Cocinero</th>
-                                    <th>Tiempo</th>
+                                    <th>Tiempo Est.</th>
+                                    <th>Tiempo Real</th>
+                                    <th>Diferencia</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
@@ -194,6 +197,9 @@
                                 {
                                     <tr class="@(preparacion.EstaAtrasada ? "table-warning" : "")">
                                         <td>
+                                            <span class="badge bg-info">@preparacion.ComandaNumero</span>
+                                        </td>
+                                        <td>
                                             <div class="fw-bold">@preparacion.ProductoNombre</div>
                                             <small class="text-muted">@preparacion.CategoriaNombre</small>
                                         </td>
@@ -201,6 +207,10 @@
                                             @if (preparacion.MesaNumero.HasValue)
                                             {
                                                 <span class="badge bg-info">@preparacion.MesaNumero</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
                                             }
                                         </td>
                                         <td>
@@ -227,6 +237,9 @@
                                             }
                                         </td>
                                         <td>
+                                            <span class="text-muted">@preparacion.TiempoEstimadoMinutos min</span>
+                                        </td>
+                                        <td>
                                             @if (preparacion.TiempoRealMinutos.HasValue)
                                             {
                                                 <span class="text-success">@preparacion.TiempoRealMinutos min</span>
@@ -239,7 +252,29 @@
                                             }
                                             else
                                             {
-                                                <span class="text-muted">@preparacion.TiempoEstimadoMinutos min est.</span>
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (preparacion.TiempoRealMinutos.HasValue)
+                                            {
+                                                var diferencia = preparacion.TiempoRealMinutos.Value - preparacion.TiempoEstimadoMinutos;
+                                                if (diferencia > 0)
+                                                {
+                                                    <span class="text-danger">+@diferencia min</span>
+                                                }
+                                                else if (diferencia < 0)
+                                                {
+                                                    <span class="text-success">@diferencia min</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">0 min</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
                                             }
                                         </td>
                                         <td>

@@ -305,6 +305,14 @@ public class ReservacionEstadisticasDto
     public decimal TasaConfirmacion { get; set; }
     public decimal TasaNoShow { get; set; }
     public decimal TasaCancelacion { get; set; }
+    
+    // Propiedades adicionales para el dashboard
+    public decimal IngresosPorReservaciones { get; set; }
+    public decimal OcupacionPromedio { get; set; }
+    public decimal? CambioTotalReservaciones { get; set; }
+    public decimal? CambioIngresos { get; set; }
+    public decimal? CambioOcupacion { get; set; }
+    
     public List<ReservacionEstadoEstadisticasDto> Estados { get; set; } = new();
     public List<ReservacionCanalEstadisticasDto> Canales { get; set; } = new();
     public List<ReservacionHoraEstadisticasDto> HorasPico { get; set; } = new();

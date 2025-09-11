@@ -7,76 +7,136 @@
 
 <PageTitle>Reservaciones</PageTitle>
 
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Gestión de Reservaciones</h1>
-    <div class="d-flex align-items-center gap-2">
-        <button class="btn btn-outline-info" @onclick="MostrarEstadisticas">
-            <i class="oi oi-bar-chart"></i> Estadísticas
-        </button>
-        <button class="btn btn-outline-warning" @onclick="MostrarUrgentes">
-            <i class="oi oi-warning"></i> Urgentes
-        </button>
-        <button class="btn btn-outline-success" @onclick="MostrarHoy">
-            <i class="oi oi-calendar"></i> Hoy
-        </button>
-        <button class="btn btn-outline-primary" @onclick="MostrarCalendario">
-            <i class="oi oi-calendar"></i> Calendario
-        </button>
-        <button class="btn btn-primary" @onclick="NuevaReservacion">
-            <i class="oi oi-plus"></i> Nueva Reservación
-        </button>
+<!-- Header Principal -->
+<div class="dashboard-header">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="dashboard-title">Gestión de Reservaciones</h1>
+            <p class="dashboard-subtitle">Administración completa de reservas y análisis de ocupación</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-info" @onclick="MostrarEstadisticas">
+                <i class="oi oi-bar-chart"></i> Estadísticas
+            </button>
+            <button class="btn btn-outline-warning" @onclick="MostrarUrgentes">
+                <i class="oi oi-warning"></i> Urgentes
+            </button>
+            <button class="btn btn-outline-success" @onclick="MostrarHoy">
+                <i class="oi oi-calendar"></i> Hoy
+            </button>
+            <button class="btn btn-outline-primary" @onclick="MostrarCalendario">
+                <i class="oi oi-calendar"></i> Calendario
+            </button>
+            <button class="btn btn-primary" @onclick="NuevaReservacion">
+                <i class="oi oi-plus"></i> Nueva Reservación
+            </button>
+        </div>
     </div>
 </div>
 
-<!-- Estadísticas generales -->
+<!-- Dashboard de Métricas -->
+@if (estadisticas != null)
+{
+    <div class="metrics-grid mb-4">
+        <MetricaCard Titulo="Total Reservaciones" 
+                     Valor="@estadisticas.TotalReservaciones.ToString()" 
+                     Subtexto="Este período" 
+                     Icono="oi oi-calendar" 
+                     CardClass="metric-card primary" 
+                     ValorClass="text-primary" 
+                     IconoClass="text-primary" 
+                     MostrarCambio="true" 
+                     Cambio="@(estadisticas.CambioTotalReservaciones)" />
+        
+        <MetricaCard Titulo="Confirmadas" 
+                     Valor="@estadisticas.ReservacionesConfirmadas.ToString()" 
+                     Subtexto="@(estadisticas.TotalReservaciones > 0 ? $"{Math.Round((double)estadisticas.ReservacionesConfirmadas / estadisticas.TotalReservaciones * 100, 1)}% del total" : "0%")" 
+                     Icono="oi oi-check" 
+                     CardClass="metric-card success" 
+                     ValorClass="text-success" 
+                     IconoClass="text-success" />
+        
+        <MetricaCard Titulo="Pendientes" 
+                     Valor="@estadisticas.ReservacionesPendientes.ToString()" 
+                     Subtexto="@(estadisticas.TotalReservaciones > 0 ? $"{Math.Round((double)estadisticas.ReservacionesPendientes / estadisticas.TotalReservaciones * 100, 1)}% del total" : "0%")" 
+                     Icono="oi oi-clock" 
+                     CardClass="metric-card warning" 
+                     ValorClass="text-warning" 
+                     IconoClass="text-warning" />
+        
+        <MetricaCard Titulo="No-Show" 
+                     Valor="@estadisticas.ReservacionesNoShow.ToString()" 
+                     Subtexto="@(estadisticas.TotalReservaciones > 0 ? $"{Math.Round((double)estadisticas.ReservacionesNoShow / estadisticas.TotalReservaciones * 100, 1)}% del total" : "0%")" 
+                     Icono="oi oi-x" 
+                     CardClass="metric-card danger" 
+                     ValorClass="text-danger" 
+                     IconoClass="text-danger" />
+        
+        <MetricaCard Titulo="Ingresos" 
+                     Valor="@estadisticas.IngresosPorReservaciones.ToString("C0")" 
+                     Subtexto="Este período" 
+                     Icono="oi oi-dollar" 
+                     CardClass="metric-card info" 
+                     ValorClass="text-info" 
+                     IconoClass="text-info" 
+                     MostrarCambio="true" 
+                     Cambio="@(estadisticas.CambioIngresos)" />
+        
+        <MetricaCard Titulo="Ocupación" 
+                     Valor="@($"{estadisticas.OcupacionPromedio:F1}%")" 
+                     Subtexto="Promedio diario" 
+                     Icono="oi oi-pie-chart" 
+                     CardClass="metric-card primary" 
+                     ValorClass="text-primary" 
+                     IconoClass="text-primary" 
+                     MostrarCambio="true" 
+                     Cambio="@(estadisticas.CambioOcupacion)" />
+    </div>
+}
+
+<!-- Gráficos de Análisis -->
 @if (estadisticas != null)
 {
     <div class="row mb-4">
-        <div class="col-md-2">
-            <div class="card border-left-primary">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="oi oi-pie-chart"></i> Distribución por Estado
+                    </h6>
+                </div>
                 <div class="card-body">
-                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Reservaciones</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.TotalReservaciones</div>
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="estadoChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-2">
-            <div class="card border-left-warning">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="oi oi-bar-chart"></i> Reservaciones por Hora
+                    </h6>
+                </div>
                 <div class="card-body">
-                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Pendientes</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.ReservacionesPendientes</div>
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="horaChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-2">
-            <div class="card border-left-success">
-                <div class="card-body">
-                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Confirmadas</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.ReservacionesConfirmadas</div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="oi oi-graph"></i> Tendencia Semanal
+                    </h6>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card border-left-info">
                 <div class="card-body">
-                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">En Proceso</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.ReservacionesEnProceso</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card border-left-primary">
-                <div class="card-body">
-                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Hoy</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.ReservacionesHoy</div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2">
-            <div class="card border-left-danger">
-                <div class="card-body">
-                    <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Urgentes</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800">@estadisticas.ReservacionesUrgentes</div>
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="tendenciaChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
@@ -87,6 +147,69 @@
 <ReservacionFiltros Filtros="filtros" 
                     OnFiltrosAplicados="AplicarFiltros"
                     Aplicando="cargando" />
+
+<!-- Filtros Rápidos y Acciones Administrativas -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="oi oi-magnifying-glass"></i> Filtros Rápidos
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-sm btn-outline-primary @(filtros.EsHoy == true ? "active" : "")" @onclick="FiltroHoy">
+                        <i class="oi oi-calendar"></i> Hoy
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary @(filtros.EsFutura == true ? "active" : "")" @onclick="FiltroMañana">
+                        <i class="oi oi-calendar"></i> Mañana
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" @onclick="FiltroEstaSemana">
+                        <i class="oi oi-calendar"></i> Esta Semana
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning @(filtros.EsUrgente == true ? "active" : "")" @onclick="FiltroPendientes">
+                        <i class="oi oi-clock"></i> Pendientes
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning @(filtros.EsVIP == true ? "active" : "")" @onclick="FiltroVIP">
+                        <i class="oi oi-star"></i> VIP
+                    </button>
+                    <button class="btn btn-sm btn-outline-info @(filtros.EsGrupo == true ? "active" : "")" @onclick="FiltroGrupos">
+                        <i class="oi oi-people"></i> Grupos
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" @onclick="LimpiarFiltros">
+                        <i class="oi oi-reload"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="oi oi-cog"></i> Acciones
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-success btn-sm" @onclick="ImportarReservaciones">
+                        <i class="oi oi-data-transfer-upload"></i> Importar
+                    </button>
+                    <button class="btn btn-warning btn-sm" @onclick="ExportarExcel">
+                        <i class="oi oi-spreadsheet"></i> Exportar Excel
+                    </button>
+                    <button class="btn btn-info btn-sm" @onclick="ConfigurarHorarios">
+                        <i class="oi oi-clock"></i> Configurar Horarios
+                    </button>
+                    <button class="btn btn-secondary btn-sm" @onclick="GenerarReportes">
+                        <i class="oi oi-document"></i> Reportes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Lista de reservaciones -->
 <ReservacionList Reservaciones="reservaciones" 
@@ -673,6 +796,78 @@
         JSRuntime.InvokeVoidAsync("alert", "Función de calendario pendiente");
     }
 
+    // Métodos para filtros rápidos
+    private async Task FiltroHoy()
+    {
+        filtros.EsHoy = !filtros.EsHoy;
+        filtros.FechaInicio = DateTime.Today;
+        filtros.FechaFin = DateTime.Today;
+        await CargarReservaciones();
+    }
+
+    private async Task FiltroMañana()
+    {
+        filtros.EsFutura = !filtros.EsFutura;
+        filtros.FechaInicio = DateTime.Today.AddDays(1);
+        filtros.FechaFin = DateTime.Today.AddDays(1);
+        await CargarReservaciones();
+    }
+
+    private async Task FiltroEstaSemana()
+    {
+        var inicioSemana = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
+        var finSemana = inicioSemana.AddDays(6);
+        filtros.FechaInicio = inicioSemana;
+        filtros.FechaFin = finSemana;
+        await CargarReservaciones();
+    }
+
+    private async Task FiltroPendientes()
+    {
+        filtros.Estado = filtros.Estado == "Pendiente" ? "" : "Pendiente";
+        await CargarReservaciones();
+    }
+
+    private async Task FiltroVIP()
+    {
+        filtros.EsVIP = !filtros.EsVIP;
+        await CargarReservaciones();
+    }
+
+    private async Task FiltroGrupos()
+    {
+        filtros.EsGrupo = !filtros.EsGrupo;
+        await CargarReservaciones();
+    }
+
+    private async Task LimpiarFiltros()
+    {
+        filtros = new ReservacionFiltrosDto
+        {
+            OrdenarPor = "FechaHoraCompleta",
+            DireccionOrden = "asc",
+            PageNumber = 1,
+            PageSize = 20
+        };
+        await CargarReservaciones();
+    }
+
+    // Métodos para acciones administrativas
+    private void ImportarReservaciones()
+    {
+        JSRuntime.InvokeVoidAsync("alert", "Función de importación pendiente");
+    }
+
+    private void ConfigurarHorarios()
+    {
+        JSRuntime.InvokeVoidAsync("alert", "Función de configuración de horarios pendiente");
+    }
+
+    private void GenerarReportes()
+    {
+        JSRuntime.InvokeVoidAsync("alert", "Función de reportes pendiente");
+    }
+
     private async Task ExportarExcel()
     {
         try
@@ -693,6 +888,14 @@
         catch (Exception ex)
         {
             await JSRuntime.InvokeVoidAsync("alert", $"Error al exportar: {ex.Message}");
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && estadisticas != null)
+        {
+            await JSRuntime.InvokeVoidAsync("inicializarGraficos", estadisticas);
         }
     }
 }

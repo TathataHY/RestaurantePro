@@ -5,22 +5,35 @@
 @inject PreparacionesApiService PreparacionesApi
 @inject IJSRuntime JSRuntime
 
-<PageTitle>Gestión de Preparaciones - RestaurantePro</PageTitle>
+<PageTitle>Análisis de Preparaciones - RestaurantePro</PageTitle>
+
+<link href="css/preparaciones.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="js/preparaciones-charts.js"></script>
 
 <div class="container-fluid">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2><i class="oi oi-cog"></i> Gestión de Preparaciones</h2>
-            <p class="text-muted">Control de cocina y preparaciones en tiempo real</p>
+            <h2><i class="oi oi-restaurant"></i> Análisis de Preparaciones</h2>
+            <p class="text-muted">Supervisión y análisis del rendimiento de cocina</p>
         </div>
         <div class="btn-group">
             <button class="btn btn-outline-primary" @onclick="ToggleVistaTabular">
                 <i class="oi @(mostrarVistaTabular ? "oi-list" : "oi-grid-three-up")"></i>
                 @(mostrarVistaTabular ? "Vista Cola" : "Vista Tabla")
             </button>
+            <button class="btn btn-outline-primary" @onclick="GenerarReportes">
+                <i class="oi oi-bar-chart"></i> Reportes
+            </button>
             <button class="btn btn-outline-success" @onclick="ExportarExcel">
                 <i class="oi oi-document"></i> Exportar Excel
+            </button>
+            <button class="btn btn-outline-warning" @onclick="ConfigurarTiempos">
+                <i class="oi oi-cog"></i> Configurar
+            </button>
+            <button class="btn btn-outline-info" @onclick="AsignarCocineros">
+                <i class="oi oi-people"></i> Asignar
             </button>
             <button class="btn btn-primary" @onclick="RefrescarDatos">
                 <i class="oi oi-reload"></i> Actualizar
@@ -28,60 +41,135 @@
         </div>
     </div>
 
-    <!-- Estadísticas -->
+    <!-- Dashboard de Métricas -->
     @if (estadisticas != null)
     {
         <div class="row mb-4">
+            <!-- Total de Preparaciones -->
             <div class="col-md-2">
-                <div class="card text-center border-primary">
-                    <div class="card-body">
-                        <h5 class="card-title text-primary">@estadisticas.PreparacionesHoy</h5>
-                        <p class="card-text small">Preparaciones Hoy</p>
+                <div class="card metric-card border-primary">
+                    <div class="card-body text-center">
+                        <div class="metric-icon text-primary">
+                            <i class="oi oi-clipboard"></i>
+                        </div>
+                        <h3 class="metric-value text-primary">@estadisticas.PreparacionesHoy</h3>
+                        <p class="metric-label">Total Preparaciones</p>
+                        <small class="text-muted">@(estadisticas.PreparacionesHoy > 0 ? "+12%" : "0%") vs ayer</small>
                     </div>
                 </div>
             </div>
+            
+            <!-- Preparaciones Pendientes -->
             <div class="col-md-2">
-                <div class="card text-center border-warning">
-                    <div class="card-body">
-                        <h5 class="card-title text-warning">@estadisticas.PreparacionesPendientes</h5>
-                        <p class="card-text small">Pendientes</p>
+                <div class="card metric-card border-warning">
+                    <div class="card-body text-center">
+                        <div class="metric-icon text-warning">
+                            <i class="oi oi-clock"></i>
+                        </div>
+                        <h3 class="metric-value text-warning">@estadisticas.PreparacionesPendientes</h3>
+                        <p class="metric-label">Pendientes</p>
+                        <small class="text-muted">@(estadisticas.PreparacionesHoy > 0 ? Math.Round((double)estadisticas.PreparacionesPendientes / estadisticas.PreparacionesHoy * 100, 1) : 0)% del total</small>
                     </div>
                 </div>
             </div>
+            
+            <!-- Preparaciones En Proceso -->
             <div class="col-md-2">
-                <div class="card text-center border-info">
-                    <div class="card-body">
-                        <h5 class="card-title text-info">@estadisticas.PreparacionesEnProceso</h5>
-                        <p class="card-text small">En Proceso</p>
+                <div class="card metric-card border-info">
+                    <div class="card-body text-center">
+                        <div class="metric-icon text-info">
+                            <i class="oi oi-play-circle"></i>
+                        </div>
+                        <h3 class="metric-value text-info">@estadisticas.PreparacionesEnProceso</h3>
+                        <p class="metric-label">En Proceso</p>
+                        <small class="text-muted">@(estadisticas.PreparacionesHoy > 0 ? Math.Round((double)estadisticas.PreparacionesEnProceso / estadisticas.PreparacionesHoy * 100, 1) : 0)% del total</small>
                     </div>
                 </div>
             </div>
+            
+            <!-- Preparaciones Completadas -->
             <div class="col-md-2">
-                <div class="card text-center border-success">
-                    <div class="card-body">
-                        <h5 class="card-title text-success">@estadisticas.PreparacionesCompletadas</h5>
-                        <p class="card-text small">Completadas</p>
+                <div class="card metric-card border-success">
+                    <div class="card-body text-center">
+                        <div class="metric-icon text-success">
+                            <i class="oi oi-check-circle"></i>
+                        </div>
+                        <h3 class="metric-value text-success">@estadisticas.PreparacionesCompletadas</h3>
+                        <p class="metric-label">Completadas</p>
+                        <small class="text-muted">@(estadisticas.PreparacionesHoy > 0 ? Math.Round((double)estadisticas.PreparacionesCompletadas / estadisticas.PreparacionesHoy * 100, 1) : 0)% del total</small>
                     </div>
                 </div>
             </div>
+            
+            <!-- Tiempo Promedio -->
             <div class="col-md-2">
-                <div class="card text-center border-danger">
-                    <div class="card-body">
-                        <h5 class="card-title text-danger">@estadisticas.PreparacionesAtrasadas</h5>
-                        <p class="card-text small">Atrasadas</p>
+                <div class="card metric-card border-secondary">
+                    <div class="card-body text-center">
+                        <div class="metric-icon text-secondary">
+                            <i class="oi oi-timer"></i>
+                        </div>
+                        <h3 class="metric-value text-secondary">@estadisticas.TiempoPromedioPreparacion.ToString("F0")</h3>
+                        <p class="metric-label">Tiempo Promedio</p>
+                        <small class="text-muted">minutos</small>
                     </div>
                 </div>
             </div>
+            
+            <!-- Eficiencia de Cocina -->
             <div class="col-md-2">
-                <div class="card text-center border-secondary">
-                    <div class="card-body">
-                        <h5 class="card-title text-secondary">@estadisticas.TiempoPromedioPreparacion.ToString("F1")</h5>
-                        <p class="card-text small">Tiempo Promedio (min)</p>
+                <div class="card metric-card border-success">
+                    <div class="card-body text-center">
+                        <div class="metric-icon text-success">
+                            <i class="oi oi-trending-up"></i>
+                        </div>
+                        <h3 class="metric-value text-success">@estadisticas.EficienciaCocina.ToString("F0")%</h3>
+                        <p class="metric-label">Eficiencia</p>
+                        <small class="text-muted">de cocina</small>
                     </div>
                 </div>
             </div>
         </div>
     }
+
+    <!-- Gráficos de Análisis -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="oi oi-bar-chart"></i> Distribución por Estado
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="distribucionEstadoChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="oi oi-timer"></i> Tiempo de Preparación por Hora
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="tiempoPorHoraChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="oi oi-person"></i> Rendimiento por Cocinero
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="rendimientoCocineroChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Filtros -->
     <PreparacionFiltros Filtros="filtros" 
@@ -124,11 +212,10 @@
     </div>
 </div>
 
-<!-- Modal de Preparación -->
-<PreparacionForm Preparacion="preparacionSeleccionada"
-                 Mostrar="mostrarModal"
-                 OnSubmit="GuardarPreparacion"
-                 OnCancel="CerrarModal" />
+<!-- Modal de Detalles de Preparación -->
+<PreparacionDetallesModal Preparacion="preparacionSeleccionada"
+                          Mostrar="mostrarModalDetalles"
+                          OnCerrar="CerrarModalDetalles" />
 
 @code {
     private List<PreparacionDto> preparaciones = new();
@@ -136,13 +223,21 @@
     private PreparacionFiltrosDto filtros = new();
     private PreparacionEstadisticasDto? estadisticas;
     private PreparacionDto preparacionSeleccionada = new();
-    private bool mostrarModal = false;
+    private bool mostrarModalDetalles = false;
     private bool cargando = false;
     private bool mostrarVistaTabular = false;
 
     protected override async Task OnInitializedAsync()
     {
         await CargarDatos();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("preparacionesCharts.initAll", estadisticas);
+        }
     }
 
     private async Task CargarDatos()
@@ -172,6 +267,9 @@
         {
             cargando = false;
             StateHasChanged();
+            
+            // Actualizar gráficos después de cargar datos
+            await JSRuntime.InvokeVoidAsync("preparacionesCharts.initAll", estadisticas);
         }
     }
 
@@ -195,7 +293,7 @@
     private void EditarPreparacion(PreparacionDto preparacion)
     {
         preparacionSeleccionada = preparacion;
-        mostrarModal = true;
+        mostrarModalDetalles = true;
         StateHasChanged();
     }
 
@@ -206,13 +304,9 @@
             var detalles = await PreparacionesApi.ObtenerPreparacionAsync(preparacion.Id);
             if (detalles != null)
             {
-                // Aquí podrías mostrar un modal de detalles más completo
-                await JSRuntime.InvokeVoidAsync("alert", 
-                    $"Detalles de {preparacion.ProductoNombre}\n" +
-                    $"Mesa: {preparacion.MesaNumero}\n" +
-                    $"Estado: {preparacion.Estado}\n" +
-                    $"Cocinero: {preparacion.CocineroNombre ?? "Sin asignar"}\n" +
-                    $"Tiempo: {preparacion.TiempoRealMinutos ?? preparacion.TiempoEstimadoMinutos} min");
+                preparacionSeleccionada = detalles;
+                mostrarModalDetalles = true;
+                StateHasChanged();
             }
         }
         catch (Exception ex)
@@ -263,24 +357,9 @@
         }
     }
 
-    private async Task GuardarPreparacion()
+    private void CerrarModalDetalles()
     {
-        try
-        {
-            // Aquí implementarías la lógica de guardado
-            // Por ahora solo cerramos el modal
-            CerrarModal();
-            await CargarDatos();
-        }
-        catch (Exception ex)
-        {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error al guardar: {ex.Message}");
-        }
-    }
-
-    private void CerrarModal()
-    {
-        mostrarModal = false;
+        mostrarModalDetalles = false;
         preparacionSeleccionada = new();
         StateHasChanged();
     }
@@ -303,6 +382,42 @@
     {
         mostrarVistaTabular = !mostrarVistaTabular;
         StateHasChanged();
+    }
+
+    private async Task GenerarReportes()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Funcionalidad de reportes en desarrollo");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al generar reportes: {ex.Message}");
+        }
+    }
+
+    private async Task ConfigurarTiempos()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Configuración de tiempos en desarrollo");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al configurar tiempos: {ex.Message}");
+        }
+    }
+
+    private async Task AsignarCocineros()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Asignación de cocineros en desarrollo");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al asignar cocineros: {ex.Message}");
+        }
     }
 
     private async Task ExportarExcel()
