@@ -63,7 +63,7 @@ public class PreparacionesViewModelTests
             new() { Id = Guid.NewGuid(), Nombre = "Arroz con mariscos", Categoria = "Platos Principales" }
         };
         _mockService
-            .Setup(s => s.BuscarPreparacionesAsync(It.Is<string>(t => t == "ar")))
+            .Setup(s => s.BuscarPreparacionesAsync(It.Is<string>(t => t == "ar"), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<PreparacionDto>>.SuccessResponse(data.Where(p => p.Nombre.Contains("ar", StringComparison.OrdinalIgnoreCase)).ToList()));
 
         var vm = CreateVm();
@@ -93,7 +93,7 @@ public class PreparacionesViewModelTests
     {
         var item = new PreparacionDto { Id = Guid.NewGuid(), Disponible = true };
         _mockService
-            .Setup(s => s.CambiarDisponibilidadAsync(item.Id, It.IsAny<bool>()))
+            .Setup(s => s.CambiarDisponibilidadAsync(item.Id, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<PreparacionDto>.SuccessResponse(item));
 
         var vm = CreateVm();
@@ -108,7 +108,7 @@ public class PreparacionesViewModelTests
     {
         var item = new PreparacionDto { Id = Guid.NewGuid(), Disponible = true };
         _mockService
-            .Setup(s => s.CambiarDisponibilidadAsync(item.Id, It.IsAny<bool>()))
+            .Setup(s => s.CambiarDisponibilidadAsync(item.Id, It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<PreparacionDto>.ErrorResponse("fallo"));
 
         var vm = CreateVm();

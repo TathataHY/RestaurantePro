@@ -95,6 +95,14 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
             services.AddScoped<RestaurantePro.Application.Common.Services.IHtmlSanitizerService, 
                 RestaurantePro.Application.Common.Services.HtmlSanitizerService>();
 
+            // Configurar servicio de fecha y hora para pruebas
+            services.AddScoped<RestaurantePro.Domain.Core.Base.Services.IDateTimeService, 
+                RestaurantePro.Domain.Core.Base.Services.DateTimeService>();
+
+            // Configurar política de visibilidad de categorías para pruebas
+            services.AddScoped<RestaurantePro.Domain.Core.Productos.Policies.IVisibilidadCategoriasPolicy, 
+                RestaurantePro.Domain.Core.Productos.Policies.VisibilidadCategoriasPolicy>();
+
             // Configurar logging para pruebas
             services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning));
         });

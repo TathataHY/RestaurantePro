@@ -278,7 +278,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
             await _viewModel.IniciarPreparacionCommand.ExecuteAsync(preparacion);
 
             // Assert
-            _mockPreparacionesService.Verify(x => x.IniciarPreparacionAsync(It.IsAny<Guid>(), It.IsAny<IniciarPreparacionDto>()), Times.Never);
+            _mockPreparacionesService.Verify(x => x.IniciarPreparacionAsync(It.IsAny<Guid>(), It.IsAny<IniciarPreparacionDto>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
@@ -391,7 +391,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
             await _viewModel.CancelarPreparacionCommand.ExecuteAsync(preparacion);
 
             // Assert
-            _mockPreparacionesService.Verify(x => x.CancelarPreparacionAsync(It.IsAny<Guid>(), It.IsAny<CancelarPreparacionDto>()), Times.Never);
+            _mockPreparacionesService.Verify(x => x.CancelarPreparacionAsync(It.IsAny<Guid>(), It.IsAny<CancelarPreparacionDto>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]

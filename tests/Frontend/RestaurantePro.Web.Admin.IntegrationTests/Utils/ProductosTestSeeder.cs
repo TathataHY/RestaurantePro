@@ -23,6 +23,13 @@ public static class ProductosTestSeeder
             ProductoCategoria.Crear("Especialidades", "Platos especiales del chef", 5)
         };
 
+        // Establecer fecha de creación para las categorías
+        var fechaCreacion = DateTime.UtcNow;
+        foreach (var categoria in categorias)
+        {
+            categoria.SetFechaCreacionForTesting(fechaCreacion);
+        }
+
         context.ProductoCategorias.AddRange(categorias);
         await context.SaveChangesAsync();
 

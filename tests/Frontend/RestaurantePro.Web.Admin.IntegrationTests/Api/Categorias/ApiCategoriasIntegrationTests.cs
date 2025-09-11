@@ -13,6 +13,10 @@ namespace RestaurantePro.Web.Admin.IntegrationTests.Api.Categorias;
 /// </summary>
 public class ApiCategoriasIntegrationTests : BaseIntegrationTest
 {
+    public ApiCategoriasIntegrationTests(WebApplicationFactory factory) : base(factory)
+    {
+    }
+
     #region Obtener Categorías
 
     [Fact]
@@ -28,7 +32,7 @@ public class ApiCategoriasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<List<CategoriaProductoDto>>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<List<RestaurantePro.Application.Core.Productos.DTOs.CategoriaProductoDto>>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -50,7 +54,7 @@ public class ApiCategoriasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<List<CategoriaProductoDto>>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<List<RestaurantePro.Application.Core.Productos.DTOs.CategoriaProductoDto>>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -71,7 +75,7 @@ public class ApiCategoriasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<List<CategoriaProductoDto>>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<List<RestaurantePro.Application.Core.Productos.DTOs.CategoriaProductoDto>>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -91,7 +95,7 @@ public class ApiCategoriasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<List<CategoriaProductoDto>>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<List<RestaurantePro.Application.Core.Productos.DTOs.CategoriaProductoDto>>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -116,7 +120,7 @@ public class ApiCategoriasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<CategoriaProductoDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<RestaurantePro.Application.Core.Productos.DTOs.CategoriaProductoDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -145,7 +149,7 @@ public class ApiCategoriasIntegrationTests : BaseIntegrationTest
     }
 
     [Fact]
-    public async Task ObtenerCategoriaPorId_ConIdInvalido_DeberiaRetornarBadRequest()
+    public async Task ObtenerCategoriaPorId_ConIdInvalido_DeberiaRetornarNotFound()
     {
         // Arrange
         var idInvalido = "id-invalido";
@@ -154,7 +158,7 @@ public class ApiCategoriasIntegrationTests : BaseIntegrationTest
         var response = await _client.GetAsync($"/api/core/categorias/{idInvalido}");
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     #endregion
@@ -175,7 +179,7 @@ public class ApiCategoriasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<List<CategoriaProductoDto>>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<List<RestaurantePro.Application.Core.Productos.DTOs.CategoriaProductoDto>>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -197,7 +201,7 @@ public class ApiCategoriasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<List<CategoriaProductoDto>>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<List<RestaurantePro.Application.Core.Productos.DTOs.CategoriaProductoDto>>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -218,7 +222,7 @@ public class ApiCategoriasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<List<CategoriaProductoDto>>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<List<RestaurantePro.Application.Core.Productos.DTOs.CategoriaProductoDto>>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -240,7 +244,7 @@ public class ApiCategoriasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<List<CategoriaProductoDto>>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<List<RestaurantePro.Application.Core.Productos.DTOs.CategoriaProductoDto>>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -261,7 +265,7 @@ public class ApiCategoriasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<List<CategoriaProductoDto>>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<List<RestaurantePro.Application.Core.Productos.DTOs.CategoriaProductoDto>>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -285,7 +289,7 @@ public class ApiCategoriasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<List<CategoriaProductoDto>>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<List<RestaurantePro.Application.Core.Productos.DTOs.CategoriaProductoDto>>>(content, GetJsonOptions());
         
         responseData.Data.Should().NotBeEmpty();
         var categoria = responseData.Data.First();
@@ -315,7 +319,7 @@ public class ApiCategoriasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<CategoriaProductoDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<RestaurantePro.Application.Core.Productos.DTOs.CategoriaProductoDto>>(content, GetJsonOptions());
         
         responseData.Data.Should().NotBeNull();
         var categoria = responseData.Data;
@@ -373,25 +377,10 @@ public class ApiCategoriasIntegrationTests : BaseIntegrationTest
 
     private async Task<List<Guid>> SeedCategoriasDePruebaAsync(int cantidad = 5)
     {
-        var categoriaIds = new List<Guid>();
-        
-        for (int i = 1; i <= cantidad; i++)
-        {
-            var categoriaId = Guid.NewGuid();
-            categoriaIds.Add(categoriaId);
-            
-            // Crear categoría usando el seeder de productos existente
-            await SeedCategoriaAsync($"Categoría Test {i}", $"Descripción de categoría {i}", i);
-        }
-        
+        var categoriaIds = await CrearCategoriasDePruebaAsync();
+        // Crear productos para que las categorías no estén vacías
+        await CrearProductosDePruebaAsync(categoriaIds);
         return categoriaIds;
-    }
-
-    private async Task SeedCategoriaAsync(string nombre, string descripcion, int orden)
-    {
-        // Este método simulará la creación de categorías
-        // En un entorno real, usarías el seeder apropiado
-        await Task.CompletedTask;
     }
 
     #endregion

@@ -74,7 +74,7 @@ public class ComandasViewModelTests
         var mockService = new Mock<IComandasService>();
         var statCalls = 0;
         mockService
-            .Setup(s => s.ObtenerEstadisticasAsync())
+            .Setup(s => s.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<EstadisticasComandasDto>.SuccessResponse(new EstadisticasComandasDto()))
             .Callback(() => statCalls++);
         mockService
