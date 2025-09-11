@@ -43,6 +43,8 @@ public class ProductosDataConsistencyTests : BaseIntegrationTest
         var responseContent = await response.Content.ReadAsStringAsync();
         var responseData = JsonSerializer.Deserialize<ApiResponse<ProductoDto>>(responseContent, GetJsonOptions());
         var productoId = responseData.Data?.Id.ToString();
+        
+        productoId.Should().NotBeNull("El ID del producto debería estar presente en la respuesta");
 
         // Verificar que el producto se puede obtener después de crearlo
         var getResponse = await _client.GetAsync($"/api/core/productos/{productoId}");
@@ -77,8 +79,10 @@ public class ProductosDataConsistencyTests : BaseIntegrationTest
         crearResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var crearResponseContent = await crearResponse.Content.ReadAsStringAsync();
-        var crearResponseData = JsonSerializer.Deserialize<ApiResponse<object>>(crearResponseContent, GetJsonOptions());
-        var productoId = crearResponseData.Data.GetType().GetProperty("Id")?.GetValue(crearResponseData.Data)?.ToString();
+        var crearResponseData = JsonSerializer.Deserialize<ApiResponse<ProductoDto>>(crearResponseContent, GetJsonOptions());
+        var productoId = crearResponseData.Data?.Id.ToString();
+        
+        productoId.Should().NotBeNull("El ID del producto debería estar presente en la respuesta");
 
         // Act - Actualizar producto
         var actualizarRequest = new ActualizarProductoCommand
@@ -143,8 +147,10 @@ public class ProductosDataConsistencyTests : BaseIntegrationTest
         crearResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var crearResponseContent = await crearResponse.Content.ReadAsStringAsync();
-        var crearResponseData = JsonSerializer.Deserialize<ApiResponse<object>>(crearResponseContent, GetJsonOptions());
-        var productoId = crearResponseData.Data.GetType().GetProperty("Id")?.GetValue(crearResponseData.Data)?.ToString();
+        var crearResponseData = JsonSerializer.Deserialize<ApiResponse<ProductoDto>>(crearResponseContent, GetJsonOptions());
+        var productoId = crearResponseData.Data?.Id.ToString();
+        
+        productoId.Should().NotBeNull("El ID del producto debería estar presente en la respuesta");
 
         // Act - Eliminar producto
         var eliminarResponse = await _client.DeleteAsync($"/api/core/productos/{productoId}");
@@ -152,7 +158,7 @@ public class ProductosDataConsistencyTests : BaseIntegrationTest
         // Assert
         eliminarResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        // Verificar que el producto no aparece en las consultas generales
+        // Verificar que el producto no aparece en las consultas generales (soft delete)
         var consultas = new[]
         {
             _client.GetAsync("/api/core/productos"),
@@ -162,9 +168,14 @@ public class ProductosDataConsistencyTests : BaseIntegrationTest
         var responses = await Task.WhenAll(consultas);
         responses.Should().AllSatisfy(r => r.StatusCode.Should().Be(HttpStatusCode.OK));
 
-        // Verificar que el producto individual devuelve 404
+        // Verificar que el producto individual sigue siendo accesible (soft delete)
         var getIndividualResponse = await _client.GetAsync($"/api/core/productos/{productoId}");
-        getIndividualResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        getIndividualResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        // Verificar que el producto está desactivado
+        var getIndividualContent = await getIndividualResponse.Content.ReadAsStringAsync();
+        var getIndividualData = JsonSerializer.Deserialize<ApiResponse<ProductoDto>>(getIndividualContent, GetJsonOptions());
+        getIndividualData.Data?.Activo.Should().BeFalse("El producto eliminado debería estar desactivado");
     }
 
     [Fact]
@@ -242,8 +253,10 @@ public class ProductosDataConsistencyTests : BaseIntegrationTest
         crearResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var crearResponseContent = await crearResponse.Content.ReadAsStringAsync();
-        var crearResponseData = JsonSerializer.Deserialize<ApiResponse<object>>(crearResponseContent, GetJsonOptions());
-        var productoId = crearResponseData.Data.GetType().GetProperty("Id")?.GetValue(crearResponseData.Data)?.ToString();
+        var crearResponseData = JsonSerializer.Deserialize<ApiResponse<ProductoDto>>(crearResponseContent, GetJsonOptions());
+        var productoId = crearResponseData.Data?.Id.ToString();
+        
+        productoId.Should().NotBeNull("El ID del producto debería estar presente en la respuesta");
 
         // Act - Cambiar categoría del producto
         var actualizarRequest = new ActualizarProductoCommand
@@ -312,6 +325,8 @@ public class ProductosDataConsistencyTests : BaseIntegrationTest
         var responseContent = await response.Content.ReadAsStringAsync();
         var responseData = JsonSerializer.Deserialize<ApiResponse<ProductoDto>>(responseContent, GetJsonOptions());
         var productoId = responseData.Data?.Id.ToString();
+        
+        productoId.Should().NotBeNull("El ID del producto debería estar presente en la respuesta");
 
         // Verificar que el precio se mantiene con la precisión correcta
         var getResponse = await _client.GetAsync($"/api/core/productos/{productoId}");
@@ -348,8 +363,10 @@ public class ProductosDataConsistencyTests : BaseIntegrationTest
         crearResponse.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var crearResponseContent = await crearResponse.Content.ReadAsStringAsync();
-        var crearResponseData = JsonSerializer.Deserialize<ApiResponse<object>>(crearResponseContent, GetJsonOptions());
-        var productoId = crearResponseData.Data.GetType().GetProperty("Id")?.GetValue(crearResponseData.Data)?.ToString();
+        var crearResponseData = JsonSerializer.Deserialize<ApiResponse<ProductoDto>>(crearResponseContent, GetJsonOptions());
+        var productoId = crearResponseData.Data?.Id.ToString();
+        
+        productoId.Should().NotBeNull("El ID del producto debería estar presente en la respuesta");
 
         // Act - Actualizar múltiples veces
         for (int i = 1; i <= 3; i++)

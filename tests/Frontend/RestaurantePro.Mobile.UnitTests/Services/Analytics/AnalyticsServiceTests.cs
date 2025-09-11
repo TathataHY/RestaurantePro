@@ -49,7 +49,7 @@ public class AnalyticsServiceTests
         Assert.Equal(2500.00m, result.Data.TotalVentas);
         Assert.Equal(45, result.Data.TotalComandas);
         Assert.Equal(38, result.Data.ClientesAtendidos);
-        _mockApiService.Verify(x => x.GetAsync<MetricasDiaDto>("api/analytics/metricas-dia", "test-token"), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<MetricasDiaDto>("api/analytics/metricas-dia", "test-token", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -85,7 +85,7 @@ public class AnalyticsServiceTests
         Assert.NotNull(result.Data);
         Assert.Equal(15000.00m, result.Data.TotalVentas);
         Assert.Equal(280, result.Data.TotalComandas);
-        _mockApiService.Verify(x => x.GetAsync<MetricasRangoDto>($"api/analytics/metricas-rango?fechaDesde={fechaDesde:yyyy-MM-dd}&fechaHasta={fechaHasta:yyyy-MM-dd}", "test-token"), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<MetricasRangoDto>($"api/analytics/metricas-rango?fechaDesde={fechaDesde:yyyy-MM-dd}&fechaHasta={fechaHasta:yyyy-MM-dd}", "test-token", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -116,7 +116,7 @@ public class AnalyticsServiceTests
         Assert.Equal(5, result.Data.Count);
         Assert.Equal("Hamburguesa Clásica", result.Data[0].NombreProducto);
         Assert.Equal(45, result.Data[0].CantidadVendida);
-        _mockApiService.Verify(x => x.GetAsync<List<TopProductoDto>>($"api/analytics/top-productos?limite={limite}", "test-token"), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<TopProductoDto>>($"api/analytics/top-productos?limite={limite}", "test-token", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -145,7 +145,7 @@ public class AnalyticsServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(3, result.Data.Count);
-        _mockApiService.Verify(x => x.GetAsync<List<TopProductoDto>>($"api/analytics/top-productos?limite={limite}&fechaDesde={fechaDesde:yyyy-MM-dd}&fechaHasta={fechaHasta:yyyy-MM-dd}", "test-token"), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<TopProductoDto>>($"api/analytics/top-productos?limite={limite}&fechaDesde={fechaDesde:yyyy-MM-dd}&fechaHasta={fechaHasta:yyyy-MM-dd}", "test-token", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -177,7 +177,7 @@ public class AnalyticsServiceTests
         Assert.Equal(20, result.Data.TotalMesas);
         Assert.Equal(15, result.Data.MesasOcupadas);
         Assert.Equal(75.0m, result.Data.PorcentajeOcupacion);
-        _mockApiService.Verify(x => x.GetAsync<OcupacionMesasDto>($"api/analytics/ocupacion-mesas?fecha={fecha:yyyy-MM-dd}", "test-token"), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<OcupacionMesasDto>($"api/analytics/ocupacion-mesas?fecha={fecha:yyyy-MM-dd}", "test-token", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -204,7 +204,7 @@ public class AnalyticsServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(18, result.Data.TiempoPromedioMinutos);
-        _mockApiService.Verify(x => x.GetAsync<TiempoPreparacionDto>("api/analytics/tiempo-preparacion", "test-token"), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<TiempoPreparacionDto>("api/analytics/tiempo-preparacion", "test-token", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -233,7 +233,7 @@ public class AnalyticsServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Equal(16, result.Data.TiempoPromedioMinutos);
-        _mockApiService.Verify(x => x.GetAsync<TiempoPreparacionDto>($"api/analytics/tiempo-preparacion?fechaDesde={fechaDesde:yyyy-MM-dd}&fechaHasta={fechaHasta:yyyy-MM-dd}", "test-token"), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<TiempoPreparacionDto>($"api/analytics/tiempo-preparacion?fechaDesde={fechaDesde:yyyy-MM-dd}&fechaHasta={fechaHasta:yyyy-MM-dd}", "test-token", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -265,7 +265,7 @@ public class AnalyticsServiceTests
         Assert.Equal(6, result.Data.Count);
         Assert.Equal(20, result.Data[4].Hora); // Hora pico
         Assert.Equal(950.00m, result.Data[4].TotalVentas);
-        _mockApiService.Verify(x => x.GetAsync<List<VentasHoraDto>>($"api/analytics/ventas-hora?fecha={fecha:yyyy-MM-dd}", "test-token"), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<VentasHoraDto>>($"api/analytics/ventas-hora?fecha={fecha:yyyy-MM-dd}", "test-token", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -324,7 +324,7 @@ public class AnalyticsServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Empty(result.Data);
-        _mockApiService.Verify(x => x.GetAsync<List<TopProductoDto>>($"api/analytics/top-productos?limite={limite}", "test-token"), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<TopProductoDto>>($"api/analytics/top-productos?limite={limite}", "test-token", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -377,7 +377,7 @@ public class AnalyticsServiceTests
         Assert.True(result.Succeeded);
         Assert.NotNull(result.Data);
         Assert.Empty(result.Data);
-        _mockApiService.Verify(x => x.GetAsync<List<VentasHoraDto>>($"api/analytics/ventas-hora?fecha={fecha:yyyy-MM-dd}", "test-token"), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<VentasHoraDto>>($"api/analytics/ventas-hora?fecha={fecha:yyyy-MM-dd}", "test-token", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     // Tests para 401/403/429

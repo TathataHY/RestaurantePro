@@ -55,7 +55,7 @@ public class MesasServiceTests
         var expectedMesas = _fixture.CreateMany<MesaDto>(3).ToList();
         var expectedResponse = ApiResponse<List<MesaDto>>.SuccessResponse(expectedMesas);
 
-        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas?estado=Disponible&ubicacion=Interior&capacidadMinima=4", It.IsAny<string?>()))
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas?estado=Disponible&ubicacion=Interior&capacidadMinima=4", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
                        .ReturnsAsync(expectedResponse);
 
         // Act
@@ -81,7 +81,7 @@ public class MesasServiceTests
         expectedMesa.Id = mesaId;
         var expectedResponse = ApiResponse<MesaDto>.SuccessResponse(expectedMesa);
 
-        _mockApiService.Setup(x => x.GetAsync<MesaDto>($"api/operaciones/mesas/{mesaId}", It.IsAny<string?>()))
+        _mockApiService.Setup(x => x.GetAsync<MesaDto>($"api/operaciones/mesas/{mesaId}", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
                        .ReturnsAsync(expectedResponse);
 
         // Act
@@ -112,7 +112,7 @@ public class MesasServiceTests
         };
         var expectedResponse = ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(paginatedList);
 
-        _mockApiService.Setup(x => x.GetAsync<PaginatedList<MesaDto>>(It.Is<string>(s => s.StartsWith("api/operaciones/mesas/disponibles") && s.Contains("pageNumber=1") && s.Contains("pageSize=50")), It.IsAny<string?>()))
+        _mockApiService.Setup(x => x.GetAsync<PaginatedList<MesaDto>>(It.Is<string>(s => s.StartsWith("api/operaciones/mesas/disponibles") && s.Contains("pageNumber=1") && s.Contains("pageSize=50")), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
                        .ReturnsAsync(expectedResponse);
 
         // Act
@@ -139,7 +139,7 @@ public class MesasServiceTests
         };
         var expectedResponse = ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(paginatedList);
 
-        _mockApiService.Setup(x => x.GetAsync<PaginatedList<MesaDto>>(It.Is<string>(s => s.StartsWith("api/operaciones/mesas/disponibles?") && s.Contains("capacidadMinima=6") && s.Contains("ubicacion=Terraza") && s.Contains("pageNumber=1") && s.Contains("pageSize=50")), It.IsAny<string?>()))
+        _mockApiService.Setup(x => x.GetAsync<PaginatedList<MesaDto>>(It.Is<string>(s => s.StartsWith("api/operaciones/mesas/disponibles?") && s.Contains("capacidadMinima=6") && s.Contains("ubicacion=Terraza") && s.Contains("pageNumber=1") && s.Contains("pageSize=50")), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
                        .ReturnsAsync(expectedResponse);
 
         // Act
@@ -163,7 +163,7 @@ public class MesasServiceTests
         var expectedEstado = _fixture.Create<EstadoMesasDto>();
         var expectedResponse = ApiResponse<EstadoMesasDto>.SuccessResponse(expectedEstado);
 
-        _mockApiService.Setup(x => x.GetAsync<EstadoMesasDto>("api/operaciones/mesas/estado-ocupacion", It.IsAny<string?>()))
+        _mockApiService.Setup(x => x.GetAsync<EstadoMesasDto>("api/operaciones/mesas/estado-ocupacion", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
                        .ReturnsAsync(expectedResponse);
 
         // Act
@@ -257,7 +257,8 @@ public class MesasServiceTests
         _mockApiService.Setup(x => x.PutAsync<MesaDto>(
             $"api/operaciones/mesas/{mesaId}/estado",
             It.IsAny<object>(),
-            It.IsAny<string?>()))
+            It.IsAny<string?>(),
+            It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -337,7 +338,7 @@ public class MesasServiceTests
         var expectedMesa = _fixture.Create<MesaDto>();
         var expectedResponse = ApiResponse<MesaDto>.SuccessResponse(expectedMesa);
 
-        _mockApiService.Setup(x => x.GetAsync<MesaDto>($"api/operaciones/mesas/buscar-mejor?numeroPersonas={numeroPersonas}&ubicacionPreferida=Terraza", It.IsAny<string?>()))
+        _mockApiService.Setup(x => x.GetAsync<MesaDto>($"api/operaciones/mesas/buscar-mejor?numeroPersonas={numeroPersonas}&ubicacionPreferida=Terraza", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
                        .ReturnsAsync(expectedResponse);
 
         // Act
@@ -358,7 +359,7 @@ public class MesasServiceTests
         var expectedMesa = _fixture.Create<MesaDto>();
         var expectedResponse = ApiResponse<MesaDto>.SuccessResponse(expectedMesa);
 
-        _mockApiService.Setup(x => x.GetAsync<MesaDto>($"api/operaciones/mesas/buscar-mejor?numeroPersonas={numeroPersonas}", It.IsAny<string?>()))
+        _mockApiService.Setup(x => x.GetAsync<MesaDto>($"api/operaciones/mesas/buscar-mejor?numeroPersonas={numeroPersonas}", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
                        .ReturnsAsync(expectedResponse);
 
         // Act
@@ -381,7 +382,7 @@ public class MesasServiceTests
         // Arrange
         var errorResponse = ApiResponse<List<MesaDto>>.ErrorResponse("Error de conexión");
 
-        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas", It.IsAny<string?>()))
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
                        .ReturnsAsync(errorResponse);
 
         // Act

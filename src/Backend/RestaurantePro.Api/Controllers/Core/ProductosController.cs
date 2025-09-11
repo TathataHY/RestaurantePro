@@ -63,6 +63,16 @@ public class ProductosController : ControllerBase
             return BadRequest(errorResponse);
         }
 
+        // Validar longitud del filtro
+        if (!string.IsNullOrEmpty(filtro) && filtro.Length > 100)
+        {
+            var errorResponse = ApiResponse<PaginatedList<ProductoDto>>.ErrorResponse(
+                new List<string> { "El filtro no puede exceder 100 caracteres" }, 
+                "Filtro de búsqueda inválido", 
+                StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+
         var query = new ObtenerProductosPaginadosQuery
         {
             PageNumber = pagina,
@@ -132,6 +142,14 @@ public class ProductosController : ControllerBase
         
         if (!result.Succeeded)
         {
+            // Si la categoría no existe, devolver 404
+            if (result.Errors.Any(e => e.Contains("categoría") && e.Contains("no encontrada")))
+            {
+                var notFoundResponse = ApiResponse<List<ProductoDto>>.ErrorResponse(
+                    result.Errors, "Categoría no encontrada", StatusCodes.Status404NotFound);
+                return NotFound(notFoundResponse);
+            }
+            
             var errorResponse = ApiResponse<List<ProductoDto>>.ErrorResponse(
                 result.Errors, "Error al obtener productos por categoría", StatusCodes.Status400BadRequest);
             return BadRequest(errorResponse);
@@ -208,6 +226,7 @@ public class ProductosController : ControllerBase
     /// Elimina un producto
     /// </summary>
     [HttpDelete("{id:guid}")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<bool>>> EliminarProducto(Guid id)
