@@ -1,0 +1,10 @@
+global using Xunit;
+global using FluentAssertions;
+global using Moq;
+global using Moq.Protected;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Http;
+global using System.Net.Http;
+global using System.Text.Json;
+global using RestaurantePro.Web.Admin.Services;
+global using RestaurantePro.Web.Admin.Models;
