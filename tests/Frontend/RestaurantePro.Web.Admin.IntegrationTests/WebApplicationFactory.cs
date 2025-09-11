@@ -59,6 +59,12 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
 
             // Configurar AutoMapper para pruebas
             services.AddAutoMapper(typeof(RestaurantePro.Application.Comercial.Clientes.Commands.CrearCliente.CrearClienteCommand).Assembly);
+            
+            // Configurar INotificationService para pruebas
+            services.AddScoped<RestaurantePro.Application.Common.Interfaces.INotificationService, TestNotificationService>();
+            
+            // Configurar IEmailService para pruebas
+            services.AddScoped<RestaurantePro.Application.Common.Interfaces.IEmailService, TestEmailService>();
 
             // Configurar serialización JSON para pruebas (enums como strings)
             services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>

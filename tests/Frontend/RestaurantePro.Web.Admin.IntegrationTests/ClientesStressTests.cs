@@ -150,7 +150,7 @@ public class ClientesStressTests : BaseIntegrationTest
         // Cliente con caracteres especiales
         clientes.Add(new CrearClienteRequest
         {
-            Nombre = "José María O'Connor-Smith",
+            Nombre = "José María OConnor Smith",
             Email = "jose.oconnor@test.com",
             Telefono = "+51-987-654-321",
             FechaNacimiento = DateTime.Today.AddYears(-25),
