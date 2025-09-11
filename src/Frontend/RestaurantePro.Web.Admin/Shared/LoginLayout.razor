@@ -1,0 +1,58 @@
+@inherits LayoutView
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RestaurantePro Admin - Login</title>
+    <base href="~/" />
+    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
+    <link href="css/app.css" rel="stylesheet" />
+    <link href="css/modern-theme.css" rel="stylesheet" />
+    <link href="RestaurantePro.Web.Admin.styles.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Noto+Sans:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-color': 'var(--primary-color)',
+                        'success-color': 'var(--success-color)',
+                        'warning-color': 'var(--warning-color)',
+                        'purple-color': 'var(--purple-color)',
+                        'background-light': 'var(--background-light)',
+                        'text-light': 'var(--text-light)',
+                        'sidebar-bg-light': 'var(--sidebar-bg-light)',
+                        'border-light': 'var(--border-light)',
+                        'input-bg-light': 'var(--input-bg-light)',
+                        'background-dark': 'var(--background-dark)',
+                        'text-dark': 'var(--text-dark)',
+                        'sidebar-bg-dark': 'var(--sidebar-bg-dark)',
+                        'border-dark': 'var(--border-dark)',
+                        'input-bg-dark': 'var(--input-bg-dark)'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900" style="font-family: Manrope, 'Noto Sans', sans-serif;">
+    @Body
+
+    <div id="blazor-error-ui">
+        <environment include="Staging,Production">
+            An error has occurred. This application may no longer respond until reloaded.
+        </environment>
+        <environment include="Development">
+            An unhandled exception has occurred. See browser dev tools for details.
+        </environment>
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+    <script src="_framework/blazor.server.js"></script>
+</body>
+</html>
