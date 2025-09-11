@@ -78,13 +78,13 @@ public class ComandasServiceTests
             .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.Is<string>(s =>
                 s.StartsWith("api/operaciones/comandas?") &&
                 s.Contains("pageNumber=1") &&
-                s.Contains("pageSize=12")), It.IsAny<string?>()))
+                s.Contains("pageSize=12")), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(paged));
 
         var result = await _comandasService.ObtenerComandasActivasAsync();
 
         result.Success.Should().BeTrue();
-        _apiServiceMock.Verify(x => x.GetAsync<PaginatedList<ComandaDto>>(It.Is<string>(s => s.Contains("pageNumber=1") && s.Contains("pageSize=12")), It.IsAny<string?>()), Times.Once);
+        _apiServiceMock.Verify(x => x.GetAsync<PaginatedList<ComandaDto>>(It.Is<string>(s => s.Contains("pageNumber=1") && s.Contains("pageSize=12")), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -97,13 +97,13 @@ public class ComandasServiceTests
             .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.Is<string>(s =>
                 s.StartsWith("api/operaciones/comandas?") &&
                 s.Contains("pageNumber=1") &&
-                s.Contains("pageSize=12")), It.IsAny<string?>()))
+                s.Contains("pageSize=12")), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(paged));
 
         var result = await _comandasService.BuscarComandasAsync(estado: "pendiente");
 
         result.Success.Should().BeTrue();
-        _apiServiceMock.Verify(x => x.GetAsync<PaginatedList<ComandaDto>>(It.Is<string>(s => s.Contains("pageNumber=1") && s.Contains("pageSize=12")), It.IsAny<string?>()), Times.Once);
+        _apiServiceMock.Verify(x => x.GetAsync<PaginatedList<ComandaDto>>(It.Is<string>(s => s.Contains("pageNumber=1") && s.Contains("pageSize=12")), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -119,13 +119,13 @@ public class ComandasServiceTests
                 s.Contains($"mesaId={mesaId}") &&
                 s.Contains("soloActivas=true") &&
                 s.Contains("pageSize=12") &&
-                s.Contains("incluirItems=true")), It.IsAny<string?>()))
+                s.Contains("incluirItems=true")), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(paged));
 
         var result = await _comandasService.ObtenerComandasPorMesaAsync(mesaId);
 
         result.Success.Should().BeTrue();
-        _apiServiceMock.Verify(x => x.GetAsync<PaginatedList<ComandaDto>>(It.Is<string>(s => s.Contains($"mesaId={mesaId}") && s.Contains("pageSize=12") && s.Contains("soloActivas=true") && s.Contains("incluirItems=true")), It.IsAny<string?>()), Times.Once);
+        _apiServiceMock.Verify(x => x.GetAsync<PaginatedList<ComandaDto>>(It.Is<string>(s => s.Contains($"mesaId={mesaId}") && s.Contains("pageSize=12") && s.Contains("soloActivas=true") && s.Contains("incluirItems=true")), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -137,7 +137,7 @@ public class ComandasServiceTests
             .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(It.Is<string>(s =>
                 s.StartsWith("api/operaciones/comandas?") &&
                 s.Contains("soloActivas=true") &&
-                s.Contains("incluirItems=true")), It.IsAny<string?>()))
+                s.Contains("incluirItems=true")), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(paged));
 
         var result = await _comandasService.ObtenerComandasActivasAsync();
@@ -347,7 +347,7 @@ public class ComandasServiceTests
         var expectedComanda = new ComandaDto { Id = comandaId, Estado = nuevoEstado };
         var expectedResponse = ApiResponse<ComandaDto>.SuccessResponse(expectedComanda);
 
-        _apiServiceMock.Setup(x => x.PatchAsync<ComandaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>()))
+        _apiServiceMock.Setup(x => x.PatchAsync<ComandaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResponse);
 
         // Act

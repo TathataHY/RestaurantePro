@@ -580,4 +580,551 @@ public class ReportesComercialesApiServiceTests
         // Assert
         resultado.Should().BeNull();
     }
+
+    // ===== PRUEBAS ROBUSTAS - CASOS EDGE =====
+
+    [Fact]
+    public async Task ObtenerAnalisisClientesAsync_ConDatosMasivos_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var fechaInicio = DateTime.UtcNow.AddYears(-5);
+        var fechaFin = DateTime.UtcNow;
+        var datosAnalisis = new 
+        { 
+            TotalClientes = 100000, 
+            ClientesNuevos = 15000, 
+            ClientesActivos = 85000,
+            Segmentos = Enumerable.Range(1, 100).Select(i => $"Segmento{i}").ToArray()
+        };
+
+        var apiResponse = new ApiResponse<object>
+        {
+            Success = true,
+            Data = datosAnalisis
+        };
+
+        var responseContent = JsonSerializer.Serialize(apiResponse);
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerAnalisisClientesAsync(fechaInicio, fechaFin);
+
+        // Assert
+        resultado.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task ObtenerAnalisisClientesAsync_ConFechasExtremas_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var fechaInicio = DateTime.MinValue;
+        var fechaFin = DateTime.MaxValue;
+        var datosAnalisis = new { TotalClientes = 0, ClientesNuevos = 0, ClientesActivos = 0 };
+
+        var apiResponse = new ApiResponse<object>
+        {
+            Success = true,
+            Data = datosAnalisis
+        };
+
+        var responseContent = JsonSerializer.Serialize(apiResponse);
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerAnalisisClientesAsync(fechaInicio, fechaFin);
+
+        // Assert
+        resultado.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task ObtenerSegmentacionClientesAsync_ConCaracteresEspeciales_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var datosSegmentacion = new 
+        { 
+            Segmentos = new[] { "VIP 🏆", "Regular 📊", "Nuevo 🆕", "Premium 💎" }, 
+            TotalSegmentos = 4,
+            Descripciones = new[] { "Clientes de alto valor", "Clientes frecuentes", "Clientes nuevos", "Clientes premium" }
+        };
+
+        var apiResponse = new ApiResponse<object>
+        {
+            Success = true,
+            Data = datosSegmentacion
+        };
+
+        var responseContent = JsonSerializer.Serialize(apiResponse);
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerSegmentacionClientesAsync();
+
+        // Assert
+        resultado.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task ObtenerAnalisisProductosAsync_ConValoresExtremos_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var fechaInicio = DateTime.UtcNow.AddDays(-365);
+        var fechaFin = DateTime.UtcNow;
+        var datosAnalisis = new 
+        { 
+            ProductosMasVendidos = Enumerable.Range(1, 1000).Select(i => $"Producto {i}").ToArray(),
+            TotalProductos = int.MaxValue,
+            VentasTotales = decimal.MaxValue,
+            MargenPromedio = decimal.MaxValue
+        };
+
+        var apiResponse = new ApiResponse<object>
+        {
+            Success = true,
+            Data = datosAnalisis
+        };
+
+        var responseContent = JsonSerializer.Serialize(apiResponse);
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerAnalisisProductosAsync(fechaInicio, fechaFin);
+
+        // Assert
+        resultado.Should().NotBeNull();
+    }
+
+    // ===== PRUEBAS ROBUSTAS - SEGURIDAD =====
+
+    [Fact]
+    public async Task ObtenerAnalisisClientesAsync_ConInyeccionSQL_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var fechaInicio = DateTime.UtcNow.AddDays(-30);
+        var fechaFin = DateTime.UtcNow;
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest
+            });
+
+        // Act
+        var resultado = await _service.ObtenerAnalisisClientesAsync(fechaInicio, fechaFin);
+
+        // Assert
+        resultado.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ObtenerSegmentacionClientesAsync_ConXSS_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest
+            });
+
+        // Act
+        var resultado = await _service.ObtenerSegmentacionClientesAsync();
+
+        // Assert
+        resultado.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ExportarReporteComercialAsync_ConPayloadsMaliciosos_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var tipoReporte = "<script>alert('xss')</script>";
+        var fechaInicio = DateTime.UtcNow.AddDays(-30);
+        var fechaFin = DateTime.UtcNow;
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest
+            });
+
+        // Act
+        var resultado = await _service.ExportarReporteComercialAsync(tipoReporte, fechaInicio, fechaFin);
+
+        // Assert
+        resultado.Should().BeNull();
+    }
+
+    // ===== PRUEBAS ROBUSTAS - CONCURRENCIA =====
+
+    [Fact]
+    public async Task ObtenerAnalisisClientesAsync_ConConcurrencia_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var fechaInicio = DateTime.UtcNow.AddDays(-30);
+        var fechaFin = DateTime.UtcNow;
+        var datosAnalisis = new { TotalClientes = 150, ClientesNuevos = 25, ClientesActivos = 120 };
+
+        var apiResponse = new ApiResponse<object>
+        {
+            Success = true,
+            Data = datosAnalisis
+        };
+
+        var responseContent = JsonSerializer.Serialize(apiResponse);
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var tareas = Enumerable.Range(1, 8).Select(_ => _service.ObtenerAnalisisClientesAsync(fechaInicio, fechaFin)).ToArray();
+        var resultados = await Task.WhenAll(tareas);
+
+        // Assert
+        resultados.Should().HaveCount(8);
+        foreach (var resultado in resultados)
+        {
+            resultado.Should().NotBeNull();
+        }
+    }
+
+    [Fact]
+    public async Task ObtenerSegmentacionClientesAsync_ConConcurrencia_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var datosSegmentacion = new { Segmentos = new[] { "VIP", "Regular", "Nuevo" }, TotalSegmentos = 3 };
+
+        var apiResponse = new ApiResponse<object>
+        {
+            Success = true,
+            Data = datosSegmentacion
+        };
+
+        var responseContent = JsonSerializer.Serialize(apiResponse);
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var tareas = Enumerable.Range(1, 6).Select(_ => _service.ObtenerSegmentacionClientesAsync()).ToArray();
+        var resultados = await Task.WhenAll(tareas);
+
+        // Assert
+        resultados.Should().HaveCount(6);
+        foreach (var resultado in resultados)
+        {
+            resultado.Should().NotBeNull();
+        }
+    }
+
+    [Fact]
+    public async Task ObtenerAnalisisProductosAsync_ConConcurrencia_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var fechaInicio = DateTime.UtcNow.AddDays(-30);
+        var fechaFin = DateTime.UtcNow;
+        var datosAnalisis = new { ProductosMasVendidos = new[] { "Pizza Margherita", "Pasta Carbonara" }, TotalProductos = 25 };
+
+        var apiResponse = new ApiResponse<object>
+        {
+            Success = true,
+            Data = datosAnalisis
+        };
+
+        var responseContent = JsonSerializer.Serialize(apiResponse);
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var tareas = Enumerable.Range(1, 5).Select(_ => _service.ObtenerAnalisisProductosAsync(fechaInicio, fechaFin)).ToArray();
+        var resultados = await Task.WhenAll(tareas);
+
+        // Assert
+        resultados.Should().HaveCount(5);
+        foreach (var resultado in resultados)
+        {
+            resultado.Should().NotBeNull();
+        }
+    }
+
+    [Fact]
+    public async Task ExportarReporteComercialAsync_ConConcurrencia_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var tipoReporte = "analisis-clientes";
+        var fechaInicio = DateTime.UtcNow.AddDays(-30);
+        var fechaFin = DateTime.UtcNow;
+        var excelBytes = Encoding.UTF8.GetBytes("Excel content");
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new ByteArrayContent(excelBytes)
+            });
+
+        // Act
+        var tareas = Enumerable.Range(1, 4).Select(_ => _service.ExportarReporteComercialAsync(tipoReporte, fechaInicio, fechaFin)).ToArray();
+        var resultados = await Task.WhenAll(tareas);
+
+        // Assert
+        resultados.Should().HaveCount(4);
+        foreach (var resultado in resultados)
+        {
+            resultado.Should().NotBeNull();
+            resultado.Should().HaveCount(13);
+        }
+    }
+
+    // ===== PRUEBAS ROBUSTAS - RENDIMIENTO Y LÍMITES =====
+
+    [Fact]
+    public async Task ObtenerAnalisisClientesAsync_ConTimeout_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var fechaInicio = DateTime.UtcNow.AddDays(-30);
+        var fechaFin = DateTime.UtcNow;
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new TaskCanceledException("Request timeout"));
+
+        // Act
+        var resultado = await _service.ObtenerAnalisisClientesAsync(fechaInicio, fechaFin);
+
+        // Assert
+        resultado.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ObtenerSegmentacionClientesAsync_ConError500_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.InternalServerError
+            });
+
+        // Act
+        var resultado = await _service.ObtenerSegmentacionClientesAsync();
+
+        // Assert
+        resultado.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ObtenerAnalisisProductosAsync_ConError503_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var fechaInicio = DateTime.UtcNow.AddDays(-30);
+        var fechaFin = DateTime.UtcNow;
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.ServiceUnavailable
+            });
+
+        // Act
+        var resultado = await _service.ObtenerAnalisisProductosAsync(fechaInicio, fechaFin);
+
+        // Assert
+        resultado.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ObtenerRentabilidadProductosAsync_ConError404_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var fechaInicio = DateTime.UtcNow.AddDays(-30);
+        var fechaFin = DateTime.UtcNow;
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.NotFound
+            });
+
+        // Act
+        var resultado = await _service.ObtenerRentabilidadProductosAsync(fechaInicio, fechaFin);
+
+        // Assert
+        resultado.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ObtenerAnalisisPromocionesAsync_ConError408_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var fechaInicio = DateTime.UtcNow.AddDays(-30);
+        var fechaFin = DateTime.UtcNow;
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.RequestTimeout
+            });
+
+        // Act
+        var resultado = await _service.ObtenerAnalisisPromocionesAsync(fechaInicio, fechaFin);
+
+        // Assert
+        resultado.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ObtenerTendenciasVentasAsync_ConError400_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var fechaInicio = DateTime.UtcNow.AddDays(-30);
+        var fechaFin = DateTime.UtcNow;
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest
+            });
+
+        // Act
+        var resultado = await _service.ObtenerTendenciasVentasAsync(fechaInicio, fechaFin);
+
+        // Assert
+        resultado.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ObtenerAnalisisCanalesAsync_ConError401_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var fechaInicio = DateTime.UtcNow.AddDays(-30);
+        var fechaFin = DateTime.UtcNow;
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.Unauthorized
+            });
+
+        // Act
+        var resultado = await _service.ObtenerAnalisisCanalesAsync(fechaInicio, fechaFin);
+
+        // Assert
+        resultado.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ObtenerAnalisisEstacionalidadAsync_ConAñoInvalido_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var año = -1;
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest
+            });
+
+        // Act
+        var resultado = await _service.ObtenerAnalisisEstacionalidadAsync(año);
+
+        // Assert
+        resultado.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ObtenerProyeccionesComercialesAsync_ConMesesInvalido_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var meses = 0;
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest
+            });
+
+        // Act
+        var resultado = await _service.ObtenerProyeccionesComercialesAsync(meses);
+
+        // Assert
+        resultado.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ExportarReporteComercialAsync_ConTipoInvalido_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var tipoReporte = "";
+        var fechaInicio = DateTime.UtcNow.AddDays(-30);
+        var fechaFin = DateTime.UtcNow;
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest
+            });
+
+        // Act
+        var resultado = await _service.ExportarReporteComercialAsync(tipoReporte, fechaInicio, fechaFin);
+
+        // Assert
+        resultado.Should().BeNull();
+    }
 }

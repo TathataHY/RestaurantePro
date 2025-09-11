@@ -67,7 +67,7 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<PaginatedList<ProductoDto>>.SuccessResponse(paginatedList);
         
         _mockApiService
-            .Setup(x => x.GetAsync<PaginatedList<ProductoDto>>(It.Is<string>(s => s.StartsWith("api/core/productos?") && s.Contains("pageNumber=1") && s.Contains("pageSize=20") && s.Contains("filtro=hamburguesa")), It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<PaginatedList<ProductoDto>>(It.Is<string>(s => s.StartsWith("api/core/productos?") && s.Contains("pageNumber=1") && s.Contains("pageSize=20") && s.Contains("filtro=hamburguesa")), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -76,7 +76,7 @@ public class ProductosServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
-        _mockApiService.Verify(x => x.GetAsync<PaginatedList<ProductoDto>>(It.Is<string>(s => s.Contains("pageNumber=1") && s.Contains("pageSize=20") && s.Contains("filtro=hamburguesa")), It.IsAny<string?>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<PaginatedList<ProductoDto>>(It.Is<string>(s => s.Contains("pageNumber=1") && s.Contains("pageSize=20") && s.Contains("filtro=hamburguesa")), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -93,13 +93,13 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<PaginatedList<ProductoDto>>.SuccessResponse(paginatedList);
 
         _mockApiService
-            .Setup(x => x.GetAsync<PaginatedList<ProductoDto>>(It.Is<string>(s => s.StartsWith("api/core/productos?") && s.Contains("pageNumber=2") && s.Contains("pageSize=50") && s.Contains("soloActivos=True")), It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<PaginatedList<ProductoDto>>(It.Is<string>(s => s.StartsWith("api/core/productos?") && s.Contains("pageNumber=2") && s.Contains("pageSize=50") && s.Contains("soloActivos=True")), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResponse);
 
         var result = await _productosService.ObtenerProductosPaginadosAsync(2, 50, null, true);
 
         result.Success.Should().BeTrue();
-        _mockApiService.Verify(x => x.GetAsync<PaginatedList<ProductoDto>>(It.Is<string>(s => s.Contains("pageNumber=2") && s.Contains("pageSize=50")), It.IsAny<string?>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<PaginatedList<ProductoDto>>(It.Is<string>(s => s.Contains("pageNumber=2") && s.Contains("pageSize=50")), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -301,7 +301,7 @@ public class ProductosServiceTests
         var expectedResponse = ApiResponse<List<ProductoDto>>.SuccessResponse(productos);
         
         _mockApiService
-            .Setup(x => x.GetAsync<List<ProductoDto>>(It.Is<string>(s => s.Contains("texto=hamburguesa")), It.IsAny<string?>()))
+            .Setup(x => x.GetAsync<List<ProductoDto>>(It.Is<string>(s => s.Contains("texto=hamburguesa")), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedResponse);
 
         // Act

@@ -183,7 +183,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Reservaciones.ViewModels
             // Assert
             _mockDialogService.Verify(x => x.ShowActionSheetAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string[]>()), Times.AtLeastOnce);
             _mockReservacionesService.Verify(x => x.CambiarEstadoReservacionAsync(reservacion.Id, "Confirmada"), Times.Once);
-            _mockDialogService.Verify(x => x.ShowAlertAsync("Éxito", "Estado actualizado correctamente"), Times.AtLeastOnce);
+            _mockDialogService.Verify(x => x.ShowAlertAsync("Éxito", "Estado actualizado correctamente", "OK"), Times.AtLeastOnce);
         }
 
         [Fact]
@@ -222,7 +222,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Reservaciones.ViewModels
             // Assert
             _mockDialogService.Verify(x => x.ShowPromptAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.AtLeastOnce);
             _mockReservacionesService.Verify(x => x.AsignarMesaAsync(reservacion.Id, "Mesa 5"), Times.Once);
-            _mockDialogService.Verify(x => x.ShowAlertAsync("Éxito", "Mesa asignada correctamente"), Times.AtLeastOnce);
+            _mockDialogService.Verify(x => x.ShowAlertAsync("Éxito", "Mesa asignada correctamente", "OK"), Times.AtLeastOnce);
         }
 
         [Fact]

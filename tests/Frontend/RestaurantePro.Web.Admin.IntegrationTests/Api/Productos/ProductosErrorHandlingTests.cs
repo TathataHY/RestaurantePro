@@ -193,15 +193,15 @@ public class ProductosErrorHandlingTests : BaseIntegrationTest
     public async Task ObtenerProductos_ConParametrosInvalidos_DeberiaRetornarError400()
     {
         // Act - Página negativa
-        var response1 = await _client.GetAsync("/api/core/productos?page=-1");
+        var response1 = await _client.GetAsync("/api/core/productos?pagina=-1");
         response1.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
         // Act - Tamaño de página inválido
-        var response2 = await _client.GetAsync("/api/core/productos?pageSize=0");
+        var response2 = await _client.GetAsync("/api/core/productos?tamanoPagina=0");
         response2.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
         // Act - Tamaño de página muy grande
-        var response3 = await _client.GetAsync("/api/core/productos?pageSize=1000");
+        var response3 = await _client.GetAsync("/api/core/productos?tamanoPagina=1000");
         response3.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 

@@ -83,7 +83,7 @@ public class ComandasService_NewBehaviorTests
     {
         var comandaId = Guid.NewGuid();
         _apiServiceMock
-            .Setup(x => x.PatchAsync<ComandaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>()))
+            .Setup(x => x.PatchAsync<ComandaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<ComandaDto>.ErrorResponse(new List<string>{message}, message, status));
 
         var result = await _service.CambiarEstadoComandaAsync(comandaId, "En Preparación");

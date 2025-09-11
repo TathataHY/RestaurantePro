@@ -44,6 +44,22 @@ public class ProductosController : ControllerBase
     {
         _logger.LogInformation("📋 GET /api/core/productos");
         
+        // Validar que los parámetros de query string sean válidos
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState
+                .Where(x => x.Value.Errors.Count > 0)
+                .SelectMany(x => x.Value.Errors)
+                .Select(x => x.ErrorMessage)
+                .ToList();
+                
+            var errorResponse = ApiResponse<PaginatedList<ProductoDto>>.ErrorResponse(
+                errors, 
+                "Parámetros de consulta inválidos", 
+                StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+        
         // Validar parámetros de paginación
         if (pagina < 1)
         {
