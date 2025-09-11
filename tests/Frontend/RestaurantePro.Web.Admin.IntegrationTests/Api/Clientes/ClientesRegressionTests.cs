@@ -5,8 +5,9 @@ using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ClienteDto = RestaurantePro.Application.Comercial.Clientes.DTOs.ClienteDto;
+using RestaurantePro.Web.Admin.IntegrationTests.Core;
 
-namespace RestaurantePro.Web.Admin.IntegrationTests;
+namespace RestaurantePro.Web.Admin.IntegrationTests.Api.Clientes;
 
 /// <summary>
 /// Pruebas de regresión para la API de clientes
