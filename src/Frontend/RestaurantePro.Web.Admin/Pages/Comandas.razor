@@ -98,12 +98,7 @@
              OnCambiarPagina="CambiarPagina"
              OnExportarExcel="ExportarExcel" />
 
-<!-- Formulario de comanda -->
-<ComandaForm Mostrar="mostrarFormulario" 
-             MostrarChanged="MostrarFormularioChanged"
-             OnComandaGuardada="ComandaGuardada" />
-
-<!-- Modal de detalles de la comanda -->
+<!-- Modal de Detalles de Comanda (Solo Lectura) -->
 @if (mostrarDetalles && comandaSeleccionada != null)
 {
     <div class="modal fade show" style="display: block;" tabindex="-1" role="dialog">
@@ -262,7 +257,6 @@
     private ComandaEstadisticasDto? estadisticas;
     private ComandaDto? comandaSeleccionada;
     
-    private bool mostrarFormulario = false;
     private bool mostrarDetalles = false;
     private bool cargando = false;
 
@@ -337,25 +331,20 @@
 
     private void NuevaComanda()
     {
-        mostrarFormulario = true;
-        StateHasChanged();
+        // Funcionalidad movida a la aplicación móvil
+        JSRuntime.InvokeVoidAsync("alert", "La creación de comandas se realiza desde la aplicación móvil");
     }
 
     private void EditarComanda(ComandaDto comanda)
     {
-        comandaSeleccionada = comanda;
-        mostrarFormulario = true;
-        StateHasChanged();
+        // Funcionalidad movida a la aplicación móvil
+        JSRuntime.InvokeVoidAsync("alert", "La edición de comandas se realiza desde la aplicación móvil");
     }
 
     private void EditarComandaDesdeDetalles()
     {
-        if (comandaSeleccionada != null)
-        {
-            mostrarDetalles = false;
-            mostrarFormulario = true;
-            StateHasChanged();
-        }
+        // Funcionalidad movida a la aplicación móvil
+        JSRuntime.InvokeVoidAsync("alert", "La edición de comandas se realiza desde la aplicación móvil");
     }
 
     private async Task CancelarComanda(ComandaDto comanda)
@@ -427,11 +416,11 @@
         }
     }
 
-    private void CambiarEstadoDesdeDetalles()
+    private async Task CambiarEstadoDesdeDetalles()
     {
         if (comandaSeleccionada != null)
         {
-            CambiarEstado(comandaSeleccionada);
+            await CambiarEstado(comandaSeleccionada);
         }
     }
 
@@ -520,20 +509,13 @@
 
     private void MostrarFormularioChanged(bool mostrar)
     {
-        mostrarFormulario = mostrar;
-        if (!mostrar)
-        {
-            comandaSeleccionada = null;
-        }
-        StateHasChanged();
+        // Función eliminada - no se usa en vista administrativa
     }
 
     private async Task ComandaGuardada(ComandaDto comanda)
     {
+        // Función eliminada - no se usa en vista administrativa
         await CargarDatos();
-        mostrarFormulario = false;
-        comandaSeleccionada = null;
-        StateHasChanged();
     }
 
     private void MostrarEstadisticas()
@@ -574,5 +556,82 @@
         {
             await JSRuntime.InvokeVoidAsync("alert", $"Error al exportar: {ex.Message}");
         }
+    }
+
+    // Nuevas funciones administrativas
+    private async Task MostrarReportes()
+    {
+        await JSRuntime.InvokeVoidAsync("alert", "Funcionalidad de reportes avanzados en desarrollo");
+    }
+
+    private async Task MostrarConfiguracion()
+    {
+        await JSRuntime.InvokeVoidAsync("alert", "Funcionalidad de configuración en desarrollo");
+    }
+
+    private async Task ActualizarDatos()
+    {
+        await CargarDatos();
+    }
+
+    // Funciones de cálculo para métricas
+    private int CalcularEficiencia()
+    {
+        if (estadisticas?.TotalComandas == 0) return 0;
+        var completadas = estadisticas?.ComandasEntregadas ?? 0;
+        var total = estadisticas?.TotalComandas ?? 1;
+        return (int)((double)completadas / total * 100);
+    }
+
+    private double CalcularTasaCancelacion()
+    {
+        if (estadisticas?.TotalComandas == 0) return 0;
+        var canceladas = estadisticas?.ComandasCanceladas ?? 0;
+        var total = estadisticas?.TotalComandas ?? 1;
+        return Math.Round((double)canceladas / total * 100, 1);
+    }
+
+    private double CalcularPorcentaje(int valor, int total)
+    {
+        if (total == 0) return 0;
+        return Math.Round((double)valor / total * 100, 1);
+    }
+
+    private int CalcularAlturaBarra(int hora)
+    {
+        // Simulación de datos por hora (en un caso real vendría del backend)
+        var datosPorHora = new Dictionary<int, int>
+        {
+            {8, 15}, {9, 25}, {10, 35}, {11, 45}, {12, 55}, {13, 60},
+            {14, 50}, {15, 40}, {16, 30}, {17, 35}, {18, 45}, {19, 40}
+        };
+        
+        var valor = datosPorHora.GetValueOrDefault(hora, 0);
+        return Math.Max(20, (int)(valor * 2.5)); // Mínimo 20px, máximo basado en el valor
+    }
+
+    private string GetEstadoClass(string estado)
+    {
+        return estado switch
+        {
+            "Pendiente" => "bg-yellow-100 text-yellow-800",
+            "EnProceso" => "bg-blue-100 text-blue-800",
+            "Lista" => "bg-green-100 text-green-800",
+            "Entregada" => "bg-gray-100 text-gray-800",
+            "Cancelada" => "bg-red-100 text-red-800",
+            _ => "bg-gray-100 text-gray-800"
+        };
+    }
+
+    private string GetPrioridadClass(string prioridad)
+    {
+        return prioridad switch
+        {
+            "Urgente" => "bg-red-100 text-red-800",
+            "Alta" => "bg-orange-100 text-orange-800",
+            "Normal" => "bg-blue-100 text-blue-800",
+            "Baja" => "bg-gray-100 text-gray-800",
+            _ => "bg-gray-100 text-gray-800"
+        };
     }
 }

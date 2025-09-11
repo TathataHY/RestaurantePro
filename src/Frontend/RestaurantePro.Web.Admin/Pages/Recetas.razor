@@ -9,207 +9,203 @@
 @inject InventarioApiService InventarioApi
 @inject IJSRuntime JSRuntime
 
-<h3>🍳 Recetas</h3>
-<p class="text-muted">Gestión de recetas y cálculo de costos.</p>
+<div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Gestión de Recetas</h1>
+    <button class="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors" @onclick="AbrirCrear">
+        <span class="material-symbols-outlined">add</span>
+        <span class="truncate">Nueva Receta</span>
+    </button>
+</div>
 
 <!-- Dashboard de estadísticas -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card bg-primary text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 class="card-title">@totalRecetas</h4>
-                        <p class="card-text">Total Recetas</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="oi oi-book" style="font-size: 2rem;"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="flex flex-col gap-2 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+        <p class="text-sm font-medium text-gray-500">Total de Recetas</p>
+        <p class="text-3xl font-bold text-gray-900">@totalRecetas</p>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-success text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 class="card-title">@recetasActivas</h4>
-                        <p class="card-text">Activas</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="oi oi-check" style="font-size: 2rem;"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="flex flex-col gap-2 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+        <p class="text-sm font-medium text-gray-500">Recetas Activas</p>
+        <p class="text-3xl font-bold text-green-600">@recetasActivas</p>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-warning text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 class="card-title">@recetasInactivas</h4>
-                        <p class="card-text">Inactivas</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="oi oi-warning" style="font-size: 2rem;"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="flex flex-col gap-2 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+        <p class="text-sm font-medium text-gray-500">Recetas Inactivas</p>
+        <p class="text-3xl font-bold text-red-500">@recetasInactivas</p>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-info text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h4 class="card-title">@costoPromedio.ToString("C")</h4>
-                        <p class="card-text">Costo Promedio</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="oi oi-dollar" style="font-size: 2rem;"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="flex flex-col gap-2 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+        <p class="text-sm font-medium text-gray-500">Costo Promedio</p>
+        <p class="text-3xl font-bold text-orange-500">@costoPromedio.ToString("C")</p>
     </div>
 </div>
 
 <!-- Filtros y acciones -->
-<div class="row mb-3">
-    <div class="col-md-3">
-        <input class="form-control" placeholder="Buscar recetas..." @bind="filtroTexto" @onkeyup="OnFiltroChanged" />
-    </div>
-    <div class="col-md-2">
-        <select class="form-select" @bind="filtroProducto" @bind:after="FiltrarRecetas">
-            <option value="">Todos los productos</option>
-            @foreach (var producto in productos)
-            {
-                <option value="@producto.Id">@producto.Nombre</option>
-            }
-        </select>
-    </div>
-    <div class="col-md-2">
-        <select class="form-select" @bind="filtroEstado" @bind:after="FiltrarRecetas">
-            <option value="">Todas</option>
-            <option value="true">Activas</option>
-            <option value="false">Inactivas</option>
-        </select>
-    </div>
-    <div class="col-md-2">
-        <select class="form-select" @bind="ordenarPor" @bind:after="FiltrarRecetas">
-            <option value="FechaCreacion">Fecha Creación</option>
-            <option value="NombreProducto">Producto</option>
-            <option value="TiempoPreparacionMinutos">Tiempo</option>
-            <option value="CostoTotal">Costo</option>
-        </select>
-    </div>
-    <div class="col-md-3 text-end">
-        <button class="btn btn-success" @onclick="AbrirCrear">
-            <i class="oi oi-plus"></i> Nueva Receta
+<div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
+    <h2 class="text-xl font-bold text-gray-900 mb-4">Filtros Avanzados</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+        <label class="flex flex-col gap-1.5">
+            <span class="text-sm font-medium text-gray-700">Buscar por nombre</span>
+            <input class="form-input w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                   placeholder="Nombre de la receta" 
+                   type="text" 
+                   @bind="filtroTexto" 
+                   @onkeyup="OnFiltroChanged" />
+        </label>
+        <label class="flex flex-col gap-1.5">
+            <span class="text-sm font-medium text-gray-700">Filtrar por producto</span>
+            <select class="form-select w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                    @bind="filtroProducto" 
+                    @bind:after="FiltrarRecetas">
+                <option value="">Seleccionar producto</option>
+                @foreach (var producto in productos)
+                {
+                    <option value="@producto.Id">@producto.Nombre</option>
+                }
+            </select>
+        </label>
+        <label class="flex flex-col gap-1.5">
+            <span class="text-sm font-medium text-gray-700">Filtrar por estado</span>
+            <select class="form-select w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                    @bind="filtroEstado" 
+                    @bind:after="FiltrarRecetas">
+                <option value="">Seleccionar estado</option>
+                <option value="true">Activa</option>
+                <option value="false">Inactiva</option>
+            </select>
+        </label>
+        <label class="flex flex-col gap-1.5">
+            <span class="text-sm font-medium text-gray-700">Ordenar por</span>
+            <select class="form-select w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                    @bind="ordenarPor" 
+                    @bind:after="FiltrarRecetas">
+                <option value="FechaCreacion">Fecha de Creación</option>
+                <option value="NombreProducto">Producto</option>
+                <option value="TiempoPreparacionMinutos">Tiempo</option>
+                <option value="CostoTotal">Costo</option>
+            </select>
+        </label>
+        <button class="w-full lg:w-auto flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors" 
+                @onclick="FiltrarRecetas">
+            <span class="material-symbols-outlined text-base">filter_alt</span>
+            Aplicar Filtros
         </button>
     </div>
 </div>
 
 <!-- Lista de recetas -->
-<div class="table-responsive">
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Producto</th>
-                <th>Tiempo (min)</th>
-                <th>Ingredientes</th>
-                <th>Costo Total</th>
-                <th>Estado</th>
-                <th>Fecha Creación</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            @if (recetas is null)
-            {
-                <tr><td colspan="7">Cargando...</td></tr>
-            }
-            else if (!recetas.Items.Any())
-            {
-                <tr><td colspan="7">No hay recetas disponibles</td></tr>
-            }
-            else
-            {
-                @foreach (var receta in recetas.Items)
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm text-left text-gray-500">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                <tr>
+                    <th class="px-6 py-3" scope="col">Producto</th>
+                    <th class="px-6 py-3" scope="col">Tiempo de preparación</th>
+                    <th class="px-6 py-3" scope="col">Ingredientes</th>
+                    <th class="px-6 py-3" scope="col">Costo Total</th>
+                    <th class="px-6 py-3" scope="col">Estado</th>
+                    <th class="px-6 py-3" scope="col">Fecha de Creación</th>
+                    <th class="px-6 py-3 text-right" scope="col">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (recetas is null)
                 {
-                    <tr>
-                        <td>
-                            <strong>@receta.NombreProducto</strong>
-                        </td>
-                        <td>
-                            <span class="badge bg-info">@receta.TiempoPreparacionMinutos min</span>
-                        </td>
-                        <td>
-                            <span class="badge bg-secondary">@receta.Ingredientes.Count ingredientes</span>
-                        </td>
-                        <td>
-                            <strong class="text-success">@receta.CostoTotal.ToString("C")</strong>
-                        </td>
-                        <td>
-                            @if (receta.EstaActiva)
-                            {
-                                <span class="badge bg-success">Activa</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-warning">Inactiva</span>
-                            }
-                        </td>
-                        <td>@receta.FechaCreacion.ToString("dd/MM/yyyy")</td>
-                        <td>
-                            <div class="btn-group">
-                                <button class="btn btn-sm btn-info" @onclick="(() => VerDetalles(receta))" title="Ver detalles">
-                                    <i class="oi oi-eye"></i>
-                                </button>
-                                <button class="btn btn-sm btn-warning" @onclick="(() => CalcularCosto(receta))" title="Calcular costo">
-                                    <i class="oi oi-calculator"></i>
-                                </button>
-                                <button class="btn btn-sm btn-primary" @onclick="(() => AbrirEditar(receta))" title="Editar">
-                                    <i class="oi oi-pencil"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger" @onclick="(() => ConfirmarEliminar(receta))" title="Eliminar">
-                                    <i class="oi oi-trash"></i>
-                                </button>
+                    <tr class="bg-white border-b">
+                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                            <div class="flex items-center justify-center gap-2">
+                                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                                Cargando...
                             </div>
                         </td>
                     </tr>
                 }
-            }
-        </tbody>
-    </table>
+                else if (!recetas.Items.Any())
+                {
+                    <tr class="bg-white border-b">
+                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                            <div class="flex flex-col items-center gap-2">
+                                <span class="material-symbols-outlined text-4xl text-gray-300">restaurant_menu</span>
+                                <span>No hay recetas disponibles</span>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var receta in recetas.Items)
+                    {
+                        <tr class="bg-white border-b hover:bg-gray-50">
+                            <th class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap" scope="row">@receta.NombreProducto</th>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @(receta.TiempoPreparacionMinutos <= 20 ? "bg-blue-100 text-blue-800" : "bg-orange-100 text-orange-800")">@receta.TiempoPreparacionMinutos min</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">@receta.Ingredientes.Count ingredientes</span>
+                            </td>
+                            <td class="px-6 py-4 font-semibold text-green-600">@receta.CostoTotal.ToString("C")</td>
+                            <td class="px-6 py-4">
+                                @if (receta.EstaActiva)
+                                {
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Activa</span>
+                                }
+                                else
+                                {
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Inactiva</span>
+                                }
+                            </td>
+                            <td class="px-6 py-4">@receta.FechaCreacion.ToString("dd/MM/yyyy")</td>
+                            <td class="px-6 py-4 text-right space-x-2">
+                                <button class="p-1 text-gray-400 hover:text-blue-600" @onclick="(() => VerDetalles(receta))" title="Ver detalles">
+                                    <span class="material-symbols-outlined">visibility</span>
+                                </button>
+                                <button class="p-1 text-gray-400 hover:text-orange-500" @onclick="(() => CalcularCosto(receta))" title="Calcular costo">
+                                    <span class="material-symbols-outlined">calculate</span>
+                                </button>
+                                <button class="p-1 text-gray-400 hover:text-green-600" @onclick="(() => AbrirEditar(receta))" title="Editar">
+                                    <span class="material-symbols-outlined">edit</span>
+                                </button>
+                                <button class="p-1 text-gray-400 hover:text-red-500" @onclick="(() => ConfirmarEliminar(receta))" title="Eliminar">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <!-- Paginación -->
 @if (recetas != null && recetas.TotalPages > 1)
 {
-    <nav aria-label="Paginación de recetas">
-        <ul class="pagination justify-content-center">
-            <li class="page-item @(recetas.PageNumber == 1 ? "disabled" : "")">
-                <button class="page-link" @onclick="(() => CambiarPagina(1))" disabled="@(recetas.PageNumber == 1)">Primera</button>
-            </li>
-            <li class="page-item @(recetas.PageNumber == 1 ? "disabled" : "")">
-                <button class="page-link" @onclick="(() => CambiarPagina(recetas.PageNumber - 1))" disabled="@(recetas.PageNumber == 1)">Anterior</button>
+    <nav aria-label="Table navigation" class="flex items-center justify-between p-4">
+        <span class="text-sm font-normal text-gray-500">
+            Mostrando <span class="font-semibold text-gray-900">@((recetas.PageNumber - 1) * recetas.PageSize + 1)-@(Math.Min(recetas.PageNumber * recetas.PageSize, recetas.TotalCount))</span> de <span class="font-semibold text-gray-900">@recetas.TotalCount</span>
+        </span>
+        <ul class="inline-flex -space-x-px text-sm h-8">
+            <li>
+                <button class="flex items-center justify-center px-3 h-8 ml-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-gray-700 @(recetas.PageNumber == 1 ? "opacity-50 cursor-not-allowed" : "")" 
+                        @onclick="(() => CambiarPagina(recetas.PageNumber - 1))" 
+                        disabled="@(recetas.PageNumber == 1)">
+                    Anterior
+                </button>
             </li>
             
             @for (int i = Math.Max(1, recetas.PageNumber - 2); i <= Math.Min(recetas.TotalPages, recetas.PageNumber + 2); i++)
             {
-                <li class="page-item @(i == recetas.PageNumber ? "active" : "")">
-                    <button class="page-link" @onclick="(() => CambiarPagina(i))">@i</button>
+                <li>
+                    <button class="flex items-center justify-center px-3 h-8 leading-tight @(i == recetas.PageNumber ? "text-blue-600 border border-gray-300 bg-blue-50 hover:bg-blue-100 hover:text-blue-700" : "text-gray-500 bg-white border border-gray-300 hover:bg-gray-100 hover:text-gray-700")" 
+                            @onclick="(() => CambiarPagina(i))">
+                        @i
+                    </button>
                 </li>
             }
             
-            <li class="page-item @(recetas.PageNumber == recetas.TotalPages ? "disabled" : "")">
-                <button class="page-link" @onclick="(() => CambiarPagina(recetas.PageNumber + 1))" disabled="@(recetas.PageNumber == recetas.TotalPages)">Siguiente</button>
-            </li>
-            <li class="page-item @(recetas.PageNumber == recetas.TotalPages ? "disabled" : "")">
-                <button class="page-link" @onclick="(() => CambiarPagina(recetas.TotalPages))" disabled="@(recetas.PageNumber == recetas.TotalPages)">Última</button>
+            <li>
+                <button class="flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-gray-700 @(recetas.PageNumber == recetas.TotalPages ? "opacity-50 cursor-not-allowed" : "")" 
+                        @onclick="(() => CambiarPagina(recetas.PageNumber + 1))" 
+                        disabled="@(recetas.PageNumber == recetas.TotalPages)">
+                    Siguiente
+                </button>
             </li>
         </ul>
     </nav>
@@ -218,98 +214,182 @@
 <!-- Modal para crear/editar receta -->
 @if (mostrandoModal)
 {
-    <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5)">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">@modalTitulo</h5>
-                    <button type="button" class="btn-close" @onclick="CerrarModal"></button>
+    <div aria-labelledby="modal-title" aria-modal="true" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" role="dialog">
+        <div class="relative flex flex-col bg-white rounded-xl shadow-2xl w-full max-w-6xl m-4 max-h-[90vh] overflow-hidden">
+            <!-- Header del Modal -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center justify-center rounded-full bg-blue-100 shrink-0 size-10">
+                        <span class="material-symbols-outlined text-blue-600">@(modalTitulo.Contains("Nueva") ? "add" : "edit")</span>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900" id="modal-title">@modalTitulo</h2>
+                        <p class="text-sm text-gray-500">@(modalTitulo.Contains("Nueva") ? "Crea una nueva receta para tu restaurante" : "Modifica los datos de la receta")</p>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <EditForm Model="editModel" OnValidSubmit="GuardarAsync">
-                        <DataAnnotationsValidator />
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Producto</label>
-                                    <InputSelect class="form-select" @bind-Value="editModel.ProductoId">
+                <button type="button" class="text-gray-400 hover:text-gray-600 transition-colors" @onclick="CerrarModal">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <EditForm Model="editModel" OnValidSubmit="GuardarAsync">
+                <DataAnnotationsValidator />
+
+                <!-- Body del Modal -->
+                <div class="flex-1 overflow-y-auto p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Columna Izquierda - Información Básica -->
+                        <div class="space-y-6">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Información Básica</h3>
+
+                                <!-- Producto -->
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Producto *</label>
+                                    <InputSelect class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" @bind-Value="editModel.ProductoId">
                                         <option value="">Seleccionar producto</option>
                                         @foreach (var producto in productos)
                                         {
                                             <option value="@producto.Id">@producto.Nombre</option>
                                         }
                                     </InputSelect>
+                                    <ValidationMessage For="@(() => editModel.ProductoId)" class="text-red-500 text-sm mt-1" />
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">Tiempo de Preparación (minutos)</label>
-                                    <InputNumber class="form-control" @bind-Value="editModel.TiempoPreparacionMinutos" />
+
+                                <!-- Tiempo de Preparación -->
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Tiempo de Preparación (minutos) *</label>
+                                    <InputNumber class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                                                @bind-Value="editModel.TiempoPreparacionMinutos" 
+                                                min="1" max="300" />
+                                    <ValidationMessage For="@(() => editModel.TiempoPreparacionMinutos)" class="text-red-500 text-sm mt-1" />
+                                </div>
+
+                                <!-- Preparación -->
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Instrucciones de Preparación *</label>
+                                    <InputTextArea class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none" 
+                                                  @bind-Value="editModel.Preparacion" 
+                                                  rows="6" 
+                                                  placeholder="Describe paso a paso cómo preparar esta receta..." />
+                                    <ValidationMessage For="@(() => editModel.Preparacion)" class="text-red-500 text-sm mt-1" />
+                                    <div class="text-right text-xs text-gray-500 mt-1">@(editModel.Preparacion?.Length ?? 0)/1000</div>
+                                </div>
+
+                                <!-- Estado -->
+                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                    <div>
+                                        <span class="text-sm font-medium text-gray-700">Receta Activa</span>
+                                        <p class="text-xs text-gray-500">La receta estará disponible para uso</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" @bind="editModel.EstaActiva" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
                                 </div>
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Preparación</label>
-                            <InputTextArea class="form-control" @bind-Value="editModel.Preparacion" rows="4" placeholder="Instrucciones de preparación" />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Ingredientes</label>
-                            <div class="border rounded p-3">
-                                @if (editModel.Ingredientes.Any())
-                                {
-                                    @foreach (var ingrediente in editModel.Ingredientes)
+
+                        <!-- Columna Derecha - Gestión de Ingredientes -->
+                        <div class="space-y-6">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Ingredientes y Costos</h3>
+
+                                <!-- Lista de Ingredientes -->
+                                <div class="space-y-3 mb-4">
+                                    @if (editModel.Ingredientes.Any())
                                     {
-                                        <div class="row mb-2">
-                                            <div class="col-md-4">
-                                                <select class="form-select" @bind="ingrediente.IngredienteId">
-                                                    <option value="">Seleccionar ingrediente</option>
-                                                    @foreach (var ing in ingredientes)
-                                                    {
-                                                        <option value="@ing.Id">@ing.Nombre</option>
-                                                    }
-                                                </select>
-                                            </div>
-                            <div class="col-md-2">
-                                <input type="number" class="form-control" @bind="ingrediente.Cantidad" placeholder="Cantidad" step="0.01" />
-                            </div>
-                                            <div class="col-md-2">
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" @bind="ingrediente.EsOpcional" />
-                                                    <label class="form-check-label">Opcional</label>
+                                        @foreach (var ingrediente in editModel.Ingredientes)
+                                        {
+                                            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                                <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                    <div>
+                                                        <label class="block text-xs font-medium text-gray-600 mb-1">Ingrediente</label>
+                                                        <select class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500" @bind="ingrediente.IngredienteId">
+                                                            <option value="">Seleccionar...</option>
+                                                            @foreach (var ing in ingredientes)
+                                                            {
+                                                                <option value="@ing.Id">@ing.Nombre</option>
+                                                            }
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label class="block text-xs font-medium text-gray-600 mb-1">Cantidad</label>
+                                                        <input type="number" 
+                                                               class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500" 
+                                                               @bind="ingrediente.Cantidad" 
+                                                               placeholder="0.00" 
+                                                               step="0.01" 
+                                                               min="0" />
+                                                    </div>
+                                                    <div class="flex items-center gap-2">
+                                                        <label class="flex items-center gap-1 text-xs text-gray-600">
+                                                            <input type="checkbox" @bind="ingrediente.EsOpcional" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                                            Opcional
+                                                        </label>
+                                                        <button type="button" 
+                                                                class="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors" 
+                                                                @onclick="(() => RemoverIngrediente(ingrediente))"
+                                                                title="Eliminar ingrediente">
+                                                            <span class="material-symbols-outlined text-sm">delete</span>
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div class="col-md-2">
-                                                <button type="button" class="btn btn-sm btn-danger" @onclick="(() => RemoverIngrediente(ingrediente))">
-                                                    <i class="oi oi-trash"></i>
-                                                </button>
-                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="text-center py-8 text-gray-500">
+                                            <span class="material-symbols-outlined text-4xl text-gray-300 mb-2">restaurant_menu</span>
+                                            <p class="text-sm">No hay ingredientes agregados</p>
                                         </div>
                                     }
-                                }
-                                <button type="button" class="btn btn-sm btn-outline-primary" @onclick="AgregarIngrediente">
-                                    <i class="oi oi-plus"></i> Agregar Ingrediente
+                                </div>
+
+                                <!-- Botón Agregar Ingrediente -->
+                                <button type="button" 
+                                        class="w-full flex items-center justify-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-500 hover:text-blue-600 transition-colors" 
+                                        @onclick="AgregarIngrediente">
+                                    <span class="material-symbols-outlined">add</span>
+                                    Agregar Ingrediente
                                 </button>
+
+                                <!-- Vista Previa de Costo -->
+                                <div class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                    <h4 class="text-sm font-medium text-blue-900 mb-2">Vista Previa de Costo</h4>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm text-blue-700">Costo estimado por receta:</span>
+                                        <span class="text-lg font-bold text-blue-900">@CalcularCostoTotal().ToString("C")</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" @bind="editModel.EstaActiva" />
-                                <label class="form-check-label">Receta activa</label>
-                            </div>
-                        </div>
-                        <div class="text-end">
-                            <button type="button" class="btn btn-secondary me-2" @onclick="CerrarModal">Cancelar</button>
-                            <button type="submit" class="btn btn-primary" disabled="@guardando">
-                                @if (guardando)
-                                {
-                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                }
-                                Guardar
-                            </button>
-                        </div>
-                    </EditForm>
+                    </div>
                 </div>
-            </div>
+
+                <!-- Footer del Modal -->
+                <div class="flex justify-end gap-4 bg-gray-50 px-6 py-4 border-t border-gray-200">
+                    <button type="button"
+                            class="flex min-w-[120px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-white border border-gray-300 text-gray-700 text-sm font-semibold leading-normal tracking-wide transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400"
+                            @onclick="CerrarModal">
+                        <span class="truncate">Cancelar</span>
+                    </button>
+                    <button type="submit"
+                            class="flex min-w-[120px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-blue-600 text-white text-sm font-semibold leading-normal tracking-wide transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled="@guardando">
+                        @if (guardando)
+                        {
+                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        }
+                        else
+                        {
+                            <span class="material-symbols-outlined text-sm mr-2">@(modalTitulo.Contains("Nueva") ? "add" : "save")</span>
+                        }
+                        <span class="truncate">@(modalTitulo.Contains("Nueva") ? "Crear" : "Actualizar")</span>
+                    </button>
+                </div>
+            </EditForm>
         </div>
     </div>
 }
@@ -317,73 +397,101 @@
 <!-- Modal de detalles de receta -->
 @if (mostrandoDetalles)
 {
-    <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5)">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Detalles de Receta</h5>
-                    <button type="button" class="btn-close" @onclick="CerrarDetalles"></button>
-                </div>
-                <div class="modal-body">
-                    @if (recetaSeleccionada != null)
-                    {
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <strong>Producto:</strong> @recetaSeleccionada.NombreProducto
-                            </div>
-                            <div class="col-md-6">
-                                <strong>Tiempo:</strong> @recetaSeleccionada.TiempoPreparacionMinutos minutos
-                            </div>
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+        <div aria-labelledby="modal-title" aria-modal="true" class="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-lg bg-white shadow-xl" role="dialog">
+            <div class="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
+                <h2 class="text-2xl font-bold text-gray-900" id="modal-title">Detalles de la Receta</h2>
+                <button class="rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700" @onclick="CerrarDetalles">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <div class="p-6 sm:p-8">
+                @if (recetaSeleccionada != null)
+                {
+                    <!-- Información básica -->
+                    <div class="mb-8">
+                        <h3 class="mb-2 text-2xl font-bold text-gray-900">@recetaSeleccionada.NombreProducto</h3>
+                        <p class="text-gray-600">Tiempo de preparación: @recetaSeleccionada.TiempoPreparacionMinutos minutos</p>
+                    </div>
+
+                    <!-- Costo total destacado -->
+                    <div class="mb-8 rounded-lg border border-green-200 bg-green-50 p-6 shadow-sm">
+                        <div class="flex flex-col items-center justify-center text-center">
+                            <p class="text-sm font-medium uppercase tracking-wider text-green-700">Costo Total de la Receta</p>
+                            <p class="mt-2 text-5xl font-extrabold text-green-800">@recetaSeleccionada.CostoTotal.ToString("C")</p>
+                            <p class="mt-2 text-sm text-green-600">Este es el costo estimado para producir una porción.</p>
                         </div>
-                        <div class="mb-3">
-                            <strong>Preparación:</strong>
-                            <p class="mt-2">@recetaSeleccionada.Preparacion</p>
-                        </div>
-                        <div class="mb-3">
-                            <strong>Ingredientes:</strong>
-                            <table class="table table-sm">
-                                <thead>
+                    </div>
+
+                    <!-- Tabla de ingredientes -->
+                    <div class="mb-8">
+                        <h4 class="mb-4 text-xl font-bold text-gray-900">Ingredientes</h4>
+                        <div class="overflow-x-auto rounded-lg border border-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
                                     <tr>
-                                        <th>Ingrediente</th>
-                                        <th>Cantidad</th>
-                                        <th>Unidad</th>
-                                        <th>Costo Unit.</th>
-                                        <th>Costo Total</th>
-                                        <th>Opcional</th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500" scope="col">Ingrediente</th>
+                                        <th class="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-gray-500" scope="col">Cantidad</th>
+                                        <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500" scope="col">Unidad</th>
+                                        <th class="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider text-gray-500" scope="col">Costo</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody class="divide-y divide-gray-200 bg-white">
                                     @foreach (var ingrediente in recetaSeleccionada.Ingredientes)
                                     {
                                         <tr>
-                                            <td>@ingrediente.Nombre</td>
-                                            <td>@ingrediente.Cantidad</td>
-                                            <td>@ingrediente.UnidadMedida</td>
-                                            <td>@ingrediente.CostoUnitario.ToString("C")</td>
-                                            <td>@ingrediente.CostoTotal.ToString("C")</td>
-                                            <td>
+                                            <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
+                                                @ingrediente.Nombre
                                                 @if (ingrediente.EsOpcional)
                                                 {
-                                                    <span class="badge bg-warning">Sí</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge bg-success">No</span>
+                                                    <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Opcional</span>
                                                 }
                                             </td>
+                                            <td class="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-500">@ingrediente.Cantidad</td>
+                                            <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">@ingrediente.UnidadMedida</td>
+                                            <td class="whitespace-nowrap px-6 py-4 text-right text-sm text-gray-500">@ingrediente.CostoTotal.ToString("C")</td>
                                         </tr>
                                     }
                                 </tbody>
                             </table>
                         </div>
-                        <div class="alert alert-info">
-                            <strong>Costo Total de la Receta: @recetaSeleccionada.CostoTotal.ToString("C")</strong>
+                    </div>
+
+                    <!-- Instrucciones de preparación -->
+                    <div>
+                        <h4 class="mb-4 text-xl font-bold text-gray-900">Instrucciones de Preparación</h4>
+                        <div class="prose max-w-none">
+                            @if (!string.IsNullOrEmpty(recetaSeleccionada.Preparacion))
+                            {
+                                <div class="whitespace-pre-wrap text-gray-600 leading-relaxed">@recetaSeleccionada.Preparacion</div>
+                            }
+                            else
+                            {
+                                <p class="text-gray-500 italic">No hay instrucciones de preparación disponibles.</p>
+                            }
                         </div>
-                    }
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CerrarDetalles">Cerrar</button>
-                </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-12">
+                        <span class="material-symbols-outlined text-6xl text-gray-300 mb-4">restaurant_menu</span>
+                        <p class="text-gray-500">No se pudo cargar la información de la receta.</p>
+                    </div>
+                }
+            </div>
+
+            <!-- Footer con acciones -->
+            <div class="sticky bottom-0 z-10 flex flex-col-reverse gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
+                <button class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:bg-gray-50" @onclick="ImprimirReceta">
+                    <span class="material-symbols-outlined text-sm mr-2">print</span>
+                    Imprimir Receta
+                </button>
+                <button class="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700" @onclick="EditarRecetaDesdeDetalles">
+                    <span class="material-symbols-outlined text-sm mr-2">edit</span>
+                    Editar Receta
+                </button>
             </div>
         </div>
     </div>
@@ -557,6 +665,21 @@
         recetaSeleccionada = null;
     }
 
+    private void ImprimirReceta()
+    {
+        // Implementar funcionalidad de impresión
+        JSRuntime.InvokeVoidAsync("window.print");
+    }
+
+    private void EditarRecetaDesdeDetalles()
+    {
+        if (recetaSeleccionada != null)
+        {
+            CerrarDetalles();
+            AbrirEditar(recetaSeleccionada);
+        }
+    }
+
     private async Task CalcularCosto(RecetaDto receta)
     {
         try
@@ -611,6 +734,13 @@
     private void RemoverIngrediente(AgregarIngredienteDto ingrediente)
     {
         editModel.Ingredientes.Remove(ingrediente);
+    }
+
+    private decimal CalcularCostoTotal()
+    {
+        // Por simplicidad, retornamos un cálculo básico
+        // En una implementación real, esto calcularía el costo real basado en los ingredientes
+        return editModel.Ingredientes.Count * 2.50m; // Costo estimado por ingrediente
     }
 
     private async Task GuardarAsync()

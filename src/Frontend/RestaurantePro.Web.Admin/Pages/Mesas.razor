@@ -1,132 +1,259 @@
 @attribute [Authorize]
 @page "/mesas"
 
+@using RestaurantePro.Web.Admin.Components
 @inject RestaurantePro.Web.Admin.Services.MesasApiService MesasApi
 
 <PageTitle>Mesas</PageTitle>
 
-<h3>Mesas</h3>
-<p class="text-muted">Gestión de mesas: listado, filtros y CRUD básico.</p>
+<div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900">Gestión de Mesas</h1>
+        <p class="text-gray-600 mt-2">Control de mesas, estados y disponibilidad del restaurante</p>
+    </div>
+    <div class="flex items-center gap-3">
+        <!-- Toggle de vista -->
+        <div class="flex items-center bg-gray-100 rounded-lg p-1">
+            <button class="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md @(vistaTabla ? "bg-white text-blue-600 shadow-sm" : "text-gray-600")" 
+                    @onclick="() => CambiarVista(true)">
+                <span class="material-symbols-outlined text-sm">table_rows</span>
+                Tabla
+            </button>
+            <button class="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md @(!vistaTabla ? "bg-white text-blue-600 shadow-sm" : "text-gray-600")" 
+                    @onclick="() => CambiarVista(false)">
+                <span class="material-symbols-outlined text-sm">grid_view</span>
+                Grid
+            </button>
+        </div>
+        <button class="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors" @onclick="NuevaMesa">
+            <span class="material-symbols-outlined">add</span>
+            <span class="truncate">Nueva Mesa</span>
+        </button>
+    </div>
+</div>
 
-<div class="row g-2 mb-3">
-  <div class="col-md-3">
-    <input class="form-control" placeholder="Estado (Disponible/Ocupada/Reservada)" @bind="estado" />
-  </div>
-  <div class="col-md-3">
-    <input class="form-control" placeholder="Ubicación/Zona" @bind="ubicacion" />
-  </div>
-  <div class="col-md-2">
-    <input class="form-control" type="number" min="1" placeholder="Capacidad mínima" @bind="capacidadMinima" />
-  </div>
-  <div class="col-md-2">
-    <button class="btn btn-primary w-100" @onclick="BuscarAsync">Buscar</button>
-  </div>
-  <div class="col-md-2 text-end">
-    <button class="btn btn-success" @onclick="NuevaMesa">Nuevo</button>
-  </div>
-  
+<!-- Dashboard de estadísticas -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 mb-8">
+    <div class="flex flex-col gap-2 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+        <p class="text-sm font-medium text-gray-500">Total de Mesas</p>
+        <p class="text-3xl font-bold text-gray-900">@totalMesas</p>
+    </div>
+    <div class="flex flex-col gap-2 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+        <p class="text-sm font-medium text-gray-500">Disponibles</p>
+        <p class="text-3xl font-bold text-green-600">@mesasDisponibles</p>
+    </div>
+    <div class="flex flex-col gap-2 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+        <p class="text-sm font-medium text-gray-500">Ocupadas</p>
+        <p class="text-3xl font-bold text-red-600">@mesasOcupadas</p>
+    </div>
+    <div class="flex flex-col gap-2 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+        <p class="text-sm font-medium text-gray-500">Reservadas</p>
+        <p class="text-3xl font-bold text-blue-600">@mesasReservadas</p>
+    </div>
+    <div class="flex flex-col gap-2 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+        <p class="text-sm font-medium text-gray-500">Ocupación</p>
+        <p class="text-3xl font-bold text-orange-600">@ocupacionPromedio%</p>
+    </div>
+    <div class="flex flex-col gap-2 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+        <p class="text-sm font-medium text-gray-500">Capacidad Total</p>
+        <p class="text-3xl font-bold text-purple-600">@capacidadTotal</p>
+    </div>
+</div>
+
+<!-- Filtros y acciones -->
+<div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
+    <h2 class="text-xl font-bold text-gray-900 mb-4">Filtros Avanzados</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+        <label class="flex flex-col gap-1.5">
+            <span class="text-sm font-medium text-gray-700">Estado</span>
+            <select class="form-select w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" @bind="estado" @bind:after="BuscarAsync">
+                <option value="">Todos los estados</option>
+                <option value="Disponible">Disponible</option>
+                <option value="Ocupada">Ocupada</option>
+                <option value="Reservada">Reservada</option>
+                <option value="Mantenimiento">Mantenimiento</option>
+            </select>
+        </label>
+        <label class="flex flex-col gap-1.5">
+            <span class="text-sm font-medium text-gray-700">Zona</span>
+            <input class="form-input w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                   placeholder="Zona/Ubicación" 
+                   type="text" 
+                   @bind="ubicacion" 
+                   @onkeyup="OnFiltroChanged" />
+        </label>
+        <label class="flex flex-col gap-1.5">
+            <span class="text-sm font-medium text-gray-700">Capacidad Mínima</span>
+            <input class="form-input w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                   placeholder="2" 
+                   type="number" 
+                   min="1" 
+                   @bind="capacidadMinima" 
+                   @onkeyup="OnFiltroChanged" />
+        </label>
+        <label class="flex flex-col gap-1.5">
+            <span class="text-sm font-medium text-gray-700">Tipo</span>
+            <select class="form-select w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" @bind="tipoFiltro" @bind:after="BuscarAsync">
+                <option value="">Todos los tipos</option>
+                <option value="Interior">Interior</option>
+                <option value="Exterior">Exterior</option>
+                <option value="VIP">VIP</option>
+                <option value="Privada">Privada</option>
+            </select>
+        </label>
+        <button class="w-full lg:w-auto flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors" @onclick="BuscarAsync">
+            <span class="material-symbols-outlined text-base">filter_alt</span>
+            Aplicar Filtros
+        </button>
+    </div>
 </div>
 
 @if (cargando)
 {
-  <div class="text-muted">Cargando...</div>
+    <div class="flex items-center justify-center py-12">
+        <div class="flex flex-col items-center gap-4">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span class="text-gray-500">Cargando mesas...</span>
+        </div>
+    </div>
 }
 else if (mesas is null)
 {
-  <div class="text-danger">No se pudieron cargar las mesas.</div>
+    <div class="flex items-center justify-center py-12">
+        <div class="flex flex-col items-center gap-4">
+            <span class="material-symbols-outlined text-6xl text-gray-300">error</span>
+            <span class="text-gray-500">No se pudieron cargar las mesas</span>
+        </div>
+    </div>
+}
+else if (!mesas.Any())
+{
+    <div class="flex items-center justify-center py-12">
+        <div class="flex flex-col items-center gap-4">
+            <span class="material-symbols-outlined text-6xl text-gray-300">table_restaurant</span>
+            <span class="text-gray-500">No hay mesas disponibles</span>
+        </div>
+    </div>
 }
 else
 {
-  <table class="table table-striped table-hover align-middle">
-    <thead>
-      <tr>
-        <th>Número</th>
-        <th>Capacidad</th>
-        <th>Estado</th>
-        <th>Zona</th>
-        <th>Tipo</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      @foreach (var m in mesas)
-      {
-        <tr>
-          <td>@m.Numero</td>
-          <td>@m.Capacidad</td>
-          <td>@m.Estado</td>
-          <td>@m.Zona</td>
-          <td>@m.Tipo</td>
-          <td class="text-end">
-            <button class="btn btn-sm btn-primary me-1" @onclick="() => EditarMesa(m)">Editar</button>
-            <button class="btn btn-sm btn-danger" @onclick="() => EliminarMesaAsync(m)">Eliminar</button>
-          </td>
-        </tr>
-      }
-    </tbody>
-  </table>
+    @if (vistaTabla)
+    {
+        <!-- Vista de Tabla -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                        <tr>
+                            <th class="px-6 py-3" scope="col">Número</th>
+                            <th class="px-6 py-3" scope="col">Capacidad</th>
+                            <th class="px-6 py-3" scope="col">Estado</th>
+                            <th class="px-6 py-3" scope="col">Zona</th>
+                            <th class="px-6 py-3" scope="col">Tipo</th>
+                            <th class="px-6 py-3 text-right" scope="col">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var m in mesas)
+                        {
+                            <tr class="bg-white border-b hover:bg-gray-50">
+                                <th class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap" scope="row">Mesa @m.Numero</th>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">@m.Capacidad personas</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @GetEstadoClass(m.Estado)">@m.Estado</span>
+                                </td>
+                                <td class="px-6 py-4 text-gray-900">@m.Zona</td>
+                                <td class="px-6 py-4 text-gray-900">@m.Tipo</td>
+                                <td class="px-6 py-4 text-right space-x-2">
+                                    <button class="p-1 text-gray-400 hover:text-blue-600" @onclick="() => VerDetalles(m)" title="Ver detalles">
+                                        <span class="material-symbols-outlined">visibility</span>
+                                    </button>
+                                    <button class="p-1 text-gray-400 hover:text-green-600" @onclick="() => EditarMesa(m)" title="Editar">
+                                        <span class="material-symbols-outlined">edit</span>
+                                    </button>
+                                    <button class="p-1 text-gray-400 hover:text-orange-500" @onclick="() => CambiarEstado(m)" title="Cambiar estado">
+                                        <span class="material-symbols-outlined">refresh</span>
+                                    </button>
+                                    <button class="p-1 text-gray-400 hover:text-red-500" @onclick="() => EliminarMesaAsync(m)" title="Eliminar">
+                                        <span class="material-symbols-outlined">delete</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Vista de Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            @foreach (var m in mesas)
+            {
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">Mesa @m.Numero</h3>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @GetEstadoClass(m.Estado)">@m.Estado</span>
+                    </div>
+                    
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-gray-400 text-sm">group</span>
+                            <span class="text-sm text-gray-600">@m.Capacidad personas</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-gray-400 text-sm">location_on</span>
+                            <span class="text-sm text-gray-600">@m.Zona</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-gray-400 text-sm">restaurant</span>
+                            <span class="text-sm text-gray-600">@m.Tipo</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex space-x-1">
+                            <button class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" @onclick="() => VerDetalles(m)" title="Ver detalles">
+                                <span class="material-symbols-outlined text-sm">visibility</span>
+                            </button>
+                            <button class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" @onclick="() => EditarMesa(m)" title="Editar">
+                                <span class="material-symbols-outlined text-sm">edit</span>
+                            </button>
+                            <button class="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-colors" @onclick="() => CambiarEstado(m)" title="Cambiar estado">
+                                <span class="material-symbols-outlined text-sm">refresh</span>
+                            </button>
+                        </div>
+                        <button class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" @onclick="() => EliminarMesaAsync(m)" title="Eliminar">
+                            <span class="material-symbols-outlined text-sm">delete</span>
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
 }
 
 @if (mostrandoModal)
 {
-  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,.5)">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">@(editando ? "Editar mesa" : "Nueva mesa")</h5>
-          <button type="button" class="btn-close" @onclick="CerrarModal"></button>
-        </div>
-        <div class="modal-body">
-          @if (!string.IsNullOrEmpty(error))
-          {
-            <div class="alert alert-danger">@error</div>
-          }
-          @if (editando)
-          {
-            <div class="mb-2">
-              <label class="form-label">Número</label>
-              <input class="form-control" @bind="editarDto.Numero" />
-            </div>
-            <div class="mb-2">
-              <label class="form-label">Capacidad</label>
-              <input class="form-control" type="number" min="1" @bind="editarDto.Capacidad" />
-            </div>
-            <div class="mb-2">
-              <label class="form-label">Ubicación/Zona</label>
-              <input class="form-control" @bind="editarDto.Ubicacion" />
-            </div>
-            <div class="mb-2">
-              <label class="form-label">Tipo</label>
-              <input class="form-control" @bind="editarDto.Tipo" />
-            </div>
-          }
-          else
-          {
-            <div class="mb-2">
-              <label class="form-label">Número</label>
-              <input class="form-control" type="number" min="1" @bind="crearDto.Numero" />
-            </div>
-            <div class="mb-2">
-              <label class="form-label">Capacidad</label>
-              <input class="form-control" type="number" min="1" @bind="crearDto.Capacidad" />
-            </div>
-            <div class="mb-2">
-              <label class="form-label">Zona</label>
-              <input class="form-control" @bind="crearDto.Zona" />
-            </div>
-            <div class="mb-2">
-              <label class="form-label">Descripción</label>
-              <textarea class="form-control" rows="2" @bind="crearDto.Descripcion"></textarea>
-            </div>
-          }
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" @onclick="CerrarModal">Cancelar</button>
-          <button class="btn btn-primary" @onclick="GuardarAsync">Guardar</button>
-        </div>
-      </div>
-    </div>
-  </div>
+    <MesaModal Mostrar="mostrandoModal" 
+               Editando="editando" 
+               CrearModel="@crearDto"
+               EditarModel="@editarDto"
+               Error="@error" 
+               Guardando="@guardando"
+               OnCerrar="CerrarModal" 
+               OnGuardar="GuardarAsync" />
+}
+
+@if (mostrandoDetalles && mesaSeleccionada != null)
+{
+    <MesaDetallesModal Mostrar="mostrandoDetalles" 
+                       Mesa="@mesaSeleccionada"
+                       OnCerrar="CerrarDetalles" 
+                       OnGuardarNotas="GuardarNotas" />
 }
 
 @code {
@@ -135,13 +262,28 @@ else
   private string estado = string.Empty;
   private string ubicacion = string.Empty;
   private int? capacidadMinima;
+  private string tipoFiltro = string.Empty;
+  private bool vistaTabla = true;
+
+  // Estadísticas
+  private int totalMesas = 0;
+  private int mesasDisponibles = 0;
+  private int mesasOcupadas = 0;
+  private int mesasReservadas = 0;
+  private int ocupacionPromedio = 0;
+  private int capacidadTotal = 0;
 
   private bool mostrandoModal = false;
   private bool editando = false;
+  private bool guardando = false;
   private string error = string.Empty;
   private Guid mesaIdEditando;
   private CrearMesaRequest crearDto = new();
   private ActualizarMesaRequest editarDto = new();
+
+  // Modal de detalles
+  private bool mostrandoDetalles = false;
+  private MesaDto? mesaSeleccionada;
 
   protected override async Task OnInitializedAsync()
   {
@@ -156,8 +298,82 @@ else
       string.IsNullOrWhiteSpace(ubicacion) ? null : ubicacion,
       capacidadMinima
     );
+    CalcularEstadisticas();
     cargando = false;
     StateHasChanged();
+  }
+
+  private void CalcularEstadisticas()
+  {
+    if (mesas == null) return;
+    
+    totalMesas = mesas.Count;
+    mesasDisponibles = mesas.Count(m => m.Estado == "Disponible");
+    mesasOcupadas = mesas.Count(m => m.Estado == "Ocupada");
+    mesasReservadas = mesas.Count(m => m.Estado == "Reservada");
+    ocupacionPromedio = totalMesas > 0 ? (int)((mesasOcupadas + mesasReservadas) * 100.0 / totalMesas) : 0;
+    capacidadTotal = mesas.Sum(m => m.Capacidad);
+  }
+
+  private void CambiarVista(bool esTabla)
+  {
+    vistaTabla = esTabla;
+    StateHasChanged();
+  }
+
+  private string GetEstadoClass(string estado)
+  {
+    return estado switch
+    {
+        "Disponible" => "bg-green-100 text-green-800",
+        "Ocupada" => "bg-red-100 text-red-800",
+        "Reservada" => "bg-blue-100 text-blue-800",
+        "Mantenimiento" => "bg-gray-100 text-gray-800",
+        _ => "bg-gray-100 text-gray-800"
+    };
+  }
+
+  private async Task OnFiltroChanged()
+  {
+    await Task.Delay(500); // Debounce
+    await BuscarAsync();
+  }
+
+  private void VerDetalles(MesaDto mesa)
+  {
+    mesaSeleccionada = mesa;
+    mostrandoDetalles = true;
+  }
+
+  private void CambiarEstado(MesaDto mesa)
+  {
+    // Implementar cambio rápido de estado
+    // Por ahora solo un placeholder
+  }
+
+  private void CerrarDetalles()
+  {
+    mostrandoDetalles = false;
+    mesaSeleccionada = null;
+  }
+
+  private async Task GuardarNotas(string notas)
+  {
+    if (mesaSeleccionada != null)
+    {
+      try
+      {
+        // Aquí implementarías la lógica para guardar las notas
+        // Por ahora solo actualizamos el objeto local
+        mesaSeleccionada.Notas = notas;
+        await CargarAsync(); // Recargar para reflejar cambios
+        CerrarDetalles();
+      }
+      catch (Exception ex)
+      {
+        error = $"Error al guardar notas: {ex.Message}";
+      }
+    }
   }
 
   private Task BuscarAsync() => CargarAsync();
@@ -175,10 +391,17 @@ else
     mesaIdEditando = m.Id;
     editarDto = new ActualizarMesaRequest
     {
-      Numero = m.Numero,
+      Numero = int.Parse(m.Numero),
       Capacidad = m.Capacidad,
-      Ubicacion = m.Zona,
-      Tipo = m.Tipo
+      Zona = m.Zona,
+      Tipo = m.Tipo,
+      Estado = m.Estado,
+      Descripcion = m.Descripcion,
+      Notas = m.Notas,
+      TieneVentana = m.TieneVentana,
+      TieneSofa = m.TieneSofa,
+      EsAccesible = m.EsAccesible,
+      TieneEnchufe = m.TieneEnchufe
     };
     editando = true;
     error = string.Empty;

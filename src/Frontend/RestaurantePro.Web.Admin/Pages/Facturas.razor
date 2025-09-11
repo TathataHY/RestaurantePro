@@ -411,11 +411,11 @@
         }
     }
 
-    private void ReimprimirFacturaDesdeDetalles()
+    private async Task ReimprimirFacturaDesdeDetalles()
     {
         if (facturaSeleccionada != null)
         {
-            ReimprimirFactura(facturaSeleccionada);
+            await ReimprimirFactura(facturaSeleccionada);
         }
     }
 

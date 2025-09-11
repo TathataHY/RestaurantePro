@@ -224,13 +224,13 @@
 
     private async Task CargarDatos()
     {
+        CargarMeseros(); // Método síncrono
         await Task.WhenAll(
             CargarEstados(),
             CargarTiposPago(),
             CargarMetodosPago(),
             CargarClientes(),
-            CargarMesas(),
-            CargarMeseros()
+            CargarMesas()
         );
     }
 
@@ -301,7 +301,7 @@
         }
     }
 
-    private async Task CargarMeseros()
+    private void CargarMeseros()
     {
         try
         {

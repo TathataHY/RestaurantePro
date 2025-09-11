@@ -396,7 +396,7 @@
         await VerificarDisponibilidad();
     }
 
-    private async Task ClienteSeleccionado()
+    private void ClienteSeleccionado()
     {
         if (Reservacion.ClienteId != Guid.Empty && clientes != null)
         {

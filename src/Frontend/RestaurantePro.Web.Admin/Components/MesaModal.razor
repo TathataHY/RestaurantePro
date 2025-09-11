@@ -1,0 +1,272 @@
+@using RestaurantePro.Web.Admin.Models
+
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+    <div class="m-4 w-full max-w-4xl rounded-2xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+        <div class="flex flex-col">
+            <!-- Header del Modal -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <div class="flex items-center gap-3">
+                    <div class="bg-blue-100 p-2 rounded-lg">
+                        <span class="material-symbols-outlined text-blue-600">table_restaurant</span>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800">@(Editando ? "Editar Mesa" : "Crear Mesa")</h2>
+                        <p class="text-sm text-gray-500">Gestiona la información y configuración de las mesas.</p>
+                    </div>
+                </div>
+                <button class="p-2 rounded-full hover:bg-gray-100" @onclick="CerrarModal">
+                    <span class="material-symbols-outlined text-gray-500">close</span>
+                </button>
+            </div>
+
+            <EditForm Model="@Model" OnValidSubmit="GuardarAsync">
+                <DataAnnotationsValidator />
+                
+                <!-- Body del Modal -->
+                <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 max-h-[70vh] overflow-y-auto">
+                    @if (!string.IsNullOrEmpty(Error))
+                    {
+                        <div class="col-span-2 p-4 text-sm text-red-700 bg-red-100 rounded-lg">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm">error</span>
+                                @Error
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Columna Izquierda - Información Básica -->
+                    <div class="flex flex-col gap-6">
+                        <h3 class="text-lg font-semibold text-gray-700 border-b pb-2">Información Básica</h3>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" for="table-number">Número de Mesa <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">tag</span>
+                                <InputNumber class="w-full pl-10 pr-4 py-2.5 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" 
+                                            id="table-number" 
+                                            placeholder="Ej: 101" 
+                                            @bind-Value="Model.Numero" />
+                            </div>
+                            <ValidationMessage For="@(() => Model.Numero)" class="text-red-500 text-sm mt-1" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" for="capacity">Capacidad <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">groups</span>
+                                <InputNumber class="w-full pl-10 pr-4 py-2.5 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" 
+                                            id="capacity" 
+                                            placeholder="Ej: 4" 
+                                            @bind-Value="Model.Capacidad" />
+                            </div>
+                            <ValidationMessage For="@(() => Model.Capacidad)" class="text-red-500 text-sm mt-1" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" for="location">Zona/Ubicación <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">room_service</span>
+                                <InputSelect class="w-full appearance-none pl-10 pr-10 py-2.5 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" 
+                                            id="location" 
+                                            @bind-Value="Model.Zona">
+                                    <option value="">Selecciona una zona</option>
+                                    <option value="Salón Principal">Salón Principal</option>
+                                    <option value="Terraza">Terraza</option>
+                                    <option value="Barra">Barra</option>
+                                    <option value="Privado">Privado</option>
+                                    <option value="VIP">VIP</option>
+                                </InputSelect>
+                                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
+                            </div>
+                            <ValidationMessage For="@(() => Model.Zona)" class="text-red-500 text-sm mt-1" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" for="table-type">Tipo de Mesa <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">table_bar</span>
+                                <InputSelect class="w-full appearance-none pl-10 pr-10 py-2.5 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" 
+                                            id="table-type" 
+                                            @bind-Value="Model.Tipo">
+                                    <option value="">Selecciona un tipo</option>
+                                    <option value="Estándar">Estándar</option>
+                                    <option value="Alta">Alta</option>
+                                    <option value="Baja">Baja</option>
+                                    <option value="Booth">Booth</option>
+                                    <option value="VIP">VIP</option>
+                                </InputSelect>
+                                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
+                            </div>
+                            <ValidationMessage For="@(() => Model.Tipo)" class="text-red-500 text-sm mt-1" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" for="description">Descripción (Opcional)</label>
+                            <InputTextArea class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" 
+                                          id="description" 
+                                          placeholder="Ej: Mesa cerca de la ventana con buena iluminación." 
+                                          rows="3" 
+                                          @bind-Value="Model.Descripcion" />
+                            <ValidationMessage For="@(() => Model.Descripcion)" class="text-red-500 text-sm mt-1" />
+                        </div>
+                    </div>
+
+                    <!-- Columna Derecha - Configuración Avanzada -->
+                    <div class="flex flex-col gap-6">
+                        <h3 class="text-lg font-semibold text-gray-700 border-b pb-2">Configuración Avanzada</h3>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" for="initial-status">Estado Inicial</label>
+                            <div class="relative">
+                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">toggle_on</span>
+                                <InputSelect class="w-full appearance-none pl-10 pr-10 py-2.5 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" 
+                                            id="initial-status" 
+                                            @bind-Value="Model.Estado">
+                                    <option value="">Selecciona un estado</option>
+                                    <option value="Disponible" class="text-green-600">🟢 Disponible</option>
+                                    <option value="Reservada" class="text-yellow-600">🟡 Reservada</option>
+                                    <option value="Ocupada" class="text-red-600">🔴 Ocupada</option>
+                                    <option value="Mantenimiento" class="text-gray-600">⚫ Mantenimiento</option>
+                                </InputSelect>
+                                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
+                            </div>
+                            <ValidationMessage For="@(() => Model.Estado)" class="text-red-500 text-sm mt-1" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Características Especiales</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="flex items-center gap-2 p-3 rounded-lg hover:bg-gray-100 cursor-pointer">
+                                    <InputCheckbox class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                                                   @bind-Value="Model.TieneVentana" />
+                                    <span class="text-sm text-gray-600">Ventana</span>
+                                </label>
+                                <label class="flex items-center gap-2 p-3 rounded-lg hover:bg-gray-100 cursor-pointer">
+                                    <InputCheckbox class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                                                   @bind-Value="Model.TieneSofa" />
+                                    <span class="text-sm text-gray-600">Sofa</span>
+                                </label>
+                                <label class="flex items-center gap-2 p-3 rounded-lg hover:bg-gray-100 cursor-pointer">
+                                    <InputCheckbox class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                                                   @bind-Value="Model.EsAccesible" />
+                                    <span class="text-sm text-gray-600">Accesible</span>
+                                </label>
+                                <label class="flex items-center gap-2 p-3 rounded-lg hover:bg-gray-100 cursor-pointer">
+                                    <InputCheckbox class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+                                                   @bind-Value="Model.TieneEnchufe" />
+                                    <span class="text-sm text-gray-600">Enchufe</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1" for="internal-notes">Notas Internas</label>
+                            <InputTextArea class="w-full p-3 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" 
+                                          id="internal-notes" 
+                                          placeholder="Anotaciones solo para el personal." 
+                                          rows="3" 
+                                          @bind-Value="Model.Notas" />
+                            <ValidationMessage For="@(() => Model.Notas)" class="text-red-500 text-sm mt-1" />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Foto de la Mesa</label>
+                            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
+                                <div class="space-y-1 text-center">
+                                    <span class="material-symbols-outlined text-5xl text-gray-400">cloud_upload</span>
+                                    <div class="flex text-sm text-gray-600">
+                                        <label class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500" for="file-upload">
+                                            <span>Sube un archivo</span>
+                                            <input class="sr-only" id="file-upload" name="file-upload" type="file" />
+                                        </label>
+                                        <p class="pl-1">o arrastra y suelta</p>
+                                    </div>
+                                    <p class="text-xs text-gray-500">PNG, JPG, GIF hasta 10MB</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer del Modal -->
+                <div class="flex justify-end items-center gap-4 p-6 bg-gray-50 border-t border-gray-200 rounded-b-2xl">
+                    <button type="button" 
+                            class="px-6 py-2.5 rounded-lg text-sm font-semibold text-gray-600 bg-white border border-gray-300 hover:bg-gray-100 transition-colors"
+                            @onclick="CerrarModal">
+                        Cancelar
+                    </button>
+                    <button type="submit" 
+                            class="px-6 py-2.5 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm hover:shadow-md"
+                            disabled="@Guardando">
+                        @if (Guardando)
+                        {
+                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        }
+                        else
+                        {
+                            <span class="material-symbols-outlined">save</span>
+                        }
+                        @(Editando ? "Actualizar Mesa" : "Guardar Mesa")
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool Mostrar { get; set; }
+    [Parameter] public bool Editando { get; set; }
+    [Parameter] public CrearMesaRequest? CrearModel { get; set; }
+    [Parameter] public ActualizarMesaRequest? EditarModel { get; set; }
+    [Parameter] public string Error { get; set; } = string.Empty;
+    [Parameter] public bool Guardando { get; set; }
+    [Parameter] public EventCallback OnCerrar { get; set; }
+    [Parameter] public EventCallback OnGuardar { get; set; }
+
+    private CrearMesaRequest Model => Editando ? ConvertToCrearRequest(EditarModel!) : CrearModel!;
+
+    private CrearMesaRequest ConvertToCrearRequest(ActualizarMesaRequest editarModel)
+    {
+        return new CrearMesaRequest
+        {
+            Numero = editarModel.Numero,
+            Capacidad = editarModel.Capacidad,
+            Zona = editarModel.Zona,
+            Tipo = editarModel.Tipo,
+            Estado = editarModel.Estado,
+            Descripcion = editarModel.Descripcion,
+            Notas = editarModel.Notas,
+            TieneVentana = editarModel.TieneVentana,
+            TieneSofa = editarModel.TieneSofa,
+            EsAccesible = editarModel.EsAccesible,
+            TieneEnchufe = editarModel.TieneEnchufe
+        };
+    }
+
+    private async Task CerrarModal()
+    {
+        await OnCerrar.InvokeAsync();
+    }
+
+    private async Task GuardarAsync()
+    {
+        if (Editando && EditarModel != null)
+        {
+            // Actualizar el modelo de edición con los valores del formulario
+            EditarModel.Numero = Model.Numero;
+            EditarModel.Capacidad = Model.Capacidad;
+            EditarModel.Zona = Model.Zona;
+            EditarModel.Tipo = Model.Tipo;
+            EditarModel.Estado = Model.Estado;
+            EditarModel.Descripcion = Model.Descripcion;
+            EditarModel.Notas = Model.Notas;
+            EditarModel.TieneVentana = Model.TieneVentana;
+            EditarModel.TieneSofa = Model.TieneSofa;
+            EditarModel.EsAccesible = Model.EsAccesible;
+            EditarModel.TieneEnchufe = Model.TieneEnchufe;
+        }
+        
+        await OnGuardar.InvokeAsync();
+    }
+}

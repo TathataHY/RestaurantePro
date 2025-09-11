@@ -1,0 +1,314 @@
+@using RestaurantePro.Web.Admin.Models
+
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+    <div class="relative z-50 flex flex-col w-full max-w-2xl bg-white rounded-2xl shadow-lg overflow-hidden m-4">
+        <!-- Header del Modal -->
+        <div class="flex items-center justify-between p-6 border-b border-[var(--border-color)]">
+            <div>
+                <h2 class="text-2xl font-bold text-[var(--primary-text-color)]">Detalles de la Mesa #@Mesa?.Numero</h2>
+                <p class="text-sm text-[var(--secondary-text-color)]">Información completa sobre la mesa y su historial.</p>
+            </div>
+            <button class="p-2 rounded-full hover:bg-gray-100 transition-colors" @onclick="CerrarModal">
+                <span class="material-symbols-outlined text-[var(--secondary-text-color)]">close</span>
+            </button>
+        </div>
+
+        <!-- Body del Modal -->
+        <div class="p-6 space-y-8 overflow-y-auto max-h-[70vh]">
+            <!-- Estado Actual -->
+            <section>
+                <h3 class="text-lg font-bold text-[var(--primary-text-color)] mb-4">Estado Actual</h3>
+                <div class="flex items-center gap-4 rounded-lg @GetEstadoClass() p-4 border @GetEstadoBorderClass()">
+                    <div class="flex items-center justify-center rounded-full @GetEstadoIconClass() shrink-0 size-12 @GetEstadoTextClass()">
+                        <span class="material-symbols-outlined text-3xl">chair_alt</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <p class="text-base font-semibold @GetEstadoTextClass()">@Mesa?.Estado</p>
+                        <p class="text-sm @GetEstadoSubtextClass()">Última actualización: @Mesa?.UltimaActualizacion.ToString("dd 'de' MMMM, yyyy, HH:mm")</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Información de la Mesa -->
+            <section>
+                <h3 class="text-lg font-bold text-[var(--primary-text-color)] mb-4">Información de la Mesa</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-[var(--container-background)] rounded-lg p-4">
+                        <p class="text-sm font-medium text-[var(--secondary-text-color)]">Capacidad</p>
+                        <p class="text-lg font-semibold text-[var(--primary-text-color)]">@Mesa?.Capacidad personas</p>
+                    </div>
+                    <div class="bg-[var(--container-background)] rounded-lg p-4">
+                        <p class="text-sm font-medium text-[var(--secondary-text-color)]">Zona</p>
+                        <p class="text-lg font-semibold text-[var(--primary-text-color)]">@Mesa?.Zona</p>
+                    </div>
+                    <div class="bg-[var(--container-background)] rounded-lg p-4">
+                        <p class="text-sm font-medium text-[var(--secondary-text-color)]">Tipo</p>
+                        <p class="text-lg font-semibold text-[var(--primary-text-color)]">@Mesa?.Tipo</p>
+                    </div>
+                    <div class="bg-[var(--container-background)] rounded-lg p-4">
+                        <p class="text-sm font-medium text-[var(--secondary-text-color)]">Cliente Actual</p>
+                        <p class="text-lg font-semibold text-[var(--primary-text-color)]">@(string.IsNullOrEmpty(Mesa?.NombreCliente) ? "Sin cliente" : Mesa.NombreCliente)</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Características Especiales -->
+            <section>
+                <h3 class="text-lg font-bold text-[var(--primary-text-color)] mb-4">Características Especiales</h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    @if (Mesa?.TieneVentana == true)
+                    {
+                        <div class="flex items-center gap-2 p-3 rounded-lg bg-blue-50 border border-blue-200">
+                            <span class="material-symbols-outlined text-blue-600">window</span>
+                            <span class="text-sm font-medium text-blue-800">Ventana</span>
+                        </div>
+                    }
+                    @if (Mesa?.TieneSofa == true)
+                    {
+                        <div class="flex items-center gap-2 p-3 rounded-lg bg-purple-50 border border-purple-200">
+                            <span class="material-symbols-outlined text-purple-600">chair</span>
+                            <span class="text-sm font-medium text-purple-800">Sofá</span>
+                        </div>
+                    }
+                    @if (Mesa?.EsAccesible == true)
+                    {
+                        <div class="flex items-center gap-2 p-3 rounded-lg bg-green-50 border border-green-200">
+                            <span class="material-symbols-outlined text-green-600">accessible</span>
+                            <span class="text-sm font-medium text-green-800">Accesible</span>
+                        </div>
+                    }
+                    @if (Mesa?.TieneEnchufe == true)
+                    {
+                        <div class="flex items-center gap-2 p-3 rounded-lg bg-yellow-50 border border-yellow-200">
+                            <span class="material-symbols-outlined text-yellow-600">power</span>
+                            <span class="text-sm font-medium text-yellow-800">Enchufe</span>
+                        </div>
+                    }
+                </div>
+            </section>
+
+            <!-- Historial Reciente -->
+            <section>
+                <h3 class="text-lg font-bold text-[var(--primary-text-color)] mb-4">Historial Reciente</h3>
+                <div class="overflow-x-auto rounded-lg border border-[var(--border-color)]">
+                    <table class="w-full text-left">
+                        <thead class="bg-[var(--container-background)]">
+                            <tr>
+                                <th class="px-4 py-3 text-sm font-semibold text-[var(--primary-text-color)]">Fecha</th>
+                                <th class="px-4 py-3 text-sm font-semibold text-[var(--primary-text-color)]">Hora de Inicio</th>
+                                <th class="px-4 py-3 text-sm font-semibold text-[var(--primary-text-color)]">Hora de Fin</th>
+                                <th class="px-4 py-3 text-sm font-semibold text-[var(--primary-text-color)] text-center">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[var(--border-color)]">
+                            @if (historial?.Any() == true)
+                            {
+                                @foreach (var item in historial)
+                                {
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-3 text-sm text-[var(--secondary-text-color)]">@item.Fecha.ToString("dd 'de' MMMM, yyyy")</td>
+                                        <td class="px-4 py-3 text-sm text-[var(--secondary-text-color)]">@item.HoraInicio.ToString("HH:mm")</td>
+                                        <td class="px-4 py-3 text-sm text-[var(--secondary-text-color)]">@item.HoraFin?.ToString("HH:mm")</td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span class="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full @GetHistorialEstadoClass(item.Estado)">@item.Estado</span>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="4" class="px-4 py-8 text-center text-[var(--secondary-text-color)]">
+                                        No hay historial disponible
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Reservas Pendientes -->
+            <section>
+                <h3 class="text-lg font-bold text-[var(--primary-text-color)] mb-4">Reservas Pendientes</h3>
+                <div class="flex flex-col items-center justify-center text-center p-8 rounded-lg bg-[var(--container-background)]">
+                    <span class="material-symbols-outlined text-5xl text-[var(--secondary-text-color)] mb-4">event_busy</span>
+                    <h4 class="text-lg font-semibold text-[var(--primary-text-color)]">No hay reservas pendientes</h4>
+                    <p class="text-sm text-[var(--secondary-text-color)]">Esta mesa no tiene reservas programadas en el futuro.</p>
+                </div>
+            </section>
+
+            <!-- Notas y Observaciones -->
+            <section>
+                <h3 class="text-lg font-bold text-[var(--primary-text-color)] mb-4">Notas y Observaciones</h3>
+                <div class="space-y-4">
+                    <textarea class="form-textarea w-full rounded-lg border-[var(--border-color)] bg-white placeholder:text-[var(--secondary-text-color)] focus:border-[var(--primary-color)] focus:ring-1 focus:ring-[var(--primary-color)] transition" 
+                              placeholder="Agregar notas sobre la mesa..." 
+                              rows="4" 
+                              @bind="notasTemporales"></textarea>
+                    @if (!string.IsNullOrEmpty(Mesa?.Notas))
+                    {
+                        <div class="bg-[var(--container-background)] rounded-lg p-4">
+                            <p class="text-sm font-medium text-[var(--primary-text-color)] mb-2">Notas actuales:</p>
+                            <p class="text-sm text-[var(--secondary-text-color)]">@Mesa.Notas</p>
+                        </div>
+                    }
+                </div>
+            </section>
+        </div>
+
+        <!-- Footer del Modal -->
+        <div class="flex justify-end gap-4 p-6 border-t border-[var(--border-color)] bg-gray-50">
+            <button class="px-6 py-2.5 rounded-lg text-sm font-bold text-[var(--secondary-text-color)] hover:bg-gray-200 transition-colors" 
+                    @onclick="CerrarModal">
+                Cancelar
+            </button>
+            <button class="px-6 py-2.5 rounded-lg bg-[var(--primary-color)] text-white text-sm font-bold hover:bg-blue-700 transition-colors" 
+                    @onclick="GuardarNotas" 
+                    disabled="@guardando">
+                @if (guardando)
+                {
+                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                }
+                else
+                {
+                    <span>Guardar Cambios</span>
+                }
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool Mostrar { get; set; }
+    [Parameter] public MesaDto? Mesa { get; set; }
+    [Parameter] public EventCallback OnCerrar { get; set; }
+    [Parameter] public EventCallback<string> OnGuardarNotas { get; set; }
+
+    private string notasTemporales = string.Empty;
+    private bool guardando = false;
+
+    // Datos de ejemplo para el historial
+    private List<HistorialMesa> historial = new();
+
+    protected override void OnParametersSet()
+    {
+        if (Mesa != null)
+        {
+            notasTemporales = Mesa.Notas ?? string.Empty;
+            CargarHistorial();
+        }
+    }
+
+    private void CargarHistorial()
+    {
+        // Datos de ejemplo - en una implementación real, esto vendría de un servicio
+        historial = new List<HistorialMesa>
+        {
+            new() { Fecha = DateTime.Now.AddDays(-2), HoraInicio = new TimeSpan(18, 0, 0), HoraFin = new TimeSpan(20, 30, 0), Estado = "Completada" },
+            new() { Fecha = DateTime.Now.AddDays(-3), HoraInicio = new TimeSpan(19, 0, 0), HoraFin = new TimeSpan(21, 0, 0), Estado = "Completada" },
+            new() { Fecha = DateTime.Now.AddDays(-4), HoraInicio = new TimeSpan(17, 30, 0), HoraFin = new TimeSpan(19, 0, 0), Estado = "Completada" }
+        };
+    }
+
+    private string GetEstadoClass()
+    {
+        return Mesa?.Estado switch
+        {
+            "Disponible" => "bg-green-50",
+            "Ocupada" => "bg-red-50",
+            "Reservada" => "bg-yellow-50",
+            "Mantenimiento" => "bg-gray-50",
+            _ => "bg-gray-50"
+        };
+    }
+
+    private string GetEstadoBorderClass()
+    {
+        return Mesa?.Estado switch
+        {
+            "Disponible" => "border-green-200",
+            "Ocupada" => "border-red-200",
+            "Reservada" => "border-yellow-200",
+            "Mantenimiento" => "border-gray-200",
+            _ => "border-gray-200"
+        };
+    }
+
+    private string GetEstadoIconClass()
+    {
+        return Mesa?.Estado switch
+        {
+            "Disponible" => "bg-green-100",
+            "Ocupada" => "bg-red-100",
+            "Reservada" => "bg-yellow-100",
+            "Mantenimiento" => "bg-gray-100",
+            _ => "bg-gray-100"
+        };
+    }
+
+    private string GetEstadoTextClass()
+    {
+        return Mesa?.Estado switch
+        {
+            "Disponible" => "text-green-800",
+            "Ocupada" => "text-red-800",
+            "Reservada" => "text-yellow-800",
+            "Mantenimiento" => "text-gray-800",
+            _ => "text-gray-800"
+        };
+    }
+
+    private string GetEstadoSubtextClass()
+    {
+        return Mesa?.Estado switch
+        {
+            "Disponible" => "text-green-600",
+            "Ocupada" => "text-red-600",
+            "Reservada" => "text-yellow-600",
+            "Mantenimiento" => "text-gray-600",
+            _ => "text-gray-600"
+        };
+    }
+
+    private string GetHistorialEstadoClass(string estado)
+    {
+        return estado switch
+        {
+            "Completada" => "bg-green-100 text-green-800",
+            "Cancelada" => "bg-red-100 text-red-800",
+            "En Proceso" => "bg-blue-100 text-blue-800",
+            _ => "bg-gray-100 text-gray-800"
+        };
+    }
+
+    private async Task CerrarModal()
+    {
+        await OnCerrar.InvokeAsync();
+    }
+
+    private async Task GuardarNotas()
+    {
+        guardando = true;
+        StateHasChanged();
+
+        try
+        {
+            await OnGuardarNotas.InvokeAsync(notasTemporales);
+            await CerrarModal();
+        }
+        finally
+        {
+            guardando = false;
+            StateHasChanged();
+        }
+    }
+
+    public class HistorialMesa
+    {
+        public DateTime Fecha { get; set; }
+        public TimeSpan HoraInicio { get; set; }
+        public TimeSpan? HoraFin { get; set; }
+        public string Estado { get; set; } = string.Empty;
+    }
+}

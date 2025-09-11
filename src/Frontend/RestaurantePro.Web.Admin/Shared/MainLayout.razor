@@ -31,10 +31,10 @@
     protected override async Task OnInitializedAsync()
     {
         // Cargar preferencia de tema desde localStorage
-        await LoadThemePreference();
+        LoadThemePreference();
     }
 
-    private async Task LoadThemePreference()
+    private void LoadThemePreference()
     {
         // Aquí podrías cargar la preferencia desde localStorage
         // Por ahora usamos el tema claro por defecto

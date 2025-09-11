@@ -390,11 +390,11 @@
         }
     }
 
-    private void ConfirmarReservacionDesdeDetalles()
+    private async Task ConfirmarReservacionDesdeDetalles()
     {
         if (reservacionSeleccionada != null)
         {
-            ConfirmarReservacion(reservacionSeleccionada);
+            await ConfirmarReservacion(reservacionSeleccionada);
         }
     }
 
@@ -465,11 +465,11 @@
         }
     }
 
-    private void MarcarLlegadaDesdeDetalles()
+    private async Task MarcarLlegadaDesdeDetalles()
     {
         if (reservacionSeleccionada != null)
         {
-            MarcarLlegada(reservacionSeleccionada);
+            await MarcarLlegada(reservacionSeleccionada);
         }
     }
 
@@ -506,11 +506,11 @@
         }
     }
 
-    private void MarcarSalidaDesdeDetalles()
+    private async Task MarcarSalidaDesdeDetalles()
     {
         if (reservacionSeleccionada != null)
         {
-            MarcarSalida(reservacionSeleccionada);
+            await MarcarSalida(reservacionSeleccionada);
         }
     }
 
