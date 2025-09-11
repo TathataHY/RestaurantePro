@@ -65,7 +65,7 @@ public class MesasServiceTests
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
         result.Data.Should().BeEquivalentTo(expectedMesas);
-        _mockApiService.Verify(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas?estado=Disponible&ubicacion=Interior&capacidadMinima=4", It.IsAny<string?>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas?estado=Disponible&ubicacion=Interior&capacidadMinima=4", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -91,7 +91,7 @@ public class MesasServiceTests
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
         result.Data.Should().BeEquivalentTo(expectedMesa);
-        _mockApiService.Verify(x => x.GetAsync<MesaDto>($"api/operaciones/mesas/{mesaId}", It.IsAny<string?>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<MesaDto>($"api/operaciones/mesas/{mesaId}", It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -122,7 +122,7 @@ public class MesasServiceTests
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
         result.Data.Should().BeEquivalentTo(expectedMesas);
-        _mockApiService.Verify(x => x.GetAsync<PaginatedList<MesaDto>>(It.Is<string>(s => s.StartsWith("api/operaciones/mesas/disponibles") && s.Contains("pageNumber=1") && s.Contains("pageSize=50")), It.IsAny<string?>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<PaginatedList<MesaDto>>(It.Is<string>(s => s.StartsWith("api/operaciones/mesas/disponibles") && s.Contains("pageNumber=1") && s.Contains("pageSize=50")), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -149,7 +149,7 @@ public class MesasServiceTests
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
         result.Data.Should().BeEquivalentTo(expectedMesas);
-        _mockApiService.Verify(x => x.GetAsync<PaginatedList<MesaDto>>(It.Is<string>(s => s.StartsWith("api/operaciones/mesas/disponibles?") && s.Contains("capacidadMinima=6") && s.Contains("ubicacion=Terraza") && s.Contains("pageNumber=1") && s.Contains("pageSize=50")), It.IsAny<string?>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<PaginatedList<MesaDto>>(It.Is<string>(s => s.StartsWith("api/operaciones/mesas/disponibles?") && s.Contains("capacidadMinima=6") && s.Contains("ubicacion=Terraza") && s.Contains("pageNumber=1") && s.Contains("pageSize=50")), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -173,7 +173,7 @@ public class MesasServiceTests
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
         result.Data.Should().BeEquivalentTo(expectedEstado);
-        _mockApiService.Verify(x => x.GetAsync<EstadoMesasDto>("api/operaciones/mesas/estado-ocupacion", It.IsAny<string?>()), Times.Once);
+        _mockApiService.Verify(x => x.GetAsync<EstadoMesasDto>("api/operaciones/mesas/estado-ocupacion", It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion

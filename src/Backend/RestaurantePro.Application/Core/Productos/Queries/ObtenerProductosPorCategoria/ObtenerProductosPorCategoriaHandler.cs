@@ -30,7 +30,7 @@ public class ObtenerProductosPorCategoriaHandler : IRequestHandler<ObtenerProduc
             if (categoria == null)
             {
                 _logger.LogWarning("⚠️ Categoría no encontrada: {CategoriaId}", request.CategoriaId);
-                return Result.Failure<List<ProductoDto>>($"La categoría con ID {request.CategoriaId} no fue encontrada");
+                return Result.Failure<List<ProductoDto>>($"La categoría con ID {request.CategoriaId} no encontrada");
             }
 
             // Obtener productos de la categoría

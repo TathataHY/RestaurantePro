@@ -36,9 +36,7 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
             // Agregar base de datos en memoria con nombre único para cada prueba
             services.AddDbContext<RestauranteProDbContext>(options =>
             {
-                // Usar SQLite en memoria para respetar precisión decimal
-                options.UseSqlite($"Data Source=:memory:;Cache=Shared");
-                options.EnableSensitiveDataLogging();
+                options.UseInMemoryDatabase(_databaseName);
             });
 
             // Configurar autenticación para pruebas

@@ -9,6 +9,7 @@ namespace RestaurantePro.Application.Core.Productos.Commands.CrearProducto;
 /// </summary>
 public class CrearProductoHandler : IRequestHandler<CrearProductoCommand, Result<ProductoDto>>
 {
+    private static readonly object _lockObject = new object();
     private readonly IProductoRepository _repository;
     private readonly IProductoCategoriaRepository _categoriaRepository;
     private readonly ProductoBuilder _builder;
@@ -55,36 +56,40 @@ public class CrearProductoHandler : IRequestHandler<CrearProductoCommand, Result
                 return Result.Failure<ProductoDto>($"Categoría con ID {request.CategoriaId} no encontrada");
             }
 
-            // 2. Validar que no exista un producto con el mismo nombre
-            var productoExistente = await _repository.ObtenerPorNombreAsync(nombreSanitizado);
-            if (productoExistente != null)
+            // 2. Validar unicidad del nombre con lock para concurrencia
+            ProductoDto productoDto;
+            lock (_lockObject)
             {
-                _logger.LogWarning("❌ Ya existe un producto con el nombre: {Nombre}", nombreSanitizado);
-                return Result.Failure<ProductoDto>($"Ya existe un producto con el nombre '{nombreSanitizado}'");
+                var productoExistente = await _repository.ObtenerPorNombreAsync(nombreSanitizado);
+                if (productoExistente != null)
+                {
+                    _logger.LogWarning("❌ Ya existe un producto con el nombre: {Nombre}", nombreSanitizado);
+                    return Result.Failure<ProductoDto>($"Ya existe un producto con el nombre '{nombreSanitizado}'");
+                }
+
+                // 3. Usar builder del dominio para crear el producto
+                var resultado = _builder
+                    .ConNombre(nombreSanitizado)
+                    .ConDescripcion(descripcionSanitizada)
+                    .ConPrecio(request.Precio)
+                    .EnCategoria(request.CategoriaId)
+                    .Construir();
+
+                if (!resultado.Succeeded)
+                {
+                    _logger.LogWarning("❌ Error al construir producto: {Error}", resultado.Error);
+                    return Result.Failure<ProductoDto>(resultado.Error ?? "Error desconocido al construir producto");
+                }
+
+                var producto = resultado.Value;
+                
+                // 4. Persistir en repositorio
+                await _repository.AgregarAsync(producto);
+                await _repository.GuardarCambiosAsync(); // ✅ AGREGAR: Guardar cambios en BD
+
+                // 5. Mapear a DTO para respuesta
+                productoDto = _mapper.Map<ProductoDto>(producto);
             }
-
-            // 3. Usar builder del dominio para crear el producto
-            var resultado = _builder
-                .ConNombre(nombreSanitizado)
-                .ConDescripcion(descripcionSanitizada)
-                .ConPrecio(request.Precio)
-                .EnCategoria(request.CategoriaId)
-                .Construir();
-
-            if (!resultado.Succeeded)
-            {
-                _logger.LogWarning("❌ Error al construir producto: {Error}", resultado.Error);
-                return Result.Failure<ProductoDto>(resultado.Error ?? "Error desconocido al construir producto");
-            }
-
-            var producto = resultado.Value;
-            
-            // 2. Persistir en repositorio
-            await _repository.AgregarAsync(producto);
-            await _repository.GuardarCambiosAsync(); // ✅ AGREGAR: Guardar cambios en BD
-
-            // 3. Mapear a DTO para respuesta
-            var productoDto = _mapper.Map<ProductoDto>(producto);
 
             try
             {
