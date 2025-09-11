@@ -2,8 +2,10 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http.Json;
+using RestaurantePro.Application.Comercial.Clientes.DTOs;
 using RestaurantePro.Web.Admin.Models;
 using System.Text;
+using ClienteDto = RestaurantePro.Application.Comercial.Clientes.DTOs.ClienteDto;
 
 namespace RestaurantePro.Web.Admin.IntegrationTests;
 
@@ -55,8 +57,7 @@ public class ApiClientesIntegrationTests : IClassFixture<WebApplicationFactory>
         // Arrange
         var nuevoCliente = new CrearClienteRequest
         {
-            Nombre = "Juan",
-            Apellidos = "Pérez",
+            Nombre = "Juan Pérez", // Nombre completo para que el handler lo divida correctamente
             Email = "juan.perez@test.com",
             Telefono = "+1234567890",
             FechaNacimiento = DateTime.Today.AddYears(-30),
@@ -76,7 +77,7 @@ public class ApiClientesIntegrationTests : IClassFixture<WebApplicationFactory>
         resultado!.Success.Should().BeTrue();
         resultado.Data.Should().NotBeNull();
         resultado.Data!.Nombre.Should().Be("Juan");
-        resultado.Data.Apellidos.Should().Be("Pérez");
+        resultado.Data.Apellido.Should().Be("Pérez"); // Corregido: Apellido (singular)
         resultado.Data.Email.Should().Be("juan.perez@test.com");
     }
 
@@ -86,8 +87,7 @@ public class ApiClientesIntegrationTests : IClassFixture<WebApplicationFactory>
         // Arrange
         var cliente1 = new CrearClienteRequest
         {
-            Nombre = "Cliente",
-            Apellidos = "Uno",
+            Nombre = "Cliente Uno", // Nombre completo
             Email = "duplicado@test.com",
             Telefono = "+1234567890",
             FechaNacimiento = DateTime.Today.AddYears(-25),
@@ -96,8 +96,7 @@ public class ApiClientesIntegrationTests : IClassFixture<WebApplicationFactory>
 
         var cliente2 = new CrearClienteRequest
         {
-            Nombre = "Cliente",
-            Apellidos = "Dos",
+            Nombre = "Cliente Dos", // Nombre completo
             Email = "duplicado@test.com", // Mismo email
             Telefono = "+1234567891",
             FechaNacimiento = DateTime.Today.AddYears(-25),
@@ -119,8 +118,7 @@ public class ApiClientesIntegrationTests : IClassFixture<WebApplicationFactory>
         // Arrange
         var clienteInvalido = new CrearClienteRequest
         {
-            Nombre = "Test", // Nombre válido
-            Apellidos = "Usuario", // Apellidos válidos
+            Nombre = "Test Usuario", // Nombre completo válido
             Email = "email-invalido", // Email inválido (sin @)
             Telefono = "+1234567890", // Teléfono válido
             FechaNacimiento = DateTime.Today.AddYears(1), // Fecha futura (inválida)
