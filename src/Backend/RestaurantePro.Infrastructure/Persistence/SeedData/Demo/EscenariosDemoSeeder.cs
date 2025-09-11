@@ -121,7 +121,7 @@ public class EscenariosDemoSeeder : ISeedData
                 else
                 {
                     // Crear nueva categoría
-                    var nuevaCategoria = ProductoCategoria.Crear(nombre, descripcion, orden);
+                    var nuevaCategoria = ProductoCategoria.Crear(nombre, descripcion, orden, "#FF5722", "🍽️");
                     categoriasMenu.Add(nuevaCategoria);
                     context.ProductoCategorias.Add(nuevaCategoria);
                     logger.LogInformation("  ✅ Creando nueva categoría: {Nombre}", nombre);

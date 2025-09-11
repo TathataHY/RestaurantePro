@@ -139,8 +139,8 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Testing
             // Crear categorías primero
             var categorias = new List<ProductoCategoria>
             {
-                ProductoCategoria.Crear("Test Categoría", "Categoría para testing", 999),
-                ProductoCategoria.Crear("Test Edge", "Categoría casos edge", 998)
+                ProductoCategoria.Crear("Test Categoría", "Categoría para testing", 999, "#FF5722", "🧪"),
+                ProductoCategoria.Crear("Test Edge", "Categoría casos edge", 998, "#FF9800", "🔬")
             };
 
             context.Set<ProductoCategoria>().AddRange(categorias);

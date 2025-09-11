@@ -527,7 +527,7 @@ public class ComandasViewModelTests
         var mockDialog = new Mock<IDialogService>();
         var vm = CreateVm(fakeService, mockDialog.Object);
         await vm.LoadComandasCommand.ExecuteAsync(null);
-        mockDialog.Verify(x => x.ShowAlertAsync(It.IsAny<string>(), It.Is<string>(msg => msg.Contains("Error")), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+        mockDialog.Verify(x => x.ShowAlertAsync(It.IsAny<string>(), It.Is<string>(msg => msg.Contains("Error")), It.IsAny<string>()), Times.AtLeastOnce);
     }
 
     [Fact]
@@ -540,7 +540,7 @@ public class ComandasViewModelTests
         var vm = CreateVm(mockService.Object, mockDialog.Object);
         await vm.CambiarEstadoComandaCommand.ExecuteAsync(comanda);
         mockService.Verify(s => s.CambiarEstadoComandaAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
-        mockDialog.Verify(x => x.ShowAlertAsync(It.Is<string>(t => t == "Información"), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        mockDialog.Verify(x => x.ShowAlertAsync(It.Is<string>(t => t == "Información"), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
@@ -581,7 +581,7 @@ public class ComandasViewModelTests
         vm.SearchText = string.Empty;
         await vm.BuscarComandaCommand.ExecuteAsync(null);
         calls.Should().Be(baseline);
-        _mockDialog.Verify(d => d.ShowAlertAsync(It.Is<string>(t => t == "Información"), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+        _mockDialog.Verify(d => d.ShowAlertAsync(It.Is<string>(t => t == "Información"), It.IsAny<string>(), It.IsAny<string>()), Times.AtLeastOnce);
     }
 
     [Fact]

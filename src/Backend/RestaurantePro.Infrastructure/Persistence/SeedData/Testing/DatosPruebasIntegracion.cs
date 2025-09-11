@@ -93,12 +93,16 @@ public class DatosPruebasIntegracion : ISeedData
                 ProductoCategoria.Crear(
                     "Platos Integración",
                     "Categoría para testing de integración de platos",
-                    1
+                    1,
+                    "#FF5722",
+                    "🍽️"
                 ),
                 ProductoCategoria.Crear(
                     "Bebidas Integración",
                     "Categoría para testing de integración de bebidas",
-                    2
+                    2,
+                    "#00BCD4",
+                    "🥤"
                 )
             };
 

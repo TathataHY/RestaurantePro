@@ -26,97 +26,127 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Demo
                 ProductoCategoria.Crear(
                     "Entradas",
                     "Aperitivos y entradas para abrir el apetito",
-                    1
+                    1,
+                    "#FF5722",
+                    "🥗"
                 ),
 
                 // Sopas y Ensaladas
                 ProductoCategoria.Crear(
                     "Sopas",
                     "Sopas y caldos caseros",
-                    2
+                    2,
+                    "#FF9800",
+                    "🍲"
                 ),
 
                 ProductoCategoria.Crear(
                     "Ensaladas",
                     "Ensaladas frescas y nutritivas",
-                    3
+                    3,
+                    "#4CAF50",
+                    "🥗"
                 ),
 
                 // Platos Principales
                 ProductoCategoria.Crear(
                     "Carnes",
                     "Cortes de carne premium y especialidades",
-                    4
+                    4,
+                    "#795548",
+                    "🥩"
                 ),
 
                 ProductoCategoria.Crear(
                     "Pollo",
                     "Especialidades de pollo preparadas al momento",
-                    5
+                    5,
+                    "#FFC107",
+                    "🐔"
                 ),
 
                 ProductoCategoria.Crear(
                     "Pescados y Mariscos",
                     "Pescados frescos y mariscos del día",
-                    6
+                    6,
+                    "#2196F3",
+                    "🐟"
                 ),
 
                 ProductoCategoria.Crear(
                     "Pasta",
                     "Pastas frescas con salsas artesanales",
-                    7
+                    7,
+                    "#FFC107",
+                    "🍝"
                 ),
 
                 ProductoCategoria.Crear(
                     "Pizza",
                     "Pizzas artesanales con masa casera",
-                    8
+                    8,
+                    "#F44336",
+                    "🍕"
                 ),
 
                 // Platos Vegetarianos
                 ProductoCategoria.Crear(
                     "Vegetariano",
                     "Opciones saludables sin carne",
-                    9
+                    9,
+                    "#8BC34A",
+                    "🌱"
                 ),
 
                 // Postres
                 ProductoCategoria.Crear(
                     "Postres",
                     "Dulces tentaciones para cerrar con broche de oro",
-                    10
+                    10,
+                    "#E91E63",
+                    "🍰"
                 ),
 
                 // Bebidas
                 ProductoCategoria.Crear(
                     "Bebidas Calientes",
                     "Café, té y bebidas reconfortantes",
-                    11
+                    11,
+                    "#8D6E63",
+                    "☕"
                 ),
 
                 ProductoCategoria.Crear(
                     "Bebidas Frías",
                     "Refrescos, jugos y bebidas refrescantes",
-                    12
+                    12,
+                    "#00BCD4",
+                    "🥤"
                 ),
 
                 ProductoCategoria.Crear(
                     "Cocteles",
                     "Cocteles artesanales y bebidas premium",
-                    13
+                    13,
+                    "#9C27B0",
+                    "🍸"
                 ),
 
                 // Especialidades
                 ProductoCategoria.Crear(
                     "Especialidades de la Casa",
                     "Nuestros platillos estrella y creaciones únicas",
-                    14
+                    14,
+                    "#FF5722",
+                    "⭐"
                 ),
 
                 ProductoCategoria.Crear(
                     "Menu Infantil",
                     "Opciones especiales para los más pequeños",
-                    15
+                    15,
+                    "#FFEB3B",
+                    "👶"
                 )
             };
 

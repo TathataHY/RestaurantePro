@@ -101,7 +101,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
             await _viewModel.SeleccionarCategoriaCommand.ExecuteAsync(categoria);
 
             // Assert
-            _mockNavigationService.Verify(x => x.NavigateToAsync("productos", It.IsAny<Dictionary<string, object>>()), Times.Once);
+            _mockNavigationService.Verify(x => x.NavigateToAsync("productos-por-categoria", It.IsAny<Dictionary<string, object>>()), Times.Once);
             Assert.Equal(categoria, _viewModel.CategoriaSeleccionada);
         }
 

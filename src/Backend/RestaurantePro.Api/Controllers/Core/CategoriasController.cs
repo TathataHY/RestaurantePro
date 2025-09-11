@@ -1,7 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MediatR;
 using RestaurantePro.Api.Common;
 using RestaurantePro.Application.Core.Productos.DTOs;
+using RestaurantePro.Application.Core.Productos.Commands.CrearCategoria;
+using RestaurantePro.Application.Core.Productos.Commands.ActualizarCategoria;
+using RestaurantePro.Application.Core.Productos.Commands.EliminarCategoria;
 using RestaurantePro.Domain.Core.Productos.Interfaces;
 using RestaurantePro.Domain.Core.Productos.Services;
 using RestaurantePro.Domain.Core.Productos.Policies;
@@ -21,17 +25,20 @@ public class CategoriasController : ControllerBase
     private readonly IProductoCategoriaRepository _categoriaRepository;
     private readonly IProductoRepository _productoRepository;
     private readonly IVisibilidadCategoriasPolicy _visibilidadPolicy;
+    private readonly IMediator _mediator;
     private readonly ILogger<CategoriasController> _logger;
 
     public CategoriasController(
         IProductoCategoriaRepository categoriaRepository,
         IProductoRepository productoRepository,
         IVisibilidadCategoriasPolicy visibilidadPolicy,
+        IMediator mediator,
         ILogger<CategoriasController> logger)
     {
         _categoriaRepository = categoriaRepository;
         _productoRepository = productoRepository;
         _visibilidadPolicy = visibilidadPolicy;
+        _mediator = mediator;
         _logger = logger;
     }
 
@@ -226,6 +233,166 @@ public class CategoriasController : ControllerBase
             _logger.LogError(ex, "❌ Error al buscar categorías: {Nombre}", nombre);
             var errorResponse = ApiResponse<List<CategoriaProductoDto>>.ErrorResponse(
                 new List<string> { "Error interno al buscar categorías" },
+                "Error de servidor",
+                StatusCodes.Status500InternalServerError);
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
+    }
+
+    /// <summary>
+    /// Crea una nueva categoría de productos
+    /// </summary>
+    [HttpPost]
+    [ProducesResponseType(typeof(ApiResponse<CategoriaProductoDto>), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ApiResponse<CategoriaProductoDto>>> CrearCategoria([FromBody] CrearCategoriaDto request)
+    {
+        _logger.LogInformation("➕ POST /api/core/categorias - Nombre: {Nombre}", request.Nombre);
+
+        try
+        {
+            var command = new CrearCategoriaCommand
+            {
+                Nombre = request.Nombre,
+                Descripcion = request.Descripcion,
+                Color = request.Color,
+                Icono = request.Icono,
+                Orden = request.Orden,
+                Activa = request.Activa
+            };
+
+            var result = await _mediator.Send(command);
+
+                    if (result.IsSuccess())
+            {
+                var response = ApiResponse<CategoriaProductoDto>.SuccessResponse(
+                    result.Value, "Categoría creada exitosamente");
+                return CreatedAtAction(nameof(GetCategoria), new { id = result.Value.Id }, response);
+            }
+
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors.ToList(), "Errores de validación", StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error al crear categoría: {Nombre}", request.Nombre);
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { "Error interno al crear la categoría" },
+                "Error de servidor",
+                StatusCodes.Status500InternalServerError);
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
+    }
+
+    /// <summary>
+    /// Actualiza una categoría de productos existente
+    /// </summary>
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(ApiResponse<CategoriaProductoDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ApiResponse<CategoriaProductoDto>>> ActualizarCategoria(
+        Guid id, [FromBody] ActualizarCategoriaDto request)
+    {
+        _logger.LogInformation("✏️ PUT /api/core/categorias/{Id} - Nombre: {Nombre}", id, request.Nombre);
+
+        try
+        {
+            // Validar que el ID de la URL coincida con el del body
+            if (id != request.Id)
+            {
+                var errorResponse = ApiResponse<object>.ErrorResponse(
+                    new List<string> { "El ID de la URL no coincide con el ID del cuerpo de la petición" },
+                    "Error de validación",
+                    StatusCodes.Status400BadRequest);
+                return BadRequest(errorResponse);
+            }
+
+            var command = new ActualizarCategoriaCommand
+            {
+                Id = request.Id,
+                Nombre = request.Nombre,
+                Descripcion = request.Descripcion,
+                Color = request.Color,
+                Icono = request.Icono,
+                Orden = request.Orden,
+                Activa = request.Activa
+            };
+
+            var result = await _mediator.Send(command);
+
+                    if (result.IsSuccess())
+            {
+                var response = ApiResponse<CategoriaProductoDto>.SuccessResponse(
+                    result.Value, "Categoría actualizada exitosamente");
+                return Ok(response);
+            }
+
+            if (result.Errors.Any(e => e.Contains("no encontrada")))
+            {
+                var errorResponse = ApiResponse<object>.ErrorResponse(
+                    result.Errors.ToList(), "Categoría no encontrada", StatusCodes.Status404NotFound);
+                return NotFound(errorResponse);
+            }
+
+            var validationErrorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors.ToList(), "Errores de validación", StatusCodes.Status400BadRequest);
+            return BadRequest(validationErrorResponse);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error al actualizar categoría: {Id}", id);
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { "Error interno al actualizar la categoría" },
+                "Error de servidor",
+                StatusCodes.Status500InternalServerError);
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
+    }
+
+    /// <summary>
+    /// Elimina una categoría de productos
+    /// </summary>
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ApiResponse<object>>> EliminarCategoria(Guid id)
+    {
+        _logger.LogInformation("🗑️ DELETE /api/core/categorias/{Id}", id);
+
+        try
+        {
+            var command = new EliminarCategoriaCommand { Id = id };
+            var result = await _mediator.Send(command);
+
+                    if (result.IsSuccess())
+            {
+                var response = ApiResponse<object>.SuccessResponse(
+                    null, "Categoría eliminada exitosamente");
+                return Ok(response);
+            }
+
+            if (result.Errors.Any(e => e.Contains("no encontrada")))
+            {
+                var errorResponse = ApiResponse<object>.ErrorResponse(
+                    result.Errors.ToList(), "Categoría no encontrada", StatusCodes.Status404NotFound);
+                return NotFound(errorResponse);
+            }
+
+            var validationErrorResponse = ApiResponse<object>.ErrorResponse(
+                result.Errors.ToList(), "Errores de validación", StatusCodes.Status400BadRequest);
+            return BadRequest(validationErrorResponse);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error al eliminar categoría: {Id}", id);
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { "Error interno al eliminar la categoría" },
                 "Error de servidor",
                 StatusCodes.Status500InternalServerError);
             return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);

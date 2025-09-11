@@ -197,10 +197,10 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Testing
             // Crear categorías primero
             var categorias = new List<ProductoCategoria>
             {
-                ProductoCategoria.Crear("Rendimiento Entradas", "Categoría para testing de rendimiento", 800),
-                ProductoCategoria.Crear("Rendimiento Principales", "Categoría para testing de rendimiento", 801),
-                ProductoCategoria.Crear("Rendimiento Postres", "Categoría para testing de rendimiento", 802),
-                ProductoCategoria.Crear("Rendimiento Bebidas", "Categoría para testing de rendimiento", 803)
+                ProductoCategoria.Crear("Rendimiento Entradas", "Categoría para testing de rendimiento", 800, "#FF5722", "🍽️"),
+                ProductoCategoria.Crear("Rendimiento Principales", "Categoría para testing de rendimiento", 801, "#F44336", "🍖"),
+                ProductoCategoria.Crear("Rendimiento Postres", "Categoría para testing de rendimiento", 802, "#E91E63", "🍰"),
+                ProductoCategoria.Crear("Rendimiento Bebidas", "Categoría para testing de rendimiento", 803, "#00BCD4", "🥤")
             };
 
             context.Set<ProductoCategoria>().AddRange(categorias);

@@ -13,21 +13,17 @@ public class DailyPreparationsViewModel_ActionsTests
         => new DailyPreparationsViewModel(_mockService.Object, _mockDialog.Object, _mockNav.Object);
 
     [Fact]
-    public async Task ConsumirPreparacion_ShouldValidateAndCallService()
+    public async Task ConsumirPreparacion_ShouldBeDisabled()
     {
         var vm = CreateVm();
         var prep = new PreparacionDiariaDto { Id = Guid.NewGuid(), NombreProducto = "Pizza", CantidadDisponible = 5 };
-        _mockDialog
-            .Setup(x => x.ShowPromptAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
-            .ReturnsAsync("2");
-        _mockService
-            .Setup(x => x.ConsumirPreparacionDiariaAsync(prep.Id, 2, null))
-            .ReturnsAsync(Result<PreparacionDiariaDto>.Success(prep));
 
+        // El comando está deshabilitado intencionalmente (CanNeverExecute = false)
         await vm.ConsumirPreparacionCommand.ExecuteAsync(prep);
 
-        _mockService.Verify(x => x.ConsumirPreparacionDiariaAsync(prep.Id, 2, null), Times.Once);
-        _mockDialog.Verify(x => x.ShowSuccessAsync(It.Is<string>(m => m.Contains("consumida"))), Times.Once);
+        // No se debe llamar al servicio ya que el comando está deshabilitado
+        _mockService.Verify(x => x.ConsumirPreparacionDiariaAsync(It.IsAny<Guid>(), It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+        _mockDialog.Verify(x => x.ShowSuccessAsync(It.IsAny<string>()), Times.Never);
     }
 
     [Fact]

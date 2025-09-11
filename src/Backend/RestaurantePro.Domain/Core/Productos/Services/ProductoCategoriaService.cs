@@ -101,7 +101,7 @@ namespace RestaurantePro.Domain.Core.Productos.Services
                     // Solo actualizar si el orden ha cambiado
                     if (categoria.Orden != nuevoOrden)
                     {
-                        categoria.Actualizar(categoria.Nombre, categoria.Descripcion, nuevoOrden);
+                        categoria.Actualizar(categoria.Nombre, categoria.Descripcion, nuevoOrden, categoria.Color, categoria.Icono);
                         await _categoriaRepository.ActualizarAsync(categoria, cancellationToken);
                         categoriasActualizadas++;
                     }

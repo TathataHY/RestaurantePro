@@ -35,18 +35,30 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
         public int Orden { get; private set; }
 
         /// <summary>
+        /// Color de la categoría (formato hexadecimal)
+        /// </summary>
+        public string Color { get; private set; }
+
+        /// <summary>
+        /// Icono de la categoría (emoji o código de icono)
+        /// </summary>
+        public string Icono { get; private set; }
+
+        /// <summary>
         /// Indica si la categoría está activa
         /// </summary>
         public bool EstaActivo { get; private set; }
 
         protected ProductoCategoria() { }
 
-        private ProductoCategoria(string nombre, string descripcion, int orden)
+        private ProductoCategoria(string nombre, string descripcion, int orden, string color, string icono)
         {
             Id = Guid.NewGuid();
             Nombre = nombre;
             Descripcion = descripcion;
             Orden = orden;
+            Color = color;
+            Icono = icono;
             EstaActivo = true;
 
             ValidarInvariantes();
@@ -56,19 +68,21 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
         /// <summary>
         /// Crea una nueva instancia de una categoría de productos
         /// </summary>
-        public static ProductoCategoria Crear(string nombre, string descripcion, int orden)
+        public static ProductoCategoria Crear(string nombre, string descripcion, int orden, string color, string icono)
         {
-            return new ProductoCategoria(nombre, descripcion, orden);
+            return new ProductoCategoria(nombre, descripcion, orden, color, icono);
         }
 
         /// <summary>
         /// Actualiza los datos de la categoría
         /// </summary>
-        public void Actualizar(string nombre, string descripcion, int orden)
+        public void Actualizar(string nombre, string descripcion, int orden, string color, string icono)
         {
             Nombre = nombre;
             Descripcion = descripcion;
             Orden = orden;
+            Color = color;
+            Icono = icono;
             MarkAsModified();
 
             ValidarInvariantes();

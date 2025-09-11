@@ -407,7 +407,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
             _mockDialogService.Verify(x => x.ShowAlertAsync(
                 It.Is<string>(t => t.Contains("Detalles")),
                 It.Is<string>(m => m.Contains("Nombre:") && m.Contains("Tomate") && m.Contains("Stock:") && m.Contains("42")),
-                It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+                It.IsAny<string>()), Times.Once);
         }
 
         [Fact]
@@ -430,7 +430,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
             _mockDialogService.Verify(x => x.ShowAlertAsync(
                 It.Is<string>(t => t.Contains("Función no disponible")),
                 It.Is<string>(m => m.Contains("creación de ingredientes") || m.Contains("no está disponible")),
-                It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+                It.IsAny<string>()), Times.Once);
         }
 
         [Fact]
@@ -446,7 +446,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
             _mockDialogService.Verify(x => x.ShowAlertAsync(
                 It.Is<string>(t => t.Contains("Función no disponible")),
                 It.Is<string>(m => m.Contains("edición de ingredientes") || m.Contains("no está disponible")),
-                It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+                It.IsAny<string>()), Times.Once);
         }
 
         [Fact]
@@ -462,7 +462,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
             _mockDialogService.Verify(x => x.ShowAlertAsync(
                 It.Is<string>(t => t.Contains("Función no disponible")),
                 It.Is<string>(m => m.Contains("ajuste de stock") || m.Contains("no está disponible")),
-                It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+                It.IsAny<string>()), Times.Once);
         }
 
         [Fact]

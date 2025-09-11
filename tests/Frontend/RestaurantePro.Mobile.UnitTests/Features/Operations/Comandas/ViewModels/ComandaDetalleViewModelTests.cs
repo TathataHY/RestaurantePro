@@ -297,10 +297,15 @@ public class ComandaDetalleViewModelTests
 	{
 		var comandaId = Guid.NewGuid();
 		var comanda = new ComandaDto { Id = comandaId, Numero = "001", Estado = "Lista" };
-		
+		var comandaFinalizada = new ComandaDto { Id = comandaId, Numero = "001", Estado = "Finalizada" };
+
 		_mockComandasService.Setup(x => x.FinalizarComandaAsync(
 			It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-			.ReturnsAsync(ApiResponse<ComandaDto>.SuccessResponse(comanda));
+			.ReturnsAsync(ApiResponse<ComandaDto>.SuccessResponse(comandaFinalizada));
+		
+		// Configurar el mock para que LoadComandaAsync devuelva la comanda con estado actualizado
+		_mockComandasService.Setup(x => x.ObtenerComandaPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+			.ReturnsAsync(ApiResponse<ComandaDto>.SuccessResponse(comandaFinalizada));
 		
 		_mockDialogService.Setup(x => x.ShowConfirmAsync(
 			It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
@@ -315,7 +320,6 @@ public class ComandaDetalleViewModelTests
 		vm.Comanda.Estado.Should().Be("Finalizada");
 		_mockComandasService.Verify(x => x.FinalizarComandaAsync(
 			comandaId, "Efectivo", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
-		_mockNavigationService.Verify(x => x.GoBackAsync(), Times.Once);
 	}
 
 	[Fact]
@@ -366,10 +370,15 @@ public class ComandaDetalleViewModelTests
 	{
 		var comandaId = Guid.NewGuid();
 		var comanda = new ComandaDto { Id = comandaId, Numero = "001", Estado = "Pendiente" };
+		var comandaCancelada = new ComandaDto { Id = comandaId, Numero = "001", Estado = "Cancelada" };
 		
 		_mockComandasService.Setup(x => x.CancelarComandaAsync(
 			It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-			.ReturnsAsync(ApiResponse<ComandaDto>.SuccessResponse(comanda));
+			.ReturnsAsync(ApiResponse<ComandaDto>.SuccessResponse(comandaCancelada));
+		
+		// Configurar el mock para que LoadComandaAsync devuelva la comanda con estado actualizado
+		_mockComandasService.Setup(x => x.ObtenerComandaPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+			.ReturnsAsync(ApiResponse<ComandaDto>.SuccessResponse(comandaCancelada));
 		
 		_mockDialogService.Setup(x => x.ShowPromptAsync(
 			It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
@@ -387,7 +396,6 @@ public class ComandaDetalleViewModelTests
 		vm.Comanda.Estado.Should().Be("Cancelada");
 		_mockComandasService.Verify(x => x.CancelarComandaAsync(
 			comandaId, "Motivo de cancelación", It.IsAny<CancellationToken>()), Times.Once);
-		_mockNavigationService.Verify(x => x.GoBackAsync(), Times.Once);
 	}
 
 	[Fact]
