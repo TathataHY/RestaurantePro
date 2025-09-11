@@ -220,4 +220,264 @@ public class ProductosApiServiceTests
         // Assert
         resultado.Should().BeFalse();
     }
+
+    // ===== PRUEBAS ROBUSTAS ADICIONALES =====
+
+    [Fact]
+    public async Task ObtenerCategoriasAsync_ConRespuestaNula_DeberiaRetornarListaVacia()
+    {
+        // Arrange
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent("null", Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerCategoriasAsync();
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ObtenerCategoriasAsync_ConJsonMalformado_DeberiaLanzarExcepcion()
+    {
+        // Arrange
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent("{ json malformado }", Encoding.UTF8, "application/json")
+            });
+
+        // Act & Assert
+        await Assert.ThrowsAsync<JsonException>(() => _service.ObtenerCategoriasAsync());
+    }
+
+    [Fact]
+    public async Task ObtenerProductosPaginadosAsync_ConFiltrosExtremos_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var productosEsperados = new PaginatedList<ProductoDto>
+        {
+            Items = new List<ProductoDto>(),
+            TotalCount = 0,
+            PageNumber = 1,
+            PageSize = 1
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<PaginatedList<ProductoDto>>
+        {
+            Success = true,
+            Data = productosEsperados
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerProductosPaginadosAsync(
+            pageNumber: 1, 
+            pageSize: 1, 
+            filtro: "test@#$%^&*()", 
+            categoriaId: Guid.NewGuid(), 
+            soloActivos: true, 
+            orderBy: "Nombre", 
+            orderDirection: "asc"
+        );
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado.Items.Should().BeEmpty();
+        resultado.TotalCount.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ObtenerProductosPaginadosAsync_ConPaginacionExtrema_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var productosEsperados = new PaginatedList<ProductoDto>
+        {
+            Items = new List<ProductoDto>(),
+            TotalCount = 0,
+            PageNumber = 999999,
+            PageSize = 1000
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<PaginatedList<ProductoDto>>
+        {
+            Success = true,
+            Data = productosEsperados
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerProductosPaginadosAsync(
+            pageNumber: 999999, 
+            pageSize: 1000, 
+            filtro: null, 
+            categoriaId: null, 
+            soloActivos: false, 
+            orderBy: "Precio", 
+            orderDirection: "desc"
+        );
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado.PageNumber.Should().Be(999999);
+        resultado.PageSize.Should().Be(1000);
+    }
+
+    [Fact]
+    public async Task ObtenerPorIdAsync_ConIdValido_DeberiaRetornarProducto()
+    {
+        // Arrange
+        var id = Guid.NewGuid();
+        var productoEsperado = new ProductoDto
+        {
+            Id = id,
+            Nombre = "Pizza Margherita",
+            Descripcion = "Pizza clásica italiana",
+            Precio = 15.99m,
+            Activo = true
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<ProductoDto>
+        {
+            Success = true,
+            Data = productoEsperado
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerPorIdAsync(id);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Id.Should().Be(id);
+        resultado.Nombre.Should().Be("Pizza Margherita");
+        resultado.Precio.Should().Be(15.99m);
+    }
+
+    [Fact]
+    public async Task ObtenerPorIdAsync_ConIdInexistente_DeberiaLanzarExcepcion()
+    {
+        // Arrange
+        var id = Guid.NewGuid();
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.NotFound,
+                Content = new StringContent("Producto no encontrado", Encoding.UTF8, "application/json")
+            });
+
+        // Act & Assert
+        await Assert.ThrowsAsync<HttpRequestException>(() => _service.ObtenerPorIdAsync(id));
+    }
+
+    [Fact]
+    public async Task CrearAsync_ConTimeout_DeberiaLanzarExcepcion()
+    {
+        // Arrange
+        var productoRequest = new CreateProductoRequest
+        {
+            Nombre = "Producto Test",
+            Descripcion = "Descripción test",
+            Precio = 10.99m
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new TaskCanceledException("Request timeout"));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<TaskCanceledException>(() => _service.CrearAsync(productoRequest));
+    }
+
+    [Fact]
+    public async Task ActualizarAsync_ConDatosInvalidos_DeberiaRetornarNull()
+    {
+        // Arrange
+        var productoRequest = new UpdateProductoRequest
+        {
+            Id = Guid.NewGuid(),
+            Nombre = "",
+            Descripcion = "",
+            Precio = -1.0m
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.BadRequest,
+                Content = new StringContent("Datos inválidos", Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ActualizarAsync(productoRequest);
+
+        // Assert
+        resultado.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task EliminarAsync_ConErrorDeServidor_DeberiaRetornarFalse()
+    {
+        // Arrange
+        var id = Guid.NewGuid();
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.InternalServerError,
+                Content = new StringContent("Error interno del servidor", Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.EliminarAsync(id);
+
+        // Assert
+        resultado.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ObtenerProductosPaginadosAsync_ConConexionPerdida_DeberiaLanzarExcepcion()
+    {
+        // Arrange
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new HttpRequestException("Connection lost"));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<HttpRequestException>(() => 
+            _service.ObtenerProductosPaginadosAsync(1, 10, null, null, true, "Nombre", "asc"));
+    }
 }

@@ -361,4 +361,212 @@ public class DashboardApiServiceTests
         resultado.First().Monto.Should().Be(150.00m);
         resultado.First().CantidadComandas.Should().Be(5);
     }
+
+    // ===== PRUEBAS ROBUSTAS ADICIONALES =====
+
+    [Fact]
+    public async Task ObtenerResumenAsync_ConDatosCorruptos_DeberiaRetornarDatosEjemplo()
+    {
+        // Arrange
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent("{ datos corruptos }", Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerResumenAsync();
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Metricas.Should().NotBeNull();
+        resultado.Metricas.VentasHoy.Should().Be(1250.50m); // Valor de ejemplo
+    }
+
+    [Fact]
+    public async Task ObtenerMetricasAsync_ConTimeout_DeberiaRetornarDatosEjemplo()
+    {
+        // Arrange
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new TaskCanceledException("Request timeout"));
+
+        // Act
+        var resultado = await _service.ObtenerMetricasAsync();
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.VentasHoy.Should().Be(1250.50m); // Valor de ejemplo
+        resultado.TotalMesas.Should().Be(20); // Valor de ejemplo
+    }
+
+    [Fact]
+    public async Task ObtenerProductosMasVendidosAsync_ConCantidadExtrema_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var productosEsperados = new List<ProductoMasVendidoDto>
+        {
+            new() { Id = Guid.NewGuid(), Nombre = "Producto 1", CategoriaNombre = "Categoría 1", CantidadVendida = 100, Ingresos = 1000.00m, PorcentajeTotal = 50.0m }
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<List<ProductoMasVendidoDto>>
+        {
+            Success = true,
+            Data = productosEsperados
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerProductosMasVendidosAsync(1000);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado.Should().HaveCount(1);
+        resultado.First().CantidadVendida.Should().Be(100);
+    }
+
+    [Fact]
+    public async Task ObtenerVentasUltimos7DiasAsync_ConDatosVacios_DeberiaRetornarListaVacia()
+    {
+        // Arrange
+        var ventasEsperadas = new List<VentaPorPeriodoDto>();
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<List<VentaPorPeriodoDto>>
+        {
+            Success = true,
+            Data = ventasEsperadas
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerVentasUltimos7DiasAsync();
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ObtenerEstadoMesasAsync_ConErrorDeConexion_DeberiaRetornarDatosEjemplo()
+    {
+        // Arrange
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new HttpRequestException("Connection lost"));
+
+        // Act
+        var resultado = await _service.ObtenerEstadoMesasAsync();
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Total.Should().Be(20); // Valor de ejemplo
+        resultado.Disponibles.Should().Be(12); // Valor de ejemplo
+    }
+
+    [Fact]
+    public async Task ObtenerComandasPorEstadoAsync_ConDatosExtremos_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var comandasEsperadas = new ComandasPorEstadoDto
+        {
+            Pendientes = 0,
+            EnPreparacion = 0,
+            Listas = 0,
+            Completadas = 0,
+            Canceladas = 0,
+            Total = 0
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<ComandasPorEstadoDto>
+        {
+            Success = true,
+            Data = comandasEsperadas
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerComandasPorEstadoAsync();
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Total.Should().Be(0);
+        resultado.Pendientes.Should().Be(0);
+        resultado.Completadas.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ObtenerIngresosPorHoraAsync_ConDatosInconsistentes_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var ingresosEsperados = new List<IngresosPorHoraDto>
+        {
+            new() { Hora = 0, Monto = 0, CantidadComandas = 0 },
+            new() { Hora = 23, Monto = 999999.99m, CantidadComandas = 1000 }
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<List<IngresosPorHoraDto>>
+        {
+            Success = true,
+            Data = ingresosEsperados
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerIngresosPorHoraAsync();
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado.Should().HaveCount(2);
+        resultado.First().Hora.Should().Be(0);
+        resultado.First().Monto.Should().Be(0);
+        resultado.Last().Hora.Should().Be(23);
+        resultado.Last().Monto.Should().Be(999999.99m);
+    }
+
+    [Fact]
+    public async Task ObtenerResumenAsync_ConExcepcionInesperada_DeberiaRetornarDatosEjemplo()
+    {
+        // Arrange
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new InvalidOperationException("Unexpected error"));
+
+        // Act
+        var resultado = await _service.ObtenerResumenAsync();
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Metricas.Should().NotBeNull();
+        resultado.Metricas.VentasHoy.Should().Be(1250.50m); // Valor de ejemplo
+    }
 }
