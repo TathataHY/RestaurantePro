@@ -7,157 +7,140 @@
 
 <PageTitle>Dashboard Ejecutivo</PageTitle>
 
-<div class="dashboard-header">
-    <div class="d-flex align-items-center justify-content-between">
-        <div>
-            <h1 class="dashboard-title">Dashboard Ejecutivo</h1>
-            <p class="dashboard-subtitle">Resumen de operaciones en tiempo real</p>
-        </div>
-        <div class="d-flex align-items-center gap-3">
-            <div class="last-update">
-                <span class="oi oi-clock text-muted"></span>
-                <small class="text-muted ms-1">
-                    Última actualización: @(resumen?.Metricas.UltimaActualizacion.ToString("HH:mm") ?? "Cargando...")
-                </small>
-            </div>
-            <button class="btn btn-primary btn-sm" @onclick="ActualizarDatos">
-                <span class="oi oi-reload"></span> Actualizar
-            </button>
-        </div>
-    </div>
-</div>
+<div class="flex-1 px-8 md:px-16 lg:px-24 py-8">
+    <div class="mx-auto max-w-7xl">
+        <h2 class="text-4xl font-bold tracking-tight text-gray-900 dark:text-white mb-8">Dashboard Ejecutivo</h2>
 
 @if (cargando)
 {
-    <div class="loading-container">
-        <div class="loading-spinner">
-            <div class="spinner"></div>
+    <div class="flex justify-center items-center py-12">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-color mx-auto mb-4"></div>
+            <p class="text-gray-500">Cargando dashboard...</p>
         </div>
-        <h3 class="loading-title">Cargando Dashboard</h3>
-        <p class="loading-subtitle">Obteniendo métricas en tiempo real...</p>
     </div>
 }
 else if (resumen != null)
 {
     <!-- Métricas principales -->
-    <div class="metrics-grid">
-        <MetricaCardModern Titulo="Ventas Hoy" 
-                          Valor="@resumen.Metricas.VentasHoy.ToString("C0")" 
-                          Subtexto="@($"vs ayer: {resumen.Metricas.VentasAyer.ToString("C0")}")"
-                          Icono="oi oi-dollar" 
-                          CardClass="success"
-                          ValorClass="text-success"
-                          IconoClass="success"
-                          MostrarCambio="true"
-                          Cambio="@resumen.Metricas.CrecimientoVentas" />
-
-        <MetricaCardModern Titulo="Mesas Ocupadas" 
-                          Valor="@($"{resumen.Metricas.MesasOcupadas} de {resumen.Metricas.TotalMesas}")" 
-                          Subtexto="@($"{resumen.Metricas.MesasDisponibles} disponibles")"
-                          Icono="oi oi-grid-three-up" 
-                          CardClass="info"
-                          ValorClass="text-info"
-                          IconoClass="info" />
-
-        <MetricaCardModern Titulo="Comandas Activas" 
-                          Valor="@resumen.Metricas.ComandasActivas.ToString()" 
-                          Subtexto="@($"{resumen.Metricas.ComandasCompletadas} completadas hoy")"
-                          Icono="oi oi-list-rich" 
-                          CardClass="warning"
-                          ValorClass="text-warning"
-                          IconoClass="warning" />
-
-        <MetricaCardModern Titulo="Promedio Ticket" 
-                          Valor="@resumen.Metricas.PromedioTicket.ToString("C0")" 
-                          Subtexto="@($"{resumen.Metricas.ClientesAtendidosHoy} clientes atendidos")"
-                          Icono="oi oi-people" 
-                          CardClass="primary"
-                          ValorClass="text-primary"
-                          IconoClass="primary" />
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="rounded-2xl p-6 bg-white dark:bg-gray-800" style="box-shadow: 0.1em 0.1em 0.3em #00000008, -0.1em -0.1em 0.3em #ffffff;">
+            <div class="flex items-center justify-between">
+                <p class="text-base font-medium text-gray-600 dark:text-gray-400">Ventas</p>
+                <span class="material-symbols-outlined text-success-color">trending_up</span>
+            </div>
+            <p class="text-4xl font-bold text-gray-900 dark:text-white mt-2">@resumen.Metricas.VentasHoy.ToString("C0")</p>
+            <p class="text-sm font-medium text-success-color mt-1">+@resumen.Metricas.CrecimientoVentas.ToString("F1")%</p>
+        </div>
+        
+        <div class="rounded-2xl p-6 bg-white dark:bg-gray-800" style="box-shadow: 0.1em 0.1em 0.3em #00000008, -0.1em -0.1em 0.3em #ffffff;">
+            <div class="flex items-center justify-between">
+                <p class="text-base font-medium text-gray-600 dark:text-gray-400">Mesas Ocupadas</p>
+                <span class="material-symbols-outlined text-primary-color">restaurant</span>
+            </div>
+            <p class="text-4xl font-bold text-gray-900 dark:text-white mt-2">@resumen.Metricas.MesasOcupadas / @resumen.Metricas.TotalMesas</p>
+            <p class="text-sm font-medium text-success-color mt-1">+5%</p>
+        </div>
+        
+        <div class="rounded-2xl p-6 bg-white dark:bg-gray-800" style="box-shadow: 0.1em 0.1em 0.3em #00000008, -0.1em -0.1em 0.3em #ffffff;">
+            <div class="flex items-center justify-between">
+                <p class="text-base font-medium text-gray-600 dark:text-gray-400">Comandas Activas</p>
+                <span class="material-symbols-outlined text-warning-color">receipt_long</span>
+            </div>
+            <p class="text-4xl font-bold text-gray-900 dark:text-white mt-2">@resumen.Metricas.ComandasActivas</p>
+            <p class="text-sm font-medium text-red-500 mt-1">-3%</p>
+        </div>
+        
+        <div class="rounded-2xl p-6 bg-white dark:bg-gray-800" style="box-shadow: 0.1em 0.1em 0.3em #00000008, -0.1em -0.1em 0.3em #ffffff;">
+            <div class="flex items-center justify-between">
+                <p class="text-base font-medium text-gray-600 dark:text-gray-400">Promedio por Ticket</p>
+                <span class="material-symbols-outlined text-purple-color">payments</span>
+            </div>
+            <p class="text-4xl font-bold text-gray-900 dark:text-white mt-2">@resumen.Metricas.PromedioTicket.ToString("C0")</p>
+            <p class="text-sm font-medium text-success-color mt-1">+8%</p>
+        </div>
     </div>
 
     <!-- Gráficos principales -->
-    <div class="charts-grid">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
         <!-- Gráfico de ventas -->
-        <div class="card">
-            <div class="card-header">
-                <h6 class="m-0 font-weight-bold text-primary">
-                    <span class="oi oi-bar-chart"></span> Ventas de los Últimos 7 Días
-                </h6>
+        <div class="rounded-2xl p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700" style="box-shadow: 0.05em 0.05em 0.2em #00000005, -0.05em -0.05em 0.2em #ffffff;">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Ventas de los Últimos 7 días</h3>
+            <div class="flex items-baseline gap-2 mt-2">
+                <p class="text-3xl font-bold text-gray-900 dark:text-white">@resumen.Metricas.VentasHoy.ToString("C0")</p>
+                <p class="text-sm font-medium text-success-color">+@resumen.Metricas.CrecimientoVentas.ToString("F1")%</p>
             </div>
-            <div class="card-body">
-                <div class="chart-container">
-                    <canvas id="graficoVentas"></canvas>
-                </div>
+            <div class="h-64 mt-4">
+                <canvas id="graficoVentas"></canvas>
             </div>
         </div>
 
         <!-- Estado de mesas -->
-        <div class="card">
-            <div class="card-header">
-                <h6 class="m-0 font-weight-bold text-primary">
-                    <span class="oi oi-grid-three-up"></span> Estado de Mesas
-                </h6>
+        <div class="rounded-2xl p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700" style="box-shadow: 0.05em 0.05em 0.2em #00000005, -0.05em -0.05em 0.2em #ffffff;">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Estado de Mesas</h3>
+            <div class="flex items-baseline gap-2 mt-2">
+                <p class="text-3xl font-bold text-gray-900 dark:text-white">@resumen.Metricas.MesasOcupadas / @resumen.Metricas.TotalMesas</p>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Ocupadas</p>
             </div>
-            <div class="card-body">
-                <div class="chart-container">
-                    <canvas id="graficoMesas"></canvas>
-                </div>
+            <div class="h-64 mt-4 flex items-center justify-center">
+                <canvas id="graficoMesas"></canvas>
             </div>
         </div>
     </div>
 
     <!-- Gráficos secundarios -->
-    <div class="charts-row">
-        <!-- Productos más vendidos -->
-        <div class="card">
-            <ProductosMasVendidos Productos="resumen.ProductosMasVendidos" />
-        </div>
-
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
         <!-- Comandas por estado -->
-        <div class="card">
-            <div class="card-header">
-                <h6 class="m-0 font-weight-bold text-primary">
-                    <span class="oi oi-list-rich"></span> Comandas por Estado
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="chart-container">
-                    <canvas id="graficoComandas"></canvas>
+        <div class="rounded-2xl p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700" style="box-shadow: 0.05em 0.05em 0.2em #00000005, -0.05em -0.05em 0.2em #ffffff;">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Comandas por Estado</h3>
+            <div class="mt-4 space-y-4">
+                <div class="flex items-center">
+                    <span class="w-24 text-sm font-medium text-gray-600 dark:text-gray-400">Pendientes</span>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
+                        <div class="bg-warning-color h-4 rounded-full" style="width: 30%"></div>
+                    </div>
+                    <span class="w-12 text-right text-sm font-bold text-gray-900 dark:text-white">@resumen.ComandasPorEstado.Pendientes</span>
                 </div>
+                <div class="flex items-center">
+                    <span class="w-24 text-sm font-medium text-gray-600 dark:text-gray-400">En Preparación</span>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
+                        <div class="bg-primary-color h-4 rounded-full" style="width: 50%"></div>
+                    </div>
+                    <span class="w-12 text-right text-sm font-bold text-gray-900 dark:text-white">@resumen.ComandasPorEstado.EnPreparacion</span>
+                </div>
+                <div class="flex items-center">
+                    <span class="w-24 text-sm font-medium text-gray-600 dark:text-gray-400">Entregadas</span>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4">
+                        <div class="bg-success-color h-4 rounded-full" style="width: 20%"></div>
+                    </div>
+                    <span class="w-12 text-right text-sm font-bold text-gray-900 dark:text-white">@resumen.ComandasPorEstado.Completadas</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ingresos por hora -->
+        <div class="rounded-2xl p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700" style="box-shadow: 0.05em 0.05em 0.2em #00000005, -0.05em -0.05em 0.2em #ffffff;">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Ingresos por Hora</h3>
+            <div class="h-64 mt-4">
+                <canvas id="graficoIngresosHora"></canvas>
             </div>
         </div>
     </div>
 
-    <!-- Gráfico de ingresos por hora -->
-    <div class="charts-full">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="m-0 font-weight-bold text-primary">
-                    <span class="oi oi-clock"></span> Ingresos por Hora (Hoy)
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="chart-container" style="height: 250px;">
-                    <canvas id="graficoIngresosHora"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
 }
 else
 {
-    <div class="error-container">
-        <div class="error-icon">
-            <span class="oi oi-warning"></span>
-        </div>
-        <h3 class="error-title">Error al cargar el dashboard</h3>
-        <p class="error-message">No se pudieron cargar las métricas del dashboard. Por favor, inténtalo de nuevo.</p>
-        <button class="btn btn-primary" @onclick="ActualizarDatos">
-            <span class="oi oi-reload"></span> Reintentar
+    <div class="text-center py-12">
+        <span class="material-symbols-outlined text-6xl text-gray-300 mb-4">error</span>
+        <p class="text-gray-500 text-lg">Error al cargar el dashboard</p>
+        <p class="text-gray-400 text-sm">No se pudieron cargar las métricas del dashboard</p>
+        <button class="mt-4 px-4 py-2 bg-primary-color text-white rounded-lg hover:bg-primary-color/90 transition-colors" @onclick="ActualizarDatos">
+            Reintentar
         </button>
     </div>
 }
+    </div>
+</div>
 
 @code {
     private DashboardResumenDto? resumen;

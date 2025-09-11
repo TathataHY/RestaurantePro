@@ -116,14 +116,34 @@
   --sidebar-bg-light: #f9fafb;
   --border-light: #e5e7eb;
   --input-bg-light: #f3f4f6;
-  --primary-color: #2563eb;
-  --success-color: #16a34a;
+  --primary-color: #1e71f6;
+  --success-color: #22c55e;
   --warning-color: #f97316;
+  --purple-color: #8b5cf6;
   --background-dark: #1f2937;
   --text-dark: #f9fafb;
   --sidebar-bg-dark: #111827;
   --border-dark: #374151;
   --input-bg-dark: #374151;
+}
+
+/* Status badges para categorías */
+.status-badge-active {
+  background-color: #e6f7f0;
+  color: #0d8a7f;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.status-badge-inactive {
+  background-color: #feeef0;
+  color: #f04461;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-weight: 500;
+  font-size: 0.875rem;
 }
 
 /* ===== TEMA OSCURO ===== */
