@@ -216,7 +216,7 @@ public class ProductosEdgeCasesTests : BaseIntegrationTest
         var categoriaId = GetFirstCategoriaId(categoriaIds);
         
         var request = CreateValidProductoRequest(categoriaId);
-        request.Descripcion = new string('A', 2000); // 2000 caracteres
+        request.Descripcion = new string('A', 600); // 600 caracteres (excede el límite de 500)
 
         // Act
         var response = await _client.PostAsJsonAsync("/api/core/productos", request);
@@ -553,7 +553,7 @@ public class ProductosEdgeCasesTests : BaseIntegrationTest
         var request = new CrearProductoCommand
         {
             Nombre = new string('A', 100), // Cerca del máximo
-            Descripcion = new string('B', 1000), // Cerca del máximo
+            Descripcion = new string('B', 500), // Máximo permitido
             Precio = 999999.99m, // Máximo razonable
             CategoriaId = categoriaId,
             Activo = true

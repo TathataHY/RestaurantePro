@@ -315,7 +315,7 @@ public class ComandaDetalleViewModelTests
 		vm.Comanda.Estado.Should().Be("Finalizada");
 		_mockComandasService.Verify(x => x.FinalizarComandaAsync(
 			comandaId, "Efectivo", It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
-		_mockNavigationService.Verify(x => x.GoBackAsync(), Times.Once);
+		_mockNavigationService.Verify(x => x.GoBackAsync(It.IsAny<CancellationToken>()), Times.Once);
 	}
 
 	[Fact]
@@ -387,7 +387,7 @@ public class ComandaDetalleViewModelTests
 		vm.Comanda.Estado.Should().Be("Cancelada");
 		_mockComandasService.Verify(x => x.CancelarComandaAsync(
 			comandaId, "Motivo de cancelación", It.IsAny<CancellationToken>()), Times.Once);
-		_mockNavigationService.Verify(x => x.GoBackAsync(), Times.Once);
+		_mockNavigationService.Verify(x => x.GoBackAsync(It.IsAny<CancellationToken>()), Times.Once);
 	}
 
 	[Fact]

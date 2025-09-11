@@ -57,20 +57,23 @@ public class ProductoBuilder
     /// <returns>Builder para encadenamiento fluido</returns>
     public ProductoBuilder ConDescripcion(string descripcion)
     {
-        if (string.IsNullOrWhiteSpace(descripcion))
+        // La descripción es opcional, pero si se proporciona debe cumplir con los límites
+        if (!string.IsNullOrWhiteSpace(descripcion))
         {
-            _notificationManager.AddError("La descripción del producto no puede estar vacía", "Descripcion");
-            return this;
+            if (descripcion.Length > 500)
+            {
+                _notificationManager.AddError("La descripción del producto no puede exceder 500 caracteres", "Descripcion");
+                return this;
+            }
+
+            _descripcion = descripcion.Trim();
+            _logger.LogDebug("Descripción del producto establecida");
+        }
+        else
+        {
+            _descripcion = string.Empty; // Permitir descripción vacía
         }
 
-        if (descripcion.Length > 500)
-        {
-            _notificationManager.AddError("La descripción del producto no puede exceder 500 caracteres", "Descripcion");
-            return this;
-        }
-
-        _descripcion = descripcion.Trim();
-        _logger.LogDebug("Descripción del producto establecida");
         return this;
     }
 
@@ -168,11 +171,17 @@ public class ProductoBuilder
     {
         _logger.LogDebug("Iniciando construcción del producto");
 
-        // Limpiar notificaciones previas del contexto de construcción
-        _notificationManager.ClearErrors();
+        // No limpiar errores aquí - se acumulan durante la construcción
 
         try
         {
+            // Verificar si hay errores acumulados durante la construcción
+            if (_notificationManager.HasErrors)
+            {
+                _logger.LogWarning("Construcción del producto falló debido a errores de validación");
+                return _notificationManager.ToResult<Producto>(null);
+            }
+
             // Validaciones finales obligatorias
             var hayErrores = false;
 
@@ -182,9 +191,10 @@ public class ProductoBuilder
                 hayErrores = true;
             }
 
-            if (string.IsNullOrWhiteSpace(_descripcion))
+            // La descripción es opcional, pero si se proporciona debe cumplir con los límites
+            if (!string.IsNullOrWhiteSpace(_descripcion) && _descripcion.Length > 500)
             {
-                _notificationManager.AddError("La descripción del producto es obligatoria", "Descripcion");
+                _notificationManager.AddError("La descripción del producto no puede exceder 500 caracteres", "Descripcion");
                 hayErrores = true;
             }
 

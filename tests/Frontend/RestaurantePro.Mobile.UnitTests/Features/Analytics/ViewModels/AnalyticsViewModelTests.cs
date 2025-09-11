@@ -134,7 +134,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Analytics.ViewModels
             await _viewModel.CargarMetricasDiaAsync();
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync("Error"), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Error", It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -156,7 +156,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Analytics.ViewModels
             // Assert
             _viewModel.TopProductos.Should().HaveCount(2);
             _viewModel.TopProductos.First().NombreProducto.Should().Be("Pizza Margherita");
-            _mockAnalyticsService.Verify(x => x.ObtenerTopProductosAsync(10, _viewModel.FechaDesde, _viewModel.FechaHasta), Times.Once);
+            _mockAnalyticsService.Verify(x => x.ObtenerTopProductosAsync(10, _viewModel.FechaDesde, _viewModel.FechaHasta, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -180,7 +180,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Analytics.ViewModels
             _viewModel.OcupacionMesas.Should().NotBeNull();
             _viewModel.OcupacionMesas!.MesasOcupadas.Should().Be(8);
             _viewModel.OcupacionMesas.PorcentajeOcupacion.Should().Be(0.67m);
-            _mockAnalyticsService.Verify(x => x.ObtenerOcupacionMesasAsync(_viewModel.FechaSeleccionada), Times.Once);
+            _mockAnalyticsService.Verify(x => x.ObtenerOcupacionMesasAsync(_viewModel.FechaSeleccionada, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -202,7 +202,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Analytics.ViewModels
             // Assert
             _viewModel.TiempoPreparacion.Should().NotBeNull();
             _viewModel.TiempoPreparacion!.TiempoPromedioMinutos.Should().Be(15);
-            _mockAnalyticsService.Verify(x => x.ObtenerTiempoPreparacionAsync(_viewModel.FechaDesde, _viewModel.FechaHasta), Times.Once);
+            _mockAnalyticsService.Verify(x => x.ObtenerTiempoPreparacionAsync(_viewModel.FechaDesde, _viewModel.FechaHasta, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -225,7 +225,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Analytics.ViewModels
             _viewModel.VentasPorHora.Should().HaveCount(2);
             _viewModel.VentasPorHora.First().Hora.Should().Be(12);
             _viewModel.VentasPorHora.First().TotalVentas.Should().Be(500.00m);
-            _mockAnalyticsService.Verify(x => x.ObtenerVentasPorHoraAsync(_viewModel.FechaSeleccionada), Times.Once);
+            _mockAnalyticsService.Verify(x => x.ObtenerVentasPorHoraAsync(_viewModel.FechaSeleccionada, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -260,7 +260,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Analytics.ViewModels
 
             // Assert
             _viewModel.TopProductos.Should().BeEmpty();
-            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>()), Times.Never);
+            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
@@ -274,7 +274,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Analytics.ViewModels
             await _viewModel.CargarTiempoPreparacionCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>()), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -304,10 +304,10 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Analytics.ViewModels
             // Assert
             _viewModel.EstaRefrescando.Should().BeFalse();
             _mockAnalyticsService.Verify(x => x.ObtenerMetricasDiaAsync(It.IsAny<CancellationToken>()), Times.Once);
-            _mockAnalyticsService.Verify(x => x.ObtenerTopProductosAsync(It.IsAny<int>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()), Times.Once);
-            _mockAnalyticsService.Verify(x => x.ObtenerOcupacionMesasAsync(It.IsAny<DateTime>()), Times.Once);
-            _mockAnalyticsService.Verify(x => x.ObtenerTiempoPreparacionAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>()), Times.Once);
-            _mockAnalyticsService.Verify(x => x.ObtenerVentasPorHoraAsync(It.IsAny<DateTime>()), Times.Once);
+            _mockAnalyticsService.Verify(x => x.ObtenerTopProductosAsync(It.IsAny<int>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Once);
+            _mockAnalyticsService.Verify(x => x.ObtenerOcupacionMesasAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+            _mockAnalyticsService.Verify(x => x.ObtenerTiempoPreparacionAsync(It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<CancellationToken>()), Times.Once);
+            _mockAnalyticsService.Verify(x => x.ObtenerVentasPorHoraAsync(It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]

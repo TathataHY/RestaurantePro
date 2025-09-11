@@ -927,4 +927,470 @@ public class ComandasApiServiceTests
         resultados.Should().AllSatisfy(r => r.Should().NotBeNull());
         resultados.Should().AllSatisfy(r => r!.Items.Should().BeEmpty());
     }
+
+    // ===== PRUEBAS ROBUSTAS - CASOS EDGE =====
+
+    [Fact]
+    public async Task ObtenerComandasAsync_ConDatosMasivos_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var filtros = new ComandaFiltrosDto
+        {
+            PageNumber = 1,
+            PageSize = 20
+        };
+
+        var comandas = new List<ComandaDto>();
+        for (int i = 0; i < 10000; i++)
+        {
+            comandas.Add(new ComandaDto
+            {
+                Id = Guid.NewGuid(),
+                NumeroComanda = $"CMD-{i:D6}",
+                Estado = (i % 5) switch { 0 => "Pendiente", 1 => "EnProceso", 2 => "Lista", 3 => "Entregada", _ => "Cancelada" },
+                Prioridad = (i % 4) switch { 0 => "Baja", 1 => "Normal", 2 => "Alta", _ => "Urgente" },
+                TipoComanda = (i % 3) switch { 0 => "Mesa", 1 => "Domicilio", _ => "Mostrador" },
+                FechaCreacion = DateTime.UtcNow.AddMinutes(-i),
+                Subtotal = (decimal)(i * 10.50),
+                Total = (decimal)(i * 12.50),
+                NumeroPersonas = (i % 8) + 1
+            });
+        }
+
+        var paginatedList = new PaginatedList<ComandaDto>
+        {
+            Items = comandas.Take(20).ToList(),
+            TotalCount = 10000,
+            PageNumber = 1,
+            PageSize = 20,
+            TotalPages = 500
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<PaginatedList<ComandaDto>>
+        {
+            Success = true,
+            Data = paginatedList
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerComandasAsync(filtros);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.TotalCount.Should().Be(10000);
+        resultado.TotalPages.Should().Be(500);
+    }
+
+    [Fact]
+    public async Task ObtenerComandasAsync_ConCaracteresEspeciales_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var filtros = new ComandaFiltrosDto
+        {
+            PageNumber = 1,
+            PageSize = 20,
+            Busqueda = "Comanda 🍕 Pizza & Pasta 🍝"
+        };
+
+        var comandas = new List<ComandaDto>
+        {
+            new() { Id = Guid.NewGuid(), NumeroComanda = "CMD-🍕-001", Observaciones = "Pizza Margherita 🍕 con extra queso 🧀" },
+            new() { Id = Guid.NewGuid(), NumeroComanda = "CMD-🍝-002", Observaciones = "Pasta Carbonara 🍝 al dente" },
+            new() { Id = Guid.NewGuid(), NumeroComanda = "CMD-🌮-003", Observaciones = "Tacos al Pastor 🌮 con piña 🍍" },
+            new() { Id = Guid.NewGuid(), NumeroComanda = "CMD-🍣-004", Observaciones = "Sushi Roll 🍣 con wasabi extra" },
+            new() { Id = Guid.NewGuid(), NumeroComanda = "CMD-🍜-005", Observaciones = "Ramen Tonkotsu 🍜 con huevo poché" }
+        };
+
+        var paginatedList = new PaginatedList<ComandaDto>
+        {
+            Items = comandas,
+            TotalCount = 5,
+            PageNumber = 1,
+            PageSize = 20,
+            TotalPages = 1
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<PaginatedList<ComandaDto>>
+        {
+            Success = true,
+            Data = paginatedList
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ObtenerComandasAsync(filtros);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Items.Should().HaveCount(5);
+        resultado.Items.First().NumeroComanda.Should().Contain("🍕");
+    }
+
+    [Fact]
+    public async Task CrearComandaAsync_ConValoresExtremos_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var request = new CrearComandaRequest
+        {
+            MesaId = Guid.NewGuid(),
+            MeseroId = Guid.NewGuid(),
+            ClienteId = Guid.NewGuid(),
+            NumeroPersonas = int.MaxValue,
+            Observaciones = new string('A', 500), // Máximo permitido
+            NotasCocina = new string('B', 500), // Máximo permitido
+            DireccionDomicilio = new string('D', 200), // Dirección máxima
+            TelefonoDomicilio = new string('5', 20), // Teléfono máximo
+            ReferenciasDomicilio = new string('E', 200), // Referencias máximas
+            EsUrgente = true,
+            RequiereFactura = true,
+            EsDomicilio = true
+        };
+
+        var comandaCreada = new ComandaDto
+        {
+            Id = Guid.NewGuid(),
+            NumeroComanda = "CMD-EXTREMO-001",
+            MesaId = request.MesaId,
+            MeseroId = request.MeseroId,
+            ClienteId = request.ClienteId,
+            NumeroPersonas = request.NumeroPersonas,
+            Observaciones = request.Observaciones,
+            NotasCocina = request.NotasCocina,
+            DireccionDomicilio = request.DireccionDomicilio,
+            TelefonoDomicilio = request.TelefonoDomicilio,
+            ReferenciasDomicilio = request.ReferenciasDomicilio,
+            EsUrgente = request.EsUrgente,
+            RequiereFactura = request.RequiereFactura,
+            EsDomicilio = request.EsDomicilio,
+            FechaCreacion = DateTime.UtcNow
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<ComandaDto>
+        {
+            Success = true,
+            Data = comandaCreada
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.CrearComandaAsync(request);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Success.Should().BeTrue();
+        resultado.Data!.NumeroPersonas.Should().Be(int.MaxValue);
+        resultado.Data.Observaciones.Should().HaveLength(500);
+    }
+
+    // ===== PRUEBAS ROBUSTAS - SEGURIDAD =====
+
+
+    [Fact]
+    public async Task ActualizarComandaAsync_ConPayloadsMaliciosos_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var request = new ActualizarComandaRequest
+        {
+            Id = Guid.NewGuid(),
+            Observaciones = "'; DROP TABLE Comandas; -- <script>alert('xss')</script>",
+            NotasCocina = "javascript:alert('xss'); <img src=x onerror=alert('xss')>",
+            NotasEntrega = "<svg onload=alert('xss')>"
+        };
+
+        var comandaActualizada = new ComandaDto
+        {
+            Id = request.Id,
+            Observaciones = request.Observaciones,
+            NotasCocina = request.NotasCocina,
+            NotasEntrega = request.NotasEntrega,
+            FechaCreacion = DateTime.UtcNow
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<ComandaDto>
+        {
+            Success = true,
+            Data = comandaActualizada
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var resultado = await _service.ActualizarComandaAsync(request);
+
+        // Assert
+        resultado.Should().NotBeNull();
+        resultado!.Success.Should().BeTrue();
+        resultado.Data!.Observaciones.Should().Contain("DROP TABLE");
+    }
+
+    // ===== PRUEBAS ROBUSTAS - CONCURRENCIA =====
+
+    [Fact]
+    public async Task ObtenerComandasAsync_ConConcurrencia_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var filtros = new ComandaFiltrosDto
+        {
+            PageNumber = 1,
+            PageSize = 20
+        };
+
+        var comandas = new List<ComandaDto>
+        {
+            new() { Id = Guid.NewGuid(), NumeroComanda = "CMD-CONCURRENCIA-001", Estado = "Pendiente" }
+        };
+
+        var paginatedList = new PaginatedList<ComandaDto>
+        {
+            Items = comandas,
+            TotalCount = 1,
+            PageNumber = 1,
+            PageSize = 20,
+            TotalPages = 1
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<PaginatedList<ComandaDto>>
+        {
+            Success = true,
+            Data = paginatedList
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var tasks = new List<Task<PaginatedList<ComandaDto>?>>();
+        for (int i = 0; i < 50; i++)
+        {
+            tasks.Add(_service.ObtenerComandasAsync(filtros));
+        }
+
+        var resultados = await Task.WhenAll(tasks);
+
+        // Assert
+        resultados.Should().HaveCount(50);
+        resultados.All(r => r != null).Should().BeTrue();
+        resultados.All(r => r!.Items.Count == 1).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CrearComandaAsync_ConConcurrencia_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(JsonSerializer.Serialize(new ApiResponse<ComandaDto>
+                {
+                    Success = true,
+                    Data = new ComandaDto { Id = Guid.NewGuid(), NumeroComanda = "CMD-TEST" }
+                }), Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var tasks = new List<Task<ApiResponse<ComandaDto>?>>();
+        for (int i = 0; i < 30; i++)
+        {
+            var request = new CrearComandaRequest
+            {
+                MesaId = Guid.NewGuid(),
+                MeseroId = Guid.NewGuid()
+            };
+            tasks.Add(_service.CrearComandaAsync(request));
+        }
+
+        var resultados = await Task.WhenAll(tasks);
+
+        // Assert
+        resultados.Should().HaveCount(30);
+        resultados.All(r => r != null).Should().BeTrue();
+        resultados.All(r => r!.Success).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ObtenerEstadisticasAsync_ConConcurrencia_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var estadisticas = new ComandaEstadisticasDto
+        {
+            TotalComandas = 1000,
+            ComandasPendientes = 100,
+            ComandasEnProceso = 200,
+            ComandasListas = 300,
+            ComandasEntregadas = 400,
+            TiempoPromedioPreparacion = 25.5m,
+            ComandasUrgentes = 50
+        };
+
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<ComandaEstadisticasDto>
+        {
+            Success = true,
+            Data = estadisticas
+        });
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() => new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var tasks = new List<Task<ComandaEstadisticasDto?>>();
+        for (int i = 0; i < 40; i++)
+        {
+            tasks.Add(_service.ObtenerEstadisticasAsync());
+        }
+
+        var resultados = await Task.WhenAll(tasks);
+
+        // Assert
+        resultados.Should().HaveCount(40);
+        resultados.All(r => r != null).Should().BeTrue();
+        resultados.All(r => r!.TotalComandas == 1000).Should().BeTrue();
+    }
+
+
+    // ===== PRUEBAS ROBUSTAS - RENDIMIENTO Y LÍMITES =====
+
+    [Fact]
+    public async Task ObtenerComandasAsync_ConTimeout_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var filtros = new ComandaFiltrosDto
+        {
+            PageNumber = 1,
+            PageSize = 20
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ThrowsAsync(new TaskCanceledException("Request timeout"));
+
+        // Act
+        var resultado = await _service.ObtenerComandasAsync(filtros);
+
+        // Assert
+        resultado.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ObtenerComandasAsync_ConError500_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var filtros = new ComandaFiltrosDto
+        {
+            PageNumber = 1,
+            PageSize = 20
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.InternalServerError
+            });
+
+        // Act
+        var resultado = await _service.ObtenerComandasAsync(filtros);
+
+        // Assert
+        resultado.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ObtenerComandasAsync_ConError503_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var filtros = new ComandaFiltrosDto
+        {
+            PageNumber = 1,
+            PageSize = 20
+        };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.ServiceUnavailable
+            });
+
+        // Act
+        var resultado = await _service.ObtenerComandasAsync(filtros);
+
+        // Assert
+        resultado.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ExportarComandasAsync_ConConcurrencia_DeberiaManejarCorrectamente()
+    {
+        // Arrange
+        var filtros = new ComandaFiltrosDto
+        {
+            PageNumber = 1,
+            PageSize = 20
+        };
+
+        var excelBytes = Encoding.UTF8.GetBytes("Excel content");
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new ByteArrayContent(excelBytes)
+            });
+
+        // Act
+        var tasks = new List<Task<ApiResponse<byte[]>?>>();
+        for (int i = 0; i < 15; i++)
+        {
+            tasks.Add(_service.ExportarComandasAsync(filtros));
+        }
+
+        var resultados = await Task.WhenAll(tasks);
+
+        // Assert
+        resultados.Should().HaveCount(15);
+        resultados.All(r => r != null).Should().BeTrue();
+        resultados.All(r => r!.Success).Should().BeTrue();
+        resultados.All(r => r.Data!.Length == 13).Should().BeTrue();
+    }
 }

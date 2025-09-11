@@ -45,7 +45,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
 
             var response = ApiResponse<List<IngredienteSummaryDto>>.SuccessResponse(ingredientes);
 
-            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>()))
+            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(response);
 
             // Act
@@ -55,7 +55,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
             _viewModel.Ingredientes.Should().NotBeNull();
             _viewModel.Ingredientes.Should().HaveCount(2);
             _viewModel.Ingredientes.First().Nombre.Should().Be("Tomate");
-            _mockIngredientesService.Verify(x => x.ObtenerIngredientesAsync(_viewModel.SoloDisponibles), Times.Once);
+            _mockIngredientesService.Verify(x => x.ObtenerIngredientesAsync(_viewModel.SoloDisponibles, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -67,14 +67,14 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
                 "Error", 
                 500);
 
-            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>()))
+            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(response);
 
             // Act
             await _viewModel.CargarIngredientesCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync("Error"), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Error", It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -140,7 +140,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
 
             var response = ApiResponse<List<MovimientoInventarioDto>>.SuccessResponse(movimientos);
 
-            _mockIngredientesService.Setup(x => x.ObtenerMovimientosAsync(ingrediente.Id))
+            _mockIngredientesService.Setup(x => x.ObtenerMovimientosAsync(ingrediente.Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(response);
 
             // Act
@@ -161,14 +161,14 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
                 "Error", 
                 500);
 
-            _mockIngredientesService.Setup(x => x.ObtenerMovimientosAsync(ingrediente.Id))
+            _mockIngredientesService.Setup(x => x.ObtenerMovimientosAsync(ingrediente.Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(response);
 
             // Act
             await _viewModel.VerMovimientosCommand.ExecuteAsync(ingrediente);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync("Error"), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Error", It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -184,7 +184,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
             var response = ApiResponse<List<IngredienteSummaryDto>>.SuccessResponse(
                 ingredientes.Where(i => i.StockActual < i.StockMinimo).ToList());
 
-            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>()))
+            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(response);
 
             // Act
@@ -215,9 +215,9 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
             var ingredientesResponse = ApiResponse<List<IngredienteSummaryDto>>.SuccessResponse(ingredientes);
             var estadisticasResponse = ApiResponse<EstadisticasIngredientesDto>.SuccessResponse(estadisticas);
 
-            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>()))
+            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ingredientesResponse);
-            _mockIngredientesService.Setup(x => x.ObtenerEstadisticasAsync())
+            _mockIngredientesService.Setup(x => x.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(estadisticasResponse);
 
             // Act
@@ -241,14 +241,14 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
 
             var response = ApiResponse<List<IngredienteSummaryDto>>.SuccessResponse(ingredientes);
 
-            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>()))
+            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(response);
 
             // Act
             await _viewModel.CambiarFiltroDisponiblesCommand.ExecuteAsync(null);
 
             // Assert
-            _mockIngredientesService.Verify(x => x.ObtenerIngredientesAsync(_viewModel.SoloDisponibles), Times.Once);
+            _mockIngredientesService.Verify(x => x.ObtenerIngredientesAsync(_viewModel.SoloDisponibles, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -262,14 +262,14 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
 
             var response = ApiResponse<List<IngredienteSummaryDto>>.SuccessResponse(ingredientes);
 
-            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>()))
+            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(response);
 
             // Act
             await _viewModel.CambiarFiltroBajoStockCommand.ExecuteAsync(null);
 
             // Assert
-            _mockIngredientesService.Verify(x => x.ObtenerIngredientesAsync(_viewModel.SoloDisponibles), Times.Once);
+            _mockIngredientesService.Verify(x => x.ObtenerIngredientesAsync(_viewModel.SoloDisponibles, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -291,17 +291,17 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
             var ingredientesResponse = ApiResponse<List<IngredienteSummaryDto>>.SuccessResponse(ingredientes);
             var estadisticasResponse = ApiResponse<EstadisticasIngredientesDto>.SuccessResponse(estadisticas);
 
-            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>()))
+            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ingredientesResponse);
-            _mockIngredientesService.Setup(x => x.ObtenerEstadisticasAsync())
+            _mockIngredientesService.Setup(x => x.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()))
                 .ReturnsAsync(estadisticasResponse);
 
             // Act
             await _viewModel.OnAppearingAsync();
 
             // Assert
-            _mockIngredientesService.Verify(x => x.ObtenerIngredientesAsync(_viewModel.SoloDisponibles), Times.Once);
-            _mockIngredientesService.Verify(x => x.ObtenerEstadisticasAsync(), Times.Once);
+            _mockIngredientesService.Verify(x => x.ObtenerIngredientesAsync(_viewModel.SoloDisponibles, It.IsAny<CancellationToken>()), Times.Once);
+            _mockIngredientesService.Verify(x => x.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -323,7 +323,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
             // Arrange
             var response = ApiResponse<List<IngredienteSummaryDto>>.SuccessResponse(new List<IngredienteSummaryDto>());
 
-            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>()))
+            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(response);
 
             // Act
@@ -361,7 +361,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
 
             var response = ApiResponse<List<IngredienteSummaryDto>>.SuccessResponse(ingredientes);
 
-            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>()))
+            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(response);
 
             // Act
@@ -391,7 +391,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
             await _viewModel.BuscarIngredientesCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync("Error"), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Error", It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -472,14 +472,14 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
             var response = ApiResponse<List<IngredienteSummaryDto>>.ErrorResponse(
                 new List<string> { "Error al cargar alertas" }, "Error", 500);
 
-            _mockIngredientesService.Setup(x => x.ObtenerIngredientesBajoStockAsync(It.IsAny<int>()))
+            _mockIngredientesService.Setup(x => x.ObtenerIngredientesBajoStockAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(response);
 
             // Act
             await _viewModel.LoadAlertasStockCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync("Error"), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Error", It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -490,7 +490,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
                 new() { Id = Guid.NewGuid(), Nombre = "Tomate", StockActual = 50, StockMinimo = 10 }
             };
 
-            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>()))
+            _mockIngredientesService.Setup(x => x.ObtenerIngredientesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .Returns(async () =>
                 {
                     await Task.Delay(200);
@@ -501,7 +501,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Ingredients.ViewMod
             var t2 = _viewModel.CargarIngredientesCommand.ExecuteAsync(null);
             await t1;
 
-            _mockIngredientesService.Verify(x => x.ObtenerIngredientesAsync(It.IsAny<bool>()), Times.Once);
+            _mockIngredientesService.Verify(x => x.ObtenerIngredientesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]

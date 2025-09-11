@@ -22,7 +22,8 @@ namespace RestaurantePro.Domain.Core.Productos.ValueObjects
                 throw new ArgumentException("El precio debe ser mayor que cero", nameof(valor));
             }
 
-            Valor = valor;
+            // Redondear a exactamente 2 decimales para consistencia monetaria
+            Valor = decimal.Round(valor, 2, MidpointRounding.AwayFromZero);
         }
 
         /// <summary>

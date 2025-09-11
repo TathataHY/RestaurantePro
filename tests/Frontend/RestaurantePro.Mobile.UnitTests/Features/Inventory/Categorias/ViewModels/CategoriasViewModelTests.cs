@@ -42,7 +42,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
                 new CategoriaProductoDto { Id = Guid.NewGuid(), Nombre = "Platos Principales", Descripcion = "Platos fuertes", Activa = true }
             };
 
-            _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<bool>()))
+            _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias));
 
             // Act
@@ -58,14 +58,14 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
         public async Task CargarCategoriasAsync_WithError_ShouldShowError()
         {
             // Arrange
-            _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<bool>()))
+            _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.ErrorResponse("Error al cargar categorías"));
 
             // Act
             await _viewModel.CargarCategoriasCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync("Error en la operación"), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Error en la operación", It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -79,7 +79,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
 
             _viewModel.FiltroBusqueda = "Entradas";
 
-            _mockCategoriasService.Setup(x => x.BuscarCategoriasAsync("Entradas"))
+            _mockCategoriasService.Setup(x => x.BuscarCategoriasAsync("Entradas", It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias));
 
             // Act
@@ -114,14 +114,14 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
                 new CategoriaProductoDto { Id = Guid.NewGuid(), Nombre = "Entradas", Descripcion = "Platos de entrada", Activa = true }
             };
 
-            _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<bool>()))
+            _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias));
 
             // Act
             await _viewModel.RefrescarCommand.ExecuteAsync(null);
 
             // Assert
-            _mockCategoriasService.Verify(x => x.ObtenerCategoriasAsync(It.IsAny<bool>()), Times.Once);
+            _mockCategoriasService.Verify(x => x.ObtenerCategoriasAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
             Assert.NotNull(_viewModel.Categorias);
             Assert.Single(_viewModel.Categorias);
         }
@@ -135,14 +135,14 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
                 new CategoriaProductoDto { Id = Guid.NewGuid(), Nombre = "Entradas", Descripcion = "Platos de entrada", Activa = true }
             };
 
-            _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<bool>()))
+            _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias));
 
             // Act
             await _viewModel.CambiarFiltroActivasCommand.ExecuteAsync(null);
 
             // Assert
-            _mockCategoriasService.Verify(x => x.ObtenerCategoriasAsync(It.IsAny<bool>()), Times.Once);
+            _mockCategoriasService.Verify(x => x.ObtenerCategoriasAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -156,7 +156,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
                 new CategoriaProductoDto { Id = Guid.NewGuid(), Nombre = "Postres", Activa = false }
             };
 
-            _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<bool>()))
+            _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias));
 
             // Act
@@ -198,7 +198,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
         public async Task CargarCategoriasAsync_SinDatos_DebeQuedarVacioYEstadisticasEnCero()
         {
             // Arrange
-            _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<bool>()))
+            _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(new List<CategoriaProductoDto>()));
 
             // Act
@@ -216,7 +216,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
         {
             // Arrange
             _viewModel.FiltroBusqueda = "Inexistente";
-            _mockCategoriasService.Setup(x => x.BuscarCategoriasAsync(It.IsAny<string>()))
+            _mockCategoriasService.Setup(x => x.BuscarCategoriasAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(new List<CategoriaProductoDto>()));
 
             // Act
@@ -234,7 +234,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
                 new() { Id = Guid.NewGuid(), Nombre = "Entradas", Activa = true }
             };
 
-            _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<bool>()))
+            _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .Returns(async () =>
                 {
                     await Task.Delay(200);
@@ -245,7 +245,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
             var t2 = _viewModel.CargarCategoriasCommand.ExecuteAsync(null);
             await t1;
 
-            _mockCategoriasService.Verify(x => x.ObtenerCategoriasAsync(It.IsAny<bool>()), Times.Once);
+            _mockCategoriasService.Verify(x => x.ObtenerCategoriasAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -254,7 +254,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
             _viewModel.FiltroBusqueda = "Entradas";
             var categorias = new List<CategoriaProductoDto> { new() { Id = Guid.NewGuid(), Nombre = "Entradas", Activa = true } };
 
-            _mockCategoriasService.Setup(x => x.BuscarCategoriasAsync(It.IsAny<string>()))
+            _mockCategoriasService.Setup(x => x.BuscarCategoriasAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .Returns(async () =>
                 {
                     await Task.Delay(200);
@@ -265,7 +265,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
             var t2 = _viewModel.BuscarCategoriasCommand.ExecuteAsync(null);
             await t1;
 
-            _mockCategoriasService.Verify(x => x.BuscarCategoriasAsync(It.IsAny<string>()), Times.Once);
+            _mockCategoriasService.Verify(x => x.BuscarCategoriasAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -273,7 +273,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
         {
             // Arrange
             _viewModel.FiltroBusqueda = "Entradas";
-            _mockCategoriasService.Setup(x => x.BuscarCategoriasAsync(It.IsAny<string>()))
+            _mockCategoriasService.Setup(x => x.BuscarCategoriasAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.ErrorResponse("Error al buscar categorías"));
 
             // Act
@@ -310,7 +310,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Inventory.Categorias.ViewMode
         public async Task CargarCategoriasAsync_Exception_ShouldSetHasError()
         {
             // Arrange
-            _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<bool>()))
+            _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                 .ThrowsAsync(new InvalidOperationException("Fallo inesperado"));
 
             // Act

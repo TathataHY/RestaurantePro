@@ -454,7 +454,7 @@ public class ProductosViewModelTests
 
         await vm.LoadProductosPopularesCommand.ExecuteAsync(null);
 
-        _mockDialog.Verify(x => x.ShowErrorAsync("Error al cargar productos populares"), Times.Once);
+        _mockDialog.Verify(x => x.ShowErrorAsync("Error al cargar productos populares", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -482,7 +482,7 @@ public class ProductosViewModelTests
 
         await vm.LoadCategoriasCommand.ExecuteAsync(null);
 
-        _mockDialog.Verify(x => x.ShowErrorAsync("Error al cargar categorías"), Times.Once);
+        _mockDialog.Verify(x => x.ShowErrorAsync("Error al cargar categorías", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -504,7 +504,7 @@ public class ProductosViewModelTests
         await vm.LoadProductosCommand.ExecuteAsync(null);
 
         vm.HasError.Should().BeTrue();
-        _mockDialog.Verify(x => x.ShowErrorAsync("Error"), Times.Once);
+        _mockDialog.Verify(x => x.ShowErrorAsync("Error", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -525,6 +525,6 @@ public class ProductosViewModelTests
         await vm.BuscarProductosCommand.ExecuteAsync(null);
 
         vm.HasError.Should().BeTrue();
-        _mockDialog.Verify(x => x.ShowErrorAsync("Error"), Times.Once);
+        _mockDialog.Verify(x => x.ShowErrorAsync("Error", It.IsAny<CancellationToken>()), Times.Once);
     }
 } 

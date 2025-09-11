@@ -56,7 +56,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
 
             var result = ApiResponse<List<PreparacionDto>>.SuccessResponse(preparaciones);
 
-            _mockPreparacionesService.Setup(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>()))
+            _mockPreparacionesService.Setup(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                                     .ReturnsAsync(result);
 
             // Act
@@ -76,7 +76,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
                 new() { Id = Guid.NewGuid(), Nombre = "Pizza", NombreProducto = "Pizza" }
             };
 
-            _mockPreparacionesService.Setup(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>()))
+            _mockPreparacionesService.Setup(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                                      .Returns(async () =>
                                      {
                                          await Task.Delay(200);
@@ -87,13 +87,13 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
             var t2 = _viewModel.CargarPreparacionesAsync();
             await t1;
 
-            _mockPreparacionesService.Verify(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>()), Times.Once);
+            _mockPreparacionesService.Verify(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
         public async Task RefrescarPreparacionesAsync_DobleEjecucion_NoDebeReentrar()
         {
-            _mockPreparacionesService.Setup(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>()))
+            _mockPreparacionesService.Setup(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                                      .Returns(async () =>
                                      {
                                          await Task.Delay(200);
@@ -104,7 +104,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
             var t2 = _viewModel.RefrescarPreparacionesCommand.ExecuteAsync(null);
             await t1;
 
-            _mockPreparacionesService.Verify(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>()), Times.Once);
+            _mockPreparacionesService.Verify(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -116,14 +116,14 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
                 "Error", 
                 500);
 
-            _mockPreparacionesService.Setup(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>()))
+            _mockPreparacionesService.Setup(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                                     .ReturnsAsync(result);
 
             // Act
             await _viewModel.CargarPreparacionesAsync();
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync("Error de conexión"), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Error de conexión", It.IsAny<CancellationToken>()), Times.Once);
             _viewModel.IsBusy.Should().BeFalse();
         }
 
@@ -151,7 +151,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
 
             var result = ApiResponse<List<PreparacionDto>>.SuccessResponse(preparaciones);
 
-            _mockPreparacionesService.Setup(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>()))
+            _mockPreparacionesService.Setup(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                                     .ReturnsAsync(result);
 
             // Act
@@ -168,7 +168,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
             // Arrange
             var result = ApiResponse<List<PreparacionDto>>.SuccessResponse(new List<PreparacionDto>());
 
-            _mockPreparacionesService.Setup(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>()))
+            _mockPreparacionesService.Setup(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                                     .ReturnsAsync(result);
 
             // Act
@@ -187,7 +187,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
             _viewModel.HayMasPreparaciones = true;
             _viewModel.PaginaActual = 1;
 
-            _mockPreparacionesService.Setup(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>()))
+            _mockPreparacionesService.Setup(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
                                     .ReturnsAsync(ApiResponse<List<PreparacionDto>>.SuccessResponse(new List<PreparacionDto>()));
 
             // Act
@@ -195,7 +195,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
 
             // Assert
             _viewModel.PaginaActual.Should().Be(2);
-            _mockPreparacionesService.Verify(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>()), Times.Once);
+            _mockPreparacionesService.Verify(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -210,7 +210,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
 
             // Assert
             _viewModel.PaginaActual.Should().Be(1);
-            _mockPreparacionesService.Verify(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>()), Times.Never);
+            _mockPreparacionesService.Verify(x => x.ObtenerPreparacionesAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
@@ -244,14 +244,14 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
             _mockDialogService.Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                              .ReturnsAsync(true);
 
-            _mockPreparacionesService.Setup(x => x.IniciarPreparacionAsync(preparacion.Id, It.IsAny<IniciarPreparacionDto>()))
+            _mockPreparacionesService.Setup(x => x.IniciarPreparacionAsync(preparacion.Id, It.IsAny<IniciarPreparacionDto>(It.IsAny<CancellationToken>())))
                                     .ReturnsAsync(ApiResponse<PreparacionDto>.SuccessResponse(preparacionIniciada));
 
             // Act
             await _viewModel.IniciarPreparacionCommand.ExecuteAsync(preparacion);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowSuccessAsync("Preparación iniciada exitosamente"), Times.AtLeastOnce);
+            _mockDialogService.Verify(x => x.ShowSuccessAsync("Preparación iniciada exitosamente", It.IsAny<CancellationToken>()), Times.AtLeastOnce);
             _mockPreparacionesService.Verify(x => x.IniciarPreparacionAsync(preparacion.Id, It.IsAny<IniciarPreparacionDto>()), Times.Once);
         }
 
@@ -312,15 +312,15 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
             _mockDialogService.Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                              .ReturnsAsync(true);
 
-            _mockPreparacionesService.Setup(x => x.CompletarPreparacionAsync(preparacion.Id))
+            _mockPreparacionesService.Setup(x => x.CompletarPreparacionAsync(preparacion.Id, It.IsAny<CancellationToken>()))
                                     .ReturnsAsync(ApiResponse<PreparacionDto>.SuccessResponse(preparacionCompletada));
 
             // Act
             await _viewModel.CompletarPreparacionCommand.ExecuteAsync(preparacion);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowSuccessAsync("Preparación completada exitosamente"), Times.AtLeastOnce);
-            _mockPreparacionesService.Verify(x => x.CompletarPreparacionAsync(preparacion.Id), Times.Once);
+            _mockDialogService.Verify(x => x.ShowSuccessAsync("Preparación completada exitosamente", It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+            _mockPreparacionesService.Verify(x => x.CompletarPreparacionAsync(preparacion.Id, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -357,14 +357,14 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
             _mockDialogService.Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                              .ReturnsAsync(true);
 
-            _mockPreparacionesService.Setup(x => x.CancelarPreparacionAsync(preparacion.Id, It.IsAny<CancelarPreparacionDto>()))
+            _mockPreparacionesService.Setup(x => x.CancelarPreparacionAsync(preparacion.Id, It.IsAny<CancelarPreparacionDto>(It.IsAny<CancellationToken>())))
                                     .ReturnsAsync(ApiResponse<PreparacionDto>.SuccessResponse(preparacionCancelada));
 
             // Act
             await _viewModel.CancelarPreparacionCommand.ExecuteAsync(preparacion);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowSuccessAsync("Preparación cancelada exitosamente"), Times.AtLeastOnce);
+            _mockDialogService.Verify(x => x.ShowSuccessAsync("Preparación cancelada exitosamente", It.IsAny<CancellationToken>()), Times.AtLeastOnce);
             _mockPreparacionesService.Verify(x => x.CancelarPreparacionAsync(preparacion.Id, It.IsAny<CancelarPreparacionDto>()), Times.Once);
         }
 
@@ -426,7 +426,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
 
             var result = ApiResponse<List<PreparacionDto>>.SuccessResponse(colaPreparaciones);
 
-            _mockPreparacionesService.Setup(x => x.ObtenerColaPreparacionesAsync())
+            _mockPreparacionesService.Setup(x => x.ObtenerColaPreparacionesAsync(It.IsAny<CancellationToken>()))
                                     .ReturnsAsync(result);
 
             // Act
@@ -458,7 +458,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Preparaciones.ViewModels
 
             var result = ApiResponse<List<PreparacionDto>>.SuccessResponse(preparacionesPendientes);
 
-            _mockPreparacionesService.Setup(x => x.ObtenerPreparacionesPorEstadoAsync("Pendiente"))
+            _mockPreparacionesService.Setup(x => x.ObtenerPreparacionesPorEstadoAsync("Pendiente", It.IsAny<CancellationToken>()))
                                     .ReturnsAsync(result);
 
             // Act

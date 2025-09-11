@@ -113,7 +113,7 @@ public class FacturasViewModelTests
 
         // Assert
         _viewModel.Facturas.Should().BeEmpty();
-        _mockDialogService.Verify(x => x.ShowErrorAsync(errorMessage), Times.Once);
+        _mockDialogService.Verify(x => x.ShowErrorAsync(errorMessage, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -153,7 +153,7 @@ public class FacturasViewModelTests
 
         // Assert
         _viewModel.Facturas.Should().BeEmpty();
-        _mockDialogService.Verify(x => x.ShowErrorAsync("Error en la operación"), Times.Once);
+        _mockDialogService.Verify(x => x.ShowErrorAsync("Error en la operación", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -224,7 +224,7 @@ public class FacturasViewModelTests
         await _viewModel.ImprimirFacturaCommand.ExecuteAsync(factura);
 
         // Assert
-        _mockDialogService.Verify(x => x.ShowSuccessAsync("Factura enviada a impresión"), Times.Once);
+        _mockDialogService.Verify(x => x.ShowSuccessAsync("Factura enviada a impresión", It.IsAny<CancellationToken>()), Times.Once);
         _mockFacturasService.Verify(x => x.ImprimirFacturaAsync(factura.Id, It.IsAny<CancellationToken>()), Times.Once);
     }
 
@@ -241,7 +241,7 @@ public class FacturasViewModelTests
         await _viewModel.ImprimirFacturaCommand.ExecuteAsync(factura);
 
         // Assert
-        _mockDialogService.Verify(x => x.ShowErrorAsync("Error en la operación"), Times.Once);
+        _mockDialogService.Verify(x => x.ShowErrorAsync("Error en la operación", It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

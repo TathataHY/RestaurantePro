@@ -54,10 +54,10 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Loyalty.ViewModels
             var tarjeta = new TarjetaFidelizacionDto { Id = tarjetaId, CodigoTarjeta = "123456789", PuntosDisponibles = 100 };
             _viewModel.CodigoTarjeta = "123456789";
 
-            _mockTarjetasService.Setup(x => x.ObtenerTarjetaPorCodigoAsync("123456789"))
+            _mockTarjetasService.Setup(x => x.ObtenerTarjetaPorCodigoAsync("123456789", It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(tarjeta));
 
-            _mockTarjetasService.Setup(x => x.ObtenerHistorialAsync(tarjetaId))
+            _mockTarjetasService.Setup(x => x.ObtenerHistorialAsync(tarjetaId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<TransaccionPuntosDto>>.SuccessResponse(new List<TransaccionPuntosDto>()));
 
             // Act
@@ -79,7 +79,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Loyalty.ViewModels
             await _viewModel.BuscarTarjetaCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync("Ingrese un código de tarjeta válido"), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Ingrese un código de tarjeta válido", It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -88,14 +88,14 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Loyalty.ViewModels
             // Arrange
             _viewModel.CodigoTarjeta = "999999999";
 
-            _mockTarjetasService.Setup(x => x.ObtenerTarjetaPorCodigoAsync("999999999"))
+            _mockTarjetasService.Setup(x => x.ObtenerTarjetaPorCodigoAsync("999999999", It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<TarjetaFidelizacionDto>.Failure("Tarjeta no encontrada"));
 
             // Act
             await _viewModel.BuscarTarjetaCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync("Error en la operación"), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Error en la operación", It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -105,7 +105,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Loyalty.ViewModels
             var tarjeta = new TarjetaFidelizacionDto { Id = Guid.NewGuid(), CodigoTarjeta = "123456789", PuntosDisponibles = 0 };
             _viewModel.CodigoTarjeta = "123456789";
 
-            _mockTarjetasService.Setup(x => x.ActivarTarjetaAsync("123456789", "Cliente"))
+            _mockTarjetasService.Setup(x => x.ActivarTarjetaAsync("123456789", "Cliente", It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(tarjeta));
 
             // Act
@@ -113,7 +113,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Loyalty.ViewModels
 
             // Assert
             Assert.NotNull(_viewModel.TarjetaActual);
-            _mockDialogService.Verify(x => x.ShowSuccessAsync("Tarjeta activada correctamente"), Times.Once);
+            _mockDialogService.Verify(x => x.ShowSuccessAsync("Tarjeta activada correctamente", It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -126,7 +126,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Loyalty.ViewModels
             await _viewModel.ActivarTarjetaCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync("Ingrese un código de tarjeta válido"), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Ingrese un código de tarjeta válido", It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -153,7 +153,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Loyalty.ViewModels
             await _viewModel.AplicarDescuentoCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync("Debe seleccionar una tarjeta primero"), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync("Debe seleccionar una tarjeta primero", It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -169,14 +169,14 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Loyalty.ViewModels
                 new TransaccionPuntosDto { Id = Guid.NewGuid(), Puntos = 100 }
             };
 
-            _mockTarjetasService.Setup(x => x.ObtenerHistorialAsync(tarjetaId))
+            _mockTarjetasService.Setup(x => x.ObtenerHistorialAsync(tarjetaId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<TransaccionPuntosDto>>.SuccessResponse(historial));
 
             // Act
             await _viewModel.RefrescarCommand.ExecuteAsync(null);
 
             // Assert
-            _mockTarjetasService.Verify(x => x.ObtenerHistorialAsync(tarjetaId), Times.Once);
+            _mockTarjetasService.Verify(x => x.ObtenerHistorialAsync(tarjetaId, It.IsAny<CancellationToken>()), Times.Once);
             Assert.Single(_viewModel.Historial);
         }
 
@@ -191,18 +191,18 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Loyalty.ViewModels
             _mockDialogService.Setup(x => x.ShowConfirmationAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
                 .ReturnsAsync(true);
 
-            _mockTarjetasService.Setup(x => x.BloquearTarjetaAsync(tarjetaId))
+            _mockTarjetasService.Setup(x => x.BloquearTarjetaAsync(tarjetaId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<bool>.SuccessResponse(true));
 
-            _mockTarjetasService.Setup(x => x.ObtenerTarjetaAsync(tarjetaId))
+            _mockTarjetasService.Setup(x => x.ObtenerTarjetaAsync(tarjetaId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(tarjeta));
 
             // Act
             await _viewModel.BloquearTarjetaCommand.ExecuteAsync(null);
 
             // Assert
-            _mockTarjetasService.Verify(x => x.BloquearTarjetaAsync(tarjetaId), Times.Once);
-            _mockDialogService.Verify(x => x.ShowSuccessAsync("Tarjeta bloqueada correctamente"), Times.Once);
+            _mockTarjetasService.Verify(x => x.BloquearTarjetaAsync(tarjetaId, It.IsAny<CancellationToken>()), Times.Once);
+            _mockDialogService.Verify(x => x.ShowSuccessAsync("Tarjeta bloqueada correctamente", It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -211,13 +211,13 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Loyalty.ViewModels
             // Arrange
             _viewModel.CodigoTarjeta = "123";
             var tarjeta = new TarjetaFidelizacionDto { Id = Guid.NewGuid(), CodigoTarjeta = "123" };
-            _mockTarjetasService.Setup(x => x.ObtenerTarjetaPorCodigoAsync(It.IsAny<string>()))
+            _mockTarjetasService.Setup(x => x.ObtenerTarjetaPorCodigoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .Returns(async () =>
                 {
                     await Task.Delay(200);
                     return ApiResponse<TarjetaFidelizacionDto>.SuccessResponse(tarjeta);
                 });
-            _mockTarjetasService.Setup(x => x.ObtenerHistorialAsync(It.IsAny<Guid>()))
+            _mockTarjetasService.Setup(x => x.ObtenerHistorialAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<TransaccionPuntosDto>>.SuccessResponse(new List<TransaccionPuntosDto>()));
 
             // Act
@@ -226,7 +226,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Loyalty.ViewModels
             await t1;
 
             // Assert
-            _mockTarjetasService.Verify(x => x.ObtenerTarjetaPorCodigoAsync(It.IsAny<string>()), Times.Once);
+            _mockTarjetasService.Verify(x => x.ObtenerTarjetaPorCodigoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -235,7 +235,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Loyalty.ViewModels
             // Arrange
             var tarjetaId = Guid.NewGuid();
             _viewModel.TarjetaActual = new TarjetaFidelizacionDto { Id = tarjetaId, CodigoTarjeta = "123" };
-            _mockTarjetasService.Setup(x => x.ObtenerHistorialAsync(tarjetaId))
+            _mockTarjetasService.Setup(x => x.ObtenerHistorialAsync(tarjetaId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<List<TransaccionPuntosDto>>.SuccessResponse(new List<TransaccionPuntosDto>()));
 
             // Act
@@ -243,7 +243,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Loyalty.ViewModels
 
             // Assert
             Assert.Empty(_viewModel.Historial);
-            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>()), Times.Never);
+            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
@@ -259,8 +259,8 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Loyalty.ViewModels
             await _viewModel.BloquearTarjetaCommand.ExecuteAsync(null);
 
             // Assert
-            _mockTarjetasService.Verify(x => x.BloquearTarjetaAsync(It.IsAny<Guid>()), Times.Never);
-            _mockDialogService.Verify(x => x.ShowSuccessAsync(It.IsAny<string>()), Times.Never);
+            _mockTarjetasService.Verify(x => x.BloquearTarjetaAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+            _mockDialogService.Verify(x => x.ShowSuccessAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
@@ -268,14 +268,14 @@ namespace RestaurantePro.Mobile.UnitTests.Features.Commercial.Loyalty.ViewModels
         {
             // Arrange
             _viewModel.CodigoTarjeta = "123";
-            _mockTarjetasService.Setup(x => x.ObtenerTarjetaPorCodigoAsync(It.IsAny<string>()))
+            _mockTarjetasService.Setup(x => x.ObtenerTarjetaPorCodigoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(ApiResponse<TarjetaFidelizacionDto>.Failure("Fallo de servicio"));
 
             // Act
             await _viewModel.BuscarTarjetaCommand.ExecuteAsync(null);
 
             // Assert
-            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>()), Times.Once);
+            _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 } 
