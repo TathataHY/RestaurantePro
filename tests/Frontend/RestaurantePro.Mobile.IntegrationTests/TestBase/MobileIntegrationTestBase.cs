@@ -43,9 +43,12 @@ namespace RestaurantePro.Mobile.IntegrationTests.TestBase;
 public class MobileIntegrationTestFixture : WebApplicationFactory<Program>, IDisposable
 {
     private bool _disposed = false;
+    private static bool _seedExecuted = false;
+    private static readonly object _seedLock = new object();
+
     public MobileIntegrationTestFixture()
     {
-        // 🔧 CONFIGURAR SEED DATA PARA CADA TEST
+        // 🔧 CONFIGURAR SEED DATA UNA SOLA VEZ
         Console.WriteLine("🔧 CONFIGURANDO FIXTURE PARA TESTS...");
     }
 
@@ -103,7 +106,7 @@ public class MobileIntegrationTestFixture : WebApplicationFactory<Program>, IDis
             
             services.AddDbContext<RestauranteProDbContext>(options =>
             {
-                options.UseInMemoryDatabase("TestDb_Shared");
+                options.UseInMemoryDatabase($"TestDb_{Guid.NewGuid()}");
             });
 
             // 🔧 REGISTRAR SERVICIOS DE INFRAESTRUCTURA
@@ -115,11 +118,7 @@ public class MobileIntegrationTestFixture : WebApplicationFactory<Program>, IDis
             // 🔧 CONFIGURAR IDENTITY SIN JWT BEARER PARA TESTS (como en los tests del backend)
             TestIdentityConfiguration.ConfigureIdentityForTests(services, configuration);
             
-            // 🔧 EJECUTAR SEED DATA UNA SOLA VEZ AL CONFIGURAR LA BD
-            var serviceProvider = services.BuildServiceProvider();
-            using var scope = serviceProvider.CreateScope();
-            var seedService = scope.ServiceProvider.GetRequiredService<ISeedDataService>();
-            seedService.SeedAsync().Wait();
+            // 🔧 EL SEED SE EJECUTARÁ EN CADA TEST INDIVIDUAL
             
             // 🔧 RE-REGISTRAR AUTENTICACIÓN PARA FORZAR EL HANDLER DE TEST COMO ESQUEMA POR DEFECTO
             services.AddAuthentication(options =>
@@ -232,6 +231,21 @@ public class MobileIntegrationTestFixture : WebApplicationFactory<Program>, IDis
         
         // 🔧 FORZAR EL DESCUBRIMIENTO DEL ASSEMBLY
         builder.UseSetting(Microsoft.AspNetCore.Hosting.WebHostDefaults.ApplicationKey, typeof(Program).Assembly.FullName);
+    }
+
+    public async Task SeedDatabaseAsync()
+    {
+        using var scope = Services.CreateScope();
+        var seedService = scope.ServiceProvider.GetRequiredService<ISeedDataService>();
+        await seedService.SeedAsync();
+    }
+
+    /// <summary>
+    /// Método de conveniencia para configurar tests con seed de datos
+    /// </summary>
+    public async Task SetupTestWithSeedAsync()
+    {
+        await SeedDatabaseAsync();
     }
 
     protected override void Dispose(bool disposing)

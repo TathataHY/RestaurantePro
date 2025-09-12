@@ -45,6 +45,9 @@ public class DashboardServiceRealDataIntegrationTests : IClassFixture<MobileInte
 
     private async Task SetupAsync()
     {
+        // Ejecutar seed de datos para cada test
+        await _fixture.SeedDatabaseAsync();
+        
         // Login automático para todos los tests
         var loginResult = await _authService.LoginAsync("admin@restaurantepro.com", "AdminRestaurante123!");
         if (!loginResult.Success)

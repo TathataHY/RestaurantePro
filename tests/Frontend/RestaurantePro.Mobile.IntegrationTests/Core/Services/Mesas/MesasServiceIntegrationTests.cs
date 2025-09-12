@@ -10,17 +10,15 @@ using Xunit;
 
 namespace RestaurantePro.Mobile.IntegrationTests.Core.Services.Mesas;
 
-public class MesasServiceIntegrationTests : IClassFixture<MobileIntegrationTestFixture>
+public class MesasServiceIntegrationTests : MobileIntegrationTestBaseWithSeed
 {
-    private readonly MobileIntegrationTestFixture _fixture;
     private readonly HttpClient _client;
     private IMesasService _mesasService;
     private IAuthService _authService;
 
-    public MesasServiceIntegrationTests(MobileIntegrationTestFixture fixture)
+    public MesasServiceIntegrationTests(MobileIntegrationTestFixture fixture) : base(fixture)
     {
-        _fixture = fixture;
-        _client = _fixture.CreateClient();
+        _client = Fixture.CreateClient();
         Setup();
     }
 
@@ -71,7 +69,10 @@ public class MesasServiceIntegrationTests : IClassFixture<MobileIntegrationTestF
     [Fact]
     public async Task ObtenerMesasDisponiblesAsync_ShouldReturnAvailableMesas()
     {
-        // Arrange - Login first
+        // Arrange - Setup test with seed data
+        await SetupAsync();
+        
+        // Login first
         var loginResult = await _authService.LoginAsync("admin@restaurantepro.com", "AdminRestaurante123!");
         Assert.True(loginResult.Success, "Login should succeed");
 
