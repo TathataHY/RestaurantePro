@@ -1,7 +1,8 @@
 @attribute [Authorize]
 @page "/productos"
-@inject RestaurantePro.Web.Admin.Services.ProductosApiService Api
+@inject IProductosApiService Api
 @using RestaurantePro.Web.Admin.Models
+@using RestaurantePro.Web.Admin.Services
 
 <PageTitle>Productos</PageTitle>
 
@@ -335,14 +336,14 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        categorias = await Api.ObtenerCategoriasAsync();
+        categorias = await Api.ObtenerCategoriasAsync() ?? new List<CategoriaProductoDto>();
         await BuscarAsync();
     }
 
     private async Task BuscarAsync()
     {
         cargando = true;
-        productos = await Api.ObtenerProductosPaginadosAsync(paginaActual, tamanoPagina, filtro, categoriaId, soloActivos, orderBy, orderDirection);
+        productos = await Api.ObtenerProductosPaginadosAsync(paginaActual, tamanoPagina, filtro, categoriaId, soloActivos, orderBy, orderDirection) ?? new PaginatedList<ProductoDto>();
         cargando = false;
         StateHasChanged();
     }

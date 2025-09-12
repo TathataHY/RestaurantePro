@@ -37,9 +37,9 @@ public class InvalidTransitionsEndToEndTests : IClassFixture<MobileIntegrationTe
         var disp = await client.GetAsync("/api/operaciones/mesas/disponibles");
         disp.EnsureSuccessStatusCode();
         using var dispDoc = JsonDocument.Parse(await disp.Content.ReadAsStringAsync());
-        var mesas = dispDoc.RootElement.GetProperty("Data").GetProperty("Items").EnumerateArray().ToList();
+        var mesas = dispDoc.RootElement.GetProperty("data").GetProperty("items").EnumerateArray().ToList();
         Assert.NotEmpty(mesas);
-        var mesaId = mesas.First().GetProperty("Id").GetGuid();
+        var mesaId = mesas.First().GetProperty("id").GetGuid();
 
         // Asignar OK
         var asignarBody = new { ClienteNombre = "Cliente E2E", NumeroPersonas = 2 };
@@ -80,14 +80,14 @@ public class InvalidTransitionsEndToEndTests : IClassFixture<MobileIntegrationTe
         var productos = await client.GetAsync("/api/core/productos");
         productos.EnsureSuccessStatusCode();
         using var prodDoc = JsonDocument.Parse(await productos.Content.ReadAsStringAsync());
-        var firstProd = prodDoc.RootElement.GetProperty("Data").GetProperty("Items").EnumerateArray().First();
-        var productoId = firstProd.GetProperty("Id").GetGuid();
+        var firstProd = prodDoc.RootElement.GetProperty("data").GetProperty("items").EnumerateArray().First();
+        var productoId = firstProd.GetProperty("id").GetGuid();
 
         // Mesa disponible
         var mesasDisponibles = await client.GetAsync("/api/operaciones/mesas/disponibles");
         mesasDisponibles.EnsureSuccessStatusCode();
         using var mesasDoc = JsonDocument.Parse(await mesasDisponibles.Content.ReadAsStringAsync());
-        var mesaId = mesasDoc.RootElement.GetProperty("Data").GetProperty("Items").EnumerateArray().First().GetProperty("Id").GetGuid();
+        var mesaId = mesasDoc.RootElement.GetProperty("data").GetProperty("items").EnumerateArray().First().GetProperty("id").GetGuid();
 
         // Crear comanda
         var crear = new
@@ -100,12 +100,12 @@ public class InvalidTransitionsEndToEndTests : IClassFixture<MobileIntegrationTe
         var crearResp = await client.PostAsync("/api/operaciones/comandas", new StringContent(JsonSerializer.Serialize(crear), Encoding.UTF8, "application/json"));
         crearResp.EnsureSuccessStatusCode();
         using var crearDoc = JsonDocument.Parse(await crearResp.Content.ReadAsStringAsync());
-        var comandaId = crearDoc.RootElement.GetProperty("Data").GetProperty("Id").GetGuid();
+        var comandaId = crearDoc.RootElement.GetProperty("data").GetProperty("id").GetGuid();
 
-        // Finalizar OK
+        // Finalizar desde estado Creada -> debe fallar (400)
         var finalizarBody = new { UsuarioId = userId, ObservacionesFinalizacion = "OK" };
         var finResp = await client.PostAsync($"/api/operaciones/comandas/{comandaId}/finalizar", new StringContent(JsonSerializer.Serialize(finalizarBody), Encoding.UTF8, "application/json"));
-        finResp.EnsureSuccessStatusCode();
+        Assert.True(finResp.StatusCode == HttpStatusCode.BadRequest, "Finalizar comanda desde estado Creada debería fallar");
 
         // Agregar producto a comanda cerrada -> debe fallar (400/404)
         var agregarBody = new { ProductoId = productoId, Cantidad = 1 };

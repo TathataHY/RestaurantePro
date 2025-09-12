@@ -1,5 +1,6 @@
 @using RestaurantePro.Web.Admin.Models
-@inject RestaurantePro.Web.Admin.Services.ClientesApiService ClientesApi
+@using RestaurantePro.Web.Admin.Services
+@inject IClientesApiService ClientesApi
 @inject IJSRuntime JSRuntime
 
 <div class="modal fade @(Mostrar ? "show" : "")" style="display: @(Mostrar ? "block" : "none")" tabindex="-1" role="dialog">
@@ -258,8 +259,8 @@
                     NotasEspeciales = Cliente.NotasEspeciales
                 };
 
-                var resultadoActualizar = await ClientesApi.ActualizarClienteAsync(request);
-                resultado = resultadoActualizar?.Data;
+                var resultadoActualizar = await ClientesApi.ActualizarClienteAsync(Cliente.Id, request);
+                resultado = resultadoActualizar;
             }
             else
             {

@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using RestaurantePro.Domain.Inventario.Ingredientes.Entities;
 using RestaurantePro.Domain.Inventario.Ingredientes.Enums;
 using RestaurantePro.Infrastructure.Persistence;
+using UnidadMedida = RestaurantePro.Domain.Inventario.Ingredientes.Enums.UnidadMedida;
+using RotacionIngrediente = RestaurantePro.Domain.Inventario.Ingredientes.Enums.RotacionIngrediente;
 
 namespace RestaurantePro.Web.Admin.IntegrationTests.Utils;
 
@@ -15,6 +17,8 @@ public static class IngredientesTestSeeder
     /// </summary>
     public static async Task<List<Guid>> SeedIngredientesAsync(RestauranteProDbContext context, int cantidad = 20)
     {
+        Console.WriteLine($"=== IngredientesTestSeeder: Creando {cantidad} ingredientes ===");
+        
         var ingredientes = new List<Ingrediente>();
         var ingredienteIds = new List<Guid>();
 
@@ -163,6 +167,12 @@ public static class IngredientesTestSeeder
 
         context.Ingredientes.AddRange(ingredientes);
         await context.SaveChangesAsync();
+
+        Console.WriteLine($"=== IngredientesTestSeeder: {ingredientes.Count} ingredientes creados exitosamente ===");
+        foreach (var ing in ingredientes)
+        {
+            Console.WriteLine($"  - {ing.Id}: {ing.Nombre} (Activo: {ing.EstaActivo})");
+        }
 
         return ingredientes.Select(i => i.Id).ToList();
     }

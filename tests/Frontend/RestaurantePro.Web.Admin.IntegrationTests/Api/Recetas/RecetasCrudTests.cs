@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using RestaurantePro.Application.Core.Recetas.Commands.CrearReceta;
 using RestaurantePro.Application.Core.Recetas.Commands.ActualizarReceta;
 using RestaurantePro.Application.Core.Recetas.Commands.EliminarReceta;
@@ -29,13 +30,32 @@ public class RecetasCrudTests : BaseIntegrationTest
         // Arrange
         var productoIds = await CrearProductosDePruebaAsync(1);
         var productoId = productoIds.First();
-        var ingredienteIds = await ObtenerIngredientesExistentesAsync(2);
         
-        // Debug: Verificar que los ingredientes existen
-        Console.WriteLine($"Ingredientes obtenidos: {ingredienteIds.Count}");
-        foreach (var id in ingredienteIds)
+        // Debug: Crear ingredientes directamente
+        Console.WriteLine("=== DEBUG: Creando ingredientes ===");
+        var ingredienteIds = new List<Guid>();
+        try
         {
-            Console.WriteLine($"Ingrediente ID: {id}");
+            ingredienteIds = await CrearIngredientesDePruebaAsync(2);
+            Console.WriteLine($"Ingredientes creados: {ingredienteIds.Count}");
+            
+            // Debug: Verificar que existen en la base de datos
+            var ingredientesEnBD = await _context.Ingredientes
+                .Where(i => i.EstaActivo)
+                .Select(i => new { i.Id, i.Nombre })
+                .ToListAsync();
+            
+            Console.WriteLine($"Ingredientes en BD: {ingredientesEnBD.Count}");
+            foreach (var ing in ingredientesEnBD)
+            {
+                Console.WriteLine($"  - {ing.Id}: {ing.Nombre}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"=== DEBUG: ERROR al crear ingredientes - {ex.Message} ===");
+            Console.WriteLine($"=== DEBUG: Stack Trace - {ex.StackTrace} ===");
+            throw;
         }
         
         var command = new CrearRecetaCommand

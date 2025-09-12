@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using RestaurantePro.Domain.Core.Productos.Entities;
 using RestaurantePro.Domain.Core.Productos.ValueObjects;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
@@ -164,7 +165,7 @@ public static class ProductosTestSeeder
         // Agregar ingredientes a la receta
         foreach (var ingrediente in ingredientesDisponibles)
         {
-            receta.AgregarIngrediente(ingrediente.Id, 1.0m, false);
+            receta.AgregarIngrediente(ingrediente.Id, ingrediente.Nombre, 1.0m, ingrediente.UnidadMedida, false);
         }
 
         context.Recetas.Add(receta);
@@ -202,7 +203,7 @@ public static class ProductosTestSeeder
         // Agregar ingredientes a la receta
         foreach (var ingrediente in ingredientesDisponibles)
         {
-            receta.AgregarIngrediente(ingrediente.Id, 2.0m, false);
+            receta.AgregarIngrediente(ingrediente.Id, ingrediente.Nombre, 2.0m, ingrediente.UnidadMedida, false);
         }
 
         context.Recetas.Add(receta);
@@ -240,7 +241,7 @@ public static class ProductosTestSeeder
         // Agregar ingredientes a la receta
         foreach (var ingrediente in ingredientesDisponibles)
         {
-            receta.AgregarIngrediente(ingrediente.Id, 1.5m, false);
+            receta.AgregarIngrediente(ingrediente.Id, ingrediente.Nombre, 1.5m, ingrediente.UnidadMedida, false);
         }
 
         context.Recetas.Add(receta);

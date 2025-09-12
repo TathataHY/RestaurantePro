@@ -53,7 +53,7 @@ public class MauiExceptionHandlingTests
 
         // Assert
         result.Should().NotBeNullOrEmpty();
-        result.Should().Contain("tiempo");
+        result.Should().Contain("espera");
     }
 
     [Fact]
@@ -226,7 +226,7 @@ public class MauiExceptionHandlingTests
 
         // Assert
         result.Should().NotBeNullOrEmpty();
-        result.Should().Contain("operación");
+        result.Should().Contain("válida");
         result.Should().NotContain("InvalidOperationException");
     }
 
@@ -241,7 +241,7 @@ public class MauiExceptionHandlingTests
 
         // Assert
         result.Should().NotBeNullOrEmpty();
-        result.Should().Contain("operación");
+        result.Should().Contain("soportada");
     }
 
     #endregion
@@ -298,7 +298,7 @@ public class MauiExceptionHandlingTests
 
         // Assert
         result.Should().NotBeNullOrEmpty();
-        result.Should().Contain("error");
+        result.Should().Contain("inesperado");
         result.Should().NotContain("Exception");
     }
 

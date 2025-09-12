@@ -86,7 +86,7 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
     public async Task CrearUsuario_ConEmailDuplicado_DeberiaRetornarErrorEspecifico()
     {
         // Arrange - Crear primer usuario
-        var usuarioCreadorId = await CrearUsuarioAdministradorDePruebaAsync();
+        var usuarioCreadorId = await CrearUsuarioAdministradorDePruebaLocalAsync();
         var primerUsuario = new
         {
             nombreUsuario = "usuario.original",
@@ -158,7 +158,7 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
         var usuario2 = JsonSerializer.Deserialize<ApiResponse<RestaurantePro.Application.Core.Usuarios.DTOs.UsuarioDto>>(contentGet, _jsonOptions);
 
         // Obtener el usuario administrador para usar como autorizador
-        var usuarioCreadorId = await CrearUsuarioAdministradorDePruebaAsync();
+        var usuarioCreadorId = await CrearUsuarioAdministradorDePruebaLocalAsync();
 
         // Intentar actualizar el primer usuario con el email del segundo
         var usuarioActualizado = new
@@ -223,7 +223,7 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
     {
         // Arrange
         var idInexistente = Guid.NewGuid();
-        var usuarioCreadorId = await CrearUsuarioAdministradorDePruebaAsync();
+        var usuarioCreadorId = await CrearUsuarioAdministradorDePruebaLocalAsync();
         var usuarioActualizado = new
         {
             UsuarioId = idInexistente,
@@ -358,7 +358,7 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
         var usuarioOriginal = JsonSerializer.Deserialize<ApiResponse<RestaurantePro.Application.Core.Usuarios.DTOs.UsuarioDto>>(contentGet, _jsonOptions);
 
         // Obtener el usuario administrador para usar como autorizador
-        var usuarioCreadorId = await CrearUsuarioAdministradorDePruebaAsync();
+        var usuarioCreadorId = await CrearUsuarioAdministradorDePruebaLocalAsync();
 
         // Simular actualización concurrente - actualizar el usuario
         var usuarioActualizado = new
@@ -397,7 +397,7 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
 
     #region Métodos de Ayuda
 
-    private async Task<Guid> CrearUsuarioAdministradorDePruebaAsync()
+    private async Task<Guid> CrearUsuarioAdministradorDePruebaLocalAsync()
     {
         // Usar el seeder de la clase base que crea el usuario directamente en la base de datos
         return await UsuariosTestSeeder.SeedUsuarioAdministradorAsync(_context);
@@ -406,7 +406,7 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
     private async Task<List<Guid>> SeedUsuariosDePruebaAsync()
     {
         // Crear usuario administrador primero
-        var usuarioCreadorId = await CrearUsuarioAdministradorDePruebaAsync();
+        var usuarioCreadorId = await CrearUsuarioAdministradorDePruebaLocalAsync();
         
         var usuarios = new[]
         {

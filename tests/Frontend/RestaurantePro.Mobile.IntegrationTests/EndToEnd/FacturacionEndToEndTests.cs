@@ -40,14 +40,14 @@ public class FacturacionEndToEndTests : IClassFixture<MobileIntegrationTestFixtu
         productosResp.EnsureSuccessStatusCode();
         var productosJson = await productosResp.Content.ReadAsStringAsync();
         using var prodDoc = JsonDocument.Parse(productosJson);
-        var productoId = prodDoc.RootElement.GetProperty("Data").GetProperty("Items").EnumerateArray().First().GetProperty("Id").GetGuid();
+        var productoId = prodDoc.RootElement.GetProperty("data").GetProperty("items").EnumerateArray().First().GetProperty("id").GetGuid();
 
         // Mesa disponible
         var mesasResp = await _client.GetAsync("/api/operaciones/mesas/disponibles");
         mesasResp.EnsureSuccessStatusCode();
         var mesasJson = await mesasResp.Content.ReadAsStringAsync();
         using var mesasDoc = JsonDocument.Parse(mesasJson);
-        var mesaId = mesasDoc.RootElement.GetProperty("Data").GetProperty("Items").EnumerateArray().First().GetProperty("Id").GetGuid();
+        var mesaId = mesasDoc.RootElement.GetProperty("data").GetProperty("items").EnumerateArray().First().GetProperty("id").GetGuid();
 
         // Crear comanda
         var userId = await _authService.GetUserIdAsync();
@@ -62,7 +62,7 @@ public class FacturacionEndToEndTests : IClassFixture<MobileIntegrationTestFixtu
         crearResp.EnsureSuccessStatusCode();
         var crearJson = await crearResp.Content.ReadAsStringAsync();
         using var crearDoc = JsonDocument.Parse(crearJson);
-        var comandaId = crearDoc.RootElement.GetProperty("Data").GetProperty("Id").GetGuid();
+        var comandaId = crearDoc.RootElement.GetProperty("data").GetProperty("id").GetGuid();
 
         // Finalizar comanda (genera el cierre y habilita facturación)
         var finalizarCmd = new { UsuarioId = Guid.Parse(userId!), ObservacionesFinalizacion = "OK", ValidarTodosItemsListos = true, NotificarMesero = true };
@@ -80,7 +80,7 @@ public class FacturacionEndToEndTests : IClassFixture<MobileIntegrationTestFixtu
         {
             var facturasJson = await facturasResp.Content.ReadAsStringAsync();
             using var factsDoc = JsonDocument.Parse(facturasJson);
-            var data = factsDoc.RootElement.GetProperty("Data").EnumerateArray().ToList();
+            var data = factsDoc.RootElement.GetProperty("data").EnumerateArray().ToList();
             Assert.True(data.Count >= 0);
         }
     }

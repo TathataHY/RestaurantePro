@@ -1,8 +1,9 @@
 @attribute [Authorize]
 @page "/clientes"
-@inject RestaurantePro.Web.Admin.Services.ClientesApiService ClientesApi
+@inject IClientesApiService ClientesApi
 @using RestaurantePro.Web.Admin.Models
 @using RestaurantePro.Web.Admin.Components
+@using RestaurantePro.Web.Admin.Services
 @inject IJSRuntime JSRuntime
 
 <PageTitle>Clientes</PageTitle>

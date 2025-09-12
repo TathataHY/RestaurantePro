@@ -38,18 +38,18 @@ public class ProductosSmokeEndToEndTests : IClassFixture<MobileIntegrationTestFi
         listResp.EnsureSuccessStatusCode();
         var listJson = await listResp.Content.ReadAsStringAsync();
         using var listDoc = JsonDocument.Parse(listJson);
-        var items = listDoc.RootElement.GetProperty("Data").GetProperty("Items").EnumerateArray().ToList();
+        var items = listDoc.RootElement.GetProperty("data").GetProperty("items").EnumerateArray().ToList();
         Assert.True(items.Count > 0);
-        var firstId = items.First().GetProperty("Id").GetGuid();
+        var firstId = items.First().GetProperty("id").GetGuid();
 
         // Detalle por Id
         var detailResp = await _client.GetAsync($"/api/core/productos/{firstId}");
         detailResp.EnsureSuccessStatusCode();
         var detailJson = await detailResp.Content.ReadAsStringAsync();
         using var detailDoc = JsonDocument.Parse(detailJson);
-        var data = detailDoc.RootElement.GetProperty("Data");
-        Assert.Equal(firstId, data.GetProperty("Id").GetGuid());
-        Assert.False(string.IsNullOrWhiteSpace(data.GetProperty("Nombre").GetString()));
+        var data = detailDoc.RootElement.GetProperty("data");
+        Assert.Equal(firstId, data.GetProperty("id").GetGuid());
+        Assert.False(string.IsNullOrWhiteSpace(data.GetProperty("nombre").GetString()));
     }
 }
 

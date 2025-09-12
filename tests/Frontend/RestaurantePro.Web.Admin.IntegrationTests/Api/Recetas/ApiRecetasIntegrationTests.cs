@@ -384,7 +384,7 @@ public class ApiRecetasIntegrationTests : BaseIntegrationTest
         receta.Ingredientes.Should().NotBeNull();
         receta.CostoTotal.Should().BeGreaterOrEqualTo(0);
         receta.EstaActiva.Should().BeTrue();
-        receta.FechaCreacion.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(5));
+        receta.FechaCreacion.Should().BeCloseTo(DateTime.Now, TimeSpan.FromMinutes(5));
     }
 
     [Fact]
@@ -414,7 +414,7 @@ public class ApiRecetasIntegrationTests : BaseIntegrationTest
         receta.Ingredientes.Should().NotBeNull();
         receta.CostoTotal.Should().BeGreaterOrEqualTo(0);
         receta.EstaActiva.Should().BeTrue();
-        receta.FechaCreacion.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(5));
+        receta.FechaCreacion.Should().BeCloseTo(DateTime.Now, TimeSpan.FromMinutes(5));
     }
 
     #endregion

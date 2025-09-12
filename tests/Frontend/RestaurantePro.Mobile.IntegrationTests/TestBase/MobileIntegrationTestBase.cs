@@ -101,6 +101,9 @@ public class MobileIntegrationTestFixture : WebApplicationFactory<Program>, IDis
             // 🔧 REGISTRAR SERVICIOS DE IDENTIDAD PARA AUTENTICACIÓN
             services.AddScoped<RestaurantePro.Application.Common.Interfaces.IIdentityService, RestaurantePro.Infrastructure.Identity.Services.IdentityService>();
             
+            // 🔧 REGISTRAR SERVICIO DE SANITIZACIÓN HTML ANTES DE MEDIATR (REQUERIDO POR HANDLERS)
+            services.AddScoped<RestaurantePro.Application.Common.Services.IHtmlSanitizerService, RestaurantePro.Application.Common.Services.HtmlSanitizerService>();
+            
             // 🔧 REGISTRAR MEDIATR CON TODOS LOS ASSEMBLIES NECESARIOS (UNA SOLA VEZ)
             services.AddMediatR(typeof(RestaurantePro.Application.Common.Behaviors.ValidationBehavior<,>).Assembly);
             services.AddMediatR(typeof(RestaurantePro.Application.Comercial.Clientes.Queries.ObtenerClientesPaginados.ObtenerClientesPaginadosQuery).Assembly);

@@ -37,11 +37,19 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
             }
 
             // Agregar base de datos en memoria con nombre único para cada prueba
-            services.AddDbContext<RestauranteProDbContext>(options =>
+            services.AddDbContext<RestauranteProDbContext>((serviceProvider, options) =>
             {
                 options.UseInMemoryDatabase(_databaseName);
                 options.ConfigureWarnings(warnings => warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning));
+                options.AddInterceptors(serviceProvider.GetRequiredService<RestaurantePro.Infrastructure.Persistence.Interceptors.AuditableEntityInterceptor>());
             });
+
+            // Configurar servicios necesarios para el interceptor de auditoría
+            services.AddScoped<RestaurantePro.Domain.Core.Base.Services.IDateTimeService, TestDateTimeService>();
+            services.AddScoped<RestaurantePro.Application.Common.Interfaces.ICurrentUserService, TestCurrentUserService>();
+            
+            // Configurar interceptor de auditoría para pruebas
+            services.AddScoped<RestaurantePro.Infrastructure.Persistence.Interceptors.AuditableEntityInterceptor>();
 
             // Deshabilitar completamente la autenticación para pruebas
             services.AddAuthentication("Test")
@@ -152,6 +160,18 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
             services.AddScoped<RestaurantePro.Domain.Core.Productos.Policies.IVisibilidadCategoriasPolicy, 
                 RestaurantePro.Domain.Core.Productos.Policies.VisibilidadCategoriasPolicy>();
 
+            // Configurar repositorio de ingredientes para pruebas
+            services.AddScoped<RestaurantePro.Domain.Inventario.Ingredientes.Interfaces.IIngredienteRepository, 
+                RestaurantePro.Infrastructure.Persistence.Repositories.Inventario.IngredienteRepository>();
+
+            // Configurar NotificationManager para pruebas
+            services.AddScoped<RestaurantePro.Domain.Core.SharedKernel.Validation.INotificationManager, 
+                TestNotificationManager>();
+
+            // Configurar servicios de cálculo de recetas para pruebas
+            services.AddScoped<RestaurantePro.Domain.Core.Productos.Services.ICalculoRecetaService, 
+                RestaurantePro.Domain.Core.Productos.Services.CalculoRecetaService>();
+
             // Configurar logging para pruebas
             services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Warning));
         });
@@ -161,8 +181,8 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
 
     public async Task InitializeAsync()
     {
-        // Generar nombre único para la base de datos de esta instancia
-        _databaseName = $"RestaurantePro_IntegrationTests_{Guid.NewGuid():N}";
+        // Usar un nombre fijo para la base de datos compartida entre tests
+        _databaseName = "RestaurantePro_IntegrationTests_Shared";
         
         // Crear la base de datos en memoria
         using var scope = Services.CreateScope();

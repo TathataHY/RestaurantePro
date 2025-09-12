@@ -132,8 +132,8 @@ public class CoreMappingProfile : Profile
             .ForMember(dest => dest.TiempoPreparacionMinutos, opt => opt.MapFrom(src => src.TiempoPreparacionMinutos))
             .ForMember(dest => dest.Ingredientes, opt => opt.MapFrom(src => src.Ingredientes))
             .ForMember(dest => dest.EstaActiva, opt => opt.MapFrom(src => !src.RecetaEliminada))
-            .ForMember(dest => dest.FechaCreacion, opt => opt.Ignore())
-            .ForMember(dest => dest.FechaModificacion, opt => opt.Ignore())
+            .ForMember(dest => dest.FechaCreacion, opt => opt.MapFrom(src => src.FechaCreacion))
+            .ForMember(dest => dest.FechaModificacion, opt => opt.MapFrom(src => src.FechaActualizacion))
             .ForMember(dest => dest.NombreProducto, opt => opt.Ignore())
             .ForMember(dest => dest.CostoTotal, opt => opt.Ignore());
 

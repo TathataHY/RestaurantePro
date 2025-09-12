@@ -32,8 +32,16 @@ public static class TestDataBuilders
         resp.EnsureSuccessStatusCode();
         var json = await resp.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(json);
-        var first = doc.RootElement.GetProperty("Data").GetProperty("Items").EnumerateArray().First();
-        return first.GetProperty("Id").GetGuid();
+        
+        // La estructura es: { "success": true, "data": { "items": [...] } }
+        var dataElement = doc.RootElement.GetProperty("data");
+        var itemsArray = dataElement.GetProperty("items").EnumerateArray();
+        
+        if (!itemsArray.Any())
+            throw new InvalidOperationException("No hay productos disponibles");
+            
+        var first = itemsArray.First();
+        return first.GetProperty("id").GetGuid();
     }
 
     public static async Task<Guid> GetAnyMesaDisponibleIdAsync(HttpClient client)
@@ -42,8 +50,16 @@ public static class TestDataBuilders
         resp.EnsureSuccessStatusCode();
         var json = await resp.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(json);
-        var first = doc.RootElement.GetProperty("Data").GetProperty("Items").EnumerateArray().First();
-        return first.GetProperty("Id").GetGuid();
+        
+        // La estructura es: { "success": true, "data": { "items": [...] } }
+        var dataElement = doc.RootElement.GetProperty("data");
+        var itemsArray = dataElement.GetProperty("items").EnumerateArray();
+        
+        if (!itemsArray.Any())
+            throw new InvalidOperationException("No hay mesas disponibles");
+            
+        var first = itemsArray.First();
+        return first.GetProperty("id").GetGuid();
     }
 
     public static async Task<Guid> CreateComandaAsync(HttpClient client, Guid meseroId, Guid mesaId, Guid productoId, int cantidad = 1, string? observaciones = null)
@@ -61,7 +77,10 @@ public static class TestDataBuilders
         resp.EnsureSuccessStatusCode();
         var body = await resp.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(body);
-        return doc.RootElement.GetProperty("Data").GetProperty("Id").GetGuid();
+        
+        // La estructura es: { "success": true, "data": { "id": "...", ... } }
+        var dataElement = doc.RootElement.GetProperty("data");
+        return dataElement.GetProperty("id").GetGuid();
     }
 
     public static async Task<Guid> GetCurrentUserIdAsync(HttpClient client, string email, string password)
@@ -72,7 +91,10 @@ public static class TestDataBuilders
         resp.EnsureSuccessStatusCode();
         var json = await resp.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(json);
-        var userIdStr = doc.RootElement.GetProperty("Data").GetProperty("UserId").GetString();
+        
+        // La estructura es: { "success": true, "data": { "userId": "...", ... } }
+        var dataElement = doc.RootElement.GetProperty("data");
+        var userIdStr = dataElement.GetProperty("userId").GetString();
         if (string.IsNullOrWhiteSpace(userIdStr)) throw new InvalidOperationException("UserId vacío en login");
         return Guid.Parse(userIdStr);
     }

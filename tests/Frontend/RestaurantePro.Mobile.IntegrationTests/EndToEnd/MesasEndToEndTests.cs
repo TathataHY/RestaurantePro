@@ -46,7 +46,7 @@ public class MesasEndToEndTests : IClassFixture<MobileIntegrationTestFixture>
         getMesa.EnsureSuccessStatusCode();
         var mesaJson = await getMesa.Content.ReadAsStringAsync();
         using var mesaDoc = JsonDocument.Parse(mesaJson);
-        var estado = mesaDoc.RootElement.GetProperty("Data").GetProperty("Estado").GetString();
+        var estado = mesaDoc.RootElement.GetProperty("data").GetProperty("estado").GetString();
         Assert.False(string.IsNullOrWhiteSpace(estado));
 
         // Liberar mesa: POST /mesas/{id}/liberar
@@ -58,7 +58,7 @@ public class MesasEndToEndTests : IClassFixture<MobileIntegrationTestFixture>
         // Verificar que la respuesta contiene Data.Id = mesaId
         var liberarJson = await liberarResp.Content.ReadAsStringAsync();
         using var liberarDoc = JsonDocument.Parse(liberarJson);
-        var returnedId = liberarDoc.RootElement.GetProperty("Data").GetProperty("Id").GetGuid();
+        var returnedId = liberarDoc.RootElement.GetProperty("data").GetProperty("id").GetGuid();
         Assert.Equal(mesaId, returnedId);
     }
 }

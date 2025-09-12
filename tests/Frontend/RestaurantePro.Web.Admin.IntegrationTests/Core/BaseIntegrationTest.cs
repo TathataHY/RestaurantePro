@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -13,7 +14,8 @@ namespace RestaurantePro.Web.Admin.IntegrationTests.Core;
 /// <summary>
 /// Clase base para pruebas de integración con funcionalidades comunes
 /// </summary>
-public abstract class BaseIntegrationTest : IClassFixture<WebApplicationFactory>, IAsyncLifetime
+[Collection("IntegrationTests")]
+public abstract class BaseIntegrationTest : IAsyncLifetime
 {
     protected readonly WebApplicationFactory _factory;
     protected readonly HttpClient _client;
@@ -219,7 +221,18 @@ public abstract class BaseIntegrationTest : IClassFixture<WebApplicationFactory>
     /// </summary>
     protected async Task<List<Guid>> CrearIngredientesDePruebaAsync(int cantidad = 10)
     {
-        return await IngredientesTestSeeder.SeedIngredientesAsync(_context, cantidad);
+        Console.WriteLine($"=== CrearIngredientesDePruebaAsync: Iniciando creación de {cantidad} ingredientes ===");
+        try
+        {
+            var resultado = await IngredientesTestSeeder.SeedIngredientesAsync(_context, cantidad);
+            Console.WriteLine($"=== CrearIngredientesDePruebaAsync: {resultado.Count} ingredientes creados exitosamente ===");
+            return resultado;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"=== CrearIngredientesDePruebaAsync: ERROR - {ex.Message} ===");
+            throw;
+        }
     }
 
     /// <summary>
@@ -239,6 +252,17 @@ public abstract class BaseIntegrationTest : IClassFixture<WebApplicationFactory>
         
         Console.WriteLine($"Ingredientes creados: {ingredientes.Count}");
         Console.WriteLine($"Ingredientes verificados: {ingredientesVerificados.Count}");
+        
+        // Debug: Listar todos los ingredientes en la base de datos
+        var todosLosIngredientes = await _context.Ingredientes
+            .Select(i => new { i.Id, i.Nombre, i.EstaActivo })
+            .ToListAsync();
+        
+        Console.WriteLine($"Total ingredientes en BD: {todosLosIngredientes.Count}");
+        foreach (var ing in todosLosIngredientes)
+        {
+            Console.WriteLine($"  - {ing.Id}: {ing.Nombre} (Activo: {ing.EstaActivo})");
+        }
         
         return ingredientes;
     }
@@ -270,7 +294,7 @@ public abstract class BaseIntegrationTest : IClassFixture<WebApplicationFactory>
     /// <summary>
     /// Crea un cliente HTTP autenticado con un rol específico
     /// </summary>
-    protected async Task<HttpClient> CreateAuthenticatedClientAsync(string rol)
+    protected HttpClient CreateAuthenticatedClientWithRole(string rol)
     {
         var client = _factory.CreateClient();
         client.DefaultRequestHeaders.Add("Authorization", "Bearer test-token");

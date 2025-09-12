@@ -118,7 +118,7 @@ public class RecetasSecurityTests : BaseIntegrationTest
     public async Task CrearReceta_ConRolMesero_DeberiaRetornarForbidden()
     {
         // Arrange
-        var clientMesero = await CreateAuthenticatedClientAsync("Mesero");
+        var clientMesero = CreateAuthenticatedClientWithRole("Mesero");
         var productoIds = await CrearProductosDePruebaAsync(1);
         var productoId = productoIds.First();
         
@@ -144,7 +144,7 @@ public class RecetasSecurityTests : BaseIntegrationTest
     public async Task CrearReceta_ConRolCajero_DeberiaRetornarForbidden()
     {
         // Arrange
-        var clientCajero = await CreateAuthenticatedClientAsync("Cajero");
+        var clientCajero = CreateAuthenticatedClientWithRole("Cajero");
         var productoIds = await CrearProductosDePruebaAsync(1);
         var productoId = productoIds.First();
         
@@ -170,7 +170,7 @@ public class RecetasSecurityTests : BaseIntegrationTest
     public async Task CrearReceta_ConRolAdministrador_DeberiaPermitir()
     {
         // Arrange
-        var clientAdmin = await CreateAuthenticatedClientAsync("Administrador");
+        var clientAdmin = CreateAuthenticatedClientWithRole("Administrador");
         var productoIds = await CrearProductosDePruebaAsync(1);
         var productoId = productoIds.First();
         
@@ -196,7 +196,7 @@ public class RecetasSecurityTests : BaseIntegrationTest
     public async Task CrearReceta_ConRolChef_DeberiaPermitir()
     {
         // Arrange
-        var clientChef = await CreateAuthenticatedClientAsync("Chef");
+        var clientChef = CreateAuthenticatedClientWithRole("Chef");
         var productoIds = await CrearProductosDePruebaAsync(1);
         var productoId = productoIds.First();
         
@@ -222,7 +222,7 @@ public class RecetasSecurityTests : BaseIntegrationTest
     public async Task ActualizarReceta_ConRolMesero_DeberiaRetornarForbidden()
     {
         // Arrange
-        var clientMesero = await CreateAuthenticatedClientAsync("Mesero");
+        var clientMesero = CreateAuthenticatedClientWithRole("Mesero");
         var recetaIds = await SeedRecetasDePruebaAsync(1);
         var recetaId = recetaIds.First();
         
@@ -248,7 +248,7 @@ public class RecetasSecurityTests : BaseIntegrationTest
     public async Task ActualizarReceta_ConRolChef_DeberiaPermitir()
     {
         // Arrange
-        var clientChef = await CreateAuthenticatedClientAsync("Chef");
+        var clientChef = CreateAuthenticatedClientWithRole("Chef");
         var recetaIds = await SeedRecetasDePruebaAsync(1);
         var recetaId = recetaIds.First();
         
@@ -274,7 +274,7 @@ public class RecetasSecurityTests : BaseIntegrationTest
     public async Task EliminarReceta_ConRolChef_DeberiaRetornarForbidden()
     {
         // Arrange
-        var clientChef = await CreateAuthenticatedClientAsync("Chef");
+        var clientChef = CreateAuthenticatedClientWithRole("Chef");
         var recetaIds = await SeedRecetasDePruebaAsync(1);
         var recetaId = recetaIds.First();
 
@@ -289,7 +289,7 @@ public class RecetasSecurityTests : BaseIntegrationTest
     public async Task EliminarReceta_ConRolAdministrador_DeberiaPermitir()
     {
         // Arrange
-        var clientAdmin = await CreateAuthenticatedClientAsync("Administrador");
+        var clientAdmin = CreateAuthenticatedClientWithRole("Administrador");
         var recetaIds = await SeedRecetasDePruebaAsync(1);
         var recetaId = recetaIds.First();
 

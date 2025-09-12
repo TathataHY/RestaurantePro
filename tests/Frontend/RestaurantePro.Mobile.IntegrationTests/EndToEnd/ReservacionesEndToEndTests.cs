@@ -40,7 +40,7 @@ public class ReservacionesEndToEndTests : IClassFixture<MobileIntegrationTestFix
         clientesResp.EnsureSuccessStatusCode();
         var clientesJson = await clientesResp.Content.ReadAsStringAsync();
         using var cliDoc = JsonDocument.Parse(clientesJson);
-        var clienteId = cliDoc.RootElement.GetProperty("Data").GetProperty("Items").EnumerateArray().First().GetProperty("Id").GetGuid();
+        var clienteId = cliDoc.RootElement.GetProperty("data").GetProperty("items").EnumerateArray().First().GetProperty("id").GetGuid();
 
         // 3) Crear reservación (usando el contrato CrearReservacionCommand)
         var crear = new {
@@ -59,7 +59,7 @@ public class ReservacionesEndToEndTests : IClassFixture<MobileIntegrationTestFix
         crearResp.EnsureSuccessStatusCode();
         var crearJson = await crearResp.Content.ReadAsStringAsync();
         using var crearDoc = JsonDocument.Parse(crearJson);
-        var reservacionId = crearDoc.RootElement.GetProperty("Data").GetProperty("Id").GetGuid();
+        var reservacionId = crearDoc.RootElement.GetProperty("data").GetProperty("id").GetGuid();
 
         // 4) Confirmar reservación
         var usuarioId = await _authService.GetUserIdAsync();
@@ -74,7 +74,7 @@ public class ReservacionesEndToEndTests : IClassFixture<MobileIntegrationTestFix
 
         var confirmJson = await confirmResp.Content.ReadAsStringAsync();
         using var confirmDoc = JsonDocument.Parse(confirmJson);
-        var estado = confirmDoc.RootElement.GetProperty("Data").GetProperty("Estado").GetString();
+        var estado = confirmDoc.RootElement.GetProperty("data").GetProperty("estado").GetString();
         Assert.False(string.IsNullOrWhiteSpace(estado));
     }
 }

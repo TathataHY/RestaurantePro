@@ -103,8 +103,8 @@ public class AuthenticationTest : MobileIntegrationTestBase
         // 🔧 EXTRAER EL TOKEN DE LA RESPUESTA (ESTRUCTURA ANIDADA)
         using var loginDoc = JsonDocument.Parse(loginResponseContent);
         var loginRoot = loginDoc.RootElement;
-        var loginDataElement = loginRoot.GetProperty("Data");
-        var token = loginDataElement.GetProperty("Token").GetString();
+        var loginDataElement = loginRoot.GetProperty("data");
+        var token = loginDataElement.GetProperty("token").GetString();
         
         Console.WriteLine($"🔧 TOKEN OBTENIDO: {token?.Substring(0, Math.Min(50, token.Length))}...");
 
@@ -125,8 +125,8 @@ public class AuthenticationTest : MobileIntegrationTestBase
         var root = doc.RootElement;
 
         // 🔧 VERIFICAR QUE LA RESPUESTA TIENE LA ESTRUCTURA CORRECTA
-        Assert.True(root.TryGetProperty("Data", out var dataElement), "Propiedad 'Data' no encontrada en la respuesta.");
-        Assert.True(dataElement.TryGetProperty("Items", out var itemsElement), "Propiedad 'Items' no encontrada en la respuesta.");
+        Assert.True(root.TryGetProperty("data", out var dataElement), "Propiedad 'data' no encontrada en la respuesta.");
+        Assert.True(dataElement.TryGetProperty("items", out var itemsElement), "Propiedad 'items' no encontrada en la respuesta.");
 
         // 🔧 VERIFICAR QUE HAY CLIENTES EN LA RESPUESTA
         var clientes = itemsElement.EnumerateArray().ToList();

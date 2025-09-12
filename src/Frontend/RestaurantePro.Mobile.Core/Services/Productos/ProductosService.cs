@@ -34,7 +34,7 @@ public class ProductosService : IProductosService
         {
             if (cancellationToken.IsCancellationRequested)
                 return ApiResponse<List<ProductoDto>>.ErrorResponse("Operación cancelada por el usuario");
-            var queryParams = $"?pageNumber={pageNumber}&pageSize={pageSize}&soloActivos={soloActivos}";
+            var queryParams = $"?pagina={pageNumber}&tamanoPagina={pageSize}&soloActivos={soloActivos}";
             
             if (!string.IsNullOrWhiteSpace(filtro))
             {
