@@ -81,11 +81,18 @@ public class ActualizarRecetaHandler : IRequestHandler<ActualizarRecetaCommand, 
                     request.Preparacion ?? receta.Preparacion,
                     request.TiempoPreparacionMinutos > 0 ? request.TiempoPreparacionMinutos : receta.TiempoPreparacionMinutos);
 
+                // Establecer el ID original usando reflexión
+                var idProperty = typeof(Receta).BaseType?.GetProperty("Id");
+                if (idProperty != null)
+                {
+                    idProperty.SetValue(nuevaReceta, receta.Id);
+                }
+
                 // Agregar ingredientes a la nueva receta
                 foreach (var ingredienteDto in request.Ingredientes)
                 {
                     var ingrediente = ingredientesExistentes.First(i => i.Id == ingredienteDto.IngredienteId);
-                    
+
                     nuevaReceta.AgregarIngrediente(
                         ingredienteDto.IngredienteId,
                         ingrediente.Nombre,
@@ -100,6 +107,9 @@ public class ActualizarRecetaHandler : IRequestHandler<ActualizarRecetaCommand, 
                 // Reemplazar la receta existente
                 _context.Recetas.Remove(receta);
                 _context.Recetas.Add(nuevaReceta);
+                
+                // Actualizar la variable receta para el mapeo
+                receta = nuevaReceta;
             }
 
             // 4. Guardar cambios
@@ -107,12 +117,8 @@ public class ActualizarRecetaHandler : IRequestHandler<ActualizarRecetaCommand, 
 
             _logger.LogInformation("💾 Receta actualizada exitosamente: {Id}", request.Id);
 
-            // 5. Mapear a DTO - usar la nueva receta si se actualizaron ingredientes
-            var recetaParaMapear = (request.Ingredientes != null && request.Ingredientes.Any()) 
-                ? _context.Recetas.FirstOrDefault(r => r.ProductoId == receta.ProductoId && !r.RecetaEliminada)
-                : receta;
-            
-            var recetaDto = _mapper.Map<RecetaDto>(recetaParaMapear);
+            // 5. Mapear a DTO
+            var recetaDto = _mapper.Map<RecetaDto>(receta);
 
             return Result.Success(recetaDto);
         }

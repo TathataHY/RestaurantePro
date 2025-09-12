@@ -51,6 +51,9 @@ public class VerificarDisponibilidadRecetaQueryHandler : IRequestHandler<Verific
             }
 
             // 2. Verificar disponibilidad usando el servicio de dominio
+            _logger.LogInformation("🔍 Verificando disponibilidad para producto: {ProductoId}, Cantidad: {Cantidad}", 
+                receta.ProductoId, request.Cantidad);
+            
             var disponibilidadResult = await _calculoRecetaService.VerificarDisponibilidadIngredientesAsync(
                 receta.ProductoId, request.Cantidad, cancellationToken);
 

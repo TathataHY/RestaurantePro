@@ -11,12 +11,23 @@ public static class TestDataBuilders
 {
     public static async Task<string> LoginAsync(HttpClient client, string email, string password)
     {
-        var api = new ApiService(client);
-        var secure = new FakeSecureStorageService();
-        var auth = new AuthService(api, NullLogger<AuthService>.Instance, secure, new FakeNavigationService());
-        var login = await auth.LoginAsync(email, password);
-        if (!login.Success) throw new InvalidOperationException($"No se pudo hacer login: {login.Error}");
-        var token = await auth.GetTokenAsync();
+        var loginRequest = new
+        {
+            Email = email,
+            Password = password,
+            RememberMe = false
+        };
+
+        var json = JsonSerializer.Serialize(loginRequest);
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var response = await client.PostAsync("/api/auth/login", content);
+        response.EnsureSuccessStatusCode();
+
+        var responseJson = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(responseJson);
+        
+        var token = doc.RootElement.GetProperty("data").GetProperty("token").GetString();
         if (string.IsNullOrWhiteSpace(token)) throw new InvalidOperationException("Token vacío tras login");
         return token;
     }
