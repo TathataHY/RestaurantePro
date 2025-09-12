@@ -4,6 +4,7 @@ using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using RestaurantePro.Application.Core.Recetas.DTOs;
+using RestaurantePro.Application.Common.Models;
 using RestaurantePro.Web.Admin.IntegrationTests.Core;
 
 namespace RestaurantePro.Web.Admin.IntegrationTests.Api.Recetas;
@@ -32,7 +33,7 @@ public class ApiRecetasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<PaginatedList<RecetaDto>>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<PaginatedList<RestaurantePro.Application.Core.Recetas.DTOs.RecetaDto>>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -54,7 +55,7 @@ public class ApiRecetasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<PaginatedList<RecetaDto>>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<PaginatedList<RestaurantePro.Application.Core.Recetas.DTOs.RecetaDto>>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -76,7 +77,7 @@ public class ApiRecetasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<PaginatedList<RecetaDto>>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<PaginatedList<RestaurantePro.Application.Core.Recetas.DTOs.RecetaDto>>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -99,7 +100,7 @@ public class ApiRecetasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<PaginatedList<RecetaDto>>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<PaginatedList<RestaurantePro.Application.Core.Recetas.DTOs.RecetaDto>>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -123,7 +124,7 @@ public class ApiRecetasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<PaginatedList<RecetaDto>>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<PaginatedList<RestaurantePro.Application.Core.Recetas.DTOs.RecetaDto>>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -153,7 +154,7 @@ public class ApiRecetasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<RecetaDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<RestaurantePro.Application.Core.Recetas.DTOs.RecetaDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -211,7 +212,7 @@ public class ApiRecetasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<List<RecetaDto>>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<List<RestaurantePro.Application.Core.Recetas.DTOs.RecetaDto>>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -303,7 +304,7 @@ public class ApiRecetasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<DisponibilidadRecetaDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<RestaurantePro.Application.Core.Recetas.DTOs.DisponibilidadRecetaDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -326,7 +327,7 @@ public class ApiRecetasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<DisponibilidadRecetaDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<RestaurantePro.Application.Core.Recetas.DTOs.DisponibilidadRecetaDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -370,7 +371,7 @@ public class ApiRecetasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<PaginatedList<RecetaDto>>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<PaginatedList<RestaurantePro.Application.Core.Recetas.DTOs.RecetaDto>>>(content, GetJsonOptions());
         
         responseData.Data.Items.Should().NotBeEmpty();
         var receta = responseData.Data.Items.First();
@@ -400,7 +401,7 @@ public class ApiRecetasIntegrationTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<RecetaDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<RestaurantePro.Application.Core.Recetas.DTOs.RecetaDto>>(content, GetJsonOptions());
         
         responseData.Data.Should().NotBeNull();
         var receta = responseData.Data;
@@ -460,6 +461,11 @@ public class ApiRecetasIntegrationTests : BaseIntegrationTest
     {
         // Crear productos primero
         var productoIds = await CrearProductosDePruebaAsync(cantidad);
+        
+        if (productoIds.Count < cantidad)
+        {
+            throw new InvalidOperationException($"No se pudieron crear suficientes productos. Se requieren {cantidad}, pero solo se crearon {productoIds.Count}");
+        }
         
         // Crear recetas para cada producto
         var recetaIds = new List<Guid>();

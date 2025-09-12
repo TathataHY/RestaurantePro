@@ -7,6 +7,7 @@ using RestaurantePro.Application.Core.Recetas.Commands.CrearReceta;
 using RestaurantePro.Application.Core.Recetas.Commands.ActualizarReceta;
 using RestaurantePro.Application.Core.Recetas.Commands.EliminarReceta;
 using RestaurantePro.Application.Core.Recetas.DTOs;
+using RestaurantePro.Application.Common.Models;
 using RestaurantePro.Web.Admin.IntegrationTests.Core;
 
 namespace RestaurantePro.Web.Admin.IntegrationTests.Api.Recetas;
@@ -28,16 +29,24 @@ public class RecetasCrudTests : BaseIntegrationTest
         // Arrange
         var productoIds = await CrearProductosDePruebaAsync(1);
         var productoId = productoIds.First();
+        var ingredienteIds = await ObtenerIngredientesExistentesAsync(2);
+        
+        // Debug: Verificar que los ingredientes existen
+        Console.WriteLine($"Ingredientes obtenidos: {ingredienteIds.Count}");
+        foreach (var id in ingredienteIds)
+        {
+            Console.WriteLine($"Ingrediente ID: {id}");
+        }
         
         var command = new CrearRecetaCommand
         {
             ProductoId = productoId,
             Preparacion = "Mezclar todos los ingredientes y hornear por 20 minutos",
             TiempoPreparacionMinutos = 30,
-            Ingredientes = new List<AgregarIngredienteDto>
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>
             {
-                new() { IngredienteId = Guid.NewGuid(), Cantidad = 2, EsOpcional = false },
-                new() { IngredienteId = Guid.NewGuid(), Cantidad = 1, EsOpcional = true }
+                new() { IngredienteId = ingredienteIds[0], Cantidad = 2, EsOpcional = false },
+                new() { IngredienteId = ingredienteIds[1], Cantidad = 1, EsOpcional = true }
             }
         };
 
@@ -51,7 +60,7 @@ public class RecetasCrudTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var responseContent = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<RecetaDto>>(responseContent, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<RestaurantePro.Application.Core.Recetas.DTOs.RecetaDto>>(responseContent, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -74,7 +83,7 @@ public class RecetasCrudTests : BaseIntegrationTest
             ProductoId = productoIdInexistente,
             Preparacion = "Receta de prueba",
             TiempoPreparacionMinutos = 15,
-            Ingredientes = new List<AgregarIngredienteDto>()
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>()
         };
 
         var json = JsonSerializer.Serialize(command, GetJsonOptions());
@@ -103,7 +112,7 @@ public class RecetasCrudTests : BaseIntegrationTest
             ProductoId = Guid.Empty,
             Preparacion = "", // Preparación vacía
             TiempoPreparacionMinutos = -1, // Tiempo negativo
-            Ingredientes = new List<AgregarIngredienteDto>()
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>()
         };
 
         var json = JsonSerializer.Serialize(command, GetJsonOptions());
@@ -128,14 +137,15 @@ public class RecetasCrudTests : BaseIntegrationTest
         // Arrange
         var productoIds = await CrearProductosDePruebaAsync(1);
         var productoId = productoIds.First();
-        var ingredienteId = Guid.NewGuid();
+        var ingredienteIds = await ObtenerIngredientesExistentesAsync(1);
+        var ingredienteId = ingredienteIds.First();
         
         var command = new CrearRecetaCommand
         {
             ProductoId = productoId,
             Preparacion = "Receta con ingredientes duplicados",
             TiempoPreparacionMinutos = 20,
-            Ingredientes = new List<AgregarIngredienteDto>
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>
             {
                 new() { IngredienteId = ingredienteId, Cantidad = 1, EsOpcional = false },
                 new() { IngredienteId = ingredienteId, Cantidad = 2, EsOpcional = false } // Duplicado
@@ -174,7 +184,7 @@ public class RecetasCrudTests : BaseIntegrationTest
             Id = recetaId,
             Preparacion = "Preparación actualizada - Mezclar ingredientes y cocinar por 25 minutos",
             TiempoPreparacionMinutos = 35,
-            Ingredientes = new List<AgregarIngredienteDto>
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>
             {
                 new() { IngredienteId = Guid.NewGuid(), Cantidad = 3, EsOpcional = false }
             }
@@ -190,7 +200,7 @@ public class RecetasCrudTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var responseContent = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<RecetaDto>>(responseContent, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<RestaurantePro.Application.Core.Recetas.DTOs.RecetaDto>>(responseContent, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -212,7 +222,7 @@ public class RecetasCrudTests : BaseIntegrationTest
             Id = recetaIdInexistente,
             Preparacion = "Preparación de prueba",
             TiempoPreparacionMinutos = 20,
-            Ingredientes = new List<AgregarIngredienteDto>()
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>()
         };
 
         var json = JsonSerializer.Serialize(command, GetJsonOptions());
@@ -244,7 +254,7 @@ public class RecetasCrudTests : BaseIntegrationTest
             Id = recetaId,
             Preparacion = "", // Preparación vacía
             TiempoPreparacionMinutos = -5, // Tiempo negativo
-            Ingredientes = new List<AgregarIngredienteDto>()
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>()
         };
 
         var json = JsonSerializer.Serialize(command, GetJsonOptions());
@@ -276,7 +286,7 @@ public class RecetasCrudTests : BaseIntegrationTest
             Id = idDiferente, // ID diferente al de la URL
             Preparacion = "Preparación actualizada",
             TiempoPreparacionMinutos = 25,
-            Ingredientes = new List<AgregarIngredienteDto>()
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>()
         };
 
         var json = JsonSerializer.Serialize(command, GetJsonOptions());
@@ -289,7 +299,7 @@ public class RecetasCrudTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var responseContent = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<RecetaDto>>(responseContent, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<RestaurantePro.Application.Core.Recetas.DTOs.RecetaDto>>(responseContent, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -367,6 +377,7 @@ public class RecetasCrudTests : BaseIntegrationTest
     {
         // Arrange
         var productoIds = await CrearProductosDePruebaAsync(3);
+        var ingredienteIds = await ObtenerIngredientesExistentesAsync(3);
         var recetasCreadas = new List<Guid>();
 
         // Act & Assert
@@ -377,9 +388,9 @@ public class RecetasCrudTests : BaseIntegrationTest
                 ProductoId = productoIds[i],
                 Preparacion = $"Receta {i + 1} - Preparación detallada",
                 TiempoPreparacionMinutos = 20 + (i * 5),
-                Ingredientes = new List<AgregarIngredienteDto>
+                Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>
                 {
-                    new() { IngredienteId = Guid.NewGuid(), Cantidad = 1 + i, EsOpcional = false }
+                    new() { IngredienteId = ingredienteIds[i], Cantidad = 1 + i, EsOpcional = false }
                 }
             };
 
@@ -390,7 +401,7 @@ public class RecetasCrudTests : BaseIntegrationTest
             response.StatusCode.Should().Be(HttpStatusCode.Created);
 
             var responseContent = await response.Content.ReadAsStringAsync();
-            var responseData = JsonSerializer.Deserialize<ApiResponse<RecetaDto>>(responseContent, GetJsonOptions());
+            var responseData = JsonSerializer.Deserialize<ApiResponse<RestaurantePro.Application.Core.Recetas.DTOs.RecetaDto>>(responseContent, GetJsonOptions());
             recetasCreadas.Add(responseData.Data.Id);
         }
 
@@ -413,7 +424,7 @@ public class RecetasCrudTests : BaseIntegrationTest
                 Id = recetaIds[i],
                 Preparacion = $"Receta actualizada {i + 1} - Nueva preparación",
                 TiempoPreparacionMinutos = 25 + (i * 5),
-                Ingredientes = new List<AgregarIngredienteDto>
+                Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>
                 {
                     new() { IngredienteId = Guid.NewGuid(), Cantidad = 2 + i, EsOpcional = false }
                 }
@@ -458,13 +469,17 @@ public class RecetasCrudTests : BaseIntegrationTest
         // Arrange
         var productoIds = await CrearProductosDePruebaAsync(1);
         var productoId = productoIds.First();
+        var ingredienteIds = await ObtenerIngredientesExistentesAsync(1);
         
         var command = new CrearRecetaCommand
         {
             ProductoId = productoId,
             Preparacion = "Receta de prueba",
             TiempoPreparacionMinutos = 20,
-            Ingredientes = new List<AgregarIngredienteDto>()
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>
+            {
+                new() { IngredienteId = ingredienteIds[0], Cantidad = 1, EsOpcional = false }
+            }
         };
 
         var json = JsonSerializer.Serialize(command, GetJsonOptions());
@@ -477,7 +492,7 @@ public class RecetasCrudTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var responseContent = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<RecetaDto>>(responseContent, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<RestaurantePro.Application.Core.Recetas.DTOs.RecetaDto>>(responseContent, GetJsonOptions());
         
         responseData.Data.ProductoId.Should().Be(productoId);
         
@@ -486,7 +501,7 @@ public class RecetasCrudTests : BaseIntegrationTest
         getRecetasResponse.StatusCode.Should().Be(HttpStatusCode.OK);
         
         var recetasContent = await getRecetasResponse.Content.ReadAsStringAsync();
-        var recetasData = JsonSerializer.Deserialize<ApiResponse<List<RecetaDto>>>(recetasContent, GetJsonOptions());
+        var recetasData = JsonSerializer.Deserialize<ApiResponse<List<RestaurantePro.Application.Core.Recetas.DTOs.RecetaDto>>>(recetasContent, GetJsonOptions());
         recetasData.Data.Should().Contain(r => r.Id == responseData.Data.Id);
     }
 
@@ -500,7 +515,7 @@ public class RecetasCrudTests : BaseIntegrationTest
         // Obtener la receta original para verificar el ProductoId
         var getResponse = await _client.GetAsync($"/api/core/recetas/{recetaId}");
         var getContent = await getResponse.Content.ReadAsStringAsync();
-        var getData = JsonSerializer.Deserialize<ApiResponse<RecetaDto>>(getContent, GetJsonOptions());
+        var getData = JsonSerializer.Deserialize<ApiResponse<RestaurantePro.Application.Core.Recetas.DTOs.RecetaDto>>(getContent, GetJsonOptions());
         var productoIdOriginal = getData.Data.ProductoId;
         
         var command = new ActualizarRecetaCommand
@@ -508,7 +523,7 @@ public class RecetasCrudTests : BaseIntegrationTest
             Id = recetaId,
             Preparacion = "Preparación actualizada",
             TiempoPreparacionMinutos = 30,
-            Ingredientes = new List<AgregarIngredienteDto>()
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>()
         };
 
         var json = JsonSerializer.Serialize(command, GetJsonOptions());
@@ -521,7 +536,7 @@ public class RecetasCrudTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var responseContent = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<RecetaDto>>(responseContent, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<RestaurantePro.Application.Core.Recetas.DTOs.RecetaDto>>(responseContent, GetJsonOptions());
         
         responseData.Data.ProductoId.Should().Be(productoIdOriginal); // Debe mantener el mismo ProductoId
     }

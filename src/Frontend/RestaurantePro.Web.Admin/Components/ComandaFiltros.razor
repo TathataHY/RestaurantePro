@@ -1,8 +1,8 @@
 @using RestaurantePro.Web.Admin.Models
 @using RestaurantePro.Web.Admin.Services
-@inject ComandasApiService ComandasApi
-@inject ClientesApiService ClientesApi
-@inject MesasApiService MesasApi
+@inject IComandasApiService ComandasApi
+@inject IClientesApiService ClientesApi
+@inject IMesasApiService MesasApi
 
 <div class="card">
     <div class="card-header">
@@ -298,9 +298,8 @@
     {
         try
         {
-            var filtros = new ClienteFiltrosDto { PageSize = 1000 };
-            var resultado = await ClientesApi.ObtenerClientesAsync(filtros);
-            clientes = resultado?.Items?.ToList() ?? new List<ClienteDto>();
+            var resultado = await ClientesApi.ObtenerClientesAsync();
+            clientes = resultado ?? new List<ClienteDto>();
         }
         catch (Exception ex)
         {

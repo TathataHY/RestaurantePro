@@ -202,4 +202,81 @@ public abstract class BaseIntegrationTest : IClassFixture<WebApplicationFactory>
     }
 
     #endregion
+
+    #region Recetas Helper Methods
+
+    /// <summary>
+    /// Crea productos de prueba y retorna sus IDs
+    /// </summary>
+    protected async Task<List<Guid>> CrearProductosDePruebaAsync(int cantidad = 5)
+    {
+        var categoriaIds = await CrearCategoriasDePruebaAsync();
+        return await ProductosTestSeeder.SeedProductosAsync(_context, categoriaIds, cantidad);
+    }
+
+    /// <summary>
+    /// Crea ingredientes de prueba y retorna sus IDs
+    /// </summary>
+    protected async Task<List<Guid>> CrearIngredientesDePruebaAsync(int cantidad = 10)
+    {
+        return await IngredientesTestSeeder.SeedIngredientesAsync(_context, cantidad);
+    }
+
+    /// <summary>
+    /// Obtiene ingredientes existentes de la base de datos
+    /// </summary>
+    protected async Task<List<Guid>> ObtenerIngredientesExistentesAsync(int cantidad = 5)
+    {
+        // Siempre crear ingredientes nuevos para asegurar que existan
+        var ingredientes = await CrearIngredientesDePruebaAsync(cantidad);
+        
+        // Verificar que se crearon correctamente
+        var ingredientesVerificados = await _context.Ingredientes
+            .Where(i => i.EstaActivo)
+            .Take(cantidad)
+            .Select(i => i.Id)
+            .ToListAsync();
+        
+        Console.WriteLine($"Ingredientes creados: {ingredientes.Count}");
+        Console.WriteLine($"Ingredientes verificados: {ingredientesVerificados.Count}");
+        
+        return ingredientes;
+    }
+
+    /// <summary>
+    /// Crea una receta de prueba y retorna su ID
+    /// </summary>
+    protected async Task<Guid> CrearRecetaDePruebaAsync(Guid productoId)
+    {
+        return await ProductosTestSeeder.SeedRecetaAsync(_context, productoId);
+    }
+
+    /// <summary>
+    /// Crea una receta compleja de prueba y retorna su ID
+    /// </summary>
+    protected async Task<Guid> CrearRecetaComplejaAsync(Guid productoId)
+    {
+        return await ProductosTestSeeder.SeedRecetaComplejaAsync(_context, productoId);
+    }
+
+    /// <summary>
+    /// Crea una receta con muchos ingredientes de prueba y retorna su ID
+    /// </summary>
+    protected async Task<Guid> CrearRecetaConMuchosIngredientesAsync(Guid productoId)
+    {
+        return await ProductosTestSeeder.SeedRecetaConMuchosIngredientesAsync(_context, productoId);
+    }
+
+    /// <summary>
+    /// Crea un cliente HTTP autenticado con un rol específico
+    /// </summary>
+    protected async Task<HttpClient> CreateAuthenticatedClientAsync(string rol)
+    {
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("Authorization", "Bearer test-token");
+        client.DefaultRequestHeaders.Add("X-Test-Role", rol);
+        return client;
+    }
+
+    #endregion
 }

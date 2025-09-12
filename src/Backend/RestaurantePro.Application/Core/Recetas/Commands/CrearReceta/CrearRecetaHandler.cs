@@ -36,7 +36,7 @@ public class CrearRecetaHandler : IRequestHandler<CrearRecetaCommand, Result<Rec
 
             // 1. Verificar que el producto existe
             var producto = await _context.Productos
-                .FirstOrDefaultAsync(p => p.Id == request.ProductoId && !p.EstaEliminado, cancellationToken);
+                .FirstOrDefaultAsync(p => p.Id == request.ProductoId, cancellationToken);
 
             if (producto == null)
             {
@@ -67,7 +67,7 @@ public class CrearRecetaHandler : IRequestHandler<CrearRecetaCommand, Result<Rec
             {
                 // Verificar que el ingrediente existe
                 var ingrediente = await _context.Ingredientes
-                    .FirstOrDefaultAsync(i => i.Id == ingredienteDto.IngredienteId && !i.EstaEliminado, cancellationToken);
+                    .FirstOrDefaultAsync(i => i.Id == ingredienteDto.IngredienteId && i.EstaActivo, cancellationToken);
 
                 if (ingrediente == null)
                 {

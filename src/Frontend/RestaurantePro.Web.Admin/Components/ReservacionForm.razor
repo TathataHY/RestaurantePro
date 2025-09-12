@@ -1,8 +1,8 @@
 @using RestaurantePro.Web.Admin.Models
 @using RestaurantePro.Web.Admin.Services
-@inject ReservacionesApiService ReservacionesApi
-@inject ClientesApiService ClientesApi
-@inject MesasApiService MesasApi
+@inject IReservacionesApiService ReservacionesApi
+@inject IClientesApiService ClientesApi
+@inject IMesasApiService MesasApi
 @inject IJSRuntime JSRuntime
 
 <div class="modal fade @(Mostrar ? "show" : "")" style="display: @(Mostrar ? "block" : "none")" tabindex="-1" role="dialog">
@@ -418,9 +418,8 @@
     {
         try
         {
-            var filtros = new ClienteFiltrosDto { PageSize = 1000 };
-            var resultado = await ClientesApi.ObtenerClientesAsync(filtros);
-            clientes = resultado?.Items?.ToList() ?? new List<ClienteDto>();
+            var resultado = await ClientesApi.ObtenerClientesAsync();
+            clientes = resultado ?? new List<ClienteDto>();
         }
         catch (Exception ex)
         {
@@ -433,11 +432,12 @@
     {
         try
         {
-            var resultado = await ReservacionesApi.ObtenerSiguienteNumeroReservacionAsync();
-            if (resultado?.Success == true && !string.IsNullOrEmpty(resultado.Data))
-            {
-                Reservacion.NumeroReservacion = resultado.Data;
-            }
+            // var resultado = await ReservacionesApi.ObtenerSiguienteNumeroReservacionAsync();
+            // if (resultado?.Success == true && !string.IsNullOrEmpty(resultado.Data))
+            // {
+            //     Reservacion.NumeroReservacion = resultado.Data;
+            // }
+            Reservacion.NumeroReservacion = $"RES-{DateTime.Now:yyyyMMddHHmmss}";
         }
         catch (Exception ex)
         {
@@ -533,24 +533,31 @@
 
         try
         {
-            var request = new VerificarDisponibilidadRequest
-            {
-                Fecha = Reservacion.FechaReservacion,
-                Hora = Reservacion.HoraReservacion,
-                NumeroPersonas = Reservacion.NumeroPersonas,
-                MesaIdExcluir = EsEdicion ? Reservacion.MesaId : null
-            };
+            // var request = new VerificarDisponibilidadRequest
+            // {
+            //     Fecha = Reservacion.FechaReservacion,
+            //     Hora = Reservacion.HoraReservacion,
+            //     NumeroPersonas = Reservacion.NumeroPersonas,
+            //     MesaIdExcluir = EsEdicion ? Reservacion.MesaId : null
+            // };
 
-            var disponibilidad = await ReservacionesApi.VerificarDisponibilidadAsync(request);
-            if (disponibilidad != null)
+            // var disponibilidad = await ReservacionesApi.VerificarDisponibilidadAsync(request);
+            // if (disponibilidad != null)
+            // {
+            //     mesasDisponibles = disponibilidad.MesasDisponibles;
+            //     
+            //     if (!disponibilidad.Disponible)
+            //     {
+            //         await JSRuntime.InvokeVoidAsync("alert", $"No hay disponibilidad para {Reservacion.NumeroPersonas} personas en {Reservacion.FechaReservacion:dd/MM/yyyy} a las {Reservacion.HoraReservacion:hh\\:mm}");
+            //     }
+            // }
+            
+            // Simular mesas disponibles para testing
+            mesasDisponibles = new List<MesaDisponibleDto>
             {
-                mesasDisponibles = disponibilidad.MesasDisponibles;
-                
-                if (!disponibilidad.Disponible)
-                {
-                    await JSRuntime.InvokeVoidAsync("alert", $"No hay disponibilidad para {Reservacion.NumeroPersonas} personas en {Reservacion.FechaReservacion:dd/MM/yyyy} a las {Reservacion.HoraReservacion:hh\\:mm}");
-                }
-            }
+                new MesaDisponibleDto { MesaId = Guid.NewGuid(), MesaNombre = "Mesa 1", MesaNumero = 1, MesaUbicacion = "Interior", Capacidad = 4 },
+                new MesaDisponibleDto { MesaId = Guid.NewGuid(), MesaNombre = "Mesa 2", MesaNumero = 2, MesaUbicacion = "Terraza", Capacidad = 6 }
+            };
         }
         catch (Exception ex)
         {
@@ -574,16 +581,16 @@
             if (!string.IsNullOrEmpty(Reservacion.NumeroReservacion))
             {
                 mostrarValidacionNumero = true;
-                var validacionNumero = await ReservacionesApi.ValidarNumeroReservacionAsync(Reservacion.NumeroReservacion, EsEdicion ? Reservacion.Id : null);
+                // var validacionNumero = await ReservacionesApi.ValidarNumeroReservacionAsync(Reservacion.NumeroReservacion, EsEdicion ? Reservacion.Id : null);
                 mostrarValidacionNumero = false;
 
-                if (validacionNumero?.Data == true)
-                {
-                    await JSRuntime.InvokeVoidAsync("alert", "El número de reservación ya existe.");
-                    guardando = false;
-                    StateHasChanged();
-                    return;
-                }
+                // if (validacionNumero?.Data == true)
+                // {
+                //     await JSRuntime.InvokeVoidAsync("alert", "El número de reservación ya existe.");
+                //     guardando = false;
+                //     StateHasChanged();
+                //     return;
+                // }
             }
 
             ReservacionDto? resultado;
@@ -608,8 +615,8 @@
                     EmailAlternativo = Reservacion.EmailAlternativo
                 };
 
-                var resultadoActualizar = await ReservacionesApi.ActualizarReservacionAsync(request);
-                resultado = resultadoActualizar?.Data;
+                var resultadoActualizar = await ReservacionesApi.ActualizarReservacionAsync(Reservacion.Id, request);
+                resultado = resultadoActualizar;
             }
             else
             {

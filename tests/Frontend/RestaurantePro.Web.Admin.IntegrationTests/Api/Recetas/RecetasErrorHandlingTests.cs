@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using RestaurantePro.Application.Core.Recetas.Commands.CrearReceta;
 using RestaurantePro.Application.Core.Recetas.Commands.ActualizarReceta;
 using RestaurantePro.Application.Core.Recetas.Commands.EliminarReceta;
+using RestaurantePro.Application.Core.Recetas.DTOs;
 using RestaurantePro.Web.Admin.IntegrationTests.Core;
 
 namespace RestaurantePro.Web.Admin.IntegrationTests.Api.Recetas;
@@ -30,7 +31,7 @@ public class RecetasErrorHandlingTests : BaseIntegrationTest
             ProductoId = Guid.Empty,
             Preparacion = "Receta de prueba",
             TiempoPreparacionMinutos = 20,
-            Ingredientes = new List<AgregarIngredienteDto>()
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>()
         };
 
         var json = JsonSerializer.Serialize(command, GetJsonOptions());
@@ -62,7 +63,7 @@ public class RecetasErrorHandlingTests : BaseIntegrationTest
             ProductoId = productoId,
             Preparacion = "", // Preparación vacía
             TiempoPreparacionMinutos = 20,
-            Ingredientes = new List<AgregarIngredienteDto>()
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>()
         };
 
         var json = JsonSerializer.Serialize(command, GetJsonOptions());
@@ -93,7 +94,7 @@ public class RecetasErrorHandlingTests : BaseIntegrationTest
             ProductoId = productoId,
             Preparacion = "Receta de prueba",
             TiempoPreparacionMinutos = -5, // Tiempo negativo
-            Ingredientes = new List<AgregarIngredienteDto>()
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>()
         };
 
         var json = JsonSerializer.Serialize(command, GetJsonOptions());
@@ -124,7 +125,7 @@ public class RecetasErrorHandlingTests : BaseIntegrationTest
             ProductoId = productoId,
             Preparacion = "Receta de prueba",
             TiempoPreparacionMinutos = 0, // Tiempo cero
-            Ingredientes = new List<AgregarIngredienteDto>()
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>()
         };
 
         var json = JsonSerializer.Serialize(command, GetJsonOptions());
@@ -155,7 +156,7 @@ public class RecetasErrorHandlingTests : BaseIntegrationTest
             ProductoId = productoId,
             Preparacion = "Receta de prueba",
             TiempoPreparacionMinutos = 20,
-            Ingredientes = new List<AgregarIngredienteDto>
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>
             {
                 new() { IngredienteId = Guid.NewGuid(), Cantidad = -1, EsOpcional = false } // Cantidad negativa
             }
@@ -189,7 +190,7 @@ public class RecetasErrorHandlingTests : BaseIntegrationTest
             ProductoId = productoId,
             Preparacion = "Receta de prueba",
             TiempoPreparacionMinutos = 20,
-            Ingredientes = new List<AgregarIngredienteDto>
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>
             {
                 new() { IngredienteId = Guid.NewGuid(), Cantidad = 0, EsOpcional = false } // Cantidad cero
             }
@@ -226,7 +227,7 @@ public class RecetasErrorHandlingTests : BaseIntegrationTest
             ProductoId = productoIdInexistente,
             Preparacion = "Receta de prueba",
             TiempoPreparacionMinutos = 20,
-            Ingredientes = new List<AgregarIngredienteDto>()
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>()
         };
 
         var json = JsonSerializer.Serialize(command, GetJsonOptions());
@@ -259,7 +260,7 @@ public class RecetasErrorHandlingTests : BaseIntegrationTest
             ProductoId = productoId,
             Preparacion = "Receta de prueba",
             TiempoPreparacionMinutos = 20,
-            Ingredientes = new List<AgregarIngredienteDto>
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>
             {
                 new() { IngredienteId = ingredienteIdInexistente, Cantidad = 1, EsOpcional = false }
             }
@@ -294,7 +295,7 @@ public class RecetasErrorHandlingTests : BaseIntegrationTest
             ProductoId = productoId,
             Preparacion = "Receta de prueba",
             TiempoPreparacionMinutos = 20,
-            Ingredientes = new List<AgregarIngredienteDto>
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>
             {
                 new() { IngredienteId = ingredienteId, Cantidad = 1, EsOpcional = false },
                 new() { IngredienteId = ingredienteId, Cantidad = 2, EsOpcional = false } // Duplicado
@@ -332,7 +333,7 @@ public class RecetasErrorHandlingTests : BaseIntegrationTest
             Id = recetaIdInexistente,
             Preparacion = "Preparación actualizada",
             TiempoPreparacionMinutos = 25,
-            Ingredientes = new List<AgregarIngredienteDto>()
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>()
         };
 
         var json = JsonSerializer.Serialize(command, GetJsonOptions());
@@ -364,7 +365,7 @@ public class RecetasErrorHandlingTests : BaseIntegrationTest
             Id = recetaId,
             Preparacion = "", // Preparación vacía
             TiempoPreparacionMinutos = -10, // Tiempo negativo
-            Ingredientes = new List<AgregarIngredienteDto>()
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>()
         };
 
         var json = JsonSerializer.Serialize(command, GetJsonOptions());
@@ -627,7 +628,7 @@ public class RecetasErrorHandlingTests : BaseIntegrationTest
             Id = recetaId,
             Preparacion = "Preparación 1",
             TiempoPreparacionMinutos = 20,
-            Ingredientes = new List<AgregarIngredienteDto>()
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>()
         };
 
         var command2 = new ActualizarRecetaCommand
@@ -635,7 +636,7 @@ public class RecetasErrorHandlingTests : BaseIntegrationTest
             Id = recetaId,
             Preparacion = "Preparación 2",
             TiempoPreparacionMinutos = 25,
-            Ingredientes = new List<AgregarIngredienteDto>()
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>()
         };
 
         var json1 = JsonSerializer.Serialize(command1, GetJsonOptions());
@@ -662,6 +663,11 @@ public class RecetasErrorHandlingTests : BaseIntegrationTest
     {
         // Crear productos primero
         var productoIds = await CrearProductosDePruebaAsync(cantidad);
+        
+        if (productoIds.Count < cantidad)
+        {
+            throw new InvalidOperationException($"No se pudieron crear suficientes productos. Se requieren {cantidad}, pero solo se crearon {productoIds.Count}");
+        }
         
         // Crear recetas para cada producto
         var recetaIds = new List<Guid>();

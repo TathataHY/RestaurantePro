@@ -206,7 +206,7 @@ public class RecetasPerformanceTests : BaseIntegrationTest
             ProductoId = productoId,
             Preparacion = "Receta de prueba para rendimiento",
             TiempoPreparacionMinutos = 20,
-            Ingredientes = new List<AgregarIngredienteDto>
+            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>
             {
                 new() { IngredienteId = Guid.NewGuid(), Cantidad = 2, EsOpcional = false },
                 new() { IngredienteId = Guid.NewGuid(), Cantidad = 1, EsOpcional = true }
@@ -233,10 +233,10 @@ public class RecetasPerformanceTests : BaseIntegrationTest
         var productoIds = await CrearProductosDePruebaAsync(1);
         var productoId = productoIds.First();
         
-        var ingredientes = new List<AgregarIngredienteDto>();
+        var ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>();
         for (int i = 0; i < 20; i++) // 20 ingredientes
         {
-            ingredientes.Add(new AgregarIngredienteDto
+            ingredientes.Add(new RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto
             {
                 IngredienteId = Guid.NewGuid(),
                 Cantidad = 1 + i,
@@ -464,6 +464,12 @@ public class RecetasPerformanceTests : BaseIntegrationTest
     private async Task<List<Guid>> SeedRecetasDePruebaAsync(int cantidad = 5)
     {
         var productoIds = await CrearProductosDePruebaAsync(cantidad);
+        
+        if (productoIds.Count < cantidad)
+        {
+            throw new InvalidOperationException($"No se pudieron crear suficientes productos. Se requieren {cantidad}, pero solo se crearon {productoIds.Count}");
+        }
+        
         var recetaIds = new List<Guid>();
         
         for (int i = 0; i < cantidad; i++)

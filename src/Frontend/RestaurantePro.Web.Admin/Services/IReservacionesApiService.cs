@@ -4,13 +4,20 @@ namespace RestaurantePro.Web.Admin.Services;
 
 public interface IReservacionesApiService
 {
-    Task<List<ReservacionDto>> ObtenerReservacionesAsync();
+    // Obtener reservaciones
+    Task<PaginatedList<ReservacionDto>?> ObtenerReservacionesAsync(ReservacionFiltrosDto filtros);
     Task<ReservacionDto?> ObtenerReservacionPorIdAsync(Guid id);
+    
+    // CRUD de reservaciones
     Task<ReservacionDto?> CrearReservacionAsync(CrearReservacionRequest request);
     Task<ReservacionDto?> ActualizarReservacionAsync(Guid id, ActualizarReservacionRequest request);
     Task<bool> EliminarReservacionAsync(Guid id);
-    Task<bool> CambiarEstadoReservacionAsync(Guid id, EstadoReservacion estado);
+    
+    // Estados de reservaciones
     Task<bool> ConfirmarReservacionAsync(ConfirmarReservacionRequest request);
     Task<bool> CancelarReservacionAsync(CancelarReservacionRequest request);
     Task<bool> MarcarLlegadaAsync(MarcarLlegadaRequest request);
+    
+    // Estadísticas y reportes
+    Task<ReservacionEstadisticasDto?> ObtenerEstadisticasAsync();
 }

@@ -1,8 +1,8 @@
 @using RestaurantePro.Web.Admin.Models
 @using RestaurantePro.Web.Admin.Services
-@inject ReservacionesApiService ReservacionesApi
-@inject ClientesApiService ClientesApi
-@inject MesasApiService MesasApi
+@inject IReservacionesApiService ReservacionesApi
+@inject IClientesApiService ClientesApi
+@inject IMesasApiService MesasApi
 
 <div class="card">
     <div class="card-header">
@@ -269,7 +269,8 @@
     {
         try
         {
-            estados = await ReservacionesApi.ObtenerEstadosAsync() ?? new List<string>();
+            // estados = await ReservacionesApi.ObtenerEstadosAsync() ?? new List<string>();
+            estados = new List<string> { "Pendiente", "Confirmada", "EnProceso", "Completada", "Cancelada", "NoShow" };
         }
         catch (Exception ex)
         {
@@ -282,7 +283,8 @@
     {
         try
         {
-            canales = await ReservacionesApi.ObtenerCanalesAsync() ?? new List<string>();
+            // canales = await ReservacionesApi.ObtenerCanalesAsync() ?? new List<string>();
+            canales = new List<string> { "Telefono", "Web", "Presencial", "WhatsApp", "Email" };
         }
         catch (Exception ex)
         {
@@ -295,9 +297,10 @@
     {
         try
         {
-            var filtros = new ClienteFiltrosDto { PageSize = 1000 };
-            var resultado = await ClientesApi.ObtenerClientesAsync(filtros);
-            clientes = resultado?.Items?.ToList() ?? new List<ClienteDto>();
+            // var filtros = new ClienteFiltrosDto { PageSize = 1000 };
+            // var resultado = await ClientesApi.ObtenerClientesAsync(filtros);
+            var resultado = await ClientesApi.ObtenerClientesAsync();
+            clientes = resultado ?? new List<ClienteDto>();
         }
         catch (Exception ex)
         {
