@@ -3,7 +3,7 @@ using RestaurantePro.Web.Admin.Models;
 
 namespace RestaurantePro.Web.Admin.Services;
 
-public class ReportesComercialesApiService
+public class ReportesComercialesApiService : IReportesComercialesApiService
 {
     private readonly IHttpClientFactory _httpFactory;
     private readonly TokenStore _tokenStore;

@@ -8,7 +8,7 @@ namespace RestaurantePro.Application.Core.Usuarios.Commands.CambiarRolUsuario;
 /// </summary>
 public class CambiarRolUsuarioValidator : AbstractValidator<CambiarRolUsuarioCommand>
 {
-    private readonly string[] _rolesValidos = { "Empleado", "Supervisor", "Gerente", "Administrador", "SuperAdministrador" };
+    private readonly string[] _rolesValidos = { "Administrador", "Gerente", "Cajero", "Mesero", "Cocinero", "EncargadoInventario" };
 
     public CambiarRolUsuarioValidator()
     {

@@ -33,26 +33,26 @@ builder.Services.AddHttpClient("Api", (sp, http) =>
         }
     }
 }).AddHttpMessageHandler<AuthTokenHandler>();
-builder.Services.AddScoped<ProductosApiService>();
-builder.Services.AddScoped<AuthApiService>();
-builder.Services.AddScoped<UsuariosApiService>();
-builder.Services.AddScoped<CategoriasApiService>();
-builder.Services.AddScoped<MesasApiService>();
-builder.Services.AddScoped<DashboardApiService>();
-builder.Services.AddScoped<PromocionesApiService>();
-builder.Services.AddScoped<ReportesApiService>();
-builder.Services.AddScoped<ClientesApiService>();
-builder.Services.AddScoped<FacturasApiService>();
-builder.Services.AddScoped<ComandasApiService>();
-builder.Services.AddScoped<ReservacionesApiService>();
-builder.Services.AddScoped<PreparacionesApiService>(); // Added for Semana 8
-builder.Services.AddScoped<InventarioApiService>(); // Added for Semana 9
-builder.Services.AddScoped<ProveedoresApiService>(); // Added for Semana 10
-builder.Services.AddScoped<NotificacionesApiService>(); // Added for Semana 11
-builder.Services.AddScoped<RecetasApiService>(); // Added for Semana 11
-builder.Services.AddScoped<ConfiguracionApiService>(); // Added for Semana 12
-builder.Services.AddScoped<ReportesComercialesApiService>(); // Added for Semana 12
-builder.Services.AddScoped<ReportesInventarioApiService>(); // Added for Semana 12
+builder.Services.AddScoped<IProductosApiService, ProductosApiService>();
+builder.Services.AddScoped<IAuthApiService, AuthApiService>();
+builder.Services.AddScoped<IUsuariosApiService, UsuariosApiService>();
+builder.Services.AddScoped<ICategoriasApiService, CategoriasApiService>();
+builder.Services.AddScoped<IMesasApiService, MesasApiService>();
+builder.Services.AddScoped<IDashboardApiService, DashboardApiService>();
+builder.Services.AddScoped<IPromocionesApiService, PromocionesApiService>();
+builder.Services.AddScoped<IReportesApiService, ReportesApiService>();
+builder.Services.AddScoped<IClientesApiService, ClientesApiService>();
+builder.Services.AddScoped<IFacturasApiService, FacturasApiService>();
+builder.Services.AddScoped<IComandasApiService, ComandasApiService>();
+builder.Services.AddScoped<IReservacionesApiService, ReservacionesApiService>();
+builder.Services.AddScoped<IPreparacionesApiService, PreparacionesApiService>(); // Added for Semana 8
+builder.Services.AddScoped<IInventarioApiService, InventarioApiService>(); // Added for Semana 9
+builder.Services.AddScoped<IProveedoresApiService, ProveedoresApiService>(); // Added for Semana 10
+builder.Services.AddScoped<INotificacionesApiService, NotificacionesApiService>(); // Added for Semana 11
+builder.Services.AddScoped<IRecetasApiService, RecetasApiService>(); // Added for Semana 11
+builder.Services.AddScoped<IConfiguracionApiService, ConfiguracionApiService>(); // Added for Semana 12
+builder.Services.AddScoped<IReportesComercialesApiService, ReportesComercialesApiService>(); // Added for Semana 12
+builder.Services.AddScoped<IReportesInventarioApiService, ReportesInventarioApiService>(); // Added for Semana 12
 builder.Services.AddScoped<JwtAuthenticationStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<JwtAuthenticationStateProvider>());
 

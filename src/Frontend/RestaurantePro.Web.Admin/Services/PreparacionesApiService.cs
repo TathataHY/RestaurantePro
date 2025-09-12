@@ -7,7 +7,7 @@ namespace RestaurantePro.Web.Admin.Services
     /// <summary>
     /// Servicio para gestión de preparaciones de cocina
     /// </summary>
-    public class PreparacionesApiService
+    public class PreparacionesApiService : IPreparacionesApiService
     {
         private readonly HttpClient _httpClient;
         private readonly TokenStore _tokenStore;

@@ -7,7 +7,7 @@ namespace RestaurantePro.Web.Admin.Services;
 /// <summary>
 /// Servicio para interactuar con la API de proveedores
 /// </summary>
-public class ProveedoresApiService
+public class ProveedoresApiService : IProveedoresApiService
 {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly TokenStore _tokenStore;

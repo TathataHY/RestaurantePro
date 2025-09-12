@@ -6,7 +6,7 @@ namespace RestaurantePro.Web.Admin.Services;
 /// <summary>
 /// Servicio para gestionar reportes del restaurante
 /// </summary>
-public class ReportesApiService
+public class ReportesApiService : IReportesApiService
 {
     private readonly IHttpClientFactory _httpFactory;
     private readonly TokenStore _tokenStore;

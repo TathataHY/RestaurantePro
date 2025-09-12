@@ -3,7 +3,7 @@ namespace RestaurantePro.Application.Core.Usuarios.Commands.ActualizarUsuario;
 public class ActualizarUsuarioValidator : AbstractValidator<ActualizarUsuarioCommand>
 {
     private readonly IApplicationDbContext _context;
-    private readonly string[] _rolesValidos = { "Empleado", "Supervisor", "Gerente", "Administrador", "SuperAdministrador" };
+    private readonly string[] _rolesValidos = { "Administrador", "Gerente", "Cajero", "Mesero", "Cocinero", "EncargadoInventario" };
     private readonly string[] _departamentosValidos = { "Cocina", "Servicio", "Administración", "Gerencia", "Mantenimiento" };
 
     public ActualizarUsuarioValidator(IApplicationDbContext context)
@@ -116,11 +116,14 @@ public class ActualizarUsuarioValidator : AbstractValidator<ActualizarUsuarioCom
             .WithMessage($"El rol debe ser uno de: {string.Join(", ", _rolesValidos)}.")
             .When(v => !string.IsNullOrWhiteSpace(v.Rol));
 
-        // TODO: Descomentar cuando Usuario tenga NivelAcceso
-        // RuleFor(v => v.NivelAcceso)
-        //     .GreaterThanOrEqualTo(1).WithMessage("El nivel de acceso mínimo es 1.")
-        //     .LessThanOrEqualTo(10).WithMessage("El nivel de acceso máximo es 10.")
-        //     .When(v => v.NivelAcceso.HasValue);
+        RuleFor(v => v.NivelAcceso)
+            .GreaterThanOrEqualTo(1)
+            .WithMessage("El nivel de acceso mínimo es 1.")
+            .LessThanOrEqualTo(10)
+            .WithMessage("El nivel de acceso máximo es 10.")
+            .Must((command, nivelAcceso) => ValidarNivelSegunRol(command.Rol, nivelAcceso))
+            .WithMessage("El nivel de acceso no es compatible con el rol asignado.")
+            .When(v => v.NivelAcceso.HasValue && !string.IsNullOrWhiteSpace(v.Rol));
 
         // Validaciones simplificadas por ahora
         RuleFor(v => v.PermisosEspecificos)
@@ -449,5 +452,28 @@ public class ActualizarUsuarioValidator : AbstractValidator<ActualizarUsuarioCom
     {
         // Temporal: asumir que no excede límites diarios
         return await Task.FromResult(true);
+    }
+
+    private static bool ValidarNivelSegunRol(string? rol, int? nivelAcceso)
+    {
+        if (string.IsNullOrWhiteSpace(rol) || !nivelAcceso.HasValue)
+            return true;
+
+        return rol.ToLower() switch
+        {
+            // Roles operativos (nivel bajo)
+            "mesero" => nivelAcceso >= 1 && nivelAcceso <= 3,
+            "cocinero" => nivelAcceso >= 1 && nivelAcceso <= 3,
+            "cajero" => nivelAcceso >= 1 && nivelAcceso <= 3,
+            "encargadoinventario" => nivelAcceso >= 2 && nivelAcceso <= 4,
+            // Roles de supervisión (nivel medio)
+            "supervisor" => nivelAcceso >= 3 && nivelAcceso <= 6,
+            // Roles de gestión (nivel alto)
+            "gerente" => nivelAcceso >= 5 && nivelAcceso <= 8,
+            "administrador" => nivelAcceso >= 7 && nivelAcceso <= 9,
+            // Rol de superadministrador (nivel máximo)
+            "superadministrador" => nivelAcceso >= 9 && nivelAcceso <= 10,
+            _ => false
+        };
     }
 } 

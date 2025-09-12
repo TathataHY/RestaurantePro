@@ -125,9 +125,17 @@ public class UsuariosController : ControllerBase
                 response);
         }
 
+        var errors = result.Errors?.Any() == true 
+            ? result.Errors.ToList() 
+            : new List<string> { result.Error ?? "Error desconocido" };
+            
+        var message = result.Errors?.Any() == true 
+            ? "Error de validación al crear usuario"
+            : "Error al crear usuario";
+            
         return BadRequest(ApiResponse<object>.ErrorResponse(
-            new List<string> { result.Error ?? "Error desconocido" },
-            "Error al crear usuario",
+            errors,
+            message,
             StatusCodes.Status400BadRequest));
     }
 
@@ -185,7 +193,7 @@ public class UsuariosController : ControllerBase
         {
             var errorResponse = ApiResponse<object>.ErrorResponse(
                 new List<string> { result.Error ?? "Error desconocido" },
-                "Error al eliminar usuario",
+                "Usuario no encontrado",
                 StatusCodes.Status404NotFound);
             return NotFound(errorResponse);
         }

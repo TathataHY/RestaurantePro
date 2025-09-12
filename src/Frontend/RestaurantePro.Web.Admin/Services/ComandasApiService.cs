@@ -6,7 +6,7 @@ namespace RestaurantePro.Web.Admin.Services;
 /// <summary>
 /// Servicio para gestionar comandas del restaurante
 /// </summary>
-public class ComandasApiService
+public class ComandasApiService : IComandasApiService
 {
     private readonly IHttpClientFactory _httpFactory;
     private readonly TokenStore _tokenStore;

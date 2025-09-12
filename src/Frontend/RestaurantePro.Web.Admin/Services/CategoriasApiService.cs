@@ -3,7 +3,7 @@ using RestaurantePro.Web.Admin.Models;
 
 namespace RestaurantePro.Web.Admin.Services;
 
-public class CategoriasApiService
+public class CategoriasApiService : ICategoriasApiService
 {
     private readonly IHttpClientFactory _httpFactory;
     private readonly TokenStore _tokenStore;
@@ -91,6 +91,41 @@ public class CategoriasApiService
         }
         var resp = await http.GetFromJsonAsync<ApiResponse<bool>>(url);
         return resp?.Data ?? false;
+    }
+
+    // Implementación de la interfaz ICategoriasApiService
+    public async Task<List<CategoriaProductoDto>> ObtenerCategoriasAsync()
+    {
+        return await ObtenerAsync();
+    }
+
+    public async Task<CategoriaProductoDto?> ObtenerCategoriaPorIdAsync(Guid id)
+    {
+        return await ObtenerPorIdAsync(id);
+    }
+
+    public async Task<CategoriaProductoDto?> CrearCategoriaAsync(CreateCategoriaRequest request)
+    {
+        var response = await CrearAsync(request);
+        return response?.Data;
+    }
+
+    public async Task<CategoriaProductoDto?> ActualizarCategoriaAsync(Guid id, UpdateCategoriaRequest request)
+    {
+        var response = await ActualizarAsync(id, request);
+        return response?.Data;
+    }
+
+    public async Task<bool> EliminarCategoriaAsync(Guid id)
+    {
+        return await EliminarAsync(id);
+    }
+
+    public async Task<bool> CambiarEstadoCategoriaAsync(Guid id, bool activa)
+    {
+        var http = CreateClient();
+        var resp = await http.PatchAsync($"api/core/categorias/{id}/estado?activa={activa}", null);
+        return resp.IsSuccessStatusCode;
     }
 }
 

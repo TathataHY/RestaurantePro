@@ -7,7 +7,7 @@ namespace RestaurantePro.Web.Admin.Services;
 /// <summary>
 /// Servicio para la gestión de inventario
 /// </summary>
-public class InventarioApiService
+public class InventarioApiService : IInventarioApiService
 {
     private readonly HttpClient _httpClient;
     private readonly TokenStore _tokenStore;

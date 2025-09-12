@@ -3,7 +3,7 @@ using RestaurantePro.Web.Admin.Models;
 
 namespace RestaurantePro.Web.Admin.Services;
 
-public class AuthApiService
+public class AuthApiService : IAuthApiService
 {
     private readonly IHttpClientFactory _httpFactory;
 

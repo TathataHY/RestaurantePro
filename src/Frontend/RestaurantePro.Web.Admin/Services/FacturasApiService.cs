@@ -6,7 +6,7 @@ namespace RestaurantePro.Web.Admin.Services;
 /// <summary>
 /// Servicio para gestionar facturas del restaurante
 /// </summary>
-public class FacturasApiService
+public class FacturasApiService : IFacturasApiService
 {
     private readonly IHttpClientFactory _httpFactory;
     private readonly TokenStore _tokenStore;

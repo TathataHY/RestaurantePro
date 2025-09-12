@@ -6,7 +6,7 @@ namespace RestaurantePro.Web.Admin.Services;
 /// <summary>
 /// Servicio para gestionar promociones del restaurante
 /// </summary>
-public class PromocionesApiService
+public class PromocionesApiService : IPromocionesApiService
 {
     private readonly IHttpClientFactory _httpFactory;
     private readonly TokenStore _tokenStore;

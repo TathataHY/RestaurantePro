@@ -3,7 +3,7 @@ namespace RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario;
 public class CrearUsuarioValidator : AbstractValidator<CrearUsuarioCommand>
 {
     private readonly IApplicationDbContext _context;
-    private readonly string[] _rolesValidos = { "Empleado", "Supervisor", "Gerente", "Administrador", "SuperAdministrador" };
+    private readonly string[] _rolesValidos = { "Administrador", "Gerente", "Cajero", "Mesero", "Cocinero", "EncargadoInventario" };
     private readonly string[] _departamentosValidos = { "Cocina", "Servicio", "Administración", "Limpieza", "Seguridad", "Sistemas" };
     private readonly string[] _permisosValidos = {
         "GestionarUsuarios", "GestionarRoles", "VerReportes", "VerTodosReportes", 
@@ -273,10 +273,19 @@ public class CrearUsuarioValidator : AbstractValidator<CrearUsuarioCommand>
     {
         return rol.ToLower() switch
         {
-            "empleado" => nivelAcceso <= 3,
-            "supervisor" => nivelAcceso >= 2 && nivelAcceso <= 6,
+            // Roles operativos (nivel bajo)
+            "mesero" => nivelAcceso >= 1 && nivelAcceso <= 3,
+            "cocinero" => nivelAcceso >= 1 && nivelAcceso <= 3,
+            "cajero" => nivelAcceso >= 1 && nivelAcceso <= 3,
+            "encargadoinventario" => nivelAcceso >= 2 && nivelAcceso <= 5,
+            
+            // Roles administrativos (nivel medio-alto)
             "gerente" => nivelAcceso >= 4 && nivelAcceso <= 8,
             "administrador" => nivelAcceso >= 6 && nivelAcceso <= 9,
+            
+            // Roles legacy (mantener compatibilidad)
+            "empleado" => nivelAcceso <= 3,
+            "supervisor" => nivelAcceso >= 2 && nivelAcceso <= 6,
             "superadministrador" => nivelAcceso >= 8 && nivelAcceso <= 10,
             _ => false
         };

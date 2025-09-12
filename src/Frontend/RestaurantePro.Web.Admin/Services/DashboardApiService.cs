@@ -6,7 +6,7 @@ namespace RestaurantePro.Web.Admin.Services;
 /// <summary>
 /// Servicio para obtener métricas y datos del dashboard administrativo
 /// </summary>
-public class DashboardApiService
+public class DashboardApiService : IDashboardApiService
 {
     private readonly IHttpClientFactory _httpFactory;
     private readonly TokenStore _tokenStore;
