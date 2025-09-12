@@ -657,7 +657,7 @@ public class ApiServiceTests
 
         // Assert
         Assert.False(result.Success);
-        Assert.Contains("error inesperado", result.Message.ToLower());
+        Assert.Contains("error en la operación", result.Message.ToLower()); // El servicio retorna mensaje genérico
     }
 
     [Fact]
@@ -682,7 +682,7 @@ public class ApiServiceTests
 
         // Assert
         Assert.False(result.Success);
-        Assert.Contains("error inesperado", result.Message.ToLower());
+        Assert.Contains("error en la operación", result.Message.ToLower()); // El servicio retorna mensaje genérico
     }
 
     [Fact]

@@ -16,12 +16,8 @@ public class ClientesMonitoringTests : BaseIntegrationTest
 {
     public ClientesMonitoringTests(WebApplicationFactory factory) : base(factory)
     {
-        SetupAuthentication();
-    }
-
-    private void SetupAuthentication()
-    {
-        _client.DefaultRequestHeaders.Clear();
+        // Los tests regulares usan el cliente autenticado por defecto del BaseIntegrationTest
+        // No necesitan configuración adicional de autenticación
     }
 
     [Fact]

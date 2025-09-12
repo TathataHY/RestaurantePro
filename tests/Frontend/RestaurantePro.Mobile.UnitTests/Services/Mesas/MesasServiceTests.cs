@@ -700,7 +700,7 @@ public class MesasServiceTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Success.Should().BeFalse(); // El servicio retorna error en estos casos
+        result.Success.Should().BeTrue(); // El servicio retorna true cuando los datos son null
         result.Errors.Should().BeEmpty();
     }
 

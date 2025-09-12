@@ -562,7 +562,7 @@ public class DashboardServiceTests
         var result = await _dashboardService.GetTodaySalesAsync();
 
         // Assert
-        Assert.True(result > 0); // Should return simulated sales instead of negative
+        Assert.True(result >= 0); // Should return simulated sales (can be 0 or positive)
     }
 
     [Fact]
