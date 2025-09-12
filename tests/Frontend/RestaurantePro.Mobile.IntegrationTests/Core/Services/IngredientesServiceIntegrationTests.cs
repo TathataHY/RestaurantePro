@@ -426,12 +426,15 @@ public class IngredientesServiceIntegrationTests : IClassFixture<MobileIntegrati
         var lowStockTask = _ingredientesService.ObtenerIngredientesBajoStockAsync();
 
         // Act
-        var results = await Task.WhenAll(searchTask, statsTask, lowStockTask);
+        await Task.WhenAll(searchTask, statsTask, lowStockTask);
+        var searchResult = await searchTask;
+        var statsResult = await statsTask;
+        var lowStockResult = await lowStockTask;
 
         // Assert
-        Assert.True(results[0].Success); // Search
-        Assert.True(results[1].Success); // Stats
-        Assert.True(results[2].Success); // Low stock
+        Assert.True(searchResult.Success); // Search
+        Assert.True(statsResult.Success); // Stats
+        Assert.True(lowStockResult.Success); // Low stock
         _logger.LogInformation("Operaciones concurrentes de búsqueda y estadísticas exitosas");
     }
 

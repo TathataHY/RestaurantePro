@@ -31,10 +31,10 @@ public class IngredientesSecurityTests : BaseIntegrationTest
     #region Tests de Autenticación
 
     [Fact]
-    public async Task TodosLosEndpoints_ConClienteNoAutenticado_DeberianRetornarUnauthorized()
+    public async Task TodosLosEndpoints_Con_clienteNoAutenticado_DeberianRetornarUnauthorized()
     {
         // Arrange
-        var clientNoAuth = Factory.CreateClient(); // Cliente sin autenticación
+        var clientNoAuth = Factory.Create_client(); // _cliente sin autenticación
 
         // Act & Assert
         var endpoints = new[]
@@ -56,10 +56,10 @@ public class IngredientesSecurityTests : BaseIntegrationTest
     }
 
     [Fact]
-    public async Task EndpointsPOST_ConClienteNoAutenticado_DeberianRetornarUnauthorized()
+    public async Task EndpointsPOST_Con_clienteNoAutenticado_DeberianRetornarUnauthorized()
     {
         // Arrange
-        var clientNoAuth = Factory.CreateClient();
+        var clientNoAuth = Factory.Create_client();
         var command = new CrearIngredienteCommand
         {
             Nombre = "Test Security",
@@ -76,10 +76,10 @@ public class IngredientesSecurityTests : BaseIntegrationTest
     }
 
     [Fact]
-    public async Task EndpointsPUT_ConClienteNoAutenticado_DeberianRetornarUnauthorized()
+    public async Task EndpointsPUT_Con_clienteNoAutenticado_DeberianRetornarUnauthorized()
     {
         // Arrange
-        var clientNoAuth = Factory.CreateClient();
+        var clientNoAuth = Factory.Create_client();
         var ingredienteId = Guid.NewGuid();
         var command = new ActualizarIngredienteCommand
         {
@@ -97,10 +97,10 @@ public class IngredientesSecurityTests : BaseIntegrationTest
     }
 
     [Fact]
-    public async Task EndpointsDELETE_ConClienteNoAutenticado_DeberianRetornarUnauthorized()
+    public async Task EndpointsDELETE_Con_clienteNoAutenticado_DeberianRetornarUnauthorized()
     {
         // Arrange
-        var clientNoAuth = Factory.CreateClient();
+        var clientNoAuth = Factory.Create_client();
         var ingredienteId = Guid.NewGuid();
 
         // Act & Assert
@@ -116,7 +116,7 @@ public class IngredientesSecurityTests : BaseIntegrationTest
     public async Task ObtenerIngredientes_ConUsuarioAutenticado_DeberiaPermitirAcceso()
     {
         // Act
-        var response = await Client.GetAsync("/api/inventario/ingredientes?pageNumber=1&pageSize=10");
+        var response = await _client.GetAsync("/api/inventario/ingredientes?pageNumber=1&pageSize=10");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -137,7 +137,7 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync("/api/inventario/ingredientes", command);
+        var response = await _client.PostAsJsonAsync("/api/inventario/ingredientes", command);
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.BadRequest);
@@ -163,7 +163,7 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync("/api/inventario/ingredientes", command);
+        var response = await _client.PostAsJsonAsync("/api/inventario/ingredientes", command);
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.BadRequest);
@@ -197,7 +197,7 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         };
 
         // Act
-        var response = await Client.PutAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}", command);
+        var response = await _client.PutAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}", command);
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
@@ -221,7 +221,7 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         // Act & Assert
         foreach (var parametro in parametrosMaliciosos)
         {
-            var response = await Client.GetAsync($"/api/inventario/ingredientes{parametro}");
+            var response = await _client.GetAsync($"/api/inventario/ingredientes{parametro}");
             
             // El endpoint debería manejar estos parámetros de manera segura
             response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
@@ -242,7 +242,7 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         // Act & Assert
         foreach (var termino in terminosMaliciosos)
         {
-            var response = await Client.GetAsync($"/api/inventario/ingredientes/buscar?termino={termino}");
+            var response = await _client.GetAsync($"/api/inventario/ingredientes/buscar?termino={termino}");
             
             // El endpoint debería manejar estos términos de manera segura
             response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
@@ -268,7 +268,7 @@ public class IngredientesSecurityTests : BaseIntegrationTest
 
         // Act
         var content = new StringContent(jsonMalformado, System.Text.Encoding.UTF8, "application/json");
-        var response = await Client.PostAsync("/api/inventario/ingredientes", content);
+        var response = await _client.PostAsync("/api/inventario/ingredientes", content);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -287,7 +287,7 @@ public class IngredientesSecurityTests : BaseIntegrationTest
 
         // Act
         var content = new StringContent(jsonMalformado, System.Text.Encoding.UTF8, "application/json");
-        var response = await Client.PutAsync($"/api/inventario/ingredientes/{ingredienteId}", content);
+        var response = await _client.PutAsync($"/api/inventario/ingredientes/{ingredienteId}", content);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -313,7 +313,7 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync("/api/inventario/ingredientes", command);
+        var response = await _client.PostAsJsonAsync("/api/inventario/ingredientes", command);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -336,7 +336,7 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync("/api/inventario/ingredientes", command);
+        var response = await _client.PostAsJsonAsync("/api/inventario/ingredientes", command);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -365,7 +365,7 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync("/api/inventario/ingredientes", command);
+        var response = await _client.PostAsJsonAsync("/api/inventario/ingredientes", command);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -389,7 +389,7 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         // Act & Assert
         foreach (var endpoint in endpoints)
         {
-            var response = await Client.GetAsync(endpoint);
+            var response = await _client.GetAsync(endpoint);
             response.StatusCode.Should().Be(HttpStatusCode.OK);
             
             // Verificar headers de seguridad básicos
@@ -412,7 +412,7 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         // Act
         for (int i = 0; i < numeroRequests; i++)
         {
-            tasks.Add(Client.GetAsync("/api/inventario/ingredientes?pageNumber=1&pageSize=10"));
+            tasks.Add(_client.GetAsync("/api/inventario/ingredientes?pageNumber=1&pageSize=10"));
         }
 
         var responses = await Task.WhenAll(tasks);
@@ -443,7 +443,7 @@ public class IngredientesSecurityTests : BaseIntegrationTest
     public async Task ObtenerIngredientePorId_ConIdInvalido_DeberiaRetornarBadRequest(string idInvalido)
     {
         // Act
-        var response = await Client.GetAsync($"/api/inventario/ingredientes/{idInvalido}");
+        var response = await _client.GetAsync($"/api/inventario/ingredientes/{idInvalido}");
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.NotFound);
@@ -467,7 +467,7 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         };
 
         // Act
-        var response = await Client.PutAsJsonAsync($"/api/inventario/ingredientes/{idInvalido}", command);
+        var response = await _client.PutAsJsonAsync($"/api/inventario/ingredientes/{idInvalido}", command);
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.BadRequest, HttpStatusCode.NotFound);
@@ -485,7 +485,7 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "text/plain");
 
         // Act
-        var response = await Client.PostAsync("/api/inventario/ingredientes", content);
+        var response = await _client.PostAsync("/api/inventario/ingredientes", content);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -500,7 +500,7 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "text/plain");
 
         // Act
-        var response = await Client.PutAsync($"/api/inventario/ingredientes/{ingredienteId}", content);
+        var response = await _client.PutAsync($"/api/inventario/ingredientes/{ingredienteId}", content);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -525,7 +525,7 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync("/api/inventario/ingredientes", command);
+        var response = await _client.PostAsJsonAsync("/api/inventario/ingredientes", command);
 
         // Assert
         // Si CSRF está implementado, el request debería ser procesado normalmente

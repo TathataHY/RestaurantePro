@@ -35,7 +35,7 @@ public class IngredientesPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync("/api/inventario/ingredientes?pageNumber=1&pageSize=10");
+        var response = await _client.GetAsync("/api/inventario/ingredientes?pageNumber=1&pageSize=10");
 
         // Assert
         stopwatch.Stop();
@@ -50,7 +50,7 @@ public class IngredientesPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync("/api/inventario/ingredientes/lista?soloActivos=true");
+        var response = await _client.GetAsync("/api/inventario/ingredientes/lista?soloActivos=true");
 
         // Assert
         stopwatch.Stop();
@@ -65,7 +65,7 @@ public class IngredientesPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync("/api/inventario/ingredientes/estadisticas");
+        var response = await _client.GetAsync("/api/inventario/ingredientes/estadisticas");
 
         // Assert
         stopwatch.Stop();
@@ -80,7 +80,7 @@ public class IngredientesPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync("/api/inventario/ingredientes/bajo-stock?porcentajeMinimo=20");
+        var response = await _client.GetAsync("/api/inventario/ingredientes/bajo-stock?porcentajeMinimo=20");
 
         // Assert
         stopwatch.Stop();
@@ -95,7 +95,7 @@ public class IngredientesPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync("/api/inventario/ingredientes/buscar?termino=test&soloDisponibles=true");
+        var response = await _client.GetAsync("/api/inventario/ingredientes/buscar?termino=test&soloDisponibles=true");
 
         // Assert
         stopwatch.Stop();
@@ -119,7 +119,7 @@ public class IngredientesPerformanceTests : BaseIntegrationTest
         
         for (int i = 0; i < numeroRequests; i++)
         {
-            tasks.Add(Client.GetAsync("/api/inventario/ingredientes?pageNumber=1&pageSize=10"));
+            tasks.Add(_client.GetAsync("/api/inventario/ingredientes?pageNumber=1&pageSize=10"));
         }
 
         var responses = await Task.WhenAll(tasks);
@@ -149,10 +149,10 @@ public class IngredientesPerformanceTests : BaseIntegrationTest
                 UnidadMedida = UnidadMedida.Kilogramo,
                 StockMinimo = 1,
                 StockMaximo = 10,
-                CostoUnitario = 5.00m
+                PrecioUnitario = 5.00m
             };
             
-            tasks.Add(Client.PostAsJsonAsync("/api/inventario/ingredientes", command));
+            tasks.Add(_client.PostAsJsonAsync("/api/inventario/ingredientes", command));
         }
 
         var responses = await Task.WhenAll(tasks);
@@ -177,7 +177,7 @@ public class IngredientesPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/ingredientes?pageNumber={pageNumber}&pageSize={pageSize}");
+        var response = await _client.GetAsync($"/api/inventario/ingredientes?pageNumber={pageNumber}&pageSize={pageSize}");
 
         // Assert
         stopwatch.Stop();
@@ -207,7 +207,7 @@ public class IngredientesPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync("/api/inventario/ingredientes/reporte/valoracion?fechaDesde=2024-01-01&fechaHasta=2024-12-31");
+        var response = await _client.GetAsync("/api/inventario/ingredientes/reporte/valoracion?fechaDesde=2024-01-01&fechaHasta=2024-12-31");
 
         // Assert
         stopwatch.Stop();
@@ -223,7 +223,7 @@ public class IngredientesPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/ingredientes/{ingredienteId}/movimientos?fechaDesde=2024-01-01&fechaHasta=2024-12-31&limite=50");
+        var response = await _client.GetAsync($"/api/inventario/ingredientes/{ingredienteId}/movimientos?fechaDesde=2024-01-01&fechaHasta=2024-12-31&limite=50");
 
         // Assert
         stopwatch.Stop();
@@ -242,7 +242,7 @@ public class IngredientesPerformanceTests : BaseIntegrationTest
         var initialMemory = GC.GetTotalMemory(true);
 
         // Act
-        var response = await Client.GetAsync("/api/inventario/ingredientes?pageNumber=1&pageSize=100");
+        var response = await _client.GetAsync("/api/inventario/ingredientes?pageNumber=1&pageSize=100");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -271,7 +271,7 @@ public class IngredientesPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync("/api/inventario/ingredientes?pageNumber=1&pageSize=50", cts.Token);
+        var response = await _client.GetAsync("/api/inventario/ingredientes?pageNumber=1&pageSize=50", cts.Token);
 
         // Assert
         stopwatch.Stop();
@@ -294,7 +294,7 @@ public class IngredientesPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/ingredientes/buscar?termino={termino}");
+        var response = await _client.GetAsync($"/api/inventario/ingredientes/buscar?termino={termino}");
 
         // Assert
         stopwatch.Stop();
@@ -318,13 +318,13 @@ public class IngredientesPerformanceTests : BaseIntegrationTest
             UnidadMedida = UnidadMedida.Kilogramo,
             StockMinimo = 1,
             StockMaximo = 10,
-            CostoUnitario = 5.00m
+            PrecioUnitario = 5.00m
         };
 
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.PostAsJsonAsync("/api/inventario/ingredientes", command);
+        var response = await _client.PostAsJsonAsync("/api/inventario/ingredientes", command);
 
         // Assert
         stopwatch.Stop();
@@ -347,7 +347,7 @@ public class IngredientesPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/consumir", command);
+        var response = await _client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/consumir", command);
 
         // Assert
         stopwatch.Stop();
@@ -365,14 +365,14 @@ public class IngredientesPerformanceTests : BaseIntegrationTest
             NumeroLote = "LOTE-PERF-001",
             Cantidad = 25,
             FechaVencimiento = DateTime.Now.AddDays(30),
-            CostoUnitario = 12.50m,
+            PrecioUnitario = 12.50m,
             Observaciones = "Lote de prueba performance"
         };
 
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/lotes", command);
+        var response = await _client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/lotes", command);
 
         // Assert
         stopwatch.Stop();
@@ -391,7 +391,7 @@ public class IngredientesPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync("/api/inventario/ingredientes?pageNumber=1&pageSize=20&soloActivos=true&categoria=Alta&ordenarPor=nombre&direccion=asc");
+        var response = await _client.GetAsync("/api/inventario/ingredientes?pageNumber=1&pageSize=20&soloActivos=true&categoria=Alta&ordenarPor=nombre&direccion=asc");
 
         // Assert
         stopwatch.Stop();
@@ -414,7 +414,7 @@ public class IngredientesPerformanceTests : BaseIntegrationTest
         for (int i = 0; i < numeroEjecuciones; i++)
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            var response = await Client.GetAsync("/api/inventario/ingredientes?pageNumber=1&pageSize=10");
+            var response = await _client.GetAsync("/api/inventario/ingredientes?pageNumber=1&pageSize=10");
             stopwatch.Stop();
             
             response.StatusCode.Should().Be(HttpStatusCode.OK);

@@ -37,19 +37,20 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         var command = new CrearIngredienteCommand
         {
             Nombre = "",
-            Rotacion = RotacionIngrediente.Alta,
-            UnidadMedida = UnidadMedida.Kilogramo,
+            Rotacion = "Alta",
+            UnidadMedida = "Kilogramo",
+            StockInicial = 5,
             StockMinimo = 1,
-            StockMaximo = 10,
-            CostoUnitario = 5.00m
+            CostoInicial = 5.00m,
+            UsuarioId = Guid.NewGuid()
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync("/api/inventario/ingredientes", command);
+        var response = await _client.PostAsJsonAsync("/api/inventario/ingredientes", command);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+        var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<object>>();
         responseData.Should().NotBeNull();
         responseData!.Success.Should().BeFalse();
         responseData.Errors.Should().NotBeEmpty();
@@ -62,15 +63,15 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         var command = new CrearIngredienteCommand
         {
             Nombre = "Test Ingrediente",
-            Rotacion = RotacionIngrediente.Alta,
-            UnidadMedida = UnidadMedida.Kilogramo,
+            Rotacion = "Alta",
+            UnidadMedida = "Kilogramo",
             StockMinimo = -1,
             StockMaximo = 10,
-            CostoUnitario = 5.00m
+            PrecioUnitario = 5.00m
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync("/api/inventario/ingredientes", command);
+        var response = await _client.PostAsJsonAsync("/api/inventario/ingredientes", command);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -83,15 +84,15 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         var command = new CrearIngredienteCommand
         {
             Nombre = "Test Ingrediente",
-            Rotacion = RotacionIngrediente.Alta,
-            UnidadMedida = UnidadMedida.Kilogramo,
+            Rotacion = "Alta",
+            UnidadMedida = "Kilogramo",
             StockMinimo = 10,
             StockMaximo = 5, // Menor que mínimo
-            CostoUnitario = 5.00m
+            PrecioUnitario = 5.00m
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync("/api/inventario/ingredientes", command);
+        var response = await _client.PostAsJsonAsync("/api/inventario/ingredientes", command);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -104,15 +105,15 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         var command = new CrearIngredienteCommand
         {
             Nombre = "Test Ingrediente",
-            Rotacion = RotacionIngrediente.Alta,
-            UnidadMedida = UnidadMedida.Kilogramo,
+            Rotacion = "Alta",
+            UnidadMedida = "Kilogramo",
             StockMinimo = 1,
             StockMaximo = 10,
-            CostoUnitario = -5.00m
+            PrecioUnitario = -5.00m
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync("/api/inventario/ingredientes", command);
+        var response = await _client.PostAsJsonAsync("/api/inventario/ingredientes", command);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -125,16 +126,17 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         var command = new CrearIngredienteCommand
         {
             Nombre = "Test Ingrediente",
-            Rotacion = RotacionIngrediente.Alta,
-            UnidadMedida = UnidadMedida.Kilogramo,
+            Rotacion = "Alta",
+            UnidadMedida = "Kilogramo",
+            StockInicial = 5,
             StockMinimo = 1,
-            StockMaximo = 10,
-            CostoUnitario = 5.00m,
+            CostoInicial = 5.00m,
+            UsuarioId = Guid.NewGuid(),
             DiasVencimiento = -1
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync("/api/inventario/ingredientes", command);
+        var response = await _client.PostAsJsonAsync("/api/inventario/ingredientes", command);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -151,14 +153,14 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         var ingredienteId = Guid.NewGuid();
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/ingredientes/{ingredienteId}");
+        var response = await _client.GetAsync($"/api/inventario/ingredientes/{ingredienteId}");
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.OK);
         
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
-            var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+            var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<object>>();
             responseData.Should().NotBeNull();
             responseData!.Success.Should().BeFalse();
             responseData.StatusCode.Should().Be(404);
@@ -173,15 +175,16 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         var command = new ActualizarIngredienteCommand
         {
             Nombre = "Ingrediente Inexistente",
-            Rotacion = RotacionIngrediente.Alta,
-            UnidadMedida = UnidadMedida.Kilogramo,
+            Rotacion = "Alta",
+            UnidadMedida = "Kilogramo",
+            StockInicial = 5,
             StockMinimo = 1,
-            StockMaximo = 10,
-            CostoUnitario = 5.00m
+            CostoInicial = 5.00m,
+            UsuarioId = Guid.NewGuid()
         };
 
         // Act
-        var response = await Client.PutAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}", command);
+        var response = await _client.PutAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}", command);
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
@@ -194,7 +197,7 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         var ingredienteId = Guid.NewGuid();
 
         // Act
-        var response = await Client.DeleteAsync($"/api/inventario/ingredientes/{ingredienteId}");
+        var response = await _client.DeleteAsync($"/api/inventario/ingredientes/{ingredienteId}");
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.NoContent);
@@ -218,7 +221,7 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/movimientos", command);
+        var response = await _client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/movimientos", command);
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
@@ -238,7 +241,7 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/movimientos", command);
+        var response = await _client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/movimientos", command);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -258,7 +261,7 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/movimientos", command);
+        var response = await _client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/movimientos", command);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -281,7 +284,7 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/consumir", command);
+        var response = await _client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/consumir", command);
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
@@ -300,7 +303,7 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/consumir", command);
+        var response = await _client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/consumir", command);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -319,7 +322,7 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/consumir", command);
+        var response = await _client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/consumir", command);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -338,7 +341,7 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/consumir", command);
+        var response = await _client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/consumir", command);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -358,12 +361,12 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
             NumeroLote = "LOTE-001",
             Cantidad = 20,
             FechaVencimiento = DateTime.Now.AddDays(30),
-            CostoUnitario = 10.00m,
+            PrecioUnitario = 10.00m,
             Observaciones = "Lote de prueba"
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/lotes", command);
+        var response = await _client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/lotes", command);
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
@@ -379,12 +382,12 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
             NumeroLote = "LOTE-001",
             Cantidad = -20, // Cantidad negativa
             FechaVencimiento = DateTime.Now.AddDays(30),
-            CostoUnitario = 10.00m,
+            PrecioUnitario = 10.00m,
             Observaciones = "Lote de prueba"
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/lotes", command);
+        var response = await _client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/lotes", command);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -400,12 +403,12 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
             NumeroLote = "LOTE-001",
             Cantidad = 20,
             FechaVencimiento = DateTime.Now.AddDays(-1), // Fecha pasada
-            CostoUnitario = 10.00m,
+            PrecioUnitario = 10.00m,
             Observaciones = "Lote de prueba"
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/lotes", command);
+        var response = await _client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/lotes", command);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -421,12 +424,12 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
             NumeroLote = "LOTE-001",
             Cantidad = 20,
             FechaVencimiento = DateTime.Now.AddDays(30),
-            CostoUnitario = -10.00m, // Costo negativo
+            PrecioUnitario = -10.00m, // Costo negativo
             Observaciones = "Lote de prueba"
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/lotes", command);
+        var response = await _client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/lotes", command);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -444,7 +447,7 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         var proveedorId = Guid.NewGuid();
 
         // Act
-        var response = await Client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/asociar-proveedor/{proveedorId}", new { });
+        var response = await _client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/asociar-proveedor/{proveedorId}", new { });
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
@@ -458,7 +461,7 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         var proveedorId = Guid.NewGuid();
 
         // Act
-        var response = await Client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/asociar-proveedor/{proveedorId}", new { });
+        var response = await _client.PostAsJsonAsync($"/api/inventario/ingredientes/{ingredienteId}/asociar-proveedor/{proveedorId}", new { });
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
@@ -475,7 +478,7 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         var query = "?pageNumber=-1&pageSize=10";
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/ingredientes{query}");
+        var response = await _client.GetAsync($"/api/inventario/ingredientes{query}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -488,7 +491,7 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         var query = "?pageNumber=1&pageSize=0";
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/ingredientes{query}");
+        var response = await _client.GetAsync($"/api/inventario/ingredientes{query}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -501,7 +504,7 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         var query = "?pageNumber=1&pageSize=10000"; // Muy grande
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/ingredientes{query}");
+        var response = await _client.GetAsync($"/api/inventario/ingredientes{query}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -519,7 +522,7 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
 
         // Act
         var content = new StringContent(jsonMalformado, System.Text.Encoding.UTF8, "application/json");
-        var response = await Client.PostAsync("/api/inventario/ingredientes", content);
+        var response = await _client.PostAsync("/api/inventario/ingredientes", content);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -534,7 +537,7 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
 
         // Act
         var content = new StringContent(jsonMalformado, System.Text.Encoding.UTF8, "application/json");
-        var response = await Client.PutAsync($"/api/inventario/ingredientes/{ingredienteId}", content);
+        var response = await _client.PutAsync($"/api/inventario/ingredientes/{ingredienteId}", content);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -552,15 +555,16 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         var command = new CrearIngredienteCommand
         {
             Nombre = nombreMuyLargo,
-            Rotacion = RotacionIngrediente.Alta,
-            UnidadMedida = UnidadMedida.Kilogramo,
+            Rotacion = "Alta",
+            UnidadMedida = "Kilogramo",
+            StockInicial = 5,
             StockMinimo = 1,
-            StockMaximo = 10,
-            CostoUnitario = 5.00m
+            CostoInicial = 5.00m,
+            UsuarioId = Guid.NewGuid()
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync("/api/inventario/ingredientes", command);
+        var response = await _client.PostAsJsonAsync("/api/inventario/ingredientes", command);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -575,15 +579,16 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         {
             Nombre = "Test Ingrediente",
             Descripcion = descripcionMuyLarga,
-            Rotacion = RotacionIngrediente.Alta,
-            UnidadMedida = UnidadMedida.Kilogramo,
+            Rotacion = "Alta",
+            UnidadMedida = "Kilogramo",
+            StockInicial = 5,
             StockMinimo = 1,
-            StockMaximo = 10,
-            CostoUnitario = 5.00m
+            CostoInicial = 5.00m,
+            UsuarioId = Guid.NewGuid()
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync("/api/inventario/ingredientes", command);
+        var response = await _client.PostAsJsonAsync("/api/inventario/ingredientes", command);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -597,7 +602,7 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
     public async Task ObtenerEstadisticas_ConErrorInterno_DeberiaManejarExcepcion()
     {
         // Act
-        var response = await Client.GetAsync("/api/inventario/ingredientes/estadisticas");
+        var response = await _client.GetAsync("/api/inventario/ingredientes/estadisticas");
 
         // Assert
         // El endpoint debería manejar errores internos y retornar un error controlado
@@ -605,7 +610,7 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         
         if (response.StatusCode == HttpStatusCode.BadRequest)
         {
-            var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+            var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<object>>();
             responseData.Should().NotBeNull();
             responseData!.Success.Should().BeFalse();
         }

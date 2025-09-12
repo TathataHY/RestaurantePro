@@ -1370,4 +1370,414 @@ public class TestTarjetasFidelizacionService : RestaurantePro.Mobile.Core.Servic
         };
         return Task.FromResult(response2);
     }
+}
+
+/// <summary>
+/// Mock del servicio de ingredientes para tests
+/// </summary>
+public class TestIngredientesService : RestaurantePro.Mobile.Core.Services.Inventory.IIngredientesService
+{
+    private readonly List<RestaurantePro.Mobile.Core.Models.DTOs.IngredienteDto> _ingredientes = new()
+    {
+        new RestaurantePro.Mobile.Core.Models.DTOs.IngredienteDto
+        {
+            Id = Guid.Parse("00000000-0000-0000-0000-000000000001"),
+            Nombre = "Tomate",
+            Descripcion = "Tomate fresco para ensaladas",
+            StockActual = 50,
+            StockMinimo = 10,
+            UnidadMedida = "kg",
+            PrecioUnitario = 2.50m,
+            Categoria = "Vegetales",
+            Disponible = true,
+            FechaCreacion = DateTime.Now.AddDays(-30),
+            Proveedor = "Proveedor A"
+        },
+        new RestaurantePro.Mobile.Core.Models.DTOs.IngredienteDto
+        {
+            Id = Guid.Parse("00000000-0000-0000-0000-000000000002"),
+            Nombre = "Lechuga",
+            Descripcion = "Lechuga fresca",
+            StockActual = 5,
+            StockMinimo = 15,
+            UnidadMedida = "unidades",
+            PrecioUnitario = 1.20m,
+            Categoria = "Vegetales",
+            Disponible = true,
+            FechaCreacion = DateTime.Now.AddDays(-15),
+            Proveedor = "Proveedor B"
+        },
+        new RestaurantePro.Mobile.Core.Models.DTOs.IngredienteDto
+        {
+            Id = Guid.Parse("00000000-0000-0000-0000-000000000003"),
+            Nombre = "Carne de Res",
+            Descripcion = "Carne de res premium",
+            StockActual = 0,
+            StockMinimo = 5,
+            UnidadMedida = "kg",
+            PrecioUnitario = 25.00m,
+            Categoria = "Carnes",
+            Disponible = false,
+            FechaCreacion = DateTime.Now.AddDays(-10),
+            Proveedor = "Proveedor C"
+        }
+    };
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.IngredienteSummaryDto>>> ObtenerIngredientesAsync(bool soloActivos = true, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.IngredienteSummaryDto>>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var ingredientes = _ingredientes.AsQueryable();
+        if (soloActivos)
+        {
+            ingredientes = ingredientes.Where(i => i.Disponible);
+        }
+
+        var summaryDtos = ingredientes.Select(i => new RestaurantePro.Mobile.Core.Models.DTOs.IngredienteSummaryDto
+        {
+            Id = i.Id,
+            Nombre = i.Nombre,
+            StockActual = i.StockActual,
+            StockMinimo = i.StockMinimo,
+            UnidadMedida = i.UnidadMedida,
+            Disponible = i.Disponible
+        }).ToList();
+
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.IngredienteSummaryDto>>
+        {
+            Success = true,
+            Data = summaryDtos,
+            Message = "Ingredientes obtenidos exitosamente"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.IngredienteSummaryDto>>> BuscarIngredientesAsync(string terminoBusqueda, string? categoria = null, bool? soloDisponibles = null, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.IngredienteSummaryDto>>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var ingredientes = _ingredientes.AsQueryable();
+
+        if (!string.IsNullOrEmpty(terminoBusqueda))
+        {
+            ingredientes = ingredientes.Where(i => i.Nombre.Contains(terminoBusqueda, StringComparison.OrdinalIgnoreCase));
+        }
+
+        if (!string.IsNullOrEmpty(categoria))
+        {
+            ingredientes = ingredientes.Where(i => i.Categoria == categoria);
+        }
+
+        if (soloDisponibles.HasValue)
+        {
+            ingredientes = ingredientes.Where(i => i.Disponible == soloDisponibles.Value);
+        }
+
+        var summaryDtos = ingredientes.Select(i => new RestaurantePro.Mobile.Core.Models.DTOs.IngredienteSummaryDto
+        {
+            Id = i.Id,
+            Nombre = i.Nombre,
+            StockActual = i.StockActual,
+            StockMinimo = i.StockMinimo,
+            UnidadMedida = i.UnidadMedida,
+            Disponible = i.Disponible
+        }).ToList();
+
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.IngredienteSummaryDto>>
+        {
+            Success = true,
+            Data = summaryDtos,
+            Message = "Búsqueda de ingredientes completada"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.IngredienteSummaryDto>>> ObtenerIngredientesBajoStockAsync(int stockMinimo = 10, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.IngredienteSummaryDto>>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var ingredientes = _ingredientes.Where(i => i.StockActual <= stockMinimo).Select(i => new RestaurantePro.Mobile.Core.Models.DTOs.IngredienteSummaryDto
+        {
+            Id = i.Id,
+            Nombre = i.Nombre,
+            StockActual = i.StockActual,
+            StockMinimo = i.StockMinimo,
+            UnidadMedida = i.UnidadMedida,
+            Disponible = i.Disponible
+        }).ToList();
+
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.IngredienteSummaryDto>>
+        {
+            Success = true,
+            Data = ingredientes,
+            Message = "Ingredientes bajo stock obtenidos"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.IngredienteDto>> ObtenerIngredienteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.IngredienteDto>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var ingrediente = _ingredientes.FirstOrDefault(i => i.Id == id);
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.IngredienteDto>
+        {
+            Success = ingrediente != null,
+            Data = ingrediente,
+            Message = ingrediente != null ? "Ingrediente obtenido" : "Ingrediente no encontrado"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.IngredienteDto>> CrearIngredienteAsync(RestaurantePro.Mobile.Core.Models.DTOs.IngredienteDto ingrediente, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.IngredienteDto>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        if (ingrediente == null)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.IngredienteDto>
+            {
+                Success = false,
+                Message = "Ingrediente no puede ser nulo"
+            };
+            return Task.FromResult(response);
+        }
+
+        ingrediente.Id = Guid.NewGuid();
+        ingrediente.FechaCreacion = DateTime.Now;
+        _ingredientes.Add(ingrediente);
+
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.IngredienteDto>
+        {
+            Success = true,
+            Data = ingrediente,
+            Message = "Ingrediente creado exitosamente"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.IngredienteDto>> ActualizarIngredienteAsync(Guid id, RestaurantePro.Mobile.Core.Models.DTOs.IngredienteDto ingrediente, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.IngredienteDto>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var ingredienteExistente = _ingredientes.FirstOrDefault(i => i.Id == id);
+        if (ingredienteExistente != null && ingrediente != null)
+        {
+            ingredienteExistente.Nombre = ingrediente.Nombre;
+            ingredienteExistente.Descripcion = ingrediente.Descripcion;
+            ingredienteExistente.StockActual = ingrediente.StockActual;
+            ingredienteExistente.StockMinimo = ingrediente.StockMinimo;
+            ingredienteExistente.UnidadMedida = ingrediente.UnidadMedida;
+            ingredienteExistente.PrecioUnitario = ingrediente.PrecioUnitario;
+            ingredienteExistente.Categoria = ingrediente.Categoria;
+            ingredienteExistente.Disponible = ingrediente.Disponible;
+            ingredienteExistente.Proveedor = ingrediente.Proveedor;
+        }
+
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.IngredienteDto>
+        {
+            Success = ingredienteExistente != null,
+            Data = ingredienteExistente,
+            Message = ingredienteExistente != null ? "Ingrediente actualizado exitosamente" : "Ingrediente no encontrado"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>> EliminarIngredienteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var ingrediente = _ingredientes.FirstOrDefault(i => i.Id == id);
+        if (ingrediente != null)
+        {
+            _ingredientes.Remove(ingrediente);
+        }
+
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>
+        {
+            Success = ingrediente != null,
+            Data = ingrediente != null,
+            Message = ingrediente != null ? "Ingrediente eliminado exitosamente" : "Ingrediente no encontrado"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.EstadisticasIngredientesDto>> ObtenerEstadisticasAsync(CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.EstadisticasIngredientesDto>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var estadisticas = new RestaurantePro.Mobile.Core.Models.DTOs.EstadisticasIngredientesDto
+        {
+            TotalIngredientes = _ingredientes.Count,
+            IngredientesDisponibles = _ingredientes.Count(i => i.Disponible),
+            IngredientesBajoStock = _ingredientes.Count(i => i.StockActual <= i.StockMinimo),
+            IngredientesAgotados = _ingredientes.Count(i => i.StockActual == 0),
+            ValorTotalInventario = _ingredientes.Sum(i => i.StockActual * i.PrecioUnitario),
+            TopIngredientesBajoStock = _ingredientes.Where(i => i.StockActual <= i.StockMinimo).Take(5).ToList()
+        };
+
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.EstadisticasIngredientesDto>
+        {
+            Success = true,
+            Data = estadisticas,
+            Message = "Estadísticas obtenidas exitosamente"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.ReporteValoracionDto>>> GenerarReporteValoracionAsync(RestaurantePro.Mobile.Core.Models.DTOs.FiltroIngredientesDto filtro, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.ReporteValoracionDto>>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var reportes = _ingredientes.Select(i => new RestaurantePro.Mobile.Core.Models.DTOs.ReporteValoracionDto
+        {
+            Id = i.Id,
+            NombreIngrediente = i.Nombre,
+            ValorActual = i.StockActual * i.PrecioUnitario,
+            ValorPromedio = i.StockActual * i.PrecioUnitario * 0.9m,
+            VariacionPorcentual = 10.0m,
+            FechaReporte = DateTime.Now,
+            Tendencia = "Estable"
+        }).ToList();
+
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.ReporteValoracionDto>>
+        {
+            Success = true,
+            Data = reportes,
+            Message = "Reporte de valoración generado exitosamente"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.MovimientoInventarioDto>>> ObtenerMovimientosAsync(Guid ingredienteId, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.MovimientoInventarioDto>>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var ingrediente = _ingredientes.FirstOrDefault(i => i.Id == ingredienteId);
+        if (ingrediente == null)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.MovimientoInventarioDto>>
+            {
+                Success = false,
+                Message = "Ingrediente no encontrado"
+            };
+            return Task.FromResult(response);
+        }
+
+        var movimientos = new List<RestaurantePro.Mobile.Core.Models.DTOs.MovimientoInventarioDto>
+        {
+            new RestaurantePro.Mobile.Core.Models.DTOs.MovimientoInventarioDto
+            {
+                Id = Guid.NewGuid(),
+                IngredienteId = ingredienteId,
+                TipoMovimiento = "Entrada",
+                Cantidad = 100,
+                Observaciones = "Compra inicial",
+                FechaMovimiento = DateTime.Now.AddDays(-30),
+                UsuarioResponsable = "Admin",
+                StockAnterior = 0,
+                StockPosterior = 100
+            },
+            new RestaurantePro.Mobile.Core.Models.DTOs.MovimientoInventarioDto
+            {
+                Id = Guid.NewGuid(),
+                IngredienteId = ingredienteId,
+                TipoMovimiento = "Salida",
+                Cantidad = 50,
+                Observaciones = "Consumo en preparaciones",
+                FechaMovimiento = DateTime.Now.AddDays(-15),
+                UsuarioResponsable = "Cocinero",
+                StockAnterior = 100,
+                StockPosterior = 50
+            }
+        };
+
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.MovimientoInventarioDto>>
+        {
+            Success = true,
+            Data = movimientos,
+            Message = "Movimientos obtenidos exitosamente"
+        };
+        return Task.FromResult(response2);
+    }
 } 
