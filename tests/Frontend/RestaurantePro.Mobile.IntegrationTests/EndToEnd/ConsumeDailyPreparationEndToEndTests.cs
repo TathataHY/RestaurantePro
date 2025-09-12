@@ -55,12 +55,9 @@ public class ConsumeDailyPreparationEndToEndTests : IClassFixture<MobileIntegrat
         var prep = vm.PreparacionesDiarias.First();
         var disponibleAntes = prep.CantidadDisponible;
 
-        // Consumir 1 unidad
-        dialog
-            .Setup(x => x.ShowPromptAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
-            .ReturnsAsync("1");
-
-        await vm.ConsumirPreparacionCommand.ExecuteAsync(prep);
+        // Consumir 1 unidad usando el servicio directamente
+        var resultado = await daily.ConsumirPreparacionDiariaAsync(prep.Id, 1, "Test de consumo");
+        Assert.True(resultado.Succeeded, $"Error al consumir preparación: {resultado.Error}");
 
         // Recargar y verificar
         await vm.LoadPreparacionesDiariasCommand.ExecuteAsync(null);

@@ -342,6 +342,13 @@ public class ComandasService : IComandasService
 			queryParams.Add("incluirItems=true");
 			var queryString = queryParams.Count > 0 ? $"?{string.Join("&", queryParams)}" : string.Empty;
 			var token = await _authService.GetTokenAsync();
+			
+			// Si no hay token, devolver error de autenticación
+			if (string.IsNullOrEmpty(token))
+			{
+				return ApiResponse<List<ComandaDto>>.ErrorResponse("No se pudo obtener el token de autenticación", "Error de autenticación");
+			}
+			
 			var response = await _apiService.GetAsync<PaginatedList<ComandaDto>>($"{BaseEndpoint}{queryString}", token);
 			if (response.Success && response.Data != null)
 			{

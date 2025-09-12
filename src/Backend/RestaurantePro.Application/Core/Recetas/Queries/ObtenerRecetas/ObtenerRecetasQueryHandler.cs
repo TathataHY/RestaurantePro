@@ -36,7 +36,9 @@ public class ObtenerRecetasQueryHandler : IRequestHandler<ObtenerRecetasQuery, R
                 request.PageNumber, request.PageSize, request.SoloActivas, request.ProductoId, request.FiltroTexto);
 
             // 1. Construir query base
-            var query = _context.Recetas.AsQueryable();
+            var query = _context.Recetas
+                .Include(r => r.Producto)
+                .AsQueryable();
 
             // 2. Filtrar solo recetas no eliminadas
             query = query.Where(r => !r.RecetaEliminada);
@@ -102,7 +104,8 @@ public class ObtenerRecetasQueryHandler : IRequestHandler<ObtenerRecetasQuery, R
         {
             var filtroLower = request.FiltroTexto.ToLower();
             query = query.Where(r => 
-                r.Preparacion.ToLower().Contains(filtroLower));
+                r.Preparacion.ToLower().Contains(filtroLower) ||
+                r.Producto.Nombre.ToLower().Contains(filtroLower));
         }
 
         return query;

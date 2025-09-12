@@ -8,6 +8,7 @@ using RestaurantePro.Web.Admin.IntegrationTests.Core;
 using RestaurantePro.Web.Admin.IntegrationTests.Converters;
 using RestaurantePro.Web.Admin.IntegrationTests.Utils;
 using RestaurantePro.Application.Core.Productos.Commands.CrearProducto;
+using RestaurantePro.Application.Core.Recetas.Commands.CrearReceta;
 
 namespace RestaurantePro.Web.Admin.IntegrationTests.Core;
 
@@ -289,6 +290,41 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
     protected async Task<Guid> CrearRecetaConMuchosIngredientesAsync(Guid productoId)
     {
         return await ProductosTestSeeder.SeedRecetaConMuchosIngredientesAsync(_context, productoId);
+    }
+
+    /// <summary>
+    /// Crea un comando CrearRecetaCommand válido con ingredientes
+    /// </summary>
+    protected async Task<CrearRecetaCommand> CrearComandoRecetaValidoAsync(Guid productoId, int cantidadIngredientes = 3)
+    {
+        // Asegurar que tenemos ingredientes disponibles
+        var ingredientesExistentes = await _context.Ingredientes.CountAsync();
+        if (ingredientesExistentes == 0)
+        {
+            await IngredientesTestSeeder.SeedIngredientesAsync(_context, 10);
+        }
+
+        // Obtener ingredientes disponibles
+        var ingredientesDisponibles = await _context.Ingredientes.Take(cantidadIngredientes).ToListAsync();
+        if (!ingredientesDisponibles.Any())
+        {
+            throw new InvalidOperationException("No se pudieron obtener ingredientes para crear la receta");
+        }
+
+        // Crear el comando con ingredientes válidos
+        var command = new CrearRecetaCommand
+        {
+            ProductoId = productoId,
+            Preparacion = "Receta de prueba con ingredientes válidos",
+            TiempoPreparacionMinutos = 30,
+            Ingredientes = ingredientesDisponibles.Select(ing => new RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto
+            {
+                IngredienteId = ing.Id,
+                Cantidad = 1.0m
+            }).ToList()
+        };
+
+        return command;
     }
 
     /// <summary>

@@ -34,6 +34,14 @@ public class PromocionesApiService : IPromocionesApiService
     /// <summary>
     /// Obtiene una lista paginada de promociones
     /// </summary>
+    public async Task<PaginatedList<PromocionDto>?> ObtenerPromocionesAsync(int pagina, int tamanoPagina)
+    {
+        return await ObtenerPromocionesAsync(pagina, tamanoPagina, null);
+    }
+
+    /// <summary>
+    /// Obtiene una lista paginada de promociones con filtros
+    /// </summary>
     public async Task<PaginatedList<PromocionDto>?> ObtenerPromocionesAsync(
         int pageNumber = 1, 
         int pageSize = 20, 
@@ -130,9 +138,26 @@ public class PromocionesApiService : IPromocionesApiService
     }
 
     /// <summary>
-    /// Actualiza una promoción existente
+    /// Actualiza una promoción existente (interfaz)
     /// </summary>
-    public async Task<ApiResponse<PromocionDto>?> ActualizarPromocionAsync(ActualizarPromocionRequest request)
+    public async Task<PromocionDto?> ActualizarPromocionAsync(ActualizarPromocionRequest request)
+    {
+        try
+        {
+            var response = await ActualizarPromocionInternalAsync(request);
+            return response?.Data;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al actualizar promoción: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Actualiza una promoción existente (interno)
+    /// </summary>
+    public async Task<ApiResponse<PromocionDto>?> ActualizarPromocionInternalAsync(ActualizarPromocionRequest request)
     {
         try
         {

@@ -68,7 +68,7 @@ public class ApiRecetasIntegrationTests : BaseIntegrationTest
     {
         // Arrange
         await SeedRecetasDePruebaAsync();
-        var terminoBusqueda = "Pizza";
+        var terminoBusqueda = "Lomo";
 
         // Act
         var response = await _client.GetAsync($"/api/core/recetas?filtroTexto={terminoBusqueda}");

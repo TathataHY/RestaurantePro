@@ -4,9 +4,11 @@ using System.Text;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using RestaurantePro.Application.Core.Recetas.Commands.CrearReceta;
 using RestaurantePro.Application.Core.Recetas.DTOs;
 using RestaurantePro.Web.Admin.IntegrationTests.Core;
+using RestaurantePro.Web.Admin.IntegrationTests.Utils;
 
 namespace RestaurantePro.Web.Admin.IntegrationTests.Api.Recetas;
 
@@ -201,16 +203,25 @@ public class RecetasPerformanceTests : BaseIntegrationTest
         var productoIds = await CrearProductosDePruebaAsync(1);
         var productoId = productoIds.First();
         
+        // Obtener ingredientes válidos
+        var ingredientesDisponibles = await _context.Ingredientes.Take(2).ToListAsync();
+        if (!ingredientesDisponibles.Any())
+        {
+            await IngredientesTestSeeder.SeedIngredientesAsync(_context, 5);
+            ingredientesDisponibles = await _context.Ingredientes.Take(2).ToListAsync();
+        }
+        
         var command = new CrearRecetaCommand
         {
             ProductoId = productoId,
             Preparacion = "Receta de prueba para rendimiento",
             TiempoPreparacionMinutos = 20,
-            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>
+            Ingredientes = ingredientesDisponibles.Select((ing, index) => new RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto
             {
-                new() { IngredienteId = Guid.NewGuid(), Cantidad = 2, EsOpcional = false },
-                new() { IngredienteId = Guid.NewGuid(), Cantidad = 1, EsOpcional = true }
-            }
+                IngredienteId = ing.Id,
+                Cantidad = index == 0 ? 2 : 1,
+                EsOpcional = index == 1
+            }).ToList()
         };
 
         var json = JsonSerializer.Serialize(command, GetJsonOptions());
@@ -233,16 +244,20 @@ public class RecetasPerformanceTests : BaseIntegrationTest
         var productoIds = await CrearProductosDePruebaAsync(1);
         var productoId = productoIds.First();
         
-        var ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>();
-        for (int i = 0; i < 20; i++) // 20 ingredientes
+        // Obtener ingredientes válidos (máximo 20)
+        var ingredientesDisponibles = await _context.Ingredientes.Take(20).ToListAsync();
+        if (!ingredientesDisponibles.Any())
         {
-            ingredientes.Add(new RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto
-            {
-                IngredienteId = Guid.NewGuid(),
-                Cantidad = 1 + i,
-                EsOpcional = i % 3 == 0
-            });
+            await IngredientesTestSeeder.SeedIngredientesAsync(_context, 25);
+            ingredientesDisponibles = await _context.Ingredientes.Take(20).ToListAsync();
         }
+        
+        var ingredientes = ingredientesDisponibles.Select((ing, index) => new RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto
+        {
+            IngredienteId = ing.Id,
+            Cantidad = 1 + index,
+            EsOpcional = index % 3 == 0
+        }).ToList();
         
         var command = new CrearRecetaCommand
         {

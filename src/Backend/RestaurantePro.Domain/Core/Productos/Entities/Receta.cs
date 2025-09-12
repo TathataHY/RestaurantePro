@@ -10,6 +10,11 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
         /// </summary>
         public Guid ProductoId { get; private set; }
 
+        /// <summary>
+        /// Navegación hacia el producto asociado
+        /// </summary>
+        public Producto? Producto { get; private set; }
+
         private readonly List<ValueObjects.IngredienteReceta> _ingredientes = new();
 
         /// <summary>

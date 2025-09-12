@@ -93,6 +93,11 @@ public class ResilienceAndErrorRecoveryTests : IClassFixture<MobileIntegrationTe
         var workingHttpClient = _fixture.CreateClient();
         var workingApiService = new ApiService(workingHttpClient);
         var workingAuthService = new AuthService(workingApiService, NullLogger<AuthService>.Instance, _secureStorage, _navigationService);
+        
+        // Autenticar el servicio funcional
+        var loginResult = await workingAuthService.LoginAsync("admin@restaurantepro.com", "AdminRestaurante123!");
+        Assert.True(loginResult.Succeeded, "Debe poder autenticarse después de la recuperación");
+        
         var workingProductosService = new ProductosService(workingApiService, workingAuthService);
         
         // Crear nuevo ViewModel con servicio funcional

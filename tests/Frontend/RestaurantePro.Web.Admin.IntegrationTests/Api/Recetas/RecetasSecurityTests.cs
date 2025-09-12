@@ -122,13 +122,7 @@ public class RecetasSecurityTests : BaseIntegrationTest
         var productoIds = await CrearProductosDePruebaAsync(1);
         var productoId = productoIds.First();
         
-        var command = new CrearRecetaCommand
-        {
-            ProductoId = productoId,
-            Preparacion = "Receta de prueba",
-            TiempoPreparacionMinutos = 20,
-            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>()
-        };
+        var command = await CrearComandoRecetaValidoAsync(productoId);
 
         var json = JsonSerializer.Serialize(command, GetJsonOptions());
         var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -148,13 +142,7 @@ public class RecetasSecurityTests : BaseIntegrationTest
         var productoIds = await CrearProductosDePruebaAsync(1);
         var productoId = productoIds.First();
         
-        var command = new CrearRecetaCommand
-        {
-            ProductoId = productoId,
-            Preparacion = "Receta de prueba",
-            TiempoPreparacionMinutos = 20,
-            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>()
-        };
+        var command = await CrearComandoRecetaValidoAsync(productoId);
 
         var json = JsonSerializer.Serialize(command, GetJsonOptions());
         var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -174,13 +162,7 @@ public class RecetasSecurityTests : BaseIntegrationTest
         var productoIds = await CrearProductosDePruebaAsync(1);
         var productoId = productoIds.First();
         
-        var command = new CrearRecetaCommand
-        {
-            ProductoId = productoId,
-            Preparacion = "Receta de prueba",
-            TiempoPreparacionMinutos = 20,
-            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>()
-        };
+        var command = await CrearComandoRecetaValidoAsync(productoId);
 
         var json = JsonSerializer.Serialize(command, GetJsonOptions());
         var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -196,17 +178,11 @@ public class RecetasSecurityTests : BaseIntegrationTest
     public async Task CrearReceta_ConRolChef_DeberiaPermitir()
     {
         // Arrange
-        var clientChef = CreateAuthenticatedClientWithRole("Chef");
+        var clientChef = CreateAuthenticatedClientWithRole("Cocinero");
         var productoIds = await CrearProductosDePruebaAsync(1);
         var productoId = productoIds.First();
         
-        var command = new CrearRecetaCommand
-        {
-            ProductoId = productoId,
-            Preparacion = "Receta de prueba",
-            TiempoPreparacionMinutos = 20,
-            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>()
-        };
+        var command = await CrearComandoRecetaValidoAsync(productoId);
 
         var json = JsonSerializer.Serialize(command, GetJsonOptions());
         var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -248,7 +224,7 @@ public class RecetasSecurityTests : BaseIntegrationTest
     public async Task ActualizarReceta_ConRolChef_DeberiaPermitir()
     {
         // Arrange
-        var clientChef = CreateAuthenticatedClientWithRole("Chef");
+        var clientChef = CreateAuthenticatedClientWithRole("Cocinero");
         var recetaIds = await SeedRecetasDePruebaAsync(1);
         var recetaId = recetaIds.First();
         
@@ -274,7 +250,7 @@ public class RecetasSecurityTests : BaseIntegrationTest
     public async Task EliminarReceta_ConRolChef_DeberiaRetornarForbidden()
     {
         // Arrange
-        var clientChef = CreateAuthenticatedClientWithRole("Chef");
+        var clientChef = CreateAuthenticatedClientWithRole("Cocinero");
         var recetaIds = await SeedRecetasDePruebaAsync(1);
         var recetaId = recetaIds.First();
 

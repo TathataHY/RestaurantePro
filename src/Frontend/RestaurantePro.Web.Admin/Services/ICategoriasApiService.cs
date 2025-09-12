@@ -5,9 +5,12 @@ namespace RestaurantePro.Web.Admin.Services;
 public interface ICategoriasApiService
 {
     Task<List<CategoriaProductoDto>> ObtenerCategoriasAsync();
-    Task<CategoriaProductoDto?> ObtenerCategoriaPorIdAsync(Guid id);
-    Task<CategoriaProductoDto?> CrearCategoriaAsync(CreateCategoriaRequest request);
-    Task<CategoriaProductoDto?> ActualizarCategoriaAsync(Guid id, UpdateCategoriaRequest request);
-    Task<bool> EliminarCategoriaAsync(Guid id);
+    Task<List<CategoriaProductoDto>?> ObtenerAsync(bool soloActivas = false, bool ocultarVacias = false);
+    Task<CategoriaProductoDto?> ObtenerPorIdAsync(Guid id);
+    Task<List<CategoriaProductoDto>?> BuscarAsync(string filtro);
+    Task<ApiResponse<CategoriaProductoDto>?> CrearAsync(CreateCategoriaRequest request);
+    Task<ApiResponse<CategoriaProductoDto>?> ActualizarAsync(Guid id, UpdateCategoriaRequest request);
+    Task<bool> EliminarAsync(Guid id);
+    Task<bool> ValidarNombreUnicoAsync(string nombre, Guid? idExcluir = null);
     Task<bool> CambiarEstadoCategoriaAsync(Guid id, bool activa);
 }

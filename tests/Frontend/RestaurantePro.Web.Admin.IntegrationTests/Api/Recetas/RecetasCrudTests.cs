@@ -10,6 +10,7 @@ using RestaurantePro.Application.Core.Recetas.Commands.EliminarReceta;
 using RestaurantePro.Application.Core.Recetas.DTOs;
 using RestaurantePro.Application.Common.Models;
 using RestaurantePro.Web.Admin.IntegrationTests.Core;
+using RestaurantePro.Web.Admin.IntegrationTests.Utils;
 
 namespace RestaurantePro.Web.Admin.IntegrationTests.Api.Recetas;
 
@@ -199,15 +200,25 @@ public class RecetasCrudTests : BaseIntegrationTest
         var recetaIds = await SeedRecetasDePruebaAsync(1);
         var recetaId = recetaIds.First();
         
+        // Obtener ingredientes válidos
+        var ingredientesDisponibles = await _context.Ingredientes.Take(2).ToListAsync();
+        if (!ingredientesDisponibles.Any())
+        {
+            await IngredientesTestSeeder.SeedIngredientesAsync(_context, 5);
+            ingredientesDisponibles = await _context.Ingredientes.Take(2).ToListAsync();
+        }
+        
         var command = new ActualizarRecetaCommand
         {
             Id = recetaId,
             Preparacion = "Preparación actualizada - Mezclar ingredientes y cocinar por 25 minutos",
             TiempoPreparacionMinutos = 35,
-            Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>
+            Ingredientes = ingredientesDisponibles.Select(ing => new RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto
             {
-                new() { IngredienteId = Guid.NewGuid(), Cantidad = 3, EsOpcional = false }
-            }
+                IngredienteId = ing.Id,
+                Cantidad = 3,
+                EsOpcional = false
+            }).ToList()
         };
 
         var json = JsonSerializer.Serialize(command, GetJsonOptions());
@@ -435,6 +446,14 @@ public class RecetasCrudTests : BaseIntegrationTest
     {
         // Arrange
         var recetaIds = await SeedRecetasDePruebaAsync(3);
+        
+        // Obtener ingredientes válidos
+        var ingredientesDisponibles = await _context.Ingredientes.Take(3).ToListAsync();
+        if (!ingredientesDisponibles.Any())
+        {
+            await IngredientesTestSeeder.SeedIngredientesAsync(_context, 5);
+            ingredientesDisponibles = await _context.Ingredientes.Take(3).ToListAsync();
+        }
 
         // Act & Assert
         for (int i = 0; i < 3; i++)
@@ -444,10 +463,12 @@ public class RecetasCrudTests : BaseIntegrationTest
                 Id = recetaIds[i],
                 Preparacion = $"Receta actualizada {i + 1} - Nueva preparación",
                 TiempoPreparacionMinutos = 25 + (i * 5),
-                Ingredientes = new List<RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto>
+                Ingredientes = ingredientesDisponibles.Take(1).Select(ing => new RestaurantePro.Application.Core.Recetas.DTOs.AgregarIngredienteDto
                 {
-                    new() { IngredienteId = Guid.NewGuid(), Cantidad = 2 + i, EsOpcional = false }
-                }
+                    IngredienteId = ing.Id,
+                    Cantidad = 2 + i,
+                    EsOpcional = false
+                }).ToList()
             };
 
             var json = JsonSerializer.Serialize(command, GetJsonOptions());

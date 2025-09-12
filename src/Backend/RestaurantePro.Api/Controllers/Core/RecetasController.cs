@@ -158,7 +158,7 @@ public class RecetasController : ControllerBase
     /// <param name="command">Datos de la receta a crear</param>
     /// <returns>Receta creada</returns>
     [HttpPost]
-    [Authorize(Roles = "Administrador,Chef")]
+    [Authorize(Roles = "Administrador,Cocinero")]
     [ProducesResponseType(typeof(ApiResponse<RecetaDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<ApiResponse<RecetaDto>>> CrearReceta(
@@ -168,6 +168,13 @@ public class RecetasController : ControllerBase
 
         try
         {
+            if (command == null)
+            {
+                return BadRequest(ApiResponse<object>.ErrorResponse(
+                    new List<string> { "El comando no puede ser nulo" },
+                    "Solicitud inválida"));
+            }
+
             var result = await _mediator.Send(command);
 
             if (result.Succeeded)
@@ -197,7 +204,7 @@ public class RecetasController : ControllerBase
     /// <param name="command">Datos actualizados de la receta</param>
     /// <returns>Receta actualizada</returns>
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "Administrador,Chef")]
+    [Authorize(Roles = "Administrador,Cocinero")]
     [ProducesResponseType(typeof(ApiResponse<RecetaDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
@@ -208,6 +215,13 @@ public class RecetasController : ControllerBase
 
         try
         {
+            if (command == null)
+            {
+                return BadRequest(ApiResponse<object>.ErrorResponse(
+                    new List<string> { "El comando no puede ser nulo" },
+                    "Solicitud inválida"));
+            }
+
             command.Id = id;
             var result = await _mediator.Send(command);
 

@@ -301,7 +301,7 @@
     {
         try
         {
-            var exito = await PreparacionesApi.CompletarPreparacionAsync(Preparacion.Id, Preparacion.NotasCocinero);
+            var exito = await PreparacionesApi.CompletarPreparacionAsync(Preparacion.Id);
             if (exito)
             {
                 Preparacion.Estado = EstadoPreparacion.Lista;

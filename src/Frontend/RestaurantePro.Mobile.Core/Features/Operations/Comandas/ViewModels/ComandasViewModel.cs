@@ -188,13 +188,13 @@ public partial class ComandasViewModel : BaseViewModel
             else
             {
                 ErrorMessage = response.Message ?? "Error al cargar las comandas";
-                await _dialogService.ShowAlertAsync("Error", ErrorMessage);
+                await _dialogService.ShowErrorAsync(ErrorMessage);
             }
         }
         catch (Exception ex)
         {
             ErrorMessage = $"Error inesperado: {ex.Message}";
-            await _dialogService.ShowAlertAsync("Error", ErrorMessage);
+            await _dialogService.ShowErrorAsync(ErrorMessage);
         }
         finally
         {

@@ -10,4 +10,5 @@ public interface INotificacionesApiService
     Task<bool> MarcarComoLeidaAsync(Guid id);
     Task<bool> EliminarNotificacionAsync(Guid id);
     Task<int> ObtenerCantidadNoLeidasAsync();
+    Task<int> MarcarTodasComoLeidasAsync();
 }

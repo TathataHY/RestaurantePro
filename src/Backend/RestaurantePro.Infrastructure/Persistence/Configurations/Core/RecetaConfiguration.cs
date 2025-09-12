@@ -42,6 +42,12 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Core
                 ownedBuilder.HasKey("RecetaId", "IngredienteId");
             });
 
+            // Relación con Producto
+            builder.HasOne(r => r.Producto)
+                .WithMany(p => p.Recetas)
+                .HasForeignKey(r => r.ProductoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             // Índices
             builder.HasIndex(r => r.ProductoId);
             

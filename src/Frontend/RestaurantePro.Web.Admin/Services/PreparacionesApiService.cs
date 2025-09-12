@@ -98,7 +98,7 @@ namespace RestaurantePro.Web.Admin.Services
         /// <summary>
         /// Obtiene preparación por ID
         /// </summary>
-        public async Task<PreparacionDetalleDto?> ObtenerPreparacionAsync(int id)
+        public async Task<PreparacionDto?> ObtenerPreparacionAsync(int id)
         {
             try
             {
@@ -108,7 +108,7 @@ namespace RestaurantePro.Web.Admin.Services
                 if (response.IsSuccessStatusCode)
                 {
                     var content = await response.Content.ReadAsStringAsync();
-                    return JsonSerializer.Deserialize<PreparacionDetalleDto>(content, _jsonOptions);
+                    return JsonSerializer.Deserialize<PreparacionDto>(content, _jsonOptions);
                 }
 
                 return null;
@@ -326,19 +326,20 @@ namespace RestaurantePro.Web.Admin.Services
             }
         }
 
+
         /// <summary>
         /// Completa preparación
         /// </summary>
-        public async Task<bool> CompletarPreparacionAsync(int preparacionId, string? notas = null)
+        public async Task<bool> CompletarPreparacionAsync(int id)
         {
             try
             {
                 var client = CreateClient();
-                var request = new { notas };
+                var request = new { notas = (string?)null };
                 var json = JsonSerializer.Serialize(request, _jsonOptions);
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                var response = await client.PostAsync($"api/operaciones/preparaciones/{preparacionId}/completar", content);
+                var response = await client.PostAsync($"api/operaciones/preparaciones/{id}/completar", content);
                 return response.IsSuccessStatusCode;
             }
             catch (Exception ex)
@@ -433,38 +434,9 @@ namespace RestaurantePro.Web.Admin.Services
         /// <summary>
         /// Obtiene una preparación por ID
         /// </summary>
-        public async Task<PreparacionDto?> ObtenerPreparacionPorIdAsync(Guid id)
+        public async Task<PreparacionDto?> ObtenerPreparacionPorIdAsync(int id)
         {
-            try
-            {
-                var detalle = await ObtenerPreparacionAsync(id.GetHashCode());
-                if (detalle == null) return null;
-
-                return new PreparacionDto
-                {
-                    Id = detalle.Id,
-                    ComandaId = detalle.ComandaId,
-                    ProductoId = detalle.ProductoId,
-                    ProductoNombre = detalle.ProductoNombre,
-                    Cantidad = detalle.Cantidad,
-                    Estado = detalle.Estado,
-                    Prioridad = detalle.Prioridad,
-                    TiempoEstimado = detalle.TiempoEstimado,
-                    TiempoInicio = detalle.TiempoInicio,
-                    TiempoFin = detalle.TiempoFin,
-                    CocineroId = detalle.CocineroId,
-                    CocineroNombre = detalle.CocineroNombre,
-                    MesaNumero = detalle.MesaNumero,
-                    Notas = detalle.Notas,
-                    FechaCreacion = detalle.FechaCreacion,
-                    FechaActualizacion = detalle.FechaActualizacion
-                };
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error al obtener preparación por ID: {ex.Message}");
-                return null;
-            }
+            return await ObtenerPreparacionAsync(id);
         }
 
         /// <summary>
@@ -498,7 +470,7 @@ namespace RestaurantePro.Web.Admin.Services
         /// <summary>
         /// Actualiza una preparación existente
         /// </summary>
-        public async Task<PreparacionDto?> ActualizarPreparacionAsync(Guid id, ActualizarPreparacionRequest request)
+        public async Task<PreparacionDto?> ActualizarPreparacionAsync(int id, ActualizarPreparacionRequest request)
         {
             try
             {
@@ -526,7 +498,7 @@ namespace RestaurantePro.Web.Admin.Services
         /// <summary>
         /// Elimina una preparación
         /// </summary>
-        public async Task<bool> EliminarPreparacionAsync(Guid id)
+        public async Task<bool> EliminarPreparacionAsync(int id)
         {
             try
             {
@@ -544,13 +516,13 @@ namespace RestaurantePro.Web.Admin.Services
         /// <summary>
         /// Cambia el estado de una preparación
         /// </summary>
-        public async Task<bool> CambiarEstadoPreparacionAsync(Guid id, EstadoPreparacion estado)
+        public async Task<bool> CambiarEstadoPreparacionAsync(int id, EstadoPreparacion estado)
         {
             try
             {
                 var request = new ActualizarEstadoPreparacionRequest
                 {
-                    PreparacionId = id.GetHashCode(),
+                    PreparacionId = id,
                     Estado = estado
                 };
                 return await ActualizarEstadoAsync(request);

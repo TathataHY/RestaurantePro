@@ -30,7 +30,6 @@ public class ProductosController : ControllerBase
     /// Obtiene todos los productos con paginación
     /// </summary>
     [HttpGet]
-    [AllowAnonymous]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedList<ProductoDto>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<PaginatedList<ProductoDto>>>> GetProductos(

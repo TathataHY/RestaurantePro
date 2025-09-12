@@ -156,7 +156,7 @@ public class CompleteUserFlowsIntegrationTests : IClassFixture<MobileIntegration
         var httpClient = new HttpClient
         {
             BaseAddress = new Uri("http://10.255.255.1/"), // Host inalcanzable
-            Timeout = TimeSpan.FromMilliseconds(100)
+            Timeout = TimeSpan.FromMilliseconds(500) // Aumentar timeout para permitir reintentos
         };
 
         var apiService = new ApiService(httpClient);
@@ -173,6 +173,9 @@ public class CompleteUserFlowsIntegrationTests : IClassFixture<MobileIntegration
 
         // Act - Intentar cargar comandas con error de red
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null);
+
+        // Esperar un poco para que se complete la operación asíncrona
+        await Task.Delay(1000);
 
         // Assert - Debe manejar el error graciosamente
         dialogService.Verify(d => d.ShowErrorAsync(It.Is<string>(s => !string.IsNullOrWhiteSpace(s))), Times.AtLeastOnce());

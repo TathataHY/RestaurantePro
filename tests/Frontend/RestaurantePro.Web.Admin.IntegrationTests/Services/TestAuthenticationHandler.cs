@@ -24,39 +24,35 @@ public class TestAuthenticationHandler : AuthenticationHandler<AuthenticationSch
         
         if (Request.Headers.ContainsKey("Authorization"))
         {
-            // Crear un usuario de prueba con roles administrativos
-            var claims = new[]
+            var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, "test-user-id"),
                 new Claim(ClaimTypes.Name, "Test User"),
-                new Claim(ClaimTypes.Email, "test@restaurantepro.com"),
-                new Claim(ClaimTypes.Role, "Administrador"),
-                new Claim(ClaimTypes.Role, "Gerente"),
-                new Claim(ClaimTypes.Role, "Cajero"),
-                new Claim(ClaimTypes.Role, "Mesero"),
-                new Claim(ClaimTypes.Role, "Cocinero"),
-                new Claim(ClaimTypes.Role, "EncargadoInventario"),
-                // Agregar permisos específicos para clientes
-                new Claim("permission", "clientes.read"),
-                new Claim("permission", "clientes.create"),
-                new Claim("permission", "clientes.update"),
-                new Claim("permission", "clientes.delete"),
-                // Agregar permisos para productos
-                new Claim("permission", "productos.read"),
-                new Claim("permission", "productos.create"),
-                new Claim("permission", "productos.update"),
-                new Claim("permission", "productos.delete"),
-                // Agregar permisos para categorías
-                new Claim("permission", "categorias.read"),
-                new Claim("permission", "categorias.create"),
-                new Claim("permission", "categorias.update"),
-                new Claim("permission", "categorias.delete"),
-                // Agregar permisos para usuarios
-                new Claim("permission", "usuarios.read"),
-                new Claim("permission", "usuarios.create"),
-                new Claim("permission", "usuarios.update"),
-                new Claim("permission", "usuarios.delete")
+                new Claim(ClaimTypes.Email, "test@restaurantepro.com")
             };
+
+            // Si hay un header X-Test-Role, usar solo ese rol específico
+            if (Request.Headers.TryGetValue("X-Test-Role", out var testRole))
+            {
+                var role = testRole.ToString();
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+            else
+            {
+                // Si no hay header específico, usar todos los roles (comportamiento por defecto)
+                claims.Add(new Claim(ClaimTypes.Role, "Administrador"));
+                claims.Add(new Claim(ClaimTypes.Role, "Gerente"));
+                claims.Add(new Claim(ClaimTypes.Role, "Cajero"));
+                claims.Add(new Claim(ClaimTypes.Role, "Mesero"));
+                claims.Add(new Claim(ClaimTypes.Role, "Cocinero"));
+                claims.Add(new Claim(ClaimTypes.Role, "EncargadoInventario"));
+            }
+
+            // Agregar permisos básicos
+            claims.Add(new Claim("permission", "clientes.read"));
+            claims.Add(new Claim("permission", "productos.read"));
+            claims.Add(new Claim("permission", "categorias.read"));
+            claims.Add(new Claim("permission", "usuarios.read"));
 
             var identity = new ClaimsIdentity(claims, "Test");
             var principal = new ClaimsPrincipal(identity);

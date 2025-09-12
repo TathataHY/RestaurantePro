@@ -10,4 +10,6 @@ public interface IRecetasApiService
     Task<RecetaDto?> ActualizarRecetaAsync(Guid id, ActualizarRecetaRequest request);
     Task<bool> EliminarRecetaAsync(Guid id);
     Task<bool> CambiarEstadoRecetaAsync(Guid id, bool activa);
+    Task<PaginatedList<RecetaDto>?> ObtenerRecetasPaginadasAsync(int pagina, int tamanoPagina, bool? soloActivas = null, Guid? productoId = null, string? filtroTexto = null, string? ordenarPor = null, string? direccion = null);
+    Task<decimal> CalcularCostoRecetaAsync(Guid recetaId);
 }

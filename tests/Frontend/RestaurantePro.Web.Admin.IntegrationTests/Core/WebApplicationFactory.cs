@@ -64,7 +64,7 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
                 options.DefaultScheme = "Test";
             });
 
-            // Configurar autorización para pruebas - permitir todo
+            // Configurar autorización para pruebas
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("TestPolicy", policy =>
@@ -78,18 +78,8 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
                     policy.RequireAssertion(_ => true);
                 });
                 
-                // Política por defecto que permite acceso sin autenticación para pruebas
-                options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
-                    .RequireAssertion(_ => true)
-                    .Build();
-            });
-            
-            // Deshabilitar la autorización por defecto para pruebas
-            services.Configure<Microsoft.AspNetCore.Authorization.AuthorizationOptions>(options =>
-            {
-                options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
-                    .RequireAssertion(_ => true)
-                    .Build();
+                // NO establecer una política por defecto que permita acceso sin autenticación
+                // Esto permitirá que los atributos [Authorize] funcionen correctamente
             });
 
             // Configurar MediatR para pruebas

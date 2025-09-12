@@ -47,8 +47,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Configurations.Core
 
             // Relaciones
             builder.HasMany(p => p.Recetas)
-                .WithOne()
-                .HasForeignKey("ProductoId")
+                .WithOne(r => r.Producto)
+                .HasForeignKey(r => r.ProductoId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Configurar fechas de auditoría

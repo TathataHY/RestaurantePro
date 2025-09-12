@@ -16,18 +16,14 @@ public class ActualizarRecetaCommandValidator : AbstractValidator<ActualizarRece
 
         RuleFor(x => x.Preparacion)
             .NotEmpty()
-            .When(x => !string.IsNullOrWhiteSpace(x.Preparacion))
             .WithMessage("Las indicaciones de preparación no pueden estar vacías")
             .MaximumLength(2000)
-            .When(x => !string.IsNullOrWhiteSpace(x.Preparacion))
             .WithMessage("Las indicaciones de preparación no pueden exceder 2000 caracteres");
 
         RuleFor(x => x.TiempoPreparacionMinutos)
             .GreaterThan(0)
-            .When(x => x.TiempoPreparacionMinutos > 0)
             .WithMessage("El tiempo de preparación debe ser mayor a 0 minutos")
             .LessThanOrEqualTo(480) // 8 horas máximo
-            .When(x => x.TiempoPreparacionMinutos > 0)
             .WithMessage("El tiempo de preparación no puede exceder 8 horas");
 
         RuleFor(x => x.Ingredientes)

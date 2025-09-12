@@ -134,7 +134,7 @@ public class CoreMappingProfile : Profile
             .ForMember(dest => dest.EstaActiva, opt => opt.MapFrom(src => !src.RecetaEliminada))
             .ForMember(dest => dest.FechaCreacion, opt => opt.MapFrom(src => src.FechaCreacion))
             .ForMember(dest => dest.FechaModificacion, opt => opt.MapFrom(src => src.FechaActualizacion))
-            .ForMember(dest => dest.NombreProducto, opt => opt.Ignore())
+            .ForMember(dest => dest.NombreProducto, opt => opt.MapFrom(src => src.Producto != null ? src.Producto.Nombre : string.Empty))
             .ForMember(dest => dest.CostoTotal, opt => opt.Ignore());
 
         // Mapeo de ingrediente de receta
