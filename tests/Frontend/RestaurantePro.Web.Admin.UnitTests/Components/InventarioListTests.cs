@@ -51,7 +51,7 @@ namespace RestaurantePro.Web.Admin.UnitTests.Components
                     StockActual = 10,
                     StockMinimo = 5,
                     StockMaximo = 20,
-                    UnidadMedida = "kg",
+                    UnidadMedida = UnidadMedida.Kilogramo,
                     CostoUnitario = 15.50m,
                     FechaVencimiento = DateTime.Now.AddDays(30),
                     Proveedor = "Proveedor Test",
@@ -106,7 +106,7 @@ namespace RestaurantePro.Web.Admin.UnitTests.Components
                     StockActual = 10.5m,
                     StockMinimo = 5.0m,
                     StockMaximo = 20.0m,
-                    UnidadMedida = "kg",
+                    UnidadMedida = UnidadMedida.Kilogramo,
                     CostoUnitario = 15.50m,
                     FechaVencimiento = new DateTime(2024, 12, 31),
                     Proveedor = "Proveedor Test",
@@ -185,7 +185,7 @@ namespace RestaurantePro.Web.Admin.UnitTests.Components
                     StockActual = 15.75m,
                     StockMinimo = 5.0m,
                     StockMaximo = 25.0m,
-                    UnidadMedida = "kg"
+                    UnidadMedida = UnidadMedida.Kilogramo
                 }
             };
 
@@ -621,7 +621,7 @@ namespace RestaurantePro.Web.Admin.UnitTests.Components
                     StockActual = 12.75m,
                     StockMinimo = 8.0m,
                     StockMaximo = 30.0m,
-                    UnidadMedida = "kg"
+                    UnidadMedida = UnidadMedida.Kilogramo
                 }
             };
 

@@ -58,6 +58,11 @@ public class OrdenCompraDto
     public decimal Impuestos { get; set; }
 
     /// <summary>
+    /// Impuesto de la orden
+    /// </summary>
+    public decimal Impuesto { get; set; }
+
+    /// <summary>
     /// Total de la orden
     /// </summary>
     public decimal Total { get; set; }
@@ -134,38 +139,3 @@ public class OrdenCompraItemDto
     public string? Observaciones { get; set; }
 }
 
-/// <summary>
-/// Estados de orden de compra
-/// </summary>
-public enum EstadoOrdenCompra
-{
-    /// <summary>
-    /// Borrador
-    /// </summary>
-    Borrador = 0,
-
-    /// <summary>
-    /// Enviada
-    /// </summary>
-    Enviada = 1,
-
-    /// <summary>
-    /// Confirmada
-    /// </summary>
-    Confirmada = 2,
-
-    /// <summary>
-    /// En tránsito
-    /// </summary>
-    EnTransito = 3,
-
-    /// <summary>
-    /// Entregada
-    /// </summary>
-    Entregada = 4,
-
-    /// <summary>
-    /// Cancelada
-    /// </summary>
-    Cancelada = 5
-}

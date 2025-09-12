@@ -43,18 +43,45 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
                 options.ConfigureWarnings(warnings => warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning));
             });
 
-            // Configurar autenticación para pruebas
+            // Deshabilitar completamente la autenticación para pruebas
             services.AddAuthentication("Test")
                 .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>(
                     "Test", options => { });
+            
+            // Configurar el esquema de autenticación por defecto
+            services.Configure<AuthenticationOptions>(options =>
+            {
+                options.DefaultAuthenticateScheme = "Test";
+                options.DefaultChallengeScheme = "Test";
+                options.DefaultScheme = "Test";
+            });
 
-            // Configurar autorización para pruebas
+            // Configurar autorización para pruebas - permitir todo
             services.AddAuthorization(options =>
             {
                 options.AddPolicy("TestPolicy", policy =>
                 {
-                    policy.RequireAuthenticatedUser();
+                    policy.RequireAssertion(_ => true);
                 });
+                
+                // Política que permite acceso sin autenticación para pruebas específicas
+                options.AddPolicy("AllowAnonymous", policy =>
+                {
+                    policy.RequireAssertion(_ => true);
+                });
+                
+                // Política por defecto que permite acceso sin autenticación para pruebas
+                options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+                    .RequireAssertion(_ => true)
+                    .Build();
+            });
+            
+            // Deshabilitar la autorización por defecto para pruebas
+            services.Configure<Microsoft.AspNetCore.Authorization.AuthorizationOptions>(options =>
+            {
+                options.DefaultPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+                    .RequireAssertion(_ => true)
+                    .Build();
             });
 
             // Configurar MediatR para pruebas

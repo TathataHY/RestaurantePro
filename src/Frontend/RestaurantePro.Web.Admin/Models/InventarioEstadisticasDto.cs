@@ -106,4 +106,34 @@ public class InventarioEstadisticasDto
     /// Movimientos de hoy
     /// </summary>
     public int MovimientosHoy { get; set; }
+
+    /// <summary>
+    /// Ingredientes vencidos
+    /// </summary>
+    public int Vencidos { get; set; }
+
+    /// <summary>
+    /// Valor del stock bajo
+    /// </summary>
+    public decimal ValorStockBajo { get; set; }
+
+    /// <summary>
+    /// Valor de ingredientes vencidos
+    /// </summary>
+    public decimal ValorVencidos { get; set; }
+
+    /// <summary>
+    /// Movimientos del mes
+    /// </summary>
+    public int MovimientosMes { get; set; }
+
+    /// <summary>
+    /// Costo total de movimientos de hoy
+    /// </summary>
+    public decimal CostoTotalMovimientosHoy { get; set; }
+
+    /// <summary>
+    /// Costo total de movimientos del mes
+    /// </summary>
+    public decimal CostoTotalMovimientosMes { get; set; }
 }

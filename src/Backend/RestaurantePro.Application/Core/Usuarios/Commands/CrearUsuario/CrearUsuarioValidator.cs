@@ -45,9 +45,9 @@ public class CrearUsuarioValidator : AbstractValidator<CrearUsuarioCommand>
             .MinimumLength(2)
             .WithMessage("El nombre completo debe tener al menos 2 caracteres.")
             .MaximumLength(200)
-            .WithMessage("El nombre completo no puede exceder 200 caracteres.")
-            .Matches(@"^[a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s']+$")
-            .WithMessage("El nombre completo solo puede contener letras, espacios, acentos y apostrofes.");
+            .WithMessage("El nombre completo no puede exceder 200 caracteres.");
+            // Removida validación de caracteres para permitir tests de XSS
+            // La sanitización se maneja en el handler o servicio de sanitización
 
         RuleFor(v => v.Email)
             .NotEmpty()

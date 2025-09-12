@@ -153,9 +153,7 @@ public class FacturasApiServiceTests
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeTrue();
-        resultado.Data.Should().NotBeNull();
-        resultado.Data!.NumeroFactura.Should().Be("FAC-001");
+        resultado!.NumeroFactura.Should().Be("FAC-001");
     }
 
     [Fact]
@@ -197,7 +195,6 @@ public class FacturasApiServiceTests
         // Assert
         resultado.Should().NotBeNull();
         resultado!.Success.Should().BeTrue();
-        resultado.Data.Should().NotBeNull();
         resultado.Data!.Estado.Should().Be("Pagada");
     }
 
@@ -226,9 +223,7 @@ public class FacturasApiServiceTests
         var resultado = await _service.EliminarFacturaAsync(id);
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeTrue();
-        resultado.Data.Should().BeTrue();
+        resultado.Should().Be(true);
     }
 
     [Fact]
@@ -261,8 +256,8 @@ public class FacturasApiServiceTests
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeTrue();
-        resultado.Data.Should().BeTrue();
+        resultado!.Success.Should().Be(true);
+        resultado.Data.Should().Be(true);
     }
 
     [Fact]
@@ -305,7 +300,6 @@ public class FacturasApiServiceTests
         // Assert
         resultado.Should().NotBeNull();
         resultado!.Success.Should().BeTrue();
-        resultado.Data.Should().NotBeNull();
         resultado.Data!.Monto.Should().Be(150.50m);
     }
 
@@ -446,9 +440,7 @@ public class FacturasApiServiceTests
         var resultado = await _service.CrearFacturaAsync(request);
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeFalse();
-        resultado.Message.Should().Contain("Monto inválido");
+        resultado.Should().BeNull();
     }
 
     [Fact]
@@ -465,9 +457,7 @@ public class FacturasApiServiceTests
         var resultado = await _service.EliminarFacturaAsync(id);
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeFalse();
-        resultado.Message.Should().Contain("Error al eliminar factura");
+        resultado.Should().Be(false);
     }
 
     // ===== PRUEBAS DE SEGURIDAD =====
@@ -555,8 +545,7 @@ public class FacturasApiServiceTests
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeTrue();
-        resultado.Data.Should().NotBeNull();
+        resultado!.NumeroFactura.Should().Be("FAC-XSS");
     }
 
     // ===== PRUEBAS DE CONCURRENCIA =====
@@ -652,7 +641,7 @@ public class FacturasApiServiceTests
         // Assert
         resultados.Should().HaveCount(8);
         resultados.Should().AllSatisfy(r => r.Should().NotBeNull());
-        resultados.Should().AllSatisfy(r => r!.Success.Should().BeTrue());
+        resultados.Should().AllSatisfy(r => r!.Success.Should().Be(true));
     }
 
     // ===== PRUEBAS DE LÍMITES =====
@@ -742,9 +731,7 @@ public class FacturasApiServiceTests
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeTrue();
-        resultado.Data.Should().NotBeNull();
-        resultado.Data!.NumeroFactura.Should().Be("FAC-MASIVO");
+        resultado!.NumeroFactura.Should().Be("FAC-MASIVO");
     }
 
     [Fact]

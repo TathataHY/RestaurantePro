@@ -44,12 +44,12 @@ public class ClienteDto : BaseDto
     /// <summary>
     /// Segmento de cliente
     /// </summary>
-    public SegmentoCliente Tipo { get; set; }
+    public string Tipo { get; set; } = string.Empty;
 
     /// <summary>
     /// Tipo de cliente como texto
     /// </summary>
-    public string TipoTexto => Tipo.ToString();
+    public string TipoTexto => Tipo;
 
     /// <summary>
     /// Indica si el cliente está activo
@@ -74,12 +74,12 @@ public class ClienteDto : BaseDto
     /// <summary>
     /// Nivel de fidelización del cliente
     /// </summary>
-    public NivelFidelizacion NivelFidelizacion { get; set; }
+    public string NivelFidelizacion { get; set; } = string.Empty;
 
     /// <summary>
     /// Nivel de fidelización del cliente como texto
     /// </summary>
-    public string NivelFidelizacionTexto => NivelFidelizacion.ToString();
+    public string NivelFidelizacionTexto => NivelFidelizacion;
 
     /// <summary>
     /// Cantidad total de visitas registradas

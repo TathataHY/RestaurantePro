@@ -460,7 +460,7 @@
             // Calcular totales
             CalcularTotales();
 
-            ApiResponse<FacturaDto>? resultado;
+            FacturaDto? resultado;
 
             if (EsEdicion)
             {
@@ -476,7 +476,8 @@
                     EsFacturaElectronica = Factura.EsFacturaElectronica
                 };
 
-                resultado = await FacturasApi.ActualizarFacturaAsync(request);
+                var resultadoActualizar = await FacturasApi.ActualizarFacturaAsync(request);
+                resultado = resultadoActualizar?.Data;
             }
             else
             {

@@ -21,9 +21,7 @@ public class ObtenerClientesPaginadosValidator : AbstractValidator<ObtenerClient
     {
         RuleFor(x => x.PageNumber)
             .GreaterThan(0)
-            .WithMessage("El número de página debe ser mayor a 0")
-            .LessThanOrEqualTo(1000)
-            .WithMessage("El número de página no puede exceder 1000");
+            .WithMessage("El número de página debe ser mayor a 0");
 
         RuleFor(x => x.PageSize)
             .GreaterThan(0)
@@ -53,7 +51,7 @@ public class ObtenerClientesPaginadosValidator : AbstractValidator<ObtenerClient
     /// </summary>
     private void ConfigurarValidacionesOrdenamiento()
     {
-        var camposValidos = new[] { "FechaCreacion", "Nombre", "Email", "PuntosAcumulados", "CantidadVisitas", "Segmento" };
+        var camposValidos = new[] { "FechaCreacion", "FechaRegistro", "Nombre", "NombreCompleto", "Email", "PuntosAcumulados", "CantidadVisitas", "Segmento" };
 
         RuleFor(x => x.OrdenarPor)
             .Must(campo => string.IsNullOrEmpty(campo) || camposValidos.Contains(campo, StringComparer.OrdinalIgnoreCase))

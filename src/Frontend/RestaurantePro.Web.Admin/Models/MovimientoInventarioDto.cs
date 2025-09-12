@@ -38,6 +38,11 @@ public class MovimientoInventarioDto
     public decimal PrecioUnitario { get; set; }
 
     /// <summary>
+    /// Costo unitario del movimiento
+    /// </summary>
+    public decimal CostoUnitario { get; set; }
+
+    /// <summary>
     /// Total del movimiento
     /// </summary>
     public decimal Total => Cantidad * PrecioUnitario;

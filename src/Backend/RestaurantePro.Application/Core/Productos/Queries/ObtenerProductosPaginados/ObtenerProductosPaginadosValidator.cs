@@ -20,28 +20,8 @@ public class ObtenerProductosPaginadosValidator : AbstractValidator<ObtenerProdu
             .When(x => !string.IsNullOrEmpty(x.Filtro))
             .WithMessage("El filtro no puede exceder 200 caracteres");
 
-        RuleFor(x => x.OrderBy)
-            .Must(BeValidOrderBy)
-            .WithMessage("Campo de ordenamiento inválido. Valores válidos: Nombre, Precio, FechaCreacion, Popularidad");
-
-        RuleFor(x => x.OrderDirection)
-            .Must(BeValidOrderDirection)
-            .WithMessage("Dirección de ordenamiento inválida. Valores válidos: asc, desc");
+        // OrderBy y OrderDirection se validan en el handler para permitir valores por defecto
+        // No validamos aquí para permitir que el handler maneje valores inválidos con defaults
     }
 
-    private static bool BeValidOrderBy(string orderBy)
-    {
-        if (string.IsNullOrEmpty(orderBy)) return true;
-        
-        var validOrderByFields = new[] { "nombre", "precio", "fechacreacion", "popularidad" };
-        return validOrderByFields.Contains(orderBy.ToLowerInvariant());
-    }
-
-    private static bool BeValidOrderDirection(string direction)
-    {
-        if (string.IsNullOrEmpty(direction)) return true;
-        
-        var validDirections = new[] { "asc", "desc" };
-        return validDirections.Contains(direction.ToLowerInvariant());
-    }
 } 

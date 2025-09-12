@@ -28,6 +28,11 @@ public class OrdenCompraEstadisticasDto
     public int OrdenesEntregadas { get; set; }
 
     /// <summary>
+    /// Órdenes completadas
+    /// </summary>
+    public int OrdenesCompletadas { get; set; }
+
+    /// <summary>
     /// Órdenes canceladas
     /// </summary>
     public int OrdenesCanceladas { get; set; }

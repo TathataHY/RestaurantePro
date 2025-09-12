@@ -586,7 +586,7 @@
                 }
             }
 
-            ApiResponse<ReservacionDto>? resultado;
+            ReservacionDto? resultado;
 
             if (EsEdicion)
             {
@@ -608,7 +608,8 @@
                     EmailAlternativo = Reservacion.EmailAlternativo
                 };
 
-                resultado = await ReservacionesApi.ActualizarReservacionAsync(request);
+                var resultadoActualizar = await ReservacionesApi.ActualizarReservacionAsync(request);
+                resultado = resultadoActualizar?.Data;
             }
             else
             {

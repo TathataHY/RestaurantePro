@@ -63,8 +63,7 @@ public class PromocionesApiServiceTests
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado!.Items.Should().HaveCount(2);
-        resultado.TotalCount.Should().Be(2);
+        resultado.Should().HaveCount(2);
     }
 
     [Fact]
@@ -111,9 +110,9 @@ public class PromocionesApiServiceTests
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado!.Data!.Nombre.Should().Be("Descuento 20%");
-        resultado.Data.ValorDescuento.Should().Be(20);
-        resultado.Data.EstaActiva.Should().BeTrue();
+        resultado!.Nombre.Should().Be("Descuento 20%");
+        resultado.ValorDescuento.Should().Be(20);
+        resultado.EstaActiva.Should().Be(true);
     }
 
     [Fact]
@@ -143,11 +142,7 @@ public class PromocionesApiServiceTests
             EstaActiva = true
         };
 
-        var responseContent = JsonSerializer.Serialize(new ApiResponse<PromocionDto>
-        {
-            Success = true,
-            Data = promocionResultado
-        });
+        var responseContent = JsonSerializer.Serialize(promocionResultado);
 
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
@@ -158,13 +153,13 @@ public class PromocionesApiServiceTests
             });
 
         // Act
-        var resultado = await _service.ActualizarPromocionAsync(promocionActualizada);
+        var resultado = await _service.ActualizarPromocionAsync(id, promocionActualizada);
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado!.Data!.Nombre.Should().Be("Descuento 30%");
-        resultado.Data.ValorDescuento.Should().Be(30);
-        resultado.Data.EstaActiva.Should().BeTrue();
+        resultado!.Nombre.Should().Be("Descuento 30%");
+        resultado.ValorDescuento.Should().Be(30);
+        resultado.EstaActiva.Should().Be(true);
     }
 
     [Fact]
@@ -191,8 +186,7 @@ public class PromocionesApiServiceTests
         var resultado = await _service.EliminarPromocionAsync(id);
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado!.Data.Should().BeTrue();
+        resultado.Should().BeTrue();
     }
 
     [Fact]
@@ -283,9 +277,7 @@ public class PromocionesApiServiceTests
         var resultado = await _service.CrearPromocionAsync(promocionInvalida);
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeFalse();
-        resultado.Message.Should().Contain("Datos de promoción inválidos");
+        resultado.Should().BeNull();
     }
 
     [Fact]
@@ -316,9 +308,7 @@ public class PromocionesApiServiceTests
         var resultado = await _service.ActualizarPromocionAsync(promocionActualizada);
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeFalse();
-        resultado.Message.Should().Contain("Error al actualizar promoción");
+        resultado.Should().BeNull();
     }
 
     [Fact]
@@ -338,9 +328,7 @@ public class PromocionesApiServiceTests
         var resultado = await _service.EliminarPromocionAsync(idInexistente);
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeFalse();
-        resultado.Message.Should().Contain("Error al eliminar promoción");
+        resultado.Should().BeFalse();
     }
 
     [Fact]
@@ -458,8 +446,8 @@ public class PromocionesApiServiceTests
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado!.Data!.Nombre.Should().Be("A");
-        resultado.Data.ValorDescuento.Should().Be(0.01m);
+        resultado!.Nombre.Should().Be("A");
+        resultado.ValorDescuento.Should().Be(0.01m);
     }
 
     // ===== PRUEBAS ROBUSTAS - SEGURIDAD =====
@@ -551,7 +539,7 @@ public class PromocionesApiServiceTests
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado!.Data!.Nombre.Should().Be("<script>alert('XSS')</script>");
+        resultado!.Nombre.Should().Be("<script>alert('XSS')</script>");
     }
 
     // ===== PRUEBAS ROBUSTAS - CONCURRENCIA =====
@@ -597,7 +585,7 @@ public class PromocionesApiServiceTests
             });
 
         // Act - Ejecutar múltiples operaciones simultáneas
-        var tareas = new List<Task<ApiResponse<PromocionDto>?>>();
+        var tareas = new List<Task<PromocionDto?>>();
         for (int i = 0; i < 10; i++)
         {
             tareas.Add(_service.CrearPromocionAsync(request));
@@ -607,7 +595,7 @@ public class PromocionesApiServiceTests
 
         // Assert
         resultados.Should().HaveCount(10);
-        resultados.Should().OnlyContain(r => r != null && r.Success);
+        resultados.Should().OnlyContain(r => r != null);
     }
 
     [Fact]
@@ -640,7 +628,7 @@ public class PromocionesApiServiceTests
             });
 
         // Act - Ejecutar múltiples consultas simultáneas
-        var tareas = new List<Task<PaginatedList<PromocionDto>?>>();
+        var tareas = new List<Task<List<PromocionDto>>>();
         for (int i = 0; i < 20; i++)
         {
             tareas.Add(_service.ObtenerPromocionesAsync());

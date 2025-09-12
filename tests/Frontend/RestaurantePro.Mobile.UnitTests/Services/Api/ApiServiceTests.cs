@@ -518,7 +518,7 @@ public class ApiServiceTests
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(async (HttpRequestMessage request, CancellationToken ct) =>
+            .Returns(async (HttpRequestMessage request, CancellationToken ct) =>
             {
                 await Task.Delay(200, ct); // Simulate slow response
                 return new HttpResponseMessage(HttpStatusCode.OK);

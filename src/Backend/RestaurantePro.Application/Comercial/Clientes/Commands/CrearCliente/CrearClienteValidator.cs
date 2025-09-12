@@ -19,7 +19,7 @@ public class CrearClienteValidator : AbstractValidator<CrearClienteCommand>
 
         RuleFor(x => x.Telefono)
             .NotEmpty().WithMessage("El teléfono es obligatorio")
-            .Matches(@"^\+?[1-9]\d{1,14}$").WithMessage("El formato del teléfono no es válido");
+            .Matches(@"^\+?[1-9][\d\-]{1,14}$").WithMessage("El formato del teléfono no es válido");
 
         RuleFor(x => x.FechaNacimiento)
             .NotEmpty().WithMessage("La fecha de nacimiento es obligatoria")

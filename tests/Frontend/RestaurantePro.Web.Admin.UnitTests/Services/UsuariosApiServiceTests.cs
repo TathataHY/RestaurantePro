@@ -175,7 +175,7 @@ public class UsuariosApiServiceTests
     public async Task CrearAsync_ConUsuarioValido_DeberiaRetornarUsuarioCreado()
     {
         // Arrange
-        var usuarioRequest = new CreateUsuarioRequest
+        var usuarioRequest = new CrearUsuarioRequest
         {
             Email = "nuevo@restaurante.com",
             NombreCompleto = "Nuevo Usuario",
@@ -222,7 +222,7 @@ public class UsuariosApiServiceTests
     public async Task CrearAsync_ConDatosInvalidos_DeberiaRetornarNull()
     {
         // Arrange
-        var usuarioRequest = new CreateUsuarioRequest
+        var usuarioRequest = new CrearUsuarioRequest
         {
             Email = "email_invalido",
             NombreCompleto = "",
@@ -251,7 +251,7 @@ public class UsuariosApiServiceTests
     {
         // Arrange
         var id = Guid.NewGuid();
-        var usuarioRequest = new UpdateUsuarioRequest
+        var usuarioRequest = new ActualizarUsuarioRequest
         {
             NombreCompleto = "Usuario Actualizado",
             Rol = "Cocinero"
@@ -295,7 +295,7 @@ public class UsuariosApiServiceTests
     {
         // Arrange
         var id = Guid.NewGuid();
-        var usuarioRequest = new UpdateUsuarioRequest
+        var usuarioRequest = new ActualizarUsuarioRequest
         {
             NombreCompleto = "Usuario Actualizado",
             Rol = "Cocinero"
@@ -427,7 +427,7 @@ public class UsuariosApiServiceTests
     public async Task CrearAsync_ConDatosExtremos_DeberiaManejarCorrectamente()
     {
         // Arrange
-        var usuarioRequest = new CreateUsuarioRequest
+        var usuarioRequest = new CrearUsuarioRequest
         {
             NombreCompleto = "A".PadRight(100, 'A'), // Nombre muy largo
             NombreUsuario = "B".PadRight(50, 'B'), // Usuario muy largo
@@ -474,7 +474,7 @@ public class UsuariosApiServiceTests
     {
         // Arrange
         var id = Guid.NewGuid();
-        var usuarioRequest = new UpdateUsuarioRequest
+        var usuarioRequest = new ActualizarUsuarioRequest
         {
             NombreCompleto = "Usuario Actualizado",
             Rol = "Cocinero"
@@ -529,7 +529,7 @@ public class UsuariosApiServiceTests
     public async Task CrearAsync_ConDatosInvalidosExtremos_DeberiaRetornarNull()
     {
         // Arrange
-        var usuarioRequest = new CreateUsuarioRequest
+        var usuarioRequest = new CrearUsuarioRequest
         {
             NombreCompleto = "", // Nombre vacío
             NombreUsuario = "", // Usuario vacío

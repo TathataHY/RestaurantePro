@@ -22,7 +22,7 @@ public abstract class BaseIntegrationTest : IClassFixture<WebApplicationFactory>
     protected BaseIntegrationTest(WebApplicationFactory factory)
     {
         _factory = factory;
-        _client = _factory.CreateClient();
+        _client = CreateAuthenticatedClient();
 
         // Obtener un DbContext fresco para cada prueba
         var scope = _factory.Services.CreateScope();
@@ -54,6 +54,14 @@ public abstract class BaseIntegrationTest : IClassFixture<WebApplicationFactory>
         var client = _factory.CreateClient();
         client.DefaultRequestHeaders.Add("Authorization", "Bearer test-token");
         return client;
+    }
+
+    /// <summary>
+    /// Crea un cliente HTTP sin autenticación para pruebas de seguridad
+    /// </summary>
+    protected HttpClient CreateUnauthenticatedClient()
+    {
+        return _factory.CreateClient();
     }
 
     /// <summary>

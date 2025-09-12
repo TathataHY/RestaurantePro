@@ -126,7 +126,7 @@ public class FlujosCompletosIntegrationTests
             }
         };
 
-        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>()))
+        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<MesaDto>>.SuccessResponse(mesas));
 
         _mesasServiceMock.Setup(m => m.AsignarMesaAsync(It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -154,8 +154,8 @@ public class FlujosCompletosIntegrationTests
         await mesasViewModel.LiberarMesaCommand.ExecuteAsync(mesaOcupada);
 
         // Assert - Verificar operaciones realizadas
-        _mesasServiceMock.Verify(m => m.AsignarMesaAsync(mesaDisponible.Id, It.IsAny<string>()), Times.Once);
-        _mesasServiceMock.Verify(m => m.LiberarMesaAsync(mesaOcupada.Id), Times.Once);
+        _mesasServiceMock.Verify(m => m.AsignarMesaAsync(mesaDisponible.Id, It.IsAny<Guid?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        _mesasServiceMock.Verify(m => m.LiberarMesaAsync(mesaOcupada.Id, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -211,8 +211,8 @@ public class FlujosCompletosIntegrationTests
         await comandasViewModel.FinalizarComandaCommand.ExecuteAsync(comanda);
 
         // Assert - Verificar operaciones realizadas
-        _comandasServiceMock.Verify(c => c.CambiarEstadoComandaAsync(comanda.Id, It.IsAny<string>()), Times.Once);
-        _comandasServiceMock.Verify(c => c.FinalizarComandaAsync(comanda.Id, It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _comandasServiceMock.Verify(c => c.CambiarEstadoComandaAsync(comanda.Id, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        _comandasServiceMock.Verify(c => c.FinalizarComandaAsync(comanda.Id, It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion
@@ -353,10 +353,10 @@ public class FlujosCompletosIntegrationTests
     public async Task FlujoCompleto_ManejoErrores_RecuperacionAutomatica()
     {
         // Arrange - Configurar fallos de red
-        _comandasServiceMock.Setup(c => c.ObtenerComandasActivasAsync())
+        _comandasServiceMock.Setup(c => c.ObtenerComandasActivasAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("Error de red"));
 
-        _comandasServiceMock.Setup(c => c.ObtenerComandasActivasAsync())
+        _comandasServiceMock.Setup(c => c.ObtenerComandasActivasAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>()));
 
         // Act - Simular flujo de recuperación de errores
@@ -376,7 +376,7 @@ public class FlujosCompletosIntegrationTests
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null);
 
         // Assert - Verificar que se manejó el error y se recuperó
-        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
     }
 
     #endregion
@@ -393,7 +393,7 @@ public class FlujosCompletosIntegrationTests
             new MesaDto { Id = Guid.NewGuid(), Numero = "Mesa 2", Estado = "Disponible" }
         };
 
-        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>()))
+        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<MesaDto>>.SuccessResponse(mesas));
 
         _mesasServiceMock.Setup(m => m.AsignarMesaAsync(It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
@@ -416,7 +416,7 @@ public class FlujosCompletosIntegrationTests
         await Task.WhenAll(tasks);
 
         // Assert - Verificar que todas las operaciones se completaron
-        _mesasServiceMock.Verify(m => m.ObtenerMesasAsync(null, null, null), Times.Exactly(3));
+        _mesasServiceMock.Verify(m => m.ObtenerMesasAsync(null, null, null, It.IsAny<CancellationToken>()), Times.Exactly(3));
     }
 
     #endregion

@@ -1,3 +1,5 @@
+using RestaurantePro.Application.Common.Services;
+
 namespace RestaurantePro.Application.Core.Usuarios.Commands.CrearUsuario;
 
 public class CrearUsuarioHandler : IRequestHandler<CrearUsuarioCommand, Result<UsuarioDto>>
@@ -7,19 +9,22 @@ public class CrearUsuarioHandler : IRequestHandler<CrearUsuarioCommand, Result<U
     private readonly ILogger<CrearUsuarioHandler> _logger;
     private readonly IEmailService _emailService;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IHtmlSanitizerService _htmlSanitizerService;
 
     public CrearUsuarioHandler(
         IApplicationDbContext context,
         IMapper mapper,
         ILogger<CrearUsuarioHandler> logger,
         IEmailService emailService,
-        ICurrentUserService currentUserService)
+        ICurrentUserService currentUserService,
+        IHtmlSanitizerService htmlSanitizerService)
     {
         _context = context;
         _mapper = mapper;
         _logger = logger;
         _emailService = emailService;
         _currentUserService = currentUserService;
+        _htmlSanitizerService = htmlSanitizerService;
     }
 
     public async Task<Result<UsuarioDto>> Handle(CrearUsuarioCommand request, CancellationToken cancellationToken)
@@ -144,7 +149,12 @@ public class CrearUsuarioHandler : IRequestHandler<CrearUsuarioCommand, Result<U
             throw new InvalidOperationException($"Rol no válido: {request.Rol}");
         }
 
-        var usuario = Usuario.Crear(request.NombreUsuario, request.NombreCompleto, request.Email, rolEnum);
+        // Sanitizar campos de texto para prevenir XSS
+        var nombreUsuarioSanitizado = _htmlSanitizerService.SanitizeHtml(request.NombreUsuario);
+        var nombreCompletoSanitizado = _htmlSanitizerService.SanitizeHtml(request.NombreCompleto);
+        var emailSanitizado = _htmlSanitizerService.SanitizeHtml(request.Email);
+
+        var usuario = Usuario.Crear(nombreUsuarioSanitizado, nombreCompletoSanitizado, emailSanitizado, rolEnum);
 
         _logger.LogInformation("Usuario {NombreUsuario} creado usando factory domain method", usuario.NombreUsuario);
 

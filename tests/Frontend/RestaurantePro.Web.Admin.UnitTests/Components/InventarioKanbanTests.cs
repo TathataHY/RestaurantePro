@@ -74,7 +74,7 @@ namespace RestaurantePro.Web.Admin.UnitTests.Components
                 StockActual = 5,
                 StockMinimo = 10,
                 StockMaximo = 50,
-                UnidadMedida = "kg",
+                UnidadMedida = UnidadMedida.Kilogramo,
                 CostoUnitario = 2.50m,
                 EstaActivo = true
             };
@@ -105,7 +105,7 @@ namespace RestaurantePro.Web.Admin.UnitTests.Components
                 StockMinimo = 5,
                 StockMaximo = 30,
                 FechaVencimiento = DateTime.Now.AddDays(3),
-                UnidadMedida = "unidades",
+                UnidadMedida = UnidadMedida.Unidad,
                 EstaActivo = true
             };
 
@@ -131,7 +131,7 @@ namespace RestaurantePro.Web.Admin.UnitTests.Components
                 StockActual = 25,
                 StockMinimo = 10,
                 StockMaximo = 40,
-                UnidadMedida = "kg",
+                UnidadMedida = UnidadMedida.Kilogramo,
                 CostoUnitario = 1.80m,
                 EstaActivo = true
             };
@@ -162,7 +162,7 @@ namespace RestaurantePro.Web.Admin.UnitTests.Components
                 StockActual = 0,
                 StockMinimo = 5,
                 StockMaximo = 20,
-                UnidadMedida = "unidades",
+                UnidadMedida = UnidadMedida.Unidad,
                 CostoUnitario = 5.00m,
                 EstaActivo = false
             };
@@ -403,7 +403,7 @@ namespace RestaurantePro.Web.Admin.UnitTests.Components
                 Id = Guid.NewGuid(),
                 Nombre = "Ingrediente Completo",
                 Descripcion = "Descripción del ingrediente",
-                UnidadMedida = "kg",
+                UnidadMedida = UnidadMedida.Kilogramo,
                 StockActual = 25.5m,
                 StockMinimo = 10.0m,
                 StockMaximo = 50.0m,

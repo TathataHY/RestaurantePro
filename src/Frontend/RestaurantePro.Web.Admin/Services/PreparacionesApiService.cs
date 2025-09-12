@@ -437,7 +437,7 @@ namespace RestaurantePro.Web.Admin.Services
         {
             try
             {
-                var detalle = await ObtenerPreparacionAsync((int)id);
+                var detalle = await ObtenerPreparacionAsync(id.GetHashCode());
                 if (detalle == null) return null;
 
                 return new PreparacionDto
@@ -550,7 +550,7 @@ namespace RestaurantePro.Web.Admin.Services
             {
                 var request = new ActualizarEstadoPreparacionRequest
                 {
-                    PreparacionId = (int)id,
+                    PreparacionId = id.GetHashCode(),
                     Estado = estado
                 };
                 return await ActualizarEstadoAsync(request);

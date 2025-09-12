@@ -34,7 +34,7 @@ public class ReportesApiService : IReportesApiService
     /// <summary>
     /// Obtiene estadísticas generales de reportes
     /// </summary>
-    public async Task<ReporteEstadisticasDto?> ObtenerEstadisticasAsync()
+    public virtual async Task<ReporteEstadisticasDto?> ObtenerEstadisticasAsync()
     {
         try
         {

@@ -235,7 +235,7 @@
                 }
             }
 
-            ApiResponse<ClienteDto>? resultado;
+            ClienteDto? resultado;
 
             if (EsEdicion)
             {
@@ -258,7 +258,8 @@
                     NotasEspeciales = Cliente.NotasEspeciales
                 };
 
-                resultado = await ClientesApi.ActualizarClienteAsync(request);
+                var resultadoActualizar = await ClientesApi.ActualizarClienteAsync(request);
+                resultado = resultadoActualizar?.Data;
             }
             else
             {

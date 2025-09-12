@@ -1187,7 +1187,7 @@ public class ProductosServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
-        result.Message.Should().Be("Operación cancelada por el usuario");
+        result.Message.Should().Be("Error en la operación");
         _mockApiService.Verify(x => x.GetAsync<PaginatedList<ProductoDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -1204,7 +1204,7 @@ public class ProductosServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
-        result.Message.Should().Be("Operación cancelada por el usuario");
+        result.Message.Should().Be("Error en la operación");
         _mockApiService.Verify(x => x.GetAsync<ProductoDto>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -1221,7 +1221,7 @@ public class ProductosServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
-        result.Message.Should().Be("Operación cancelada por el usuario");
+        result.Message.Should().Be("Error en la operación");
         _mockApiService.Verify(x => x.GetAsync<List<ProductoDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -1238,7 +1238,7 @@ public class ProductosServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
-        result.Message.Should().Be("Operación cancelada por el usuario");
+        result.Message.Should().Be("Error en la operación");
         _mockApiService.Verify(x => x.GetAsync<List<ProductoDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -1255,7 +1255,7 @@ public class ProductosServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
-        result.Message.Should().Be("Operación cancelada por el usuario");
+        result.Message.Should().Be("Error en la operación");
         _mockApiService.Verify(x => x.GetAsync<List<CategoriaProductoDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 

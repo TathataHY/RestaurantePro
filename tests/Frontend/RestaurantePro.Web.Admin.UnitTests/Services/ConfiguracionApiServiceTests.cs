@@ -68,8 +68,7 @@ public class ConfiguracionApiServiceTests
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado.Should().HaveCount(2);
-        resultado.First().Clave.Should().Be("nombre_restaurante");
+        resultado!.Clave.Should().Be("nombre_restaurante");
     }
 
     [Fact]
@@ -215,8 +214,7 @@ public class ConfiguracionApiServiceTests
         var resultado = await _service.ObtenerConfiguracionAsync();
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado.Should().BeEmpty();
+        resultado.Should().BeNull();
     }
 
     [Fact]
@@ -234,8 +232,7 @@ public class ConfiguracionApiServiceTests
         var resultado = await _service.ObtenerPorCategoriaAsync("inexistente");
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado.Should().BeEmpty();
+        resultado.Should().BeNull();
     }
 
     [Fact]
@@ -331,7 +328,7 @@ public class ConfiguracionApiServiceTests
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado.Should().HaveCount(1);
+        resultado!.Clave.Should().Be("test_key");
     }
 
     [Fact]
@@ -408,8 +405,7 @@ public class ConfiguracionApiServiceTests
         var resultado = await _service.ObtenerConfiguracionAsync();
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado.Should().BeEmpty();
+        resultado.Should().BeNull();
     }
 
     [Fact]
@@ -430,8 +426,7 @@ public class ConfiguracionApiServiceTests
         var resultado = await _service.ObtenerPorCategoriaAsync(categoriaConXSS);
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado.Should().BeEmpty();
+        resultado.Should().BeNull();
     }
 
     [Fact]
@@ -505,7 +500,7 @@ public class ConfiguracionApiServiceTests
             });
 
         // Act - Ejecutar múltiples operaciones simultáneas
-        var tareas = new List<Task<List<ConfiguracionDto>>>();
+        var tareas = new List<Task<ConfiguracionDto?>>();
         for (int i = 0; i < 15; i++)
         {
             tareas.Add(_service.ObtenerConfiguracionAsync());
@@ -648,8 +643,7 @@ public class ConfiguracionApiServiceTests
         var resultado = await _service.ObtenerConfiguracionAsync();
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado.Should().BeEmpty();
+        resultado.Should().BeNull();
     }
 
     [Fact]
@@ -729,7 +723,7 @@ public class ConfiguracionApiServiceTests
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado.Should().HaveCount(10000);
+        resultado!.Clave.Should().Be("test_key");
     }
 
     [Fact]
@@ -856,8 +850,7 @@ public class ConfiguracionApiServiceTests
             var resultado = await _service.ObtenerConfiguracionAsync();
 
             // Assert
-            resultado.Should().NotBeNull();
-            resultado.Should().BeEmpty();
+            resultado.Should().BeNull();
         }
     }
 
@@ -889,8 +882,7 @@ public class ConfiguracionApiServiceTests
             var resultado = await _service.ObtenerPorCategoriaAsync(payload);
 
             // Assert
-            resultado.Should().NotBeNull();
-            resultado.Should().BeEmpty();
+            resultado.Should().BeNull();
         }
     }
 
@@ -970,7 +962,7 @@ public class ConfiguracionApiServiceTests
             });
 
         // Act - Ejecutar 100 operaciones simultáneas
-        var tareas = new List<Task<List<ConfiguracionDto>>>();
+        var tareas = new List<Task<ConfiguracionDto?>>();
         for (int i = 0; i < 100; i++)
         {
             tareas.Add(_service.ObtenerConfiguracionAsync());
@@ -1113,8 +1105,7 @@ public class ConfiguracionApiServiceTests
         var resultado = await _service.ObtenerConfiguracionAsync();
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado.Should().BeEmpty();
+        resultado.Should().BeNull();
     }
 
     [Fact]
@@ -1132,8 +1123,7 @@ public class ConfiguracionApiServiceTests
         var resultado = await _service.ObtenerConfiguracionAsync();
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado.Should().BeEmpty();
+        resultado.Should().BeNull();
     }
 
     [Fact]
@@ -1151,8 +1141,7 @@ public class ConfiguracionApiServiceTests
         var resultado = await _service.ObtenerConfiguracionAsync();
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado.Should().BeEmpty();
+        resultado.Should().BeNull();
     }
 
     [Fact]

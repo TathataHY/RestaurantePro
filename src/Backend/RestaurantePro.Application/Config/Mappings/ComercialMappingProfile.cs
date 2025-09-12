@@ -1,3 +1,5 @@
+using RestaurantePro.Domain.Comercial.Clientes.Enums;
+
 namespace RestaurantePro.Application.Config.Mappings;
 
 /// <summary>
@@ -22,27 +24,17 @@ public class ComercialMappingProfile : Profile
     private void ConfigurarMapeosClientes()
     {
         // Cliente Entity -> ClienteDto
-        CreateMap<Cliente, ClienteDto>()
-            .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Nombre.Nombre))
-            .ForMember(dest => dest.Apellido, opt => opt.MapFrom(src => src.Nombre.Apellido))
-            .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email.Value))
-            .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => src.Telefono.Value))
-            .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.EstaActivo))
-            // Mapeos de propiedades faltantes 
-            .ForMember(dest => dest.Direccion, opt => opt.Ignore()) // TODO: Implementar en entidad
-            .ForMember(dest => dest.Tipo, opt => opt.Ignore()) // TODO: Implementar en entidad
-            .ForMember(dest => dest.Notas, opt => opt.Ignore()) // TODO: Implementar en entidad
-            .ForMember(dest => dest.TarjetaFidelizacionId, opt => opt.Ignore()) // TODO: Implementar en entidad
-            .ForMember(dest => dest.PuntosFidelizacion, opt => opt.MapFrom(src => 0)) // Default value
-            .ForMember(dest => dest.NivelFidelizacion, opt => opt.MapFrom(src => NivelFidelizacion.Basico)) // Default value
-            .ForMember(dest => dest.TotalVisitas, opt => opt.MapFrom(src => 0)) // TODO: Calcular desde histórico
-            .ForMember(dest => dest.TotalGastado, opt => opt.MapFrom(src => 0)) // TODO: Calcular desde histórico
-            .ForMember(dest => dest.UltimaVisita, opt => opt.MapFrom(src => (DateTime?)null)) // TODO: Calcular desde histórico
-            .ForMember(dest => dest.PromedioGasto, opt => opt.MapFrom(src => 0)) // TODO: Calcular desde histórico
-            // Heredadas de BaseDto
-            .ForMember(dest => dest.FechaModificacion, opt => opt.Ignore()) // TODO: Implementar en entidad
-            .ForMember(dest => dest.CreadoPor, opt => opt.Ignore()) // TODO: Implementar en entidad
-            .ForMember(dest => dest.ModificadoPor, opt => opt.Ignore()); // TODO: Implementar en entidad
+            CreateMap<Cliente, ClienteDto>()
+                .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.Nombre.Nombre))
+                .ForMember(dest => dest.Apellido, opt => opt.MapFrom(src => src.Nombre.Apellido))
+                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email.Value))
+                .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => src.Telefono.Value))
+                .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.EstaActivo))
+                .ForMember(dest => dest.Tipo, opt => opt.MapFrom(src => src.Segmento.ToString()))
+                .ForMember(dest => dest.FechaNacimiento, opt => opt.MapFrom(src => src.FechaNacimiento))
+                .ForMember(dest => dest.PuntosFidelizacion, opt => opt.MapFrom(src => src.PuntosAcumulados))
+                .ForMember(dest => dest.TotalVisitas, opt => opt.MapFrom(src => src.CantidadVisitas))
+                .ForMember(dest => dest.NivelFidelizacion, opt => opt.MapFrom(src => CalcularNivelFidelizacion(src.PuntosAcumulados)));
 
         // Cliente Entity -> ClienteSummaryDto
         CreateMap<Cliente, ClienteSummaryDto>()
@@ -51,14 +43,14 @@ public class ComercialMappingProfile : Profile
             .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => src.Telefono.Value))
             .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.EstaActivo))
             // Mapeos de propiedades faltantes
-            .ForMember(dest => dest.TipoCliente, opt => opt.MapFrom(src => "Regular")) // TODO: Implementar en entidad
+            .ForMember(dest => dest.TipoCliente, opt => opt.MapFrom(src => src.Segmento.ToString()))
             .ForMember(dest => dest.FechaRegistro, opt => opt.MapFrom(src => src.FechaCreacion))
             .ForMember(dest => dest.RegistradoPor, opt => opt.MapFrom(src => "Sistema")) // TODO: Implementar en entidad
             .ForMember(dest => dest.FechaNacimiento, opt => opt.Ignore()) // TODO: Implementar en entidad
             .ForMember(dest => dest.Ciudad, opt => opt.MapFrom(src => "")) // TODO: Implementar en entidad
             .ForMember(dest => dest.Pais, opt => opt.MapFrom(src => "")) // TODO: Implementar en entidad
             .ForMember(dest => dest.PuntosFidelizacion, opt => opt.MapFrom(src => 0)) // TODO: Calcular desde fidelización
-            .ForMember(dest => dest.NivelFidelizacion, opt => opt.MapFrom(src => NivelFidelizacion.Basico)) // TODO: Calcular desde fidelización
+            .ForMember(dest => dest.NivelFidelizacion, opt => opt.MapFrom(src => NivelFidelizacion.Basico.ToString())) // TODO: Calcular desde fidelización
             .ForMember(dest => dest.TotalOrdenes, opt => opt.MapFrom(src => 0)) // TODO: Calcular desde histórico
             .ForMember(dest => dest.MontoTotalCompras, opt => opt.MapFrom(src => 0)) // TODO: Calcular desde histórico
             .ForMember(dest => dest.FechaUltimaOrden, opt => opt.MapFrom(src => (DateTime?)null)) // TODO: Calcular desde histórico
@@ -164,5 +156,20 @@ public class ComercialMappingProfile : Profile
             .ForMember(dest => dest.DiasValidos, opt => opt.Ignore()); // Si existe lógica específica, mapear aquí
         // Si necesitas el mapeo inverso:
         // CreateMap<PromocionDto, Promocion>()... (no recomendado para entidades de dominio)
+    }
+
+    /// <summary>
+    /// Calcula el nivel de fidelización basado en los puntos acumulados
+    /// </summary>
+    private static string CalcularNivelFidelizacion(int puntos)
+    {
+        return puntos switch
+        {
+            >= 1000 => "Diamante",
+            >= 500 => "Platino",
+            >= 200 => "Oro",
+            >= 50 => "Plata",
+            _ => "Basico"
+        };
     }
 } 

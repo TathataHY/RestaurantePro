@@ -31,7 +31,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -46,7 +46,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -64,7 +64,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -85,7 +85,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -101,7 +101,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -120,7 +120,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -138,7 +138,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -154,7 +154,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -172,7 +172,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -196,7 +196,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -217,7 +217,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -232,7 +232,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -247,7 +247,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -264,7 +264,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -282,7 +282,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -302,7 +302,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -319,7 +319,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -335,7 +335,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -353,7 +353,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -373,7 +373,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -393,7 +393,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -409,7 +409,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -426,7 +426,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -446,7 +446,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -469,7 +469,7 @@ public class ConfiguracionPageTests : TestContext
     {
         // Arrange
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(new List<ConfiguracionDto>());
+            .ReturnsAsync((ConfiguracionDto?)null);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -485,15 +485,10 @@ public class ConfiguracionPageTests : TestContext
     public void Renderizar_ConParametros_DeberiaMostrarEstadisticas()
     {
         // Arrange
-        var parametros = new List<ConfiguracionDto>
-        {
-            new ConfiguracionDto { Categoria = "Sistema", EsEditable = true, FechaActualizacion = DateTime.Now },
-            new ConfiguracionDto { Categoria = "Notificaciones", EsEditable = false, FechaActualizacion = DateTime.Now.AddDays(-1) },
-            new ConfiguracionDto { Categoria = "Fidelizacion", EsEditable = true, FechaActualizacion = DateTime.Now.AddDays(-2) }
-        };
+        var parametro = new ConfiguracionDto { Categoria = "Sistema", EsEditable = true, FechaActualizacion = DateTime.Now };
 
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(parametros);
+            .ReturnsAsync(parametro);
 
         // Act
         var component = RenderComponent<Configuracion>();
@@ -510,15 +505,10 @@ public class ConfiguracionPageTests : TestContext
     public void Renderizar_ConParametros_DeberiaMostrarOpcionesDeFiltro()
     {
         // Arrange
-        var parametros = new List<ConfiguracionDto>
-        {
-            new ConfiguracionDto { Categoria = "Sistema" },
-            new ConfiguracionDto { Categoria = "Notificaciones" },
-            new ConfiguracionDto { Categoria = "Fidelizacion" }
-        };
+        var parametro = new ConfiguracionDto { Categoria = "Sistema" };
 
         _configuracionApiMock.Setup(x => x.ObtenerConfiguracionAsync())
-            .ReturnsAsync(parametros);
+            .ReturnsAsync(parametro);
 
         // Act
         var component = RenderComponent<Configuracion>();

@@ -129,8 +129,8 @@ public class ProductosApiService : IProductosApiService
             Id = id,
             Nombre = request.Nombre,
             Descripcion = request.Descripcion,
-            Precio = request.Precio,
-            CategoriaId = request.CategoriaId,
+            Precio = request.Precio ?? 0,
+            CategoriaId = request.CategoriaId ?? Guid.Empty,
             Activo = request.Activo
         };
         return await ActualizarAsync(updateRequest);

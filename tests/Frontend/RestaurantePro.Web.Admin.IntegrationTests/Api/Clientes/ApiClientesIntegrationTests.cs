@@ -19,15 +19,8 @@ public class ApiClientesIntegrationTests : BaseIntegrationTest
 {
     public ApiClientesIntegrationTests(WebApplicationFactory factory) : base(factory)
     {
-        // Configurar autenticación para las pruebas
-        SetupAuthentication();
-    }
-
-    private void SetupAuthentication()
-    {
-        // Para las pruebas, vamos a usar un token de prueba o deshabilitar la autenticación
-        // Por ahora, vamos a probar sin autenticación para ver si los endpoints existen
-        _client.DefaultRequestHeaders.Clear();
+        // Los tests regulares usan el cliente autenticado por defecto del BaseIntegrationTest
+        // No necesitan configuración adicional de autenticación
     }
 
     [Fact]
@@ -95,6 +88,7 @@ public class ApiClientesIntegrationTests : BaseIntegrationTest
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         var jsonContent = await response.Content.ReadAsStringAsync();
+        Console.WriteLine($"JSON Response: {jsonContent}"); // Log temporal para debug
         var resultado = JsonSerializer.Deserialize<ApiResponse<ClienteDto>>(jsonContent, GetJsonOptions());
         resultado.Should().NotBeNull();
         resultado!.Success.Should().BeTrue();
@@ -383,9 +377,10 @@ public class ApiClientesIntegrationTests : BaseIntegrationTest
     {
         // Arrange - Página muy grande
         var queryParams = "pageNumber=999999&pageSize=1";
+        var authenticatedClient = CreateAuthenticatedClient();
 
         // Act
-        var response = await _client.GetAsync($"/api/comercial/clientes?{queryParams}");
+        var response = await authenticatedClient.GetAsync($"/api/comercial/clientes?{queryParams}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);

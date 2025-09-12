@@ -189,8 +189,7 @@ namespace RestaurantePro.Web.Admin.UnitTests.Services
 
             // Assert
             resultado.Should().NotBeNull();
-            resultado!.Success.Should().BeTrue();
-            resultado.Data!.NumeroReservacion.Should().Be("RES001");
+            resultado!.NumeroReservacion.Should().Be("RES001");
         }
 
         [Fact]
@@ -241,8 +240,7 @@ namespace RestaurantePro.Web.Admin.UnitTests.Services
 
             // Assert
             resultado.Should().NotBeNull();
-            resultado!.Success.Should().BeTrue();
-            resultado.Data!.EsUrgente.Should().BeTrue();
+            resultado!.Data!.EsUrgente.Should().Be(true);
         }
 
         [Fact]
@@ -272,9 +270,7 @@ namespace RestaurantePro.Web.Admin.UnitTests.Services
             var resultado = await _service.EliminarReservacionAsync(id);
 
             // Assert
-            resultado.Should().NotBeNull();
-            resultado!.Success.Should().BeTrue();
-            resultado.Data.Should().BeTrue();
+            resultado.Should().Be(true);
         }
 
         [Fact]
@@ -308,9 +304,7 @@ namespace RestaurantePro.Web.Admin.UnitTests.Services
             var resultado = await _service.ConfirmarReservacionAsync(request);
 
             // Assert
-            resultado.Should().NotBeNull();
-            resultado!.Success.Should().BeTrue();
-            resultado.Data.Should().BeTrue();
+            resultado.Should().Be(true);
         }
 
         [Fact]
@@ -345,9 +339,7 @@ namespace RestaurantePro.Web.Admin.UnitTests.Services
             var resultado = await _service.CancelarReservacionAsync(request);
 
             // Assert
-            resultado.Should().NotBeNull();
-            resultado!.Success.Should().BeTrue();
-            resultado.Data.Should().BeTrue();
+            resultado.Should().Be(true);
         }
 
         [Fact]
@@ -381,9 +373,7 @@ namespace RestaurantePro.Web.Admin.UnitTests.Services
             var resultado = await _service.MarcarLlegadaAsync(request);
 
             // Assert
-            resultado.Should().NotBeNull();
-            resultado!.Success.Should().BeTrue();
-            resultado.Data.Should().BeTrue();
+            resultado.Should().Be(true);
         }
 
         [Fact]
@@ -661,9 +651,7 @@ namespace RestaurantePro.Web.Admin.UnitTests.Services
             var resultado = await _service.CrearReservacionAsync(request);
 
             // Assert
-            resultado.Should().NotBeNull();
-            resultado!.Success.Should().BeFalse();
-            resultado.Message.Should().Contain("Connection lost");
+            resultado.Should().BeNull();
         }
 
         [Fact]
@@ -683,9 +671,7 @@ namespace RestaurantePro.Web.Admin.UnitTests.Services
             var resultado = await _service.ConfirmarReservacionAsync(request);
 
             // Assert
-            resultado.Should().NotBeNull();
-            resultado!.Success.Should().BeFalse();
-            resultado.Message.Should().Contain("Connection lost");
+            resultado.Should().Be(false);
         }
 
         [Fact]

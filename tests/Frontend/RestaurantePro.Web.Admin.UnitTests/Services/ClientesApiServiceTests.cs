@@ -210,12 +210,9 @@ public class ClientesApiServiceTests
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeTrue();
-        resultado.Data.Should().NotBeNull();
-        resultado.Data!.Nombre.Should().Be("Carlos");
-        resultado.Data.Apellidos.Should().Be("López");
-        resultado.Data.Email.Should().Be("carlos@email.com");
-        resultado.Message.Should().Be("Cliente creado correctamente");
+        resultado!.Nombre.Should().Be("Carlos");
+        resultado.Apellidos.Should().Be("López");
+        resultado.Email.Should().Be("carlos@email.com");
     }
 
     [Fact]
@@ -248,9 +245,7 @@ public class ClientesApiServiceTests
         var resultado = await _service.CrearClienteAsync(clienteRequest);
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeFalse();
-        resultado.Message.Should().Be("Datos de cliente inválidos");
+        resultado.Should().BeNull();
     }
 
     [Fact]
@@ -296,12 +291,9 @@ public class ClientesApiServiceTests
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeTrue();
-        resultado.Data.Should().NotBeNull();
-        resultado.Data!.Id.Should().Be(id);
+        resultado!.Data!.Id.Should().Be(id);
         resultado.Data.Nombre.Should().Be("Carlos Actualizado");
         resultado.Data.Apellidos.Should().Be("López Actualizado");
-        resultado.Message.Should().Be("Cliente actualizado correctamente");
     }
 
     [Fact]
@@ -329,10 +321,7 @@ public class ClientesApiServiceTests
         var resultado = await _service.EliminarClienteAsync(id);
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeTrue();
-        resultado.Data.Should().BeTrue();
-        resultado.Message.Should().Be("Cliente eliminado correctamente");
+        resultado.Should().Be(true);
     }
 
     [Fact]
@@ -360,10 +349,7 @@ public class ClientesApiServiceTests
         var resultado = await _service.ToggleActivarClienteAsync(id);
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeTrue();
-        resultado.Data.Should().BeTrue();
-        resultado.Message.Should().Be("Estado del cliente cambiado correctamente");
+        resultado.Should().Be(true);
     }
 
     [Fact]
@@ -431,10 +417,7 @@ public class ClientesApiServiceTests
         var resultado = await _service.ValidarEmailAsync(email);
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeTrue();
-        resultado.Data.Should().BeTrue();
-        resultado.Message.Should().Be("Email disponible");
+        resultado.Should().Be(true);
     }
 
     [Fact]
@@ -462,10 +445,7 @@ public class ClientesApiServiceTests
         var resultado = await _service.ValidarEmailAsync(email);
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeTrue();
-        resultado.Data.Should().BeFalse();
-        resultado.Message.Should().Be("Email ya existe");
+        resultado.Should().Be(false);
     }
 
     // ===== PRUEBAS ROBUSTAS ADICIONALES =====
@@ -592,9 +572,7 @@ public class ClientesApiServiceTests
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeTrue();
-        resultado.Data.Should().NotBeNull();
-        resultado.Data!.Nombre.Should().Be(clienteRequest.Nombre);
+        resultado!.Nombre.Should().Be(clienteRequest.Nombre);
     }
 
     [Fact]
@@ -617,9 +595,7 @@ public class ClientesApiServiceTests
         var resultado = await _service.ActualizarClienteAsync(clienteRequest);
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeFalse();
-        resultado.Message.Should().Contain("Error al actualizar cliente");
+        resultado.Should().BeNull();
     }
 
     [Fact]
@@ -640,9 +616,7 @@ public class ClientesApiServiceTests
         var resultado = await _service.EliminarClienteAsync(id);
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeFalse();
-        resultado.Message.Should().Contain("Error al eliminar cliente");
+        resultado.Should().Be(false);
     }
 
     [Fact]
@@ -712,10 +686,7 @@ public class ClientesApiServiceTests
         var resultado = await _service.ValidarEmailAsync(email);
 
         // Assert
-        resultado.Should().NotBeNull();
-        resultado!.Success.Should().BeFalse();
-        resultado.Data.Should().BeFalse();
-        resultado.Message.Should().Contain("Error al validar email");
+        resultado.Should().Be(false);
     }
 
     [Fact]
@@ -745,9 +716,7 @@ public class ClientesApiServiceTests
         // Assert
         resultado.Should().NotBeNull();
         resultado!.Success.Should().BeTrue();
-        resultado.Data.Should().NotBeNull();
-        resultado.Data.Should().HaveCount(archivoBytes.Length);
-        resultado.Message.Should().Be("Clientes exportados correctamente");
+        resultado.Data!.Length.Should().Be(archivoBytes.Length);
     }
 
     [Fact]
@@ -788,6 +757,6 @@ public class ClientesApiServiceTests
         resultado.Should().NotBeNull();
         resultado!.Clientes.Should().HaveCount(1);
         resultado.TotalEncontrados.Should().Be(1);
-        resultado.TieneMasResultados.Should().BeFalse();
+        resultado.TieneMasResultados.Should().Be(false);
     }
 }

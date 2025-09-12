@@ -45,8 +45,8 @@ public class InventarioApiServiceTests
         // Arrange
         var ingredientes = new List<IngredienteDto>
         {
-            new() { Id = Guid.NewGuid(), Nombre = "Tomate", UnidadMedida = "kg", StockActual = 50, CostoUnitario = 2.50m },
-            new() { Id = Guid.NewGuid(), Nombre = "Cebolla", UnidadMedida = "kg", StockActual = 30, CostoUnitario = 1.80m }
+            new() { Id = Guid.NewGuid(), Nombre = "Tomate", UnidadMedida = UnidadMedida.Kilogramo, StockActual = 50, CostoUnitario = 2.50m },
+            new() { Id = Guid.NewGuid(), Nombre = "Cebolla", UnidadMedida = UnidadMedida.Kilogramo, StockActual = 30, CostoUnitario = 1.80m }
         };
 
         var paginatedList = new PaginatedList<IngredienteDto>
@@ -86,7 +86,7 @@ public class InventarioApiServiceTests
         {
             Id = id,
             Nombre = "Pimiento",
-            UnidadMedida = "kg",
+            UnidadMedida = UnidadMedida.Kilogramo,
             StockActual = 25,
             CostoUnitario = 3.20m
         };
@@ -117,7 +117,7 @@ public class InventarioApiServiceTests
         var ingrediente = new IngredienteDto
         {
             Nombre = "Ajo",
-            UnidadMedida = "kg",
+            UnidadMedida = UnidadMedida.Kilogramo,
             StockActual = 10,
             CostoUnitario = 4.50m
         };
@@ -152,7 +152,7 @@ public class InventarioApiServiceTests
         {
             Id = id,
             Nombre = "Zanahoria",
-            UnidadMedida = "kg",
+            UnidadMedida = UnidadMedida.Kilogramo,
             StockActual = 40,
             CostoUnitario = 2.00m
         };
@@ -692,7 +692,7 @@ public class InventarioApiServiceTests
             {
                 Id = Guid.NewGuid(),
                 Nombre = $"Ingrediente {i}",
-                UnidadMedida = "kg",
+                UnidadMedida = UnidadMedida.Kilogramo,
                 StockActual = i,
                 CostoUnitario = i * 0.1m
             });
@@ -732,10 +732,10 @@ public class InventarioApiServiceTests
         // Arrange
         var ingredientes = new List<IngredienteDto>
         {
-            new() { Id = Guid.NewGuid(), Nombre = "Tomate 🍅", UnidadMedida = "kg", StockActual = 50 },
-            new() { Id = Guid.NewGuid(), Nombre = "Cebolla 🧅", UnidadMedida = "kg", StockActual = 30 },
-            new() { Id = Guid.NewGuid(), Nombre = "Ajo con ñoño", UnidadMedida = "kg", StockActual = 10 },
-            new() { Id = Guid.NewGuid(), Nombre = "Pimiento rojo 🌶️", UnidadMedida = "kg", StockActual = 25 }
+            new() { Id = Guid.NewGuid(), Nombre = "Tomate 🍅", UnidadMedida = UnidadMedida.Kilogramo, StockActual = 50 },
+            new() { Id = Guid.NewGuid(), Nombre = "Cebolla 🧅", UnidadMedida = UnidadMedida.Kilogramo, StockActual = 30 },
+            new() { Id = Guid.NewGuid(), Nombre = "Ajo con ñoño", UnidadMedida = UnidadMedida.Kilogramo, StockActual = 10 },
+            new() { Id = Guid.NewGuid(), Nombre = "Pimiento rojo 🌶️", UnidadMedida = UnidadMedida.Kilogramo, StockActual = 25 }
         };
 
         var paginatedList = new PaginatedList<IngredienteDto>
@@ -773,7 +773,7 @@ public class InventarioApiServiceTests
         var ingrediente = new IngredienteDto
         {
             Nombre = "Ingrediente Extremo",
-            UnidadMedida = "kg",
+            UnidadMedida = UnidadMedida.Kilogramo,
             StockActual = decimal.MaxValue,
             StockMinimo = decimal.MaxValue,
             StockMaximo = decimal.MaxValue,
@@ -876,7 +876,7 @@ public class InventarioApiServiceTests
         {
             Nombre = "<script>alert('xss')</script>",
             Descripcion = "<img src=x onerror=alert('xss')>",
-            UnidadMedida = "<svg onload=alert('xss')>",
+            UnidadMedida = UnidadMedida.Kilogramo,
             StockActual = 10
         };
 
@@ -960,7 +960,7 @@ public class InventarioApiServiceTests
         // Arrange
         var ingredientes = new List<IngredienteDto>
         {
-            new() { Id = Guid.NewGuid(), Nombre = "Tomate", UnidadMedida = "kg", StockActual = 50 }
+            new() { Id = Guid.NewGuid(), Nombre = "Tomate", UnidadMedida = UnidadMedida.Kilogramo, StockActual = 50 }
         };
 
         var paginatedList = new PaginatedList<IngredienteDto>
@@ -1004,7 +1004,7 @@ public class InventarioApiServiceTests
         var ingrediente = new IngredienteDto
         {
             Nombre = "Ingrediente Concurrencia",
-            UnidadMedida = "kg",
+            UnidadMedida = UnidadMedida.Kilogramo,
             StockActual = 10,
             CostoUnitario = 2.50m
         };

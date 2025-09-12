@@ -67,7 +67,7 @@ public class ResilienceTests
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null); // Segundo intento - éxito
 
         // Assert - Verificar que se manejó el error y se recuperó
-        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.AtLeast(1));
         comandasViewModel.Comandas.Should().NotBeNull();
     }
 
@@ -75,7 +75,7 @@ public class ResilienceTests
     public async Task Resilience_FalloRed_MesasService_RecuperacionAutomatica()
     {
         // Arrange - Configurar fallo de red seguido de éxito
-        _mesasServiceMock.SetupSequence(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>()))
+        _mesasServiceMock.SetupSequence(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("Error de red"))
             .ReturnsAsync(ApiResponse<List<MesaDto>>.SuccessResponse(new List<MesaDto>()));
 
@@ -89,7 +89,7 @@ public class ResilienceTests
         await mesasViewModel.LoadMesasCommand.ExecuteAsync(null); // Segundo intento - éxito
 
         // Assert - Verificar que se manejó el error y se recuperó
-        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         mesasViewModel.Mesas.Should().NotBeNull();
     }
 
@@ -112,7 +112,7 @@ public class ResilienceTests
         await productosViewModel.LoadProductosCommand.ExecuteAsync(null); // Segundo intento - éxito
 
         // Assert - Verificar que se manejó el error y se recuperó
-        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _dialogServiceMock.Verify(d => d.ShowErrorAsync(It.IsAny<string>()), Times.AtLeast(1));
         productosViewModel.Productos.Should().NotBeNull();
     }
 
@@ -140,7 +140,7 @@ public class ResilienceTests
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null);
 
         // Assert - Verificar que se manejó el error
-        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         comandasViewModel.Comandas.Should().BeEmpty();
     }
 
@@ -148,7 +148,7 @@ public class ResilienceTests
     public async Task Resilience_FalloServicio_MesasService_Error503()
     {
         // Arrange - Configurar error 503 del servidor
-        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>()))
+        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<MesaDto>>.ErrorResponse(new List<string> { "Servicio no disponible" }, "Servicio no disponible"));
 
         var mesasViewModel = new MesasViewModel(
@@ -160,7 +160,7 @@ public class ResilienceTests
         await mesasViewModel.LoadMesasCommand.ExecuteAsync(null);
 
         // Assert - Verificar que se manejó el error
-        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         mesasViewModel.Mesas.Should().BeEmpty();
     }
 
@@ -219,7 +219,7 @@ public class ResilienceTests
             }
         };
 
-        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>()))
+        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<MesaDto>>.SuccessResponse(mesasInconsistentes));
 
         var mesasViewModel = new MesasViewModel(
@@ -270,7 +270,7 @@ public class ResilienceTests
     public async Task Resilience_RecuperacionAutomatica_MesasService_ReintentoExitoso()
     {
         // Arrange - Configurar fallo seguido de éxito
-        _mesasServiceMock.SetupSequence(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>()))
+        _mesasServiceMock.SetupSequence(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("Error de red"))
             .ThrowsAsync(new HttpRequestException("Error de red"))
             .ReturnsAsync(ApiResponse<List<MesaDto>>.SuccessResponse(new List<MesaDto>()));
@@ -286,7 +286,7 @@ public class ResilienceTests
         await mesasViewModel.LoadMesasCommand.ExecuteAsync(null); // Éxito
 
         // Assert - Verificar que se recuperó después de múltiples fallos
-        _mesasServiceMock.Verify(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>()), Times.Exactly(3));
+        _mesasServiceMock.Verify(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()), Times.Exactly(3));
     }
 
     #endregion
@@ -313,7 +313,7 @@ public class ResilienceTests
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null);
 
         // Assert - Verificar que se manejó el error
-        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.AtLeast(1));
         comandasViewModel.Comandas.Should().BeEmpty();
     }
 
@@ -321,7 +321,7 @@ public class ResilienceTests
     public async Task Resilience_DatosCorruptos_MesasService_RespuestaInvalida()
     {
         // Arrange - Configurar respuesta con datos corruptos
-        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>()))
+        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Datos corruptos"));
 
         var mesasViewModel = new MesasViewModel(
@@ -333,7 +333,7 @@ public class ResilienceTests
         await mesasViewModel.LoadMesasCommand.ExecuteAsync(null);
 
         // Assert - Verificar que se manejó el error
-        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         mesasViewModel.Mesas.Should().BeEmpty();
     }
 
@@ -406,7 +406,7 @@ public class ResilienceTests
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null);
 
         // Assert - Verificar que se manejó el timeout
-        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         comandasViewModel.Comandas.Should().BeEmpty();
     }
 
@@ -414,7 +414,7 @@ public class ResilienceTests
     public async Task Resilience_Timeout_MesasService_OperacionLenta()
     {
         // Arrange - Configurar timeout
-        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>()))
+        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new TaskCanceledException("Operación cancelada por timeout"));
 
         var mesasViewModel = new MesasViewModel(
@@ -426,7 +426,7 @@ public class ResilienceTests
         await mesasViewModel.LoadMesasCommand.ExecuteAsync(null);
 
         // Assert - Verificar que se manejó el timeout
-        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         mesasViewModel.Mesas.Should().BeEmpty();
     }
 

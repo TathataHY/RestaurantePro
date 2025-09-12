@@ -160,6 +160,9 @@ public class ObtenerClientesPaginadosHandler : IRequestHandler<ObtenerClientesPa
             "nombre" => esDescendente 
                 ? query.OrderByDescending(c => c.Nombre.NombreCompleto)
                 : query.OrderBy(c => c.Nombre.NombreCompleto),
+            "nombrecompleto" => esDescendente 
+                ? query.OrderByDescending(c => c.Nombre.NombreCompleto)
+                : query.OrderBy(c => c.Nombre.NombreCompleto),
             "email" => esDescendente 
                 ? query.OrderByDescending(c => c.Email.Value)
                 : query.OrderBy(c => c.Email.Value),
@@ -172,6 +175,9 @@ public class ObtenerClientesPaginadosHandler : IRequestHandler<ObtenerClientesPa
             "segmento" => esDescendente 
                 ? query.OrderByDescending(c => c.Segmento)
                 : query.OrderBy(c => c.Segmento),
+            "fecharegistro" => esDescendente 
+                ? query.OrderByDescending(c => c.FechaCreacion)
+                : query.OrderBy(c => c.FechaCreacion),
             _ => esDescendente 
                 ? query.OrderByDescending(c => c.FechaCreacion)
                 : query.OrderBy(c => c.FechaCreacion)

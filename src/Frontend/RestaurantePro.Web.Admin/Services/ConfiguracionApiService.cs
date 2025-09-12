@@ -31,7 +31,7 @@ public class ConfiguracionApiService : IConfiguracionApiService
     /// <summary>
     /// Obtiene la configuración principal
     /// </summary>
-    public async Task<ConfiguracionDto?> ObtenerConfiguracionAsync()
+    public virtual async Task<ConfiguracionDto?> ObtenerConfiguracionAsync()
     {
         try
         {
