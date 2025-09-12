@@ -67,7 +67,7 @@ public class ApiRecetasIntegrationTests : BaseIntegrationTest
     public async Task ObtenerRecetas_ConFiltroTexto_DeberiaRetornarRecetasFiltradas()
     {
         // Arrange
-        await SeedRecetasDePruebaAsync();
+        await SeedRecetasDePruebaAsync(15); // Crear 15 recetas para asegurar que incluya "Lomo Saltado"
         var terminoBusqueda = "Lomo";
 
         // Act

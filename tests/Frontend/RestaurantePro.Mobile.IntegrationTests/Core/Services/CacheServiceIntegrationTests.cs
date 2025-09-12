@@ -392,26 +392,29 @@ public class MockCacheService : ICacheService
             {
                 return (T)_cache[key];
             }
-
-            // Si ya hay una tarea ejecutándose para esta clave, esperarla
-            if (_runningTasks.ContainsKey(key))
-            {
-                var runningTask = _runningTasks[key];
-                return (T)_cache[key]; // Esperar a que termine y devolver el resultado
-            }
         }
 
-        // Crear nueva tarea para esta clave
-        Task<T> task = null;
+        // Verificar si ya hay una tarea ejecutándose para esta clave
+        Task<T> existingTask = null;
         lock (_lock)
         {
             if (_runningTasks.ContainsKey(key))
             {
-                // Otra tarea ya está ejecutándose, esperarla
-                return (T)_cache[key];
+                existingTask = (Task<T>)_runningTasks[key];
             }
+        }
 
-            task = ExecuteFactoryAndCache(key, factory, expiration);
+        if (existingTask != null)
+        {
+            // Esperar a que termine la tarea existente
+            return await existingTask;
+        }
+
+        // Crear nueva tarea para esta clave
+        Task<T> task = ExecuteFactoryAndCache(key, factory, expiration);
+        
+        lock (_lock)
+        {
             _runningTasks[key] = task;
         }
 

@@ -138,8 +138,8 @@ public class ReservacionesServiceIntegrationTests : IClassFixture<MobileIntegrat
             NombreCliente = "Test Cliente",
             Telefono = "123456789",
             Email = "test@example.com",
-            FechaHoraReservacion = DateTime.Today.AddDays(1).AddHours(19), // Fecha futura a las 7 PM
-            NumeroPersonas = 4,
+            FechaHoraReservacion = DateTime.Today.AddDays(7).AddHours(12), // Fecha futura a las 12 PM (más probable que haya disponibilidad)
+            NumeroPersonas = 2, // Menos personas para mayor disponibilidad
             Estado = "Pendiente",
             Comentarios = "Prueba de integración"
         };

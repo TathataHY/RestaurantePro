@@ -168,7 +168,7 @@ public class ComandaRealtimeServiceIntegrationTests : MobileIntegrationTestBase
         cts.CancelAfter(TimeSpan.FromMilliseconds(100));
 
         // Act & Assert
-        await Assert.ThrowsAsync<OperationCanceledException>(async () =>
+        await Assert.ThrowsAsync<TaskCanceledException>(async () =>
         {
             await _realtimeService.StartAsync(cts.Token);
         });

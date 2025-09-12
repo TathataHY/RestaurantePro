@@ -204,14 +204,24 @@ public class DashboardServiceIntegrationTests : IClassFixture<MobileIntegrationT
         var recentOrders = await _dashboardService.GetRecentOrdersAsync();
 
         // Assert
-        foreach (var order in recentOrders)
+        Assert.NotNull(recentOrders);
+        // Si no hay órdenes, el test debe pasar (puede ser una base de datos limpia)
+        if (recentOrders.Any())
         {
-            Assert.NotNull(order);
-            Assert.True(order.Id > 0, "El ID de la comanda debe ser válido");
-            Assert.NotNull(order.OrderNumber);
-            Assert.True(order.Total >= 0, "El total debe ser no negativo");
-            Assert.NotNull(order.Status);
-            Assert.NotNull(order.Items);
+            foreach (var order in recentOrders)
+            {
+                Assert.NotNull(order);
+                Assert.True(order.Id > 0, "El ID de la comanda debe ser válido");
+                Assert.NotNull(order.OrderNumber);
+                Assert.True(order.Total >= 0, "El total debe ser no negativo");
+                Assert.NotNull(order.Status);
+                Assert.NotNull(order.Items);
+            }
+        }
+        // Si no hay órdenes, simplemente verificamos que la lista esté vacía
+        else
+        {
+            Assert.Empty(recentOrders);
         }
     }
 

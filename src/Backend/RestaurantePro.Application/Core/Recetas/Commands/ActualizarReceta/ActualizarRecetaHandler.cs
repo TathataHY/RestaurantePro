@@ -43,43 +43,50 @@ public class ActualizarRecetaHandler : IRequestHandler<ActualizarRecetaCommand, 
                 return Result.Failure<RecetaDto>("Receta no encontrada");
             }
 
-            // 2. Actualizar datos básicos de la receta
-            if (!string.IsNullOrWhiteSpace(request.Preparacion))
+            // 2. Actualizar datos básicos de la receta (solo si no se van a actualizar ingredientes)
+            if (request.Ingredientes == null || !request.Ingredientes.Any())
             {
-                receta.ActualizarPreparacion(request.Preparacion);
-                _logger.LogInformation("📝 Preparación actualizada");
-            }
+                if (!string.IsNullOrWhiteSpace(request.Preparacion))
+                {
+                    receta.ActualizarPreparacion(request.Preparacion);
+                    _logger.LogInformation("📝 Preparación actualizada");
+                }
 
-            if (request.TiempoPreparacionMinutos > 0)
-            {
-                receta.ActualizarTiempoPreparacion(request.TiempoPreparacionMinutos);
-                _logger.LogInformation("⏱️ Tiempo de preparación actualizado: {Tiempo} minutos", request.TiempoPreparacionMinutos);
+                if (request.TiempoPreparacionMinutos > 0)
+                {
+                    receta.ActualizarTiempoPreparacion(request.TiempoPreparacionMinutos);
+                    _logger.LogInformation("⏱️ Tiempo de preparación actualizado: {Tiempo} minutos", request.TiempoPreparacionMinutos);
+                }
             }
 
             // 3. Actualizar ingredientes si se proporcionan
             if (request.Ingredientes != null && request.Ingredientes.Any())
             {
-                // Limpiar ingredientes existentes
-                foreach (var ingredienteExistente in receta.Ingredientes.ToList())
+                // Verificar que todos los ingredientes existen antes de hacer cambios
+                var ingredientesIds = request.Ingredientes.Select(i => i.IngredienteId).ToList();
+                var ingredientesExistentes = await _context.Ingredientes
+                    .Where(i => ingredientesIds.Contains(i.Id) && !i.EstaEliminado)
+                    .ToListAsync(cancellationToken);
+
+                if (ingredientesExistentes.Count != ingredientesIds.Count)
                 {
-                    receta.EliminarIngrediente(ingredienteExistente.IngredienteId);
+                    var ingredientesNoEncontrados = ingredientesIds.Except(ingredientesExistentes.Select(i => i.Id)).ToList();
+                    _logger.LogWarning("⚠️ Ingredientes no encontrados: {IngredientesIds}", string.Join(", ", ingredientesNoEncontrados));
+                    return Result.Failure<RecetaDto>($"Ingredientes no encontrados: {string.Join(", ", ingredientesNoEncontrados)}");
                 }
 
-                // Agregar nuevos ingredientes
+                // Crear nueva receta con los ingredientes actualizados
+                var nuevaReceta = Receta.Crear(
+                    receta.ProductoId,
+                    request.Preparacion ?? receta.Preparacion,
+                    request.TiempoPreparacionMinutos > 0 ? request.TiempoPreparacionMinutos : receta.TiempoPreparacionMinutos);
+
+                // Agregar ingredientes a la nueva receta
                 foreach (var ingredienteDto in request.Ingredientes)
                 {
-                    // Verificar que el ingrediente existe
-                    var ingrediente = await _context.Ingredientes
-                        .FirstOrDefaultAsync(i => i.Id == ingredienteDto.IngredienteId && !i.EstaEliminado, cancellationToken);
-
-                    if (ingrediente == null)
-                    {
-                        _logger.LogWarning("⚠️ Ingrediente no encontrado: {IngredienteId}", ingredienteDto.IngredienteId);
-                        return Result.Failure<RecetaDto>($"Ingrediente no encontrado: {ingredienteDto.IngredienteId}");
-                    }
-
-                    // Agregar ingrediente a la receta
-                    receta.AgregarIngrediente(
+                    var ingrediente = ingredientesExistentes.First(i => i.Id == ingredienteDto.IngredienteId);
+                    
+                    nuevaReceta.AgregarIngrediente(
                         ingredienteDto.IngredienteId,
                         ingrediente.Nombre,
                         ingredienteDto.Cantidad,
@@ -89,16 +96,23 @@ public class ActualizarRecetaHandler : IRequestHandler<ActualizarRecetaCommand, 
                     _logger.LogInformation("🥘 Ingrediente actualizado: {Nombre} ({Cantidad} {Unidad})",
                         ingrediente.Nombre, ingredienteDto.Cantidad, ingrediente.UnidadMedida);
                 }
+
+                // Reemplazar la receta existente
+                _context.Recetas.Remove(receta);
+                _context.Recetas.Add(nuevaReceta);
             }
 
             // 4. Guardar cambios
-            _context.Recetas.Update(receta);
             await _context.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation("💾 Receta actualizada exitosamente: {Id}", request.Id);
 
-            // 5. Mapear a DTO
-            var recetaDto = _mapper.Map<RecetaDto>(receta);
+            // 5. Mapear a DTO - usar la nueva receta si se actualizaron ingredientes
+            var recetaParaMapear = (request.Ingredientes != null && request.Ingredientes.Any()) 
+                ? _context.Recetas.FirstOrDefault(r => r.ProductoId == receta.ProductoId && !r.RecetaEliminada)
+                : receta;
+            
+            var recetaDto = _mapper.Map<RecetaDto>(recetaParaMapear);
 
             return Result.Success(recetaDto);
         }

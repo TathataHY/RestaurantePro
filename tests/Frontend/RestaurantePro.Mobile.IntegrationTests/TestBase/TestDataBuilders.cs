@@ -28,6 +28,10 @@ public static class TestDataBuilders
 
     public static async Task<Guid> GetAnyProductoIdAsync(HttpClient client)
     {
+        // Asegurar que el cliente tenga autenticación
+        var token = await LoginAsync(client, "admin@restaurantepro.com", "AdminRestaurante123!");
+        SetBearer(client, token);
+        
         var resp = await client.GetAsync("/api/core/productos");
         resp.EnsureSuccessStatusCode();
         var json = await resp.Content.ReadAsStringAsync();

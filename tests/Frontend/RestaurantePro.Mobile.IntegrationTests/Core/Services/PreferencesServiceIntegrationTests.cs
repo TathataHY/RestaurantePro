@@ -417,14 +417,22 @@ public class PreferencesServiceIntegrationTests : IClassFixture<MobileIntegratio
     {
         // Arrange
         var key = "invalid_json_key";
-        // Simular JSON inválido (esto es difícil de hacer directamente, pero podemos probar el comportamiento)
-        _preferencesService.SetAsync(key, "invalid json string").Wait();
+        // Simular JSON inválido para un tipo complejo
+        await _preferencesService.SetAsync(key, new { Name = "Test" }); // Esto se serializa como JSON válido
+        // Ahora sobrescribir con JSON inválido directamente en el diccionario interno
+        var mockService = (MockPreferencesService)_preferencesService;
+        mockService.SetInvalidJson(key, "invalid json string");
 
         // Act
-        var result = _preferencesService.Get(key, "default_value");
+        var result = _preferencesService.Get<TestObject>(key, new TestObject { Name = "default_value" });
 
         // Assert
-        Assert.Equal("default_value", result);
+        Assert.Equal("default_value", result.Name);
+    }
+
+    private class TestObject
+    {
+        public string Name { get; set; } = string.Empty;
     }
 
     [Fact]
@@ -507,7 +515,7 @@ public class MockPreferencesService : IPreferencesService
                 {
                     return System.Text.Json.JsonSerializer.Deserialize<T>(json);
                 }
-                catch
+                catch (System.Text.Json.JsonException)
                 {
                     return defaultValue;
                 }
@@ -547,5 +555,10 @@ public class MockPreferencesService : IPreferencesService
     public void Clear()
     {
         _preferences.Clear();
+    }
+
+    public void SetInvalidJson(string key, string invalidJson)
+    {
+        _preferences[key] = invalidJson;
     }
 }
