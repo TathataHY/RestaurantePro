@@ -20,6 +20,14 @@ public class CrearUsuarioRequest
     [StringLength(100, ErrorMessage = "El nombre no puede exceder 100 caracteres")]
     public string Nombre { get; set; } = string.Empty;
 
+    [Required(ErrorMessage = "El nombre completo es obligatorio")]
+    [StringLength(200, ErrorMessage = "El nombre completo no puede exceder 200 caracteres")]
+    public string NombreCompleto { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "La contraseña es obligatoria")]
+    [StringLength(100, MinimumLength = 6, ErrorMessage = "La contraseña debe tener entre 6 y 100 caracteres")]
+    public string Password { get; set; } = string.Empty;
+
     [Required(ErrorMessage = "El apellido es obligatorio")]
     [StringLength(100, ErrorMessage = "El apellido no puede exceder 100 caracteres")]
     public string Apellido { get; set; } = string.Empty;
@@ -61,6 +69,9 @@ public class ActualizarUsuarioRequest
     [StringLength(100, ErrorMessage = "El email no puede exceder 100 caracteres")]
     [EmailAddress(ErrorMessage = "El formato del email no es válido")]
     public string? Email { get; set; }
+
+    [StringLength(200, ErrorMessage = "El nombre completo no puede exceder 200 caracteres")]
+    public string? NombreCompleto { get; set; }
 
     [StringLength(100, ErrorMessage = "El nombre no puede exceder 100 caracteres")]
     public string? Nombre { get; set; }

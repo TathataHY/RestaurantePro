@@ -167,6 +167,21 @@ public class ActualizarClienteRequest
     public string? PreferenciasAlimentarias { get; set; }
     public string? Alergias { get; set; }
     public string? NotasEspeciales { get; set; }
+
+    [StringLength(100, ErrorMessage = "El apellido no puede exceder 100 caracteres")]
+    public string Apellido { get; set; } = string.Empty;
+
+    [StringLength(50, ErrorMessage = "El estado no puede exceder 50 caracteres")]
+    public string Estado { get; set; } = string.Empty;
+
+    [StringLength(50, ErrorMessage = "El segmento no puede exceder 50 caracteres")]
+    public string Segmento { get; set; } = string.Empty;
+
+    [StringLength(50, ErrorMessage = "El nivel de fidelización no puede exceder 50 caracteres")]
+    public string NivelFidelizacion { get; set; } = string.Empty;
+
+    [StringLength(500, ErrorMessage = "Las notas no pueden exceder 500 caracteres")]
+    public string? Notas { get; set; }
 }
 
 /// <summary>

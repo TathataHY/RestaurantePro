@@ -178,6 +178,28 @@ public class ActualizarReservacionRequest
     public string? ContactoAlternativo { get; set; }
     public string? TelefonoAlternativo { get; set; }
     public string? EmailAlternativo { get; set; }
+
+    [Required(ErrorMessage = "El ID del cliente es obligatorio")]
+    public Guid ClienteId { get; set; }
+
+    [StringLength(50, ErrorMessage = "El canal de reservación no puede exceder 50 caracteres")]
+    public string CanalReservacion { get; set; } = string.Empty;
+
+    [StringLength(500, ErrorMessage = "Las notas no pueden exceder 500 caracteres")]
+    public string? Notas { get; set; }
+
+    public bool RequiereAtencion { get; set; } = false;
+
+    [StringLength(100, ErrorMessage = "El motivo de atención no puede exceder 100 caracteres")]
+    public string MotivoAtencion { get; set; } = string.Empty;
+
+    public bool EsGrupo { get; set; } = false;
+    public bool EsRecurrente { get; set; } = false;
+
+    [Required(ErrorMessage = "La fecha de creación es obligatoria")]
+    public DateTime FechaCreacion { get; set; }
+
+    public DateTime? FechaActualizacion { get; set; }
 }
 
 /// <summary>

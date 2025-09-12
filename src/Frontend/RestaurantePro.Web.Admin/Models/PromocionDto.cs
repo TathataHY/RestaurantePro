@@ -139,6 +139,14 @@ public class ActualizarPromocionRequest
     public bool EstaActiva { get; set; }
     
     public List<Guid> ProductosIds { get; set; } = new();
+
+    public bool Activa { get; set; } = true;
+
+    [Range(0, int.MaxValue, ErrorMessage = "El uso máximo debe ser mayor o igual a 0")]
+    public int UsoMaximo { get; set; } = 0;
+
+    [Range(0, int.MaxValue, ErrorMessage = "El uso actual debe ser mayor o igual a 0")]
+    public int UsoActual { get; set; } = 0;
 }
 
 /// <summary>

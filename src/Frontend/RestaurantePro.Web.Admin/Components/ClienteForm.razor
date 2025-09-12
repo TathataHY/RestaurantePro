@@ -280,18 +280,19 @@
                     NotasEspeciales = Cliente.NotasEspeciales
                 };
 
-                resultado = await ClientesApi.CrearClienteAsync(request);
+                var resultadoCrear = await ClientesApi.CrearClienteAsync(request);
+                resultado = resultadoCrear;
             }
 
-            if (resultado?.Success == true && resultado.Data != null)
+            if (resultado != null)
             {
-                await OnClienteGuardado.InvokeAsync(resultado.Data);
+                await OnClienteGuardado.InvokeAsync(resultado);
                 await Cerrar();
                 await JSRuntime.InvokeVoidAsync("alert", EsEdicion ? "Cliente actualizado correctamente" : "Cliente creado correctamente");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al guardar el cliente");
+                await JSRuntime.InvokeVoidAsync("alert", "Error al guardar el cliente");
             }
         }
         catch (Exception ex)

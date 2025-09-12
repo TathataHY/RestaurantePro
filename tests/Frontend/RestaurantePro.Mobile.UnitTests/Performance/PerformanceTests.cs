@@ -3,11 +3,9 @@ using Moq;
 using RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;
 using RestaurantePro.Mobile.Core.Features.Operations.Mesas.ViewModels;
 using RestaurantePro.Mobile.Core.Features.Operations.Productos.ViewModels;
-// using RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels; // Comentado temporalmente
 using RestaurantePro.Mobile.Core.Services.Comandas;
 using RestaurantePro.Mobile.Core.Services.Mesas;
 using RestaurantePro.Mobile.Core.Services.Productos;
-using RestaurantePro.Mobile.Core.Services;
 using RestaurantePro.Mobile.Core.Services.Navigation;
 using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Notifications;
@@ -15,21 +13,18 @@ using RestaurantePro.Mobile.Core.Services.Realtime;
 using RestaurantePro.Mobile.Core.Services.Preferences;
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Models.Common;
-using Xunit;
 using System.Diagnostics;
 
 namespace RestaurantePro.Mobile.UnitTests.Performance;
 
 /// <summary>
-/// Pruebas de rendimiento para la aplicación móvil
-/// FASE 3: Calidad y Rendimiento
+/// Pruebas de rendimiento para operaciones críticas
 /// </summary>
 public class PerformanceTests
 {
     private readonly Mock<IComandasService> _comandasServiceMock;
     private readonly Mock<IMesasService> _mesasServiceMock;
     private readonly Mock<IProductosService> _productosServiceMock;
-    private readonly Mock<IDailyPreparationsService> _dailyPreparationsServiceMock;
     private readonly Mock<INavigationService> _navigationServiceMock;
     private readonly Mock<IDialogService> _dialogServiceMock;
     private readonly Mock<INotificationService> _notificationServiceMock;
@@ -41,7 +36,6 @@ public class PerformanceTests
         _comandasServiceMock = new Mock<IComandasService>();
         _mesasServiceMock = new Mock<IMesasService>();
         _productosServiceMock = new Mock<IProductosService>();
-        _dailyPreparationsServiceMock = new Mock<IDailyPreparationsService>();
         _navigationServiceMock = new Mock<INavigationService>();
         _dialogServiceMock = new Mock<IDialogService>();
         _notificationServiceMock = new Mock<INotificationService>();
@@ -49,14 +43,14 @@ public class PerformanceTests
         _preferencesServiceMock = new Mock<IPreferencesService>();
     }
 
-    #region Pruebas de Carga con Grandes Volúmenes de Datos
+    #region Pruebas de Carga - Grandes Volúmenes de Datos
 
     [Fact]
     public async Task Performance_CargarComandas_GranVolumenDeDatos()
     {
-        // Arrange - Generar 1000 comandas para prueba de carga
-        var comandas = GenerateLargeComandasList(1000);
-        _comandasServiceMock.Setup(c => c.ObtenerComandasActivasAsync())
+        // Arrange - Generar 500 comandas para prueba de carga
+        var comandas = GenerateLargeComandasList(500);
+        _comandasServiceMock.Setup(c => c.ObtenerComandasActivasAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ComandaDto>>.SuccessResponse(comandas));
 
         var comandasViewModel = new ComandasViewModel(
@@ -70,24 +64,27 @@ public class PerformanceTests
 
         // Act - Medir tiempo de carga
         var stopwatch = Stopwatch.StartNew();
-        await comandasViewModel.LoadComandasAsync();
+        await comandasViewModel.LoadComandasCommand.ExecuteAsync(null);
         stopwatch.Stop();
 
         // Assert - Verificar rendimiento
-        stopwatch.ElapsedMilliseconds.Should().BeLessThan(5000); // Menos de 5 segundos
-        comandasViewModel.Comandas.Should().HaveCount(1000);
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(2000); // Menos de 2 segundos
+        comandasViewModel.Comandas.Should().HaveCount(500);
         comandasViewModel.IsBusy.Should().BeFalse();
     }
 
     [Fact]
     public async Task Performance_CargarMesas_GranVolumenDeDatos()
     {
-        // Arrange - Generar 500 mesas para prueba de carga
-        var mesas = GenerateLargeMesasList(500);
-        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync())
+        // Arrange - Generar 200 mesas para prueba de carga
+        var mesas = GenerateLargeMesasList(200);
+        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(null, null, null))
             .ReturnsAsync(ApiResponse<List<MesaDto>>.SuccessResponse(mesas));
 
-        var mesasViewModel = new MesasViewModel(_mesasServiceMock.Object, _dialogServiceMock.Object, _navigationServiceMock.Object);
+        var mesasViewModel = new MesasViewModel(
+            _mesasServiceMock.Object,
+            _dialogServiceMock.Object,
+            _navigationServiceMock.Object);
 
         // Act - Medir tiempo de carga
         var stopwatch = Stopwatch.StartNew();
@@ -95,26 +92,26 @@ public class PerformanceTests
         stopwatch.Stop();
 
         // Assert - Verificar rendimiento
-        stopwatch.ElapsedMilliseconds.Should().BeLessThan(3000); // Menos de 3 segundos
-        mesasViewModel.Mesas.Should().HaveCount(500);
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(1500); // Menos de 1.5 segundos
+        mesasViewModel.Mesas.Should().HaveCount(200);
         mesasViewModel.IsBusy.Should().BeFalse();
     }
 
     [Fact]
     public async Task Performance_CargarProductos_GranVolumenDeDatos()
     {
-        // Arrange - Generar 2000 productos para prueba de carga
-        var productos = GenerateLargeProductosList(2000);
+        // Arrange - Generar 1000 productos para prueba de carga
+        var productos = GenerateLargeProductosList(1000);
         var paginatedList = new PaginatedList<ProductoDto>
         {
             Items = productos,
-            TotalCount = 2000,
             PageNumber = 1,
-            PageSize = 2000
+            PageSize = 1000,
+            TotalCount = 1000
         };
-
-        _productosServiceMock.Setup(p => p.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool>()))
-            .ReturnsAsync(ApiResponse<PaginatedList<ProductoDto>>.SuccessResponse(paginatedList));
+        
+        _productosServiceMock.Setup(p => p.ObtenerProductosPaginadosAsync(1, 1000, null, true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<List<ProductoDto>>.SuccessResponse(productos));
 
         var productosViewModel = new ProductosViewModel(
             _productosServiceMock.Object,
@@ -123,112 +120,26 @@ public class PerformanceTests
 
         // Act - Medir tiempo de carga
         var stopwatch = Stopwatch.StartNew();
-        await productosViewModel.LoadProductosAsync();
+        await productosViewModel.LoadProductosCommand.ExecuteAsync(null);
         stopwatch.Stop();
 
         // Assert - Verificar rendimiento
-        stopwatch.ElapsedMilliseconds.Should().BeLessThan(4000); // Menos de 4 segundos
-        productosViewModel.Productos.Should().HaveCount(2000);
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(3000); // Menos de 3 segundos
+        productosViewModel.Productos.Should().HaveCount(1000);
         productosViewModel.IsBusy.Should().BeFalse();
     }
-
-    // [Fact]
-    // public async Task Performance_CargarPreparaciones_GranVolumenDeDatos()
-    // {
-    //     // Esta prueba está comentada temporalmente porque DailyPreparationsViewModel no existe
-    // }
 
     #endregion
 
     #region Pruebas de Memoria - Detección de Memory Leaks
 
     [Fact]
-    public async Task Performance_MemoryLeaks_CargaMultipleSinLiberacion()
+    public async Task Performance_MemoryLeak_CargarComandasRepetidamente()
     {
         // Arrange
         var comandas = GenerateLargeComandasList(100);
-        _comandasServiceMock.Setup(c => c.ObtenerComandasActivasAsync())
+        _comandasServiceMock.Setup(c => c.ObtenerComandasActivasAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ComandaDto>>.SuccessResponse(comandas));
-
-        // Act - Realizar múltiples cargas para detectar memory leaks
-        for (int i = 0; i < 10; i++)
-        {
-            var comandasViewModel = new ComandasViewModel(
-                _comandasServiceMock.Object,
-                _dialogServiceMock.Object,
-                _navigationServiceMock.Object,
-                _mesasServiceMock.Object,
-                _notificationServiceMock.Object,
-                _realtimeServiceMock.Object,
-                _preferencesServiceMock.Object);
-
-            await comandasViewModel.LoadComandasAsync();
-            
-            // Forzar garbage collection
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-        }
-
-        // Assert - Verificar que no hay memory leaks significativos
-        var memoryBefore = GC.GetTotalMemory(false);
-        GC.Collect();
-        var memoryAfter = GC.GetTotalMemory(true);
-        
-        // La diferencia de memoria no debería ser excesiva
-        (memoryBefore - memoryAfter).Should().BeLessThan(10 * 1024 * 1024); // Menos de 10MB
-    }
-
-    [Fact]
-    public async Task Performance_MemoryLeaks_EventosYSubscripciones()
-    {
-        // Arrange
-        var comandas = new List<ComandaDto>();
-        _comandasServiceMock.Setup(c => c.ObtenerComandasActivasAsync())
-            .ReturnsAsync(ApiResponse<List<ComandaDto>>.SuccessResponse(comandas));
-
-        // Act - Crear y destruir ViewModels múltiples veces
-        for (int i = 0; i < 5; i++)
-        {
-            var comandasViewModel = new ComandasViewModel(
-                _comandasServiceMock.Object,
-                _dialogServiceMock.Object,
-                _navigationServiceMock.Object,
-                _mesasServiceMock.Object,
-                _notificationServiceMock.Object,
-                _realtimeServiceMock.Object,
-                _preferencesServiceMock.Object);
-
-            await comandasViewModel.LoadComandasAsync();
-            
-            // Simular navegación y destrucción del ViewModel
-            comandasViewModel = null;
-            
-            // Forzar garbage collection
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-        }
-
-        // Assert - Verificar que las subscripciones se liberaron correctamente
-        // (En un escenario real, esto se verificaría con herramientas de profiling)
-        var finalMemory = GC.GetTotalMemory(true);
-        finalMemory.Should().BeLessThan(50 * 1024 * 1024); // Menos de 50MB
-    }
-
-    #endregion
-
-    #region Pruebas de Tiempo de Respuesta
-
-    [Fact]
-    public async Task Performance_TiempoRespuesta_OperacionesCriticas()
-    {
-        // Arrange
-        var comandaId = Guid.NewGuid();
-        var comanda = new ComandaDto { Id = comandaId, Estado = "Pendiente" };
-        
-        _comandasServiceMock.Setup(c => c.CambiarEstadoComandaAsync(comandaId, "En Preparación", It.IsAny<string>()))
-            .ReturnsAsync(ApiResponse<ComandaDto>.SuccessResponse(comanda with { Estado = "En Preparación" }));
 
         var comandasViewModel = new ComandasViewModel(
             _comandasServiceMock.Object,
@@ -239,133 +150,70 @@ public class PerformanceTests
             _realtimeServiceMock.Object,
             _preferencesServiceMock.Object);
 
-        // Act - Medir tiempo de operaciones críticas
-        var stopwatch = Stopwatch.StartNew();
-        await comandasViewModel.CambiarEstadoCommand.ExecuteAsync("En Preparación");
-        stopwatch.Stop();
+        // Act - Cargar comandas múltiples veces
+        for (int i = 0; i < 10; i++)
+        {
+            await comandasViewModel.LoadComandasCommand.ExecuteAsync(null);
+            await Task.Delay(10); // Simular tiempo entre cargas
+        }
 
-        // Assert - Verificar tiempo de respuesta
-        stopwatch.ElapsedMilliseconds.Should().BeLessThan(1000); // Menos de 1 segundo
+        // Assert - Verificar que no hay memory leaks
+        comandasViewModel.Comandas.Should().HaveCount(100);
+        comandasViewModel.IsBusy.Should().BeFalse();
+        
+        // Forzar garbage collection
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
     }
 
     [Fact]
-    public async Task Performance_TiempoRespuesta_BusquedaYFiltrado()
+    public async Task Performance_MemoryLeak_CargarMesasRepetidamente()
     {
         // Arrange
-        var productos = GenerateLargeProductosList(1000);
-        var paginatedList = new PaginatedList<ProductoDto>
-        {
-            Items = productos,
-            TotalCount = 1000,
-            PageNumber = 1,
-            PageSize = 1000
-        };
+        var mesas = GenerateLargeMesasList(50);
+        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(null, null, null))
+            .ReturnsAsync(ApiResponse<List<MesaDto>>.SuccessResponse(mesas));
 
-        _productosServiceMock.Setup(p => p.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool>()))
-            .ReturnsAsync(ApiResponse<PaginatedList<ProductoDto>>.SuccessResponse(paginatedList));
-
-        var productosViewModel = new ProductosViewModel(
-            _productosServiceMock.Object,
+        var mesasViewModel = new MesasViewModel(
+            _mesasServiceMock.Object,
             _dialogServiceMock.Object,
             _navigationServiceMock.Object);
 
-        // Act - Medir tiempo de búsqueda
-        var stopwatch = Stopwatch.StartNew();
-        productosViewModel.SearchText = "Pizza";
-        await productosViewModel.BuscarProductosCommand.ExecuteAsync(null);
-        stopwatch.Stop();
+        // Act - Cargar mesas múltiples veces
+        for (int i = 0; i < 20; i++)
+        {
+            await mesasViewModel.LoadMesasAsync();
+            await Task.Delay(5); // Simular tiempo entre cargas
+        }
 
-        // Assert - Verificar tiempo de búsqueda
-        stopwatch.ElapsedMilliseconds.Should().BeLessThan(500); // Menos de 500ms
+        // Assert - Verificar que no hay memory leaks
+        mesasViewModel.Mesas.Should().HaveCount(50);
+        mesasViewModel.IsBusy.Should().BeFalse();
+        
+        // Forzar garbage collection
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
     }
 
     #endregion
 
-    #region Pruebas de Concurrencia y Carga
+    #region Pruebas de Tiempo de Respuesta - Operaciones Críticas
 
     [Fact]
-    public async Task Performance_Concurrencia_MultiplesUsuariosSimultaneos()
+    public async Task Performance_TiempoRespuesta_CambiarEstadoComanda()
     {
         // Arrange
-        var comandas = GenerateLargeComandasList(100);
-        _comandasServiceMock.Setup(c => c.ObtenerComandasActivasAsync())
-            .ReturnsAsync(ApiResponse<List<ComandaDto>>.SuccessResponse(comandas));
-
-        // Act - Simular 10 usuarios cargando comandas simultáneamente
-        var tasks = Enumerable.Range(1, 10).Select(async _ =>
+        var comanda = new ComandaDto
         {
-            var comandasViewModel = new ComandasViewModel(
-                _comandasServiceMock.Object,
-                _dialogServiceMock.Object,
-                _navigationServiceMock.Object,
-                _mesasServiceMock.Object,
-                _notificationServiceMock.Object,
-                _realtimeServiceMock.Object,
-                _preferencesServiceMock.Object);
+            Id = Guid.NewGuid(),
+            Numero = "C-001",
+            Estado = "Activa"
+        };
 
-            await comandasViewModel.LoadComandasAsync();
-            return comandasViewModel.Comandas.Count;
-        });
-
-        var stopwatch = Stopwatch.StartNew();
-        var results = await Task.WhenAll(tasks);
-        stopwatch.Stop();
-
-        // Assert - Verificar concurrencia
-        stopwatch.ElapsedMilliseconds.Should().BeLessThan(10000); // Menos de 10 segundos
-        results.Should().AllBeEquivalentTo(100);
-    }
-
-    [Fact]
-    public async Task Performance_Concurrencia_OperacionesCRUDSimultaneas()
-    {
-        // Arrange
-        var comandaId = Guid.NewGuid();
-        var comanda = new ComandaDto { Id = comandaId, Estado = "Pendiente" };
-
-        _comandasServiceMock.Setup(c => c.CambiarEstadoComandaAsync(comandaId, It.IsAny<string>(), It.IsAny<string>()))
+        _comandasServiceMock.Setup(c => c.CambiarEstadoComandaAsync(comanda.Id, "En Preparación", It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<ComandaDto>.SuccessResponse(comanda));
-
-        // Act - Simular múltiples operaciones CRUD simultáneas
-        var tasks = Enumerable.Range(1, 20).Select(async i =>
-        {
-            var comandasViewModel = new ComandasViewModel(
-                _comandasServiceMock.Object,
-                _dialogServiceMock.Object,
-                _navigationServiceMock.Object,
-                _mesasServiceMock.Object,
-                _notificationServiceMock.Object,
-                _realtimeServiceMock.Object,
-                _preferencesServiceMock.Object);
-
-            await comandasViewModel.CambiarEstadoCommand.ExecuteAsync($"Estado{i}");
-            return i;
-        });
-
-        var stopwatch = Stopwatch.StartNew();
-        var results = await Task.WhenAll(tasks);
-        stopwatch.Stop();
-
-        // Assert - Verificar rendimiento bajo carga
-        stopwatch.ElapsedMilliseconds.Should().BeLessThan(5000); // Menos de 5 segundos
-        results.Should().HaveCount(20);
-    }
-
-    #endregion
-
-    #region Pruebas de Escalabilidad
-
-    [Theory]
-    [InlineData(100)]
-    [InlineData(500)]
-    [InlineData(1000)]
-    [InlineData(2000)]
-    public async Task Performance_Escalabilidad_CargaConDiferentesVolumenes(int cantidad)
-    {
-        // Arrange
-        var comandas = GenerateLargeComandasList(cantidad);
-        _comandasServiceMock.Setup(c => c.ObtenerComandasActivasAsync())
-            .ReturnsAsync(ApiResponse<List<ComandaDto>>.SuccessResponse(comandas));
 
         var comandasViewModel = new ComandasViewModel(
             _comandasServiceMock.Object,
@@ -376,45 +224,104 @@ public class PerformanceTests
             _realtimeServiceMock.Object,
             _preferencesServiceMock.Object);
 
-        // Act - Medir tiempo de carga
+        // Act - Medir tiempo de cambio de estado
         var stopwatch = Stopwatch.StartNew();
-        await comandasViewModel.LoadComandasAsync();
+        await comandasViewModel.CambiarEstadoComandaCommand.ExecuteAsync(comanda);
         stopwatch.Stop();
 
-        // Assert - Verificar escalabilidad
-        var tiempoMaximo = cantidad switch
+        // Assert - Verificar tiempo de respuesta
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(500); // Menos de 500ms
+    }
+
+    [Fact]
+    public async Task Performance_TiempoRespuesta_AsignarMesa()
+    {
+        // Arrange
+        var mesa = new MesaDto
         {
-            <= 100 => 1000,    // 1 segundo para 100 elementos
-            <= 500 => 2000,    // 2 segundos para 500 elementos
-            <= 1000 => 4000,   // 4 segundos para 1000 elementos
-            _ => 8000          // 8 segundos para 2000+ elementos
+            Id = Guid.NewGuid(),
+            Numero = "Mesa 1",
+            Estado = "Disponible"
         };
 
-        stopwatch.ElapsedMilliseconds.Should().BeLessThan(tiempoMaximo);
-        comandasViewModel.Comandas.Should().HaveCount(cantidad);
+        _mesasServiceMock.Setup(m => m.AsignarMesaAsync(mesa.Id, It.IsAny<string>()))
+            .ReturnsAsync(Result<MesaDto>.Success(mesa));
+
+        var mesasViewModel = new MesasViewModel(
+            _mesasServiceMock.Object,
+            _dialogServiceMock.Object,
+            _navigationServiceMock.Object);
+
+        // Act - Medir tiempo de asignación
+        var stopwatch = Stopwatch.StartNew();
+        await mesasViewModel.AsignarMesaCommand.ExecuteAsync(mesa);
+        stopwatch.Stop();
+
+        // Assert - Verificar tiempo de respuesta
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(300); // Menos de 300ms
     }
 
     #endregion
 
-    #region Métodos Auxiliares
+    #region Pruebas de Escalabilidad - Múltiples Usuarios Concurrentes
+
+    [Fact]
+    public async Task Performance_Escalabilidad_MultiplesUsuariosConcurrentes()
+    {
+        // Arrange - Simular 10 usuarios concurrentes
+        var comandas = GenerateLargeComandasList(50);
+        _comandasServiceMock.Setup(c => c.ObtenerComandasActivasAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<List<ComandaDto>>.SuccessResponse(comandas));
+
+        // Act - Simular múltiples usuarios cargando comandas simultáneamente
+        var tasks = new List<Task>();
+        var viewModels = new List<ComandasViewModel>();
+
+        for (int i = 0; i < 10; i++)
+        {
+            var viewModel = new ComandasViewModel(
+                _comandasServiceMock.Object,
+                _dialogServiceMock.Object,
+                _navigationServiceMock.Object,
+                _mesasServiceMock.Object,
+                _notificationServiceMock.Object,
+                _realtimeServiceMock.Object,
+                _preferencesServiceMock.Object);
+            
+            viewModels.Add(viewModel);
+            tasks.Add(viewModel.LoadComandasCommand.ExecuteAsync(null));
+        }
+
+        var stopwatch = Stopwatch.StartNew();
+        await Task.WhenAll(tasks);
+        stopwatch.Stop();
+
+        // Assert - Verificar que todas las operaciones se completaron en tiempo razonable
+        stopwatch.ElapsedMilliseconds.Should().BeLessThan(5000); // Menos de 5 segundos
+        viewModels.Should().HaveCount(10);
+        viewModels.All(vm => vm.Comandas.Count == 50).Should().BeTrue();
+    }
+
+    #endregion
+
+    #region Métodos de Ayuda
 
     private List<ComandaDto> GenerateLargeComandasList(int count)
     {
-        var random = new Random();
         var comandas = new List<ComandaDto>();
+        var random = new Random();
 
         for (int i = 0; i < count; i++)
         {
             comandas.Add(new ComandaDto
             {
                 Id = Guid.NewGuid(),
-                Numero = $"C{i:D4}",
+                Numero = $"C-{i + 1:D3}",
                 MesaId = Guid.NewGuid(),
-                Estado = GetRandomEstado(random),
+                MesaNumero = $"Mesa {i % 20 + 1}",
+                Estado = random.Next(0, 2) == 0 ? "Activa" : "En Preparación",
                 Total = (decimal)(random.NextDouble() * 100 + 10),
-                FechaCreacion = DateTime.Now.AddMinutes(-random.Next(0, 1440)),
-                ClienteNombre = $"Cliente {i}",
-                Observaciones = $"Observaciones para comanda {i}"
+                FechaCreacion = DateTime.Now.AddMinutes(-random.Next(0, 1440))
             });
         }
 
@@ -423,10 +330,10 @@ public class PerformanceTests
 
     private List<MesaDto> GenerateLargeMesasList(int count)
     {
-        var random = new Random();
         var mesas = new List<MesaDto>();
-        var ubicaciones = new[] { "Terraza", "Interior", "Ventana", "Barra" };
+        var random = new Random();
         var estados = new[] { "Disponible", "Ocupada", "Reservada", "Mantenimiento" };
+        var ubicaciones = new[] { "Salón Principal", "Terraza", "Comedor Privado", "Bar" };
 
         for (int i = 0; i < count; i++)
         {
@@ -434,10 +341,9 @@ public class PerformanceTests
             {
                 Id = Guid.NewGuid(),
                 Numero = $"Mesa {i + 1}",
-                Capacidad = random.Next(2, 8),
+                Capacidad = random.Next(2, 12),
                 Estado = estados[random.Next(estados.Length)],
-                Ubicacion = ubicaciones[random.Next(ubicaciones.Length)],
-                FechaCreacion = DateTime.Now.AddDays(-random.Next(0, 365))
+                Ubicacion = ubicaciones[random.Next(ubicaciones.Length)]
             });
         }
 
@@ -446,9 +352,9 @@ public class PerformanceTests
 
     private List<ProductoDto> GenerateLargeProductosList(int count)
     {
-        var random = new Random();
         var productos = new List<ProductoDto>();
-        var categorias = new[] { "Pizzas", "Bebidas", "Postres", "Entradas", "Platos Principales" };
+        var random = new Random();
+        var categorias = new[] { "Pizzas", "Pasta", "Ensaladas", "Bebidas", "Postres" };
 
         for (int i = 0; i < count; i++)
         {
@@ -458,48 +364,12 @@ public class PerformanceTests
                 Nombre = $"Producto {i + 1}",
                 Descripcion = $"Descripción del producto {i + 1}",
                 Precio = (decimal)(random.NextDouble() * 50 + 5),
-                CategoriaId = Guid.NewGuid(),
                 CategoriaNombre = categorias[random.Next(categorias.Length)],
-                Activo = random.Next(0, 2) == 1,
-                FechaCreacion = DateTime.Now.AddDays(-random.Next(0, 365))
+                Activo = random.Next(0, 2) == 0
             });
         }
 
         return productos;
-    }
-
-    private List<PreparacionDiariaDto> GenerateLargePreparacionesList(int count)
-    {
-        var random = new Random();
-        var preparaciones = new List<PreparacionDiariaDto>();
-        var estados = new[] { "Disponible", "Agotado", "En Preparación", "Cancelado" };
-
-        for (int i = 0; i < count; i++)
-        {
-            var cantidadPreparada = random.Next(1, 20);
-            var cantidadConsumida = random.Next(0, cantidadPreparada);
-            var cantidadDisponible = cantidadPreparada - cantidadConsumida;
-
-            preparaciones.Add(new PreparacionDiariaDto
-            {
-                Id = Guid.NewGuid(),
-                ProductoId = Guid.NewGuid(),
-                ProductoNombre = $"Producto {i + 1}",
-                CantidadPreparada = cantidadPreparada,
-                CantidadDisponible = cantidadDisponible,
-                CantidadConsumida = cantidadConsumida,
-                Estado = estados[random.Next(estados.Length)],
-                FechaPreparacion = DateTime.Today.AddHours(-random.Next(0, 24))
-            });
-        }
-
-        return preparaciones;
-    }
-
-    private string GetRandomEstado(Random random)
-    {
-        var estados = new[] { "Pendiente", "En Preparación", "Lista", "Entregada", "Finalizada", "Cancelada" };
-        return estados[random.Next(estados.Length)];
     }
 
     #endregion

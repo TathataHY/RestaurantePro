@@ -35,6 +35,11 @@ namespace RestaurantePro.Web.Admin.Models
         public DateTime FechaCreacion { get; set; }
         public DateTime? FechaInicio { get; set; }
         public DateTime? FechaFin { get; set; }
+        public int TiempoEstimado { get; set; }
+        public DateTime? TiempoInicio { get; set; }
+        public DateTime? TiempoFin { get; set; }
+        public string? Notas { get; set; }
+        public DateTime? FechaActualizacion { get; set; }
 
         [Range(0, int.MaxValue, ErrorMessage = "El tiempo estimado debe ser mayor o igual a 0")]
         public int TiempoEstimadoMinutos { get; set; }

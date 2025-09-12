@@ -99,7 +99,7 @@ else
                         <td>
                             @if (ingrediente.FechaVencimiento != DateTime.MinValue)
                             {
-                                <span class="@GetVencimientoClass(ingrediente.FechaVencimiento)">
+                                <span class="@GetVencimientoClass(ingrediente.FechaVencimiento.Value)">
                                     @ingrediente.FechaVencimiento?.ToString("dd/MM/yyyy")
                                 </span>
                                 <br><small class="text-muted">@GetDiasVencimiento(ingrediente.FechaVencimiento.Value)</small>

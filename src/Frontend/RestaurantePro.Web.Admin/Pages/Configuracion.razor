@@ -168,7 +168,8 @@
     {
         try
         {
-            parametros = await ConfiguracionApi.ObtenerConfiguracionAsync();
+            var resultado = await ConfiguracionApi.ObtenerConfiguracionAsync();
+            parametros = new List<ConfiguracionDto> { resultado };
             parametrosFiltrados = parametros.ToList();
             CalcularEstadisticas();
             FiltrarParametros();

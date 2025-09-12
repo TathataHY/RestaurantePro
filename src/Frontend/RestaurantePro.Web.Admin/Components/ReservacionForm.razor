@@ -639,18 +639,19 @@
                     TamañoGrupo = Reservacion.TamañoGrupo
                 };
 
-                resultado = await ReservacionesApi.CrearReservacionAsync(request);
+                var resultadoCrear = await ReservacionesApi.CrearReservacionAsync(request);
+                resultado = resultadoCrear;
             }
 
-            if (resultado?.Success == true && resultado.Data != null)
+            if (resultado != null)
             {
-                await OnReservacionGuardada.InvokeAsync(resultado.Data);
+                await OnReservacionGuardada.InvokeAsync(resultado);
                 await Cerrar();
                 await JSRuntime.InvokeVoidAsync("alert", EsEdicion ? "Reservación actualizada correctamente" : "Reservación creada correctamente");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al guardar la reservación");
+                await JSRuntime.InvokeVoidAsync("alert", "Error al guardar la reservación");
             }
         }
         catch (Exception ex)

@@ -538,7 +538,7 @@
                             <div class="card mb-2">
                                 <div class="card-body p-2">
                                     <h6 class="card-title">@ingrediente.Nombre</h6>
-                                    <p class="card-text small">Vence: @ingrediente.FechaVencimiento.ToString("dd/MM/yyyy")</p>
+                                    <p class="card-text small">Vence: @ingrediente.FechaVencimiento?.ToString("dd/MM/yyyy")</p>
                                 </div>
                             </div>
                         }

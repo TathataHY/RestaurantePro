@@ -191,7 +191,7 @@
         try
         {
             var resultado = await PromocionesApi.ToggleActivarPromocionAsync(promocion.Id, !promocion.EstaActiva);
-            if (resultado == true)
+            if (resultado?.Success == true)
             {
                 await CargarDatos();
                 await JSRuntime.InvokeVoidAsync("alert", $"Promoción {(promocion.EstaActiva ? "desactivada" : "activada")} correctamente");
@@ -212,14 +212,14 @@
         try
         {
             var resultado = await PromocionesApi.CrearPromocionAsync(request);
-            if (resultado == true)
+            if (resultado != null)
             {
                 await CargarDatos();
                 await JSRuntime.InvokeVoidAsync("alert", "Promoción creada correctamente");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al crear la promoción");
+                await JSRuntime.InvokeVoidAsync("alert", "Error al crear la promoción");
             }
         }
         catch (Exception ex)
@@ -233,14 +233,14 @@
         try
         {
             var resultado = await PromocionesApi.ActualizarPromocionAsync(request);
-            if (resultado == true)
+            if (resultado != null)
             {
                 await CargarDatos();
                 await JSRuntime.InvokeVoidAsync("alert", "Promoción actualizada correctamente");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al actualizar la promoción");
+                await JSRuntime.InvokeVoidAsync("alert", "Error al actualizar la promoción");
             }
         }
         catch (Exception ex)

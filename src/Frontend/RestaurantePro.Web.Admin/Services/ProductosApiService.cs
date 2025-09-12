@@ -113,9 +113,7 @@ public class ProductosApiService : IProductosApiService
             Descripcion = request.Descripcion,
             Precio = request.Precio,
             CategoriaId = request.CategoriaId,
-            Activo = request.Activo,
-            ImagenUrl = request.ImagenUrl,
-            Ingredientes = request.Ingredientes
+            Activo = request.Activo
         };
         return await CrearAsync(createRequest);
     }
@@ -133,9 +131,7 @@ public class ProductosApiService : IProductosApiService
             Descripcion = request.Descripcion,
             Precio = request.Precio,
             CategoriaId = request.CategoriaId,
-            Activo = request.Activo,
-            ImagenUrl = request.ImagenUrl,
-            Ingredientes = request.Ingredientes
+            Activo = request.Activo
         };
         return await ActualizarAsync(updateRequest);
     }

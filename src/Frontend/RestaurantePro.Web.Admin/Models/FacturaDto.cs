@@ -134,6 +134,32 @@ public class ActualizarFacturaRequest
     public string? Observaciones { get; set; }
     public string? NotasInternas { get; set; }
     public bool EsFacturaElectronica { get; set; } = false;
+
+    [StringLength(50, ErrorMessage = "El número de factura no puede exceder 50 caracteres")]
+    public string NumeroFactura { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "El ID del cliente es obligatorio")]
+    public Guid ClienteId { get; set; }
+
+    [Required(ErrorMessage = "El ID de la mesa es obligatorio")]
+    public Guid MesaId { get; set; }
+
+    [Required(ErrorMessage = "El ID del mesero es obligatorio")]
+    public Guid MeseroId { get; set; }
+
+    [Required(ErrorMessage = "La fecha de emisión es obligatoria")]
+    public DateTime FechaEmision { get; set; }
+
+    public DateTime? FechaVencimiento { get; set; }
+
+    [Required(ErrorMessage = "El subtotal es obligatorio")]
+    public decimal Subtotal { get; set; }
+
+    [Required(ErrorMessage = "Los impuestos son obligatorios")]
+    public decimal Impuestos { get; set; }
+
+    [Required(ErrorMessage = "El total es obligatorio")]
+    public decimal Total { get; set; }
 }
 
 /// <summary>

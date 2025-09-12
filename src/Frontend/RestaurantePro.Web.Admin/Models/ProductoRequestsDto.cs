@@ -41,6 +41,8 @@ public class CrearProductoRequest
     public string? Observaciones { get; set; }
 
     public List<IngredienteProductoRequest> Ingredientes { get; set; } = new();
+
+    public bool Activo { get; set; } = true;
 }
 
 /// <summary>
@@ -82,6 +84,8 @@ public class ActualizarProductoRequest
     public string? Observaciones { get; set; }
 
     public List<IngredienteProductoRequest>? Ingredientes { get; set; }
+
+    public bool Activo { get; set; } = true;
 }
 
 /// <summary>

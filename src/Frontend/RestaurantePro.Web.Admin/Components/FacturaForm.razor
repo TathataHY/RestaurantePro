@@ -502,18 +502,19 @@
                     }).ToList()
                 };
 
-                resultado = await FacturasApi.CrearFacturaAsync(request);
+                var resultadoCrear = await FacturasApi.CrearFacturaAsync(request);
+                resultado = resultadoCrear;
             }
 
-            if (resultado?.Success == true && resultado.Data != null)
+            if (resultado != null)
             {
-                await OnFacturaGuardada.InvokeAsync(resultado.Data);
+                await OnFacturaGuardada.InvokeAsync(resultado);
                 await Cerrar();
                 await JSRuntime.InvokeVoidAsync("alert", EsEdicion ? "Factura actualizada correctamente" : "Factura creada correctamente");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al guardar la factura");
+                await JSRuntime.InvokeVoidAsync("alert", "Error al guardar la factura");
             }
         }
         catch (Exception ex)
