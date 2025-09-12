@@ -169,14 +169,14 @@
             try
             {
                 var resultado = await PromocionesApi.EliminarPromocionAsync(promocion.Id);
-                if (resultado?.Success == true)
+                if (resultado == true)
                 {
                     await CargarDatos();
                     await JSRuntime.InvokeVoidAsync("alert", "Promoción eliminada correctamente");
                 }
                 else
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al eliminar la promoción");
+                    await JSRuntime.InvokeVoidAsync("alert", "Error al eliminar la promoción");
                 }
             }
             catch (Exception ex)
@@ -191,14 +191,14 @@
         try
         {
             var resultado = await PromocionesApi.ToggleActivarPromocionAsync(promocion.Id, !promocion.EstaActiva);
-            if (resultado?.Success == true)
+            if (resultado == true)
             {
                 await CargarDatos();
                 await JSRuntime.InvokeVoidAsync("alert", $"Promoción {(promocion.EstaActiva ? "desactivada" : "activada")} correctamente");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al cambiar estado de la promoción");
+                await JSRuntime.InvokeVoidAsync("alert", "Error al cambiar estado de la promoción");
             }
         }
         catch (Exception ex)
@@ -212,7 +212,7 @@
         try
         {
             var resultado = await PromocionesApi.CrearPromocionAsync(request);
-            if (resultado?.Success == true)
+            if (resultado == true)
             {
                 await CargarDatos();
                 await JSRuntime.InvokeVoidAsync("alert", "Promoción creada correctamente");
@@ -233,7 +233,7 @@
         try
         {
             var resultado = await PromocionesApi.ActualizarPromocionAsync(request);
-            if (resultado?.Success == true)
+            if (resultado == true)
             {
                 await CargarDatos();
                 await JSRuntime.InvokeVoidAsync("alert", "Promoción actualizada correctamente");

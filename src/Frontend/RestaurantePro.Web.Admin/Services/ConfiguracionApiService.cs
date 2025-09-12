@@ -29,20 +29,20 @@ public class ConfiguracionApiService : IConfiguracionApiService
     }
 
     /// <summary>
-    /// Obtiene todos los parámetros de configuración
+    /// Obtiene la configuración principal
     /// </summary>
-    public async Task<List<ConfiguracionDto>> ObtenerConfiguracionAsync()
+    public async Task<ConfiguracionDto?> ObtenerConfiguracionAsync()
     {
         try
         {
             var http = CreateClient();
-            var resp = await http.GetFromJsonAsync<ApiResponse<List<ConfiguracionDto>>>("api/admin/configuracion");
-            return resp?.Data ?? new List<ConfiguracionDto>();
+            var resp = await http.GetFromJsonAsync<ApiResponse<ConfiguracionDto>>("api/admin/configuracion");
+            return resp?.Data;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error al obtener configuración: {ex.Message}");
-            return new List<ConfiguracionDto>();
+            return null;
         }
     }
 
@@ -186,6 +186,42 @@ public class ConfiguracionApiService : IConfiguracionApiService
         catch (Exception ex)
         {
             Console.WriteLine($"Error al resetear configuración de {categoria}: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Actualiza la configuración principal
+    /// </summary>
+    public async Task<bool> ActualizarConfiguracionAsync(ConfiguracionDto configuracion)
+    {
+        try
+        {
+            var http = CreateClient();
+            var resp = await http.PutAsJsonAsync("api/admin/configuracion", configuracion);
+            return resp.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al actualizar configuración: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Restablece la configuración a valores por defecto
+    /// </summary>
+    public async Task<bool> RestablecerConfiguracionAsync()
+    {
+        try
+        {
+            var http = CreateClient();
+            var resp = await http.PostAsync("api/admin/configuracion/restablecer", null);
+            return resp.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al restablecer configuración: {ex.Message}");
             return false;
         }
     }

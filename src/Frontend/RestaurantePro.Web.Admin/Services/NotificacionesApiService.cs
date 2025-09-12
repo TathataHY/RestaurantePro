@@ -204,6 +204,30 @@ public class NotificacionesApiService : INotificacionesApiService
             return false;
         }
     }
+
+    /// <summary>
+    /// Obtiene notificaciones (sin parámetros)
+    /// </summary>
+    public async Task<List<NotificacionDto>> ObtenerNotificacionesAsync()
+    {
+        return await ObtenerNotificacionesAsync(false);
+    }
+
+    /// <summary>
+    /// Obtiene notificación por ID (alias)
+    /// </summary>
+    public async Task<NotificacionDto?> ObtenerNotificacionPorIdAsync(Guid id)
+    {
+        return await ObtenerPorIdAsync(id);
+    }
+
+    /// <summary>
+    /// Obtiene cantidad de notificaciones no leídas (alias)
+    /// </summary>
+    public async Task<int> ObtenerCantidadNoLeidasAsync()
+    {
+        return await ObtenerContadorNoLeidasAsync();
+    }
 }
 
 /// <summary>

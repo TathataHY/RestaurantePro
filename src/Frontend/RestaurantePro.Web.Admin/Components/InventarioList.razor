@@ -100,9 +100,9 @@ else
                             @if (ingrediente.FechaVencimiento != DateTime.MinValue)
                             {
                                 <span class="@GetVencimientoClass(ingrediente.FechaVencimiento)">
-                                    @ingrediente.FechaVencimiento.ToString("dd/MM/yyyy")
+                                    @ingrediente.FechaVencimiento?.ToString("dd/MM/yyyy")
                                 </span>
-                                <br><small class="text-muted">@GetDiasVencimiento(ingrediente.FechaVencimiento)</small>
+                                <br><small class="text-muted">@GetDiasVencimiento(ingrediente.FechaVencimiento.Value)</small>
                             }
                             else
                             {

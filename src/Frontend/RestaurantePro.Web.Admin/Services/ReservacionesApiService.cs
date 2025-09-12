@@ -131,9 +131,9 @@ public class ReservacionesApiService : IReservacionesApiService
     }
 
     /// <summary>
-    /// Crea una nueva reservación
+    /// Crea una nueva reservación (interno)
     /// </summary>
-    public async Task<ApiResponse<ReservacionDto>?> CrearReservacionAsync(CrearReservacionRequest request)
+    public async Task<ApiResponse<ReservacionDto>?> CrearReservacionInternalAsync(CrearReservacionRequest request)
     {
         try
         {
@@ -175,9 +175,9 @@ public class ReservacionesApiService : IReservacionesApiService
     }
 
     /// <summary>
-    /// Elimina una reservación (soft delete)
+    /// Elimina una reservación (interno)
     /// </summary>
-    public async Task<ApiResponse<bool>?> EliminarReservacionAsync(Guid id)
+    public async Task<ApiResponse<bool>?> EliminarReservacionInternalAsync(Guid id)
     {
         try
         {
@@ -636,4 +636,132 @@ public class ReservacionesApiService : IReservacionesApiService
             return null;
         }
     }
+
+    #region Métodos de Interfaz
+
+    /// <summary>
+    /// Obtiene todas las reservaciones
+    /// </summary>
+    public async Task<List<ReservacionDto>> ObtenerReservacionesAsync()
+    {
+        try
+        {
+            var filtros = new ReservacionFiltrosDto
+            {
+                PageNumber = 1,
+                PageSize = 1000,
+                OrdenarPor = "FechaReservacion",
+                DireccionOrden = "desc"
+            };
+            var result = await ObtenerReservacionesAsync(filtros);
+            return result?.Items ?? new List<ReservacionDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener reservaciones: {ex.Message}");
+            return new List<ReservacionDto>();
+        }
+    }
+
+    /// <summary>
+    /// Obtiene una reservación por ID
+    /// </summary>
+    public async Task<ReservacionDto?> ObtenerReservacionPorIdAsync(Guid id)
+    {
+        return await ObtenerReservacionAsync(id);
+    }
+
+    /// <summary>
+    /// Crea una nueva reservación
+    /// </summary>
+    public async Task<ReservacionDto?> CrearReservacionAsync(CrearReservacionRequest request)
+    {
+        try
+        {
+            var response = await CrearReservacionInternalAsync(request);
+            return response?.Data;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al crear reservación: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Actualiza una reservación existente
+    /// </summary>
+    public async Task<ReservacionDto?> ActualizarReservacionAsync(Guid id, ActualizarReservacionRequest request)
+    {
+        try
+        {
+            var updateRequest = new ActualizarReservacionRequest
+            {
+                Id = id,
+                ClienteId = request.ClienteId,
+                MesaId = request.MesaId,
+                FechaReservacion = request.FechaReservacion,
+                HoraReservacion = request.HoraReservacion,
+                NumeroPersonas = request.NumeroPersonas,
+                Estado = request.Estado,
+                CanalReservacion = request.CanalReservacion,
+                Notas = request.Notas,
+                RequiereAtencion = request.RequiereAtencion,
+                EsUrgente = request.EsUrgente,
+                EsVIP = request.EsVIP,
+                EsGrupo = request.EsGrupo,
+                EsRecurrente = request.EsRecurrente,
+                FechaCreacion = request.FechaCreacion,
+                FechaActualizacion = request.FechaActualizacion
+            };
+            var response = await ActualizarReservacionAsync(updateRequest);
+            return response?.Data;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al actualizar reservación: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Elimina una reservación
+    /// </summary>
+    public async Task<bool> EliminarReservacionAsync(Guid id)
+    {
+        try
+        {
+            var response = await EliminarReservacionInternalAsync(id);
+            return response?.Success ?? false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al eliminar reservación: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Cambia el estado de una reservación
+    /// </summary>
+    public async Task<bool> CambiarEstadoReservacionAsync(Guid id, EstadoReservacion estado)
+    {
+        try
+        {
+            var request = new ActualizarReservacionRequest
+            {
+                Id = id,
+                Estado = estado.ToString()
+            };
+            var response = await ActualizarReservacionAsync(request);
+            return response?.Success ?? false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cambiar estado de reservación: {ex.Message}");
+            return false;
+        }
+    }
+
+    #endregion
 }

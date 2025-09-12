@@ -441,6 +441,509 @@ public class ApiServiceTests
 
     #endregion
 
+    #region 🚀 NUEVAS PRUEBAS ROBUSTAS - Timeouts y Reintentos Avanzados
+
+    [Fact]
+    public async Task GetAsync_WithTimeoutException_ShouldRetryWithBackoff()
+    {
+        // Arrange
+        var expectedData = new { Id = 1, Name = "Test" };
+        var jsonResponse = JsonSerializer.Serialize(ApiResponse<object>.SuccessResponse(expectedData, "Success"));
+        var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(jsonResponse, Encoding.UTF8, "application/json")
+        };
+
+        var callCount = 0;
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() =>
+            {
+                callCount++;
+                if (callCount <= 2)
+                {
+                    throw new TaskCanceledException("Request timeout");
+                }
+                return httpResponse;
+            });
+
+        // Act
+        var result = await _apiService.GetAsync<object>("test-endpoint");
+
+        // Assert
+        Assert.True(result.Success);
+        Assert.Equal(3, callCount); // Should have retried twice
+    }
+
+    [Fact]
+    public async Task GetAsync_WithMultipleFailures_ShouldEventuallyFail()
+    {
+        // Arrange
+        var callCount = 0;
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() =>
+            {
+                callCount++;
+                throw new HttpRequestException("Persistent network error");
+            });
+
+        // Act
+        var result = await _apiService.GetAsync<object>("test-endpoint");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Contains("error inesperado", result.Message.ToLower());
+        Assert.Equal(3, callCount); // Should have retried 3 times
+    }
+
+    [Fact]
+    public async Task GetAsync_WithCancellationToken_ShouldRespectCancellation()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.CancelAfter(TimeSpan.FromMilliseconds(100));
+
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(async (HttpRequestMessage request, CancellationToken ct) =>
+            {
+                await Task.Delay(200, ct); // Simulate slow response
+                return new HttpResponseMessage(HttpStatusCode.OK);
+            });
+
+        // Act
+        var result = await _apiService.GetAsync<object>("test-endpoint", cancellationToken: cts.Token);
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Contains("error inesperado", result.Message.ToLower());
+    }
+
+    #endregion
+
+    #region 🚀 NUEVAS PRUEBAS ROBUSTAS - Diferentes Tipos de Errores HTTP
+
+    [Theory]
+    [InlineData(HttpStatusCode.Unauthorized, 401)]
+    [InlineData(HttpStatusCode.Forbidden, 403)]
+    [InlineData(HttpStatusCode.NotFound, 404)]
+    [InlineData(HttpStatusCode.MethodNotAllowed, 405)]
+    [InlineData(HttpStatusCode.Conflict, 409)]
+    [InlineData(HttpStatusCode.UnprocessableEntity, 422)]
+    [InlineData(HttpStatusCode.TooManyRequests, 429)]
+    [InlineData(HttpStatusCode.InternalServerError, 500)]
+    [InlineData(HttpStatusCode.BadGateway, 502)]
+    [InlineData(HttpStatusCode.ServiceUnavailable, 503)]
+    [InlineData(HttpStatusCode.GatewayTimeout, 504)]
+    public async Task GetAsync_WithDifferentHttpErrors_ShouldReturnAppropriateError(HttpStatusCode statusCode, int expectedStatusCode)
+    {
+        // Arrange
+        var httpResponse = new HttpResponseMessage(statusCode)
+        {
+            Content = new StringContent($"Error {statusCode}", Encoding.UTF8, "text/plain")
+        };
+
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(httpResponse);
+
+        // Act
+        var result = await _apiService.GetAsync<object>("test-endpoint");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal("Error de conexión", result.Message);
+        Assert.Equal(expectedStatusCode, result.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetAsync_WithCustomErrorResponse_ShouldParseErrorDetails()
+    {
+        // Arrange
+        var errorResponse = new
+        {
+            error = "Validation failed",
+            details = new[] { "Field 'name' is required", "Field 'email' is invalid" }
+        };
+        var jsonResponse = JsonSerializer.Serialize(errorResponse);
+        var httpResponse = new HttpResponseMessage(HttpStatusCode.BadRequest)
+        {
+            Content = new StringContent(jsonResponse, Encoding.UTF8, "application/json")
+        };
+
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(httpResponse);
+
+        // Act
+        var result = await _apiService.GetAsync<object>("test-endpoint");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal("Error de conexión", result.Message);
+        Assert.Equal(400, result.StatusCode);
+    }
+
+    #endregion
+
+    #region 🚀 NUEVAS PRUEBAS ROBUSTAS - Respuestas Malformadas
+
+    [Fact]
+    public async Task GetAsync_WithInvalidJson_ShouldReturnError()
+    {
+        // Arrange
+        var invalidJson = "{ invalid json }";
+        var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(invalidJson, Encoding.UTF8, "application/json")
+        };
+
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(httpResponse);
+
+        // Act
+        var result = await _apiService.GetAsync<object>("test-endpoint");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Contains("error inesperado", result.Message.ToLower());
+    }
+
+    [Fact]
+    public async Task GetAsync_WithNullResponse_ShouldReturnError()
+    {
+        // Arrange
+        var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("null", Encoding.UTF8, "application/json")
+        };
+
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(httpResponse);
+
+        // Act
+        var result = await _apiService.GetAsync<object>("test-endpoint");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Contains("error inesperado", result.Message.ToLower());
+    }
+
+    [Fact]
+    public async Task GetAsync_WithEmptyJsonObject_ShouldReturnError()
+    {
+        // Arrange
+        var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{}", Encoding.UTF8, "application/json")
+        };
+
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(httpResponse);
+
+        // Act
+        var result = await _apiService.GetAsync<object>("test-endpoint");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Contains("error inesperado", result.Message.ToLower());
+    }
+
+    [Fact]
+    public async Task GetAsync_WithUnexpectedContentType_ShouldReturnError()
+    {
+        // Arrange
+        var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("Success", Encoding.UTF8, "text/html")
+        };
+
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(httpResponse);
+
+        // Act
+        var result = await _apiService.GetAsync<object>("test-endpoint");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Contains("error inesperado", result.Message.ToLower());
+    }
+
+    #endregion
+
+    #region 🚀 NUEVAS PRUEBAS ROBUSTAS - Casos Edge y Límites
+
+    [Fact]
+    public async Task GetAsync_WithVeryLongEndpoint_ShouldHandleGracefully()
+    {
+        // Arrange
+        var longEndpoint = new string('a', 10000); // 10,000 caracteres
+        var expectedData = new { Id = 1, Name = "Test" };
+        var jsonResponse = JsonSerializer.Serialize(ApiResponse<object>.SuccessResponse(expectedData, "Success"));
+        var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(jsonResponse, Encoding.UTF8, "application/json")
+        };
+
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(httpResponse);
+
+        // Act
+        var result = await _apiService.GetAsync<object>(longEndpoint);
+
+        // Assert
+        Assert.True(result.Success);
+    }
+
+    [Fact]
+    public async Task PostAsync_WithVeryLargePayload_ShouldHandleGracefully()
+    {
+        // Arrange
+        var largeData = new { Data = new string('a', 100000) }; // 100,000 caracteres
+        var expectedResponse = new { Id = 1, Status = "Created" };
+        var jsonResponse = JsonSerializer.Serialize(ApiResponse<object>.SuccessResponse(expectedResponse, "Created"));
+        var httpResponse = new HttpResponseMessage(HttpStatusCode.Created)
+        {
+            Content = new StringContent(jsonResponse, Encoding.UTF8, "application/json")
+        };
+
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(httpResponse);
+
+        // Act
+        var result = await _apiService.PostAsync<object>("test-endpoint", largeData);
+
+        // Assert
+        Assert.True(result.Success);
+    }
+
+    [Fact]
+    public async Task GetAsync_WithSpecialCharactersInEndpoint_ShouldHandleGracefully()
+    {
+        // Arrange
+        var specialEndpoint = "test-endpoint?param=value&special=ñáéíóú";
+        var expectedData = new { Id = 1, Name = "Test" };
+        var jsonResponse = JsonSerializer.Serialize(ApiResponse<object>.SuccessResponse(expectedData, "Success"));
+        var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(jsonResponse, Encoding.UTF8, "application/json")
+        };
+
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(httpResponse);
+
+        // Act
+        var result = await _apiService.GetAsync<object>(specialEndpoint);
+
+        // Assert
+        Assert.True(result.Success);
+    }
+
+    #endregion
+
+    #region 🚀 NUEVAS PRUEBAS ROBUSTAS - Concurrencia y Threading
+
+    [Fact]
+    public async Task GetAsync_WithConcurrentCalls_ShouldHandleGracefully()
+    {
+        // Arrange
+        var expectedData = new { Id = 1, Name = "Test" };
+        var jsonResponse = JsonSerializer.Serialize(ApiResponse<object>.SuccessResponse(expectedData, "Success"));
+        var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(jsonResponse, Encoding.UTF8, "application/json")
+        };
+
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(httpResponse);
+
+        // Act
+        var task1 = _apiService.GetAsync<object>("test-endpoint-1");
+        var task2 = _apiService.GetAsync<object>("test-endpoint-2");
+        var task3 = _apiService.GetAsync<object>("test-endpoint-3");
+
+        var results = await Task.WhenAll(task1, task2, task3);
+
+        // Assert
+        Assert.All(results, result => Assert.True(result.Success));
+    }
+
+    [Fact]
+    public async Task PostAsync_WithConcurrentCalls_ShouldHandleGracefully()
+    {
+        // Arrange
+        var requestData = new { Name = "Test", Value = 123 };
+        var expectedResponse = new { Id = 1, Name = "Test", Value = 123 };
+        var jsonResponse = JsonSerializer.Serialize(ApiResponse<object>.SuccessResponse(expectedResponse, "Created"));
+        var httpResponse = new HttpResponseMessage(HttpStatusCode.Created)
+        {
+            Content = new StringContent(jsonResponse, Encoding.UTF8, "application/json")
+        };
+
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(httpResponse);
+
+        // Act
+        var task1 = _apiService.PostAsync<object>("test-endpoint-1", requestData);
+        var task2 = _apiService.PostAsync<object>("test-endpoint-2", requestData);
+        var task3 = _apiService.PostAsync<object>("test-endpoint-3", requestData);
+
+        var results = await Task.WhenAll(task1, task2, task3);
+
+        // Assert
+        Assert.All(results, result => Assert.True(result.Success));
+    }
+
+    #endregion
+
+    #region 🚀 NUEVAS PRUEBAS ROBUSTAS - Manejo de Excepciones Específicas
+
+    [Fact]
+    public async Task GetAsync_WithSocketException_ShouldRetryAndEventuallyFail()
+    {
+        // Arrange
+        var callCount = 0;
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() =>
+            {
+                callCount++;
+                throw new System.Net.Sockets.SocketException(10054); // Connection reset
+            });
+
+        // Act
+        var result = await _apiService.GetAsync<object>("test-endpoint");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Contains("error inesperado", result.Message.ToLower());
+        Assert.Equal(3, callCount); // Should have retried 3 times
+    }
+
+    [Fact]
+    public async Task GetAsync_WithAggregateException_ShouldHandleGracefully()
+    {
+        // Arrange
+        var callCount = 0;
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() =>
+            {
+                callCount++;
+                throw new AggregateException("Multiple errors", new HttpRequestException("Network error"));
+            });
+
+        // Act
+        var result = await _apiService.GetAsync<object>("test-endpoint");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Contains("error inesperado", result.Message.ToLower());
+        Assert.Equal(3, callCount); // Should have retried 3 times
+    }
+
+    [Fact]
+    public async Task GetAsync_WithTaskCanceledException_ShouldHandleGracefully()
+    {
+        // Arrange
+        var callCount = 0;
+        _mockHttpMessageHandler
+            .Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(() =>
+            {
+                callCount++;
+                throw new TaskCanceledException("Request was canceled");
+            });
+
+        // Act
+        var result = await _apiService.GetAsync<object>("test-endpoint");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Contains("error inesperado", result.Message.ToLower());
+        Assert.Equal(3, callCount); // Should have retried 3 times
+    }
+
+    #endregion
+
     public void Dispose()
     {
         _httpClient?.Dispose();

@@ -35,6 +35,20 @@ public class AuthApiService : IAuthApiService
         var api = await res.Content.ReadFromJsonAsync<ApiResponse<AuthUserDto>>();
         return api?.Data;
     }
+
+    public async Task<bool> LogoutAsync()
+    {
+        var http = _httpFactory.CreateClient("Api");
+        var res = await http.PostAsync("api/auth/logout", null);
+        return res.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> RefreshTokenAsync()
+    {
+        var http = _httpFactory.CreateClient("Api");
+        var res = await http.PostAsync("api/auth/refresh", null);
+        return res.IsSuccessStatusCode;
+    }
 }
 
 

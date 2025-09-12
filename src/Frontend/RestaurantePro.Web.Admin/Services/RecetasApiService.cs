@@ -198,6 +198,50 @@ public class RecetasApiService : IRecetasApiService
             return null;
         }
     }
+
+    /// <summary>
+    /// Obtiene todas las recetas (sin paginación)
+    /// </summary>
+    public async Task<List<RecetaDto>> ObtenerRecetasAsync()
+    {
+        try
+        {
+            var http = CreateClient();
+            var resp = await http.GetFromJsonAsync<ApiResponse<List<RecetaDto>>>("api/core/recetas/todas");
+            return resp?.Data ?? new List<RecetaDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener recetas: {ex.Message}");
+            return new List<RecetaDto>();
+        }
+    }
+
+    /// <summary>
+    /// Obtiene receta por ID (alias)
+    /// </summary>
+    public async Task<RecetaDto?> ObtenerRecetaPorIdAsync(Guid id)
+    {
+        return await ObtenerPorIdAsync(id);
+    }
+
+    /// <summary>
+    /// Cambia el estado de una receta
+    /// </summary>
+    public async Task<bool> CambiarEstadoRecetaAsync(Guid id, bool activa)
+    {
+        try
+        {
+            var http = CreateClient();
+            var resp = await http.PostAsync($"api/core/recetas/{id}/cambiar-estado?activa={activa}", null);
+            return resp.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cambiar estado de receta {id}: {ex.Message}");
+            return false;
+        }
+    }
 }
 
 /// <summary>

@@ -84,6 +84,79 @@ public class ProductosApiService : IProductosApiService
         var res = await http.DeleteAsync($"api/core/productos/{id}");
         return res.IsSuccessStatusCode;
     }
+
+    /// <summary>
+    /// Obtiene productos con paginación
+    /// </summary>
+    public async Task<PaginatedList<ProductoDto>?> ObtenerProductosAsync(int pageNumber = 1, int pageSize = 20, string? filtro = null)
+    {
+        return await ObtenerProductosPaginadosAsync(pageNumber, pageSize, filtro ?? string.Empty, null, true, "Nombre", "asc");
+    }
+
+    /// <summary>
+    /// Obtiene un producto por ID
+    /// </summary>
+    public async Task<ProductoDto?> ObtenerProductoPorIdAsync(Guid id)
+    {
+        return await ObtenerPorIdAsync(id);
+    }
+
+    /// <summary>
+    /// Crea un nuevo producto
+    /// </summary>
+    public async Task<ProductoDto?> CrearProductoAsync(CrearProductoRequest request)
+    {
+        // Convertir CrearProductoRequest a CreateProductoRequest
+        var createRequest = new CreateProductoRequest
+        {
+            Nombre = request.Nombre,
+            Descripcion = request.Descripcion,
+            Precio = request.Precio,
+            CategoriaId = request.CategoriaId,
+            Activo = request.Activo,
+            ImagenUrl = request.ImagenUrl,
+            Ingredientes = request.Ingredientes
+        };
+        return await CrearAsync(createRequest);
+    }
+
+    /// <summary>
+    /// Actualiza un producto existente
+    /// </summary>
+    public async Task<ProductoDto?> ActualizarProductoAsync(Guid id, ActualizarProductoRequest request)
+    {
+        // Convertir ActualizarProductoRequest a UpdateProductoRequest
+        var updateRequest = new UpdateProductoRequest
+        {
+            Id = id,
+            Nombre = request.Nombre,
+            Descripcion = request.Descripcion,
+            Precio = request.Precio,
+            CategoriaId = request.CategoriaId,
+            Activo = request.Activo,
+            ImagenUrl = request.ImagenUrl,
+            Ingredientes = request.Ingredientes
+        };
+        return await ActualizarAsync(updateRequest);
+    }
+
+    /// <summary>
+    /// Elimina un producto
+    /// </summary>
+    public async Task<bool> EliminarProductoAsync(Guid id)
+    {
+        return await EliminarAsync(id);
+    }
+
+    /// <summary>
+    /// Cambia el estado de un producto
+    /// </summary>
+    public async Task<bool> CambiarEstadoProductoAsync(Guid id, bool activo)
+    {
+        var http = CreateClient();
+        var res = await http.PostAsync($"api/core/productos/{id}/cambiar-estado?activo={activo}", null);
+        return res.IsSuccessStatusCode;
+    }
 }
 
 

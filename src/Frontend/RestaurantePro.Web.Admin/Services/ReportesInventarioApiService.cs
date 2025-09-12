@@ -263,4 +263,64 @@ public class ReportesInventarioApiService : IReportesInventarioApiService
             return null;
         }
     }
+
+    /// <summary>
+    /// Obtiene todos los reportes de inventario
+    /// </summary>
+    public async Task<List<ReporteInventarioDto>> ObtenerReportesInventarioAsync()
+    {
+        try
+        {
+            var http = CreateClient();
+            var resp = await http.GetFromJsonAsync<ApiResponse<List<ReporteInventarioDto>>>("api/inventario/reportes");
+            return resp?.Data ?? new List<ReporteInventarioDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener reportes de inventario: {ex.Message}");
+            return new List<ReporteInventarioDto>();
+        }
+    }
+
+    /// <summary>
+    /// Obtiene un reporte de inventario por ID
+    /// </summary>
+    public async Task<ReporteInventarioDto?> ObtenerReporteInventarioPorIdAsync(Guid id)
+    {
+        try
+        {
+            var http = CreateClient();
+            var resp = await http.GetFromJsonAsync<ApiResponse<ReporteInventarioDto>>($"api/inventario/reportes/{id}");
+            return resp?.Data;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener reporte de inventario {id}: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Genera un reporte de inventario
+    /// </summary>
+    public async Task<byte[]?> GenerarReporteInventarioAsync(Guid reporteId, Dictionary<string, object> parametros)
+    {
+        try
+        {
+            var http = CreateClient();
+            var resp = await http.PostAsJsonAsync($"api/inventario/reportes/{reporteId}/generar", parametros);
+            
+            if (resp.IsSuccessStatusCode)
+            {
+                return await resp.Content.ReadAsByteArrayAsync();
+            }
+            
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al generar reporte de inventario {reporteId}: {ex.Message}");
+            return null;
+        }
+    }
 }

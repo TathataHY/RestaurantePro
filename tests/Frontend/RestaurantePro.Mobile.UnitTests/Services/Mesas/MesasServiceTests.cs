@@ -397,4 +397,793 @@ public class MesasServiceTests
     }
 
     #endregion
+
+    // ===== PRUEBAS ROBUSTAS ADICIONALES =====
+
+    #region Validaciones de Entrada
+
+    [Fact]
+    public async Task ObtenerMesasAsync_ConEstadoVacio_DebeUsarEndpointSinFiltro()
+    {
+        // Arrange
+        var expectedMesas = _fixture.CreateMany<MesaDto>(3).ToList();
+        var expectedResponse = ApiResponse<List<MesaDto>>.SuccessResponse(expectedMesas);
+
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                       .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _mesasService.ObtenerMesasAsync("", null, null);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        _mockApiService.Verify(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas", It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ObtenerMesasAsync_ConEstadoWhitespace_DebeUsarEndpointSinFiltro()
+    {
+        // Arrange
+        var expectedMesas = _fixture.CreateMany<MesaDto>(3).ToList();
+        var expectedResponse = ApiResponse<List<MesaDto>>.SuccessResponse(expectedMesas);
+
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                       .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _mesasService.ObtenerMesasAsync("   ", null, null);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        _mockApiService.Verify(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas", It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ObtenerMesasAsync_ConUbicacionVacia_DebeUsarEndpointSinFiltro()
+    {
+        // Arrange
+        var expectedMesas = _fixture.CreateMany<MesaDto>(3).ToList();
+        var expectedResponse = ApiResponse<List<MesaDto>>.SuccessResponse(expectedMesas);
+
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                       .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _mesasService.ObtenerMesasAsync(null, "", null);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        _mockApiService.Verify(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas", It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ObtenerMesasAsync_ConCapacidadMinimaCero_DebeUsarEndpointConFiltro()
+    {
+        // Arrange
+        var expectedMesas = _fixture.CreateMany<MesaDto>(3).ToList();
+        var expectedResponse = ApiResponse<List<MesaDto>>.SuccessResponse(expectedMesas);
+
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas?capacidadMinima=0", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                       .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _mesasService.ObtenerMesasAsync(null, null, 0);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        _mockApiService.Verify(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas?capacidadMinima=0", It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ObtenerMesasAsync_ConCapacidadMinimaNegativa_DebeUsarEndpointConFiltro()
+    {
+        // Arrange
+        var expectedMesas = _fixture.CreateMany<MesaDto>(3).ToList();
+        var expectedResponse = ApiResponse<List<MesaDto>>.SuccessResponse(expectedMesas);
+
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas?capacidadMinima=-1", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                       .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _mesasService.ObtenerMesasAsync(null, null, -1);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        _mockApiService.Verify(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas?capacidadMinima=-1", It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ObtenerMesasAsync_ConCapacidadMinimaMuyGrande_DebeUsarEndpointConFiltro()
+    {
+        // Arrange
+        var expectedMesas = _fixture.CreateMany<MesaDto>(3).ToList();
+        var expectedResponse = ApiResponse<List<MesaDto>>.SuccessResponse(expectedMesas);
+
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas?capacidadMinima=1000", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                       .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _mesasService.ObtenerMesasAsync(null, null, 1000);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        _mockApiService.Verify(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas?capacidadMinima=1000", It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ObtenerMesasAsync_ConCaracteresEspecialesEnEstado_DebeEscaparCorrectamente()
+    {
+        // Arrange
+        var estado = "Fuera de servicio & mantenimiento";
+        var expectedMesas = _fixture.CreateMany<MesaDto>(3).ToList();
+        var expectedResponse = ApiResponse<List<MesaDto>>.SuccessResponse(expectedMesas);
+
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas?estado=Fuera%20de%20servicio%20%26%20mantenimiento", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                       .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _mesasService.ObtenerMesasAsync(estado, null, null);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        _mockApiService.Verify(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas?estado=Fuera%20de%20servicio%20%26%20mantenimiento", It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ObtenerMesasAsync_ConCaracteresEspecialesEnUbicacion_DebeEscaparCorrectamente()
+    {
+        // Arrange
+        var ubicacion = "Terraza & Jardín";
+        var expectedMesas = _fixture.CreateMany<MesaDto>(3).ToList();
+        var expectedResponse = ApiResponse<List<MesaDto>>.SuccessResponse(expectedMesas);
+
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas?ubicacion=Terraza%20%26%20Jard%C3%ADn", It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                       .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _mesasService.ObtenerMesasAsync(null, ubicacion, null);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        _mockApiService.Verify(x => x.GetAsync<List<MesaDto>>("api/operaciones/mesas?ubicacion=Terraza%20%26%20Jard%C3%ADn", It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region Manejo de Errores de Red
+
+    [Fact]
+    public async Task ObtenerMesasAsync_CuandoApiServiceTimeout_DebeRetornarErrorResponse()
+    {
+        // Arrange
+        var timeoutException = new TaskCanceledException("Request timeout");
+
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                       .ThrowsAsync(timeoutException);
+
+        // Act
+        var result = await _mesasService.ObtenerMesasAsync();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.Errors.Should().Contain("Request timeout");
+    }
+
+    [Fact]
+    public async Task ObtenerMesasAsync_CuandoApiServiceHttpException_DebeRetornarErrorResponse()
+    {
+        // Arrange
+        var httpException = new HttpRequestException("Service unavailable", null, System.Net.HttpStatusCode.ServiceUnavailable);
+
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                       .ThrowsAsync(httpException);
+
+        // Act
+        var result = await _mesasService.ObtenerMesasAsync();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.Errors.Should().Contain("Service unavailable");
+    }
+
+    [Fact]
+    public async Task ObtenerMesasAsync_CuandoApiServiceSocketException_DebeRetornarErrorResponse()
+    {
+        // Arrange
+        var socketException = new System.Net.Sockets.SocketException(10054); // Connection reset
+
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                       .ThrowsAsync(socketException);
+
+        // Act
+        var result = await _mesasService.ObtenerMesasAsync();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.Errors.Should().Contain(socketException.Message);
+    }
+
+    [Fact]
+    public async Task ObtenerMesasAsync_CuandoApiServiceAggregateException_DebeRetornarErrorResponse()
+    {
+        // Arrange
+        var innerException = new HttpRequestException("Network error");
+        var aggregateException = new AggregateException("Multiple errors", innerException);
+
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                       .ThrowsAsync(aggregateException);
+
+        // Act
+        var result = await _mesasService.ObtenerMesasAsync();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.Errors.Should().Contain("Multiple errors");
+    }
+
+    [Fact]
+    public async Task ObtenerMesasAsync_CuandoApiServiceIOException_DebeRetornarErrorResponse()
+    {
+        // Arrange
+        var ioException = new IOException("I/O error occurred");
+
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                       .ThrowsAsync(ioException);
+
+        // Act
+        var result = await _mesasService.ObtenerMesasAsync();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.Errors.Should().Contain("I/O error occurred");
+    }
+
+    [Fact]
+    public async Task ObtenerMesasAsync_CuandoApiServiceGenericException_DebeRetornarErrorResponse()
+    {
+        // Arrange
+        var genericException = new InvalidOperationException("Unexpected error");
+
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                       .ThrowsAsync(genericException);
+
+        // Act
+        var result = await _mesasService.ObtenerMesasAsync();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.Errors.Should().Contain("Unexpected error");
+    }
+
+    #endregion
+
+    #region Casos Edge y Límites
+
+    [Fact]
+    public async Task ObtenerMesasAsync_CuandoApiServiceRetornaNull_DebeRetornarErrorResponse()
+    {
+        // Arrange
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                       .ReturnsAsync((ApiResponse<List<MesaDto>>?)null);
+
+        // Act
+        var result = await _mesasService.ObtenerMesasAsync();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.Errors.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public async Task ObtenerMesasAsync_CuandoApiServiceRetornaDataNull_DebeRetornarErrorResponse()
+    {
+        // Arrange
+        var apiResponse = ApiResponse<List<MesaDto>>.SuccessResponse(null!);
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                       .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _mesasService.ObtenerMesasAsync();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.Errors.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public async Task ObtenerMesasAsync_CuandoApiServiceRetornaListaVacia_DebeRetornarSuccessResponse()
+    {
+        // Arrange
+        var emptyList = new List<MesaDto>();
+        var apiResponse = ApiResponse<List<MesaDto>>.SuccessResponse(emptyList);
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                       .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _mesasService.ObtenerMesasAsync();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        result.Data.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ObtenerMesasAsync_CuandoApiServiceRetornaListaMuyGrande_DebeRetornarSuccessResponse()
+    {
+        // Arrange
+        var largeList = _fixture.CreateMany<MesaDto>(1000).ToList();
+        var apiResponse = ApiResponse<List<MesaDto>>.SuccessResponse(largeList);
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                       .ReturnsAsync(apiResponse);
+
+        // Act
+        var result = await _mesasService.ObtenerMesasAsync();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        result.Data.Should().HaveCount(1000);
+    }
+
+    #endregion
+
+    #region Concurrencia y Threading
+
+    [Fact]
+    public async Task ObtenerMesasAsync_CuandoSeLlamaConcurrentemente_DebeManejarCorrectamente()
+    {
+        // Arrange
+        var expectedMesas = _fixture.CreateMany<MesaDto>(5).ToList();
+        var expectedResponse = ApiResponse<List<MesaDto>>.SuccessResponse(expectedMesas);
+
+        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                       .ReturnsAsync(expectedResponse);
+
+        // Act
+        var tasks = Enumerable.Range(0, 10)
+            .Select(_ => _mesasService.ObtenerMesasAsync())
+            .ToArray();
+
+        var results = await Task.WhenAll(tasks);
+
+        // Assert
+        results.Should().HaveCount(10);
+        results.Should().AllSatisfy(r => r.Success.Should().BeTrue());
+        results.Should().AllSatisfy(r => r.Data.Should().BeEquivalentTo(expectedMesas));
+    }
+
+    [Fact]
+    public async Task ObtenerMesasDisponiblesAsync_CuandoSeLlamaConcurrentemente_DebeManejarCorrectamente()
+    {
+        // Arrange
+        var expectedMesas = _fixture.CreateMany<MesaDto>(3).ToList();
+        var paginatedList = new PaginatedList<MesaDto>
+        {
+            Items = expectedMesas,
+            TotalCount = expectedMesas.Count,
+            PageNumber = 1,
+            PageSize = 10
+        };
+        var expectedResponse = ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(paginatedList);
+
+        _mockApiService.Setup(x => x.GetAsync<PaginatedList<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+                       .ReturnsAsync(expectedResponse);
+
+        // Act
+        var tasks = Enumerable.Range(0, 5)
+            .Select(_ => _mesasService.ObtenerMesasDisponiblesAsync())
+            .ToArray();
+
+        var results = await Task.WhenAll(tasks);
+
+        // Assert
+        results.Should().HaveCount(5);
+        results.Should().AllSatisfy(r => r.Success.Should().BeTrue());
+        results.Should().AllSatisfy(r => r.Data.Should().BeEquivalentTo(expectedMesas));
+    }
+
+    #endregion
+
+    #region Validaciones de Negocio
+
+    [Fact]
+    public async Task AsignarMesaAsync_ConMesaIdVacio_DebeUsarEndpointCorrecto()
+    {
+        // Arrange
+        var mesaId = Guid.Empty;
+        var expectedResponse = ApiResponse<object>.SuccessResponse(new { });
+
+        _mockApiService.Setup(x => x.PostAsync<object>(
+            $"api/operaciones/mesas/{mesaId}/asignar",
+            It.IsAny<object>(),
+            It.IsAny<string?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _mesasService.AsignarMesaAsync(mesaId);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        _mockApiService.Verify(x => x.PostAsync<object>(
+            $"api/operaciones/mesas/{mesaId}/asignar",
+            It.IsAny<object>(),
+            It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AsignarMesaAsync_ConClienteIdVacio_DebeUsarEndpointCorrecto()
+    {
+        // Arrange
+        var mesaId = Guid.NewGuid();
+        var clienteId = Guid.Empty;
+        var expectedResponse = ApiResponse<object>.SuccessResponse(new { });
+
+        _mockApiService.Setup(x => x.PostAsync<object>(
+            $"api/operaciones/mesas/{mesaId}/asignar",
+            It.IsAny<object>(),
+            It.IsAny<string?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _mesasService.AsignarMesaAsync(mesaId, clienteId);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        _mockApiService.Verify(x => x.PostAsync<object>(
+            $"api/operaciones/mesas/{mesaId}/asignar",
+            It.IsAny<object>(),
+            It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AsignarMesaAsync_ConNumeroPersonasCero_DebeUsarEndpointCorrecto()
+    {
+        // Arrange
+        var mesaId = Guid.NewGuid();
+        var numeroPersonas = 0;
+        var expectedResponse = ApiResponse<object>.SuccessResponse(new { });
+
+        _mockApiService.Setup(x => x.PostAsync<object>(
+            $"api/operaciones/mesas/{mesaId}/asignar",
+            It.IsAny<object>(),
+            It.IsAny<string?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _mesasService.AsignarMesaAsync(mesaId, null, numeroPersonas);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        _mockApiService.Verify(x => x.PostAsync<object>(
+            $"api/operaciones/mesas/{mesaId}/asignar",
+            It.IsAny<object>(),
+            It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AsignarMesaAsync_ConNumeroPersonasNegativo_DebeUsarEndpointCorrecto()
+    {
+        // Arrange
+        var mesaId = Guid.NewGuid();
+        var numeroPersonas = -1;
+        var expectedResponse = ApiResponse<object>.SuccessResponse(new { });
+
+        _mockApiService.Setup(x => x.PostAsync<object>(
+            $"api/operaciones/mesas/{mesaId}/asignar",
+            It.IsAny<object>(),
+            It.IsAny<string?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _mesasService.AsignarMesaAsync(mesaId, null, numeroPersonas);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        _mockApiService.Verify(x => x.PostAsync<object>(
+            $"api/operaciones/mesas/{mesaId}/asignar",
+            It.IsAny<object>(),
+            It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AsignarMesaAsync_ConNumeroPersonasMuyGrande_DebeUsarEndpointCorrecto()
+    {
+        // Arrange
+        var mesaId = Guid.NewGuid();
+        var numeroPersonas = 1000;
+        var expectedResponse = ApiResponse<object>.SuccessResponse(new { });
+
+        _mockApiService.Setup(x => x.PostAsync<object>(
+            $"api/operaciones/mesas/{mesaId}/asignar",
+            It.IsAny<object>(),
+            It.IsAny<string?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _mesasService.AsignarMesaAsync(mesaId, null, numeroPersonas);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        _mockApiService.Verify(x => x.PostAsync<object>(
+            $"api/operaciones/mesas/{mesaId}/asignar",
+            It.IsAny<object>(),
+            It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AsignarMesaAsync_ConObservacionesVacias_DebeUsarEndpointCorrecto()
+    {
+        // Arrange
+        var mesaId = Guid.NewGuid();
+        var observaciones = "";
+        var expectedResponse = ApiResponse<object>.SuccessResponse(new { });
+
+        _mockApiService.Setup(x => x.PostAsync<object>(
+            $"api/operaciones/mesas/{mesaId}/asignar",
+            It.IsAny<object>(),
+            It.IsAny<string?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _mesasService.AsignarMesaAsync(mesaId, null, null, observaciones);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        _mockApiService.Verify(x => x.PostAsync<object>(
+            $"api/operaciones/mesas/{mesaId}/asignar",
+            It.IsAny<object>(),
+            It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AsignarMesaAsync_ConObservacionesNull_DebeUsarEndpointCorrecto()
+    {
+        // Arrange
+        var mesaId = Guid.NewGuid();
+        string? observaciones = null;
+        var expectedResponse = ApiResponse<object>.SuccessResponse(new { });
+
+        _mockApiService.Setup(x => x.PostAsync<object>(
+            $"api/operaciones/mesas/{mesaId}/asignar",
+            It.IsAny<object>(),
+            It.IsAny<string?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _mesasService.AsignarMesaAsync(mesaId, null, null, observaciones);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        _mockApiService.Verify(x => x.PostAsync<object>(
+            $"api/operaciones/mesas/{mesaId}/asignar",
+            It.IsAny<object>(),
+            It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AsignarMesaAsync_ConObservacionesMuyLargas_DebeUsarEndpointCorrecto()
+    {
+        // Arrange
+        var mesaId = Guid.NewGuid();
+        var observaciones = new string('a', 1000); // Observaciones muy largas
+        var expectedResponse = ApiResponse<object>.SuccessResponse(new { });
+
+        _mockApiService.Setup(x => x.PostAsync<object>(
+            $"api/operaciones/mesas/{mesaId}/asignar",
+            It.IsAny<object>(),
+            It.IsAny<string?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _mesasService.AsignarMesaAsync(mesaId, null, null, observaciones);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        _mockApiService.Verify(x => x.PostAsync<object>(
+            $"api/operaciones/mesas/{mesaId}/asignar",
+            It.IsAny<object>(),
+            It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AsignarMesaAsync_ConObservacionesConCaracteresEspeciales_DebeUsarEndpointCorrecto()
+    {
+        // Arrange
+        var mesaId = Guid.NewGuid();
+        var observaciones = "Mesa para cena de negocios & celebración especial";
+        var expectedResponse = ApiResponse<object>.SuccessResponse(new { });
+
+        _mockApiService.Setup(x => x.PostAsync<object>(
+            $"api/operaciones/mesas/{mesaId}/asignar",
+            It.IsAny<object>(),
+            It.IsAny<string?>(),
+            It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _mesasService.AsignarMesaAsync(mesaId, null, null, observaciones);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        _mockApiService.Verify(x => x.PostAsync<object>(
+            $"api/operaciones/mesas/{mesaId}/asignar",
+            It.IsAny<object>(),
+            It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    #endregion
+
+    #region Cancelación
+
+    [Fact]
+    public async Task ObtenerMesasAsync_CuandoSeCancela_DebeRetornarErrorResponse()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // Act
+        var result = await _mesasService.ObtenerMesasAsync(cancellationToken: cts.Token);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.Errors.Should().Contain("Operación cancelada por el usuario");
+        _mockApiService.Verify(x => x.GetAsync<List<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ObtenerMesaAsync_CuandoSeCancela_DebeRetornarErrorResponse()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // Act
+        var result = await _mesasService.ObtenerMesaAsync(Guid.NewGuid(), cts.Token);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.Errors.Should().Contain("Operación cancelada por el usuario");
+        _mockApiService.Verify(x => x.GetAsync<MesaDto>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ObtenerMesasDisponiblesAsync_CuandoSeCancela_DebeRetornarErrorResponse()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // Act
+        var result = await _mesasService.ObtenerMesasDisponiblesAsync(cancellationToken: cts.Token);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.Errors.Should().Contain("Operación cancelada por el usuario");
+        _mockApiService.Verify(x => x.GetAsync<PaginatedList<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ObtenerEstadoOcupacionAsync_CuandoSeCancela_DebeRetornarErrorResponse()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // Act
+        var result = await _mesasService.ObtenerEstadoOcupacionAsync(cts.Token);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.Errors.Should().Contain("Operación cancelada por el usuario");
+        _mockApiService.Verify(x => x.GetAsync<EstadoMesasDto>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task AsignarMesaAsync_CuandoSeCancela_DebeRetornarErrorResponse()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // Act
+        var result = await _mesasService.AsignarMesaAsync(Guid.NewGuid(), cancellationToken: cts.Token);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.Errors.Should().Contain("Operación cancelada por el usuario");
+        _mockApiService.Verify(x => x.PostAsync<object>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task LiberarMesaAsync_CuandoSeCancela_DebeRetornarErrorResponse()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // Act
+        var result = await _mesasService.LiberarMesaAsync(Guid.NewGuid(), cancellationToken: cts.Token);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.Errors.Should().Contain("Operación cancelada por el usuario");
+        _mockApiService.Verify(x => x.PostAsync<MesaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CambiarEstadoMesaAsync_CuandoSeCancela_DebeRetornarErrorResponse()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // Act
+        var result = await _mesasService.CambiarEstadoMesaAsync(Guid.NewGuid(), "Nuevo Estado", cancellationToken: cts.Token);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.Errors.Should().Contain("Operación cancelada por el usuario");
+        _mockApiService.Verify(x => x.PutAsync<MesaDto>(It.IsAny<string>(), It.IsAny<object>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task BuscarMejorMesaAsync_CuandoSeCancela_DebeRetornarErrorResponse()
+    {
+        // Arrange
+        var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        // Act
+        var result = await _mesasService.BuscarMejorMesaAsync(4, cancellationToken: cts.Token);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.Errors.Should().Contain("Operación cancelada por el usuario");
+        _mockApiService.Verify(x => x.GetAsync<MesaDto>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
 } 

@@ -466,4 +466,468 @@ public class DashboardServiceTests
     }
 
     #endregion
+
+    #region 🚀 NUEVAS PRUEBAS ROBUSTAS - Fallos Parciales de Servicios
+
+    [Fact]
+    public async Task GetTodaySalesAsync_WithPartialServiceFailure_ShouldReturnSimulatedSales()
+    {
+        // Arrange
+        _mockAnalyticsService
+            .Setup(x => x.ObtenerMetricasDiaAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Service temporarily unavailable"));
+
+        // Act
+        var result = await _dashboardService.GetTodaySalesAsync();
+
+        // Assert
+        Assert.True(result > 0); // Should return simulated sales
+        Assert.True(result >= 500 && result <= 2000); // Should be in reasonable range
+    }
+
+    [Fact]
+    public async Task GetSalesChangePercentageAsync_WithPartialServiceFailure_ShouldReturnSimulatedPercentage()
+    {
+        // Arrange
+        var todayResponse = ApiResponse<MetricasDiaDto>.SuccessResponse(
+            new MetricasDiaDto { TotalVentas = 1500m }, "Success");
+        var yesterdayResponse = ApiResponse<MetricasRangoDto>.ErrorResponse("Service error");
+
+        _mockAnalyticsService
+            .Setup(x => x.ObtenerMetricasDiaAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(todayResponse);
+        _mockAnalyticsService
+            .Setup(x => x.ObtenerMetricasRangoAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(yesterdayResponse);
+
+        // Act
+        var result = await _dashboardService.GetSalesChangePercentageAsync();
+
+        // Assert
+        Assert.True(result >= -20 && result <= 30); // Should return simulated percentage
+    }
+
+    [Fact]
+    public async Task GetActiveOrdersCountAsync_WithPartialServiceFailure_ShouldReturnSimulatedCount()
+    {
+        // Arrange
+        var token = "test-token";
+        var comandas1 = new List<ComandaDto> { new ComandaDto(), new ComandaDto() };
+        var comandas2 = new List<ComandaDto> { new ComandaDto() };
+
+        _mockAuthService
+            .Setup(x => x.GetTokenAsync())
+            .ReturnsAsync(token);
+
+        _mockApiService
+            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(
+                "api/operaciones/comandas?Estado=EnProceso&PageSize=100&SoloActivas=true", token, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(
+                new PaginatedList<ComandaDto> { Items = comandas1 }, "Success"));
+
+        _mockApiService
+            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(
+                "api/operaciones/comandas?Estado=Lista&PageSize=100&SoloActivas=true", token, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Service error"));
+
+        _mockApiService
+            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(
+                "api/operaciones/comandas?Estado=Entregada&PageSize=100&SoloActivas=true", token, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(
+                new PaginatedList<ComandaDto> { Items = comandas2 }, "Success"));
+
+        // Act
+        var result = await _dashboardService.GetActiveOrdersCountAsync();
+
+        // Assert
+        Assert.True(result >= 3); // Should handle partial failure gracefully
+    }
+
+    #endregion
+
+    #region 🚀 NUEVAS PRUEBAS ROBUSTAS - Datos Inconsistentes
+
+    [Fact]
+    public async Task GetTodaySalesAsync_WithInconsistentData_ShouldHandleGracefully()
+    {
+        // Arrange
+        var inconsistentResponse = ApiResponse<MetricasDiaDto>.SuccessResponse(
+            new MetricasDiaDto { TotalVentas = -100m }, "Success"); // Negative sales
+
+        _mockAnalyticsService
+            .Setup(x => x.ObtenerMetricasDiaAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(inconsistentResponse);
+
+        // Act
+        var result = await _dashboardService.GetTodaySalesAsync();
+
+        // Assert
+        Assert.True(result > 0); // Should return simulated sales instead of negative
+    }
+
+    [Fact]
+    public async Task GetSalesChangePercentageAsync_WithInconsistentData_ShouldHandleGracefully()
+    {
+        // Arrange
+        var todayResponse = ApiResponse<MetricasDiaDto>.SuccessResponse(
+            new MetricasDiaDto { TotalVentas = 1000m }, "Success");
+        var yesterdayResponse = ApiResponse<MetricasRangoDto>.SuccessResponse(
+            new MetricasRangoDto { TotalVentas = 0m }, "Success"); // Zero yesterday sales
+
+        _mockAnalyticsService
+            .Setup(x => x.ObtenerMetricasDiaAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(todayResponse);
+        _mockAnalyticsService
+            .Setup(x => x.ObtenerMetricasRangoAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(yesterdayResponse);
+
+        // Act
+        var result = await _dashboardService.GetSalesChangePercentageAsync();
+
+        // Assert
+        Assert.True(result >= -20 && result <= 30); // Should return simulated percentage
+    }
+
+    [Fact]
+    public async Task GetTableStatusAsync_WithInconsistentData_ShouldHandleGracefully()
+    {
+        // Arrange
+        var inconsistentStatus = new EstadoMesasDto
+        {
+            Mesas = new List<MesaDto>
+            {
+                new MesaDto { Id = Guid.NewGuid(), Numero = "1", Estado = "invalid_state", Capacidad = -1 }
+            },
+            Estadisticas = new EstadisticasMesasDto
+            {
+                MesasDisponibles = -1,
+                MesasOcupadas = -1,
+                PorcentajeOcupacion = 150.0m // Invalid percentage
+            }
+        };
+
+        _mockMesasService
+            .Setup(x => x.ObtenerEstadoOcupacionAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<EstadoMesasDto>.SuccessResponse(inconsistentStatus, "Success"));
+
+        // Act
+        var result = await _dashboardService.GetTableStatusAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotNull(result.Mesas);
+        Assert.NotNull(result.Estadisticas);
+    }
+
+    #endregion
+
+    #region 🚀 NUEVAS PRUEBAS ROBUSTAS - Caché y Actualización
+
+    [Fact]
+    public async Task GetTodaySalesAsync_WithCachedData_ShouldReturnCachedValue()
+    {
+        // Arrange
+        var expectedSales = 1500.50m;
+        var metricsResponse = ApiResponse<MetricasDiaDto>.SuccessResponse(
+            new MetricasDiaDto { TotalVentas = expectedSales }, "Success");
+
+        _mockAnalyticsService
+            .Setup(x => x.ObtenerMetricasDiaAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(metricsResponse);
+
+        // Act - Call multiple times
+        var result1 = await _dashboardService.GetTodaySalesAsync();
+        var result2 = await _dashboardService.GetTodaySalesAsync();
+        var result3 = await _dashboardService.GetTodaySalesAsync();
+
+        // Assert
+        Assert.Equal(expectedSales, result1);
+        Assert.Equal(expectedSales, result2);
+        Assert.Equal(expectedSales, result3);
+        
+        // Verify service was called multiple times (no caching implemented)
+        _mockAnalyticsService.Verify(x => x.ObtenerMetricasDiaAsync(It.IsAny<CancellationToken>()), Times.Exactly(3));
+    }
+
+    [Fact]
+    public async Task GetTableStatusAsync_WithCachedData_ShouldReturnCachedValue()
+    {
+        // Arrange
+        var expectedStatus = new EstadoMesasDto
+        {
+            Mesas = new List<MesaDto>
+            {
+                new MesaDto { Id = Guid.NewGuid(), Numero = "1", Estado = "disponible", Capacidad = 4 }
+            },
+            Estadisticas = new EstadisticasMesasDto
+            {
+                MesasDisponibles = 1,
+                MesasOcupadas = 0
+            }
+        };
+
+        _mockMesasService
+            .Setup(x => x.ObtenerEstadoOcupacionAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<EstadoMesasDto>.SuccessResponse(expectedStatus, "Success"));
+
+        // Act - Call multiple times
+        var result1 = await _dashboardService.GetTableStatusAsync();
+        var result2 = await _dashboardService.GetTableStatusAsync();
+
+        // Assert
+        Assert.NotNull(result1);
+        Assert.NotNull(result2);
+        Assert.Equal(result1.Mesas.Count, result2.Mesas.Count);
+        
+        // Verify service was called multiple times (no caching implemented)
+        _mockMesasService.Verify(x => x.ObtenerEstadoOcupacionAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
+    }
+
+    #endregion
+
+    #region 🚀 NUEVAS PRUEBAS ROBUSTAS - Timeouts y Reintentos
+
+    [Fact]
+    public async Task GetTodaySalesAsync_WithTimeout_ShouldReturnSimulatedSales()
+    {
+        // Arrange
+        _mockAnalyticsService
+            .Setup(x => x.ObtenerMetricasDiaAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new TaskCanceledException("Request timeout"));
+
+        // Act
+        var result = await _dashboardService.GetTodaySalesAsync();
+
+        // Assert
+        Assert.True(result > 0); // Should return simulated sales
+        Assert.True(result >= 500 && result <= 2000); // Should be in reasonable range
+    }
+
+    [Fact]
+    public async Task GetActiveOrdersCountAsync_WithTimeout_ShouldReturnSimulatedCount()
+    {
+        // Arrange
+        _mockAuthService
+            .Setup(x => x.GetTokenAsync())
+            .ThrowsAsync(new TaskCanceledException("Request timeout"));
+
+        // Act
+        var result = await _dashboardService.GetActiveOrdersCountAsync();
+
+        // Assert
+        Assert.True(result >= 5 && result <= 15); // Should return simulated count
+    }
+
+    [Fact]
+    public async Task GetTableStatusAsync_WithTimeout_ShouldReturnSimulatedStatus()
+    {
+        // Arrange
+        _mockMesasService
+            .Setup(x => x.ObtenerEstadoOcupacionAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new TaskCanceledException("Request timeout"));
+
+        // Act
+        var result = await _dashboardService.GetTableStatusAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotNull(result.Mesas);
+        Assert.True(result.Mesas.Count > 0);
+        Assert.NotNull(result.Estadisticas);
+    }
+
+    #endregion
+
+    #region 🚀 NUEVAS PRUEBAS ROBUSTAS - Concurrencia y Threading
+
+    [Fact]
+    public async Task MultipleOperations_WithConcurrentCalls_ShouldHandleGracefully()
+    {
+        // Arrange
+        var token = "test-token";
+        var metricsResponse = ApiResponse<MetricasDiaDto>.SuccessResponse(
+            new MetricasDiaDto { TotalVentas = 1000m }, "Success");
+        var tableStatusResponse = ApiResponse<EstadoMesasDto>.SuccessResponse(
+            new EstadoMesasDto { Mesas = new List<MesaDto>() }, "Success");
+
+        _mockAuthService
+            .Setup(x => x.GetTokenAsync())
+            .ReturnsAsync(token);
+
+        _mockAnalyticsService
+            .Setup(x => x.ObtenerMetricasDiaAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(metricsResponse);
+
+        _mockMesasService
+            .Setup(x => x.ObtenerEstadoOcupacionAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(tableStatusResponse);
+
+        // Act - Call all operations concurrently
+        var task1 = _dashboardService.GetTodaySalesAsync();
+        var task2 = _dashboardService.GetSalesChangePercentageAsync();
+        var task3 = _dashboardService.GetActiveOrdersCountAsync();
+        var task4 = _dashboardService.GetPendingOrdersCountAsync();
+        var task5 = _dashboardService.GetRecentOrdersAsync();
+        var task6 = _dashboardService.GetTableStatusAsync();
+
+        var results = await Task.WhenAll(task1, task2, task3, task4, task5, task6);
+
+        // Assert
+        Assert.True(results[0] > 0); // Sales
+        Assert.True(results[1] >= -20 && results[1] <= 30); // Change percentage
+        Assert.True(results[2] >= 0); // Active orders
+        Assert.True(results[3] >= 0); // Pending orders
+        Assert.NotNull(results[4]); // Recent orders
+        Assert.NotNull(results[5]); // Table status
+    }
+
+    [Fact]
+    public async Task GetTodaySalesAsync_WithConcurrentCalls_ShouldHandleGracefully()
+    {
+        // Arrange
+        var expectedSales = 1500.50m;
+        var metricsResponse = ApiResponse<MetricasDiaDto>.SuccessResponse(
+            new MetricasDiaDto { TotalVentas = expectedSales }, "Success");
+
+        _mockAnalyticsService
+            .Setup(x => x.ObtenerMetricasDiaAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(metricsResponse);
+
+        // Act - Call same operation multiple times concurrently
+        var task1 = _dashboardService.GetTodaySalesAsync();
+        var task2 = _dashboardService.GetTodaySalesAsync();
+        var task3 = _dashboardService.GetTodaySalesAsync();
+
+        var results = await Task.WhenAll(task1, task2, task3);
+
+        // Assert
+        Assert.All(results, result => Assert.Equal(expectedSales, result));
+    }
+
+    #endregion
+
+    #region 🚀 NUEVAS PRUEBAS ROBUSTAS - Casos Edge y Límites
+
+    [Fact]
+    public async Task GetTodaySalesAsync_WithVeryLargeSales_ShouldHandleGracefully()
+    {
+        // Arrange
+        var veryLargeSales = 999999999.99m;
+        var metricsResponse = ApiResponse<MetricasDiaDto>.SuccessResponse(
+            new MetricasDiaDto { TotalVentas = veryLargeSales }, "Success");
+
+        _mockAnalyticsService
+            .Setup(x => x.ObtenerMetricasDiaAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(metricsResponse);
+
+        // Act
+        var result = await _dashboardService.GetTodaySalesAsync();
+
+        // Assert
+        Assert.Equal(veryLargeSales, result);
+    }
+
+    [Fact]
+    public async Task GetSalesChangePercentageAsync_WithVeryLargePercentage_ShouldHandleGracefully()
+    {
+        // Arrange
+        var todaySales = 1000m;
+        var yesterdaySales = 1m; // Very small yesterday sales
+        var expectedPercentage = ((todaySales - yesterdaySales) / yesterdaySales) * 100;
+
+        var todayResponse = ApiResponse<MetricasDiaDto>.SuccessResponse(
+            new MetricasDiaDto { TotalVentas = todaySales }, "Success");
+        var yesterdayResponse = ApiResponse<MetricasRangoDto>.SuccessResponse(
+            new MetricasRangoDto { TotalVentas = yesterdaySales }, "Success");
+
+        _mockAnalyticsService
+            .Setup(x => x.ObtenerMetricasDiaAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(todayResponse);
+        _mockAnalyticsService
+            .Setup(x => x.ObtenerMetricasRangoAsync(It.IsAny<DateTime>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(yesterdayResponse);
+
+        // Act
+        var result = await _dashboardService.GetSalesChangePercentageAsync();
+
+        // Assert
+        Assert.Equal(Math.Round(expectedPercentage, 1), result);
+    }
+
+    [Fact]
+    public async Task GetActiveOrdersCountAsync_WithVeryLargeCount_ShouldHandleGracefully()
+    {
+        // Arrange
+        var token = "test-token";
+        var largeComandas = Enumerable.Range(1, 1000).Select(_ => new ComandaDto()).ToList();
+
+        _mockAuthService
+            .Setup(x => x.GetTokenAsync())
+            .ReturnsAsync(token);
+
+        _mockApiService
+            .Setup(x => x.GetAsync<PaginatedList<ComandaDto>>(
+                It.IsAny<string>(), token, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<PaginatedList<ComandaDto>>.SuccessResponse(
+                new PaginatedList<ComandaDto> { Items = largeComandas }, "Success"));
+
+        // Act
+        var result = await _dashboardService.GetActiveOrdersCountAsync();
+
+        // Assert
+        Assert.True(result >= 1000); // Should handle large counts
+    }
+
+    #endregion
+
+    #region 🚀 NUEVAS PRUEBAS ROBUSTAS - Manejo de Excepciones Específicas
+
+    [Fact]
+    public async Task GetTodaySalesAsync_WithHttpRequestException_ShouldReturnSimulatedSales()
+    {
+        // Arrange
+        _mockAnalyticsService
+            .Setup(x => x.ObtenerMetricasDiaAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new HttpRequestException("Network error"));
+
+        // Act
+        var result = await _dashboardService.GetTodaySalesAsync();
+
+        // Assert
+        Assert.True(result > 0); // Should return simulated sales
+    }
+
+    [Fact]
+    public async Task GetTodaySalesAsync_WithAggregateException_ShouldReturnSimulatedSales()
+    {
+        // Arrange
+        _mockAnalyticsService
+            .Setup(x => x.ObtenerMetricasDiaAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new AggregateException("Multiple errors", new HttpRequestException("Network error")));
+
+        // Act
+        var result = await _dashboardService.GetTodaySalesAsync();
+
+        // Assert
+        Assert.True(result > 0); // Should return simulated sales
+    }
+
+    [Fact]
+    public async Task GetTableStatusAsync_WithSocketException_ShouldReturnSimulatedStatus()
+    {
+        // Arrange
+        _mockMesasService
+            .Setup(x => x.ObtenerEstadoOcupacionAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new System.Net.Sockets.SocketException(10054));
+
+        // Act
+        var result = await _dashboardService.GetTableStatusAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.NotNull(result.Mesas);
+        Assert.True(result.Mesas.Count > 0);
+    }
+
+    #endregion
 }

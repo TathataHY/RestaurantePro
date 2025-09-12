@@ -219,6 +219,22 @@ public class DashboardApiService : IDashboardApiService
     }
 
     /// <summary>
+    /// Obtiene el dashboard completo
+    /// </summary>
+    public async Task<DashboardResumenDto?> ObtenerDashboardAsync()
+    {
+        return await ObtenerResumenAsync();
+    }
+
+    /// <summary>
+    /// Obtiene productos más vendidos (sin parámetros)
+    /// </summary>
+    public async Task<List<ProductoMasVendidoDto>> ObtenerProductosMasVendidosAsync()
+    {
+        return await ObtenerProductosMasVendidosAsync(5);
+    }
+
+    /// <summary>
     /// Crea datos de ejemplo para desarrollo
     /// </summary>
     private DashboardResumenDto CrearDatosEjemplo()

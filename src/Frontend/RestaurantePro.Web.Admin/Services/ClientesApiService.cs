@@ -110,9 +110,9 @@ public class ClientesApiService : IClientesApiService
     }
 
     /// <summary>
-    /// Crea un nuevo cliente
+    /// Crea un nuevo cliente (interno)
     /// </summary>
-    public async Task<ApiResponse<ClienteDto>?> CrearClienteAsync(CrearClienteRequest request)
+    public async Task<ApiResponse<ClienteDto>?> CrearClienteInternalAsync(CrearClienteRequest request)
     {
         try
         {
@@ -154,9 +154,9 @@ public class ClientesApiService : IClientesApiService
     }
 
     /// <summary>
-    /// Elimina un cliente (soft delete)
+    /// Elimina un cliente (interno)
     /// </summary>
-    public async Task<ApiResponse<bool>?> EliminarClienteAsync(Guid id)
+    public async Task<ApiResponse<bool>?> EliminarClienteInternalAsync(Guid id)
     {
         try
         {
@@ -387,6 +387,124 @@ public class ClientesApiService : IClientesApiService
                 Success = false,
                 Message = $"Error al exportar clientes: {ex.Message}"
             };
+        }
+    }
+
+    /// <summary>
+    /// Obtiene todas las clientes
+    /// </summary>
+    public async Task<List<ClienteDto>> ObtenerClientesAsync()
+    {
+        try
+        {
+            var filtros = new ClienteFiltrosDto
+            {
+                PageNumber = 1,
+                PageSize = 1000,
+                OrdenarPor = "Nombre",
+                DireccionOrden = "asc"
+            };
+            var result = await ObtenerClientesAsync(filtros);
+            return result?.Items ?? new List<ClienteDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener clientes: {ex.Message}");
+            return new List<ClienteDto>();
+        }
+    }
+
+    /// <summary>
+    /// Obtiene un cliente por ID
+    /// </summary>
+    public async Task<ClienteDto?> ObtenerClientePorIdAsync(Guid id)
+    {
+        return await ObtenerClienteAsync(id);
+    }
+
+    /// <summary>
+    /// Crea un nuevo cliente
+    /// </summary>
+    public async Task<ClienteDto?> CrearClienteAsync(CrearClienteRequest request)
+    {
+        try
+        {
+            var response = await CrearClienteInternalAsync(request);
+            return response?.Data;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al crear cliente: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Actualiza un cliente existente
+    /// </summary>
+    public async Task<ClienteDto?> ActualizarClienteAsync(Guid id, ActualizarClienteRequest request)
+    {
+        try
+        {
+            var updateRequest = new ActualizarClienteRequest
+            {
+                Id = id,
+                Nombre = request.Nombre,
+                Apellido = request.Apellido,
+                Email = request.Email,
+                Telefono = request.Telefono,
+                FechaNacimiento = request.FechaNacimiento,
+                Direccion = request.Direccion,
+                Ciudad = request.Ciudad,
+                Estado = request.Estado,
+                CodigoPostal = request.CodigoPostal,
+                Pais = request.Pais,
+                Segmento = request.Segmento,
+                NivelFidelizacion = request.NivelFidelizacion,
+                AceptaMarketing = request.AceptaMarketing,
+                Notas = request.Notas
+            };
+            var response = await ActualizarClienteAsync(updateRequest);
+            return response?.Data;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al actualizar cliente: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Elimina un cliente
+    /// </summary>
+    public async Task<bool> EliminarClienteAsync(Guid id)
+    {
+        try
+        {
+            var response = await EliminarClienteInternalAsync(id);
+            return response?.Success ?? false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al eliminar cliente: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Cambia el estado de un cliente
+    /// </summary>
+    public async Task<bool> CambiarEstadoClienteAsync(Guid id, bool activo)
+    {
+        try
+        {
+            var response = await ToggleActivarClienteAsync(id);
+            return response?.Success ?? false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cambiar estado del cliente: {ex.Message}");
+            return false;
         }
     }
 }

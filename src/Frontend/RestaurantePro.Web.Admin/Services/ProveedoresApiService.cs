@@ -369,4 +369,77 @@ public class ProveedoresApiService : IProveedoresApiService
     }
 
     #endregion
+
+    /// <summary>
+    /// Obtiene un proveedor por ID
+    /// </summary>
+    public async Task<ProveedorDto?> ObtenerProveedorPorIdAsync(Guid id)
+    {
+        return await GetProveedorById(id);
+    }
+
+    /// <summary>
+    /// Crea un nuevo proveedor
+    /// </summary>
+    public async Task<ProveedorDto?> CrearProveedorAsync(CrearProveedorRequest request)
+    {
+        return await CreateProveedor(request);
+    }
+
+    /// <summary>
+    /// Actualiza un proveedor existente
+    /// </summary>
+    public async Task<ProveedorDto?> ActualizarProveedorAsync(Guid id, ActualizarProveedorRequest request)
+    {
+        try
+        {
+            var client = CreateClient();
+            var json = JsonSerializer.Serialize(request);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await client.PutAsync($"api/proveedores/{id}", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseContent = await response.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<ProveedorDto>(responseContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al actualizar proveedor: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Elimina un proveedor
+    /// </summary>
+    public async Task<bool> EliminarProveedorAsync(Guid id)
+    {
+        return await DeleteProveedor(id);
+    }
+
+    /// <summary>
+    /// Cambia el estado de un proveedor
+    /// </summary>
+    public async Task<bool> CambiarEstadoProveedorAsync(Guid id, bool activo)
+    {
+        try
+        {
+            var client = CreateClient();
+            var response = await client.PostAsync($"api/proveedores/{id}/cambiar-estado?activo={activo}", null);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cambiar estado del proveedor: {ex.Message}");
+            return false;
+        }
+    }
 }

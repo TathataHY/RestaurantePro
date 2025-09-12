@@ -639,4 +639,207 @@ public class InventarioApiService : IInventarioApiService
     }
 
     #endregion
+
+    #region Métodos de Interfaz
+
+    /// <summary>
+    /// Obtiene todo el inventario
+    /// </summary>
+    public async Task<List<InventarioDto>> ObtenerInventarioAsync()
+    {
+        try
+        {
+            var result = await ObtenerIngredientesPaginadosAsync(1, 1000);
+            return result?.Items?.Select(i => new InventarioDto
+            {
+                Id = i.Id,
+                Nombre = i.Nombre,
+                Categoria = i.Categoria,
+                StockActual = i.StockActual,
+                StockMinimo = i.StockMinimo,
+                PrecioUnitario = i.PrecioUnitario,
+                FechaVencimiento = i.FechaVencimiento,
+                EstaActivo = i.EstaActivo,
+                ProveedorId = i.ProveedorId,
+                ProveedorNombre = i.ProveedorNombre,
+                UnidadMedida = i.UnidadMedidaTexto,
+                Descripcion = i.Descripcion,
+                FechaCreacion = i.FechaCreacion,
+                FechaActualizacion = i.FechaActualizacion
+            }).ToList() ?? new List<InventarioDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener inventario: {ex.Message}");
+            return new List<InventarioDto>();
+        }
+    }
+
+    /// <summary>
+    /// Obtiene un inventario por ID
+    /// </summary>
+    public async Task<InventarioDto?> ObtenerInventarioPorIdAsync(Guid id)
+    {
+        try
+        {
+            var ingrediente = await ObtenerIngredienteAsync(id);
+            if (ingrediente == null) return null;
+
+            return new InventarioDto
+            {
+                Id = ingrediente.Id,
+                Nombre = ingrediente.Nombre,
+                Categoria = ingrediente.Categoria,
+                StockActual = ingrediente.StockActual,
+                StockMinimo = ingrediente.StockMinimo,
+                PrecioUnitario = ingrediente.PrecioUnitario,
+                FechaVencimiento = ingrediente.FechaVencimiento,
+                EstaActivo = ingrediente.EstaActivo,
+                ProveedorId = ingrediente.ProveedorId,
+                ProveedorNombre = ingrediente.ProveedorNombre,
+                UnidadMedida = ingrediente.UnidadMedidaTexto,
+                Descripcion = ingrediente.Descripcion,
+                FechaCreacion = ingrediente.FechaCreacion,
+                FechaActualizacion = ingrediente.FechaActualizacion
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener inventario por ID: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Crea un nuevo inventario
+    /// </summary>
+    public async Task<InventarioDto?> CrearInventarioAsync(InventarioDto inventario)
+    {
+        try
+        {
+            var ingrediente = new IngredienteDto
+            {
+                Id = inventario.Id,
+                Nombre = inventario.Nombre,
+                Categoria = inventario.Categoria,
+                StockActual = inventario.StockActual,
+                StockMinimo = inventario.StockMinimo,
+                PrecioUnitario = inventario.PrecioUnitario,
+                FechaVencimiento = inventario.FechaVencimiento,
+                EstaActivo = inventario.EstaActivo,
+                ProveedorId = inventario.ProveedorId,
+                ProveedorNombre = inventario.ProveedorNombre,
+                UnidadMedidaTexto = inventario.UnidadMedida,
+                Descripcion = inventario.Descripcion,
+                FechaCreacion = inventario.FechaCreacion,
+                FechaActualizacion = inventario.FechaActualizacion
+            };
+
+            var resultado = await CrearIngredienteAsync(ingrediente);
+            if (resultado == null) return null;
+
+            return new InventarioDto
+            {
+                Id = resultado.Id,
+                Nombre = resultado.Nombre,
+                Categoria = resultado.Categoria,
+                StockActual = resultado.StockActual,
+                StockMinimo = resultado.StockMinimo,
+                PrecioUnitario = resultado.PrecioUnitario,
+                FechaVencimiento = resultado.FechaVencimiento,
+                EstaActivo = resultado.EstaActivo,
+                ProveedorId = resultado.ProveedorId,
+                ProveedorNombre = resultado.ProveedorNombre,
+                UnidadMedida = resultado.UnidadMedidaTexto,
+                Descripcion = resultado.Descripcion,
+                FechaCreacion = resultado.FechaCreacion,
+                FechaActualizacion = resultado.FechaActualizacion
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al crear inventario: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Actualiza un inventario existente
+    /// </summary>
+    public async Task<InventarioDto?> ActualizarInventarioAsync(Guid id, InventarioDto inventario)
+    {
+        try
+        {
+            var ingrediente = new IngredienteDto
+            {
+                Id = inventario.Id,
+                Nombre = inventario.Nombre,
+                Categoria = inventario.Categoria,
+                StockActual = inventario.StockActual,
+                StockMinimo = inventario.StockMinimo,
+                PrecioUnitario = inventario.PrecioUnitario,
+                FechaVencimiento = inventario.FechaVencimiento,
+                EstaActivo = inventario.EstaActivo,
+                ProveedorId = inventario.ProveedorId,
+                ProveedorNombre = inventario.ProveedorNombre,
+                UnidadMedidaTexto = inventario.UnidadMedida,
+                Descripcion = inventario.Descripcion,
+                FechaCreacion = inventario.FechaCreacion,
+                FechaActualizacion = inventario.FechaActualizacion
+            };
+
+            var resultado = await ActualizarIngredienteAsync(id, ingrediente);
+            if (resultado == null) return null;
+
+            return new InventarioDto
+            {
+                Id = resultado.Id,
+                Nombre = resultado.Nombre,
+                Categoria = resultado.Categoria,
+                StockActual = resultado.StockActual,
+                StockMinimo = resultado.StockMinimo,
+                PrecioUnitario = resultado.PrecioUnitario,
+                FechaVencimiento = resultado.FechaVencimiento,
+                EstaActivo = resultado.EstaActivo,
+                ProveedorId = resultado.ProveedorId,
+                ProveedorNombre = resultado.ProveedorNombre,
+                UnidadMedida = resultado.UnidadMedidaTexto,
+                Descripcion = resultado.Descripcion,
+                FechaCreacion = resultado.FechaCreacion,
+                FechaActualizacion = resultado.FechaActualizacion
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al actualizar inventario: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Elimina un inventario
+    /// </summary>
+    public async Task<bool> EliminarInventarioAsync(Guid id)
+    {
+        return await EliminarIngredienteAsync(id);
+    }
+
+    /// <summary>
+    /// Obtiene alertas de inventario
+    /// </summary>
+    public async Task<List<AlertaInventarioDto>> ObtenerAlertasInventarioAsync()
+    {
+        try
+        {
+            var alertas = await ObtenerAlertasAsync();
+            return alertas ?? new List<AlertaInventarioDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener alertas de inventario: {ex.Message}");
+            return new List<AlertaInventarioDto>();
+        }
+    }
+
+    #endregion
 }

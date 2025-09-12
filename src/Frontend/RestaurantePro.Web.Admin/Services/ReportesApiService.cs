@@ -329,4 +329,72 @@ public class ReportesApiService : IReportesApiService
             };
         }
     }
+
+    /// <summary>
+    /// Obtiene todos los reportes
+    /// </summary>
+    public async Task<List<ReporteDto>> ObtenerReportesAsync()
+    {
+        try
+        {
+            var http = CreateClient();
+            var response = await http.GetFromJsonAsync<ApiResponse<List<ReporteDto>>>("api/operaciones/reportes");
+            return response?.Data ?? new List<ReporteDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener reportes: {ex.Message}");
+            return new List<ReporteDto>();
+        }
+    }
+
+    /// <summary>
+    /// Obtiene un reporte por ID
+    /// </summary>
+    public async Task<ReporteDto?> ObtenerReportePorIdAsync(Guid id)
+    {
+        return await ObtenerReporteAsync(id);
+    }
+
+    /// <summary>
+    /// Genera un reporte
+    /// </summary>
+    public async Task<byte[]?> GenerarReporteAsync(Guid reporteId, Dictionary<string, object> parametros)
+    {
+        try
+        {
+            var http = CreateClient();
+            var response = await http.PostAsJsonAsync($"api/operaciones/reportes/{reporteId}/generar", parametros);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadAsByteArrayAsync();
+            }
+            
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al generar reporte {reporteId}: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Obtiene los tipos de reporte disponibles
+    /// </summary>
+    public async Task<List<TipoReporte>> ObtenerTiposReporteAsync()
+    {
+        try
+        {
+            var http = CreateClient();
+            var response = await http.GetFromJsonAsync<ApiResponse<List<TipoReporte>>>("api/operaciones/reportes/tipos");
+            return response?.Data ?? new List<TipoReporte>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener tipos de reporte: {ex.Message}");
+            return new List<TipoReporte>();
+        }
+    }
 }

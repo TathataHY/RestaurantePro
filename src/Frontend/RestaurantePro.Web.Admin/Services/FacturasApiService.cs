@@ -113,9 +113,9 @@ public class FacturasApiService : IFacturasApiService
     }
 
     /// <summary>
-    /// Crea una nueva factura
+    /// Crea una nueva factura (interno)
     /// </summary>
-    public async Task<ApiResponse<FacturaDto>?> CrearFacturaAsync(CrearFacturaRequest request)
+    public async Task<ApiResponse<FacturaDto>?> CrearFacturaInternalAsync(CrearFacturaRequest request)
     {
         try
         {
@@ -157,9 +157,9 @@ public class FacturasApiService : IFacturasApiService
     }
 
     /// <summary>
-    /// Elimina una factura (soft delete)
+    /// Elimina una factura (interno)
     /// </summary>
-    public async Task<ApiResponse<bool>?> EliminarFacturaAsync(Guid id)
+    public async Task<ApiResponse<bool>?> EliminarFacturaInternalAsync(Guid id)
     {
         try
         {
@@ -478,6 +478,125 @@ public class FacturasApiService : IFacturasApiService
                 Success = false,
                 Message = $"Error al validar número de factura: {ex.Message}"
             };
+        }
+    }
+
+    /// <summary>
+    /// Obtiene todas las facturas
+    /// </summary>
+    public async Task<List<FacturaDto>> ObtenerFacturasAsync()
+    {
+        try
+        {
+            var filtros = new FacturaFiltrosDto
+            {
+                PageNumber = 1,
+                PageSize = 1000,
+                OrdenarPor = "FechaCreacion",
+                DireccionOrden = "desc"
+            };
+            var result = await ObtenerFacturasAsync(filtros);
+            return result?.Items ?? new List<FacturaDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener facturas: {ex.Message}");
+            return new List<FacturaDto>();
+        }
+    }
+
+    /// <summary>
+    /// Obtiene una factura por ID
+    /// </summary>
+    public async Task<FacturaDto?> ObtenerFacturaPorIdAsync(Guid id)
+    {
+        return await ObtenerFacturaAsync(id);
+    }
+
+    /// <summary>
+    /// Crea una nueva factura
+    /// </summary>
+    public async Task<FacturaDto?> CrearFacturaAsync(CrearFacturaRequest request)
+    {
+        try
+        {
+            var response = await CrearFacturaInternalAsync(request);
+            return response?.Data;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al crear factura: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Actualiza una factura existente
+    /// </summary>
+    public async Task<FacturaDto?> ActualizarFacturaAsync(Guid id, ActualizarFacturaRequest request)
+    {
+        try
+        {
+            var updateRequest = new ActualizarFacturaRequest
+            {
+                Id = id,
+                NumeroFactura = request.NumeroFactura,
+                ClienteId = request.ClienteId,
+                MesaId = request.MesaId,
+                MeseroId = request.MeseroId,
+                FechaEmision = request.FechaEmision,
+                FechaVencimiento = request.FechaVencimiento,
+                Subtotal = request.Subtotal,
+                Descuento = request.Descuento,
+                Impuestos = request.Impuestos,
+                Total = request.Total,
+                Estado = request.Estado,
+                TipoPago = request.TipoPago,
+                MetodoPago = request.MetodoPago,
+                Observaciones = request.Observaciones,
+                EsFacturaElectronica = request.EsFacturaElectronica
+            };
+            var response = await ActualizarFacturaAsync(updateRequest);
+            return response?.Data;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al actualizar factura: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Elimina una factura
+    /// </summary>
+    public async Task<bool> EliminarFacturaAsync(Guid id)
+    {
+        try
+        {
+            var response = await EliminarFacturaInternalAsync(id);
+            return response?.Success ?? false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al eliminar factura: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Genera PDF de factura
+    /// </summary>
+    public async Task<byte[]?> GenerarPDFFacturaAsync(Guid id)
+    {
+        try
+        {
+            var response = await ReimprimirFacturaAsync(new ReimprimirFacturaRequest { FacturaId = id });
+            return response?.Data;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al generar PDF de factura: {ex.Message}");
+            return null;
         }
     }
 }

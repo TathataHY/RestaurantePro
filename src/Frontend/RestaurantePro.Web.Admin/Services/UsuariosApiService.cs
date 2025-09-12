@@ -61,7 +61,7 @@ public class UsuariosApiService : IUsuariosApiService
         return resp?.Data;
     }
 
-    public async Task<UsuarioDto?> CrearAsync(CreateUsuarioRequest request)
+    public async Task<UsuarioDto?> CrearAsync(CrearUsuarioRequest request)
     {
         var http = _httpFactory.CreateClient("Api");
         if (!string.IsNullOrWhiteSpace(_tokenStore.Token))
@@ -81,7 +81,7 @@ public class UsuariosApiService : IUsuariosApiService
         return resp?.Data;
     }
 
-    public async Task<UsuarioDto?> ActualizarAsync(Guid id, UpdateUsuarioRequest request)
+    public async Task<UsuarioDto?> ActualizarAsync(Guid id, ActualizarUsuarioRequest request)
     {
         var http = _httpFactory.CreateClient("Api");
         if (!string.IsNullOrWhiteSpace(_tokenStore.Token))
@@ -114,6 +114,36 @@ public class UsuariosApiService : IUsuariosApiService
         }
         var res = await http.DeleteAsync($"api/core/usuarios/{id}");
         return res.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> CambiarEstadoAsync(Guid id, bool activo)
+    {
+        var http = _httpFactory.CreateClient("Api");
+        if (!string.IsNullOrWhiteSpace(_tokenStore.Token))
+        {
+            http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _tokenStore.Token);
+            if (!http.DefaultRequestHeaders.Contains("X-Bearer-Token"))
+            {
+                http.DefaultRequestHeaders.Add("X-Bearer-Token", _tokenStore.Token);
+            }
+        }
+        var res = await http.PostAsync($"api/core/usuarios/{id}/cambiar-estado?activo={activo}", null);
+        return res.IsSuccessStatusCode;
+    }
+
+    public async Task<List<string>> ObtenerRolesDisponiblesAsync()
+    {
+        var http = _httpFactory.CreateClient("Api");
+        if (!string.IsNullOrWhiteSpace(_tokenStore.Token))
+        {
+            http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _tokenStore.Token);
+            if (!http.DefaultRequestHeaders.Contains("X-Bearer-Token"))
+            {
+                http.DefaultRequestHeaders.Add("X-Bearer-Token", _tokenStore.Token);
+            }
+        }
+        var resp = await http.GetFromJsonAsync<ApiResponse<List<string>>>("api/core/usuarios/roles");
+        return resp?.Data ?? new List<string>();
     }
 }
 

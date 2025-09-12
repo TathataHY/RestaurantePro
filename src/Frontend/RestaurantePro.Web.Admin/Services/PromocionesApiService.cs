@@ -108,9 +108,9 @@ public class PromocionesApiService : IPromocionesApiService
     }
 
     /// <summary>
-    /// Crea una nueva promoción
+    /// Crea una nueva promoción (interno)
     /// </summary>
-    public async Task<ApiResponse<PromocionDto>?> CrearPromocionAsync(CrearPromocionRequest request)
+    public async Task<ApiResponse<PromocionDto>?> CrearPromocionInternalAsync(CrearPromocionRequest request)
     {
         try
         {
@@ -152,9 +152,9 @@ public class PromocionesApiService : IPromocionesApiService
     }
 
     /// <summary>
-    /// Elimina una promoción (soft delete)
+    /// Elimina una promoción (interno)
     /// </summary>
-    public async Task<ApiResponse<bool>?> EliminarPromocionAsync(Guid id)
+    public async Task<ApiResponse<bool>?> EliminarPromocionInternalAsync(Guid id)
     {
         try
         {
@@ -272,6 +272,119 @@ public class PromocionesApiService : IPromocionesApiService
                 Success = false,
                 Message = $"Error al validar código: {ex.Message}"
             };
+        }
+    }
+
+    /// <summary>
+    /// Obtiene todas las promociones
+    /// </summary>
+    public async Task<List<PromocionDto>> ObtenerPromocionesAsync()
+    {
+        try
+        {
+            var result = await ObtenerPromocionesAsync(1, 1000);
+            return result?.Items ?? new List<PromocionDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener promociones: {ex.Message}");
+            return new List<PromocionDto>();
+        }
+    }
+
+    /// <summary>
+    /// Obtiene una promoción por ID
+    /// </summary>
+    public async Task<PromocionDto?> ObtenerPromocionPorIdAsync(Guid id)
+    {
+        return await ObtenerPromocionAsync(id);
+    }
+
+    /// <summary>
+    /// Crea una nueva promoción
+    /// </summary>
+    public async Task<PromocionDto?> CrearPromocionAsync(CrearPromocionRequest request)
+    {
+        try
+        {
+            var response = await CrearPromocionInternalAsync(request);
+            return response?.Data;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al crear promoción: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Actualiza una promoción existente
+    /// </summary>
+    public async Task<PromocionDto?> ActualizarPromocionAsync(Guid id, ActualizarPromocionRequest request)
+    {
+        try
+        {
+            var http = CreateClient();
+            var updateRequest = new ActualizarPromocionRequest
+            {
+                Id = id,
+                Nombre = request.Nombre,
+                Descripcion = request.Descripcion,
+                Tipo = request.Tipo,
+                ValorDescuento = request.ValorDescuento,
+                FechaInicio = request.FechaInicio,
+                FechaFin = request.FechaFin,
+                Activa = request.Activa,
+                Codigo = request.Codigo,
+                UsoMaximo = request.UsoMaximo,
+                UsoActual = request.UsoActual
+            };
+            var response = await http.PutAsJsonAsync($"api/comercial/promociones/{id}", updateRequest);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadFromJsonAsync<ApiResponse<PromocionDto>>();
+                return content?.Data;
+            }
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al actualizar promoción: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Elimina una promoción
+    /// </summary>
+    public async Task<bool> EliminarPromocionAsync(Guid id)
+    {
+        try
+        {
+            var response = await EliminarPromocionInternalAsync(id);
+            return response?.Success ?? false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al eliminar promoción: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Cambia el estado de una promoción
+    /// </summary>
+    public async Task<bool> CambiarEstadoPromocionAsync(Guid id, bool activa)
+    {
+        try
+        {
+            var response = await ToggleActivarPromocionAsync(id, activa);
+            return response?.Success ?? false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cambiar estado de promoción: {ex.Message}");
+            return false;
         }
     }
 }

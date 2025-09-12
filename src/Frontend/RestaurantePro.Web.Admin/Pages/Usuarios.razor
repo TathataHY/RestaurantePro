@@ -207,7 +207,7 @@
   {
     if (esCreacion)
     {
-      var creado = await UsuariosApi.CrearAsync(new CreateUsuarioRequest
+      var creado = await UsuariosApi.CrearAsync(new CrearUsuarioRequest
       {
         NombreCompleto = editModel?.NombreCompleto ?? string.Empty,
         NombreUsuario = editModel?.NombreUsuario ?? string.Empty,
@@ -224,7 +224,7 @@
     }
     else if (editModel != null)
     {
-      var actualizado = await UsuariosApi.ActualizarAsync(editModel.Id, new UpdateUsuarioRequest
+      var actualizado = await UsuariosApi.ActualizarAsync(editModel.Id, new ActualizarUsuarioRequest
       {
         NombreCompleto = editModel.NombreCompleto,
         Email = editModel.Email,

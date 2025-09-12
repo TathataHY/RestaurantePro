@@ -240,4 +240,64 @@ public class ReportesComercialesApiService : IReportesComercialesApiService
             return null;
         }
     }
+
+    /// <summary>
+    /// Obtiene todos los reportes comerciales
+    /// </summary>
+    public async Task<List<ReporteComercialDto>> ObtenerReportesComercialesAsync()
+    {
+        try
+        {
+            var http = CreateClient();
+            var resp = await http.GetFromJsonAsync<ApiResponse<List<ReporteComercialDto>>>("api/comercial/reportes");
+            return resp?.Data ?? new List<ReporteComercialDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener reportes comerciales: {ex.Message}");
+            return new List<ReporteComercialDto>();
+        }
+    }
+
+    /// <summary>
+    /// Obtiene un reporte comercial por ID
+    /// </summary>
+    public async Task<ReporteComercialDto?> ObtenerReporteComercialPorIdAsync(Guid id)
+    {
+        try
+        {
+            var http = CreateClient();
+            var resp = await http.GetFromJsonAsync<ApiResponse<ReporteComercialDto>>($"api/comercial/reportes/{id}");
+            return resp?.Data;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener reporte comercial {id}: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Genera un reporte comercial
+    /// </summary>
+    public async Task<byte[]?> GenerarReporteComercialAsync(Guid reporteId, Dictionary<string, object> parametros)
+    {
+        try
+        {
+            var http = CreateClient();
+            var resp = await http.PostAsJsonAsync($"api/comercial/reportes/{reporteId}/generar", parametros);
+            
+            if (resp.IsSuccessStatusCode)
+            {
+                return await resp.Content.ReadAsByteArrayAsync();
+            }
+            
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al generar reporte comercial {reporteId}: {ex.Message}");
+            return null;
+        }
+    }
 }

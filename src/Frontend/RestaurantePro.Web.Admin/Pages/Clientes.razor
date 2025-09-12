@@ -292,14 +292,14 @@
             try
             {
                 var resultado = await ClientesApi.EliminarClienteAsync(cliente.Id);
-                if (resultado?.Success == true)
+                if (resultado == true)
                 {
                     await CargarClientes();
                     await JSRuntime.InvokeVoidAsync("alert", "Cliente eliminado correctamente");
                 }
                 else
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al eliminar el cliente");
+                    await JSRuntime.InvokeVoidAsync("alert", "Error al eliminar el cliente");
                 }
             }
             catch (Exception ex)
@@ -322,7 +322,7 @@
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al cambiar el estado del cliente");
+                await JSRuntime.InvokeVoidAsync("alert", "Error al cambiar el estado del cliente");
             }
         }
         catch (Exception ex)

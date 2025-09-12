@@ -410,5 +410,158 @@ namespace RestaurantePro.Web.Admin.Services
                 return null;
             }
         }
+
+        #region Métodos de Interfaz
+
+        /// <summary>
+        /// Obtiene todas las preparaciones
+        /// </summary>
+        public async Task<List<PreparacionDto>> ObtenerPreparacionesAsync()
+        {
+            try
+            {
+                var result = await ObtenerPreparacionesPaginadasAsync(1, 1000);
+                return result?.Items ?? new List<PreparacionDto>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al obtener preparaciones: {ex.Message}");
+                return new List<PreparacionDto>();
+            }
+        }
+
+        /// <summary>
+        /// Obtiene una preparación por ID
+        /// </summary>
+        public async Task<PreparacionDto?> ObtenerPreparacionPorIdAsync(Guid id)
+        {
+            try
+            {
+                var detalle = await ObtenerPreparacionAsync((int)id);
+                if (detalle == null) return null;
+
+                return new PreparacionDto
+                {
+                    Id = detalle.Id,
+                    ComandaId = detalle.ComandaId,
+                    ProductoId = detalle.ProductoId,
+                    ProductoNombre = detalle.ProductoNombre,
+                    Cantidad = detalle.Cantidad,
+                    Estado = detalle.Estado,
+                    Prioridad = detalle.Prioridad,
+                    TiempoEstimado = detalle.TiempoEstimado,
+                    TiempoInicio = detalle.TiempoInicio,
+                    TiempoFin = detalle.TiempoFin,
+                    CocineroId = detalle.CocineroId,
+                    CocineroNombre = detalle.CocineroNombre,
+                    MesaNumero = detalle.MesaNumero,
+                    Notas = detalle.Notas,
+                    FechaCreacion = detalle.FechaCreacion,
+                    FechaActualizacion = detalle.FechaActualizacion
+                };
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al obtener preparación por ID: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Crea una nueva preparación
+        /// </summary>
+        public async Task<PreparacionDto?> CrearPreparacionAsync(CrearPreparacionRequest request)
+        {
+            try
+            {
+                var client = CreateClient();
+                var json = JsonSerializer.Serialize(request, _jsonOptions);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await client.PostAsync("api/operaciones/preparaciones", content);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<PreparacionDto>(responseContent, _jsonOptions);
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al crear preparación: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Actualiza una preparación existente
+        /// </summary>
+        public async Task<PreparacionDto?> ActualizarPreparacionAsync(Guid id, ActualizarPreparacionRequest request)
+        {
+            try
+            {
+                var client = CreateClient();
+                var json = JsonSerializer.Serialize(request, _jsonOptions);
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                var response = await client.PutAsync($"api/operaciones/preparaciones/{id}", content);
+                
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseContent = await response.Content.ReadAsStringAsync();
+                    return JsonSerializer.Deserialize<PreparacionDto>(responseContent, _jsonOptions);
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al actualizar preparación: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Elimina una preparación
+        /// </summary>
+        public async Task<bool> EliminarPreparacionAsync(Guid id)
+        {
+            try
+            {
+                var client = CreateClient();
+                var response = await client.DeleteAsync($"api/operaciones/preparaciones/{id}");
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al eliminar preparación: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Cambia el estado de una preparación
+        /// </summary>
+        public async Task<bool> CambiarEstadoPreparacionAsync(Guid id, EstadoPreparacion estado)
+        {
+            try
+            {
+                var request = new ActualizarEstadoPreparacionRequest
+                {
+                    PreparacionId = (int)id,
+                    Estado = estado
+                };
+                return await ActualizarEstadoAsync(request);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al cambiar estado de preparación: {ex.Message}");
+                return false;
+            }
+        }
+
+        #endregion
     }
 }

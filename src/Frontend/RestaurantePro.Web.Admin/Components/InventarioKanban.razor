@@ -63,8 +63,8 @@ else
                             <div class="card-body p-2">
                                 <h6 class="card-title">@ingrediente.Nombre</h6>
                                 <p class="card-text small">
-                                    <strong>Vence:</strong> @ingrediente.FechaVencimiento.ToString("dd/MM/yyyy")<br>
-                                    <strong>Días:</strong> @GetDiasVencimiento(ingrediente.FechaVencimiento)<br>
+                                    <strong>Vence:</strong> @ingrediente.FechaVencimiento?.ToString("dd/MM/yyyy")<br>
+                                    <strong>Días:</strong> @GetDiasVencimiento(ingrediente.FechaVencimiento.Value)<br>
                                     <strong>Stock:</strong> @ingrediente.StockActual.ToString("N2") @ingrediente.UnidadMedida}
                                 </p>
                                 <div class="btn-group btn-group-sm" role="group">

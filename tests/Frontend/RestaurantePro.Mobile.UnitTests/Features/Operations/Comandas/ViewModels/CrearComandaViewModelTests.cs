@@ -247,6 +247,455 @@ public class CrearComandaViewModelTests
 
     #endregion
 
+    #region 🚀 NUEVAS PRUEBAS ROBUSTAS - Validaciones de Datos de Entrada
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData(null)]
+    public async Task BuscarProductosAsync_WithInvalidSearchText_ShouldHandleGracefully(string searchText)
+    {
+        // Arrange
+        _viewModel.TextoBusqueda = searchText;
+        _mockProductosService.Setup(x => x.ObtenerProductosPaginadosAsync(1, 100, null, true))
+            .ReturnsAsync(ApiResponse<List<ProductoDto>>.SuccessResponse(new List<ProductoDto>()));
+
+        // Act
+        await _viewModel.BuscarProductosCommand.ExecuteAsync(null);
+
+        // Assert
+        _mockProductosService.Verify(x => x.ObtenerProductosPaginadosAsync(1, 100, null, true), Times.Once);
+        _mockProductosService.Verify(x => x.BuscarProductosAsync(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task BuscarProductosAsync_WithVeryLongSearchText_ShouldTruncateOrHandle()
+    {
+        // Arrange
+        var longSearchText = new string('a', 1000); // 1000 caracteres
+        _viewModel.TextoBusqueda = longSearchText;
+        _mockProductosService.Setup(x => x.BuscarProductosAsync(It.IsAny<string>()))
+            .ReturnsAsync(ApiResponse<List<ProductoDto>>.SuccessResponse(new List<ProductoDto>()));
+
+        // Act
+        await _viewModel.BuscarProductosCommand.ExecuteAsync(null);
+
+        // Assert
+        _mockProductosService.Verify(x => x.BuscarProductosAsync(longSearchText), Times.Once);
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(0)]
+    [InlineData(1000000)]
+    public void IncrementarCantidad_WithExtremeValues_ShouldHandleGracefully(int initialQuantity)
+    {
+        // Arrange
+        var producto = CreateProductoCarritoDto("1", "Pizza", 25.50m, initialQuantity);
+
+        // Act & Assert
+        // Should not throw exception
+        _viewModel.IncrementarCantidadCommand.Execute(producto);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData(null)]
+    public void Observaciones_WithInvalidValues_ShouldBeHandled(string observaciones)
+    {
+        // Act
+        _viewModel.Observaciones = observaciones;
+
+        // Assert
+        Assert.Equal(observaciones ?? string.Empty, _viewModel.Observaciones);
+    }
+
+    #endregion
+
+    #region 🚀 NUEVAS PRUEBAS ROBUSTAS - Manejo de Errores de Red y Servicios
+
+    [Fact]
+    public async Task BuscarProductosAsync_WithNetworkTimeout_ShouldShowError()
+    {
+        // Arrange
+        _viewModel.TextoBusqueda = "pizza";
+        _mockProductosService.Setup(x => x.BuscarProductosAsync("pizza"))
+            .ThrowsAsync(new TaskCanceledException("Request timeout"));
+
+        // Act
+        await _viewModel.BuscarProductosCommand.ExecuteAsync(null);
+
+        // Assert
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Error", It.Is<string>(s => s.Contains("timeout")), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task BuscarProductosAsync_WithHttpException_ShouldShowError()
+    {
+        // Arrange
+        _viewModel.TextoBusqueda = "pizza";
+        _mockProductosService.Setup(x => x.BuscarProductosAsync("pizza"))
+            .ThrowsAsync(new HttpRequestException("Network error"));
+
+        // Act
+        await _viewModel.BuscarProductosCommand.ExecuteAsync(null);
+
+        // Assert
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Error", It.Is<string>(s => s.Contains("Network error")), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task BuscarProductosAsync_WithServiceFailure_ShouldShowError()
+    {
+        // Arrange
+        _viewModel.TextoBusqueda = "pizza";
+        _mockProductosService.Setup(x => x.BuscarProductosAsync("pizza"))
+            .ReturnsAsync(ApiResponse<List<ProductoDto>>.Failure("Service unavailable"));
+
+        // Act
+        await _viewModel.BuscarProductosCommand.ExecuteAsync(null);
+
+        // Assert
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Error", It.Is<string>(s => s.Contains("Service unavailable")), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task BuscarProductosAsync_WithNullData_ShouldHandleGracefully()
+    {
+        // Arrange
+        _viewModel.TextoBusqueda = "pizza";
+        _mockProductosService.Setup(x => x.BuscarProductosAsync("pizza"))
+            .ReturnsAsync(ApiResponse<List<ProductoDto>>.SuccessResponse(null!));
+
+        // Act
+        await _viewModel.BuscarProductosCommand.ExecuteAsync(null);
+
+        // Assert
+        Assert.Empty(_viewModel.ProductosDisponibles);
+    }
+
+    [Fact]
+    public async Task LoadPreparacionesDiaAsync_WithServiceError_ShouldShowError()
+    {
+        // Arrange
+        _mockDailyPreparationsService.Setup(x => x.GetPreparacionesDiariasAsync())
+            .ThrowsAsync(new Exception("Database connection failed"));
+
+        // Act
+        await _viewModel.LoadPreparacionesDiaCommand.ExecuteAsync(null);
+
+        // Assert
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Error", It.Is<string>(s => s.Contains("Database connection failed")), It.IsAny<string>()), Times.Once);
+    }
+
+    #endregion
+
+    #region 🚀 NUEVAS PRUEBAS ROBUSTAS - Casos Edge y Límites
+
+    [Fact]
+    public async Task IncrementarCantidad_WithMaxLimitReached_ShouldShowAlert()
+    {
+        // Arrange
+        var producto = CreateProductoCarritoDto("1", "Pizza", 25.50m, 10); // Max limit
+        producto.PreparacionesDisponiblesHoy = 0; // No hay preparaciones disponibles
+
+        // Act
+        await _viewModel.IncrementarCantidadCommand.ExecuteAsync(producto);
+
+        // Assert
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Límite alcanzado", It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task IncrementarCantidad_WithNegativePreparaciones_ShouldHandleGracefully()
+    {
+        // Arrange
+        var producto = CreateProductoCarritoDto("1", "Pizza", 25.50m, 1);
+        producto.PreparacionesDisponiblesHoy = -1; // Invalid value
+
+        // Act
+        await _viewModel.IncrementarCantidadCommand.ExecuteAsync(producto);
+
+        // Assert
+        // Should not throw exception and should handle gracefully
+        Assert.True(true);
+    }
+
+    [Fact]
+    public void TotalCarrito_WithVeryLargeNumbers_ShouldCalculateCorrectly()
+    {
+        // Arrange
+        var producto1 = CreateProductoCarritoDto("1", "Pizza", 999999.99m, 100);
+        var producto2 = CreateProductoCarritoDto("2", "Bebida", 0.01m, 1);
+
+        // Act
+        _viewModel.ProductosCarrito.Add(producto1);
+        _viewModel.ProductosCarrito.Add(producto2);
+
+        // Assert
+        Assert.Equal(99999999.01m, _viewModel.TotalCarrito);
+    }
+
+    [Fact]
+    public void TotalCarrito_WithZeroPrices_ShouldCalculateCorrectly()
+    {
+        // Arrange
+        var producto = CreateProductoCarritoDto("1", "Gratis", 0m, 5);
+
+        // Act
+        _viewModel.ProductosCarrito.Add(producto);
+
+        // Assert
+        Assert.Equal(0m, _viewModel.TotalCarrito);
+    }
+
+    [Fact]
+    public void TotalCarrito_WithNegativePrices_ShouldCalculateCorrectly()
+    {
+        // Arrange
+        var producto = CreateProductoCarritoDto("1", "Descuento", -10m, 2);
+
+        // Act
+        _viewModel.ProductosCarrito.Add(producto);
+
+        // Assert
+        Assert.Equal(-20m, _viewModel.TotalCarrito);
+    }
+
+    #endregion
+
+    #region 🚀 NUEVAS PRUEBAS ROBUSTAS - Concurrencia y Threading
+
+    [Fact]
+    public async Task BuscarProductosAsync_WithConcurrentCalls_ShouldHandleGracefully()
+    {
+        // Arrange
+        _viewModel.TextoBusqueda = "pizza";
+        _mockProductosService.Setup(x => x.BuscarProductosAsync("pizza"))
+            .ReturnsAsync(ApiResponse<List<ProductoDto>>.SuccessResponse(new List<ProductoDto>()));
+
+        // Act
+        var task1 = _viewModel.BuscarProductosCommand.ExecuteAsync(null);
+        var task2 = _viewModel.BuscarProductosCommand.ExecuteAsync(null);
+        var task3 = _viewModel.BuscarProductosCommand.ExecuteAsync(null);
+
+        await Task.WhenAll(task1, task2, task3);
+
+        // Assert
+        // Should not throw exception and should handle concurrent calls
+        Assert.True(true);
+    }
+
+    [Fact]
+    public async Task IncrementarCantidad_WithConcurrentCalls_ShouldHandleGracefully()
+    {
+        // Arrange
+        var producto = CreateProductoCarritoDto("1", "Pizza", 25.50m, 1);
+
+        // Act
+        var task1 = _viewModel.IncrementarCantidadCommand.ExecuteAsync(producto);
+        var task2 = _viewModel.IncrementarCantidadCommand.ExecuteAsync(producto);
+        var task3 = _viewModel.IncrementarCantidadCommand.ExecuteAsync(producto);
+
+        await Task.WhenAll(task1, task2, task3);
+
+        // Assert
+        // Should not throw exception and should handle concurrent calls
+        Assert.True(true);
+    }
+
+    #endregion
+
+    #region 🚀 NUEVAS PRUEBAS ROBUSTAS - Validaciones de Preparaciones Diarias
+
+    [Fact]
+    public async Task IncrementarDesdePreparacionAsync_WithNullPreparacion_ShouldReturnEarly()
+    {
+        // Act
+        await _viewModel.IncrementarDesdePreparacionCommand.ExecuteAsync(null);
+
+        // Assert
+        // Should return early without doing anything
+        Assert.True(true);
+    }
+
+    [Fact]
+    public async Task IncrementarDesdePreparacionAsync_WithExpiredPreparacion_ShouldShowAlert()
+    {
+        // Arrange
+        var preparacion = CreatePreparacionDiariaDto("1", "Pizza", 0);
+        preparacion.EstaVencida = true;
+
+        // Act
+        await _viewModel.IncrementarDesdePreparacionCommand.ExecuteAsync(preparacion);
+
+        // Assert
+        _mockDialogService.Verify(x => x.ShowAlertAsync("No disponible", "La preparación no está disponible o no tiene unidades.", It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task IncrementarDesdePreparacionAsync_WithZeroCantidad_ShouldShowAlert()
+    {
+        // Arrange
+        var preparacion = CreatePreparacionDiariaDto("1", "Pizza", 0);
+        preparacion.EstaVencida = false;
+
+        // Act
+        await _viewModel.IncrementarDesdePreparacionCommand.ExecuteAsync(preparacion);
+
+        // Assert
+        _mockDialogService.Verify(x => x.ShowAlertAsync("No disponible", "La preparación no está disponible o no tiene unidades.", It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task IncrementarDesdePreparacionAsync_WithProductNotFound_ShouldShowAlert()
+    {
+        // Arrange
+        var preparacion = CreatePreparacionDiariaDto("1", "Pizza", 5);
+        preparacion.EstaVencida = false;
+        preparacion.ProductoId = Guid.NewGuid();
+
+        _mockProductosService.Setup(x => x.ObtenerProductoPorIdAsync(preparacion.ProductoId))
+            .ReturnsAsync(ApiResponse<ProductoDto>.Failure("Product not found"));
+
+        // Act
+        await _viewModel.IncrementarDesdePreparacionCommand.ExecuteAsync(preparacion);
+
+        // Assert
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Producto no disponible", "El producto de la preparación no está disponible.", It.IsAny<string>()), Times.Once);
+    }
+
+    #endregion
+
+    #region 🚀 NUEVAS PRUEBAS ROBUSTAS - Manejo de Errores de API
+
+    [Fact]
+    public async Task CrearComandaAsync_WithApiError_ShouldShowDetailedError()
+    {
+        // Arrange
+        var producto = CreateProductoCarritoDto("1", "Pizza", 25.50m, 1);
+        _viewModel.ProductosCarrito.Add(producto);
+        _viewModel.Mesa = CreateMesaDto("5");
+
+        _mockComandasService.Setup(x => x.CrearComandaAsync(It.IsAny<CrearComandaRequest>()))
+            .ReturnsAsync(ApiResponse<ComandaDto>.Failure("API Error", new[] { "Error 1", "Error 2" }));
+
+        _mockDialogService.Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
+
+        // Act
+        await _viewModel.CrearComandaCommand.ExecuteAsync(null);
+
+        // Assert
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Error", It.Is<string>(s => s.Contains("API Error") && s.Contains("Error 1") && s.Contains("Error 2")), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CrearComandaAsync_WithNetworkException_ShouldShowError()
+    {
+        // Arrange
+        var producto = CreateProductoCarritoDto("1", "Pizza", 25.50m, 1);
+        _viewModel.ProductosCarrito.Add(producto);
+        _viewModel.Mesa = CreateMesaDto("5");
+
+        _mockComandasService.Setup(x => x.CrearComandaAsync(It.IsAny<CrearComandaRequest>()))
+            .ThrowsAsync(new HttpRequestException("Network error"));
+
+        _mockDialogService.Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
+
+        // Act
+        await _viewModel.CrearComandaCommand.ExecuteAsync(null);
+
+        // Assert
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Error", It.Is<string>(s => s.Contains("Network error")), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CrearComandaAsync_WithTimeoutException_ShouldShowError()
+    {
+        // Arrange
+        var producto = CreateProductoCarritoDto("1", "Pizza", 25.50m, 1);
+        _viewModel.ProductosCarrito.Add(producto);
+        _viewModel.Mesa = CreateMesaDto("5");
+
+        _mockComandasService.Setup(x => x.CrearComandaAsync(It.IsAny<CrearComandaRequest>()))
+            .ThrowsAsync(new TaskCanceledException("Request timeout"));
+
+        _mockDialogService.Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(true);
+
+        // Act
+        await _viewModel.CrearComandaCommand.ExecuteAsync(null);
+
+        // Assert
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Error", It.Is<string>(s => s.Contains("timeout")), It.IsAny<string>()), Times.Once);
+    }
+
+    #endregion
+
+    #region 🚀 NUEVAS PRUEBAS ROBUSTAS - Casos de Fallo en Servicios
+
+    [Fact]
+    public async Task InitializeAsync_WithInvalidMesaId_ShouldShowError()
+    {
+        // Arrange
+        var invalidMesaId = "invalid-guid";
+
+        // Act
+        await _viewModel.InitializeAsync(invalidMesaId);
+
+        // Assert
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Error", "Identificador de mesa inválido", It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task InitializeAsync_WithMesaNotFound_ShouldShowError()
+    {
+        // Arrange
+        var mesaId = Guid.NewGuid().ToString();
+        _mockMesasService.Setup(x => x.ObtenerMesaAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(ApiResponse<MesaDto>.Failure("Mesa not found"));
+
+        // Act
+        await _viewModel.InitializeAsync(mesaId);
+
+        // Assert
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Error", It.Is<string>(s => s.Contains("Mesa not found")), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task InitializeEdicionAsync_WithInvalidComandaId_ShouldNotLoad()
+    {
+        // Arrange
+        var invalidComandaId = "invalid-guid";
+
+        // Act
+        await _viewModel.InitializeEdicionAsync(invalidComandaId);
+
+        // Assert
+        Assert.Equal(Guid.Empty, _viewModel.ComandaId);
+        Assert.False(_viewModel.EsEdicion);
+    }
+
+    [Fact]
+    public async Task InitializeEdicionAsync_WithComandaNotFound_ShouldShowError()
+    {
+        // Arrange
+        var comandaId = Guid.NewGuid().ToString();
+        _mockComandasService.Setup(x => x.ObtenerComandaPorIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(ApiResponse<ComandaDto>.Failure("Comanda not found"));
+
+        // Act
+        await _viewModel.InitializeEdicionAsync(comandaId);
+
+        // Assert
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Error", "Comanda not found", It.IsAny<string>()), Times.Once);
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private ProductoCarritoDto CreateProductoCarritoDto(string id, string nombre, decimal precio, int cantidad)

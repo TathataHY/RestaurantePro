@@ -96,6 +96,57 @@ public class MesasApiService : IMesasApiService
         return res.IsSuccessStatusCode;
     }
 
+    /// <summary>
+    /// Obtiene todas las mesas
+    /// </summary>
+    public async Task<List<MesaDto>> ObtenerMesasAsync()
+    {
+        var result = await ObtenerAsync();
+        return result ?? new List<MesaDto>();
+    }
+
+    /// <summary>
+    /// Obtiene una mesa por ID
+    /// </summary>
+    public async Task<MesaDto?> ObtenerMesaPorIdAsync(Guid id)
+    {
+        return await ObtenerPorIdAsync(id);
+    }
+
+    /// <summary>
+    /// Crea una nueva mesa
+    /// </summary>
+    public async Task<MesaDto?> CrearMesaAsync(CrearMesaRequest request)
+    {
+        return await CrearAsync(request);
+    }
+
+    /// <summary>
+    /// Actualiza una mesa existente
+    /// </summary>
+    public async Task<MesaDto?> ActualizarMesaAsync(Guid id, ActualizarMesaRequest request)
+    {
+        return await ActualizarAsync(id, request);
+    }
+
+    /// <summary>
+    /// Elimina una mesa
+    /// </summary>
+    public async Task<bool> EliminarMesaAsync(Guid id)
+    {
+        return await EliminarAsync(id);
+    }
+
+    /// <summary>
+    /// Cambia el estado de una mesa
+    /// </summary>
+    public async Task<bool> CambiarEstadoMesaAsync(Guid id, string estado)
+    {
+        var http = CreateClient();
+        var res = await http.PostAsync($"api/operaciones/mesas/{id}/cambiar-estado?estado={Uri.EscapeDataString(estado)}", null);
+        return res.IsSuccessStatusCode;
+    }
+
     private class ApiResponse<T>
     {
         public T? Data { get; set; }
