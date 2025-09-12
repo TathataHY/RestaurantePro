@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using FluentAssertions;
-using RestaurantePro.Application.Comercial.Reportes.DTOs;
+using AppReportes = RestaurantePro.Application.Comercial.Reportes.DTOs;
 using RestaurantePro.Application.Common.Models;
 using RestaurantePro.Web.Admin.IntegrationTests.Core;
 
@@ -31,7 +31,7 @@ public class ReportesClientesTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteClientesDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteClientesDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -53,7 +53,7 @@ public class ReportesClientesTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteClientesDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteClientesDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -75,7 +75,7 @@ public class ReportesClientesTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteClientesDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteClientesDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -96,7 +96,7 @@ public class ReportesClientesTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteClientesDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteClientesDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -119,7 +119,7 @@ public class ReportesClientesTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteClientesDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteClientesDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -142,7 +142,7 @@ public class ReportesClientesTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteClientesDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteClientesDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -151,10 +151,10 @@ public class ReportesClientesTests : BaseIntegrationTest
     }
 
     [Fact]
-    public async Task ObtenerReporteClientes_ConClientesNuevos_DeberiaCalcularCorrectamente()
+    public async Task ObtenerReporteClientes_ConClientesActivos_DeberiaCalcularCorrectamente()
     {
         // Arrange
-        await SeedClientesNuevosAsync(10, DateTime.Now.AddDays(-7)); // 10 clientes nuevos en la última semana
+        await SeedClientesActivosAsync(10); // 10 clientes activos
 
         // Act
         var response = await _client.GetAsync("/api/comercial/reportes/clientes");
@@ -163,12 +163,12 @@ public class ReportesClientesTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteClientesDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteClientesDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
         responseData.Data.Should().NotBeNull();
-        responseData.Data.ClientesNuevos.Should().Be(10);
+        responseData.Data.ClientesActivos.Should().Be(10);
     }
 
     #endregion
@@ -246,7 +246,7 @@ public class ReportesClientesTests : BaseIntegrationTest
     {
         // Arrange
         await SeedClientesDePruebaAsync(100, 80); // 100 total, 80 activos
-        await SeedClientesNuevosAsync(20, DateTime.Now.AddDays(-30)); // 20 nuevos en el último mes
+        await SeedClientesActivosAsync(20); // 20 clientes activos
 
         // Act
         var response = await _client.GetAsync("/api/comercial/reportes/clientes");
@@ -255,12 +255,11 @@ public class ReportesClientesTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteClientesDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteClientesDto>>(content, GetJsonOptions());
         
         responseData.Data.Should().NotBeNull();
         responseData.Data.TotalClientes.Should().Be(80); // Solo activos por defecto
         responseData.Data.ClientesActivos.Should().Be(80);
-        responseData.Data.ClientesNuevos.Should().Be(20);
     }
 
     [Fact]
@@ -276,12 +275,11 @@ public class ReportesClientesTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteClientesDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteClientesDto>>(content, GetJsonOptions());
         
         responseData.Data.Should().NotBeNull();
         responseData.Data.TotalClientes.Should().Be(0);
         responseData.Data.ClientesActivos.Should().Be(0);
-        responseData.Data.ClientesNuevos.Should().Be(0);
     }
 
     [Fact]
@@ -297,16 +295,14 @@ public class ReportesClientesTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteClientesDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteClientesDto>>(content, GetJsonOptions());
         
         responseData.Data.Should().NotBeNull();
         var reporte = responseData.Data;
         
         reporte.TotalClientes.Should().BeGreaterOrEqualTo(0);
         reporte.ClientesActivos.Should().BeGreaterOrEqualTo(0);
-        reporte.ClientesNuevos.Should().BeGreaterOrEqualTo(0);
-        reporte.PorcentajeClientesActivos.Should().BeGreaterOrEqualTo(0);
-        reporte.PorcentajeClientesNuevos.Should().BeGreaterOrEqualTo(0);
+        reporte.PorcentajeActivos.Should().BeGreaterOrEqualTo(0);
     }
 
     [Fact]
@@ -324,7 +320,7 @@ public class ReportesClientesTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteClientesDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteClientesDto>>(content, GetJsonOptions());
         
         responseData.Data.Should().NotBeNull();
         responseData.Data.TotalClientes.Should().Be(5);
@@ -403,7 +399,7 @@ public class ReportesClientesTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteClientesDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteClientesDto>>(content, GetJsonOptions());
         
         responseData.Data.Should().NotBeNull();
         responseData.Data.TotalClientes.Should().Be(0);
@@ -423,7 +419,7 @@ public class ReportesClientesTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteClientesDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteClientesDto>>(content, GetJsonOptions());
         
         responseData.Data.Should().NotBeNull();
         responseData.Data.TotalClientes.Should().Be(15);
@@ -443,7 +439,7 @@ public class ReportesClientesTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteClientesDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteClientesDto>>(content, GetJsonOptions());
         
         responseData.Data.Should().NotBeNull();
         responseData.Data.TotalClientes.Should().Be(15); // Solo activos por defecto
@@ -491,6 +487,14 @@ public class ReportesClientesTests : BaseIntegrationTest
         {
             var fechaRegistro = fechaDesde.AddDays(Random.Shared.Next((fechaHasta - fechaDesde).Days));
             await CrearClienteConFiltrosCombinadosAsync(segmento, fechaRegistro, true);
+        }
+    }
+
+    private async Task SeedClientesActivosAsync(int cantidad)
+    {
+        for (int i = 0; i < cantidad; i++)
+        {
+            await CrearClienteDePruebaAsync(true);
         }
     }
 

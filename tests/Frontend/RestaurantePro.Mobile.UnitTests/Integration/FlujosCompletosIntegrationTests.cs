@@ -385,8 +385,9 @@ public class FlujosCompletosIntegrationTests
         // 2. Segundo intento - éxito
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null);
 
-        // Assert - Verificar que se manejó el error y se recuperó (4 llamadas: 2 del constructor + 2 del test)
-        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(4));
+        // Assert - Verificar que se manejó el error y se recuperó (1 llamada a ShowAlertAsync + 3 llamadas a ShowErrorAsync)
+        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _dialogServiceMock.Verify(d => d.ShowErrorAsync(It.IsAny<string>()), Times.Exactly(3));
     }
 
     #endregion

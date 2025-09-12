@@ -106,7 +106,7 @@ public class NavMenuTests : TestContext
             .AddCascadingValue(authStateTask));
 
         // Assert
-        component.FindAll(".nav-section").Should().HaveCount(6); // Dashboard, Productos, Operaciones, Comercial, Inventario, Reportes, Sistema
+        component.FindAll(".nav-section").Should().HaveCount(7); // Dashboard, Productos, Operaciones, Comercial, Inventario, Reportes, Sistema
     }
 
     [Fact]

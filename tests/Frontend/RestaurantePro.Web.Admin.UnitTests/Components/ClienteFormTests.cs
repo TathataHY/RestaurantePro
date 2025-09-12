@@ -21,7 +21,7 @@ public class ClienteFormTests : TestContext
         _clientesApiMock = new Mock<ClientesApiService>(Mock.Of<IHttpClientFactory>(), Mock.Of<TokenStore>());
         _jsRuntimeMock = new Mock<IJSRuntime>();
 
-        Services.AddSingleton(_clientesApiMock.Object);
+        Services.AddSingleton<IClientesApiService>(_clientesApiMock.Object);
         Services.AddSingleton(_jsRuntimeMock.Object);
     }
 

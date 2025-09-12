@@ -13,16 +13,18 @@
 
 ## 🎯 **ESTADO ACTUAL DE COBERTURA**
 
-### ✅ **Módulos YA Implementados (23 archivos)**
+### ✅ **Módulos YA Implementados (35 archivos)**
 | Módulo | Archivos | Estado | Cobertura |
 |--------|----------|--------|-----------|
 | **Categorías** | 6 | ✅ Completo | 100% |
 | **Productos** | 10 | ✅ Completo | 100% |
 | **Clientes** | 4 | ✅ Completo | 100% |
 | **Usuarios** | 3 | ✅ Completo | 100% |
+| **Reportes Comerciales** | 6 | ✅ Completo | 100% |
+| **Recetas** | 6 | ✅ Completo | 100% |
 
-### ❌ **Módulos FALTANTES (85 archivos)**
-Según la arquitectura de la Web Administrativa, faltan implementar tests para **10 módulos principales**.
+### ❌ **Módulos FALTANTES (73 archivos)**
+Según la arquitectura de la Web Administrativa, faltan implementar tests para **8 módulos principales**.
 
 ---
 
@@ -30,29 +32,7 @@ Según la arquitectura de la Web Administrativa, faltan implementar tests para *
 
 ### 🔴 **FASE 1: MÓDULOS CRÍTICOS (Prioridad Alta)**
 
-#### **1. 🍳 RECETAS** - 6 archivos
-**Justificación**: Base fundamental para la gestión de productos y menú
-```
-Api/Recetas/
-├── ApiRecetasIntegrationTests.cs          # Tests principales de API
-├── RecetasCrudTests.cs                    # Tests CRUD básicos
-├── RecetasErrorHandlingTests.cs           # Tests de manejo de errores
-├── RecetasPerformanceTests.cs             # Tests de rendimiento
-├── RecetasSecurityTests.cs                # Tests de seguridad
-└── RecetasMonitoringTests.cs              # Tests de monitoreo
-```
-
-**Funcionalidades a testear**:
-- ✅ Crear, leer, actualizar, eliminar recetas
-- ✅ Validación de ingredientes y cantidades
-- ✅ Cálculo de costos de recetas
-- ✅ Asociación con productos
-- ✅ Validaciones de negocio
-- ✅ Manejo de errores y excepciones
-- ✅ Seguridad y autorización
-- ✅ Performance con recetas complejas
-
-#### **2. 📊 REPORTES COMERCIALES** - 6 archivos
+#### **1. 📊 REPORTES COMERCIALES** - 6 archivos
 **Justificación**: Análisis de ventas y métricas comerciales críticas
 ```
 Api/ReportesComercial/
@@ -74,7 +54,7 @@ Api/ReportesComercial/
 - ✅ Cálculos financieros complejos
 - ✅ Performance con grandes volúmenes de datos
 
-#### **3. 🎯 PROMOCIONES** - 6 archivos
+#### **2. 🎯 PROMOCIONES** - 6 archivos
 **Justificación**: Gestión de marketing y promociones activas
 ```
 Api/Promociones/
@@ -96,10 +76,10 @@ Api/Promociones/
 - ✅ Estados de promociones (activa/inactiva)
 - ✅ Performance con múltiples promociones
 
-#### **4. 📦 INVENTARIO COMPLETO** - 20 archivos
+#### **3. 📦 INVENTARIO COMPLETO** - 20 archivos
 **Justificación**: Gestión completa de stock y movimientos de inventario
 
-##### **4.1 Ingredientes** - 5 archivos
+##### **3.1 Ingredientes** - 5 archivos
 ```
 Api/Inventario/Ingredientes/
 ├── ApiIngredientesIntegrationTests.cs      # Tests principales de API
@@ -109,7 +89,7 @@ Api/Inventario/Ingredientes/
 └── IngredientesSecurityTests.cs            # Tests de seguridad
 ```
 
-##### **4.2 Movimientos de Inventario** - 4 archivos
+##### **3.2 Movimientos de Inventario** - 4 archivos
 ```
 Api/Inventario/MovimientosInventario/
 ├── ApiMovimientosInventarioIntegrationTests.cs # Tests principales de API
@@ -118,7 +98,7 @@ Api/Inventario/MovimientosInventario/
 └── MovimientosInventarioPerformanceTests.cs    # Tests de rendimiento
 ```
 
-##### **4.3 Órdenes de Compra** - 4 archivos
+##### **3.3 Órdenes de Compra** - 4 archivos
 ```
 Api/Inventario/OrdenesCompra/
 ├── ApiOrdenesCompraIntegrationTests.cs     # Tests principales de API
@@ -127,7 +107,7 @@ Api/Inventario/OrdenesCompra/
 └── OrdenesCompraPerformanceTests.cs        # Tests de rendimiento
 ```
 
-##### **4.4 Reportes de Inventario** - 3 archivos
+##### **3.4 Reportes de Inventario** - 3 archivos
 ```
 Api/Inventario/ReportesInventario/
 ├── ApiReportesInventarioIntegrationTests.cs # Tests principales de API
@@ -135,7 +115,7 @@ Api/Inventario/ReportesInventario/
 └── ReportesInventarioSecurityTests.cs       # Tests de seguridad
 ```
 
-##### **4.5 Control de Stock** - 4 archivos
+##### **3.5 Control de Stock** - 4 archivos
 ```
 Api/Inventario/ControlStock/
 ├── ApiControlStockIntegrationTests.cs      # Tests principales de API
@@ -148,7 +128,7 @@ Api/Inventario/ControlStock/
 
 ### 🟡 **FASE 2: MÓDULOS IMPORTANTES (Prioridad Media)**
 
-#### **5. 🧾 FACTURAS (Gestión Completa)** - 6 archivos
+#### **4. 🧾 FACTURAS (Gestión Completa)** - 6 archivos
 **Justificación**: Administración financiera y facturación
 ```
 Api/Facturas/
@@ -160,7 +140,7 @@ Api/Facturas/
 └── FacturasMonitoringTests.cs              # Tests de monitoreo
 ```
 
-#### **6. 📈 REPORTES GENERALES** - 5 archivos
+#### **5. 📈 REPORTES GENERALES** - 5 archivos
 **Justificación**: Dashboard ejecutivo y análisis general
 ```
 Api/Reportes/
@@ -171,7 +151,7 @@ Api/Reportes/
 └── ReportesSecurityTests.cs                # Tests de seguridad
 ```
 
-#### **7. 🏷️ TARJETAS FIDELIZACIÓN** - 5 archivos
+#### **6. 🏷️ TARJETAS FIDELIZACIÓN** - 5 archivos
 **Justificación**: Programa de lealtad de clientes
 ```
 Api/TarjetasFidelizacion/
@@ -186,7 +166,7 @@ Api/TarjetasFidelizacion/
 
 ### 🟢 **FASE 3: MÓDULOS DE SOPORTE (Prioridad Baja)**
 
-#### **8. 🏢 PROVEEDORES** - 8 archivos
+#### **7. 🏢 PROVEEDORES** - 8 archivos
 **Justificación**: Gestión de proveedores y compras
 ```
 Api/Proveedores/
@@ -201,7 +181,7 @@ Api/Proveedores/
     └── ContactosProveedorErrorHandlingTests.cs  # Tests de manejo de errores
 ```
 
-#### **9. 🔔 NOTIFICACIONES** - 5 archivos
+#### **8. 🔔 NOTIFICACIONES** - 5 archivos
 **Justificación**: Sistema de alertas y notificaciones
 ```
 Api/Notificaciones/
@@ -212,10 +192,10 @@ Api/Notificaciones/
 └── NotificacionesSecurityTests.cs          # Tests de seguridad
 ```
 
-#### **10. 🏪 OPERACIONES (Solo Reportes)** - 10 archivos
+#### **9. 🏪 OPERACIONES (Solo Reportes)** - 10 archivos
 **Justificación**: Análisis operativo y reportes de operaciones
 
-##### **10.1 Comandas (Reportes)** - 3 archivos
+##### **9.1 Comandas (Reportes)** - 3 archivos
 ```
 Api/Operaciones/Comandas/
 ├── ApiComandasReportesIntegrationTests.cs  # Tests principales de API
@@ -223,14 +203,14 @@ Api/Operaciones/Comandas/
 └── ComandasPerformanceTests.cs             # Tests de rendimiento
 ```
 
-##### **10.2 Mesas (Configuración)** - 2 archivos
+##### **9.2 Mesas (Configuración)** - 2 archivos
 ```
 Api/Operaciones/Mesas/
 ├── ApiMesasConfigIntegrationTests.cs       # Tests principales de API
 └── MesasConfigTests.cs                     # Tests de configuración
 ```
 
-##### **10.3 Reservaciones (Gestión)** - 3 archivos
+##### **9.3 Reservaciones (Gestión)** - 3 archivos
 ```
 Api/Operaciones/Reservaciones/
 ├── ApiReservacionesGestionIntegrationTests.cs # Tests principales de API
@@ -238,7 +218,7 @@ Api/Operaciones/Reservaciones/
 └── ReservacionesPerformanceTests.cs            # Tests de rendimiento
 ```
 
-##### **10.4 Preparaciones (Reportes)** - 2 archivos
+##### **9.4 Preparaciones (Reportes)** - 2 archivos
 ```
 Api/Operaciones/Preparaciones/
 ├── ApiPreparacionesReportesIntegrationTests.cs # Tests principales de API

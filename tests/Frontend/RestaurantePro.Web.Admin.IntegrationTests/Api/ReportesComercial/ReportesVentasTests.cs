@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using FluentAssertions;
-using RestaurantePro.Application.Comercial.Reportes.DTOs;
+using AppReportes = RestaurantePro.Application.Comercial.Reportes.DTOs;
 using RestaurantePro.Application.Common.Models;
 using RestaurantePro.Web.Admin.IntegrationTests.Core;
 
@@ -33,14 +33,14 @@ public class ReportesVentasTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteVentasDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteVentasDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
         responseData.Data.Should().NotBeNull();
         responseData.Data.TotalVentas.Should().BeGreaterThan(0);
-        responseData.Data.CantidadTransacciones.Should().BeGreaterThan(0);
-        responseData.Data.PromedioVentaPorTransaccion.Should().BeGreaterThan(0);
+        responseData.Data.TotalTransacciones.Should().BeGreaterThan(0);
+        responseData.Data.PromedioTicket.Should().BeGreaterThan(0);
     }
 
     [Fact]
@@ -58,13 +58,13 @@ public class ReportesVentasTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteVentasDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteVentasDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
         responseData.Data.Should().NotBeNull();
         responseData.Data.TotalVentas.Should().BeGreaterThan(0);
-        responseData.Data.CantidadTransacciones.Should().BeGreaterThan(0);
+        responseData.Data.TotalTransacciones.Should().BeGreaterThan(0);
     }
 
     [Fact]
@@ -82,7 +82,7 @@ public class ReportesVentasTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteVentasDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteVentasDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -104,7 +104,7 @@ public class ReportesVentasTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteVentasDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteVentasDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -126,7 +126,7 @@ public class ReportesVentasTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteVentasDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteVentasDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -148,7 +148,7 @@ public class ReportesVentasTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteVentasDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteVentasDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -170,7 +170,7 @@ public class ReportesVentasTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteVentasDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteVentasDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -192,7 +192,7 @@ public class ReportesVentasTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteVentasDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteVentasDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -214,7 +214,7 @@ public class ReportesVentasTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteVentasDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteVentasDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -326,12 +326,12 @@ public class ReportesVentasTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteVentasDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteVentasDto>>(content, GetJsonOptions());
         
         responseData.Data.Should().NotBeNull();
         responseData.Data.TotalVentas.Should().Be(600);
-        responseData.Data.CantidadTransacciones.Should().Be(3);
-        responseData.Data.PromedioVentaPorTransaccion.Should().Be(200);
+        responseData.Data.TotalTransacciones.Should().Be(3);
+        responseData.Data.PromedioTicket.Should().Be(200);
     }
 
     [Fact]
@@ -349,12 +349,12 @@ public class ReportesVentasTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteVentasDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteVentasDto>>(content, GetJsonOptions());
         
         responseData.Data.Should().NotBeNull();
         responseData.Data.TotalVentas.Should().Be(0);
-        responseData.Data.CantidadTransacciones.Should().Be(0);
-        responseData.Data.PromedioVentaPorTransaccion.Should().Be(0);
+        responseData.Data.TotalTransacciones.Should().Be(0);
+        responseData.Data.PromedioTicket.Should().Be(0);
     }
 
     [Fact]
@@ -372,7 +372,7 @@ public class ReportesVentasTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<ReporteVentasDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteVentasDto>>(content, GetJsonOptions());
         
         responseData.Data.Should().NotBeNull();
         responseData.Data.FechaInicio.Should().Be(fechaInicio.Date);

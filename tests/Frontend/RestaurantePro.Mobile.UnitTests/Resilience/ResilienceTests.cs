@@ -142,8 +142,8 @@ public class ResilienceTests
         // Act - Intentar cargar comandas
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null);
 
-        // Assert - Verificar que se manejó el error (2 llamadas: una de LoadComandasAsync y otra de LoadEstadisticasAsync)
-        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
+        // Assert - Verificar que se manejó el error (2 llamadas a ShowErrorAsync)
+        _dialogServiceMock.Verify(d => d.ShowErrorAsync(It.IsAny<string>()), Times.Exactly(2));
         comandasViewModel.Comandas.Should().BeEmpty();
     }
 
@@ -420,8 +420,9 @@ public class ResilienceTests
         // Act - Intentar cargar comandas con timeout
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null);
 
-        // Assert - Verificar que se manejó el timeout (3 llamadas: 1 del constructor + 2 del test)
-        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(3));
+        // Assert - Verificar que se manejó el timeout (1 llamada a ShowAlertAsync + 2 llamadas a ShowErrorAsync)
+        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _dialogServiceMock.Verify(d => d.ShowErrorAsync(It.IsAny<string>()), Times.Exactly(2));
         comandasViewModel.Comandas.Should().BeEmpty();
     }
 
