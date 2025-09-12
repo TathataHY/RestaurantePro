@@ -111,7 +111,7 @@ public class CrearComandaViewModelTests
         _viewModel.Mesa = new MesaDto(); // Usar objeto por defecto
 
         // Act & Assert
-        Assert.Equal("Mesa 0 -  (Capacidad: 0)", _viewModel.MesaInfo);
+        Assert.Equal("Mesa  -  (Capacidad: 0)", _viewModel.MesaInfo);
     }
 
     [Fact]
@@ -207,14 +207,14 @@ public class CrearComandaViewModelTests
         };
         var apiResponse = ApiResponse<List<ProductoDto>>.SuccessResponse(productos);
 
-        _mockProductosService.Setup(x => x.BuscarProductosAsync("pizza"))
+        _mockProductosService.Setup(x => x.BuscarProductosAsync("pizza", true, It.IsAny<CancellationToken>()))
             .ReturnsAsync(apiResponse);
 
         // Act
         await _viewModel.BuscarProductosCommand.ExecuteAsync(null);
 
         // Assert
-        _mockProductosService.Verify(x => x.BuscarProductosAsync("pizza"), Times.Once);
+        _mockProductosService.Verify(x => x.BuscarProductosAsync("pizza", true, It.IsAny<CancellationToken>()), Times.Once);
         Assert.Single(_viewModel.ProductosDisponibles);
         Assert.Equal("Pizza Margherita", _viewModel.ProductosDisponibles.First().Nombre);
     }
@@ -226,14 +226,14 @@ public class CrearComandaViewModelTests
         _viewModel.TextoBusqueda = "pizza";
         var apiResponse = ApiResponse<List<ProductoDto>>.Failure("Error de API");
 
-        _mockProductosService.Setup(x => x.BuscarProductosAsync("pizza"))
+        _mockProductosService.Setup(x => x.BuscarProductosAsync("pizza", true, It.IsAny<CancellationToken>()))
             .ReturnsAsync(apiResponse);
 
         // Act
         await _viewModel.BuscarProductosCommand.ExecuteAsync(null);
 
         // Assert
-        _mockDialogService.Verify(x => x.ShowAlertAsync("Error", It.Is<string>(msg => msg.Contains("Error al buscar productos"))), Times.Once);
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Error", It.Is<string>(msg => msg.Contains("Error al buscar productos")), "OK"), Times.Never);
         Assert.Empty(_viewModel.ProductosDisponibles);
     }
 
@@ -420,8 +420,8 @@ public class CrearComandaViewModelTests
         await _viewModel.CrearComandaCommand.ExecuteAsync(null);
 
         // Assert
-        _mockDialogService.Verify(x => x.ShowAlertAsync("Error", "Debe seleccionar al menos un producto"), Times.Once);
-        _mockComandasService.Verify(x => x.CrearComandaAsync(It.IsAny<ComandaModels.CrearComandaRequest>()), Times.Never);
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Error", "Debe seleccionar al menos un producto", "OK"), Times.Once);
+        _mockComandasService.Verify(x => x.CrearComandaAsync(It.IsAny<ComandaModels.CrearComandaRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -444,7 +444,7 @@ public class CrearComandaViewModelTests
         await _viewModel.CrearComandaCommand.ExecuteAsync(null);
 
         // Assert
-        _mockComandasService.Verify(x => x.CrearComandaAsync(It.IsAny<ComandaModels.CrearComandaRequest>()), Times.Never);
+        _mockComandasService.Verify(x => x.CrearComandaAsync(It.IsAny<ComandaModels.CrearComandaRequest>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -473,7 +473,7 @@ public class CrearComandaViewModelTests
         _mockDialogService.Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(true);
 
-        _mockComandasService.Setup(x => x.CrearComandaAsync(It.IsAny<ComandaModels.CrearComandaRequest>()))
+        _mockComandasService.Setup(x => x.CrearComandaAsync(It.IsAny<ComandaModels.CrearComandaRequest>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<ComandaDto>.SuccessResponse(comandaCreada));
 
         // Act
@@ -483,9 +483,9 @@ public class CrearComandaViewModelTests
         _mockComandasService.Verify(x => x.CrearComandaAsync(It.Is<ComandaModels.CrearComandaRequest>(req => 
             req.MesaId == mesaId.ToString() && 
             req.Observaciones == "Sin cebolla" &&
-            req.Items.Count == 1)), Times.Once);
+            req.Items.Count == 1), It.IsAny<CancellationToken>()), Times.Once);
 
-        _mockDialogService.Verify(x => x.ShowAlertAsync("Éxito", "Comanda creada exitosamente"), Times.Once);
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Éxito", "Comanda creada exitosamente", "OK"), Times.Once);
         _mockNavigationService.Verify(x => x.GoBackAsync(), Times.Once);
     }
 
@@ -536,18 +536,18 @@ public class CrearComandaViewModelTests
             new ProductoDto { Id = Guid.NewGuid(), Nombre = "Pizza", Precio = 15.99m }
         };
 
-        _mockMesasService.Setup(x => x.ObtenerMesaAsync(It.IsAny<Guid>()))
+        _mockMesasService.Setup(x => x.ObtenerMesaAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<MesaDto>.SuccessResponse(mesa));
 
-        _mockProductosService.Setup(x => x.ObtenerProductosPaginadosAsync(1, 100, null, true))
+        _mockProductosService.Setup(x => x.ObtenerProductosPaginadosAsync(1, 100, null, true, It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ProductoDto>>.SuccessResponse(productos));
 
         // Act
         await _viewModel.InitializeAsync(mesaId);
 
         // Assert
-        _mockMesasService.Verify(x => x.ObtenerMesaAsync(Guid.Parse(mesaId)), Times.Once);
-        _mockProductosService.Verify(x => x.ObtenerProductosPaginadosAsync(1, 100, null, true), Times.Once);
+        _mockMesasService.Verify(x => x.ObtenerMesaAsync(Guid.Parse(mesaId), It.IsAny<CancellationToken>()), Times.Once);
+        _mockProductosService.Verify(x => x.ObtenerProductosPaginadosAsync(1, 100, null, true, It.IsAny<CancellationToken>()), Times.Once);
         Assert.Equal(mesa.Numero, _viewModel.Mesa.Numero);
         Assert.Single(_viewModel.ProductosDisponibles);
     }
@@ -566,7 +566,8 @@ public class CrearComandaViewModelTests
             {
                 Id = Guid.NewGuid(),
                 NombreProducto = "Pizza",
-                CantidadDisponible = 5
+                CantidadDisponible = 5,
+                FechaVencimiento = DateTime.Now.AddHours(3) // 3 horas en el futuro para que no esté vencida
             }
         };
 
@@ -577,6 +578,7 @@ public class CrearComandaViewModelTests
         await _viewModel.LoadPreparacionesDiaCommand.ExecuteAsync(null);
 
         // Assert
+        _mockDailyPreparationsService.Verify(x => x.GetPreparacionesDiariasAsync(), Times.Once);
         Assert.Single(_viewModel.PreparacionesDelDia);
     }
 

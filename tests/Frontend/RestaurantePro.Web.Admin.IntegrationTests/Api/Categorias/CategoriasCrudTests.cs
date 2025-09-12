@@ -63,20 +63,36 @@ public class CategoriasCrudTests : BaseIntegrationTest
     [Fact]
     public async Task CrearCategoria_ConNombreDuplicado_DeberiaRetornarError()
     {
-        // Arrange
-        var categoriaExistente = new
+        // Arrange - Crear una categoría existente primero
+        var primeraCategoria = new
         {
-            nombre = "Bebidas", // Nombre que ya existe en el seeder
-            descripcion = "Descripción duplicada",
+            nombre = "Bebidas",
+            descripcion = "Descripción original",
             orden = 1,
             activa = true
         };
 
-        var json = JsonSerializer.Serialize(categoriaExistente, _jsonOptions);
-        var content = new StringContent(json, Encoding.UTF8, "application/json");
+        var jsonPrimera = JsonSerializer.Serialize(primeraCategoria, _jsonOptions);
+        var contentPrimera = new StringContent(jsonPrimera, Encoding.UTF8, "application/json");
+
+        // Crear la primera categoría
+        var responsePrimera = await _client.PostAsync("/api/core/categorias", contentPrimera);
+        responsePrimera.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        // Ahora intentar crear otra categoría con el mismo nombre
+        var categoriaDuplicada = new
+        {
+            nombre = "Bebidas", // Mismo nombre que la primera
+            descripcion = "Descripción duplicada",
+            orden = 2,
+            activa = true
+        };
+
+        var jsonDuplicada = JsonSerializer.Serialize(categoriaDuplicada, _jsonOptions);
+        var contentDuplicada = new StringContent(jsonDuplicada, Encoding.UTF8, "application/json");
 
         // Act
-        var response = await _client.PostAsync("/api/core/categorias", content);
+        var response = await _client.PostAsync("/api/core/categorias", contentDuplicada);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -143,6 +159,7 @@ public class CategoriasCrudTests : BaseIntegrationTest
 
         var categoriaActualizada = new
         {
+            id = categoriaId,
             nombre = "Categoría Actualizada",
             descripcion = "Descripción actualizada",
             orden = 99,
@@ -178,6 +195,7 @@ public class CategoriasCrudTests : BaseIntegrationTest
         var idInexistente = Guid.NewGuid();
         var categoriaActualizada = new
         {
+            id = Guid.NewGuid(), // ID inexistente para probar 404
             nombre = "Categoría Actualizada",
             descripcion = "Descripción actualizada",
             orden = 99,
@@ -210,6 +228,7 @@ public class CategoriasCrudTests : BaseIntegrationTest
 
         var categoriaActualizada = new
         {
+            id = categoriaId,
             nombre = "Bebidas", // Nombre que ya existe en otra categoría
             descripcion = "Descripción actualizada",
             orden = 99,
@@ -350,6 +369,7 @@ public class CategoriasCrudTests : BaseIntegrationTest
 
         var categoriaActualizada = new
         {
+            id = categoriaId,
             nombre = "Categoría Modificada",
             descripcion = "Descripción modificada",
             orden = 77,

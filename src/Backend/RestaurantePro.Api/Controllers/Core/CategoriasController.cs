@@ -262,17 +262,22 @@ public class CategoriasController : ControllerBase
                 Activa = request.Activa
             };
 
+            _logger.LogWarning("DEBUG: Antes de _mediator.Send");
             var result = await _mediator.Send(command);
+            _logger.LogWarning("DEBUG: Después de _mediator.Send - Resultado recibido en controlador");
 
-                    if (result.IsSuccess())
+            if (result.Succeeded)
             {
                 var response = ApiResponse<CategoriaProductoDto>.SuccessResponse(
                     result.Value, "Categoría creada exitosamente");
                 return CreatedAtAction(nameof(GetCategoria), new { id = result.Value.Id }, response);
             }
 
+            _logger.LogWarning("DEBUG: result.Error = {Error}, result.Errors = {Errors}", result.Error, string.Join(", ", result.Errors ?? new List<string>()));
             var errorResponse = ApiResponse<object>.ErrorResponse(
-                result.Errors.ToList(), result.Errors.FirstOrDefault() ?? "Error de validación", StatusCodes.Status400BadRequest);
+                result.Errors?.ToList() ?? new List<string> { result.Error ?? "Error de validación" }, 
+                result.Error ?? result.Errors?.FirstOrDefault() ?? "Error de validación", 
+                StatusCodes.Status400BadRequest);
             return BadRequest(errorResponse);
         }
         catch (Exception ex)
@@ -301,9 +306,12 @@ public class CategoriasController : ControllerBase
 
         try
         {
+            _logger.LogInformation("DEBUG: URL ID: {UrlId}, Request ID: {RequestId}", id, request.Id);
+            
             // Validar que el ID de la URL coincida con el del body
             if (id != request.Id)
             {
+                _logger.LogWarning("DEBUG: ID validation failed - URL: {UrlId}, Request: {RequestId}", id, request.Id);
                 var errorResponse = ApiResponse<object>.ErrorResponse(
                     new List<string> { "El ID de la URL no coincide con el ID del cuerpo de la petición" },
                     "Error de validación",
@@ -324,14 +332,14 @@ public class CategoriasController : ControllerBase
 
             var result = await _mediator.Send(command);
 
-                    if (result.IsSuccess())
+            if (result.Succeeded)
             {
                 var response = ApiResponse<CategoriaProductoDto>.SuccessResponse(
                     result.Value, "Categoría actualizada exitosamente");
                 return Ok(response);
             }
 
-            if (result.Errors.Any(e => e.Contains("no encontrada")))
+            if (result.Errors?.Any(e => e.Contains("no encontrada")) == true)
             {
                 var errorResponse = ApiResponse<object>.ErrorResponse(
                     result.Errors.ToList(), "Categoría no encontrada", StatusCodes.Status404NotFound);
@@ -339,7 +347,8 @@ public class CategoriasController : ControllerBase
             }
 
             var validationErrorResponse = ApiResponse<object>.ErrorResponse(
-                result.Errors.ToList(), "Errores de validación", StatusCodes.Status400BadRequest);
+                result.Errors?.ToList() ?? new List<string> { result.Error ?? "Error de validación" }, 
+                result.Error ?? result.Errors?.FirstOrDefault() ?? "Error de validación", StatusCodes.Status400BadRequest);
             return BadRequest(validationErrorResponse);
         }
         catch (Exception ex)
@@ -370,14 +379,14 @@ public class CategoriasController : ControllerBase
             var command = new EliminarCategoriaCommand { Id = id };
             var result = await _mediator.Send(command);
 
-                    if (result.IsSuccess())
+            if (result.Succeeded)
             {
                 var response = ApiResponse<object>.SuccessResponse(
                     null, "Categoría eliminada exitosamente");
                 return Ok(response);
             }
 
-            if (result.Errors.Any(e => e.Contains("no encontrada")))
+            if (result.Errors?.Any(e => e.Contains("no encontrada")) == true)
             {
                 var errorResponse = ApiResponse<object>.ErrorResponse(
                     result.Errors.ToList(), "Categoría no encontrada", StatusCodes.Status404NotFound);
@@ -385,7 +394,8 @@ public class CategoriasController : ControllerBase
             }
 
             var validationErrorResponse = ApiResponse<object>.ErrorResponse(
-                result.Errors.ToList(), "Errores de validación", StatusCodes.Status400BadRequest);
+                result.Errors?.ToList() ?? new List<string> { result.Error ?? "Error de validación" }, 
+                result.Error ?? result.Errors?.FirstOrDefault() ?? "Error de validación", StatusCodes.Status400BadRequest);
             return BadRequest(validationErrorResponse);
         }
         catch (Exception ex)

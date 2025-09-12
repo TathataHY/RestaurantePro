@@ -28,7 +28,7 @@ namespace RestaurantePro.Api.Extensions
                 // Ignorar referencias circulares en JSON
                 options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
                 // Usar nombres de propiedades en camelCase
-                options.JsonSerializerOptions.PropertyNamingPolicy = null;
+                options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
                 // Ignorar valores nulos
                 options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
                 // Convertir enums a strings

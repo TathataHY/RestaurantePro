@@ -43,10 +43,29 @@ public class CrearCategoriaCommandHandler : IRequestHandler<CrearCategoriaComman
             if (categoriaExistente != null)
             {
                 _logger.LogWarning("Ya existe una categoría con el nombre: {Nombre} (ID: {Id})", request.Nombre, categoriaExistente.Id);
-                return Result.Failure<CategoriaProductoDto>("Ya existe una categoría con este nombre");
+                return Result.Failure<CategoriaProductoDto>("El nombre está duplicado");
             }
             
             _logger.LogInformation("No se encontró categoría duplicada, procediendo con la creación");
+
+            // Validar datos antes de crear la categoría
+            if (string.IsNullOrEmpty(request.Nombre))
+            {
+                _logger.LogWarning("Error de validación: El nombre de la categoría no puede estar vacío");
+                return Result.Failure<CategoriaProductoDto>("El nombre es requerido");
+            }
+            
+            if (string.IsNullOrWhiteSpace(request.Nombre))
+            {
+                _logger.LogWarning("Error de validación: El nombre de la categoría no puede estar vacío");
+                return Result.Failure<CategoriaProductoDto>("El nombre no puede estar vacío");
+            }
+
+            if (request.Orden < 0)
+            {
+                _logger.LogWarning("Error de validación: El orden debe ser mayor o igual a cero");
+                return Result.Failure<CategoriaProductoDto>("El orden debe ser mayor o igual a 0");
+            }
 
             // Crear la nueva categoría (esto puede lanzar excepciones de validación)
             ProductoCategoria categoria;

@@ -64,7 +64,7 @@ public class ActualizarCategoriaCommandHandler : IRequestHandler<ActualizarCateg
             if (categoriaConMismoNombre != null)
             {
                 _logger.LogWarning("Ya existe otra categoría con el nombre: {Nombre}", request.Nombre);
-                return Result.Failure<CategoriaProductoDto>($"Ya existe otra categoría con el nombre '{request.Nombre}'");
+                return Result.Failure<CategoriaProductoDto>($"El nombre está duplicado");
             }
 
             // Actualizar la categoría
