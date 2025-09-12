@@ -142,7 +142,13 @@ public class PromocionesApiServiceTests
             EstaActiva = true
         };
 
-        var responseContent = JsonSerializer.Serialize(promocionResultado);
+        var apiResponse = new ApiResponse<PromocionDto>
+        {
+            Success = true,
+            Data = promocionResultado,
+            Message = "Promoción actualizada correctamente"
+        };
+        var responseContent = JsonSerializer.Serialize(apiResponse);
 
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())

@@ -226,7 +226,7 @@
                 var validacionEmail = await ClientesApi.ValidarEmailAsync(Cliente.Email, EsEdicion ? Cliente.Id : null);
                 mostrarValidacionEmail = false;
 
-                if (validacionEmail?.Data == true)
+                if (validacionEmail == true)
                 {
                     await JSRuntime.InvokeVoidAsync("alert", "El email ya está registrado por otro cliente.");
                     guardando = false;

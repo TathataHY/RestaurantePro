@@ -314,7 +314,7 @@
         try
         {
             var resultado = await ClientesApi.ToggleActivarClienteAsync(cliente.Id);
-            if (resultado?.Success == true)
+            if (resultado == true)
             {
                 await CargarClientes();
                 await JSRuntime.InvokeVoidAsync("alert", 

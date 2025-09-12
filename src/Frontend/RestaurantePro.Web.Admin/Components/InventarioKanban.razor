@@ -26,7 +26,7 @@ else
                             <div class="card-body p-2">
                                 <h6 class="card-title">@ingrediente.Nombre</h6>
                                 <p class="card-text small">
-                                    <strong>Stock:</strong> @ingrediente.StockActual.ToString("N2") @ingrediente.UnidadMedida}<br>
+                                    <strong>Stock:</strong> @ingrediente.StockActual.ToString("N2") @GetUnidadMedidaAbreviada(ingrediente.UnidadMedida)}<br>
                                     <strong>Mínimo:</strong> @ingrediente.StockMinimo.ToString("N2")<br>
                                     <strong>Costo:</strong> $@ingrediente.CostoUnitario.ToString("N2")
                                 </p>
@@ -65,7 +65,7 @@ else
                                 <p class="card-text small">
                                     <strong>Vence:</strong> @ingrediente.FechaVencimiento?.ToString("dd/MM/yyyy")<br>
                                     <strong>Días:</strong> @GetDiasVencimiento(ingrediente.FechaVencimiento.Value)<br>
-                                    <strong>Stock:</strong> @ingrediente.StockActual.ToString("N2") @ingrediente.UnidadMedida}
+                                    <strong>Stock:</strong> @ingrediente.StockActual.ToString("N2") @GetUnidadMedidaAbreviada(ingrediente.UnidadMedida)}
                                 </p>
                                 <div class="btn-group btn-group-sm" role="group">
                                     <button type="button" class="btn btn-outline-primary btn-sm" @onclick="() => OnEditar.InvokeAsync(ingrediente)" title="Editar">
@@ -100,7 +100,7 @@ else
                             <div class="card-body p-2">
                                 <h6 class="card-title">@ingrediente.Nombre</h6>
                                 <p class="card-text small">
-                                    <strong>Stock:</strong> @ingrediente.StockActual.ToString("N2") @ingrediente.UnidadMedida}<br>
+                                    <strong>Stock:</strong> @ingrediente.StockActual.ToString("N2") @GetUnidadMedidaAbreviada(ingrediente.UnidadMedida)}<br>
                                     <strong>Mín:</strong> @ingrediente.StockMinimo.ToString("N2") | <strong>Máx:</strong> @ingrediente.StockMaximo.ToString("N2")<br>
                                     <strong>Costo:</strong> $@ingrediente.CostoUnitario.ToString("N2")
                                 </p>
@@ -138,7 +138,7 @@ else
                                 <h6 class="card-title">@ingrediente.Nombre</h6>
                                 <p class="card-text small">
                                     <strong>Estado:</strong> Inactivo<br>
-                                    <strong>Stock:</strong> @ingrediente.StockActual.ToString("N2") @ingrediente.UnidadMedida}<br>
+                                    <strong>Stock:</strong> @ingrediente.StockActual.ToString("N2") @GetUnidadMedidaAbreviada(ingrediente.UnidadMedida)}<br>
                                     <strong>Costo:</strong> $@ingrediente.CostoUnitario.ToString("N2")
                                 </p>
                                 <div class="btn-group btn-group-sm" role="group">
@@ -181,5 +181,27 @@ else
             return "Vence mañana";
         
         return $"Vence en {dias} días";
+    }
+
+    private string GetUnidadMedidaAbreviada(UnidadMedida unidad)
+    {
+        return unidad switch
+        {
+            UnidadMedida.Kilogramo => "kg",
+            UnidadMedida.Gramo => "g",
+            UnidadMedida.Litro => "L",
+            UnidadMedida.Mililitro => "ml",
+            UnidadMedida.Unidad => "un",
+            UnidadMedida.Metro => "m",
+            UnidadMedida.Centimetro => "cm",
+            UnidadMedida.MetroCuadrado => "m²",
+            UnidadMedida.MetroCubico => "m³",
+            UnidadMedida.Hora => "h",
+            UnidadMedida.Dia => "d",
+            UnidadMedida.Semana => "sem",
+            UnidadMedida.Mes => "mes",
+            UnidadMedida.Año => "año",
+            _ => unidad.ToString()
+        };
     }
 }

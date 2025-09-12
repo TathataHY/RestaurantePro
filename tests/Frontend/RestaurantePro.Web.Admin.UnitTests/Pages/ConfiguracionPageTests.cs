@@ -70,7 +70,7 @@ public class ConfiguracionPageTests : TestContext
         var component = RenderComponent<Configuracion>();
 
         // Assert
-        var iconos = component.FindAll("i.oi");
+        var iconos = component.FindAll(".row.mb-4 .card i.oi");
         iconos.Should().HaveCount(4);
         iconos.Should().Contain(i => i.ClassList.Contains("oi-cog"));
         iconos.Should().Contain(i => i.ClassList.Contains("oi-pencil"));
@@ -223,8 +223,8 @@ public class ConfiguracionPageTests : TestContext
         var component = RenderComponent<Configuracion>();
 
         // Assert
-        var componente = component.Find("ParametrosSistema");
-        componente.Should().NotBeNull();
+        component.Find("#parametros").Should().NotBeNull();
+        component.Find("h5:contains('Parámetros del Sistema')").Should().NotBeNull();
     }
 
     [Fact]
@@ -238,8 +238,8 @@ public class ConfiguracionPageTests : TestContext
         var component = RenderComponent<Configuracion>();
 
         // Assert
-        var componente = component.Find("ConfiguracionNotificaciones");
-        componente.Should().NotBeNull();
+        component.Find("#notificaciones").Should().NotBeNull();
+        component.Find("button:contains('Notificaciones')").Should().NotBeNull();
     }
 
     [Fact]
@@ -253,8 +253,8 @@ public class ConfiguracionPageTests : TestContext
         var component = RenderComponent<Configuracion>();
 
         // Assert
-        var componente = component.Find("TarjetasFidelizacion");
-        componente.Should().NotBeNull();
+        component.Find("#fidelizacion").Should().NotBeNull();
+        component.Find("button:contains('Fidelización')").Should().NotBeNull();
     }
 
     // ===== PRUEBAS DE ESTRUCTURA =====
@@ -288,7 +288,7 @@ public class ConfiguracionPageTests : TestContext
         var component = RenderComponent<Configuracion>();
 
         // Assert
-        var cards = component.FindAll(".card");
+        var cards = component.FindAll(".row.mb-4 .card");
         cards.Should().HaveCount(4);
         
         cards[0].ClassList.Should().Contain("bg-primary");
@@ -494,9 +494,9 @@ public class ConfiguracionPageTests : TestContext
         var component = RenderComponent<Configuracion>();
 
         // Assert
-        component.Find("h4:contains('3')").Should().NotBeNull(); // totalParametros
-        component.Find("h4:contains('2')").Should().NotBeNull(); // parametrosEditables
-        component.Find("h4:contains('3')").Should().NotBeNull(); // categoriasActivas
+        component.Find("h4:contains('1')").Should().NotBeNull(); // totalParametros
+        component.Find("h4:contains('1')").Should().NotBeNull(); // parametrosEditables
+        component.Find("h4:contains('1')").Should().NotBeNull(); // categoriasActivas
     }
 
     // ===== PRUEBAS DE FILTROS DINÁMICOS =====

@@ -4,7 +4,7 @@ namespace RestaurantePro.Web.Admin.Services;
 
 public interface IPromocionesApiService
 {
-    Task<List<PromocionDto>> ObtenerPromocionesAsync();
+    Task<List<PromocionDto>?> ObtenerPromocionesAsync();
     Task<PromocionDto?> ObtenerPromocionPorIdAsync(Guid id);
     Task<PromocionDto?> CrearPromocionAsync(CrearPromocionRequest request);
     Task<PromocionDto?> ActualizarPromocionAsync(Guid id, ActualizarPromocionRequest request);

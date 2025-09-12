@@ -145,11 +145,7 @@ public class ClientesApiService : IClientesApiService
         catch (Exception ex)
         {
             Console.WriteLine($"Error al actualizar cliente: {ex.Message}");
-            return new ApiResponse<ClienteDto>
-            {
-                Success = false,
-                Message = $"Error al actualizar cliente: {ex.Message}"
-            };
+            return null;
         }
     }
 
@@ -178,7 +174,7 @@ public class ClientesApiService : IClientesApiService
     /// <summary>
     /// Activa o desactiva un cliente
     /// </summary>
-    public async Task<ApiResponse<bool>?> ToggleActivarClienteAsync(Guid id)
+    public async Task<ApiResponse<bool>?> ToggleActivarClienteInternalAsync(Guid id)
     {
         try
         {
@@ -326,7 +322,7 @@ public class ClientesApiService : IClientesApiService
     /// <summary>
     /// Valida si un email ya existe
     /// </summary>
-    public async Task<ApiResponse<bool>?> ValidarEmailAsync(string email, Guid? clienteIdExcluir = null)
+    public async Task<ApiResponse<bool>?> ValidarEmailInternalAsync(string email, Guid? clienteIdExcluir = null)
     {
         try
         {
@@ -498,7 +494,41 @@ public class ClientesApiService : IClientesApiService
     {
         try
         {
-            var response = await ToggleActivarClienteAsync(id);
+            var response = await ToggleActivarClienteInternalAsync(id);
+            return response?.Success ?? false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cambiar estado del cliente: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Valida si un email está disponible
+    /// </summary>
+    public async Task<bool> ValidarEmailAsync(string email, Guid? clienteIdExcluir = null)
+    {
+        try
+        {
+            var response = await ValidarEmailInternalAsync(email, clienteIdExcluir);
+            return response?.Data ?? false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al validar email: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Activa o desactiva un cliente
+    /// </summary>
+    public async Task<bool> ToggleActivarClienteAsync(Guid id)
+    {
+        try
+        {
+            var response = await ToggleActivarClienteInternalAsync(id);
             return response?.Success ?? false;
         }
         catch (Exception ex)

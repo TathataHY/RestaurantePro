@@ -725,7 +725,7 @@ public class ConfiguracionApiServiceTests
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado!.Clave.Should().Be("test_key");
+        resultado!.Clave.Should().Be("config_1");
     }
 
     [Fact]

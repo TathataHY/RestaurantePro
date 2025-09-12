@@ -143,11 +143,7 @@ public class PromocionesApiService : IPromocionesApiService
         catch (Exception ex)
         {
             Console.WriteLine($"Error al actualizar promoción: {ex.Message}");
-            return new ApiResponse<PromocionDto>
-            {
-                Success = false,
-                Message = $"Error al actualizar promoción: {ex.Message}"
-            };
+            return null;
         }
     }
 
@@ -278,17 +274,17 @@ public class PromocionesApiService : IPromocionesApiService
     /// <summary>
     /// Obtiene todas las promociones
     /// </summary>
-    public async Task<List<PromocionDto>> ObtenerPromocionesAsync()
+    public async Task<List<PromocionDto>?> ObtenerPromocionesAsync()
     {
         try
         {
             var result = await ObtenerPromocionesAsync(1, 1000);
-            return result?.Items ?? new List<PromocionDto>();
+            return result?.Items;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error al obtener promociones: {ex.Message}");
-            return new List<PromocionDto>();
+            return null;
         }
     }
 

@@ -169,7 +169,14 @@
         try
         {
             var resultado = await ConfiguracionApi.ObtenerConfiguracionAsync();
-            parametros = new List<ConfiguracionDto> { resultado };
+            if (resultado != null)
+            {
+                parametros = new List<ConfiguracionDto> { resultado };
+            }
+            else
+            {
+                parametros = new List<ConfiguracionDto>();
+            }
             parametrosFiltrados = parametros.ToList();
             CalcularEstadisticas();
             FiltrarParametros();
@@ -177,6 +184,8 @@
         catch (Exception ex)
         {
             await JSRuntime.InvokeVoidAsync("console.error", "Error al cargar parámetros:", ex.Message);
+            parametros = new List<ConfiguracionDto>();
+            parametrosFiltrados = new List<ConfiguracionDto>();
         }
     }
 

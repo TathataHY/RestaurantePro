@@ -10,4 +10,6 @@ public interface IClientesApiService
     Task<ClienteDto?> ActualizarClienteAsync(Guid id, ActualizarClienteRequest request);
     Task<bool> EliminarClienteAsync(Guid id);
     Task<bool> CambiarEstadoClienteAsync(Guid id, bool activo);
+    Task<bool> ValidarEmailAsync(string email, Guid? clienteIdExcluir = null);
+    Task<bool> ToggleActivarClienteAsync(Guid id);
 }
