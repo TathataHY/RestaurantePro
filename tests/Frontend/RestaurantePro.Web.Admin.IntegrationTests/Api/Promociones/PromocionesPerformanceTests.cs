@@ -54,7 +54,7 @@ public class PromocionesPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await client.GetAsync("/api/comercial/promociones?estado=Activa&tipo=DescuentoPorcentaje");
+        var response = await client.GetAsync("/api/comercial/promociones?estado=Activa&tipo=PorcentajeTotal");
         stopwatch.Stop();
 
         // Assert
@@ -78,7 +78,7 @@ public class PromocionesPerformanceTests : BaseIntegrationTest
             Codigo = "PERF_TEST",
             Nombre = "Test de Rendimiento",
             Descripcion = "Promoción para test de rendimiento",
-            Tipo = TipoPromocion.DescuentoPorcentaje,
+            Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
             ValorDescuento = 10,
             MontoMinimo = 50,
             FechaInicio = DateTime.UtcNow,
@@ -211,7 +211,7 @@ public class PromocionesPerformanceTests : BaseIntegrationTest
                 Codigo = $"BATCH_{i}",
                 Nombre = $"Promoción Batch {i}",
                 Descripcion = $"Promoción de lote {i}",
-                Tipo = TipoPromocion.DescuentoPorcentaje,
+                Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
                 ValorDescuento = 10 + i,
                 MontoMinimo = 50 + (i * 10),
                 FechaInicio = DateTime.UtcNow,
@@ -332,7 +332,7 @@ public class PromocionesPerformanceTests : BaseIntegrationTest
             Codigo = "PERF_SINGLE",
             Nombre = "Promoción Individual",
             Descripcion = "Promoción para test de rendimiento individual",
-            Tipo = TipoPromocion.DescuentoPorcentaje,
+            Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
             ValorDescuento = 10,
             MontoMinimo = 50,
             FechaInicio = DateTime.UtcNow,
@@ -341,7 +341,7 @@ public class PromocionesPerformanceTests : BaseIntegrationTest
             Prioridad = 1
         };
 
-        var mediator = _factory.Services.GetRequiredService<IMediator>();
+        var mediator = _factory.Services.GetRequiredService<MediatR.IMediator>();
         var result = await mediator.Send(command);
         return result.Value.Id;
     }
@@ -351,7 +351,7 @@ public class PromocionesPerformanceTests : BaseIntegrationTest
         var promocionId = await SeedPromocionAsync();
         var command = new ActivarPromocionCommand { Id = promocionId };
         
-        var mediator = _factory.Services.GetRequiredService<IMediator>();
+        var mediator = _factory.Services.GetRequiredService<MediatR.IMediator>();
         await mediator.Send(command);
         
         return promocionId;
@@ -368,7 +368,7 @@ public class PromocionesPerformanceTests : BaseIntegrationTest
                 Codigo = $"PERF_{i:D3}",
                 Nombre = $"Promoción de Rendimiento {i}",
                 Descripcion = $"Promoción {i} para test de rendimiento",
-                Tipo = i % 2 == 0 ? TipoPromocion.DescuentoPorcentaje : TipoPromocion.DescuentoFijo,
+                Tipo = i % 2 == 0 ? RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal : RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.MontoFijoTotal,
                 ValorDescuento = 10 + (i % 20),
                 MontoMinimo = 50 + (i * 10),
                 FechaInicio = DateTime.UtcNow,
@@ -378,7 +378,7 @@ public class PromocionesPerformanceTests : BaseIntegrationTest
             });
         }
 
-        var mediator = _factory.Services.GetRequiredService<IMediator>();
+        var mediator = _factory.Services.GetRequiredService<MediatR.IMediator>();
         foreach (var command in commands)
         {
             await mediator.Send(command);
@@ -396,7 +396,7 @@ public class PromocionesPerformanceTests : BaseIntegrationTest
                 Codigo = $"ESTADO_{i:D3}",
                 Nombre = $"Promoción Estado {i}",
                 Descripcion = $"Promoción {i} con estado específico",
-                Tipo = TipoPromocion.DescuentoPorcentaje,
+                Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
                 ValorDescuento = 10 + (i % 15),
                 MontoMinimo = 50 + (i * 5),
                 FechaInicio = DateTime.UtcNow,
@@ -406,7 +406,7 @@ public class PromocionesPerformanceTests : BaseIntegrationTest
             });
         }
 
-        var mediator = _factory.Services.GetRequiredService<IMediator>();
+        var mediator = _factory.Services.GetRequiredService<MediatR.IMediator>();
         foreach (var command in commands)
         {
             await mediator.Send(command);
@@ -425,7 +425,7 @@ public class PromocionesPerformanceTests : BaseIntegrationTest
                 Codigo = $"ACTIVA_{i:D3}",
                 Nombre = $"Promoción Activa {i}",
                 Descripcion = $"Promoción activa {i}",
-                Tipo = TipoPromocion.DescuentoPorcentaje,
+                Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
                 ValorDescuento = 10 + (i % 20),
                 MontoMinimo = 50 + (i * 10),
                 FechaInicio = DateTime.UtcNow,
@@ -435,7 +435,7 @@ public class PromocionesPerformanceTests : BaseIntegrationTest
             });
         }
 
-        var mediator = _factory.Services.GetRequiredService<IMediator>();
+        var mediator = _factory.Services.GetRequiredService<MediatR.IMediator>();
         foreach (var command in commands)
         {
             var result = await mediator.Send(command);
@@ -460,7 +460,7 @@ public class PromocionesPerformanceTests : BaseIntegrationTest
                 Codigo = $"NOMBRE_{i:D3}",
                 Nombre = $"Promoción Especial {i}",
                 Descripcion = $"Promoción {i} con nombre específico",
-                Tipo = TipoPromocion.DescuentoPorcentaje,
+                Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
                 ValorDescuento = 10 + (i % 15),
                 MontoMinimo = 50 + (i * 5),
                 FechaInicio = DateTime.UtcNow,
@@ -470,7 +470,7 @@ public class PromocionesPerformanceTests : BaseIntegrationTest
             });
         }
 
-        var mediator = _factory.Services.GetRequiredService<IMediator>();
+        var mediator = _factory.Services.GetRequiredService<MediatR.IMediator>();
         foreach (var command in commands)
         {
             await mediator.Send(command);
@@ -479,3 +479,4 @@ public class PromocionesPerformanceTests : BaseIntegrationTest
 
     #endregion
 }
+

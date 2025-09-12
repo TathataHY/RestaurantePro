@@ -21,6 +21,17 @@ public class ObtenerReporteVentasHandler : IRequestHandler<ObtenerReporteVentasQ
     {
         try
         {
+            // Validaciones de entrada
+            if (request.FechaInicio > request.FechaFin)
+            {
+                return Result.Failure<ReporteVentasDto>("La fecha de inicio debe ser anterior o igual a la fecha fin");
+            }
+
+            if (request.FechaInicio > DateTime.Now)
+            {
+                return Result.Failure<ReporteVentasDto>("La fecha de inicio no puede ser futura");
+            }
+
             _logger.LogInformation("📊 Generando reporte de ventas desde {FechaInicio} hasta {FechaFin}", 
                 request.FechaInicio.ToShortDateString(), request.FechaFin.ToShortDateString());
 

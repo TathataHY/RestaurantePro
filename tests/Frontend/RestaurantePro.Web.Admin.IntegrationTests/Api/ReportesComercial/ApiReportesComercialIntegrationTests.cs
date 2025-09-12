@@ -557,26 +557,15 @@ public class ApiReportesComercialIntegrationTests : BaseIntegrationTest
     {
         // Crear datos básicos necesarios para los reportes
         await CrearProductosDePruebaAsync(5);
-        await CrearClientesDePruebaAsync(10);
+        await CrearClientesDePruebaAsync(10, 8); // 10 total, 8 activos
         await CrearFacturasDePruebaAsync(20);
         await CrearPromocionesDePruebaAsync(3);
         await CrearTarjetasFidelizacionDePruebaAsync(5);
     }
 
-    private async Task<List<Guid>> CrearClientesDePruebaAsync(int cantidad)
+    private async Task<List<Guid>> CrearClientesDePruebaAsync(int total, int activos)
     {
-        var clienteIds = new List<Guid>();
-        
-        for (int i = 0; i < cantidad; i++)
-        {
-            var clienteId = Guid.NewGuid();
-            clienteIds.Add(clienteId);
-            
-            // Aquí se crearían los clientes en la base de datos de prueba
-            // Por ahora solo simulamos la creación
-        }
-        
-        return clienteIds;
+        return await base.CrearClientesDePruebaAsync(total, activos);
     }
 
     private async Task<List<Guid>> CrearFacturasDePruebaAsync(int cantidad)

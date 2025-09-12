@@ -20,16 +20,12 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
 {
     protected readonly WebApplicationFactory _factory;
     protected readonly HttpClient _client;
-    protected readonly RestauranteProDbContext _context;
+    protected RestauranteProDbContext _context;
 
     protected BaseIntegrationTest(WebApplicationFactory factory)
     {
         _factory = factory;
         _client = CreateAuthenticatedClient();
-
-        // Obtener un DbContext fresco para cada prueba
-        var scope = _factory.Services.CreateScope();
-        _context = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
     }
 
     /// <summary>
@@ -42,7 +38,9 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
             Converters = { 
                 new EstadoUsuarioConverter(),
                 new TipoUsuarioConverter(),
-                new RolUsuarioConverter()
+                new RolUsuarioConverter(),
+                new TipoPromocionConverter(),
+                new EstadoPromocionConverter()
             },
             PropertyNameCaseInsensitive = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
@@ -72,6 +70,10 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
     /// </summary>
     public virtual async Task InitializeAsync()
     {
+        // Crear un contexto fresco para cada prueba
+        var scope = _factory.Services.CreateScope();
+        _context = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
+        
         // Limpiar la base de datos antes de cada prueba
         await CleanupDatabaseAsync();
     }
@@ -336,6 +338,50 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
         client.DefaultRequestHeaders.Add("Authorization", "Bearer test-token");
         client.DefaultRequestHeaders.Add("X-Test-Role", rol);
         return client;
+    }
+
+    #endregion
+
+    #region Clientes Helper Methods
+
+    /// <summary>
+    /// Crea clientes de prueba y retorna sus IDs
+    /// </summary>
+    protected async Task<List<Guid>> CrearClientesDePruebaAsync(int total, int activos)
+    {
+        return await ClientesTestSeeder.SeedClientesAsync(_context, total, activos);
+    }
+
+    /// <summary>
+    /// Crea clientes con un segmento específico
+    /// </summary>
+    protected async Task<List<Guid>> CrearClientesConSegmentoAsync(int cantidad, string segmento)
+    {
+        return await ClientesTestSeeder.SeedClientesConSegmentoAsync(_context, cantidad, segmento);
+    }
+
+    /// <summary>
+    /// Crea clientes con fechas de registro específicas
+    /// </summary>
+    protected async Task<List<Guid>> CrearClientesConFechasRegistroAsync(int cantidad, DateTime fechaDesde, DateTime fechaHasta)
+    {
+        return await ClientesTestSeeder.SeedClientesConFechasRegistroAsync(_context, cantidad, fechaDesde, fechaHasta);
+    }
+
+    /// <summary>
+    /// Crea clientes con filtros combinados
+    /// </summary>
+    protected async Task<List<Guid>> CrearClientesConFiltrosCombinadosAsync(int cantidad, string segmento, DateTime fechaDesde, DateTime fechaHasta)
+    {
+        return await ClientesTestSeeder.SeedClientesConFiltrosCombinadosAsync(_context, cantidad, segmento, fechaDesde, fechaHasta, true);
+    }
+
+    /// <summary>
+    /// Crea solo clientes activos
+    /// </summary>
+    protected async Task<List<Guid>> CrearClientesActivosAsync(int cantidad)
+    {
+        return await ClientesTestSeeder.SeedClientesActivosAsync(_context, cantidad);
     }
 
     #endregion

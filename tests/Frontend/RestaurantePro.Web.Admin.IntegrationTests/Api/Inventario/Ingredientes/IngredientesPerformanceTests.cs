@@ -145,11 +145,12 @@ public class IngredientesPerformanceTests : BaseIntegrationTest
             var command = new CrearIngredienteCommand
             {
                 Nombre = $"Ingrediente Performance Test {i}",
-                Rotacion = RotacionIngrediente.Media,
-                UnidadMedida = UnidadMedida.Kilogramo,
+                Rotacion = "Media",
+                UnidadMedida = "Kilogramo",
                 StockMinimo = 1,
-                StockMaximo = 10,
-                PrecioUnitario = 5.00m
+                StockInicial = 5,
+                UsuarioId = Guid.NewGuid(),
+                CostoInicial = 5.00m
             };
             
             tasks.Add(_client.PostAsJsonAsync("/api/inventario/ingredientes", command));
@@ -314,11 +315,12 @@ public class IngredientesPerformanceTests : BaseIntegrationTest
         var command = new CrearIngredienteCommand
         {
             Nombre = "Ingrediente Performance Test",
-            Rotacion = RotacionIngrediente.Alta,
-            UnidadMedida = UnidadMedida.Kilogramo,
+            Rotacion = "Alta",
+            UnidadMedida = "Kilogramo",
             StockMinimo = 1,
-            StockMaximo = 10,
-            PrecioUnitario = 5.00m
+            StockInicial = 5,
+            UsuarioId = Guid.NewGuid(),
+            CostoInicial = 5.00m
         };
 
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();

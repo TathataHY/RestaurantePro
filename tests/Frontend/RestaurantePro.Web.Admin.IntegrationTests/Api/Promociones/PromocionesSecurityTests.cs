@@ -57,7 +57,7 @@ public class PromocionesSecurityTests : BaseIntegrationTest
             Codigo = "SEC_TEST",
             Nombre = "Test de Seguridad",
             Descripcion = "Promoción para test de seguridad",
-            Tipo = TipoPromocion.DescuentoPorcentaje,
+            Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
             ValorDescuento = 10,
             MontoMinimo = 50,
             FechaInicio = DateTime.UtcNow,
@@ -208,8 +208,12 @@ public class PromocionesSecurityTests : BaseIntegrationTest
         var json = JsonSerializer.Serialize(productosIds, GetJsonOptions());
 
         // Act
-        var response = await client.DeleteAsync($"/api/comercial/promociones/{promocionId}/productos", 
-            new StringContent(json, System.Text.Encoding.UTF8, "application/json"));
+        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"/api/comercial/promociones/{promocionId}/productos")
+        {
+            Content = content
+        };
+        var response = await client.SendAsync(request);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.Unauthorized);
@@ -224,7 +228,7 @@ public class PromocionesSecurityTests : BaseIntegrationTest
             Codigo = "<script>alert('xss')</script>",
             Nombre = "'; DROP TABLE Promociones; --",
             Descripcion = "Descripción con <script>alert('xss')</script>",
-            Tipo = TipoPromocion.DescuentoPorcentaje,
+            Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
             ValorDescuento = 10,
             MontoMinimo = 50,
             FechaInicio = DateTime.UtcNow,
@@ -264,7 +268,7 @@ public class PromocionesSecurityTests : BaseIntegrationTest
             Codigo = new string('A', 1000), // Código muy largo
             Nombre = new string('B', 1000), // Nombre muy largo
             Descripcion = new string('C', 10000), // Descripción muy larga
-            Tipo = TipoPromocion.DescuentoPorcentaje,
+            Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
             ValorDescuento = 10,
             MontoMinimo = 50,
             FechaInicio = DateTime.UtcNow,
@@ -349,7 +353,7 @@ public class PromocionesSecurityTests : BaseIntegrationTest
             Codigo = "EXTREME",
             Nombre = "Promoción con Valores Extremos",
             Descripcion = "Promoción con valores extremos",
-            Tipo = TipoPromocion.DescuentoPorcentaje,
+            Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
             ValorDescuento = decimal.MaxValue, // Valor extremo
             MontoMinimo = decimal.MaxValue, // Valor extremo
             FechaInicio = DateTime.MinValue, // Fecha extrema
@@ -416,7 +420,7 @@ public class PromocionesSecurityTests : BaseIntegrationTest
             Codigo = "SEC_ACTIVA",
             Nombre = "Promoción Activa Seguridad",
             Descripcion = "Promoción activa para tests de seguridad",
-            Tipo = TipoPromocion.DescuentoPorcentaje,
+            Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
             ValorDescuento = 10,
             MontoMinimo = 50,
             FechaInicio = DateTime.UtcNow,
@@ -425,7 +429,7 @@ public class PromocionesSecurityTests : BaseIntegrationTest
             Prioridad = 1
         };
 
-        var mediator = _factory.Services.GetRequiredService<IMediator>();
+        var mediator = _factory.Services.GetRequiredService<MediatR.IMediator>();
         var result = await mediator.Send(command);
         
         if (result.Succeeded)
@@ -438,4 +442,14 @@ public class PromocionesSecurityTests : BaseIntegrationTest
     }
 
     #endregion
+}
+
+/// <summary>
+/// DTO para aplicar una promoción
+/// </summary>
+public class AplicarPromocionDto
+{
+    public Guid PromocionId { get; set; }
+    public Guid ClienteId { get; set; }
+    public List<Guid> ProductosIds { get; set; } = new();
 }

@@ -23,6 +23,16 @@ using RestaurantePro.Application.Config.DependencyInjection;
 using FluentValidation;
 using RestaurantePro.Mobile.Core.Services.Notifications;
 using RestaurantePro.Mobile.Core.Services.Realtime;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using System.Text.Encodings.Web;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
+using System.Linq;
 
 namespace RestaurantePro.Mobile.IntegrationTests.TestBase;
 
@@ -59,6 +69,24 @@ public class MobileIntegrationTestFixture : WebApplicationFactory<Program>, IDis
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        // 🔧 CONFIGURAR EL CONTENT ROOT CORRECTO PARA EL PROYECTO API
+        // Buscar el directorio raíz del proyecto (donde está el .sln)
+        var currentDir = Directory.GetCurrentDirectory();
+        var solutionDir = currentDir;
+        while (!File.Exists(Path.Combine(solutionDir, "RestaurantePro.sln")))
+        {
+            var parentDir = Directory.GetParent(solutionDir);
+            if (parentDir == null) break;
+            solutionDir = parentDir.FullName;
+        }
+        
+        var apiProjectPath = Path.Combine(solutionDir, "src", "Backend", "RestaurantePro.Api");
+        Console.WriteLine($"🔍 Directorio actual: {currentDir}");
+        Console.WriteLine($"🔍 Directorio de solución: {solutionDir}");
+        Console.WriteLine($"🔍 Ruta del proyecto API: {apiProjectPath}");
+        Console.WriteLine($"🔍 ¿Existe el directorio? {Directory.Exists(apiProjectPath)}");
+        builder.UseContentRoot(apiProjectPath);
+        
         // 🔧 CONFIGURAR VARIABLES DE ENTORNO PARA TESTS
         Environment.SetEnvironmentVariable("TESTING_MODE", "true");
         Environment.SetEnvironmentVariable("UseInMemoryDatabase", "true");
@@ -98,7 +126,17 @@ public class MobileIntegrationTestFixture : WebApplicationFactory<Program>, IDis
 
             // 🔧 REGISTRAR SERVICIOS DE INFRAESTRUCTURA
             services.AddPersistenceServices(configuration, isTestEnvironment: true);
-            IdentitySetup.AddIdentityServices(services, configuration);
+            
+            // 🔧 CONFIGURAR IDENTITY SIN JWT BEARER PARA TESTS (como en los tests del backend)
+            TestIdentityConfiguration.ConfigureIdentityForTests(services, configuration);
+            
+            // 🔧 RE-REGISTRAR AUTENTICACIÓN PARA FORZAR EL HANDLER DE TEST COMO ESQUEMA POR DEFECTO
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = "Test";
+                options.DefaultChallengeScheme = "Test";
+            })
+            .AddScheme<AuthenticationSchemeOptions, TestAuthenticationHandler>("Test", options => { });
             
             // 🔧 REGISTRAR SERVICIOS DE IDENTIDAD PARA AUTENTICACIÓN
             services.AddScoped<RestaurantePro.Application.Common.Interfaces.IIdentityService, RestaurantePro.Infrastructure.Identity.Services.IdentityService>();
@@ -128,6 +166,9 @@ public class MobileIntegrationTestFixture : WebApplicationFactory<Program>, IDis
             services.AddScoped<RestaurantePro.Application.Common.Interfaces.IDelayProvider, MockDelayProvider>();
             services.AddScoped<RestaurantePro.Application.Common.Interfaces.IFileStorageService, MockFileStorageService>();
             
+            // 🔧 REGISTRAR API SERVICE PERSONALIZADO PARA TESTS
+            services.AddScoped<RestaurantePro.Mobile.Core.Services.Api.IApiService, TestApiService>();
+            
             // 🔧 REGISTRAR EL SERVICIO DE SEED DE DATOS
             services.AddScoped<ISeedDataService, TestSeedDataService>();
             
@@ -137,9 +178,8 @@ public class MobileIntegrationTestFixture : WebApplicationFactory<Program>, IDis
             // 🔧 REGISTRAR CACHE FAKE PARA HANDLERS QUE LO REQUIEREN
             services.AddSingleton<RestaurantePro.Domain.Core.SharedKernel.Services.Cache.ICacheService, TestCacheService>();
             
-            // 🔧 REGISTRAR TEST ANALYTICS SERVICE
-            Console.WriteLine("🔧 Registrando TestAnalyticsService en MobileIntegrationTestFixture");
-            services.AddScoped<RestaurantePro.Domain.Core.Analytics.Interfaces.IAnalyticsService, TestAnalyticsService>();
+            // 🔧 NO MOCKEAR EL SERVICIO DE ANALYTICS - USAR EL REAL PARA DATOS DE BD
+            Console.WriteLine("🔧 Usando AnalyticsService real para obtener datos de la BD");
             
             // 🔧 REGISTRAR TEST NOTIFICATION SERVICE
             Console.WriteLine("🔧 Registrando TestNotificationService en MobileIntegrationTestFixture");
@@ -222,6 +262,56 @@ public class MobileIntegrationTestFixture : WebApplicationFactory<Program>, IDis
             }
             _disposed = true;
         }
+    }
+}
+
+/// <summary>
+/// Configura Identity para tests sin JWT Bearer
+/// </summary>
+public static class TestIdentityConfiguration
+{
+    public static void ConfigureIdentityForTests(IServiceCollection services, IConfiguration configuration)
+    {
+        // Configurar opciones de JWT (solo para compatibilidad, no se usará)
+        services.Configure<RestaurantePro.Infrastructure.Identity.Configuration.JwtConfiguration>(configuration.GetSection("JwtSettings"));
+        services.AddSingleton<IConfigureOptions<RestaurantePro.Infrastructure.Identity.Configuration.JwtConfiguration>, RestaurantePro.Infrastructure.Identity.Configuration.JwtConfigurationSetup>();
+
+        // Configurar Identity desde el archivo de configuración
+        services.Configure<RestaurantePro.Infrastructure.Identity.Configuration.IdentityConfiguration>(configuration.GetSection("IdentitySettings"));
+        var identitySettings = configuration.GetSection("IdentitySettings").Get<RestaurantePro.Infrastructure.Identity.Configuration.IdentityConfiguration>() ?? new RestaurantePro.Infrastructure.Identity.Configuration.IdentityConfiguration();
+
+        services.AddIdentity<RestaurantePro.Infrastructure.Identity.Models.ApplicationUser, RestaurantePro.Infrastructure.Identity.Models.ApplicationRole>(options =>
+        {
+            // Configuración de contraseñas
+            options.Password.RequireDigit = identitySettings.PasswordSettings.RequireDigit;
+            options.Password.RequireLowercase = identitySettings.PasswordSettings.RequireLowercase;
+            options.Password.RequireUppercase = identitySettings.PasswordSettings.RequireUppercase;
+            options.Password.RequireNonAlphanumeric = identitySettings.PasswordSettings.RequireNonAlphanumeric;
+            options.Password.RequiredLength = identitySettings.PasswordSettings.RequiredLength;
+            options.Password.RequiredUniqueChars = identitySettings.PasswordSettings.RequiredUniqueChars;
+
+            // Configuración de bloqueo
+            options.Lockout.DefaultLockoutTimeSpan = identitySettings.LockoutSettings.DefaultLockoutTimeSpan;
+            options.Lockout.MaxFailedAccessAttempts = identitySettings.LockoutSettings.MaxFailedAccessAttempts;
+            options.Lockout.AllowedForNewUsers = identitySettings.LockoutSettings.AllowedForNewUsers;
+
+            // Configuración de usuario
+            options.User.RequireUniqueEmail = identitySettings.UserSettings.RequireUniqueEmail;
+            
+            // Configuración de SignIn
+            options.SignIn.RequireConfirmedAccount = identitySettings.UserSettings.RequireConfirmedAccount;
+            options.SignIn.RequireConfirmedEmail = identitySettings.UserSettings.RequireConfirmedEmail;
+            options.SignIn.RequireConfirmedPhoneNumber = identitySettings.UserSettings.RequireConfirmedPhoneNumber;
+        })
+        .AddEntityFrameworkStores<RestauranteProDbContext>()
+        .AddDefaultTokenProviders()
+        .AddRoles<RestaurantePro.Infrastructure.Identity.Models.ApplicationRole>()
+        .AddRoleManager<RoleManager<RestaurantePro.Infrastructure.Identity.Models.ApplicationRole>>()
+        .AddRoleValidator<RoleValidator<RestaurantePro.Infrastructure.Identity.Models.ApplicationRole>>();
+
+        // Registrar servicios de Identity
+        services.AddScoped<RestaurantePro.Application.Common.Interfaces.IJwtTokenService, RestaurantePro.Infrastructure.Identity.Services.JwtTokenService>();
+        services.AddScoped<RestaurantePro.Application.Common.Interfaces.IIdentityService, RestaurantePro.Infrastructure.Identity.Services.IdentityService>();
     }
 }
 
@@ -361,95 +451,6 @@ public class JwtSettings
     public int ExpirationInMinutes { get; set; } = 60;
 }
 
-/// <summary>
-/// Implementación de prueba del servicio de analytics para tests móviles
-/// </summary>
-public class TestAnalyticsService : RestaurantePro.Domain.Core.Analytics.Interfaces.IAnalyticsService
-{
-    public TestAnalyticsService()
-    {
-        Console.WriteLine("🔧 TestAnalyticsService constructor llamado en MobileIntegrationTestFixture");
-    }
-
-    public async Task<RestaurantePro.Domain.Core.Analytics.DTOs.MetricasDiaDto> ObtenerMetricasDiaAsync()
-    {
-        Console.WriteLine("🔧 TestAnalyticsService.ObtenerMetricasDiaAsync() llamado en MobileIntegrationTestFixture");
-        Console.WriteLine("🔧 Retornando datos mock para ObtenerMetricasDiaAsync");
-        return await Task.FromResult(new RestaurantePro.Domain.Core.Analytics.DTOs.MetricasDiaDto
-        {
-            Fecha = DateTime.Today,
-            TotalVentas = 1250.50m,
-            TotalComandas = 15,
-            TotalProductosVendidos = 45,
-            TiempoPromedioPreparacion = 12,
-            PorcentajeOcupacionMesas = 75.5m,
-            ClientesAtendidos = 42,
-            TopProductos = new List<RestaurantePro.Domain.Core.Analytics.DTOs.TopProductoDto>
-            {
-                new() { ProductoId = Guid.NewGuid(), NombreProducto = "Hamburguesa Clásica", Categoria = "Platos Principales", CantidadVendida = 8, TotalVentas = 320.00m, PorcentajeTotalVentas = 25.6m, PrecioPromedio = 40.00m }
-            }
-        });
-    }
-
-    public async Task<RestaurantePro.Domain.Core.Analytics.DTOs.MetricasRangoDto> ObtenerMetricasRangoAsync(DateTime fechaDesde, DateTime fechaHasta)
-    {
-        return await Task.FromResult(new RestaurantePro.Domain.Core.Analytics.DTOs.MetricasRangoDto
-        {
-            FechaDesde = fechaDesde,
-            FechaHasta = fechaHasta,
-            TotalVentas = 8750.75m,
-            TotalComandas = 105,
-            PromedioVentasDiarias = 1250.11m,
-            PromedioComandasDiarias = 15.0m,
-            MetricasPorDia = new List<RestaurantePro.Domain.Core.Analytics.DTOs.MetricasDiaDto>()
-        });
-    }
-
-    public async Task<List<RestaurantePro.Domain.Core.Analytics.DTOs.TopProductoDto>> ObtenerTopProductosAsync(int limite, DateTime? fechaDesde = null, DateTime? fechaHasta = null)
-    {
-        return await Task.FromResult(new List<RestaurantePro.Domain.Core.Analytics.DTOs.TopProductoDto>
-        {
-            new() { ProductoId = Guid.NewGuid(), NombreProducto = "Hamburguesa Clásica", Categoria = "Platos Principales", CantidadVendida = 45, TotalVentas = 1800.00m, PorcentajeTotalVentas = 18.5m, PrecioPromedio = 40.00m }
-        });
-    }
-
-    public async Task<RestaurantePro.Domain.Core.Analytics.DTOs.OcupacionMesasDto> ObtenerOcupacionMesasAsync(DateTime fecha)
-    {
-        return await Task.FromResult(new RestaurantePro.Domain.Core.Analytics.DTOs.OcupacionMesasDto
-        {
-            Fecha = fecha,
-            TotalMesas = 20,
-            MesasOcupadas = 15,
-            MesasDisponibles = 5,
-            TiempoPromedioOcupacion = 85,
-            RotacionesMesas = 8
-        });
-    }
-
-    public async Task<RestaurantePro.Domain.Core.Analytics.DTOs.TiempoPreparacionDto> ObtenerTiempoPreparacionAsync(DateTime? fechaDesde = null, DateTime? fechaHasta = null)
-    {
-        return await Task.FromResult(new RestaurantePro.Domain.Core.Analytics.DTOs.TiempoPreparacionDto
-        {
-            TiempoPromedioMinutos = 12,
-            TiempoMinimoMinutos = 5,
-            TiempoMaximoMinutos = 25,
-            TotalPreparaciones = 150,
-            PreparacionesEnTiempo = 135,
-            PreparacionesFueraTiempo = 15,
-            TiempoEstandarMinutos = 15
-        });
-    }
-
-    public async Task<List<RestaurantePro.Domain.Core.Analytics.DTOs.VentasHoraDto>> ObtenerVentasPorHoraAsync(DateTime fecha)
-    {
-        return await Task.FromResult(new List<RestaurantePro.Domain.Core.Analytics.DTOs.VentasHoraDto>
-        {
-            new() { Hora = 12, TotalVentas = 450.00m, NumeroComandas = 8, PorcentajeTotalVentas = 36.0m },
-            new() { Hora = 13, TotalVentas = 650.00m, NumeroComandas = 12, PorcentajeTotalVentas = 52.0m },
-            new() { Hora = 14, TotalVentas = 350.00m, NumeroComandas = 6, PorcentajeTotalVentas = 28.0m }
-        });
-    }
-}
 
 /// <summary>
 /// Implementación de prueba del servicio de almacenamiento seguro para tests móviles
@@ -484,64 +485,259 @@ public class TestSecureStorageService : RestaurantePro.Mobile.Core.Services.Plat
 }
 
 /// <summary>
-/// Implementación de prueba del servicio de API para tests móviles
+/// Authentication handler personalizado para tests que bypasa la autenticación real
 /// </summary>
-public class TestApiService : RestaurantePro.Mobile.Core.Services.Api.IApiService
+public class TestAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
-    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>> GetAsync<T>(string endpoint, string? token = null, CancellationToken cancellationToken = default)
+    public TestAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options,
+        ILoggerFactory logger, UrlEncoder encoder, ISystemClock clock)
+        : base(options, logger, encoder, clock)
     {
-        // Mock response para tests
-        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>
-        {
-            Success = true,
-            Data = default(T),
-            Message = "Mock response"
-        };
-        return Task.FromResult(response);
     }
 
-    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>> PostAsync<T>(string endpoint, object data, string? token = null, CancellationToken cancellationToken = default)
+    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>
+        Console.WriteLine($"🔍 TestAuthenticationHandler: Iniciando autenticación...");
+        Console.WriteLine($"🔍 TestAuthenticationHandler: URL: {Request.Path}");
+        Console.WriteLine($"🔍 TestAuthenticationHandler: Método: {Request.Method}");
+        Console.WriteLine($"🔍 TestAuthenticationHandler: Headers disponibles: {string.Join(", ", Request.Headers.Keys)}");
+        
+        // Verificar si hay un header de autorización (X-Bearer-Token o Authorization)
+        string? authHeader = null;
+        if (Request.Headers.ContainsKey("X-Bearer-Token"))
         {
-            Success = true,
-            Data = default(T),
-            Message = "Mock response"
-        };
-        return Task.FromResult(response);
+            authHeader = Request.Headers["X-Bearer-Token"].ToString();
+            Console.WriteLine($"🔍 TestAuthenticationHandler: Header X-Bearer-Token encontrado: {authHeader}");
+        }
+        else if (Request.Headers.ContainsKey("Authorization"))
+        {
+            authHeader = Request.Headers["Authorization"].ToString();
+            Console.WriteLine($"🔍 TestAuthenticationHandler: Header Authorization encontrado: {authHeader}");
+        }
+        else
+        {
+            Console.WriteLine($"🔍 TestAuthenticationHandler: NO hay headers de autorización");
+            return Task.FromResult(AuthenticateResult.Fail("No authorization header"));
+        }
+        Console.WriteLine($"🔍 TestAuthenticationHandler: Header recibido: {authHeader}");
+        
+        // Si es un token JWT válido (Bearer), procesarlo y devolver autenticación exitosa
+        if (authHeader.StartsWith("Bearer "))
+        {
+            Console.WriteLine($"🔍 TestAuthenticationHandler: Procesando Bearer token");
+            return HandleBearerSchemeAsync(authHeader);
+        }
+        
+        // Si es un token JWT directo (sin prefijo Bearer), procesarlo
+        if (authHeader.Contains(".") && authHeader.Split('.').Length == 3)
+        {
+            Console.WriteLine($"🔍 TestAuthenticationHandler: Procesando JWT token directo");
+            return HandleBearerSchemeAsync($"Bearer {authHeader}");
+        }
+        
+        // Soporte para esquema "Test" (comportamiento original)
+        if (authHeader.StartsWith("Test "))
+        {
+            Console.WriteLine($"🔍 TestAuthenticationHandler: Procesando Test scheme");
+            var result = HandleTestSchemeAsync(authHeader);
+            Console.WriteLine($"🔍 TestAuthenticationHandler: Resultado de Test scheme: {result.Result.Succeeded}");
+            return result;
+        }
+        
+        Console.WriteLine($"🔍 TestAuthenticationHandler: Esquema no reconocido");
+        return Task.FromResult(AuthenticateResult.Fail("Invalid authentication scheme"));
     }
 
-    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>> PutAsync<T>(string endpoint, object data, string? token = null, CancellationToken cancellationToken = default)
+    private Task<AuthenticateResult> HandleTestSchemeAsync(string authHeader)
     {
-        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>
+        var role = "Administrador"; // Rol por defecto
+        var userId = Guid.NewGuid().ToString(); // ID por defecto
+        
+        // Remover el prefijo "Test " para procesar el resto
+        var authValue = authHeader.Substring(5); // "Test " tiene 5 caracteres
+        Console.WriteLine($"🔍 TestAuthenticationHandler: Valor de autorización: {authValue}");
+        
+        if (authValue.StartsWith("User_"))
         {
-            Success = true,
-            Data = default(T),
-            Message = "Mock response"
+            // Formato: "User_{userId}_{rol}"
+            var userPart = authValue.Substring(5); // Remover "User_"
+            var parts = userPart.Split('_');
+            Console.WriteLine($"🔍 TestAuthenticationHandler: Parts encontrados: {string.Join(", ", parts)}");
+            
+            if (parts.Length >= 2)
+            {
+                if (Guid.TryParse(parts[0], out var parsedUserId))
+                {
+                    userId = parsedUserId.ToString();
+                    Console.WriteLine($"🔍 TestAuthenticationHandler: UserId parseado correctamente: {userId}");
+                }
+                else
+                {
+                    Console.WriteLine($"🔍 TestAuthenticationHandler: Error al parsear UserId: {parts[0]}");
+                }
+                role = parts[1];
+            }
+        }
+        else if (authValue.StartsWith("AuthenticatedUser-"))
+        {
+            // Formato: "AuthenticatedUser-{rol}"
+            role = authValue.Substring(17); // Remover "AuthenticatedUser-"
+            Console.WriteLine($"🔍 TestAuthenticationHandler: Formato AuthenticatedUser detectado, rol: {role}");
+        }
+
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, userId),
+            new Claim(ClaimTypes.Name, "TestUser"),
+            new Claim(ClaimTypes.Email, "test@test.com"),
+            new Claim(ClaimTypes.Role, role),
+            new Claim("permission", "perfil.read"),
+            new Claim("permission", "perfil.update")
         };
-        return Task.FromResult(response);
+
+        var identity = new ClaimsIdentity(claims, "Test");
+        var principal = new ClaimsPrincipal(identity);
+        var ticket = new AuthenticationTicket(principal, "Test");
+
+        return Task.FromResult(AuthenticateResult.Success(ticket));
     }
 
-    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>> PatchAsync<T>(string endpoint, object data, string? token = null, CancellationToken cancellationToken = default)
+    private Task<AuthenticateResult> HandleBearerSchemeAsync(string authHeader)
     {
-        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>
+        try
         {
-            Success = true,
-            Data = default(T),
-            Message = "Mock response"
-        };
-        return Task.FromResult(response);
-    }
-
-    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>> DeleteAsync(string endpoint, string? token = null, CancellationToken cancellationToken = default)
-    {
-        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>
+            // Extraer el token JWT
+            var token = authHeader.Substring(7); // "Bearer " tiene 7 caracteres
+            
+            Console.WriteLine($"[DEBUG] HandleBearerSchemeAsync - Token recibido: {token}");
+            
+            // 🔧 PARSER BÁSICO DE JWT PARA TESTS
+            // En tests, vamos a extraer información básica del token JWT sin validación criptográfica
+            var parts = token.Split('.');
+            if (parts.Length != 3)
+            {
+                Console.WriteLine($"[DEBUG] HandleBearerSchemeAsync - Token no es JWT válido (partes: {parts.Length}), usando fallback");
+                // Si no es un JWT válido, aceptar cualquier token fake para tests
+                var fallbackClaims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.NameIdentifier, "fake-user-id"),
+                    new Claim(ClaimTypes.Name, "FakeUser"),
+                    new Claim(ClaimTypes.Email, "fake@test.com"),
+                    new Claim(ClaimTypes.Role, "Empleado"),
+                    new Claim("permission", "perfil.read"),
+                    new Claim("permission", "perfil.update")
+                };
+                
+                var fallbackIdentity = new ClaimsIdentity(fallbackClaims, "Test");
+                var fallbackPrincipal = new ClaimsPrincipal(fallbackIdentity);
+                
+                return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(fallbackPrincipal, "Test")));
+            }
+            
+            // Intentar parsear el payload del JWT
+            var payload = parts[1];
+            // Agregar padding si es necesario
+            var padding = 4 - (payload.Length % 4);
+            if (padding != 4)
+            {
+                payload += new string('=', padding);
+            }
+            
+            var payloadBytes = Convert.FromBase64String(payload);
+            var payloadJson = System.Text.Encoding.UTF8.GetString(payloadBytes);
+            Console.WriteLine($"[DEBUG] HandleBearerSchemeAsync - Payload: {payloadJson}");
+            
+            // Parsear el JSON del payload
+            var payloadObj = JsonSerializer.Deserialize<JsonObject>(payloadJson);
+            if (payloadObj == null)
+            {
+                Console.WriteLine($"[DEBUG] HandleBearerSchemeAsync - No se pudo parsear el payload JSON");
+                return Task.FromResult(AuthenticateResult.Fail("Invalid JWT payload"));
+            }
+            
+            // Extraer claims del JWT
+            var claims = new List<Claim>();
+            
+            // NameIdentifier (sub) - Preservar tanto el claim "sub" como NameIdentifier
+            if (payloadObj.TryGetPropertyValue("sub", out var subValue))
+            {
+                var subString = subValue?.ToString() ?? "unknown";
+                claims.Add(new Claim(ClaimTypes.NameIdentifier, subString));
+                claims.Add(new Claim("sub", subString)); // Preservar el claim "sub" original
+                claims.Add(new Claim("userid", subString)); // También agregar "userid" como fallback
+            }
+            
+            // Name (name)
+            if (payloadObj.TryGetPropertyValue("name", out var nameValue))
+            {
+                claims.Add(new Claim(ClaimTypes.Name, nameValue?.ToString() ?? "Unknown"));
+            }
+            
+            // Email
+            if (payloadObj.TryGetPropertyValue("email", out var emailValue))
+            {
+                claims.Add(new Claim(ClaimTypes.Email, emailValue?.ToString() ?? "unknown@test.com"));
+            }
+            
+            // UID (identificador adicional)
+            if (payloadObj.TryGetPropertyValue("uid", out var uidValue))
+            {
+                claims.Add(new Claim("uid", uidValue?.ToString() ?? "unknown"));
+            }
+            
+            // Roles - El JWT real puede tener múltiples roles como claims separados
+            // Buscar todos los claims de tipo "role" en el payload
+            var roleClaims = payloadObj.Where(kvp => kvp.Key == "role").ToList();
+            if (roleClaims.Any())
+            {
+                foreach (var roleClaim in roleClaims)
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, roleClaim.Value?.ToString() ?? "Empleado"));
+                }
+            }
+            else
+            {
+                // Fallback: buscar en claims estándar de JWT
+                if (payloadObj.TryGetPropertyValue("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", out var standardRoleValue))
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, standardRoleValue?.ToString() ?? "Empleado"));
+                }
+            }
+            
+            // Agregar claims por defecto si no hay suficientes
+            if (!claims.Any(c => c.Type == ClaimTypes.NameIdentifier))
+            {
+                claims.Add(new Claim(ClaimTypes.NameIdentifier, "admin@restaurantepro.com"));
+            }
+            if (!claims.Any(c => c.Type == ClaimTypes.Name))
+            {
+                claims.Add(new Claim(ClaimTypes.Name, "admin@restaurantepro.com"));
+            }
+            if (!claims.Any(c => c.Type == ClaimTypes.Email))
+            {
+                claims.Add(new Claim(ClaimTypes.Email, "admin@restaurantepro.com"));
+            }
+            if (!claims.Any(c => c.Type == ClaimTypes.Role))
+            {
+                claims.Add(new Claim(ClaimTypes.Role, "Administrador"));
+            }
+            
+            // Agregar permisos
+            claims.Add(new Claim("permission", "perfil.read"));
+            claims.Add(new Claim("permission", "perfil.update"));
+            
+            var identity = new ClaimsIdentity(claims, "Test");
+            var principal = new ClaimsPrincipal(identity);
+            var ticket = new AuthenticationTicket(principal, "Test");
+            
+            Console.WriteLine($"[DEBUG] HandleBearerSchemeAsync - Autenticación exitosa con {claims.Count} claims");
+            return Task.FromResult(AuthenticateResult.Success(ticket));
+        }
+        catch (Exception ex)
         {
-            Success = true,
-            Data = true,
-            Message = "Mock response"
-        };
-        return Task.FromResult(response);
+            Console.WriteLine($"[DEBUG] HandleBearerSchemeAsync - Error procesando JWT: {ex.Message}");
+            return Task.FromResult(AuthenticateResult.Fail($"Error processing JWT: {ex.Message}"));
+        }
     }
 }
 
@@ -552,7 +748,8 @@ public class TestAuthService : RestaurantePro.Mobile.Core.Services.Authenticatio
 {
     public Task<string?> GetTokenAsync()
     {
-        return Task.FromResult<string?>("mock-token");
+        // Devolver un token simple para el esquema "Test"
+        return Task.FromResult<string?>("Test AuthenticatedUser-Admin");
     }
 
     public Task<bool> IsAuthenticatedAsync()
@@ -572,7 +769,7 @@ public class TestAuthService : RestaurantePro.Mobile.Core.Services.Authenticatio
             Success = true,
             Data = new RestaurantePro.Mobile.Core.Models.DTOs.AuthResponse
             {
-                Token = "mock-token",
+                Token = "Test AuthenticatedUser-Admin",
                 RefreshToken = "mock-refresh-token",
                 User = new RestaurantePro.Mobile.Core.Models.DTOs.AuthUser
                 {
@@ -580,7 +777,7 @@ public class TestAuthService : RestaurantePro.Mobile.Core.Services.Authenticatio
                     Email = email,
                     Nombre = "Test",
                     Apellido = "User",
-                    Roles = new List<string> { "Mesero" }
+                    Roles = new List<string> { "Admin" }
                 },
                 ExpiresAt = DateTime.UtcNow.AddHours(1)
             },
@@ -594,17 +791,238 @@ public class TestAuthService : RestaurantePro.Mobile.Core.Services.Authenticatio
         var user = new RestaurantePro.Mobile.Core.Models.DTOs.AuthUser
         {
             Id = 1,
-            Email = "test@example.com",
-            Nombre = "Test",
+            Email = "admin@restaurantepro.com",
+            Nombre = "Admin",
             Apellido = "User",
-            Roles = new List<string> { "Mesero" }
+            Roles = new List<string> { "Admin" }
         };
         return Task.FromResult<RestaurantePro.Mobile.Core.Models.DTOs.AuthUser?>(user);
     }
 
     public Task<string?> GetUserIdAsync()
     {
-        return Task.FromResult<string?>("1");
+        return Task.FromResult<string?>("admin@restaurantepro.com");
+    }
+}
+
+/// <summary>
+/// Implementación de prueba del servicio de API para tests móviles
+/// </summary>
+public class TestApiService : RestaurantePro.Mobile.Core.Services.Api.IApiService
+{
+    private readonly HttpClient _httpClient;
+
+    public TestApiService(HttpClient httpClient)
+    {
+        _httpClient = httpClient;
+    }
+
+    public async Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>> GetAsync<T>(string endpoint, string? token = null, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            AddAuthHeader(token);
+            if (!_httpClient.DefaultRequestHeaders.Accept.Any(h => h.MediaType == "application/json"))
+            {
+                _httpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            }
+
+            var response = await _httpClient.GetAsync(endpoint, cancellationToken);
+            var content = await response.Content.ReadAsStringAsync(cancellationToken);
+            
+            // Log para debugging
+            Console.WriteLine($"🔍 TestApiService - Endpoint: {endpoint}");
+            Console.WriteLine($"🔍 TestApiService - StatusCode: {response.StatusCode}");
+            Console.WriteLine($"🔍 TestApiService - Content: {content.Substring(0, Math.Min(200, content.Length))}...");
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Deserializar la respuesta como ApiResponse<T>
+                var apiResponse = JsonSerializer.Deserialize<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                
+                if (apiResponse != null)
+                {
+                    return apiResponse;
+                }
+                
+                // Fallback: intentar deserializar directamente como T
+                var result = JsonSerializer.Deserialize<T>(content, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                return RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>.SuccessResponse(result, "Success");
+            }
+
+            return RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>.ErrorResponse(
+                new List<string> { $"Error HTTP: {response.StatusCode} - {content}" },
+                "Error de conexión",
+                (int)response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            return RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>.ErrorResponse(new List<string> { ex.Message }, "Error inesperado", 500);
+        }
+    }
+
+    public async Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>> PostAsync<T>(string endpoint, object? data = null, string? token = null, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            AddAuthHeader(token);
+            if (!_httpClient.DefaultRequestHeaders.Accept.Any(h => h.MediaType == "application/json"))
+            {
+                _httpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            }
+
+            StringContent? content = null;
+            if (data != null)
+            {
+                var json = JsonSerializer.Serialize(data);
+                content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            }
+
+            var response = await _httpClient.PostAsync(endpoint, content, cancellationToken);
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = JsonSerializer.Deserialize<T>(responseContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                return RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>.SuccessResponse(result, "Success");
+            }
+
+            return RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>.ErrorResponse(
+                new List<string> { $"Error HTTP: {response.StatusCode} - {responseContent}" },
+                "Error de conexión",
+                (int)response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            return RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>.ErrorResponse(new List<string> { ex.Message }, "Error inesperado", 500);
+        }
+    }
+
+    public async Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>> PutAsync<T>(string endpoint, object? data = null, string? token = null, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            AddAuthHeader(token);
+            if (!_httpClient.DefaultRequestHeaders.Accept.Any(h => h.MediaType == "application/json"))
+            {
+                _httpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            }
+
+            StringContent? content = null;
+            if (data != null)
+            {
+                var json = JsonSerializer.Serialize(data);
+                content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            }
+
+            var response = await _httpClient.PutAsync(endpoint, content, cancellationToken);
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = JsonSerializer.Deserialize<T>(responseContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                return RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>.SuccessResponse(result, "Success");
+            }
+
+            return RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>.ErrorResponse(
+                new List<string> { $"Error HTTP: {response.StatusCode} - {responseContent}" },
+                "Error de conexión",
+                (int)response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            return RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>.ErrorResponse(new List<string> { ex.Message }, "Error inesperado", 500);
+        }
+    }
+
+    public async Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>> PatchAsync<T>(string endpoint, object data, string? token = null, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            AddAuthHeader(token);
+            if (!_httpClient.DefaultRequestHeaders.Accept.Any(h => h.MediaType == "application/json"))
+            {
+                _httpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            }
+
+            var json = JsonSerializer.Serialize(data);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PatchAsync(endpoint, content, cancellationToken);
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = JsonSerializer.Deserialize<T>(responseContent, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+                return RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>.SuccessResponse(result, "Success");
+            }
+
+            return RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>.ErrorResponse(
+                new List<string> { $"Error HTTP: {response.StatusCode} - {responseContent}" },
+                "Error de conexión",
+                (int)response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            return RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>.ErrorResponse(new List<string> { ex.Message }, "Error inesperado", 500);
+        }
+    }
+
+    public async Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>> DeleteAsync(string endpoint, string? token = null, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            AddAuthHeader(token);
+            if (!_httpClient.DefaultRequestHeaders.Accept.Any(h => h.MediaType == "application/json"))
+            {
+                _httpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            }
+
+            var response = await _httpClient.DeleteAsync(endpoint, cancellationToken);
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>.SuccessResponse(true, "Success");
+            }
+
+            return RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>.ErrorResponse(
+                new List<string> { $"Error HTTP: {response.StatusCode} - {responseContent}" },
+                "Error de conexión",
+                (int)response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            return RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>.ErrorResponse(new List<string> { ex.Message }, "Error inesperado", 500);
+        }
+    }
+
+    private void AddAuthHeader(string? token)
+    {
+        // Remover headers de autenticación existentes
+        _httpClient.DefaultRequestHeaders.Remove("Authorization");
+        _httpClient.DefaultRequestHeaders.Remove("X-Bearer-Token");
+        
+        if (!string.IsNullOrEmpty(token))
+        {
+            // Usar el header Authorization para el esquema "Test"
+            _httpClient.DefaultRequestHeaders.Add("Authorization", token);
+        }
     }
 }
 

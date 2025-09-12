@@ -19,6 +19,8 @@ Elevar la calidad y estabilidad de las pruebas de integración móviles aseguran
 - Pruebas nuevas: Expiración/refresh de token (2/2 OK).
 - Seguridad/Roles: sin token 401 (OK); Mesero puede listar Facturas (200), acceso a `Usuarios` devuelve 403 (OK).
 - Resiliencia ViewModels: manejo de error/timeout en `DailyPreparationsViewModel.LoadEstadisticas` mostrando mensaje al usuario (OK).
+- **Dashboard Tests Robustos**: 13/13 tests de validación del dashboard con datos reales de BD (OK).
+- **Servicios Comerciales**: ClientesService, TarjetasFidelizacionService, IngredientesService - tests de integración completados.
 
 ### Checklist (técnico)
 - [x] Agregar `FakeNavigationService` en proyecto de integración y referenciar donde se construye `AuthService`.
@@ -43,6 +45,18 @@ Elevar la calidad y estabilidad de las pruebas de integración móviles aseguran
 - Clientes (consulta básica): cubierto a nivel servicio.
 - Tarjetas fidelización (uso/consulta): cubierto a nivel servicio; E2E opcional con factura.
 - [x] Documentar cobertura de flujos críticos (Auth, Preparaciones, Comandas, Mesas, Productos) y huecos restantes.
+- [x] **Dashboard Tests de Validación**: Crear tests que validen métricas del dashboard con datos reales de BD.
+
+### Tests de Validación del Dashboard
+- **Archivo**: `DashboardServiceValidationIntegrationTests.cs`
+- **Tests**: 13 tests de validación con datos reales de BD
+- **Cobertura**:
+  - Validación de métricas de ventas con datos reales
+  - Validación de cálculos de ocupación de mesas
+  - Validación de consistencia lógica entre métricas
+  - Validación de rangos de valores razonables
+  - Validación de cálculos de porcentajes
+- **Estado**: ✅ COMPLETADO - Todos los tests pasan correctamente
 
 ### Métricas objetivo
 - Tiempo total: ≤ 5-8 min local, ≤ 12 min CI (indicativo).

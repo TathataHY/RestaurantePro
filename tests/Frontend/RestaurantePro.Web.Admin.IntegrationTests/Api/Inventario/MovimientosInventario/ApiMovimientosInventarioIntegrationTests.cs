@@ -31,11 +31,11 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
         var query = "?pageNumber=1&pageSize=10&fechaInicio=2024-01-01&fechaFin=2024-12-31";
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/movimientos{query}");
+        var response = await _client.GetAsync($"/api/inventario/movimientos{query}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<PaginatedList<MovimientoInventarioDto>>>();
+        var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<PaginatedList<RestaurantePro.Application.Inventario.MovimientosInventario.DTOs.MovimientoInventarioDto>>>();
         responseData.Should().NotBeNull();
         responseData!.Success.Should().BeTrue();
         responseData.Data.Should().NotBeNull();
@@ -51,11 +51,11 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
         var query = $"?pageNumber=1&pageSize=20&fechaInicio=2024-01-01&fechaFin=2024-12-31&tipoMovimiento=Ingreso&ingredienteId={ingredienteId}&usuarioId={usuarioId}&filtroMotivo=compra&ordenarPor=Fecha&direccionOrdenamiento=desc";
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/movimientos{query}");
+        var response = await _client.GetAsync($"/api/inventario/movimientos{query}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<PaginatedList<MovimientoInventarioDto>>>();
+        var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<PaginatedList<RestaurantePro.Application.Inventario.MovimientosInventario.DTOs.MovimientoInventarioDto>>>();
         responseData.Should().NotBeNull();
         responseData!.Success.Should().BeTrue();
         responseData.Data.Should().NotBeNull();
@@ -68,7 +68,7 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
         var movimientoId = Guid.NewGuid();
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/movimientos/{movimientoId}");
+        var response = await _client.GetAsync($"/api/inventario/movimientos/{movimientoId}");
 
         // Assert
         // Nota: Este test puede retornar 404 si no existe el movimiento, lo cual es válido
@@ -76,7 +76,7 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
         
         if (response.StatusCode == HttpStatusCode.OK)
         {
-            var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<MovimientoInventarioDto>>();
+            var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<RestaurantePro.Application.Inventario.MovimientosInventario.DTOs.MovimientoInventarioDto>>();
             responseData.Should().NotBeNull();
             responseData!.Success.Should().BeTrue();
             responseData.Data.Should().NotBeNull();
@@ -91,7 +91,7 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
         {
             IngredienteId = Guid.NewGuid(),
             Cantidad = 50,
-            TipoMovimiento = TipoMovimientoInventario.Ingreso,
+            TipoMovimiento = Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Ingreso,
             Motivo = "Compra inicial",
             Observaciones = "Movimiento de prueba",
             UsuarioId = Guid.NewGuid(),
@@ -99,14 +99,14 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync("/api/inventario/movimientos", request);
+        var response = await _client.PostAsJsonAsync("/api/inventario/movimientos", request);
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.BadRequest);
         
         if (response.StatusCode == HttpStatusCode.Created)
         {
-            var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<Guid>>();
+            var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<Guid>>();
             responseData.Should().NotBeNull();
             responseData!.Success.Should().BeTrue();
             responseData.Data.Should().NotBe(Guid.Empty);
@@ -127,14 +127,14 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
         };
 
         // Act
-        var response = await Client.PutAsJsonAsync($"/api/inventario/movimientos/{movimientoId}", request);
+        var response = await _client.PutAsJsonAsync($"/api/inventario/movimientos/{movimientoId}", request);
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
         
         if (response.StatusCode == HttpStatusCode.OK)
         {
-            var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<MovimientoInventarioDto>>();
+            var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<RestaurantePro.Application.Inventario.MovimientosInventario.DTOs.MovimientoInventarioDto>>();
             responseData.Should().NotBeNull();
             responseData!.Success.Should().BeTrue();
             responseData.Data.Should().NotBeNull();
@@ -148,7 +148,7 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
         var movimientoId = Guid.NewGuid();
 
         // Act
-        var response = await Client.DeleteAsync($"/api/inventario/movimientos/{movimientoId}");
+        var response = await _client.DeleteAsync($"/api/inventario/movimientos/{movimientoId}");
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound);
@@ -166,14 +166,14 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
         var query = "?fechaDesde=2024-01-01&fechaHasta=2024-12-31&limite=10";
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/movimientos/ingrediente/{ingredienteId}{query}");
+        var response = await _client.GetAsync($"/api/inventario/movimientos/ingrediente/{ingredienteId}{query}");
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
         
         if (response.StatusCode == HttpStatusCode.OK)
         {
-            var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<List<MovimientoInventarioDto>>>();
+            var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<List<RestaurantePro.Application.Inventario.MovimientosInventario.DTOs.MovimientoInventarioDto>>>();
             responseData.Should().NotBeNull();
             responseData!.Success.Should().BeTrue();
             responseData.Data.Should().NotBeNull();
@@ -188,14 +188,14 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
         var query = "?pageNumber=1&pageSize=10&fechaInicio=2024-01-01&fechaFin=2024-12-31";
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/movimientos/tipo/{tipo}{query}");
+        var response = await _client.GetAsync($"/api/inventario/movimientos/tipo/{tipo}{query}");
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.BadRequest);
         
         if (response.StatusCode == HttpStatusCode.OK)
         {
-            var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<PaginatedList<MovimientoInventarioDto>>>();
+            var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<PaginatedList<RestaurantePro.Application.Inventario.MovimientosInventario.DTOs.MovimientoInventarioDto>>>();
             responseData.Should().NotBeNull();
             responseData!.Success.Should().BeTrue();
             responseData.Data.Should().NotBeNull();
@@ -210,7 +210,7 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
         var query = "?pageNumber=1&pageSize=10";
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/movimientos/tipo/{tipo}{query}");
+        var response = await _client.GetAsync($"/api/inventario/movimientos/tipo/{tipo}{query}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -227,11 +227,11 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
         var query = "?fechaInicio=2024-01-01&fechaFin=2024-12-31&incluirDetalle=true&agruparPorTipo=true";
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/movimientos/reporte{query}");
+        var response = await _client.GetAsync($"/api/inventario/movimientos/reporte{query}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<ReporteMovimientosDto>>();
+        var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<RestaurantePro.Application.Inventario.MovimientosInventario.DTOs.ReporteMovimientosDto>>();
         responseData.Should().NotBeNull();
         responseData!.Success.Should().BeTrue();
         responseData.Data.Should().NotBeNull();
@@ -252,7 +252,7 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
         var query = $"?pageNumber={pageNumber}&pageSize={pageSize}";
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/movimientos{query}");
+        var response = await _client.GetAsync($"/api/inventario/movimientos{query}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -265,7 +265,7 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
         var query = "?fechaInicio=2024-13-01&fechaFin=2024-12-32";
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/movimientos{query}");
+        var response = await _client.GetAsync($"/api/inventario/movimientos{query}");
 
         // Assert
         // El endpoint debería manejar fechas inválidas de manera apropiada
@@ -289,7 +289,7 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
         // Act & Assert
         foreach (var endpoint in endpoints)
         {
-            var response = await Client.GetAsync(endpoint);
+            var response = await _client.GetAsync(endpoint);
             response.Content.Headers.ContentType?.MediaType.Should().Be("application/json");
         }
     }
@@ -298,7 +298,7 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
     public async Task TodosLosEndpoints_DeberianTenerAutorizacion()
     {
         // Arrange
-        var client = Factory.CreateClient(); // Cliente sin autenticación
+        var client = _factory.CreateClient(); // _cliente sin autenticación
 
         // Act & Assert
         var response = await client.GetAsync("/api/inventario/movimientos");
@@ -321,14 +321,14 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
         {
             IngredienteId = Guid.NewGuid(),
             Cantidad = 25,
-            TipoMovimiento = Enum.Parse<TipoMovimientoInventario>(tipoMovimiento),
+            TipoMovimiento = Enum.Parse<Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario>(tipoMovimiento),
             Motivo = "Test de tipo",
             Observaciones = "Movimiento de prueba",
             UsuarioId = Guid.NewGuid()
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync("/api/inventario/movimientos", request);
+        var response = await _client.PostAsJsonAsync("/api/inventario/movimientos", request);
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.BadRequest);
@@ -342,14 +342,14 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
         {
             IngredienteId = Guid.NewGuid(),
             Cantidad = 25,
-            TipoMovimiento = (TipoMovimientoInventario)999, // Tipo inválido
+            TipoMovimiento = (Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario)999, // Tipo inválido
             Motivo = "Test de tipo inválido",
             Observaciones = "Movimiento de prueba",
             UsuarioId = Guid.NewGuid()
         };
 
         // Act
-        var response = await Client.PostAsJsonAsync("/api/inventario/movimientos", request);
+        var response = await _client.PostAsJsonAsync("/api/inventario/movimientos", request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -367,11 +367,11 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
         var query = $"?usuarioId={usuarioId}&pageNumber=1&pageSize=10";
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/movimientos{query}");
+        var response = await _client.GetAsync($"/api/inventario/movimientos{query}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<PaginatedList<MovimientoInventarioDto>>>();
+        var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<PaginatedList<RestaurantePro.Application.Inventario.MovimientosInventario.DTOs.MovimientoInventarioDto>>>();
         responseData.Should().NotBeNull();
         responseData!.Success.Should().BeTrue();
     }
@@ -383,11 +383,11 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
         var query = "?filtroMotivo=compra&pageNumber=1&pageSize=10";
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/movimientos{query}");
+        var response = await _client.GetAsync($"/api/inventario/movimientos{query}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<PaginatedList<MovimientoInventarioDto>>>();
+        var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<PaginatedList<RestaurantePro.Application.Inventario.MovimientosInventario.DTOs.MovimientoInventarioDto>>>();
         responseData.Should().NotBeNull();
         responseData!.Success.Should().BeTrue();
     }
@@ -407,15 +407,40 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
         var query = $"?ordenarPor={ordenarPor}&direccionOrdenamiento={direccion}&pageNumber=1&pageSize=10";
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/movimientos{query}");
+        var response = await _client.GetAsync($"/api/inventario/movimientos{query}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<PaginatedList<MovimientoInventarioDto>>>();
+        var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<PaginatedList<RestaurantePro.Application.Inventario.MovimientosInventario.DTOs.MovimientoInventarioDto>>>();
         responseData.Should().NotBeNull();
         responseData!.Success.Should().BeTrue();
     }
 
     #endregion
+}
+
+/// <summary>
+/// Request para registrar un nuevo movimiento de inventario
+/// </summary>
+public class RegistrarMovimientoRequest
+{
+    public Guid IngredienteId { get; set; }
+    public decimal Cantidad { get; set; }
+    public Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario TipoMovimiento { get; set; }
+    public string Motivo { get; set; } = string.Empty;
+    public string? Observaciones { get; set; }
+    public Guid? UsuarioId { get; set; }
+    public DateTime? Fecha { get; set; }
+}
+
+/// <summary>
+/// Request para actualizar un movimiento de inventario
+/// </summary>
+public class ActualizarMovimientoRequest
+{
+    public decimal? Cantidad { get; set; }
+    public decimal? CostoUnitario { get; set; }
+    public string? Motivo { get; set; }
+    public string? Observaciones { get; set; }
 }
 

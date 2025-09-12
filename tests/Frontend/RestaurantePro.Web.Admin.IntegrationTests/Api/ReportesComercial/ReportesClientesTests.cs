@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using AppReportes = RestaurantePro.Application.Comercial.Reportes.DTOs;
 using RestaurantePro.Application.Common.Models;
 using RestaurantePro.Web.Admin.IntegrationTests.Core;
@@ -22,7 +23,12 @@ public class ReportesClientesTests : BaseIntegrationTest
     public async Task ObtenerReporteClientes_ConParametrosPorDefecto_DeberiaRetornarSoloActivos()
     {
         // Arrange
+        Console.WriteLine("=== Iniciando test ObtenerReporteClientes_ConParametrosPorDefecto_DeberiaRetornarSoloActivos ===");
         await SeedClientesDePruebaAsync(20, 15); // 20 total, 15 activos
+        
+        // Verificar que los clientes se crearon
+        var clientesEnBD = await _context.Clientes.CountAsync();
+        Console.WriteLine($"Clientes en BD después del seed: {clientesEnBD}");
 
         // Act
         var response = await _client.GetAsync("/api/comercial/reportes/clientes");
@@ -311,7 +317,7 @@ public class ReportesClientesTests : BaseIntegrationTest
         // Arrange
         await SeedClientesConSegmentoAsync(5, "Premium");
         await SeedClientesConSegmentoAsync(10, "Regular");
-        await SeedClientesConSegmentoAsync(3, "VIP");
+        await SeedClientesConSegmentoAsync(3, "Creciente");
 
         // Act - Filtrar por Premium
         var response = await _client.GetAsync("/api/comercial/reportes/clientes?segmento=Premium");
@@ -451,87 +457,32 @@ public class ReportesClientesTests : BaseIntegrationTest
 
     private async Task SeedClientesDePruebaAsync(int total, int activos)
     {
-        // Crear clientes activos
-        for (int i = 0; i < activos; i++)
-        {
-            await CrearClienteDePruebaAsync(true);
-        }
-        
-        // Crear clientes inactivos
-        for (int i = 0; i < total - activos; i++)
-        {
-            await CrearClienteDePruebaAsync(false);
-        }
+        await CrearClientesDePruebaAsync(total, activos);
     }
 
     private async Task SeedClientesConSegmentoAsync(int cantidad, string segmento)
     {
-        for (int i = 0; i < cantidad; i++)
-        {
-            await CrearClienteConSegmentoAsync(segmento);
-        }
+        await CrearClientesConSegmentoAsync(cantidad, segmento);
     }
 
     private async Task SeedClientesConFechasRegistroAsync(int cantidad, DateTime fechaDesde, DateTime fechaHasta)
     {
-        for (int i = 0; i < cantidad; i++)
-        {
-            var fechaRegistro = fechaDesde.AddDays(Random.Shared.Next((fechaHasta - fechaDesde).Days));
-            await CrearClienteConFechaRegistroAsync(fechaRegistro);
-        }
+        await CrearClientesConFechasRegistroAsync(cantidad, fechaDesde, fechaHasta);
     }
 
     private async Task SeedClientesConFiltrosCombinadosAsync(int cantidad, string segmento, DateTime fechaDesde, DateTime fechaHasta)
     {
-        for (int i = 0; i < cantidad; i++)
-        {
-            var fechaRegistro = fechaDesde.AddDays(Random.Shared.Next((fechaHasta - fechaDesde).Days));
-            await CrearClienteConFiltrosCombinadosAsync(segmento, fechaRegistro, true);
-        }
+        await CrearClientesConFiltrosCombinadosAsync(cantidad, segmento, fechaDesde, fechaHasta);
     }
 
     private async Task SeedClientesActivosAsync(int cantidad)
     {
-        for (int i = 0; i < cantidad; i++)
-        {
-            await CrearClienteDePruebaAsync(true);
-        }
+        await CrearClientesActivosAsync(cantidad);
     }
 
     private async Task SeedClientesNuevosAsync(int cantidad, DateTime fechaRegistro)
     {
-        for (int i = 0; i < cantidad; i++)
-        {
-            await CrearClienteConFechaRegistroAsync(fechaRegistro);
-        }
-    }
-
-    private async Task CrearClienteDePruebaAsync(bool activo)
-    {
-        // Aquí se crearían los clientes en la base de datos de prueba
-        // Por ahora solo simulamos la creación
-        await Task.Delay(1); // Simular operación asíncrona
-    }
-
-    private async Task CrearClienteConSegmentoAsync(string segmento)
-    {
-        // Aquí se crearían los clientes con segmento específico en la base de datos de prueba
-        // Por ahora solo simulamos la creación
-        await Task.Delay(1); // Simular operación asíncrona
-    }
-
-    private async Task CrearClienteConFechaRegistroAsync(DateTime fechaRegistro)
-    {
-        // Aquí se crearían los clientes con fecha de registro específica en la base de datos de prueba
-        // Por ahora solo simulamos la creación
-        await Task.Delay(1); // Simular operación asíncrona
-    }
-
-    private async Task CrearClienteConFiltrosCombinadosAsync(string segmento, DateTime fechaRegistro, bool activo)
-    {
-        // Aquí se crearían los clientes con filtros combinados en la base de datos de prueba
-        // Por ahora solo simulamos la creación
-        await Task.Delay(1); // Simular operación asíncrona
+        await CrearClientesConFechasRegistroAsync(cantidad, fechaRegistro, fechaRegistro);
     }
 
     #endregion

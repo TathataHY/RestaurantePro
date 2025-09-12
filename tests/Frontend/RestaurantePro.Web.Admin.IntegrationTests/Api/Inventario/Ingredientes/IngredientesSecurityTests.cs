@@ -34,7 +34,7 @@ public class IngredientesSecurityTests : BaseIntegrationTest
     public async Task TodosLosEndpoints_Con_clienteNoAutenticado_DeberianRetornarUnauthorized()
     {
         // Arrange
-        var clientNoAuth = Factory.Create_client(); // _cliente sin autenticación
+        var clientNoAuth = _factory.CreateClient(); // cliente sin autenticación
 
         // Act & Assert
         var endpoints = new[]
@@ -59,15 +59,16 @@ public class IngredientesSecurityTests : BaseIntegrationTest
     public async Task EndpointsPOST_Con_clienteNoAutenticado_DeberianRetornarUnauthorized()
     {
         // Arrange
-        var clientNoAuth = Factory.Create_client();
+        var clientNoAuth = _factory.CreateClient();
         var command = new CrearIngredienteCommand
         {
             Nombre = "Test Security",
-            Rotacion = RotacionIngrediente.Alta,
-            UnidadMedida = UnidadMedida.Kilogramo,
+            Rotacion = "Alta",
+            UnidadMedida = "Kilogramo",
             StockMinimo = 1,
-            StockMaximo = 10,
-            CostoUnitario = 5.00m
+            StockInicial = 5,
+            UsuarioId = Guid.NewGuid(),
+            CostoInicial = 5.00m
         };
 
         // Act & Assert
@@ -79,16 +80,15 @@ public class IngredientesSecurityTests : BaseIntegrationTest
     public async Task EndpointsPUT_Con_clienteNoAutenticado_DeberianRetornarUnauthorized()
     {
         // Arrange
-        var clientNoAuth = Factory.Create_client();
+        var clientNoAuth = _factory.CreateClient();
         var ingredienteId = Guid.NewGuid();
         var command = new ActualizarIngredienteCommand
         {
+            Id = ingredienteId,
             Nombre = "Test Security Update",
-            Rotacion = RotacionIngrediente.Media,
-            UnidadMedida = UnidadMedida.Litro,
+            Rotacion = Domain.Inventario.Ingredientes.Enums.RotacionIngrediente.Media,
             StockMinimo = 2,
-            StockMaximo = 20,
-            CostoUnitario = 10.00m
+            CostoPromedio = 10.00m
         };
 
         // Act & Assert
@@ -100,7 +100,7 @@ public class IngredientesSecurityTests : BaseIntegrationTest
     public async Task EndpointsDELETE_Con_clienteNoAutenticado_DeberianRetornarUnauthorized()
     {
         // Arrange
-        var clientNoAuth = Factory.Create_client();
+        var clientNoAuth = _factory.CreateClient();
         var ingredienteId = Guid.NewGuid();
 
         // Act & Assert
@@ -129,11 +129,12 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         var command = new CrearIngredienteCommand
         {
             Nombre = "Test Security Create",
-            Rotacion = RotacionIngrediente.Alta,
-            UnidadMedida = UnidadMedida.Kilogramo,
+            Rotacion = "Alta",
+            UnidadMedida = "Kilogramo",
             StockMinimo = 1,
-            StockMaximo = 10,
-            CostoUnitario = 5.00m
+            StockInicial = 5,
+            UsuarioId = Guid.NewGuid(),
+            CostoInicial = 5.00m
         };
 
         // Act
@@ -155,11 +156,12 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         {
             Nombre = "<script>alert('xss')</script>Ingrediente",
             Descripcion = "'; DROP TABLE Ingredientes; --",
-            Rotacion = RotacionIngrediente.Alta,
-            UnidadMedida = UnidadMedida.Kilogramo,
+            Rotacion = "Alta",
+            UnidadMedida = "Kilogramo",
             StockMinimo = 1,
-            StockMaximo = 10,
-            CostoUnitario = 5.00m
+            StockInicial = 5,
+            UsuarioId = Guid.NewGuid(),
+            CostoInicial = 5.00m
         };
 
         // Act
@@ -170,7 +172,7 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         
         if (response.StatusCode == HttpStatusCode.Created)
         {
-            var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<IngredienteDto>>();
+            var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<RestaurantePro.Application.Inventario.Ingredientes.DTOs.IngredienteDto>>();
             responseData.Should().NotBeNull();
             responseData!.Data.Should().NotBeNull();
             
@@ -187,13 +189,12 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         var ingredienteId = Guid.NewGuid();
         var command = new ActualizarIngredienteCommand
         {
+            Id = ingredienteId,
             Nombre = "Ingrediente<script>alert('xss')</script>",
             Descripcion = "'; DELETE FROM Ingredientes; --",
-            Rotacion = RotacionIngrediente.Media,
-            UnidadMedida = UnidadMedida.Litro,
+            Rotacion = Domain.Inventario.Ingredientes.Enums.RotacionIngrediente.Media,
             StockMinimo = 2,
-            StockMaximo = 20,
-            CostoUnitario = 10.00m
+            CostoPromedio = 10.00m
         };
 
         // Act
@@ -305,11 +306,12 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         var command = new CrearIngredienteCommand
         {
             Nombre = nombreMuyLargo,
-            Rotacion = RotacionIngrediente.Alta,
-            UnidadMedida = UnidadMedida.Kilogramo,
+            Rotacion = "Alta",
+            UnidadMedida = "Kilogramo",
             StockMinimo = 1,
-            StockMaximo = 10,
-            CostoUnitario = 5.00m
+            StockInicial = 5,
+            UsuarioId = Guid.NewGuid(),
+            CostoInicial = 5.00m
         };
 
         // Act
@@ -328,11 +330,12 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         {
             Nombre = "Test Ingrediente",
             Descripcion = descripcionMuyLarga,
-            Rotacion = RotacionIngrediente.Alta,
-            UnidadMedida = UnidadMedida.Kilogramo,
+            Rotacion = "Alta",
+            UnidadMedida = "Kilogramo",
             StockMinimo = 1,
-            StockMaximo = 10,
-            CostoUnitario = 5.00m
+            StockInicial = 5,
+            UsuarioId = Guid.NewGuid(),
+            CostoInicial = 5.00m
         };
 
         // Act
@@ -357,11 +360,12 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         var command = new CrearIngredienteCommand
         {
             Nombre = "Test Ingrediente",
-            Rotacion = RotacionIngrediente.Alta,
-            UnidadMedida = UnidadMedida.Kilogramo,
+            Rotacion = "Alta",
+            UnidadMedida = "Kilogramo",
             StockMinimo = valor,
-            StockMaximo = valor + 100,
-            CostoUnitario = Math.Abs(valor)
+            StockInicial = valor + 100,
+            UsuarioId = Guid.NewGuid(),
+            CostoInicial = Math.Abs(valor)
         };
 
         // Act
@@ -458,12 +462,11 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         // Arrange
         var command = new ActualizarIngredienteCommand
         {
+            Id = Guid.NewGuid(),
             Nombre = "Test Update",
-            Rotacion = RotacionIngrediente.Alta,
-            UnidadMedida = UnidadMedida.Kilogramo,
+            Rotacion = Domain.Inventario.Ingredientes.Enums.RotacionIngrediente.Alta,
             StockMinimo = 1,
-            StockMaximo = 10,
-            CostoUnitario = 5.00m
+            CostoPromedio = 5.00m
         };
 
         // Act
@@ -517,11 +520,12 @@ public class IngredientesSecurityTests : BaseIntegrationTest
         var command = new CrearIngredienteCommand
         {
             Nombre = "Test CSRF",
-            Rotacion = RotacionIngrediente.Alta,
-            UnidadMedida = UnidadMedida.Kilogramo,
+            Rotacion = "Alta",
+            UnidadMedida = "Kilogramo",
             StockMinimo = 1,
-            StockMaximo = 10,
-            CostoUnitario = 5.00m
+            StockInicial = 5,
+            UsuarioId = Guid.NewGuid(),
+            CostoInicial = 5.00m
         };
 
         // Act

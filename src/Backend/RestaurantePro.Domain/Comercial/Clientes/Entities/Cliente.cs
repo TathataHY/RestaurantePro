@@ -125,6 +125,9 @@ namespace RestaurantePro.Domain.Comercial.Clientes.Entities
                 CantidadVisitas = 0,
                 Segmento = SegmentoCliente.SinClasificar
             };
+            
+            // Establecer la fecha de creación después de crear el objeto
+            cliente.SetFechaCreacionForTesting(DateTime.Now);
 
             cliente.MarkAsModified();
             cliente.AddDomainEvent(new ClienteCreado(cliente.Id, nombre.NombreCompleto, email, telefono));

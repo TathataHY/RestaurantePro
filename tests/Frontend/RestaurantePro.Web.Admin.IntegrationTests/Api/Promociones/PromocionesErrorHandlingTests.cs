@@ -37,7 +37,7 @@ public class PromocionesErrorHandlingTests : BaseIntegrationTest
             Codigo = codigoExistente, // Mismo código
             Nombre = "Promoción Duplicada",
             Descripcion = "Promoción con código duplicado",
-            Tipo = TipoPromocion.DescuentoPorcentaje,
+            Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
             ValorDescuento = 10,
             MontoMinimo = 50,
             FechaInicio = DateTime.UtcNow,
@@ -73,7 +73,7 @@ public class PromocionesErrorHandlingTests : BaseIntegrationTest
             Codigo = "", // Código vacío
             Nombre = "", // Nombre vacío
             Descripcion = "Promoción con datos inválidos",
-            Tipo = TipoPromocion.DescuentoPorcentaje,
+            Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
             ValorDescuento = -10, // Valor negativo
             MontoMinimo = -50, // Monto negativo
             FechaInicio = DateTime.UtcNow.AddDays(10), // Fecha inicio futura
@@ -108,7 +108,7 @@ public class PromocionesErrorHandlingTests : BaseIntegrationTest
             Codigo = "FECHAS_INVALIDAS",
             Nombre = "Promoción con Fechas Inválidas",
             Descripcion = "Promoción con fechas incorrectas",
-            Tipo = TipoPromocion.DescuentoPorcentaje,
+            Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
             ValorDescuento = 10,
             MontoMinimo = 50,
             FechaInicio = DateTime.UtcNow.AddDays(10), // Fecha inicio futura
@@ -144,7 +144,7 @@ public class PromocionesErrorHandlingTests : BaseIntegrationTest
             Codigo = "VALORES_NEGATIVOS",
             Nombre = "Promoción con Valores Negativos",
             Descripcion = "Promoción con valores negativos",
-            Tipo = TipoPromocion.DescuentoPorcentaje,
+            Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
             ValorDescuento = -20, // Valor negativo
             MontoMinimo = -100, // Monto negativo
             PuntosRequeridos = -50, // Puntos negativos
@@ -497,7 +497,7 @@ public class PromocionesErrorHandlingTests : BaseIntegrationTest
             Codigo = "ERROR_TEST",
             Nombre = "Promoción Error Test",
             Descripcion = "Promoción para tests de error",
-            Tipo = TipoPromocion.DescuentoPorcentaje,
+            Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
             ValorDescuento = 10,
             MontoMinimo = 50,
             FechaInicio = DateTime.UtcNow,
@@ -518,7 +518,7 @@ public class PromocionesErrorHandlingTests : BaseIntegrationTest
             Codigo = codigo,
             Nombre = "Promoción Existente",
             Descripcion = "Promoción con código existente",
-            Tipo = TipoPromocion.DescuentoPorcentaje,
+            Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
             ValorDescuento = 10,
             MontoMinimo = 50,
             FechaInicio = DateTime.UtcNow,
@@ -550,7 +550,7 @@ public class PromocionesErrorHandlingTests : BaseIntegrationTest
             Codigo = "EXPIRADA",
             Nombre = "Promoción Expirada",
             Descripcion = "Promoción expirada",
-            Tipo = TipoPromocion.DescuentoPorcentaje,
+            Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
             ValorDescuento = 10,
             MontoMinimo = 50,
             FechaInicio = DateTime.UtcNow.AddDays(-30),
@@ -571,7 +571,7 @@ public class PromocionesErrorHandlingTests : BaseIntegrationTest
             Codigo = "AGOTADA",
             Nombre = "Promoción Agotada",
             Descripcion = "Promoción agotada",
-            Tipo = TipoPromocion.DescuentoPorcentaje,
+            Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
             ValorDescuento = 10,
             MontoMinimo = 50,
             FechaInicio = DateTime.UtcNow,

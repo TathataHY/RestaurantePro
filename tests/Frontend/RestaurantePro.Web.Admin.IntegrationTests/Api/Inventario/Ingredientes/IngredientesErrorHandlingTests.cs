@@ -66,8 +66,9 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
             Rotacion = "Alta",
             UnidadMedida = "Kilogramo",
             StockMinimo = -1,
-            StockMaximo = 10,
-            PrecioUnitario = 5.00m
+            StockInicial = 5,
+            UsuarioId = Guid.NewGuid(),
+            CostoInicial = 5.00m
         };
 
         // Act
@@ -87,8 +88,9 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
             Rotacion = "Alta",
             UnidadMedida = "Kilogramo",
             StockMinimo = 10,
-            StockMaximo = 5, // Menor que mínimo
-            PrecioUnitario = 5.00m
+            StockInicial = 5, // Menor que mínimo
+            UsuarioId = Guid.NewGuid(),
+            CostoInicial = 5.00m
         };
 
         // Act
@@ -108,8 +110,9 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
             Rotacion = "Alta",
             UnidadMedida = "Kilogramo",
             StockMinimo = 1,
-            StockMaximo = 10,
-            PrecioUnitario = -5.00m
+            StockInicial = 5,
+            UsuarioId = Guid.NewGuid(),
+            CostoInicial = -5.00m
         };
 
         // Act
@@ -132,7 +135,6 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
             StockMinimo = 1,
             CostoInicial = 5.00m,
             UsuarioId = Guid.NewGuid(),
-            DiasVencimiento = -1
         };
 
         // Act
@@ -174,13 +176,11 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         var ingredienteId = Guid.NewGuid();
         var command = new ActualizarIngredienteCommand
         {
+            Id = ingredienteId,
             Nombre = "Ingrediente Inexistente",
-            Rotacion = "Alta",
-            UnidadMedida = "Kilogramo",
-            StockInicial = 5,
+            Rotacion = Domain.Inventario.Ingredientes.Enums.RotacionIngrediente.Alta,
             StockMinimo = 1,
-            CostoInicial = 5.00m,
-            UsuarioId = Guid.NewGuid()
+            CostoPromedio = 5.00m
         };
 
         // Act
@@ -214,7 +214,7 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         var ingredienteId = Guid.NewGuid();
         var command = new RegistrarMovimientoCommand
         {
-            TipoMovimiento = TipoMovimientoInventario.Entrada,
+            TipoMovimiento = Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Entrada,
             Cantidad = 10,
             Motivo = "Test movimiento",
             Observaciones = "Movimiento de prueba"
@@ -234,7 +234,7 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         var ingredienteId = Guid.NewGuid();
         var command = new RegistrarMovimientoCommand
         {
-            TipoMovimiento = TipoMovimientoInventario.Entrada,
+            TipoMovimiento = Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Entrada,
             Cantidad = -10, // Cantidad negativa
             Motivo = "Test movimiento",
             Observaciones = "Movimiento de prueba"
@@ -254,7 +254,7 @@ public class IngredientesErrorHandlingTests : BaseIntegrationTest
         var ingredienteId = Guid.NewGuid();
         var command = new RegistrarMovimientoCommand
         {
-            TipoMovimiento = TipoMovimientoInventario.Entrada,
+            TipoMovimiento = Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Entrada,
             Cantidad = 10,
             Motivo = "", // Motivo vacío
             Observaciones = "Movimiento de prueba"

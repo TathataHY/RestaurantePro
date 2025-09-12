@@ -43,7 +43,7 @@ public class ApiIngredientesIntegrationTests : BaseIntegrationTest
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<PaginatedList<IngredienteSummaryDto>>>();
+            var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<PaginatedList<RestaurantePro.Application.Inventario.Ingredientes.DTOs.IngredienteSummaryDto>>>();
         responseData.Should().NotBeNull();
         responseData!.Success.Should().BeTrue();
         responseData.Data.Should().NotBeNull();
@@ -61,7 +61,7 @@ public class ApiIngredientesIntegrationTests : BaseIntegrationTest
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<List<IngredienteSummaryDto>>>();
+        var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<List<RestaurantePro.Application.Inventario.Ingredientes.DTOs.IngredienteSummaryDto>>>();
         responseData.Should().NotBeNull();
         responseData!.Success.Should().BeTrue();
         responseData.Data.Should().NotBeNull();
@@ -97,13 +97,12 @@ public class ApiIngredientesIntegrationTests : BaseIntegrationTest
         {
             Nombre = "Test Ingrediente",
             Descripcion = "Ingrediente de prueba",
-            Rotacion = RotacionIngrediente.Alta,
-            UnidadMedida = UnidadMedida.Kilogramo,
+            Rotacion = "Alta",
+            UnidadMedida = "Kilogramo",
             StockMinimo = 10,
-            StockMaximo = 100,
-            CostoUnitario = 15.50m,
-            RequiereRefrigeracion = false,
-            DiasVencimiento = 30
+            StockInicial = 50,
+            CostoInicial = 15.50m,
+            UsuarioId = Guid.NewGuid()
         };
 
         // Act
@@ -129,15 +128,12 @@ public class ApiIngredientesIntegrationTests : BaseIntegrationTest
         var ingredienteId = Guid.NewGuid();
         var command = new ActualizarIngredienteCommand
         {
+            Id = ingredienteId,
             Nombre = "Ingrediente Actualizado",
             Descripcion = "Descripción actualizada",
-            Rotacion = RotacionIngrediente.Media,
-            UnidadMedida = UnidadMedida.Litro,
+            Rotacion = Domain.Inventario.Ingredientes.Enums.RotacionIngrediente.Media,
             StockMinimo = 20,
-            StockMaximo = 200,
-            CostoUnitario = 25.75m,
-            RequiereRefrigeracion = true,
-            DiasVencimiento = 15
+            CostoPromedio = 25.75m
         };
 
         // Act
@@ -187,7 +183,7 @@ public class ApiIngredientesIntegrationTests : BaseIntegrationTest
         
         if (response.StatusCode == HttpStatusCode.OK)
         {
-            var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<List<MovimientoInventarioDto>>>();
+            var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<List<RestaurantePro.Application.Inventario.MovimientosInventario.DTOs.MovimientoInventarioDto>>>();
             responseData.Should().NotBeNull();
             responseData!.Success.Should().BeTrue();
             responseData.Data.Should().NotBeNull();
@@ -201,7 +197,7 @@ public class ApiIngredientesIntegrationTests : BaseIntegrationTest
         var ingredienteId = Guid.NewGuid();
         var command = new RegistrarMovimientoCommand
         {
-            TipoMovimiento = TipoMovimientoInventario.Entrada,
+            TipoMovimiento = Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Entrada,
             Cantidad = 50,
             Motivo = "Compra inicial",
             Observaciones = "Movimiento de prueba"
@@ -215,7 +211,7 @@ public class ApiIngredientesIntegrationTests : BaseIntegrationTest
         
         if (response.StatusCode == HttpStatusCode.Created)
         {
-            var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<Guid>>();
+            var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<Guid>>();
             responseData.Should().NotBeNull();
             responseData!.Success.Should().BeTrue();
             responseData.Data.Should().NotBe(Guid.Empty);
@@ -237,7 +233,7 @@ public class ApiIngredientesIntegrationTests : BaseIntegrationTest
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<List<IngredienteSummaryDto>>>();
+        var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<List<RestaurantePro.Application.Inventario.Ingredientes.DTOs.IngredienteSummaryDto>>>();
         responseData.Should().NotBeNull();
         responseData!.Success.Should().BeTrue();
         responseData.Data.Should().NotBeNull();
@@ -320,7 +316,7 @@ public class ApiIngredientesIntegrationTests : BaseIntegrationTest
         
         if (response.StatusCode == HttpStatusCode.OK)
         {
-            var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<bool>>();
+            var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<bool>>();
             responseData.Should().NotBeNull();
             responseData!.Success.Should().BeTrue();
             responseData.Data.Should().BeTrue();
@@ -342,7 +338,7 @@ public class ApiIngredientesIntegrationTests : BaseIntegrationTest
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<ReporteValoracionDto>>();
+        var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<RestaurantePro.Application.Inventario.Ingredientes.DTOs.ReporteValoracionDto>>();
         responseData.Should().NotBeNull();
         responseData!.Success.Should().BeTrue();
         responseData.Data.Should().NotBeNull();
@@ -356,7 +352,7 @@ public class ApiIngredientesIntegrationTests : BaseIntegrationTest
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<EstadisticasIngredientesDto>>();
+        var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<RestaurantePro.Application.Inventario.Ingredientes.DTOs.EstadisticasIngredientesDto>>();
         responseData.Should().NotBeNull();
         responseData!.Success.Should().BeTrue();
         responseData.Data.Should().NotBeNull();
@@ -377,7 +373,7 @@ public class ApiIngredientesIntegrationTests : BaseIntegrationTest
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<List<IngredienteSummaryDto>>>();
+        var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<List<RestaurantePro.Application.Inventario.Ingredientes.DTOs.IngredienteSummaryDto>>>();
         responseData.Should().NotBeNull();
         responseData!.Success.Should().BeTrue();
         responseData.Data.Should().NotBeNull();

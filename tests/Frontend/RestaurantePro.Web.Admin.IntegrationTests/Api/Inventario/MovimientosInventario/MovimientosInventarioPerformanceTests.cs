@@ -30,7 +30,7 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync("/api/inventario/movimientos?pageNumber=1&pageSize=10");
+        var response = await _client.GetAsync("/api/inventario/movimientos?pageNumber=1&pageSize=10");
 
         // Assert
         stopwatch.Stop();
@@ -46,7 +46,7 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/movimientos/{movimientoId}");
+        var response = await _client.GetAsync($"/api/inventario/movimientos/{movimientoId}");
 
         // Assert
         stopwatch.Stop();
@@ -62,7 +62,7 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/movimientos/ingrediente/{ingredienteId}?fechaDesde=2024-01-01&fechaHasta=2024-12-31");
+        var response = await _client.GetAsync($"/api/inventario/movimientos/ingrediente/{ingredienteId}?fechaDesde=2024-01-01&fechaHasta=2024-12-31");
 
         // Assert
         stopwatch.Stop();
@@ -77,7 +77,7 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync("/api/inventario/movimientos/tipo/Ingreso?pageNumber=1&pageSize=10");
+        var response = await _client.GetAsync("/api/inventario/movimientos/tipo/Ingreso?pageNumber=1&pageSize=10");
 
         // Assert
         stopwatch.Stop();
@@ -92,7 +92,7 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync("/api/inventario/movimientos/reporte?fechaInicio=2024-01-01&fechaFin=2024-12-31");
+        var response = await _client.GetAsync("/api/inventario/movimientos/reporte?fechaInicio=2024-01-01&fechaFin=2024-12-31");
 
         // Assert
         stopwatch.Stop();
@@ -116,7 +116,7 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
         
         for (int i = 0; i < numeroRequests; i++)
         {
-            tasks.Add(Client.GetAsync("/api/inventario/movimientos?pageNumber=1&pageSize=10"));
+            tasks.Add(_client.GetAsync("/api/inventario/movimientos?pageNumber=1&pageSize=10"));
         }
 
         var responses = await Task.WhenAll(tasks);
@@ -143,12 +143,12 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
             {
                 IngredienteId = Guid.NewGuid(),
                 Cantidad = 25,
-                TipoMovimiento = TipoMovimientoInventario.Ingreso,
+                TipoMovimiento = Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Ingreso,
                 Motivo = $"Test concurrente {i}",
                 UsuarioId = Guid.NewGuid()
             };
             
-            tasks.Add(Client.PostAsJsonAsync("/api/inventario/movimientos", request));
+            tasks.Add(_client.PostAsJsonAsync("/api/inventario/movimientos", request));
         }
 
         var responses = await Task.WhenAll(tasks);
@@ -173,7 +173,7 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/movimientos?pageNumber={pageNumber}&pageSize={pageSize}");
+        var response = await _client.GetAsync($"/api/inventario/movimientos?pageNumber={pageNumber}&pageSize={pageSize}");
 
         // Assert
         stopwatch.Stop();
@@ -205,7 +205,7 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/movimientos?pageNumber=1&pageSize=20&fechaInicio=2024-01-01&fechaFin=2024-12-31&tipoMovimiento=Ingreso&ingredienteId={ingredienteId}&usuarioId={usuarioId}&filtroMotivo=compra&ordenarPor=Fecha&direccionOrdenamiento=desc");
+        var response = await _client.GetAsync($"/api/inventario/movimientos?pageNumber=1&pageSize=20&fechaInicio=2024-01-01&fechaFin=2024-12-31&tipoMovimiento=Ingreso&ingredienteId={ingredienteId}&usuarioId={usuarioId}&filtroMotivo=compra&ordenarPor=Fecha&direccionOrdenamiento=desc");
 
         // Assert
         stopwatch.Stop();
@@ -220,7 +220,7 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync("/api/inventario/movimientos/reporte?fechaInicio=2024-01-01&fechaFin=2024-12-31&incluirDetalle=true&agruparPorTipo=true&agruparPorIngrediente=true");
+        var response = await _client.GetAsync("/api/inventario/movimientos/reporte?fechaInicio=2024-01-01&fechaFin=2024-12-31&incluirDetalle=true&agruparPorTipo=true&agruparPorIngrediente=true");
 
         // Assert
         stopwatch.Stop();
@@ -239,7 +239,7 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
         var initialMemory = GC.GetTotalMemory(true);
 
         // Act
-        var response = await Client.GetAsync("/api/inventario/movimientos?pageNumber=1&pageSize=100");
+        var response = await _client.GetAsync("/api/inventario/movimientos?pageNumber=1&pageSize=100");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -268,7 +268,7 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync("/api/inventario/movimientos?pageNumber=1&pageSize=50", cts.Token);
+        var response = await _client.GetAsync("/api/inventario/movimientos?pageNumber=1&pageSize=50", cts.Token);
 
         // Assert
         stopwatch.Stop();
@@ -291,7 +291,7 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/movimientos?filtroMotivo={filtroMotivo}&pageNumber=1&pageSize=10");
+        var response = await _client.GetAsync($"/api/inventario/movimientos?filtroMotivo={filtroMotivo}&pageNumber=1&pageSize=10");
 
         // Assert
         stopwatch.Stop();
@@ -312,7 +312,7 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
         {
             IngredienteId = Guid.NewGuid(),
             Cantidad = 50,
-            TipoMovimiento = TipoMovimientoInventario.Ingreso,
+            TipoMovimiento = Domain.Inventario.Ingredientes.Movimientos.Enums.TipoMovimientoInventario.Ingreso,
             Motivo = "Test performance",
             UsuarioId = Guid.NewGuid()
         };
@@ -320,7 +320,7 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.PostAsJsonAsync("/api/inventario/movimientos", request);
+        var response = await _client.PostAsJsonAsync("/api/inventario/movimientos", request);
 
         // Assert
         stopwatch.Stop();
@@ -342,7 +342,7 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.PutAsJsonAsync($"/api/inventario/movimientos/{movimientoId}", request);
+        var response = await _client.PutAsJsonAsync($"/api/inventario/movimientos/{movimientoId}", request);
 
         // Assert
         stopwatch.Stop();
@@ -358,7 +358,7 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.DeleteAsync($"/api/inventario/movimientos/{movimientoId}");
+        var response = await _client.DeleteAsync($"/api/inventario/movimientos/{movimientoId}");
 
         // Assert
         stopwatch.Stop();
@@ -377,7 +377,7 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync("/api/inventario/movimientos?pageNumber=1&pageSize=20&fechaInicio=2024-01-01&fechaFin=2024-12-31&tipoMovimiento=Ingreso&ordenarPor=Fecha&direccionOrdenamiento=desc");
+        var response = await _client.GetAsync("/api/inventario/movimientos?pageNumber=1&pageSize=20&fechaInicio=2024-01-01&fechaFin=2024-12-31&tipoMovimiento=Ingreso&ordenarPor=Fecha&direccionOrdenamiento=desc");
 
         // Assert
         stopwatch.Stop();
@@ -400,7 +400,7 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
         for (int i = 0; i < numeroEjecuciones; i++)
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            var response = await Client.GetAsync("/api/inventario/movimientos?pageNumber=1&pageSize=10");
+            var response = await _client.GetAsync("/api/inventario/movimientos?pageNumber=1&pageSize=10");
             stopwatch.Stop();
             
             response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -434,7 +434,7 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/movimientos/ingrediente/{ingredienteId}?fechaDesde=2024-01-01&fechaHasta=2024-12-31&limite=50");
+        var response = await _client.GetAsync($"/api/inventario/movimientos/ingrediente/{ingredienteId}?fechaDesde=2024-01-01&fechaHasta=2024-12-31&limite=50");
 
         // Assert
         stopwatch.Stop();
@@ -449,7 +449,7 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync("/api/inventario/movimientos/tipo/Egreso?pageNumber=1&pageSize=20&fechaInicio=2024-01-01&fechaFin=2024-12-31");
+        var response = await _client.GetAsync("/api/inventario/movimientos/tipo/Egreso?pageNumber=1&pageSize=20&fechaInicio=2024-01-01&fechaFin=2024-12-31");
 
         // Assert
         stopwatch.Stop();
@@ -472,7 +472,7 @@ public class MovimientosInventarioPerformanceTests : BaseIntegrationTest
         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/movimientos?ordenarPor={ordenarPor}&direccionOrdenamiento={direccion}&pageNumber=1&pageSize=10");
+        var response = await _client.GetAsync($"/api/inventario/movimientos?ordenarPor={ordenarPor}&direccionOrdenamiento={direccion}&pageNumber=1&pageSize=10");
 
         // Assert
         stopwatch.Stop();

@@ -35,14 +35,14 @@ public class ApiOrdenesCompraIntegrationTests : BaseIntegrationTest
         };
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/ordenes-compra?pageNumber={query.PageNumber}&pageSize={query.PageSize}");
+        var response = await _client.GetAsync($"/api/inventario/ordenes-compra?pageNumber={query.PageNumber}&pageSize={query.PageSize}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<ApiResponse<PaginatedList<OrdenCompraDto>>>(content, JsonOptions);
+        var result = JsonSerializer.Deserialize<ApiResponse<PaginatedList<RestaurantePro.Application.Inventario.OrdenesCompra.DTOs.OrdenCompraDto>>>(content, JsonSerializerOptions.Default);
         result.Should().NotBeNull();
-        result!.Succeeded.Should().BeTrue();
+        result!.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
     }
 
@@ -53,7 +53,7 @@ public class ApiOrdenesCompraIntegrationTests : BaseIntegrationTest
         var ordenCompraId = Guid.NewGuid();
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/ordenes-compra/{ordenCompraId}");
+        var response = await _client.GetAsync($"/api/inventario/ordenes-compra/{ordenCompraId}");
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound);
@@ -68,7 +68,7 @@ public class ApiOrdenesCompraIntegrationTests : BaseIntegrationTest
             ProveedorId = Guid.NewGuid(),
             FechaEntregaEsperada = DateTime.Now.AddDays(7),
             Observaciones = "Orden de prueba",
-            Items = new List<CrearOrdenCompraItemCommand>
+            Items = new List<OrdenCompraItemCommand>
             {
                 new()
                 {
@@ -80,11 +80,11 @@ public class ApiOrdenesCompraIntegrationTests : BaseIntegrationTest
             }
         };
 
-        var json = JsonSerializer.Serialize(command, JsonOptions);
+        var json = JsonSerializer.Serialize(command, JsonSerializerOptions.Default);
         var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
         // Act
-        var response = await Client.PostAsync("/api/inventario/ordenes-compra", content);
+        var response = await _client.PostAsync("/api/inventario/ordenes-compra", content);
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.Created, HttpStatusCode.BadRequest);
@@ -99,7 +99,7 @@ public class ApiOrdenesCompraIntegrationTests : BaseIntegrationTest
         {
             FechaEntregaEsperada = DateTime.Now.AddDays(10),
             Observaciones = "Orden actualizada",
-            Items = new List<ActualizarOrdenCompraItemCommand>
+            Items = new List<OrdenCompraItemCommand>
             {
                 new()
                 {
@@ -111,11 +111,11 @@ public class ApiOrdenesCompraIntegrationTests : BaseIntegrationTest
             }
         };
 
-        var json = JsonSerializer.Serialize(command, JsonOptions);
+        var json = JsonSerializer.Serialize(command, JsonSerializerOptions.Default);
         var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
         // Act
-        var response = await Client.PutAsync($"/api/inventario/ordenes-compra/{ordenCompraId}", content);
+        var response = await _client.PutAsync($"/api/inventario/ordenes-compra/{ordenCompraId}", content);
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
@@ -132,7 +132,7 @@ public class ApiOrdenesCompraIntegrationTests : BaseIntegrationTest
         var ordenCompraId = Guid.NewGuid();
 
         // Act
-        var response = await Client.PostAsync($"/api/inventario/ordenes-compra/{ordenCompraId}/aprobar", null);
+        var response = await _client.PostAsync($"/api/inventario/ordenes-compra/{ordenCompraId}/aprobar", null);
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound);
@@ -145,7 +145,7 @@ public class ApiOrdenesCompraIntegrationTests : BaseIntegrationTest
         var ordenCompraId = Guid.NewGuid();
 
         // Act
-        var response = await Client.PostAsync($"/api/inventario/ordenes-compra/{ordenCompraId}/enviar", null);
+        var response = await _client.PostAsync($"/api/inventario/ordenes-compra/{ordenCompraId}/enviar", null);
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound);
@@ -158,14 +158,14 @@ public class ApiOrdenesCompraIntegrationTests : BaseIntegrationTest
         var ordenCompraId = Guid.NewGuid();
         var command = new RechazarOrdenCompraCommand
         {
-            MotivoRechazo = "Motivo de prueba"
+            Motivo = "Motivo de prueba"
         };
 
-        var json = JsonSerializer.Serialize(command, JsonOptions);
+        var json = JsonSerializer.Serialize(command, JsonSerializerOptions.Default);
         var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
         // Act
-        var response = await Client.PostAsync($"/api/inventario/ordenes-compra/{ordenCompraId}/rechazar", content);
+        var response = await _client.PostAsync($"/api/inventario/ordenes-compra/{ordenCompraId}/rechazar", content);
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound);
@@ -178,14 +178,14 @@ public class ApiOrdenesCompraIntegrationTests : BaseIntegrationTest
         var ordenCompraId = Guid.NewGuid();
         var command = new RecibirOrdenCompraCommand
         {
-            NotasRecepcion = "Recibido correctamente"
+            Observaciones = "Recibido correctamente"
         };
 
-        var json = JsonSerializer.Serialize(command, JsonOptions);
+        var json = JsonSerializer.Serialize(command, JsonSerializerOptions.Default);
         var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
         // Act
-        var response = await Client.PostAsync($"/api/inventario/ordenes-compra/{ordenCompraId}/recibir", content);
+        var response = await _client.PostAsync($"/api/inventario/ordenes-compra/{ordenCompraId}/recibir", content);
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound);
@@ -199,14 +199,14 @@ public class ApiOrdenesCompraIntegrationTests : BaseIntegrationTest
     public async Task ObtenerOrdenesPendientes_DeberiaRetornarListaDeOrdenesPendientes()
     {
         // Act
-        var response = await Client.GetAsync("/api/inventario/ordenes-compra/pendientes");
+        var response = await _client.GetAsync("/api/inventario/ordenes-compra/pendientes");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<ApiResponse<List<OrdenCompraDto>>>(content, JsonOptions);
+        var result = JsonSerializer.Deserialize<ApiResponse<List<RestaurantePro.Application.Inventario.OrdenesCompra.DTOs.OrdenCompraDto>>>(content, JsonSerializerOptions.Default);
         result.Should().NotBeNull();
-        result!.Succeeded.Should().BeTrue();
+        result!.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
     }
 
@@ -217,14 +217,14 @@ public class ApiOrdenesCompraIntegrationTests : BaseIntegrationTest
         var proveedorId = Guid.NewGuid();
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/ordenes-compra/proveedor/{proveedorId}");
+        var response = await _client.GetAsync($"/api/inventario/ordenes-compra/proveedor/{proveedorId}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<ApiResponse<List<OrdenCompraDto>>>(content, JsonOptions);
+        var result = JsonSerializer.Deserialize<ApiResponse<List<RestaurantePro.Application.Inventario.OrdenesCompra.DTOs.OrdenCompraDto>>>(content, JsonSerializerOptions.Default);
         result.Should().NotBeNull();
-        result!.Succeeded.Should().BeTrue();
+        result!.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
     }
 
@@ -240,14 +240,14 @@ public class ApiOrdenesCompraIntegrationTests : BaseIntegrationTest
         {
             ProveedorId = Guid.Empty,
             FechaEntregaEsperada = DateTime.Now.AddDays(-1), // Fecha pasada
-            Items = new List<CrearOrdenCompraItemCommand>()
+            Items = new List<OrdenCompraItemCommand>()
         };
 
-        var json = JsonSerializer.Serialize(command, JsonOptions);
+        var json = JsonSerializer.Serialize(command, JsonSerializerOptions.Default);
         var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
         // Act
-        var response = await Client.PostAsync("/api/inventario/ordenes-compra", content);
+        var response = await _client.PostAsync("/api/inventario/ordenes-compra", content);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -261,14 +261,14 @@ public class ApiOrdenesCompraIntegrationTests : BaseIntegrationTest
         var command = new ActualizarOrdenCompraCommand
         {
             FechaEntregaEsperada = DateTime.Now.AddDays(10),
-            Items = new List<ActualizarOrdenCompraItemCommand>()
+            Items = new List<OrdenCompraItemCommand>()
         };
 
-        var json = JsonSerializer.Serialize(command, JsonOptions);
+        var json = JsonSerializer.Serialize(command, JsonSerializerOptions.Default);
         var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
         // Act
-        var response = await Client.PutAsync($"/api/inventario/ordenes-compra/{ordenCompraId}", content);
+        var response = await _client.PutAsync($"/api/inventario/ordenes-compra/{ordenCompraId}", content);
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.BadRequest);
@@ -292,11 +292,77 @@ public class ApiOrdenesCompraIntegrationTests : BaseIntegrationTest
         var ordenCompraId = Guid.NewGuid();
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/ordenes-compra/{ordenCompraId}");
+        var response = await _client.GetAsync($"/api/inventario/ordenes-compra/{ordenCompraId}");
 
         // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.NotFound);
     }
 
     #endregion
+}
+
+/// <summary>
+/// Command para crear una nueva orden de compra
+/// </summary>
+public class CrearOrdenCompraCommand
+{
+    public Guid ProveedorId { get; set; }
+    public DateTime FechaEntregaEsperada { get; set; }
+    public string? Observaciones { get; set; }
+    public List<OrdenCompraItemCommand> Items { get; set; } = new();
+    public Guid? UsuarioId { get; set; }
+}
+
+/// <summary>
+/// Command para actualizar una orden de compra
+/// </summary>
+public class ActualizarOrdenCompraCommand
+{
+    public Guid Id { get; set; }
+    public DateTime? FechaEntregaEsperada { get; set; }
+    public string? Observaciones { get; set; }
+    public List<OrdenCompraItemCommand>? Items { get; set; }
+}
+
+/// <summary>
+/// Command para rechazar una orden de compra
+/// </summary>
+public class RechazarOrdenCompraCommand
+{
+    public Guid Id { get; set; }
+    public string Motivo { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Command para recibir una orden de compra
+/// </summary>
+public class RecibirOrdenCompraCommand
+{
+    public Guid Id { get; set; }
+    public DateTime FechaRecepcion { get; set; }
+    public string? Observaciones { get; set; }
+}
+
+/// <summary>
+/// Query para obtener órdenes de compra paginadas
+/// </summary>
+public class ObtenerOrdenesCompraPaginadasQuery
+{
+    public int PageNumber { get; set; } = 1;
+    public int PageSize { get; set; } = 10;
+    public string? SearchTerm { get; set; }
+    public Guid? ProveedorId { get; set; }
+    public DateTime? FechaDesde { get; set; }
+    public DateTime? FechaHasta { get; set; }
+}
+
+/// <summary>
+/// Command para representar un item de orden de compra
+/// </summary>
+public class OrdenCompraItemCommand
+{
+    public Guid IngredienteId { get; set; }
+    public int Cantidad { get; set; }
+    public decimal PrecioUnitario { get; set; }
+    public string? Observaciones { get; set; }
 }

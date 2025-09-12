@@ -363,12 +363,12 @@ public class MockComandaRealtimeService : IComandaRealtimeService
 /// </summary>
 public class MockAuthService : IAuthService
 {
-    public Task<ApiResponse<AuthResponse>> LoginAsync(string email, string password, bool recordarme = false)
+    public Task<ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.AuthResponse>> LoginAsync(string email, string password, bool recordarme = false)
     {
-        return Task.FromResult(ApiResponse<AuthResponse>.SuccessResponse(new AuthResponse
+        return Task.FromResult(ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.AuthResponse>.SuccessResponse(new RestaurantePro.Mobile.Core.Models.DTOs.AuthResponse
         {
             Token = "mock_token",
-            User = new AuthUser
+            User = new RestaurantePro.Mobile.Core.Models.DTOs.AuthUser
             {
                 Id = 1,
                 Email = email,

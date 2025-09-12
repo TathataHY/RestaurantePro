@@ -154,6 +154,14 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
             services.AddScoped<RestaurantePro.Domain.Inventario.Ingredientes.Interfaces.IIngredienteRepository, 
                 RestaurantePro.Infrastructure.Persistence.Repositories.Inventario.IngredienteRepository>();
 
+            // Configurar repositorio de movimientos de inventario para pruebas
+            services.AddScoped<RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Interfaces.IMovimientoInventarioRepository, 
+                RestaurantePro.Infrastructure.Persistence.Repositories.Inventario.MovimientoInventarioRepository>();
+
+            // Configurar repositorio de órdenes de compra para pruebas
+            services.AddScoped<RestaurantePro.Domain.Inventario.Compras.OrdenesCompra.Interfaces.IOrdenCompraRepository, 
+                RestaurantePro.Infrastructure.Persistence.Repositories.Inventario.OrdenCompraRepository>();
+
             // Configurar NotificationManager para pruebas
             services.AddScoped<RestaurantePro.Domain.Core.SharedKernel.Validation.INotificationManager, 
                 TestNotificationManager>();

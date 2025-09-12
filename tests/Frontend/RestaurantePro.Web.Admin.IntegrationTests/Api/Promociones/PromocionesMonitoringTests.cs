@@ -30,7 +30,7 @@ public class PromocionesMonitoringTests : BaseIntegrationTest
             Codigo = "MONITOR_TEST",
             Nombre = "Promoción de Monitoreo",
             Descripcion = "Promoción para test de monitoreo",
-            Tipo = TipoPromocion.DescuentoPorcentaje,
+            Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
             ValorDescuento = 10,
             MontoMinimo = 50,
             FechaInicio = DateTime.UtcNow,
@@ -100,7 +100,7 @@ public class PromocionesMonitoringTests : BaseIntegrationTest
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
         responseData.Data.Should().NotBeNull();
-        responseData.Data.Estado.Should().Be(EstadoPromocion.Activa);
+        responseData.Data.Estado.Should().Be(RestaurantePro.Domain.Comercial.Promociones.Enums.EstadoPromocion.Activa.ToString());
         
         // Verificar que se registró el cambio de estado
         // En un entorno real, aquí se verificarían los logs de auditoría
@@ -179,7 +179,7 @@ public class PromocionesMonitoringTests : BaseIntegrationTest
             Codigo = "", // Código vacío para generar error
             Nombre = "Promoción con Error",
             Descripcion = "Promoción que generará error",
-            Tipo = TipoPromocion.DescuentoPorcentaje,
+            Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
             ValorDescuento = -10, // Valor negativo para generar error
             MontoMinimo = 50,
             FechaInicio = DateTime.UtcNow,
@@ -272,7 +272,7 @@ public class PromocionesMonitoringTests : BaseIntegrationTest
         var client = CreateAuthenticatedClient();
 
         // Act
-        var response = await client.GetAsync("/api/comercial/promociones?estado=Activa&tipo=DescuentoPorcentaje");
+        var response = await client.GetAsync("/api/comercial/promociones?estado=Activa&tipo=PorcentajeTotal");
 
         // Assert
         response.EnsureSuccessStatusCode();
@@ -323,13 +323,17 @@ public class PromocionesMonitoringTests : BaseIntegrationTest
         var json = JsonSerializer.Serialize(productosIds, GetJsonOptions());
 
         // Act
-        var response = await client.DeleteAsync($"/api/comercial/promociones/{promocionId}/productos", 
-            new StringContent(json, System.Text.Encoding.UTF8, "application/json"));
+        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"/api/comercial/promociones/{promocionId}/productos")
+        {
+            Content = content
+        };
+        var response = await client.SendAsync(request);
 
         // Assert
         response.EnsureSuccessStatusCode();
-        var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<PromocionDto>>(content, GetJsonOptions());
+        var responseContent = await response.Content.ReadAsStringAsync();
+        var responseData = JsonSerializer.Deserialize<ApiResponse<PromocionDto>>(responseContent, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -371,7 +375,7 @@ public class PromocionesMonitoringTests : BaseIntegrationTest
             Codigo = "MONITOR_SINGLE",
             Nombre = "Promoción Individual Monitoreo",
             Descripcion = "Promoción individual para test de monitoreo",
-            Tipo = TipoPromocion.DescuentoPorcentaje,
+            Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
             ValorDescuento = 10,
             MontoMinimo = 50,
             FechaInicio = DateTime.UtcNow,
@@ -380,7 +384,7 @@ public class PromocionesMonitoringTests : BaseIntegrationTest
             Prioridad = 1
         };
 
-        var mediator = _factory.Services.GetRequiredService<IMediator>();
+        var mediator = _factory.Services.GetRequiredService<MediatR.IMediator>();
         var result = await mediator.Send(command);
         return result.Value.Id;
     }
@@ -390,7 +394,7 @@ public class PromocionesMonitoringTests : BaseIntegrationTest
         var promocionId = await SeedPromocionAsync();
         var command = new ActivarPromocionCommand { Id = promocionId };
         
-        var mediator = _factory.Services.GetRequiredService<IMediator>();
+        var mediator = _factory.Services.GetRequiredService<MediatR.IMediator>();
         await mediator.Send(command);
         
         return promocionId;
@@ -407,7 +411,7 @@ public class PromocionesMonitoringTests : BaseIntegrationTest
                 Codigo = $"MONITOR_{i:D3}",
                 Nombre = $"Promoción Monitoreo {i}",
                 Descripcion = $"Promoción {i} para test de monitoreo",
-                Tipo = i % 2 == 0 ? TipoPromocion.DescuentoPorcentaje : TipoPromocion.DescuentoFijo,
+                Tipo = i % 2 == 0 ? RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal : RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.MontoFijoTotal,
                 ValorDescuento = 10 + (i % 20),
                 MontoMinimo = 50 + (i * 10),
                 FechaInicio = DateTime.UtcNow,
@@ -417,7 +421,7 @@ public class PromocionesMonitoringTests : BaseIntegrationTest
             });
         }
 
-        var mediator = _factory.Services.GetRequiredService<IMediator>();
+        var mediator = _factory.Services.GetRequiredService<MediatR.IMediator>();
         foreach (var command in commands)
         {
             await mediator.Send(command);
@@ -436,7 +440,7 @@ public class PromocionesMonitoringTests : BaseIntegrationTest
                 Codigo = $"ACTIVA_MONITOR_{i:D3}",
                 Nombre = $"Promoción Activa Monitoreo {i}",
                 Descripcion = $"Promoción activa {i} para test de monitoreo",
-                Tipo = TipoPromocion.DescuentoPorcentaje,
+                Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
                 ValorDescuento = 10 + (i % 20),
                 MontoMinimo = 50 + (i * 10),
                 FechaInicio = DateTime.UtcNow,
@@ -446,7 +450,7 @@ public class PromocionesMonitoringTests : BaseIntegrationTest
             });
         }
 
-        var mediator = _factory.Services.GetRequiredService<IMediator>();
+        var mediator = _factory.Services.GetRequiredService<MediatR.IMediator>();
         foreach (var command in commands)
         {
             var result = await mediator.Send(command);
@@ -471,7 +475,7 @@ public class PromocionesMonitoringTests : BaseIntegrationTest
                 Codigo = $"ESTADO_MONITOR_{i:D3}",
                 Nombre = $"Promoción Estado Monitoreo {i}",
                 Descripcion = $"Promoción {i} con estado específico para monitoreo",
-                Tipo = TipoPromocion.DescuentoPorcentaje,
+                Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
                 ValorDescuento = 10 + (i % 15),
                 MontoMinimo = 50 + (i * 5),
                 FechaInicio = DateTime.UtcNow,
@@ -481,7 +485,7 @@ public class PromocionesMonitoringTests : BaseIntegrationTest
             });
         }
 
-        var mediator = _factory.Services.GetRequiredService<IMediator>();
+        var mediator = _factory.Services.GetRequiredService<MediatR.IMediator>();
         foreach (var command in commands)
         {
             await mediator.Send(command);
@@ -499,7 +503,7 @@ public class PromocionesMonitoringTests : BaseIntegrationTest
         //     PromocionId = promocionId,
         //     ProductosIds = productosIds
         // };
-        // var mediator = _factory.Services.GetRequiredService<IMediator>();
+        // var mediator = _factory.Services.GetRequiredService<MediatR.IMediator>();
         // await mediator.Send(command);
         
         return promocionId;
@@ -513,3 +517,4 @@ public class PromocionesMonitoringTests : BaseIntegrationTest
 
     #endregion
 }
+

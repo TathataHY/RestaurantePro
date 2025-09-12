@@ -36,7 +36,7 @@ public class OrdenesCompraPerformanceTests : BaseIntegrationTest
         var stopwatch = Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/ordenes-compra?pageNumber={query.PageNumber}&pageSize={query.PageSize}");
+        var response = await _client.GetAsync($"/api/inventario/ordenes-compra?pageNumber={query.PageNumber}&pageSize={query.PageSize}");
         stopwatch.Stop();
 
         // Assert
@@ -52,7 +52,7 @@ public class OrdenesCompraPerformanceTests : BaseIntegrationTest
         var stopwatch = Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/ordenes-compra/{ordenCompraId}");
+        var response = await _client.GetAsync($"/api/inventario/ordenes-compra/{ordenCompraId}");
         stopwatch.Stop();
 
         // Assert
@@ -67,7 +67,7 @@ public class OrdenesCompraPerformanceTests : BaseIntegrationTest
         var stopwatch = Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync("/api/inventario/ordenes-compra/pendientes");
+        var response = await _client.GetAsync("/api/inventario/ordenes-compra/pendientes");
         stopwatch.Stop();
 
         // Assert
@@ -83,7 +83,7 @@ public class OrdenesCompraPerformanceTests : BaseIntegrationTest
         var stopwatch = Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/ordenes-compra/proveedor/{proveedorId}");
+        var response = await _client.GetAsync($"/api/inventario/ordenes-compra/proveedor/{proveedorId}");
         stopwatch.Stop();
 
         // Assert
@@ -103,13 +103,13 @@ public class OrdenesCompraPerformanceTests : BaseIntegrationTest
         {
             ProveedorId = Guid.NewGuid(),
             FechaEntregaEsperada = DateTime.Now.AddDays(7),
-            Items = new List<CrearOrdenCompraItemCommand>()
+            Items = new List<OrdenCompraItemCommand>()
         };
 
         // Crear 100 items para probar rendimiento
         for (int i = 0; i < 100; i++)
         {
-            command.Items.Add(new CrearOrdenCompraItemCommand
+            command.Items.Add(new OrdenCompraItemCommand
             {
                 IngredienteId = Guid.NewGuid(),
                 Cantidad = i + 1,
@@ -118,13 +118,13 @@ public class OrdenesCompraPerformanceTests : BaseIntegrationTest
             });
         }
 
-        var json = JsonSerializer.Serialize(command, JsonOptions);
+        var json = JsonSerializer.Serialize(command, JsonSerializerOptions.Default);
         var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
         var stopwatch = Stopwatch.StartNew();
 
         // Act
-        var response = await Client.PostAsync("/api/inventario/ordenes-compra", content);
+        var response = await _client.PostAsync("/api/inventario/ordenes-compra", content);
         stopwatch.Stop();
 
         // Assert
@@ -140,13 +140,13 @@ public class OrdenesCompraPerformanceTests : BaseIntegrationTest
         var command = new ActualizarOrdenCompraCommand
         {
             FechaEntregaEsperada = DateTime.Now.AddDays(10),
-            Items = new List<ActualizarOrdenCompraItemCommand>()
+            Items = new List<OrdenCompraItemCommand>()
         };
 
         // Crear 50 items para probar rendimiento
         for (int i = 0; i < 50; i++)
         {
-            command.Items.Add(new ActualizarOrdenCompraItemCommand
+            command.Items.Add(new OrdenCompraItemCommand
             {
                 IngredienteId = Guid.NewGuid(),
                 Cantidad = i + 1,
@@ -155,13 +155,13 @@ public class OrdenesCompraPerformanceTests : BaseIntegrationTest
             });
         }
 
-        var json = JsonSerializer.Serialize(command, JsonOptions);
+        var json = JsonSerializer.Serialize(command, JsonSerializerOptions.Default);
         var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
         var stopwatch = Stopwatch.StartNew();
 
         // Act
-        var response = await Client.PutAsync($"/api/inventario/ordenes-compra/{ordenCompraId}", content);
+        var response = await _client.PutAsync($"/api/inventario/ordenes-compra/{ordenCompraId}", content);
         stopwatch.Stop();
 
         // Assert
@@ -182,7 +182,7 @@ public class OrdenesCompraPerformanceTests : BaseIntegrationTest
         {
             ProveedorId = Guid.NewGuid(),
             FechaEntregaEsperada = DateTime.Now.AddDays(7),
-            Items = new List<CrearOrdenCompraItemCommand>
+            Items = new List<OrdenCompraItemCommand>
             {
                 new()
                 {
@@ -193,13 +193,13 @@ public class OrdenesCompraPerformanceTests : BaseIntegrationTest
             }
         };
 
-        var json = JsonSerializer.Serialize(command, JsonOptions);
+        var json = JsonSerializer.Serialize(command, JsonSerializerOptions.Default);
         var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
         // Act - Crear 10 requests concurrentes
         for (int i = 0; i < 10; i++)
         {
-            tasks.Add(Client.PostAsync("/api/inventario/ordenes-compra", content));
+            tasks.Add(_client.PostAsync("/api/inventario/ordenes-compra", content));
         }
 
         var stopwatch = Stopwatch.StartNew();
@@ -221,7 +221,7 @@ public class OrdenesCompraPerformanceTests : BaseIntegrationTest
         // Act - Crear 20 requests concurrentes
         for (int i = 0; i < 20; i++)
         {
-            tasks.Add(Client.GetAsync($"/api/inventario/ordenes-compra?pageNumber={i % 5 + 1}&pageSize=10"));
+            tasks.Add(_client.GetAsync($"/api/inventario/ordenes-compra?pageNumber={i % 5 + 1}&pageSize=10"));
         }
 
         var stopwatch = Stopwatch.StartNew();
@@ -251,7 +251,7 @@ public class OrdenesCompraPerformanceTests : BaseIntegrationTest
         var memoryBefore = GC.GetTotalMemory(false);
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/ordenes-compra?pageNumber={query.PageNumber}&pageSize={query.PageSize}");
+        var response = await _client.GetAsync($"/api/inventario/ordenes-compra?pageNumber={query.PageNumber}&pageSize={query.PageSize}");
 
         var memoryAfter = GC.GetTotalMemory(false);
         var memoryUsed = memoryAfter - memoryBefore;
@@ -281,7 +281,7 @@ public class OrdenesCompraPerformanceTests : BaseIntegrationTest
         var stopwatch = Stopwatch.StartNew();
 
         // Act
-        var response = await Client.GetAsync($"/api/inventario/ordenes-compra?pageNumber={query.PageNumber}&pageSize={query.PageSize}");
+        var response = await _client.GetAsync($"/api/inventario/ordenes-compra?pageNumber={query.PageNumber}&pageSize={query.PageSize}");
         stopwatch.Stop();
 
         // Assert
@@ -302,11 +302,11 @@ public class OrdenesCompraPerformanceTests : BaseIntegrationTest
     {
         // Arrange
         var stopwatchSinFiltros = Stopwatch.StartNew();
-        var responseSinFiltros = await Client.GetAsync("/api/inventario/ordenes-compra?pageNumber=1&pageSize=100");
+        var responseSinFiltros = await _client.GetAsync("/api/inventario/ordenes-compra?pageNumber=1&pageSize=100");
         stopwatchSinFiltros.Stop();
 
         var stopwatchConFiltros = Stopwatch.StartNew();
-        var responseConFiltros = await Client.GetAsync("/api/inventario/ordenes-compra?pageNumber=1&pageSize=100&estado=Pendiente");
+        var responseConFiltros = await _client.GetAsync("/api/inventario/ordenes-compra?pageNumber=1&pageSize=100&estado=Pendiente");
         stopwatchConFiltros.Stop();
 
         // Assert
@@ -314,7 +314,7 @@ public class OrdenesCompraPerformanceTests : BaseIntegrationTest
         responseConFiltros.StatusCode.Should().Be(HttpStatusCode.OK);
         
         // Los filtros deberían hacer la consulta más rápida (o al menos no significativamente más lenta)
-        stopwatchConFiltros.ElapsedMilliseconds.Should().BeLessThan(stopwatchSinFiltros.ElapsedMilliseconds * 1.5,
+        stopwatchConFiltros.ElapsedMilliseconds.Should().BeLessThan((long)(stopwatchSinFiltros.ElapsedMilliseconds * 1.5),
             "Los filtros no deberían hacer la consulta significativamente más lenta");
     }
 
@@ -330,13 +330,13 @@ public class OrdenesCompraPerformanceTests : BaseIntegrationTest
         {
             ProveedorId = Guid.NewGuid(),
             FechaEntregaEsperada = DateTime.Now.AddDays(7),
-            Items = new List<CrearOrdenCompraItemCommand>()
+            Items = new List<OrdenCompraItemCommand>()
         };
 
         // Crear el máximo número de items permitido (1000)
         for (int i = 0; i < 1000; i++)
         {
-            command.Items.Add(new CrearOrdenCompraItemCommand
+            command.Items.Add(new OrdenCompraItemCommand
             {
                 IngredienteId = Guid.NewGuid(),
                 Cantidad = 1,
@@ -344,13 +344,13 @@ public class OrdenesCompraPerformanceTests : BaseIntegrationTest
             });
         }
 
-        var json = JsonSerializer.Serialize(command, JsonOptions);
+        var json = JsonSerializer.Serialize(command, JsonSerializerOptions.Default);
         var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
         var stopwatch = Stopwatch.StartNew();
 
         // Act
-        var response = await Client.PostAsync("/api/inventario/ordenes-compra", content);
+        var response = await _client.PostAsync("/api/inventario/ordenes-compra", content);
         stopwatch.Stop();
 
         // Assert

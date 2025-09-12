@@ -39,6 +39,9 @@
     
     <!-- System.Text.Json para serialización en pruebas -->
     <PackageReference Include="System.Text.Json" Version="9.0.5" />
+    
+    <!-- JWT para generación de tokens en tests -->
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.2.1" />
   </ItemGroup>
 
   <ItemGroup>

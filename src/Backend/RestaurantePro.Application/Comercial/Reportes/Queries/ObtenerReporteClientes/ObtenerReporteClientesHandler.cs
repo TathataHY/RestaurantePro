@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Globalization;
 using System.Linq;
+using RestaurantePro.Domain.Comercial.Clientes.Enums;
 
 namespace RestaurantePro.Application.Comercial.Reportes.Queries.ObtenerReporteClientes;
 
@@ -26,6 +27,30 @@ public class ObtenerReporteClientesHandler : IRequestHandler<ObtenerReporteClien
         {
             _logger.LogInformation("👥 Generando reporte de clientes");
 
+            // Validaciones de entrada
+            if (request.FechaRegistroDesde.HasValue && request.FechaRegistroHasta.HasValue)
+            {
+                if (request.FechaRegistroDesde.Value > request.FechaRegistroHasta.Value)
+                {
+                    return Result.Failure<ReporteClientesDto>("La fecha de registro desde debe ser anterior o igual a la fecha hasta");
+                }
+            }
+
+            if (request.FechaRegistroDesde.HasValue && request.FechaRegistroDesde.Value > DateTime.Now)
+            {
+                return Result.Failure<ReporteClientesDto>("La fecha de registro desde no puede ser futura");
+            }
+
+            // Validar segmento si se proporciona
+            if (!string.IsNullOrEmpty(request.Segmento))
+            {
+                var segmentosValidos = new[] { "Premium", "Regular", "VIP", "Nuevo" };
+                if (!segmentosValidos.Contains(request.Segmento, StringComparer.OrdinalIgnoreCase))
+                {
+                    return Result.Failure<ReporteClientesDto>($"El segmento '{request.Segmento}' no es válido. Segmentos válidos: {string.Join(", ", segmentosValidos)}");
+                }
+            }
+
             // Query base de clientes
             var clientesQuery = _context.Clientes.AsQueryable();
 
@@ -37,6 +62,31 @@ public class ObtenerReporteClientesHandler : IRequestHandler<ObtenerReporteClien
             if (request.FechaRegistroHasta.HasValue)
             {
                 clientesQuery = clientesQuery.Where(c => c.FechaCreacion <= request.FechaRegistroHasta.Value);
+            }
+
+            // Filtrar por segmento si se proporciona
+            if (!string.IsNullOrEmpty(request.Segmento))
+            {
+                if (Enum.TryParse<SegmentoCliente>(request.Segmento, true, out var segmentoFiltro))
+                {
+                    clientesQuery = clientesQuery.Where(c => c.Segmento == segmentoFiltro);
+                }
+                else
+                {
+                    // Si el segmento no es válido, retornar lista vacía
+                    return Result.Success(new ReporteClientesDto
+                    {
+                        TotalClientes = 0,
+                        ClientesActivos = 0,
+                        ClientesInactivos = 0
+                    });
+                }
+            }
+
+            // Filtrar por clientes activos si se solicita
+            if (request.SoloActivos)
+            {
+                clientesQuery = clientesQuery.Where(c => c.EstaActivo);
             }
 
             var clientes = await clientesQuery.ToListAsync(cancellationToken);

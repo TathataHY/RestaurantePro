@@ -35,13 +35,12 @@ public class IngredientesCrudTests : BaseIntegrationTest
         {
             Nombre = "Tomate Fresco",
             Descripcion = "Tomate rojo maduro para ensaladas",
-            Rotacion = RotacionIngrediente.Alta,
-            UnidadMedida = UnidadMedida.Kilogramo,
+            Rotacion = "Alta",
+            UnidadMedida = "Kilogramo",
             StockMinimo = 5,
-            StockMaximo = 50,
-            CostoUnitario = 8.50m,
-            RequiereRefrigeracion = true,
-            DiasVencimiento = 7
+            StockInicial = 25,
+            UsuarioId = Guid.NewGuid(),
+            CostoInicial = 8.50m
         };
 
         // Act
@@ -58,13 +57,11 @@ public class IngredientesCrudTests : BaseIntegrationTest
             responseData.Data.Should().NotBeNull();
             responseData.Data!.Nombre.Should().Be(command.Nombre);
             responseData.Data.Descripcion.Should().Be(command.Descripcion);
-            responseData.Data.Rotacion.Should().Be(command.Rotacion);
-            responseData.Data.UnidadMedida.Should().Be(command.UnidadMedida);
+            responseData.Data.Rotacion.ToString().Should().Be(command.Rotacion);
+            responseData.Data.UnidadMedida.ToString().Should().Be(command.UnidadMedida);
             responseData.Data.StockMinimo.Should().Be(command.StockMinimo);
-            responseData.Data.StockMaximo.Should().Be(command.StockMaximo);
-            responseData.Data.CostoUnitario.Should().Be(command.CostoUnitario);
-            responseData.Data.RequiereRefrigeracion.Should().Be(command.RequiereRefrigeracion);
-            responseData.Data.DiasVencimiento.Should().Be(command.DiasVencimiento);
+            responseData.Data.StockActual.Should().Be(command.StockInicial);
+            responseData.Data.CostoPromedio.Should().Be(command.CostoInicial);
         }
     }
 
@@ -75,11 +72,12 @@ public class IngredientesCrudTests : BaseIntegrationTest
         var command = new CrearIngredienteCommand
         {
             Nombre = "Sal de Mesa",
-            Rotacion = RotacionIngrediente.Baja,
-            UnidadMedida = UnidadMedida.Kilogramo,
+            Rotacion = "Baja",
+            UnidadMedida = "Kilogramo",
             StockMinimo = 1,
-            StockMaximo = 10,
-            CostoUnitario = 2.00m
+            StockInicial = 5,
+            UsuarioId = Guid.NewGuid(),
+            CostoInicial = 2.00m
         };
 
         // Act
@@ -105,11 +103,12 @@ public class IngredientesCrudTests : BaseIntegrationTest
         var command = new CrearIngredienteCommand
         {
             Nombre = "Ingrediente Duplicado",
-            Rotacion = RotacionIngrediente.Media,
-            UnidadMedida = UnidadMedida.Unidad,
+            Rotacion = "Media",
+            UnidadMedida = "Unidad",
             StockMinimo = 1,
-            StockMaximo = 10,
-            CostoUnitario = 5.00m
+            StockInicial = 5,
+            UsuarioId = Guid.NewGuid(),
+            CostoInicial = 5.00m
         };
 
         // Act
@@ -130,19 +129,19 @@ public class IngredientesCrudTests : BaseIntegrationTest
     public async Task ObtenerIngredientes_ConPaginacion_DeberiaRetornarDatosPaginados()
     {
         // Arrange
-        var query = "?pageNumber=1&pageSize=5&soloActivos=true";
+        var query = "?pageNumber=1&pageSize=10&soloActivos=true";
 
         // Act
         var response = await _client.GetAsync($"/api/inventario/ingredientes{query}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<PaginatedList<IngredienteSummaryDto>>>();
+        var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<PaginatedList<RestaurantePro.Application.Inventario.Ingredientes.DTOs.IngredienteSummaryDto>>>();
         responseData.Should().NotBeNull();
         responseData!.Success.Should().BeTrue();
         responseData.Data.Should().NotBeNull();
         responseData.Data.PageNumber.Should().Be(1);
-        responseData.Data.PageSize.Should().Be(5);
+        responseData.Data.PageSize.Should().Be(10);
     }
 
     [Fact]
@@ -156,7 +155,7 @@ public class IngredientesCrudTests : BaseIntegrationTest
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<PaginatedList<IngredienteSummaryDto>>>();
+        var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<PaginatedList<RestaurantePro.Application.Inventario.Ingredientes.DTOs.IngredienteSummaryDto>>>();
         responseData.Should().NotBeNull();
         responseData!.Success.Should().BeTrue();
         responseData.Data.Should().NotBeNull();
@@ -198,7 +197,7 @@ public class IngredientesCrudTests : BaseIntegrationTest
         
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
-            var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
+            var responseData = await response.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<object>>();
             responseData.Should().NotBeNull();
             responseData!.Success.Should().BeFalse();
         }
@@ -215,15 +214,12 @@ public class IngredientesCrudTests : BaseIntegrationTest
         var ingredienteId = Guid.NewGuid();
         var command = new ActualizarIngredienteCommand
         {
+            Id = ingredienteId,
             Nombre = "Ingrediente Actualizado",
             Descripcion = "Descripción actualizada",
-            Rotacion = RotacionIngrediente.Media,
-            UnidadMedida = UnidadMedida.Litro,
+            Rotacion = Domain.Inventario.Ingredientes.Enums.RotacionIngrediente.Media,
             StockMinimo = 15,
-            StockMaximo = 150,
-            CostoUnitario = 12.75m,
-            RequiereRefrigeracion = false,
-            DiasVencimiento = 20
+            CostoPromedio = 12.75m
         };
 
         // Act
@@ -250,12 +246,11 @@ public class IngredientesCrudTests : BaseIntegrationTest
         var ingredienteId = Guid.NewGuid();
         var command = new ActualizarIngredienteCommand
         {
+            Id = ingredienteId,
             Nombre = "Ingrediente Inexistente",
-            Rotacion = RotacionIngrediente.Baja,
-            UnidadMedida = UnidadMedida.Unidad,
+            Rotacion = Domain.Inventario.Ingredientes.Enums.RotacionIngrediente.Baja,
             StockMinimo = 1,
-            StockMaximo = 10,
-            CostoUnitario = 5.00m
+            CostoPromedio = 5.00m
         };
 
         // Act
@@ -272,12 +267,11 @@ public class IngredientesCrudTests : BaseIntegrationTest
         var ingredienteId = Guid.NewGuid();
         var command = new ActualizarIngredienteCommand
         {
+            Id = ingredienteId,
             Nombre = "", // Nombre vacío - inválido
-            Rotacion = RotacionIngrediente.Baja,
-            UnidadMedida = UnidadMedida.Unidad,
+            Rotacion = Domain.Inventario.Ingredientes.Enums.RotacionIngrediente.Baja,
             StockMinimo = -1, // Stock mínimo negativo - inválido
-            StockMaximo = 10,
-            CostoUnitario = -5.00m // Costo negativo - inválido
+            CostoPromedio = -5.00m // Costo negativo - inválido
         };
 
         // Act
@@ -334,11 +328,12 @@ public class IngredientesCrudTests : BaseIntegrationTest
         var command = new CrearIngredienteCommand
         {
             Nombre = nombre,
-            Rotacion = rotacion,
-            UnidadMedida = unidadMedida,
+            Rotacion = rotacion.ToString(),
+            UnidadMedida = unidadMedida.ToString(),
             StockMinimo = stockMinimo,
-            StockMaximo = stockMaximo,
-            CostoUnitario = costoUnitario
+            StockInicial = stockMaximo,
+            UsuarioId = Guid.NewGuid(),
+            CostoInicial = costoUnitario
         };
 
         // Act
@@ -372,7 +367,7 @@ public class IngredientesCrudTests : BaseIntegrationTest
         
         if (crearResponse.StatusCode == HttpStatusCode.Created)
         {
-            var crearData = await crearResponse.Content.ReadFromJsonAsync<ApiResponse<IngredienteDto>>();
+            var crearData = await crearResponse.Content.ReadFromJsonAsync<RestaurantePro.Api.Common.ApiResponse<RestaurantePro.Application.Inventario.Ingredientes.DTOs.IngredienteDto>>();
             var ingredienteId = crearData!.Data!.Id;
 
             // 2. Leer ingrediente creado
