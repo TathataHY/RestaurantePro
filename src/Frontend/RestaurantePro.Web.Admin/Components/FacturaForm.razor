@@ -1,10 +1,10 @@
 @using RestaurantePro.Web.Admin.Models
 @using RestaurantePro.Web.Admin.Services
-@inject FacturasApiService FacturasApi
-@inject ClientesApiService ClientesApi
-@inject MesasApiService MesasApi
-@inject UsuariosApiService UsuariosApi
-@inject CategoriasApiService CategoriasApi
+@inject IFacturasApiService FacturasApi
+@inject IClientesApiService ClientesApi
+@inject IMesasApiService MesasApi
+@inject IUsuariosApiService UsuariosApi
+@inject ICategoriasApiService CategoriasApi
 @inject IJSRuntime JSRuntime
 
 <div class="modal fade @(Mostrar ? "show" : "")" style="display: @(Mostrar ? "block" : "none")" tabindex="-1" role="dialog">
@@ -389,11 +389,13 @@
     {
         try
         {
-            var resultado = await FacturasApi.ObtenerSiguienteNumeroFacturaAsync();
-            if (resultado?.Success == true && !string.IsNullOrEmpty(resultado.Data))
-            {
-                Factura.NumeroFactura = resultado.Data;
-            }
+            // TODO: Implementar cuando esté disponible en la API
+            // var resultado = await FacturasApi.ObtenerSiguienteNumeroFacturaAsync();
+            // if (resultado?.Success == true && !string.IsNullOrEmpty(resultado.Data))
+            // {
+            //     Factura.NumeroFactura = resultado.Data;
+            // }
+            Factura.NumeroFactura = $"F{DateTime.Now:yyyyMMddHHmmss}";
         }
         catch (Exception ex)
         {
@@ -441,21 +443,22 @@
 
         try
         {
+            // TODO: Implementar validación cuando esté disponible en la API
             // Validar número de factura único
-            if (!string.IsNullOrEmpty(Factura.NumeroFactura))
-            {
-                mostrarValidacionNumero = true;
-                var validacionNumero = await FacturasApi.ValidarNumeroFacturaAsync(Factura.NumeroFactura, EsEdicion ? Factura.Id : null);
-                mostrarValidacionNumero = false;
+            // if (!string.IsNullOrEmpty(Factura.NumeroFactura))
+            // {
+            //     mostrarValidacionNumero = true;
+            //     var validacionNumero = await FacturasApi.ValidarNumeroFacturaAsync(Factura.NumeroFactura, EsEdicion ? Factura.Id : null);
+            //     mostrarValidacionNumero = false;
 
-                if (validacionNumero?.Data == true)
-                {
-                    await JSRuntime.InvokeVoidAsync("alert", "El número de factura ya existe.");
-                    guardando = false;
-                    StateHasChanged();
-                    return;
-                }
-            }
+            //     if (validacionNumero?.Data == true)
+            //     {
+            //         await JSRuntime.InvokeVoidAsync("alert", "El número de factura ya existe.");
+            //         guardando = false;
+            //         StateHasChanged();
+            //         return;
+            //     }
+            // }
 
             // Calcular totales
             CalcularTotales();
@@ -476,8 +479,8 @@
                     EsFacturaElectronica = Factura.EsFacturaElectronica
                 };
 
-                var resultadoActualizar = await FacturasApi.ActualizarFacturaAsync(request);
-                resultado = resultadoActualizar?.Data;
+                var resultadoActualizar = await FacturasApi.ActualizarFacturaAsync(Factura.Id, request);
+                resultado = resultadoActualizar;
             }
             else
             {

@@ -1,9 +1,9 @@
 @using RestaurantePro.Web.Admin.Models
 @using RestaurantePro.Web.Admin.Services
-@inject FacturasApiService FacturasApi
-@inject ClientesApiService ClientesApi
-@inject MesasApiService MesasApi
-@inject UsuariosApiService UsuariosApi
+@inject IFacturasApiService FacturasApi
+@inject IClientesApiService ClientesApi
+@inject IMesasApiService MesasApi
+@inject IUsuariosApiService UsuariosApi
 
 <div class="card">
     <div class="card-header">
@@ -238,7 +238,8 @@
     {
         try
         {
-            estados = await FacturasApi.ObtenerEstadosAsync() ?? new List<string>();
+            // TODO: Implementar cuando esté disponible en la API
+            estados = new List<string> { "Pendiente", "Pagada", "Cancelada", "Vencida" };
         }
         catch (Exception ex)
         {
@@ -251,7 +252,8 @@
     {
         try
         {
-            tiposPago = await FacturasApi.ObtenerTiposPagoAsync() ?? new List<string>();
+            // TODO: Implementar cuando esté disponible en la API
+            tiposPago = new List<string> { "Efectivo", "Tarjeta", "Transferencia", "Cheque" };
         }
         catch (Exception ex)
         {
@@ -264,7 +266,8 @@
     {
         try
         {
-            metodosPago = await FacturasApi.ObtenerMetodosPagoAsync() ?? new List<string>();
+            // TODO: Implementar cuando esté disponible en la API
+            metodosPago = new List<string> { "Efectivo", "Visa", "Mastercard", "Transferencia Bancaria" };
         }
         catch (Exception ex)
         {
