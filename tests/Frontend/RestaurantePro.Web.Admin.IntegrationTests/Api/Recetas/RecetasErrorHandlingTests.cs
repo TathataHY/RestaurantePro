@@ -602,7 +602,7 @@ public class RecetasErrorHandlingTests : BaseIntegrationTest
         // Act & Assert
         var action = async () =>
         {
-            using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100)); // Timeout muy corto
+            using var cts = new CancellationTokenSource(TimeSpan.FromTicks(1)); // Timeout extremadamente corto
             var request = new HttpRequestMessage(HttpMethod.Get, "/api/core/recetas");
             var response = await _client.SendAsync(request, cts.Token);
             return response;

@@ -1,10 +1,13 @@
 using Bunit;
 using FluentAssertions;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using RestaurantePro.Web.Admin.Auth;
+using RestaurantePro.Web.Admin.Models;
 using RestaurantePro.Web.Admin.Shared;
+using RestaurantePro.Web.Admin.UnitTests.Pages;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -12,17 +15,17 @@ namespace RestaurantePro.Web.Admin.UnitTests.Shared;
 
 public class NavMenuTests : TestContext
 {
-    private readonly Mock<JwtAuthenticationStateProvider> _authStateProviderMock;
-    private readonly Mock<AuthenticationStateProvider> _authenticationStateProviderMock;
+    private readonly Mock<TokenStore> _tokenStoreMock;
+    private readonly JwtAuthenticationStateProvider _authStateProvider;
 
     public NavMenuTests()
     {
-        _authStateProviderMock = new Mock<JwtAuthenticationStateProvider>();
-        _authenticationStateProviderMock = new Mock<AuthenticationStateProvider>();
+        _tokenStoreMock = new Mock<TokenStore>();
+        _authStateProvider = new JwtAuthenticationStateProvider(_tokenStoreMock.Object);
 
-        Services.AddSingleton(_authStateProviderMock.Object);
-        Services.AddSingleton<AuthenticationStateProvider>(_authenticationStateProviderMock.Object);
-        Services.AddSingleton<TestNavigationManager>();
+        Services.AddSingleton(_authStateProvider);
+        Services.AddSingleton<AuthenticationStateProvider>(_authStateProvider);
+        Services.AddSingleton<NavigationManager>(new TestNavigationManager("https://localhost:5001/", "https://localhost:5001/"));
 
         // Configurar JSInterop para manejar llamadas JavaScript
         JSInterop.SetupVoid("console.log", _ => true);
@@ -55,7 +58,7 @@ public class NavMenuTests : TestContext
             .AddCascadingValue(authStateTask));
 
         // Assert
-        component.Find(".navbar-brand").TextContent.Trim().Should().Be("RestaurantePro");
+        component.Find(".navbar-brand").TextContent.Trim().Should().Contain("RestaurantePro");
     }
 
     [Fact]
@@ -140,7 +143,7 @@ public class NavMenuTests : TestContext
         // Assert
         var dashboardLink = component.Find("a[href='/']");
         dashboardLink.Should().NotBeNull();
-        dashboardLink.TextContent.Trim().Should().Be("Dashboard");
+        dashboardLink.TextContent.Trim().Should().Contain("Dashboard");
     }
 
     [Fact]

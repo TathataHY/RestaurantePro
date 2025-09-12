@@ -1,10 +1,11 @@
 using Bunit;
 using FluentAssertions;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using Moq;
 using RestaurantePro.Web.Admin.Shared;
-using System.Threading.Tasks;
+using RestaurantePro.Web.Admin.UnitTests.Pages;
 
 namespace RestaurantePro.Web.Admin.UnitTests.Shared;
 
@@ -17,7 +18,7 @@ public class MainLayoutTests : TestContext
         _jsRuntimeMock = new Mock<IJSRuntime>();
 
         Services.AddSingleton(_jsRuntimeMock.Object);
-        Services.AddSingleton<TestNavigationManager>();
+        Services.AddSingleton<NavigationManager>(new TestNavigationManager("https://localhost:5001/", "https://localhost:5001/"));
 
         // Configurar JSInterop para manejar llamadas JavaScript
         JSInterop.SetupVoid("document.body.setAttribute", _ => true);
@@ -27,7 +28,7 @@ public class MainLayoutTests : TestContext
     [Fact]
     public void MainLayout_ShouldRender()
     {
-        // Arrange & Act
+        // Act
         var component = RenderComponent<MainLayout>();
 
         // Assert

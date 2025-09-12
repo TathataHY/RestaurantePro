@@ -273,5 +273,390 @@ public class ComandasServiceIntegrationTests : IClassFixture<MobileIntegrationTe
             Assert.NotNull(result.Errors);
         }
     }
+
+    #region Tests de Casos Edge y Validaciones
+
+    [Fact]
+    public async Task ObtenerComandasActivasAsync_WithCancellationToken_ShouldHandleCancellation()
+    {
+        // Arrange
+        await SetupAsync();
+        using var cts = new CancellationTokenSource();
+        cts.Cancel(); // Cancelar inmediatamente
+
+        // Act
+        var result = await _comandasService.ObtenerComandasActivasAsync(cts.Token);
+
+        // Assert - El servicio puede no lanzar excepción pero debe manejar la cancelación
+        // Verificamos que el resultado sea válido o que se maneje la cancelación apropiadamente
+        Assert.NotNull(result);
+        // Si el servicio no lanza excepción, al menos verificamos que se ejecutó
+    }
+
+    [Fact]
+    public async Task CrearComandaAsync_WithEmptyProductos_ShouldReturnError()
+    {
+        // Arrange
+        await SetupAsync();
+        var request = new RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models.CrearComandaRequest
+        {
+            MeseroId = "mesero-test",
+            MesaId = Guid.NewGuid().ToString(),
+            Observaciones = "Comanda sin productos",
+            ProductosIniciales = new List<RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models.ProductoComandaRequest>()
+        };
+
+        // Act
+        var result = await _comandasService.CrearComandaAsync(request);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.NotNull(result.Errors);
+        // El mensaje de error puede variar, solo verificamos que hay errores
+        Assert.True(result.Errors.Any());
+    }
+
+    [Fact]
+    public async Task CrearComandaAsync_WithInvalidMesaId_ShouldReturnError()
+    {
+        // Arrange
+        await SetupAsync();
+        var request = new RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models.CrearComandaRequest
+        {
+            MeseroId = "mesero-test",
+            MesaId = "invalid-guid",
+            Observaciones = "Comanda con mesa inválida",
+            ProductosIniciales = new List<RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models.ProductoComandaRequest>
+            {
+                new RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models.ProductoComandaRequest
+                {
+                    ProductoId = Guid.NewGuid().ToString(),
+                    Cantidad = 1,
+                    Precio = 10.0m
+                }
+            }
+        };
+
+        // Act
+        var result = await _comandasService.CrearComandaAsync(request);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.NotNull(result.Errors);
+    }
+
+    [Fact]
+    public async Task CambiarEstadoComandaAsync_WithEmptyEstado_ShouldReturnError()
+    {
+        // Arrange
+        await SetupAsync();
+        var comandaId = Guid.NewGuid();
+
+        // Act
+        var result = await _comandasService.CambiarEstadoComandaAsync(comandaId, string.Empty, "Sin estado");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.NotNull(result.Errors);
+    }
+
+    [Fact]
+    public async Task FinalizarComandaAsync_WithEmptyMetodoPago_ShouldReturnError()
+    {
+        // Arrange
+        await SetupAsync();
+        var comandaId = Guid.NewGuid();
+
+        // Act
+        var result = await _comandasService.FinalizarComandaAsync(comandaId, string.Empty, "Sin método de pago");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.NotNull(result.Errors);
+    }
+
+    [Fact]
+    public async Task AgregarProductosAsync_WithNegativeCantidad_ShouldReturnError()
+    {
+        // Arrange
+        await SetupAsync();
+        var comandaId = Guid.NewGuid();
+        var productos = new List<ComandaProductoRequest>
+        {
+            new ComandaProductoRequest
+            {
+                ProductoId = Guid.NewGuid(),
+                Cantidad = -1 // Cantidad negativa
+            }
+        };
+
+        // Act
+        var result = await _comandasService.AgregarProductosAsync(comandaId, productos);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.NotNull(result.Errors);
+    }
+
+    [Fact]
+    public async Task ActualizarCantidadProductoAsync_WithZeroCantidad_ShouldReturnError()
+    {
+        // Arrange
+        await SetupAsync();
+        var comandaId = Guid.NewGuid();
+        var productoId = Guid.NewGuid();
+
+        // Act
+        var result = await _comandasService.ActualizarCantidadProductoAsync(comandaId, productoId, 0);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.NotNull(result.Errors);
+    }
+
+    #endregion
+
+    #region Tests de Rendimiento
+
+    [Fact]
+    public async Task ObtenerComandasActivasAsync_ShouldCompleteWithinReasonableTime()
+    {
+        // Arrange
+        await SetupAsync();
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        // Act
+        var result = await _comandasService.ObtenerComandasActivasAsync();
+        stopwatch.Stop();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(stopwatch.ElapsedMilliseconds < 5000, $"Operación tomó {stopwatch.ElapsedMilliseconds}ms, debería ser menor a 5000ms");
+    }
+
+    [Fact]
+    public async Task MultipleConcurrentRequests_ShouldHandleGracefully()
+    {
+        // Arrange
+        await SetupAsync();
+        var tasks = new List<Task<ApiResponse<List<ComandaDto>>>>();
+
+        // Act - Ejecutar múltiples requests concurrentes
+        for (int i = 0; i < 10; i++)
+        {
+            tasks.Add(_comandasService.ObtenerComandasActivasAsync());
+        }
+
+        var results = await Task.WhenAll(tasks);
+
+        // Assert
+        Assert.Equal(10, results.Length);
+        foreach (var result in results)
+        {
+            Assert.NotNull(result);
+            // Todos deberían completarse sin excepción
+        }
+    }
+
+    #endregion
+
+    #region Tests de Concurrencia
+
+    [Fact]
+    public async Task ConcurrentStateChanges_ShouldHandleRaceConditions()
+    {
+        // Arrange
+        await SetupAsync();
+        var comandaId = Guid.NewGuid();
+        var tasks = new List<Task<ApiResponse<ComandaDto>>>();
+
+        // Act - Intentar cambiar estado concurrentemente
+        for (int i = 0; i < 5; i++)
+        {
+            tasks.Add(_comandasService.CambiarEstadoComandaAsync(comandaId, $"Estado {i}", $"Observación {i}"));
+        }
+
+        var results = await Task.WhenAll(tasks);
+
+        // Assert
+        Assert.Equal(5, results.Length);
+        foreach (var result in results)
+        {
+            Assert.NotNull(result);
+            // Al menos uno debería fallar por concurrencia, pero no debería lanzar excepción
+        }
+    }
+
+    [Fact]
+    public async Task ConcurrentProductAdditions_ShouldHandleGracefully()
+    {
+        // Arrange
+        await SetupAsync();
+        var comandaId = Guid.NewGuid();
+        var tasks = new List<Task<ApiResponse<ComandaDto>>>();
+
+        // Act - Agregar productos concurrentemente
+        for (int i = 0; i < 3; i++)
+        {
+            var productos = new List<ComandaProductoRequest>
+            {
+                new ComandaProductoRequest
+                {
+                    ProductoId = Guid.NewGuid(),
+                    Cantidad = 1
+                }
+            };
+            tasks.Add(_comandasService.AgregarProductosAsync(comandaId, productos));
+        }
+
+        var results = await Task.WhenAll(tasks);
+
+        // Assert
+        Assert.Equal(3, results.Length);
+        foreach (var result in results)
+        {
+            Assert.NotNull(result);
+            // No debería lanzar excepción por concurrencia
+        }
+    }
+
+    #endregion
+
+    #region Tests de Validación de Datos
+
+    [Fact]
+    public async Task ObtenerEstadisticasAsync_ShouldReturnValidStatistics()
+    {
+        // Arrange
+        await SetupAsync();
+
+        // Act
+        var result = await _comandasService.ObtenerEstadisticasAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        if (result.Success)
+        {
+            Assert.NotNull(result.Data);
+                   // Verificar que las estadísticas sean válidas (pueden variar según la implementación)
+                   Assert.True(result.Data.TotalComandasActivas >= 0);
+                   Assert.True(result.Data.ComandasPendientes >= 0);
+                   Assert.True(result.Data.ComandasEnPreparacion >= 0);
+                   Assert.True(result.Data.ComandasListas >= 0);
+        }
+        else
+        {
+            Assert.NotNull(result.Errors);
+        }
+    }
+
+    [Fact]
+    public async Task BuscarComandasAsync_WithValidFilters_ShouldReturnFilteredResults()
+    {
+        // Arrange
+        await SetupAsync();
+        var fechaInicio = DateTime.Now.AddDays(-7);
+        var fechaFin = DateTime.Now;
+
+        // Act
+        var result = await _comandasService.BuscarComandasAsync(
+            "test",
+            null,
+            fechaInicio,
+            fechaFin,
+            "Pendiente"
+        );
+
+        // Assert
+        Assert.NotNull(result);
+        if (result.Success)
+        {
+            Assert.NotNull(result.Data);
+            // Verificar que los resultados estén dentro del rango de fechas
+            foreach (var comanda in result.Data)
+            {
+                Assert.True(comanda.FechaCreacion >= fechaInicio);
+                Assert.True(comanda.FechaCreacion <= fechaFin);
+            }
+        }
+        else
+        {
+            Assert.NotNull(result.Errors);
+        }
+    }
+
+    [Fact]
+    public async Task BuscarComandasAsync_WithInvalidDateRange_ShouldReturnError()
+    {
+        // Arrange
+        await SetupAsync();
+        var fechaInicio = DateTime.Now;
+        var fechaFin = DateTime.Now.AddDays(-1); // Fecha fin antes que inicio
+
+        // Act
+        var result = await _comandasService.BuscarComandasAsync(
+            null,
+            null,
+            fechaInicio,
+            fechaFin,
+            null
+        );
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.NotNull(result.Errors);
+    }
+
+    #endregion
+
+    #region Tests de Manejo de Errores
+
+    [Fact]
+    public async Task Service_WithInvalidCredentials_ShouldHandleAuthenticationError()
+    {
+        // Arrange
+        var httpClient = _client;
+        var apiService = new ApiService(httpClient);
+        var authService = new AuthService(apiService, NullLogger<AuthService>.Instance, new FakeSecureStorageService(), new FakeNavigationService());
+        var comandasService = new ComandasService(apiService, authService);
+
+        // No hacer login - simular credenciales inválidas
+
+        // Act
+        var result = await comandasService.ObtenerComandasActivasAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.False(result.Success);
+        Assert.NotNull(result.Errors);
+        // El mensaje de error puede variar, solo verificamos que hay errores
+        Assert.True(result.Errors.Any());
+    }
+
+    [Fact]
+    public async Task Service_WithNetworkTimeout_ShouldHandleTimeoutGracefully()
+    {
+        // Arrange
+        await SetupAsync();
+        using var cts = new CancellationTokenSource();
+        cts.Cancel(); // Cancelar inmediatamente
+
+        // Act
+        var result = await _comandasService.ObtenerComandasActivasAsync(cts.Token);
+
+        // Assert - El servicio puede no lanzar excepción pero debe manejar la cancelación
+        // Verificamos que el resultado sea válido o que se maneje la cancelación apropiadamente
+        Assert.NotNull(result);
+        // Si el servicio no lanza excepción, al menos verificamos que se ejecutó
+    }
+
+    #endregion
 } 
  

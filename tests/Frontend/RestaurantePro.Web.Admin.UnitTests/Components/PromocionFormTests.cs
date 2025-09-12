@@ -32,7 +32,8 @@ namespace RestaurantePro.Web.Admin.UnitTests.Components
 
             Services.AddSingleton(_mockHttpClientFactory.Object);
             Services.AddSingleton(_mockTokenStore.Object);
-            Services.AddSingleton(new ProductosApiService(_mockHttpClientFactory.Object, _mockTokenStore.Object));
+            var productosApiService = new ProductosApiService(_mockHttpClientFactory.Object, _mockTokenStore.Object);
+            Services.AddSingleton<IProductosApiService>(productosApiService);
         }
 
         [Fact]

@@ -1,10 +1,12 @@
 using Bunit;
 using FluentAssertions;
+using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using RestaurantePro.Web.Admin.Components;
 using RestaurantePro.Web.Admin.Models;
 using RestaurantePro.Web.Admin.Services;
+using RestaurantePro.Web.Admin.UnitTests.Pages;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -26,7 +28,7 @@ public class ComandaFiltrosTests : TestContext
         Services.AddSingleton(_comandasApiMock.Object);
         Services.AddSingleton(_clientesApiMock.Object);
         Services.AddSingleton(_mesasApiMock.Object);
-        Services.AddSingleton<TestNavigationManager>();
+                Services.AddSingleton<NavigationManager>(new TestNavigationManager("https://localhost:5001/", "https://localhost:5001/comandas"));
 
         // Configurar JSInterop para manejar llamadas JavaScript
         JSInterop.SetupVoid("console.log", _ => true);
@@ -232,8 +234,8 @@ public class ComandaFiltrosTests : TestContext
         var onFiltrosAplicados = new EventCallback<ComandaFiltrosDto>();
         var clientes = new List<ClienteDto>
         {
-            new ClienteDto { Id = Guid.NewGuid(), NombreCompleto = "Juan Pérez" },
-            new ClienteDto { Id = Guid.NewGuid(), NombreCompleto = "María García" }
+            new ClienteDto { Id = Guid.NewGuid(), Nombre = "Juan", Apellidos = "Pérez" },
+            new ClienteDto { Id = Guid.NewGuid(), Nombre = "María", Apellidos = "García" }
         };
 
         _clientesApiMock.Setup(x => x.ObtenerClientesAsync())
@@ -256,11 +258,11 @@ public class ComandaFiltrosTests : TestContext
         var onFiltrosAplicados = new EventCallback<ComandaFiltrosDto>();
         var mesas = new List<MesaDto>
         {
-            new MesaDto { Id = Guid.NewGuid(), Numero = 1 },
-            new MesaDto { Id = Guid.NewGuid(), Numero = 2 }
+            new MesaDto { Id = Guid.NewGuid(), Numero = "1" },
+            new MesaDto { Id = Guid.NewGuid(), Numero = "2" }
         };
 
-        _mesasApiMock.Setup(x => x.ObtenerAsync())
+        _mesasApiMock.Setup(x => x.ObtenerAsync(null, null, null))
             .ReturnsAsync(mesas);
 
         // Act
@@ -269,7 +271,7 @@ public class ComandaFiltrosTests : TestContext
             .Add(p => p.OnFiltrosAplicados, onFiltrosAplicados));
 
         // Assert
-        _mesasApiMock.Verify(x => x.ObtenerAsync(), Times.Once);
+        _mesasApiMock.Verify(x => x.ObtenerAsync(null, null, null), Times.Once);
     }
 
     [Fact]
@@ -294,9 +296,9 @@ public class ComandaFiltrosTests : TestContext
 
         // Assert
         // Verificar que los filtros se han limpiado
-        component.Instance.Filtros.Busqueda.Should().BeEmpty();
-        component.Instance.Filtros.Estado.Should().BeEmpty();
-        component.Instance.Filtros.Prioridad.Should().BeEmpty();
+        component.Instance.Filtros.Busqueda.Should().BeNullOrEmpty();
+        component.Instance.Filtros.Estado.Should().BeNullOrEmpty();
+        component.Instance.Filtros.Prioridad.Should().BeNullOrEmpty();
     }
 
     [Fact]

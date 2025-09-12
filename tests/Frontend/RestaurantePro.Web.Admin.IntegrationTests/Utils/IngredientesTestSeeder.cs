@@ -22,40 +22,40 @@ public static class IngredientesTestSeeder
         var ingredientes = new List<Ingrediente>();
         var ingredienteIds = new List<Guid>();
 
-        // Lista de ingredientes comunes con costos realistas
+        // Lista de ingredientes comunes con costos realistas y stock suficiente para tests de rendimiento
         var ingredientesData = new[]
         {
             // Carnes
-            ("Pollo", "POLLO001", "Pechuga de pollo fresca", UnidadMedida.Kilogramo, 5.50m, 10.0m, 2.0m),
-            ("Res", "RES001", "Carne de res molida", UnidadMedida.Kilogramo, 8.75m, 15.0m, 3.0m),
-            ("Cerdo", "CERDO001", "Lomo de cerdo", UnidadMedida.Kilogramo, 6.25m, 12.0m, 2.5m),
-            ("Pescado", "PESCADO001", "Salmón fresco", UnidadMedida.Kilogramo, 12.00m, 8.0m, 1.5m),
+            ("Pollo", "POLLO001", "Pechuga de pollo fresca", UnidadMedida.Kilogramo, 5.50m, 250.0m, 2.0m),
+            ("Res", "RES001", "Carne de res molida", UnidadMedida.Kilogramo, 8.75m, 300.0m, 3.0m),
+            ("Cerdo", "CERDO001", "Lomo de cerdo", UnidadMedida.Kilogramo, 6.25m, 250.0m, 2.5m),
+            ("Pescado", "PESCADO001", "Salmón fresco", UnidadMedida.Kilogramo, 12.00m, 250.0m, 1.5m),
             
             // Vegetales
-            ("Cebolla", "CEBOLLA001", "Cebolla blanca", UnidadMedida.Kilogramo, 1.20m, 20.0m, 5.0m),
-            ("Tomate", "TOMATE001", "Tomate rojo", UnidadMedida.Kilogramo, 2.50m, 15.0m, 3.0m),
-            ("Lechuga", "LECHUGA001", "Lechuga fresca", UnidadMedida.Unidad, 0.50m, 30.0m, 10.0m),
-            ("Zanahoria", "ZANAHORIA001", "Zanahoria fresca", UnidadMedida.Kilogramo, 1.80m, 25.0m, 4.0m),
-            ("Papa", "PAPA001", "Papa blanca", UnidadMedida.Kilogramo, 1.00m, 30.0m, 5.0m),
+            ("Cebolla", "CEBOLLA001", "Cebolla blanca", UnidadMedida.Kilogramo, 1.20m, 500.0m, 5.0m),
+            ("Tomate", "TOMATE001", "Tomate rojo", UnidadMedida.Kilogramo, 2.50m, 300.0m, 3.0m),
+            ("Lechuga", "LECHUGA001", "Lechuga fresca", UnidadMedida.Unidad, 0.50m, 1000.0m, 10.0m),
+            ("Zanahoria", "ZANAHORIA001", "Zanahoria fresca", UnidadMedida.Kilogramo, 1.80m, 500.0m, 4.0m),
+            ("Papa", "PAPA001", "Papa blanca", UnidadMedida.Kilogramo, 1.00m, 600.0m, 5.0m),
             
             // Condimentos y especias
-            ("Sal", "SAL001", "Sal marina", UnidadMedida.Kilogramo, 0.80m, 50.0m, 10.0m),
-            ("Pimienta", "PIMIENTA001", "Pimienta negra molida", UnidadMedida.Gramo, 0.15m, 1000.0m, 200.0m),
-            ("Ajo", "AJO001", "Ajo fresco", UnidadMedida.Kilogramo, 3.50m, 20.0m, 3.0m),
-            ("Orégano", "OREGANO001", "Orégano seco", UnidadMedida.Gramo, 0.25m, 500.0m, 50.0m),
+            ("Sal", "SAL001", "Sal marina", UnidadMedida.Kilogramo, 0.80m, 1000.0m, 10.0m),
+            ("Pimienta", "PIMIENTA001", "Pimienta negra molida", UnidadMedida.Gramo, 0.15m, 10000.0m, 200.0m),
+            ("Ajo", "AJO001", "Ajo fresco", UnidadMedida.Kilogramo, 3.50m, 400.0m, 3.0m),
+            ("Orégano", "OREGANO001", "Orégano seco", UnidadMedida.Gramo, 0.25m, 5000.0m, 50.0m),
             
             // Lácteos
-            ("Queso", "QUESO001", "Queso mozzarella", UnidadMedida.Kilogramo, 4.50m, 15.0m, 2.0m),
-            ("Leche", "LECHE001", "Leche entera", UnidadMedida.Litro, 1.20m, 20.0m, 5.0m),
-            ("Mantequilla", "MANTEQUILLA001", "Mantequilla sin sal", UnidadMedida.Kilogramo, 3.80m, 10.0m, 2.0m),
+            ("Queso", "QUESO001", "Queso mozzarella", UnidadMedida.Kilogramo, 4.50m, 300.0m, 2.0m),
+            ("Leche", "LECHE001", "Leche entera", UnidadMedida.Litro, 1.20m, 400.0m, 5.0m),
+            ("Mantequilla", "MANTEQUILLA001", "Mantequilla sin sal", UnidadMedida.Kilogramo, 3.80m, 200.0m, 2.0m),
             
             // Granos y cereales
-            ("Arroz", "ARROZ001", "Arroz blanco", UnidadMedida.Kilogramo, 2.20m, 25.0m, 5.0m),
-            ("Pasta", "PASTA001", "Pasta espagueti", UnidadMedida.Kilogramo, 1.80m, 20.0m, 4.0m),
-            ("Pan", "PAN001", "Pan blanco", UnidadMedida.Unidad, 0.75m, 20.0m, 5.0m),
+            ("Arroz", "ARROZ001", "Arroz blanco", UnidadMedida.Kilogramo, 2.20m, 500.0m, 5.0m),
+            ("Pasta", "PASTA001", "Pasta espagueti", UnidadMedida.Kilogramo, 1.80m, 400.0m, 4.0m),
+            ("Pan", "PAN001", "Pan blanco", UnidadMedida.Unidad, 0.75m, 500.0m, 5.0m),
             
             // Aceites y grasas
-            ("Aceite", "ACEITE001", "Aceite de oliva", UnidadMedida.Litro, 4.50m, 15.0m, 3.0m)
+            ("Aceite", "ACEITE001", "Aceite de oliva", UnidadMedida.Litro, 4.50m, 300.0m, 3.0m)
         };
 
         for (int i = 0; i < Math.Min(cantidad, ingredientesData.Length); i++)

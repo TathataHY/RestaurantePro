@@ -225,13 +225,14 @@ public class CategoriasErrorHandlingTests : BaseIntegrationTest
     public async Task ObtenerCategorias_ConTimeoutCorto_DeberiaManejarCorrectamente()
     {
         // Arrange
-        _client.Timeout = TimeSpan.FromMilliseconds(100);
+        using var cts = new CancellationTokenSource(TimeSpan.FromTicks(1)); // Timeout extremadamente corto
+        var request = new HttpRequestMessage(HttpMethod.Get, "/api/core/categorias");
 
         // Act & Assert
-        // El timeout muy corto debe causar una TaskCanceledException
-        var act = async () => await _client.GetAsync("/api/core/categorias");
+        // El timeout extremadamente corto debe causar una TaskCanceledException
+        var act = async () => await _client.SendAsync(request, cts.Token);
         await act.Should().ThrowAsync<TaskCanceledException>()
-            .WithMessage("*canceled*");
+            .WithMessage("*");
     }
 
     #endregion

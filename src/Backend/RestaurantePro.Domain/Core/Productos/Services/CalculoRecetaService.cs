@@ -34,7 +34,7 @@ public class CalculoRecetaService : ICalculoRecetaService
             return _notificationManager.ToResult<Dictionary<Guid, decimal>>(null);
         }
 
-        var receta = producto.Recetas.FirstOrDefault();
+        var receta = producto.Recetas?.FirstOrDefault();
         if (receta == null)
         {
             _notificationManager.AddError("El producto no tiene una receta asignada.");
