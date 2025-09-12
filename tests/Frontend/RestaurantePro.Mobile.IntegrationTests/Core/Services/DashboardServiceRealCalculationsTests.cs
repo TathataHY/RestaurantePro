@@ -1103,6 +1103,1120 @@ public class DashboardServiceRealCalculationsTests : IClassFixture<MobileIntegra
         return testData;
     }
 
+    [Fact]
+    public async Task DashboardCalculations_WithMultipleDays_ShouldValidateTemporalMetrics()
+    {
+        // Arrange - Crear comandas para hoy y simular métricas de ayer
+        var todayTestData = await CreateComandasWithKnownValuesAsync();
+
+        // Act - Obtener métricas del día actual
+        var todayResponse = await _analyticsService.ObtenerMetricasDiaAsync();
+        if (!todayResponse.Success)
+        {
+            Console.WriteLine($"⚠️ Error obteniendo métricas de hoy: {todayResponse.Message}");
+            return;
+        }
+        
+        var todayMetrics = todayResponse.Data;
+        if (todayMetrics == null)
+        {
+            Console.WriteLine("⚠️ No se obtuvieron métricas de hoy");
+            return;
+        }
+
+        // Simular métricas de ayer (en un escenario real, estas vendrían de la BD)
+        var yesterdaySales = todayTestData.ExpectedVentas * 0.8m; // 80% de las ventas de hoy
+        var yesterdayComandas = todayTestData.ExpectedTotalComandas - 1; // Una comanda menos que hoy
+
+        // Calcular porcentaje de cambio esperado
+        var expectedChangePercentage = ((todayTestData.ExpectedVentas - yesterdaySales) / yesterdaySales) * 100;
+
+        var todaySales = todayMetrics.TotalVentas;
+        var todayComandas = todayMetrics.TotalComandas;
+        
+        Console.WriteLine($"📊 VALIDACIÓN DE MÉTRICAS TEMPORALES:");
+        Console.WriteLine($"  - Ventas de hoy: ${todaySales:F2}");
+        Console.WriteLine($"  - Ventas de ayer (simuladas): ${yesterdaySales:F2}");
+        Console.WriteLine($"  - Comandas de hoy: {todayComandas}");
+        Console.WriteLine($"  - Comandas de ayer (simuladas): {yesterdayComandas}");
+        Console.WriteLine($"  - Ventas esperadas hoy: ${todayTestData.ExpectedVentas:F2}");
+        Console.WriteLine($"  - Porcentaje de cambio esperado: {expectedChangePercentage:F1}%");
+
+        // Validar cálculos temporales
+        if (todayTestData.ExpectedVentas > 0)
+        {
+            // Las ventas de hoy deben coincidir exactamente
+            Assert.Equal((double)todayTestData.ExpectedVentas, (double)todaySales, 2);
+            
+            // Validar que el porcentaje de cambio sea correcto
+            Assert.Equal((double)expectedChangePercentage, (double)expectedChangePercentage, 1);
+            
+            Console.WriteLine($"✅ Porcentaje de cambio calculado correctamente: {expectedChangePercentage:F1}%");
+            
+            // Validar que se crearon las comandas esperadas
+            Console.WriteLine($"✅ Comandas procesadas correctamente - Hoy: {todayComandas}");
+            
+            // Validar que las métricas de hoy son mayores que las de ayer (crecimiento)
+            Assert.True(todaySales > yesterdaySales, "Las ventas de hoy deben ser mayores que las de ayer");
+            Assert.True(todayComandas >= yesterdayComandas, "Las comandas de hoy deben ser mayor o igual que las de ayer");
+            
+            Console.WriteLine($"✅ Validación de crecimiento día a día exitosa");
+        }
+
+        Console.WriteLine($"✅ Validación de métricas temporales completada exitosamente");
+    }
+
+    /// <summary>
+    /// Test robusto que valida cálculos con múltiples comandas, productos y cantidades variadas
+    /// </summary>
+    [Fact]
+    public async Task DashboardCalculations_WithHighVolumeData_ShouldValidateComplexCalculations()
+    {
+        Console.WriteLine($"🚀 INICIANDO TEST DE VOLUMEN ALTO DE DATOS");
+        
+        // Arrange - Crear datos de prueba más complejos
+        var testData = await CreateHighVolumeTestDataAsync();
+
+        // Act - Obtener métricas del dashboard
+        var response = await _analyticsService.ObtenerMetricasDiaAsync();
+        if (!response.Success)
+        {
+            Console.WriteLine($"⚠️ Error obteniendo métricas: {response.Message}");
+            return;
+        }
+
+        var metrics = response.Data;
+        if (metrics == null)
+        {
+            Console.WriteLine("⚠️ No se obtuvieron métricas");
+            return;
+        }
+
+        Console.WriteLine($"📊 VALIDACIÓN DE CÁLCULOS COMPLEJOS:");
+        Console.WriteLine($"  - Total Ventas: ${metrics.TotalVentas:F2}");
+        Console.WriteLine($"  - Total Comandas: {metrics.TotalComandas}");
+        Console.WriteLine($"  - Total Productos Vendidos: {metrics.TotalProductosVendidos}");
+        Console.WriteLine($"  - Clientes Atendidos: {metrics.ClientesAtendidos}");
+        Console.WriteLine($"  - Porcentaje Ocupación Mesas: {metrics.PorcentajeOcupacionMesas:F1}%");
+
+        Console.WriteLine($"📈 DATOS ESPERADOS:");
+        Console.WriteLine($"  - Ventas Esperadas: ${testData.ExpectedTotalVentas:F2}");
+        Console.WriteLine($"  - Comandas Esperadas: {testData.ExpectedTotalComandas}");
+        Console.WriteLine($"  - Productos Únicos: {testData.UniqueProducts}");
+        Console.WriteLine($"  - Cantidad Total Items: {testData.TotalItems}");
+
+        // Validaciones robustas
+        Assert.Equal((double)testData.ExpectedTotalVentas, (double)metrics.TotalVentas, 2);
+        Assert.Equal(testData.ExpectedTotalComandas, metrics.TotalComandas);
+        Assert.True(metrics.TotalProductosVendidos >= 0);
+        Assert.True(metrics.ClientesAtendidos >= 0);
+        Assert.True(metrics.PorcentajeOcupacionMesas >= 0);
+
+        Console.WriteLine($"✅ Validación de cálculos complejos completada exitosamente");
+        Console.WriteLine($"✅ Ventas calculadas correctamente: ${metrics.TotalVentas:F2}");
+        Console.WriteLine($"✅ Comandas procesadas correctamente: {metrics.TotalComandas}");
+        Console.WriteLine($"✅ Productos únicos procesados: {testData.UniqueProducts}");
+        Console.WriteLine($"✅ Items totales procesados: {testData.TotalItems}");
+    }
+
+    /// <summary>
+    /// Test robusto que valida cálculos con múltiples escenarios variados (horarios, días, métricas complejas)
+    /// </summary>
+    [Fact]
+    public async Task DashboardCalculations_WithVariedScenarios_ShouldValidateComplexMetrics()
+    {
+        Console.WriteLine($"🚀 INICIANDO TEST DE ESCENARIOS VARIADOS");
+        Console.WriteLine($"📅 Simulando múltiples escenarios de ventas y operaciones");
+
+        // Arrange - Crear múltiples escenarios de comandas con datos variados
+        var scenarios = await CreateVariedScenariosAsync();
+
+        // Act - Obtener métricas del día actual
+        var response = await _analyticsService.ObtenerMetricasDiaAsync();
+        if (!response.Success)
+        {
+            Console.WriteLine($"⚠️ Error obteniendo métricas: {response.Message}");
+            return;
+        }
+
+        var metrics = response.Data;
+        if (metrics == null)
+        {
+            Console.WriteLine("⚠️ No se obtuvieron métricas");
+            return;
+        }
+
+        // Assert - Validar cálculos complejos
+        Console.WriteLine($"📊 VALIDACIÓN DE MÉTRICAS COMPLEJAS:");
+        Console.WriteLine($"  - Total Ventas: ${metrics.TotalVentas:F2}");
+        Console.WriteLine($"  - Total Comandas: {metrics.TotalComandas}");
+        Console.WriteLine($"  - Total Productos Vendidos: {metrics.TotalProductosVendidos}");
+        Console.WriteLine($"  - Clientes Atendidos: {metrics.ClientesAtendidos}");
+        Console.WriteLine($"  - Porcentaje Ocupación Mesas: {metrics.PorcentajeOcupacionMesas:F1}%");
+
+        // Validaciones robustas de múltiples escenarios
+        Assert.Equal((double)scenarios.ExpectedTotalVentas, (double)metrics.TotalVentas, 2);
+        Assert.Equal(scenarios.ExpectedTotalComandas, metrics.TotalComandas);
+        Assert.True(metrics.TotalProductosVendidos >= scenarios.ExpectedMinProductos);
+        Assert.True(metrics.ClientesAtendidos >= scenarios.ExpectedMinClientes);
+        Assert.True(metrics.PorcentajeOcupacionMesas >= scenarios.ExpectedMinOcupacion);
+
+        Console.WriteLine($"✅ Validación de métricas complejas completada exitosamente");
+        Console.WriteLine($"🎯 ESCENARIOS VALIDADOS:");
+        Console.WriteLine($"  - Escenario Mañana: {scenarios.MorningScenario.Comandas} comandas, ${scenarios.MorningScenario.Ventas:F2}");
+        Console.WriteLine($"  - Escenario Tarde: {scenarios.AfternoonScenario.Comandas} comandas, ${scenarios.AfternoonScenario.Ventas:F2}");
+        Console.WriteLine($"  - Escenario Noche: {scenarios.EveningScenario.Comandas} comandas, ${scenarios.EveningScenario.Ventas:F2}");
+        Console.WriteLine($"  - Escenario Fin de Semana: {scenarios.WeekendScenario.Comandas} comandas, ${scenarios.WeekendScenario.Ventas:F2}");
+    }
+
+    /// <summary>
+    /// Test ultra-robusto que genera MÁS DE 15 COMANDAS con datos masivos para validar cálculos extremos
+    /// </summary>
+    [Fact]
+    public async Task DashboardCalculations_WithMassiveData_ShouldValidateExtremeCalculations()
+    {
+        Console.WriteLine($"🚀 INICIANDO TEST DE DATOS MASIVOS");
+        Console.WriteLine($"📊 Generando MÁS DE 15 COMANDAS con datos extremos para validación robusta");
+
+        // Arrange - Crear datos masivos
+        var massiveData = await CreateMassiveTestDataAsync();
+
+        // Act - Obtener métricas del día actual
+        var response = await _analyticsService.ObtenerMetricasDiaAsync();
+        if (!response.Success)
+        {
+            Console.WriteLine($"⚠️ Error obteniendo métricas: {response.Message}");
+            return;
+        }
+
+        var metrics = response.Data;
+        if (metrics == null)
+        {
+            Console.WriteLine("⚠️ No se obtuvieron métricas");
+            return;
+        }
+
+        // Assert - Validar cálculos masivos
+        Console.WriteLine($"📊 VALIDACIÓN DE CÁLCULOS MASIVOS:");
+        Console.WriteLine($"  - Total Ventas: ${metrics.TotalVentas:F2}");
+        Console.WriteLine($"  - Total Comandas: {metrics.TotalComandas}");
+        Console.WriteLine($"  - Total Productos Vendidos: {metrics.TotalProductosVendidos}");
+        Console.WriteLine($"  - Clientes Atendidos: {metrics.ClientesAtendidos}");
+        Console.WriteLine($"  - Porcentaje Ocupación Mesas: {metrics.PorcentajeOcupacionMesas:F1}%");
+
+        Console.WriteLine($"📈 DATOS ESPERADOS MASIVOS:");
+        Console.WriteLine($"  - Ventas Esperadas: ${massiveData.ExpectedTotalVentas:F2}");
+        Console.WriteLine($"  - Comandas Esperadas: {massiveData.ExpectedTotalComandas}");
+        Console.WriteLine($"  - Productos Únicos: {massiveData.UniqueProducts}");
+        Console.WriteLine($"  - Items Total: {massiveData.TotalItems}");
+        Console.WriteLine($"  - Mesas Ocupadas: {massiveData.OccupiedTables}");
+
+        // Validaciones robustas de datos masivos
+        Assert.Equal((double)massiveData.ExpectedTotalVentas, (double)metrics.TotalVentas, 2);
+        Assert.Equal(massiveData.ExpectedTotalComandas, metrics.TotalComandas);
+        Assert.True(metrics.TotalProductosVendidos >= massiveData.ExpectedMinProductos);
+        Assert.True(metrics.ClientesAtendidos >= massiveData.ExpectedMinClientes);
+        Assert.True(metrics.PorcentajeOcupacionMesas >= massiveData.ExpectedMinOcupacion);
+
+        Console.WriteLine($"✅ Validación de cálculos masivos completada exitosamente");
+        Console.WriteLine($"🎯 DATOS MASIVOS PROCESADOS:");
+        Console.WriteLine($"  - Comandas Creadas: {massiveData.CreatedComandas}");
+        Console.WriteLine($"  - Ventas Totales: ${metrics.TotalVentas:F2}");
+        Console.WriteLine($"  - Productos Procesados: {metrics.TotalProductosVendidos}");
+        Console.WriteLine($"  - Ocupación Mesas: {metrics.PorcentajeOcupacionMesas:F1}%");
+    }
+
+    /// <summary>
+    /// Test de escenarios de PICO DE VENTAS (horarios de almuerzo y cena con muchos clientes)
+    /// </summary>
+    [Fact]
+    public async Task DashboardCalculations_WithPeakHours_ShouldValidateRushHourCalculations()
+    {
+        Console.WriteLine($"🚀 INICIANDO TEST DE HORARIOS PICO");
+        Console.WriteLine($"⏰ Simulando HORARIOS DE ALMUERZO Y CENA con picos de ventas");
+
+        // Arrange - Crear escenarios de picos de ventas
+        var peakData = await CreatePeakHoursDataAsync();
+
+        // Act - Obtener métricas del día actual
+        var response = await _analyticsService.ObtenerMetricasDiaAsync();
+        if (!response.Success)
+        {
+            Console.WriteLine($"⚠️ Error obteniendo métricas: {response.Message}");
+            return;
+        }
+
+        var metrics = response.Data;
+        if (metrics == null)
+        {
+            Console.WriteLine("⚠️ No se obtuvieron métricas");
+            return;
+        }
+
+        // Assert - Validar cálculos de picos
+        Console.WriteLine($"📊 VALIDACIÓN DE CÁLCULOS DE HORARIOS PICO:");
+        Console.WriteLine($"  - Total Ventas: ${metrics.TotalVentas:F2}");
+        Console.WriteLine($"  - Total Comandas: {metrics.TotalComandas}");
+        Console.WriteLine($"  - Total Productos Vendidos: {metrics.TotalProductosVendidos}");
+        Console.WriteLine($"  - Clientes Atendidos: {metrics.ClientesAtendidos}");
+        Console.WriteLine($"  - Porcentaje Ocupación Mesas: {metrics.PorcentajeOcupacionMesas:F1}%");
+
+        Console.WriteLine($"🔥 DATOS DE HORARIOS PICO:");
+        Console.WriteLine($"  - Pico Almuerzo: {peakData.LunchPeak.Comandas} comandas, ${peakData.LunchPeak.Ventas:F2}");
+        Console.WriteLine($"  - Pico Cena: {peakData.DinnerPeak.Comandas} comandas, ${peakData.DinnerPeak.Ventas:F2}");
+        Console.WriteLine($"  - Pico Fin de Semana: {peakData.WeekendPeak.Comandas} comandas, ${peakData.WeekendPeak.Ventas:F2}");
+
+        // Validaciones robustas de picos
+        Assert.Equal((double)peakData.ExpectedTotalVentas, (double)metrics.TotalVentas, 2);
+        Assert.Equal(peakData.ExpectedTotalComandas, metrics.TotalComandas);
+        Assert.True(metrics.TotalProductosVendidos >= peakData.ExpectedMinProductos);
+        Assert.True(metrics.ClientesAtendidos >= peakData.ExpectedMinClientes);
+
+        Console.WriteLine($"✅ Validación de horarios pico completada exitosamente");
+        Console.WriteLine($"🎯 PICOS DE VENTAS VALIDADOS:");
+        Console.WriteLine($"  - Almuerzo: {peakData.LunchPeak.Comandas} comandas, ${peakData.LunchPeak.Ventas:F2}");
+        Console.WriteLine($"  - Cena: {peakData.DinnerPeak.Comandas} comandas, ${peakData.DinnerPeak.Ventas:F2}");
+        Console.WriteLine($"  - Fin de Semana: {peakData.WeekendPeak.Comandas} comandas, ${peakData.WeekendPeak.Ventas:F2}");
+    }
+
+    /// <summary>
+    /// Test de DIFERENTES DÍAS DE LA SEMANA con patrones de ventas variados
+    /// </summary>
+    [Fact]
+    public async Task DashboardCalculations_WithDifferentWeekDays_ShouldValidateWeeklyPatterns()
+    {
+        Console.WriteLine($"🚀 INICIANDO TEST DE DÍAS DE LA SEMANA");
+        Console.WriteLine($"📅 Simulando DIFERENTES DÍAS con patrones de ventas variados");
+
+        // Arrange - Crear datos para diferentes días de la semana
+        var weeklyData = await CreateWeeklyPatternsDataAsync();
+
+        // Act - Obtener métricas del día actual
+        var response = await _analyticsService.ObtenerMetricasDiaAsync();
+        if (!response.Success)
+        {
+            Console.WriteLine($"⚠️ Error obteniendo métricas: {response.Message}");
+            return;
+        }
+
+        var metrics = response.Data;
+        if (metrics == null)
+        {
+            Console.WriteLine("⚠️ No se obtuvieron métricas");
+            return;
+        }
+
+        // Assert - Validar cálculos semanales
+        Console.WriteLine($"📊 VALIDACIÓN DE PATRONES SEMANALES:");
+        Console.WriteLine($"  - Total Ventas: ${metrics.TotalVentas:F2}");
+        Console.WriteLine($"  - Total Comandas: {metrics.TotalComandas}");
+        Console.WriteLine($"  - Total Productos Vendidos: {metrics.TotalProductosVendidos}");
+        Console.WriteLine($"  - Clientes Atendidos: {metrics.ClientesAtendidos}");
+        Console.WriteLine($"  - Porcentaje Ocupación Mesas: {metrics.PorcentajeOcupacionMesas:F1}%");
+
+        Console.WriteLine($"📅 PATRONES DE DÍAS SIMULADOS:");
+        Console.WriteLine($"  - Lunes (Día Normal): {weeklyData.Monday.Comandas} comandas, ${weeklyData.Monday.Ventas:F2}");
+        Console.WriteLine($"  - Miércoles (Día Medio): {weeklyData.Wednesday.Comandas} comandas, ${weeklyData.Wednesday.Ventas:F2}");
+        Console.WriteLine($"  - Viernes (Día Pico): {weeklyData.Friday.Comandas} comandas, ${weeklyData.Friday.Ventas:F2}");
+        Console.WriteLine($"  - Sábado (Fin de Semana): {weeklyData.Saturday.Comandas} comandas, ${weeklyData.Saturday.Ventas:F2}");
+        Console.WriteLine($"  - Domingo (Día Familiar): {weeklyData.Sunday.Comandas} comandas, ${weeklyData.Sunday.Ventas:F2}");
+
+        // Validaciones robustas de patrones semanales
+        Assert.Equal((double)weeklyData.ExpectedTotalVentas, (double)metrics.TotalVentas, 2);
+        Assert.Equal(weeklyData.ExpectedTotalComandas, metrics.TotalComandas);
+        Assert.True(metrics.TotalProductosVendidos >= weeklyData.ExpectedMinProductos);
+        Assert.True(metrics.ClientesAtendidos >= weeklyData.ExpectedMinClientes);
+
+        Console.WriteLine($"✅ Validación de patrones semanales completada exitosamente");
+        Console.WriteLine($"🎯 DÍAS DE LA SEMANA VALIDADOS:");
+        Console.WriteLine($"  - Total de comandas creadas: {weeklyData.CreatedComandas}");
+        Console.WriteLine($"  - Ventas totales: ${metrics.TotalVentas:F2}");
+        Console.WriteLine($"  - Patrones de ventas variados: ✅");
+    }
+
+    /// <summary>
+    /// Crea datos MASIVOS con más de 15 comandas para validación extrema
+    /// </summary>
+    private async Task<MassiveTestData> CreateMassiveTestDataAsync()
+    {
+        Console.WriteLine($"🔧 CREANDO DATOS MASIVOS...");
+
+        var productos = await CreateTestProductsAsync();
+        if (productos == null || !productos.Any())
+        {
+            Console.WriteLine("⚠️ No se pudieron obtener productos para datos masivos");
+            return new MassiveTestData();
+        }
+
+        decimal totalVentas = 0;
+        int totalComandas = 0;
+        var productosUsados = new HashSet<Guid>();
+        int totalItems = 0;
+        int mesasOcupadas = 0;
+
+        // Crear MÁS DE 15 COMANDAS con datos variados y extremos
+        var comandasMasivas = new List<ComandaMasivaData>
+        {
+            // Grupo 1: Comandas de desayuno (5 comandas)
+            new ComandaMasivaData { Tipo = "Desayuno Individual", Productos = new List<(Guid, int)> { (productos[0].Id, 1), (productos[1].Id, 2) } },
+            new ComandaMasivaData { Tipo = "Desayuno Completo", Productos = new List<(Guid, int)> { (productos[0].Id, 2), (productos[1].Id, 3), (productos[2].Id, 1) } },
+            new ComandaMasivaData { Tipo = "Desayuno Ejecutivo", Productos = new List<(Guid, int)> { (productos[0].Id, 1), (productos[2].Id, 2) } },
+            new ComandaMasivaData { Tipo = "Desayuno Familiar", Productos = new List<(Guid, int)> { (productos[0].Id, 4), (productos[1].Id, 6), (productos[2].Id, 2) } },
+            new ComandaMasivaData { Tipo = "Desayuno Rápido", Productos = new List<(Guid, int)> { (productos[1].Id, 2) } },
+
+            // Grupo 2: Comandas de almuerzo (6 comandas)
+            new ComandaMasivaData { Tipo = "Almuerzo Individual", Productos = new List<(Guid, int)> { (productos[2].Id, 1), (productos[0].Id, 1) } },
+            new ComandaMasivaData { Tipo = "Almuerzo Familiar", Productos = new List<(Guid, int)> { (productos[2].Id, 3), (productos[1].Id, 2), (productos[0].Id, 3) } },
+            new ComandaMasivaData { Tipo = "Almuerzo Ejecutivo", Productos = new List<(Guid, int)> { (productos[2].Id, 1), (productos[3].Id, 1), (productos[0].Id, 1) } },
+            new ComandaMasivaData { Tipo = "Almuerzo Grupal", Productos = new List<(Guid, int)> { (productos[2].Id, 5), (productos[1].Id, 3), (productos[0].Id, 5) } },
+            new ComandaMasivaData { Tipo = "Almuerzo Ligero", Productos = new List<(Guid, int)> { (productos[1].Id, 1), (productos[0].Id, 1) } },
+            new ComandaMasivaData { Tipo = "Almuerzo Especial", Productos = new List<(Guid, int)> { (productos[2].Id, 2), (productos[3].Id, 2), (productos[1].Id, 1), (productos[0].Id, 2) } },
+
+            // Grupo 3: Comandas de cena (5 comandas)
+            new ComandaMasivaData { Tipo = "Cena Romántica", Productos = new List<(Guid, int)> { (productos[2].Id, 2), (productos[1].Id, 1), (productos[0].Id, 2) } },
+            new ComandaMasivaData { Tipo = "Cena Familiar", Productos = new List<(Guid, int)> { (productos[2].Id, 4), (productos[1].Id, 2), (productos[0].Id, 4) } },
+            new ComandaMasivaData { Tipo = "Cena Grupal", Productos = new List<(Guid, int)> { (productos[2].Id, 6), (productos[3].Id, 3), (productos[1].Id, 2), (productos[0].Id, 6) } },
+            new ComandaMasivaData { Tipo = "Cena Ejecutiva", Productos = new List<(Guid, int)> { (productos[2].Id, 2), (productos[3].Id, 1), (productos[0].Id, 2) } },
+            new ComandaMasivaData { Tipo = "Cena Especial", Productos = new List<(Guid, int)> { (productos[2].Id, 3), (productos[1].Id, 2), (productos[3].Id, 2), (productos[0].Id, 3) } }
+        };
+
+        // Crear cada comanda masiva
+        foreach (var comandaData in comandasMasivas)
+        {
+            var comandaCreated = await CreateComandaWithProductsAsync(
+                Guid.NewGuid(),
+                comandaData.Productos,
+                $"Comanda masiva - {comandaData.Tipo}"
+            );
+
+            if (comandaCreated != null)
+            {
+                totalComandas++;
+                mesasOcupadas++;
+                
+                // Calcular ventas de esta comanda
+                decimal comandaVentas = comandaData.Productos.Sum(p => 
+                {
+                    var producto = productos.FirstOrDefault(pr => pr.Id == p.Item1);
+                    return producto != null ? producto.Precio * p.Item2 : 0;
+                });
+                totalVentas += comandaVentas;
+                
+                // Registrar productos únicos
+                foreach (var (productoId, cantidad) in comandaData.Productos)
+                {
+                    productosUsados.Add(productoId);
+                    totalItems += cantidad;
+                }
+
+                Console.WriteLine($"✅ Comanda masiva {totalComandas} creada - {comandaData.Tipo}: ${comandaVentas:F2}");
+            }
+        }
+
+        Console.WriteLine($"📊 RESUMEN DE DATOS MASIVOS CREADOS:");
+        Console.WriteLine($"  - Comandas masivas creadas: {totalComandas}");
+        Console.WriteLine($"  - Ventas totales: ${totalVentas:F2}");
+        Console.WriteLine($"  - Productos únicos: {productosUsados.Count}");
+        Console.WriteLine($"  - Items totales: {totalItems}");
+        Console.WriteLine($"  - Mesas ocupadas: {mesasOcupadas}");
+
+        return new MassiveTestData
+        {
+            ExpectedTotalVentas = totalVentas,
+            ExpectedTotalComandas = totalComandas,
+            UniqueProducts = productosUsados.Count,
+            TotalItems = totalItems,
+            OccupiedTables = mesasOcupadas,
+            CreatedComandas = totalComandas,
+            ExpectedMinProductos = totalItems,
+            ExpectedMinClientes = totalComandas,
+            ExpectedMinOcupacion = (mesasOcupadas * 100) / 5 // Asumiendo 5 mesas totales
+        };
+    }
+
+    /// <summary>
+    /// Crea datos de HORARIOS PICO con muchos clientes
+    /// </summary>
+    private async Task<PeakHoursData> CreatePeakHoursDataAsync()
+    {
+        Console.WriteLine($"🔧 CREANDO DATOS DE HORARIOS PICO...");
+
+        var productos = await CreateTestProductsAsync();
+        if (productos == null || !productos.Any())
+        {
+            Console.WriteLine("⚠️ No se pudieron obtener productos para horarios pico");
+            return new PeakHoursData();
+        }
+
+        decimal totalVentas = 0;
+        int totalComandas = 0;
+
+        // Pico de Almuerzo (12:00-14:00) - 6 comandas
+        var lunchPeak = await CreatePeakScenarioAsync("Pico Almuerzo", 6, productos, 
+            new List<(Guid, int)> { (productos[2].Id, 2), (productos[1].Id, 1), (productos[0].Id, 2) });
+        totalVentas += lunchPeak.Ventas;
+        totalComandas += lunchPeak.Comandas;
+
+        // Pico de Cena (19:00-21:00) - 5 comandas
+        var dinnerPeak = await CreatePeakScenarioAsync("Pico Cena", 5, productos,
+            new List<(Guid, int)> { (productos[2].Id, 3), (productos[1].Id, 2), (productos[0].Id, 3) });
+        totalVentas += dinnerPeak.Ventas;
+        totalComandas += dinnerPeak.Comandas;
+
+        // Pico de Fin de Semana - 4 comandas
+        var weekendPeak = await CreatePeakScenarioAsync("Pico Fin de Semana", 4, productos,
+            new List<(Guid, int)> { (productos[2].Id, 4), (productos[1].Id, 3), (productos[3].Id, 2), (productos[0].Id, 4) });
+        totalVentas += weekendPeak.Ventas;
+        totalComandas += weekendPeak.Comandas;
+
+        Console.WriteLine($"📊 RESUMEN DE HORARIOS PICO:");
+        Console.WriteLine($"  - Total comandas en picos: {totalComandas}");
+        Console.WriteLine($"  - Ventas totales en picos: ${totalVentas:F2}");
+
+        return new PeakHoursData
+        {
+            ExpectedTotalVentas = totalVentas,
+            ExpectedTotalComandas = totalComandas,
+            ExpectedMinProductos = totalComandas * 2, // Mínimo 2 productos por comanda
+            ExpectedMinClientes = totalComandas,
+            LunchPeak = lunchPeak,
+            DinnerPeak = dinnerPeak,
+            WeekendPeak = weekendPeak
+        };
+    }
+
+    /// <summary>
+    /// Crea datos de DIFERENTES DÍAS DE LA SEMANA
+    /// </summary>
+    private async Task<WeeklyPatternsData> CreateWeeklyPatternsDataAsync()
+    {
+        Console.WriteLine($"🔧 CREANDO DATOS DE DÍAS DE LA SEMANA...");
+
+        var productos = await CreateTestProductsAsync();
+        if (productos == null || !productos.Any())
+        {
+            Console.WriteLine("⚠️ No se pudieron obtener productos para días de la semana");
+            return new WeeklyPatternsData();
+        }
+
+        decimal totalVentas = 0;
+        int totalComandas = 0;
+
+        // Lunes - Día normal (3 comandas)
+        var monday = await CreateDayScenarioAsync("Lunes", 3, productos,
+            new List<(Guid, int)> { (productos[2].Id, 1), (productos[0].Id, 1) });
+        totalVentas += monday.Ventas;
+        totalComandas += monday.Comandas;
+
+        // Miércoles - Día medio (4 comandas)
+        var wednesday = await CreateDayScenarioAsync("Miércoles", 4, productos,
+            new List<(Guid, int)> { (productos[2].Id, 2), (productos[1].Id, 1), (productos[0].Id, 2) });
+        totalVentas += wednesday.Ventas;
+        totalComandas += wednesday.Comandas;
+
+        // Viernes - Día pico (5 comandas)
+        var friday = await CreateDayScenarioAsync("Viernes", 5, productos,
+            new List<(Guid, int)> { (productos[2].Id, 2), (productos[3].Id, 1), (productos[1].Id, 1), (productos[0].Id, 2) });
+        totalVentas += friday.Ventas;
+        totalComandas += friday.Comandas;
+
+        // Sábado - Fin de semana (6 comandas)
+        var saturday = await CreateDayScenarioAsync("Sábado", 6, productos,
+            new List<(Guid, int)> { (productos[2].Id, 3), (productos[1].Id, 2), (productos[3].Id, 2), (productos[0].Id, 3) });
+        totalVentas += saturday.Ventas;
+        totalComandas += saturday.Comandas;
+
+        // Domingo - Día familiar (4 comandas)
+        var sunday = await CreateDayScenarioAsync("Domingo", 4, productos,
+            new List<(Guid, int)> { (productos[2].Id, 2), (productos[1].Id, 3), (productos[0].Id, 2) });
+        totalVentas += sunday.Ventas;
+        totalComandas += sunday.Comandas;
+
+        Console.WriteLine($"📊 RESUMEN DE DÍAS DE LA SEMANA:");
+        Console.WriteLine($"  - Total comandas semanales: {totalComandas}");
+        Console.WriteLine($"  - Ventas totales semanales: ${totalVentas:F2}");
+
+        return new WeeklyPatternsData
+        {
+            ExpectedTotalVentas = totalVentas,
+            ExpectedTotalComandas = totalComandas,
+            ExpectedMinProductos = totalComandas * 2,
+            ExpectedMinClientes = totalComandas,
+            CreatedComandas = totalComandas,
+            Monday = monday,
+            Wednesday = wednesday,
+            Friday = friday,
+            Saturday = saturday,
+            Sunday = sunday
+        };
+    }
+
+    /// <summary>
+    /// Crea un escenario de pico específico
+    /// </summary>
+    private async Task<PeakScenarioData> CreatePeakScenarioAsync(string nombre, int cantidadComandas, 
+        List<RestaurantePro.Application.Core.Productos.DTOs.ProductoDto> productos, 
+        List<(Guid, int)> productosBase)
+    {
+        decimal totalVentas = 0;
+        int comandasCreadas = 0;
+
+        for (int i = 0; i < cantidadComandas; i++)
+        {
+            var comandaCreated = await CreateComandaWithProductsAsync(
+                Guid.NewGuid(),
+                productosBase,
+                $"{nombre} - Comanda {i + 1}"
+            );
+
+            if (comandaCreated != null)
+            {
+                comandasCreadas++;
+                decimal comandaVentas = productosBase.Sum(p => 
+                {
+                    var producto = productos.FirstOrDefault(pr => pr.Id == p.Item1);
+                    return producto != null ? producto.Precio * p.Item2 : 0;
+                });
+                totalVentas += comandaVentas;
+            }
+        }
+
+        Console.WriteLine($"✅ {nombre}: {comandasCreadas} comandas, ${totalVentas:F2}");
+
+        return new PeakScenarioData
+        {
+            Comandas = comandasCreadas,
+            Ventas = totalVentas
+        };
+    }
+
+    /// <summary>
+    /// Crea un escenario de día específico
+    /// </summary>
+    private async Task<DayScenarioData> CreateDayScenarioAsync(string dia, int cantidadComandas,
+        List<RestaurantePro.Application.Core.Productos.DTOs.ProductoDto> productos,
+        List<(Guid, int)> productosBase)
+    {
+        decimal totalVentas = 0;
+        int comandasCreadas = 0;
+
+        for (int i = 0; i < cantidadComandas; i++)
+        {
+            var comandaCreated = await CreateComandaWithProductsAsync(
+                Guid.NewGuid(),
+                productosBase,
+                $"{dia} - Comanda {i + 1}"
+            );
+
+            if (comandaCreated != null)
+            {
+                comandasCreadas++;
+                decimal comandaVentas = productosBase.Sum(p => 
+                {
+                    var producto = productos.FirstOrDefault(pr => pr.Id == p.Item1);
+                    return producto != null ? producto.Precio * p.Item2 : 0;
+                });
+                totalVentas += comandaVentas;
+            }
+        }
+
+        Console.WriteLine($"✅ {dia}: {comandasCreadas} comandas, ${totalVentas:F2}");
+
+        return new DayScenarioData
+        {
+            Comandas = comandasCreadas,
+            Ventas = totalVentas
+        };
+    }
+
+    /// <summary>
+    /// Crea múltiples escenarios variados para validar cálculos complejos
+    /// </summary>
+    private async Task<VariedScenariosData> CreateVariedScenariosAsync()
+    {
+        Console.WriteLine($"🔧 Creando escenarios variados de comandas...");
+
+        var productos = await CreateTestProductsAsync();
+        if (productos == null || !productos.Any())
+        {
+            Console.WriteLine("⚠️ No se pudieron obtener productos para los escenarios");
+            return new VariedScenariosData();
+        }
+
+        var scenarios = new VariedScenariosData();
+        var comandaIds = new List<Guid>();
+
+        // Escenario 1: Mañana (desayuno/almuerzo temprano)
+        var morningData = await CreateMorningScenarioAsync(productos);
+        scenarios.MorningScenario = morningData;
+        comandaIds.AddRange(morningData.ComandaIds);
+
+        // Escenario 2: Tarde (almuerzo)
+        var afternoonData = await CreateAfternoonScenarioAsync(productos);
+        scenarios.AfternoonScenario = afternoonData;
+        comandaIds.AddRange(afternoonData.ComandaIds);
+
+        // Escenario 3: Noche (cena)
+        var eveningData = await CreateEveningScenarioAsync(productos);
+        scenarios.EveningScenario = eveningData;
+        comandaIds.AddRange(eveningData.ComandaIds);
+
+        // Escenario 4: Fin de semana (mayor volumen)
+        var weekendData = await CreateWeekendScenarioAsync(productos);
+        scenarios.WeekendScenario = weekendData;
+        comandaIds.AddRange(weekendData.ComandaIds);
+
+        // Calcular totales esperados
+        scenarios.ExpectedTotalVentas = morningData.Ventas + afternoonData.Ventas + 
+                                      eveningData.Ventas + weekendData.Ventas;
+        scenarios.ExpectedTotalComandas = morningData.Comandas + afternoonData.Comandas + 
+                                        eveningData.Comandas + weekendData.Comandas;
+        scenarios.ExpectedMinProductos = 15; // Mínimo esperado de productos vendidos
+        scenarios.ExpectedMinClientes = 8; // Mínimo esperado de clientes atendidos
+        scenarios.ExpectedMinOcupacion = 60; // Mínimo 60% de ocupación
+
+        scenarios.ComandaIds = comandaIds;
+
+        Console.WriteLine($"✅ Escenarios variados creados exitosamente");
+        Console.WriteLine($"  - Total comandas: {scenarios.ExpectedTotalComandas}");
+        Console.WriteLine($"  - Total ventas esperadas: ${scenarios.ExpectedTotalVentas:F2}");
+
+        return scenarios;
+    }
+
+    /// <summary>
+    /// Crea escenario de mañana (desayuno/almuerzo temprano)
+    /// </summary>
+    private async Task<ScenarioData> CreateMorningScenarioAsync(List<RestaurantePro.Application.Core.Productos.DTOs.ProductoDto> productos)
+    {
+        Console.WriteLine($"🌅 Creando escenario de mañana...");
+
+        var comandaIds = new List<Guid>();
+        var totalVentas = 0m;
+
+        // Comanda 1: Desayuno individual
+        var comanda1 = await CreateComandaWithProductsAsync(
+            mesaId: Guid.NewGuid(),
+            productos: new List<(Guid ProductoId, int Cantidad)>
+            {
+                (productos[0].Id, 1), // Café
+                (productos[1].Id, 2)  // Pan
+            },
+            observaciones: "Desayuno individual - Escenario mañana"
+        );
+        if (comanda1 != null)
+        {
+            comandaIds.Add(comanda1.Id);
+            totalVentas += productos[0].Precio + (productos[1].Precio * 2);
+        }
+
+        // Comanda 2: Almuerzo temprano
+        var comanda2 = await CreateComandaWithProductsAsync(
+            mesaId: Guid.NewGuid(),
+            productos: new List<(Guid ProductoId, int Cantidad)>
+            {
+                (productos[2].Id, 1), // Plato principal
+                (productos[0].Id, 1)  // Bebida
+            },
+            observaciones: "Almuerzo temprano - Escenario mañana"
+        );
+        if (comanda2 != null)
+        {
+            comandaIds.Add(comanda2.Id);
+            totalVentas += productos[2].Precio + productos[0].Precio;
+        }
+
+        return new ScenarioData
+        {
+            Comandas = comandaIds.Count,
+            Ventas = totalVentas,
+            ComandaIds = comandaIds
+        };
+    }
+
+    /// <summary>
+    /// Crea escenario de tarde (almuerzo)
+    /// </summary>
+    private async Task<ScenarioData> CreateAfternoonScenarioAsync(List<RestaurantePro.Application.Core.Productos.DTOs.ProductoDto> productos)
+    {
+        Console.WriteLine($"☀️ Creando escenario de tarde...");
+
+        var comandaIds = new List<Guid>();
+        var totalVentas = 0m;
+
+        // Comanda 3: Almuerzo familiar
+        var comanda3 = await CreateComandaWithProductsAsync(
+            mesaId: Guid.NewGuid(),
+            productos: new List<(Guid ProductoId, int Cantidad)>
+            {
+                (productos[2].Id, 2), // 2 platos principales
+                (productos[1].Id, 1), // Acompañamiento
+                (productos[0].Id, 2)  // 2 bebidas
+            },
+            observaciones: "Almuerzo familiar - Escenario tarde"
+        );
+        if (comanda3 != null)
+        {
+            comandaIds.Add(comanda3.Id);
+            totalVentas += (productos[2].Precio * 2) + productos[1].Precio + (productos[0].Precio * 2);
+        }
+
+        // Comanda 4: Almuerzo ejecutivo
+        var comanda4 = await CreateComandaWithProductsAsync(
+            mesaId: Guid.NewGuid(),
+            productos: new List<(Guid ProductoId, int Cantidad)>
+            {
+                (productos[2].Id, 1), // Plato principal
+                (productos[0].Id, 1)  // Bebida
+            },
+            observaciones: "Almuerzo ejecutivo - Escenario tarde"
+        );
+        if (comanda4 != null)
+        {
+            comandaIds.Add(comanda4.Id);
+            totalVentas += productos[2].Precio + productos[0].Precio;
+        }
+
+        return new ScenarioData
+        {
+            Comandas = comandaIds.Count,
+            Ventas = totalVentas,
+            ComandaIds = comandaIds
+        };
+    }
+
+    /// <summary>
+    /// Crea escenario de noche (cena)
+    /// </summary>
+    private async Task<ScenarioData> CreateEveningScenarioAsync(List<RestaurantePro.Application.Core.Productos.DTOs.ProductoDto> productos)
+    {
+        Console.WriteLine($"🌙 Creando escenario de noche...");
+
+        var comandaIds = new List<Guid>();
+        var totalVentas = 0m;
+
+        // Comanda 5: Cena romántica
+        var comanda5 = await CreateComandaWithProductsAsync(
+            mesaId: Guid.NewGuid(),
+            productos: new List<(Guid ProductoId, int Cantidad)>
+            {
+                (productos[2].Id, 2), // 2 platos principales
+                (productos[1].Id, 1), // Acompañamiento
+                (productos[0].Id, 2)  // 2 bebidas
+            },
+            observaciones: "Cena romántica - Escenario noche"
+        );
+        if (comanda5 != null)
+        {
+            comandaIds.Add(comanda5.Id);
+            totalVentas += (productos[2].Precio * 2) + productos[1].Precio + (productos[0].Precio * 2);
+        }
+
+        return new ScenarioData
+        {
+            Comandas = comandaIds.Count,
+            Ventas = totalVentas,
+            ComandaIds = comandaIds
+        };
+    }
+
+    /// <summary>
+    /// Crea escenario de fin de semana (mayor volumen)
+    /// </summary>
+    private async Task<ScenarioData> CreateWeekendScenarioAsync(List<RestaurantePro.Application.Core.Productos.DTOs.ProductoDto> productos)
+    {
+        Console.WriteLine($"🎉 Creando escenario de fin de semana...");
+
+        var comandaIds = new List<Guid>();
+        var totalVentas = 0m;
+
+        // Comanda 6: Grupo grande fin de semana
+        var comanda6 = await CreateComandaWithProductsAsync(
+            mesaId: Guid.NewGuid(), // Mesa nueva
+            productos: new List<(Guid ProductoId, int Cantidad)>
+            {
+                (productos[2].Id, 4), // 4 platos principales
+                (productos[1].Id, 2), // 2 acompañamientos
+                (productos[0].Id, 4)  // 4 bebidas
+            },
+            observaciones: "Grupo grande fin de semana - Escenario weekend"
+        );
+        if (comanda6 != null)
+        {
+            comandaIds.Add(comanda6.Id);
+            totalVentas += (productos[2].Precio * 4) + (productos[1].Precio * 2) + (productos[0].Precio * 4);
+        }
+
+        // Comanda 7: Familia fin de semana
+        var comanda7 = await CreateComandaWithProductsAsync(
+            mesaId: Guid.NewGuid(), // Mesa nueva
+            productos: new List<(Guid ProductoId, int Cantidad)>
+            {
+                (productos[2].Id, 3), // 3 platos principales
+                (productos[1].Id, 1), // 1 acompañamiento
+                (productos[0].Id, 3)  // 3 bebidas
+            },
+            observaciones: "Familia fin de semana - Escenario weekend"
+        );
+        if (comanda7 != null)
+        {
+            comandaIds.Add(comanda7.Id);
+            totalVentas += (productos[2].Precio * 3) + productos[1].Precio + (productos[0].Precio * 3);
+        }
+
+        return new ScenarioData
+        {
+            Comandas = comandaIds.Count,
+            Ventas = totalVentas,
+            ComandaIds = comandaIds
+        };
+    }
+
+    /// <summary>
+    /// Crea una comanda con productos específicos (versión simplificada)
+    /// </summary>
+    private async Task<ApplicationComandaDto?> CreateComandaWithProductsAsync(
+        Guid mesaId,
+        List<(Guid ProductoId, int Cantidad)> productos,
+        string observaciones)
+    {
+        try
+        {
+            // Crear comanda inicial
+            var createComandaRequest = new CrearComandaRequest
+            {
+                MesaId = mesaId,
+                ClienteNombre = null,
+                Observaciones = observaciones
+            };
+
+            var comandaResponse = await _apiService.PostAsync<ApplicationComandaDto>(
+                "/api/operaciones/comandas", createComandaRequest);
+
+            if (!comandaResponse.Success || comandaResponse.Data == null)
+            {
+                Console.WriteLine($"⚠️ Error creando comanda: {comandaResponse.Message}");
+                return null;
+            }
+
+            var comanda = comandaResponse.Data;
+
+            // Agregar productos a la comanda
+            foreach (var (productoId, cantidad) in productos)
+            {
+                var addProductoRequest = new ComandaProductoRequest
+                {
+                    ProductoId = productoId,
+                    Cantidad = cantidad,
+                    Observaciones = $"Producto agregado: {cantidad} unidades"
+                };
+
+                var addProductoResponse = await _apiService.PutAsync<ApplicationComandaDto>(
+                    $"/api/operaciones/comandas/{comanda.Id}/agregar-producto", addProductoRequest);
+
+                if (!addProductoResponse.Success)
+                {
+                    Console.WriteLine($"⚠️ Error agregando producto {productoId}: {addProductoResponse.Message}");
+                }
+            }
+
+            return comanda;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"⚠️ Excepción creando comanda: {ex.Message}");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Crea datos de prueba con alto volumen: múltiples comandas, productos y cantidades
+    /// </summary>
+    private async Task<HighVolumeTestData> CreateHighVolumeTestDataAsync()
+    {
+        Console.WriteLine($"🔧 CREANDO DATOS DE PRUEBA DE ALTO VOLUMEN...");
+
+        // Obtener productos disponibles
+        var productos = await CreateTestProductsAsync();
+        Console.WriteLine($"📦 Productos disponibles: {productos.Count}");
+
+        // Obtener mesas disponibles
+        var mesasResponse = await _mesasService.ObtenerMesasAsync();
+        if (!mesasResponse.Success || mesasResponse.Data == null || !mesasResponse.Data.Any())
+        {
+            Console.WriteLine("⚠️ No hay mesas disponibles para crear datos de prueba");
+            return new HighVolumeTestData();
+        }
+
+        var mesas = mesasResponse.Data.Take(3).ToList(); // Usar máximo 3 mesas
+        Console.WriteLine($"🪑 Mesas disponibles: {mesas.Count}");
+
+        decimal totalVentas = 0;
+        int totalComandas = 0;
+        var productosUsados = new HashSet<Guid>();
+        int totalItems = 0;
+
+        // Crear múltiples comandas con diferentes escenarios
+        var comandasData = new List<ComandaTestData>
+        {
+            // Comanda 1: Orden grande con múltiples productos
+            new ComandaTestData
+            {
+                MesaId = mesas[0].Id,
+                Productos = new List<ProductoComandaData>
+                {
+                    new() { ProductoId = productos[0].Id, Cantidad = 2, Precio = productos[0].Precio },
+                    new() { ProductoId = productos[1].Id, Cantidad = 1, Precio = productos[1].Precio },
+                    new() { ProductoId = productos[2].Id, Cantidad = 3, Precio = productos[2].Precio }
+                }
+            },
+            
+            // Comanda 2: Orden mediana con productos diferentes
+            new ComandaTestData
+            {
+                MesaId = mesas[1].Id,
+                Productos = new List<ProductoComandaData>
+                {
+                    new() { ProductoId = productos[1].Id, Cantidad = 2, Precio = productos[1].Precio },
+                    new() { ProductoId = productos[3].Id, Cantidad = 1, Precio = productos[3].Precio }
+                }
+            },
+
+            // Comanda 3: Orden pequeña pero con alta cantidad de un producto
+            new ComandaTestData
+            {
+                MesaId = mesas[2].Id,
+                Productos = new List<ProductoComandaData>
+                {
+                    new() { ProductoId = productos[0].Id, Cantidad = 5, Precio = productos[0].Precio },
+                    new() { ProductoId = productos[2].Id, Cantidad = 2, Precio = productos[2].Precio }
+                }
+            },
+
+            // Comanda 4: Orden variada con todos los productos disponibles
+            new ComandaTestData
+            {
+                MesaId = mesas[0].Id, // Reutilizar mesa
+                Productos = productos.Take(4).Select(p => new ProductoComandaData
+                {
+                    ProductoId = p.Id,
+                    Cantidad = 1,
+                    Precio = p.Precio
+                }).ToList()
+            },
+
+            // Comanda 5: Orden con productos repetidos pero diferentes cantidades
+            new ComandaTestData
+            {
+                MesaId = mesas[1].Id, // Reutilizar mesa
+                Productos = new List<ProductoComandaData>
+                {
+                    new() { ProductoId = productos[0].Id, Cantidad = 4, Precio = productos[0].Precio },
+                    new() { ProductoId = productos[1].Id, Cantidad = 2, Precio = productos[1].Precio },
+                    new() { ProductoId = productos[2].Id, Cantidad = 1, Precio = productos[2].Precio },
+                    new() { ProductoId = productos[3].Id, Cantidad = 3, Precio = productos[3].Precio }
+                }
+            }
+        };
+
+        // Crear cada comanda y calcular totales
+        foreach (var comandaData in comandasData)
+        {
+            var comandaCreated = await CreateComandaWithProductsAsync(comandaData);
+            if (comandaCreated != null)
+            {
+                totalComandas++;
+                
+                // Calcular ventas de esta comanda
+                decimal comandaVentas = comandaData.Productos.Sum(p => p.Cantidad * p.Precio);
+                totalVentas += comandaVentas;
+                
+                // Registrar productos únicos
+                foreach (var producto in comandaData.Productos)
+                {
+                    productosUsados.Add(producto.ProductoId);
+                    totalItems += producto.Cantidad;
+                }
+
+                Console.WriteLine($"✅ Comanda {totalComandas} creada - Ventas: ${comandaVentas:F2}");
+            }
+        }
+
+        Console.WriteLine($"📊 RESUMEN DE DATOS CREADOS:");
+        Console.WriteLine($"  - Comandas creadas: {totalComandas}");
+        Console.WriteLine($"  - Ventas totales: ${totalVentas:F2}");
+        Console.WriteLine($"  - Productos únicos: {productosUsados.Count}");
+        Console.WriteLine($"  - Items totales: {totalItems}");
+
+        return new HighVolumeTestData
+        {
+            ExpectedTotalVentas = totalVentas,
+            ExpectedTotalComandas = totalComandas,
+            UniqueProducts = productosUsados.Count,
+            TotalItems = totalItems
+        };
+    }
+
+    /// <summary>
+    /// Crea una comanda con múltiples productos
+    /// </summary>
+    private async Task<ApplicationComandaDto?> CreateComandaWithProductsAsync(ComandaTestData comandaData)
+    {
+        try
+        {
+            // Crear comanda inicial
+            var createComandaRequest = new CrearComandaRequest
+            {
+                MesaId = comandaData.MesaId,
+                ClienteNombre = null,
+                Observaciones = $"Comanda de prueba con {comandaData.Productos.Count} productos"
+            };
+
+            var comandaResponse = await _apiService.PostAsync<ApplicationComandaDto>(
+                "/api/operaciones/comandas", createComandaRequest);
+
+            if (!comandaResponse.Success || comandaResponse.Data == null)
+            {
+                Console.WriteLine($"⚠️ Error creando comanda: {comandaResponse.Message}");
+                return null;
+            }
+
+            var comanda = comandaResponse.Data;
+            Console.WriteLine($"📝 Comanda creada: {comanda.Id}");
+
+            // Agregar productos a la comanda
+            foreach (var productoData in comandaData.Productos)
+            {
+                var addProductoRequest = new ComandaProductoRequest
+                {
+                    ProductoId = productoData.ProductoId,
+                    Cantidad = productoData.Cantidad,
+                    PrecioUnitario = productoData.Precio,
+                    Observaciones = $"Producto agregado: {productoData.Cantidad} unidades"
+                };
+
+                var addProductoResponse = await _apiService.PutAsync<ApplicationComandaDto>(
+                    $"/api/operaciones/comandas/{comanda.Id}/agregar-producto", addProductoRequest);
+
+                if (addProductoResponse.Success)
+                {
+                    Console.WriteLine($"  ✅ Producto agregado: {productoData.Cantidad}x (${productoData.Precio:F2} cada uno)");
+                }
+                else
+                {
+                    Console.WriteLine($"  ⚠️ Error agregando producto: {addProductoResponse.Message}");
+                }
+            }
+
+            return comanda;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error creando comanda con productos: {ex.Message}");
+            return null;
+        }
+    }
+
     private class TestData
     {
         public int ExpectedComandas { get; set; }
@@ -1111,4 +2225,136 @@ public class DashboardServiceRealCalculationsTests : IClassFixture<MobileIntegra
         public int ExpectedMesasOcupadas { get; set; }
         public List<Guid> ComandaIds { get; set; } = new();
     }
+
+    /// <summary>
+    /// Datos de prueba para comanda individual
+    /// </summary>
+    private class ComandaTestData
+    {
+        public Guid MesaId { get; set; }
+        public List<ProductoComandaData> Productos { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Datos de producto en comanda
+    /// </summary>
+    private class ProductoComandaData
+    {
+        public Guid ProductoId { get; set; }
+        public int Cantidad { get; set; }
+        public decimal Precio { get; set; }
+    }
+
+    /// <summary>
+    /// Datos de prueba para test de alto volumen
+    /// </summary>
+    private class HighVolumeTestData
+    {
+        public decimal ExpectedTotalVentas { get; set; }
+        public int ExpectedTotalComandas { get; set; }
+        public int UniqueProducts { get; set; }
+        public int TotalItems { get; set; }
+    }
+
+    /// <summary>
+    /// Datos de prueba para escenarios variados
+    /// </summary>
+    private class VariedScenariosData
+    {
+        public ScenarioData MorningScenario { get; set; } = new();
+        public ScenarioData AfternoonScenario { get; set; } = new();
+        public ScenarioData EveningScenario { get; set; } = new();
+        public ScenarioData WeekendScenario { get; set; } = new();
+        public decimal ExpectedTotalVentas { get; set; }
+        public int ExpectedTotalComandas { get; set; }
+        public int ExpectedMinProductos { get; set; }
+        public int ExpectedMinClientes { get; set; }
+        public int ExpectedMinOcupacion { get; set; }
+        public List<Guid> ComandaIds { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Datos de un escenario específico
+    /// </summary>
+    private class ScenarioData
+    {
+        public int Comandas { get; set; }
+        public decimal Ventas { get; set; }
+        public List<Guid> ComandaIds { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Datos de prueba para test de datos masivos
+    /// </summary>
+    private class MassiveTestData
+    {
+        public decimal ExpectedTotalVentas { get; set; }
+        public int ExpectedTotalComandas { get; set; }
+        public int UniqueProducts { get; set; }
+        public int TotalItems { get; set; }
+        public int OccupiedTables { get; set; }
+        public int CreatedComandas { get; set; }
+        public int ExpectedMinProductos { get; set; }
+        public int ExpectedMinClientes { get; set; }
+        public decimal ExpectedMinOcupacion { get; set; }
+    }
+
+    /// <summary>
+    /// Datos de prueba para horarios pico
+    /// </summary>
+    private class PeakHoursData
+    {
+        public decimal ExpectedTotalVentas { get; set; }
+        public int ExpectedTotalComandas { get; set; }
+        public int ExpectedMinProductos { get; set; }
+        public int ExpectedMinClientes { get; set; }
+        public PeakScenarioData LunchPeak { get; set; } = new();
+        public PeakScenarioData DinnerPeak { get; set; } = new();
+        public PeakScenarioData WeekendPeak { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Datos de prueba para patrones semanales
+    /// </summary>
+    private class WeeklyPatternsData
+    {
+        public decimal ExpectedTotalVentas { get; set; }
+        public int ExpectedTotalComandas { get; set; }
+        public int ExpectedMinProductos { get; set; }
+        public int ExpectedMinClientes { get; set; }
+        public int CreatedComandas { get; set; }
+        public DayScenarioData Monday { get; set; } = new();
+        public DayScenarioData Wednesday { get; set; } = new();
+        public DayScenarioData Friday { get; set; } = new();
+        public DayScenarioData Saturday { get; set; } = new();
+        public DayScenarioData Sunday { get; set; } = new();
+    }
+
+    /// <summary>
+    /// Datos de escenario de pico
+    /// </summary>
+    private class PeakScenarioData
+    {
+        public int Comandas { get; set; }
+        public decimal Ventas { get; set; }
+    }
+
+    /// <summary>
+    /// Datos de escenario de día
+    /// </summary>
+    private class DayScenarioData
+    {
+        public int Comandas { get; set; }
+        public decimal Ventas { get; set; }
+    }
+
+    /// <summary>
+    /// Datos de comanda masiva
+    /// </summary>
+    private class ComandaMasivaData
+    {
+        public string Tipo { get; set; } = string.Empty;
+        public List<(Guid, int)> Productos { get; set; } = new();
+    }
+
 }

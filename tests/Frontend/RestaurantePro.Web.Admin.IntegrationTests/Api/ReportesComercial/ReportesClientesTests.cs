@@ -114,8 +114,9 @@ public class ReportesClientesTests : BaseIntegrationTest
     public async Task ObtenerReporteClientes_ConFechasRegistro_DeberiaFiltrarCorrectamente()
     {
         // Arrange
-        var fechaDesde = DateTime.Now.AddDays(-30);
-        var fechaHasta = DateTime.Now.AddDays(-15);
+        var fechaBase = new DateTime(2024, 1, 1, 12, 0, 0);
+        var fechaDesde = fechaBase.AddDays(-30);
+        var fechaHasta = fechaBase.AddDays(-15);
         await SeedClientesConFechasRegistroAsync(8, fechaDesde, fechaHasta);
 
         // Act
@@ -137,8 +138,9 @@ public class ReportesClientesTests : BaseIntegrationTest
     public async Task ObtenerReporteClientes_ConFiltrosCombinados_DeberiaAplicarTodosLosFiltros()
     {
         // Arrange
-        var fechaDesde = DateTime.Now.AddDays(-60);
-        var fechaHasta = DateTime.Now.AddDays(-30);
+        var fechaBase = new DateTime(2024, 1, 1, 12, 0, 0);
+        var fechaDesde = fechaBase.AddDays(-60);
+        var fechaHasta = fechaBase.AddDays(-30);
         await SeedClientesConFiltrosCombinadosAsync(5, "Premium", fechaDesde, fechaHasta);
 
         // Act
@@ -252,7 +254,6 @@ public class ReportesClientesTests : BaseIntegrationTest
     {
         // Arrange
         await SeedClientesDePruebaAsync(100, 80); // 100 total, 80 activos
-        await SeedClientesActivosAsync(20); // 20 clientes activos
 
         // Act
         var response = await _client.GetAsync("/api/comercial/reportes/clientes");
