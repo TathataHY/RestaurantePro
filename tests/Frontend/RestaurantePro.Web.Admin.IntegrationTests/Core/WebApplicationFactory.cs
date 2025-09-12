@@ -6,9 +6,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 using System.Data.Common;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http.Json;
 using RestaurantePro.Web.Admin.IntegrationTests.Services;
+using FluentValidation;
+using MediatR;
 
 namespace RestaurantePro.Web.Admin.IntegrationTests.Core;
 
@@ -55,10 +58,14 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
             });
 
             // Configurar MediatR para pruebas
-            services.AddMediatR(cfg => 
+            services.AddMediatR(cfg =>
             {
                 cfg.RegisterServicesFromAssembly(typeof(RestaurantePro.Application.Comercial.Clientes.Commands.CrearCliente.CrearClienteCommand).Assembly);
             });
+
+            // Configurar FluentValidation para pruebas
+            services.AddValidatorsFromAssembly(typeof(RestaurantePro.Application.Comercial.Clientes.Commands.CrearCliente.CrearClienteCommand).Assembly);
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(RestaurantePro.Application.Common.Behaviors.ValidationBehavior<,>));
 
             // Configurar AutoMapper para pruebas
             services.AddAutoMapper(typeof(RestaurantePro.Application.Comercial.Clientes.Commands.CrearCliente.CrearClienteCommand).Assembly);

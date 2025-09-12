@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using RestaurantePro.Application.Core.Usuarios.DTOs;
 using RestaurantePro.Web.Admin.IntegrationTests.Core;
 using Xunit;
@@ -17,11 +18,7 @@ public class UsuariosSecurityTests : BaseIntegrationTest
 
     public UsuariosSecurityTests(WebApplicationFactory factory) : base(factory)
     {
-        _jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            PropertyNameCaseInsensitive = true
-        };
+        _jsonOptions = GetJsonOptions();
     }
 
     #region Pruebas de Autorización
@@ -46,10 +43,15 @@ public class UsuariosSecurityTests : BaseIntegrationTest
         var clientNoAuth = _factory.CreateClient();
         var nuevoUsuario = new
         {
+            nombreUsuario = "usuario.noauth",
             nombreCompleto = "Usuario No Autorizado",
             email = "noauth@restaurantepro.com",
-            telefono = "+1234567890",
+            password = "Password123!",
+            confirmarPassword = "Password123!",
+            telefono = "1234567890",
             rol = "Mesero",
+            nivelAcceso = 1,
+            usuarioCreadorId = Guid.NewGuid(),
             activo = true
         };
 
@@ -81,7 +83,8 @@ public class UsuariosSecurityTests : BaseIntegrationTest
         await SeedUsuariosDePruebaAsync();
 
         // Act
-        var response = await _client.GetAsync($"/api/core/usuarios?filtro={Uri.EscapeDataString(sqlInjection)}");
+        var authenticatedClient = CreateAuthenticatedClient();
+        var response = await authenticatedClient.GetAsync($"/api/core/usuarios?filtro={Uri.EscapeDataString(sqlInjection)}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -121,7 +124,8 @@ public class UsuariosSecurityTests : BaseIntegrationTest
             "application/json");
 
         // Act
-        var response = await _client.PostAsync("/api/core/usuarios", content);
+        var authenticatedClient = CreateAuthenticatedClient();
+        var response = await authenticatedClient.PostAsync("/api/core/usuarios", content);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -146,12 +150,18 @@ public class UsuariosSecurityTests : BaseIntegrationTest
     public async Task CrearUsuario_ConXSSEnNombre_DeberiaEscaparCorrectamente(string xssPayload)
     {
         // Arrange
+        var usuarioCreadorId = await CrearUsuarioAdministradorDePruebaAsync();
         var usuarioConXSS = new
         {
+            nombreUsuario = "usuario.xss",
             nombreCompleto = xssPayload,
             email = "xss@restaurantepro.com",
-            telefono = "+1234567890",
+            password = "Password123!",
+            confirmarPassword = "Password123!",
+            telefono = "1234567890",
             rol = "Mesero",
+            nivelAcceso = 1,
+            usuarioCreadorId = usuarioCreadorId,
             activo = true
         };
 
@@ -161,7 +171,8 @@ public class UsuariosSecurityTests : BaseIntegrationTest
             "application/json");
 
         // Act
-        var response = await _client.PostAsync("/api/core/usuarios", content);
+        var authenticatedClient = CreateAuthenticatedClient();
+        var response = await authenticatedClient.PostAsync("/api/core/usuarios", content);
 
         // Assert
         // Debería crear el usuario pero con el contenido escapado
@@ -210,7 +221,8 @@ public class UsuariosSecurityTests : BaseIntegrationTest
             "application/json");
 
         // Act
-        var response = await _client.PostAsync("/api/core/usuarios", content);
+        var authenticatedClient = CreateAuthenticatedClient();
+        var response = await authenticatedClient.PostAsync("/api/core/usuarios", content);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -247,7 +259,8 @@ public class UsuariosSecurityTests : BaseIntegrationTest
             "application/json");
 
         // Act
-        var response = await _client.PostAsync("/api/core/usuarios", content);
+        var authenticatedClient = CreateAuthenticatedClient();
+        var response = await authenticatedClient.PostAsync("/api/core/usuarios", content);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -280,7 +293,8 @@ public class UsuariosSecurityTests : BaseIntegrationTest
             "application/json");
 
         // Act
-        var response = await _client.PostAsync("/api/core/usuarios", content);
+        var authenticatedClient = CreateAuthenticatedClient();
+        var response = await authenticatedClient.PostAsync("/api/core/usuarios", content);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -299,27 +313,41 @@ public class UsuariosSecurityTests : BaseIntegrationTest
 
     private async Task<List<Guid>> SeedUsuariosDePruebaAsync()
     {
+        // Crear administrador directamente en la base de datos usando el seeder
+        var adminId = await CrearUsuarioAdministradorDePruebaAsync();
+
         var usuarios = new[]
         {
             new
             {
-                nombreCompleto = "Usuario Prueba 1",
+                nombreCompleto = "Usuario Prueba 1 Test",
                 email = "usuario1@restaurantepro.com",
-                telefono = "+1111111111",
+                telefono = "1111111111",
                 rol = "Mesero",
-                activo = true
+                activo = true,
+                nombreUsuario = "usuario1",
+                password = "Usuario123!",
+                confirmarPassword = "Usuario123!",
+                nivelAcceso = 1,
+                usuarioCreadorId = adminId
             },
             new
             {
-                nombreCompleto = "Usuario Prueba 2",
+                nombreCompleto = "Usuario Prueba 2 Test",
                 email = "usuario2@restaurantepro.com",
-                telefono = "+2222222222",
+                telefono = "2222222222",
                 rol = "Cocinero",
-                activo = true
+                activo = true,
+                nombreUsuario = "usuario2",
+                password = "Usuario123!",
+                confirmarPassword = "Usuario123!",
+                nivelAcceso = 1,
+                usuarioCreadorId = adminId
             }
         };
 
-        var usuarioIds = new List<Guid>();
+        var usuarioIds = new List<Guid> { adminId }; // Incluir el admin
+        var authenticatedClient = CreateAuthenticatedClient();
 
         foreach (var usuario in usuarios)
         {
@@ -328,7 +356,7 @@ public class UsuariosSecurityTests : BaseIntegrationTest
                 Encoding.UTF8,
                 "application/json");
 
-            var response = await _client.PostAsync("/api/core/usuarios", content);
+            var response = await authenticatedClient.PostAsync("/api/core/usuarios", content);
             response.EnsureSuccessStatusCode();
 
             var responseContent = await response.Content.ReadAsStringAsync();
@@ -337,6 +365,12 @@ public class UsuariosSecurityTests : BaseIntegrationTest
         }
 
         return usuarioIds;
+    }
+
+    private new async Task<Guid> CrearUsuarioAdministradorDePruebaAsync()
+    {
+        // Usar el método de la clase base
+        return await base.CrearUsuarioAdministradorDePruebaAsync();
     }
 
     #endregion

@@ -4,6 +4,7 @@ using System.Text.Json;
 using FluentAssertions;
 using RestaurantePro.Application.Core.Usuarios.DTOs;
 using RestaurantePro.Web.Admin.IntegrationTests.Core;
+using RestaurantePro.Web.Admin.IntegrationTests.Utils;
 using Xunit;
 
 namespace RestaurantePro.Web.Admin.IntegrationTests.Api.Usuarios;
@@ -17,11 +18,7 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
 
     public UsuariosErrorHandlingTests(WebApplicationFactory factory) : base(factory)
     {
-        _jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            PropertyNameCaseInsensitive = true
-        };
+        _jsonOptions = GetJsonOptions();
     }
 
     #region Pruebas de Errores de Validación
@@ -34,7 +31,8 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
         var content = new StringContent(jsonInvalido, Encoding.UTF8, "application/json");
 
         // Act
-        var response = await _client.PostAsync("/api/core/usuarios", content);
+        var authenticatedClient = CreateAuthenticatedClient();
+        var response = await authenticatedClient.PostAsync("/api/core/usuarios", content);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -59,7 +57,8 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
             "text/plain"); // Content-Type incorrecto
 
         // Act
-        var response = await _client.PostAsync("/api/core/usuarios", content);
+        var authenticatedClient = CreateAuthenticatedClient();
+        var response = await authenticatedClient.PostAsync("/api/core/usuarios", content);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.UnsupportedMediaType);
@@ -72,7 +71,8 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
         var content = new StringContent("", Encoding.UTF8, "application/json");
 
         // Act
-        var response = await _client.PostAsync("/api/core/usuarios", content);
+        var authenticatedClient = CreateAuthenticatedClient();
+        var response = await authenticatedClient.PostAsync("/api/core/usuarios", content);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -86,12 +86,18 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
     public async Task CrearUsuario_ConEmailDuplicado_DeberiaRetornarErrorEspecifico()
     {
         // Arrange - Crear primer usuario
+        var usuarioCreadorId = await CrearUsuarioAdministradorDePruebaAsync();
         var primerUsuario = new
         {
+            nombreUsuario = "usuario.original",
             nombreCompleto = "Usuario Original",
             email = "duplicado@restaurantepro.com",
+            password = "Password123!",
+            confirmarPassword = "Password123!",
             telefono = "+1234567890",
             rol = "Mesero",
+            nivelAcceso = 2,
+            usuarioCreadorId = usuarioCreadorId,
             activo = true
         };
 
@@ -100,15 +106,21 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
             Encoding.UTF8,
             "application/json");
 
-        await _client.PostAsync("/api/core/usuarios", content1);
+        var authenticatedClient = CreateAuthenticatedClient();
+        await authenticatedClient.PostAsync("/api/core/usuarios", content1);
 
         // Arrange - Intentar crear segundo usuario con mismo email
         var segundoUsuario = new
         {
+            nombreUsuario = "usuario.duplicado",
             nombreCompleto = "Usuario Duplicado",
             email = "duplicado@restaurantepro.com",
-            telefono = "+0987654321",
-            rol = "Cocinero",
+            password = "Password123!",
+            confirmarPassword = "Password123!",
+            telefono = "+9876543210",
+            rol = "Mesero",
+            nivelAcceso = 2,
+            usuarioCreadorId = usuarioCreadorId,
             activo = true
         };
 
@@ -118,7 +130,7 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
             "application/json");
 
         // Act
-        var response = await _client.PostAsync("/api/core/usuarios", content2);
+        var response = await authenticatedClient.PostAsync("/api/core/usuarios", content2);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -128,8 +140,7 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeFalse();
-        responseData.Message.Should().Contain("email");
-        responseData.Message.Should().Contain("duplicado");
+        responseData.Errors.Should().Contain("El email ya está en uso.");
     }
 
     [Fact]
@@ -141,19 +152,27 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
         var usuarioId2 = usuarioIds[1];
 
         // Obtener el email del segundo usuario
-        var responseGet = await _client.GetAsync($"/api/core/usuarios/{usuarioId2}");
+        var authenticatedClient = CreateAuthenticatedClient();
+        var responseGet = await authenticatedClient.GetAsync($"/api/core/usuarios/{usuarioId2}");
         var contentGet = await responseGet.Content.ReadAsStringAsync();
         var usuario2 = JsonSerializer.Deserialize<ApiResponse<RestaurantePro.Application.Core.Usuarios.DTOs.UsuarioDto>>(contentGet, _jsonOptions);
+
+        // Obtener el usuario administrador para usar como autorizador
+        var usuarioCreadorId = await CrearUsuarioAdministradorDePruebaAsync();
 
         // Intentar actualizar el primer usuario con el email del segundo
         var usuarioActualizado = new
         {
-            id = usuarioId1,
-            nombreCompleto = "Usuario Actualizado",
-            email = usuario2.Data.Email, // Email duplicado
-            telefono = "+1111111111",
-            rol = "Mesero",
-            activo = true
+            UsuarioId = usuarioId1,
+            Nombre = "Usuario Actualizado",
+            Email = usuario2.Data.Email, // Email duplicado
+            Telefono = "1111111111",
+            Rol = "Mesero",
+            Activo = true,
+            UsuarioAutorizaId = usuarioCreadorId,
+            MotivoActualizacion = "Prueba de email duplicado",
+            Prioridad = 1,
+            RequiereAprobacion = false
         };
 
         var content = new StringContent(
@@ -162,18 +181,16 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
             "application/json");
 
         // Act
-        var response = await _client.PutAsync($"/api/core/usuarios/{usuarioId1}", content);
+        var response = await authenticatedClient.PutAsync($"/api/core/usuarios/{usuarioId1}", content);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
-        var responseContent = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<object>>(responseContent, _jsonOptions);
-        
+        var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
         responseData.Should().NotBeNull();
-        responseData.Success.Should().BeFalse();
-        responseData.Message.Should().Contain("email");
-        responseData.Message.Should().Contain("duplicado");
+        responseData!.Success.Should().BeFalse();
+        responseData.Errors.Should().NotBeEmpty();
+        responseData.Errors.Should().Contain(e => e.Contains("El email ya está en uso"));
     }
 
     #endregion
@@ -187,7 +204,8 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
         var idInexistente = Guid.NewGuid();
 
         // Act
-        var response = await _client.GetAsync($"/api/core/usuarios/{idInexistente}");
+        var authenticatedClient = CreateAuthenticatedClient();
+        var response = await authenticatedClient.GetAsync($"/api/core/usuarios/{idInexistente}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -205,14 +223,19 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
     {
         // Arrange
         var idInexistente = Guid.NewGuid();
+        var usuarioCreadorId = await CrearUsuarioAdministradorDePruebaAsync();
         var usuarioActualizado = new
         {
-            id = idInexistente,
-            nombreCompleto = "Usuario Inexistente",
-            email = "inexistente@restaurantepro.com",
-            telefono = "+1234567890",
-            rol = "Mesero",
-            activo = true
+            UsuarioId = idInexistente,
+            Nombre = "Usuario Inexistente",
+            Email = "inexistente@restaurantepro.com",
+            Telefono = "1234567890",
+            Rol = "Mesero",
+            Activo = true,
+            UsuarioAutorizaId = usuarioCreadorId,
+            MotivoActualizacion = "Prueba de usuario inexistente",
+            Prioridad = 1,
+            RequiereAprobacion = false
         };
 
         var content = new StringContent(
@@ -221,17 +244,16 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
             "application/json");
 
         // Act
-        var response = await _client.PutAsync($"/api/core/usuarios/{idInexistente}", content);
+        var authenticatedClient = CreateAuthenticatedClient();
+        var response = await authenticatedClient.PutAsync($"/api/core/usuarios/{idInexistente}", content);
 
         // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
-        var responseContent = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<object>>(responseContent, _jsonOptions);
-        
+        var responseData = await response.Content.ReadFromJsonAsync<ApiResponse<object>>();
         responseData.Should().NotBeNull();
-        responseData.Success.Should().BeFalse();
-        responseData.Message.Should().Contain("no encontrado");
+        responseData!.Errors.Should().NotBeEmpty();
+        responseData.Errors.Should().Contain(e => e.Contains("El usuario especificado no existe"));
     }
 
     [Fact]
@@ -239,9 +261,10 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
     {
         // Arrange
         var idInexistente = Guid.NewGuid();
+        var authenticatedClient = CreateAuthenticatedClient();
 
         // Act
-        var response = await _client.DeleteAsync($"/api/core/usuarios/{idInexistente}");
+        var response = await authenticatedClient.DeleteAsync($"/api/core/usuarios/{idInexistente}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -267,7 +290,8 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
     public async Task ObtenerUsuarios_ConParametrosInvalidos_DeberiaRetornarBadRequest(int pageNumber, int pageSize)
     {
         // Act
-        var response = await _client.GetAsync($"/api/core/usuarios?pageNumber={pageNumber}&pageSize={pageSize}");
+        var authenticatedClient = CreateAuthenticatedClient();
+        var response = await authenticatedClient.GetAsync($"/api/core/usuarios?pageNumber={pageNumber}&pageSize={pageSize}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -284,7 +308,8 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
     public async Task ObtenerUsuarios_ConOrderByInvalido_DeberiaRetornarBadRequest()
     {
         // Act
-        var response = await _client.GetAsync("/api/core/usuarios?orderBy=CampoInexistente&orderDirection=asc");
+        var authenticatedClient = CreateAuthenticatedClient();
+        var response = await authenticatedClient.GetAsync("/api/core/usuarios?orderBy=CampoInexistente&orderDirection=asc");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -301,7 +326,8 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
     public async Task ObtenerUsuarios_ConOrderDirectionInvalido_DeberiaRetornarBadRequest()
     {
         // Act
-        var response = await _client.GetAsync("/api/core/usuarios?orderBy=NombreCompleto&orderDirection=invalid");
+        var authenticatedClient = CreateAuthenticatedClient();
+        var response = await authenticatedClient.GetAsync("/api/core/usuarios?orderBy=NombreCompleto&orderDirection=invalid");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -326,19 +352,27 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
         var usuarioId = usuarioIds.First();
 
         // Obtener usuario original
-        var responseGet = await _client.GetAsync($"/api/core/usuarios/{usuarioId}");
+        var authenticatedClient = CreateAuthenticatedClient();
+        var responseGet = await authenticatedClient.GetAsync($"/api/core/usuarios/{usuarioId}");
         var contentGet = await responseGet.Content.ReadAsStringAsync();
         var usuarioOriginal = JsonSerializer.Deserialize<ApiResponse<RestaurantePro.Application.Core.Usuarios.DTOs.UsuarioDto>>(contentGet, _jsonOptions);
+
+        // Obtener el usuario administrador para usar como autorizador
+        var usuarioCreadorId = await CrearUsuarioAdministradorDePruebaAsync();
 
         // Simular actualización concurrente - actualizar el usuario
         var usuarioActualizado = new
         {
-            id = usuarioId,
-            nombreCompleto = "Usuario Actualizado Concurrentemente",
-            email = usuarioOriginal.Data.Email,
-            telefono = "+9999999999",
-            rol = usuarioOriginal.Data.Rol,
-            activo = usuarioOriginal.Data.Activo
+            UsuarioId = usuarioId,
+            Nombre = "Usuario Actualizado Concurrentemente",
+            Email = usuarioOriginal.Data.Email,
+            Telefono = "9999999999",
+            Rol = usuarioOriginal.Data.Rol,
+            Activo = usuarioOriginal.Data.Activo,
+            UsuarioAutorizaId = usuarioCreadorId,
+            MotivoActualizacion = "Prueba de concurrencia de datos",
+            Prioridad = 1,
+            RequiereAprobacion = true
         };
 
         var content = new StringContent(
@@ -347,41 +381,59 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
             "application/json");
 
         // Act
-        var response = await _client.PutAsync($"/api/core/usuarios/{usuarioId}", content);
+        var response = await authenticatedClient.PutAsync($"/api/core/usuarios/{usuarioId}", content);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var responseContent = await response.Content.ReadAsStringAsync();
         var responseData = JsonSerializer.Deserialize<ApiResponse<RestaurantePro.Application.Core.Usuarios.DTOs.UsuarioDto>>(responseContent, _jsonOptions);
-        
         responseData.Should().NotBeNull();
-        responseData.Success.Should().BeTrue();
-        responseData.Data.NombreCompleto.Should().Be(usuarioActualizado.nombreCompleto);
+        responseData!.Success.Should().BeTrue();
+        responseData.Data!.NombreCompleto.Should().Be(usuarioActualizado.Nombre);
     }
 
     #endregion
 
     #region Métodos de Ayuda
 
+    private async Task<Guid> CrearUsuarioAdministradorDePruebaAsync()
+    {
+        // Usar el seeder de la clase base que crea el usuario directamente en la base de datos
+        return await UsuariosTestSeeder.SeedUsuarioAdministradorAsync(_context);
+    }
+
     private async Task<List<Guid>> SeedUsuariosDePruebaAsync()
     {
+        // Crear usuario administrador primero
+        var usuarioCreadorId = await CrearUsuarioAdministradorDePruebaAsync();
+        
         var usuarios = new[]
         {
             new
             {
-                nombreCompleto = "Usuario Prueba 1",
+                nombreUsuario = "usuario.prueba1",
+                nombreCompleto = "Usuario Prueba Uno",
                 email = "usuario1@restaurantepro.com",
-                telefono = "+1111111111",
+                password = "Password123!",
+                confirmarPassword = "Password123!",
+                telefono = "1111111111",
                 rol = "Mesero",
+                nivelAcceso = 1,
+                usuarioCreadorId = usuarioCreadorId,
                 activo = true
             },
             new
             {
-                nombreCompleto = "Usuario Prueba 2",
+                nombreUsuario = "usuario.prueba2",
+                nombreCompleto = "Usuario Prueba Dos",
                 email = "usuario2@restaurantepro.com",
-                telefono = "+2222222222",
+                password = "Password123!",
+                confirmarPassword = "Password123!",
+                telefono = "2222222222",
                 rol = "Cocinero",
+                nivelAcceso = 1,
+                usuarioCreadorId = usuarioCreadorId,
                 activo = true
             }
         };
@@ -395,7 +447,8 @@ public class UsuariosErrorHandlingTests : BaseIntegrationTest
                 Encoding.UTF8,
                 "application/json");
 
-            var response = await _client.PostAsync("/api/core/usuarios", content);
+            var authenticatedClient = CreateAuthenticatedClient();
+            var response = await authenticatedClient.PostAsync("/api/core/usuarios", content);
             response.EnsureSuccessStatusCode();
 
             var responseContent = await response.Content.ReadAsStringAsync();

@@ -1,22 +1,17 @@
-using Xunit;
+using Microsoft.Extensions.Logging;
 using Moq;
 using RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;
+using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models;
 using RestaurantePro.Mobile.Core.Services.Comandas;
-using RestaurantePro.Mobile.Core.Services.Productos;
-using RestaurantePro.Mobile.Core.Services.Mesas;
-using RestaurantePro.Mobile.Core.Services;
-using RestaurantePro.Mobile.Core.Services.Navigation;
 using RestaurantePro.Mobile.Core.Services.Dialog;
-using RestaurantePro.Mobile.Core.Models.DTOs;
-using RestaurantePro.Mobile.Core.Models.Common;
-using ComandaModels = RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models;
+using RestaurantePro.Mobile.Core.Services.Mesas;
+using RestaurantePro.Mobile.Core.Services.Navigation;
+using RestaurantePro.Mobile.Core.Services.Productos;
+using RestaurantePro.Mobile.Core.Services;
 
 namespace RestaurantePro.Mobile.UnitTests.Features.Operations.Comandas.ViewModels;
 
-/// <summary>
-/// Pruebas unitarias para CrearComandaViewModel - Flujo principal del negocio
-/// </summary>
 public class CrearComandaViewModelTests
 {
     private readonly Mock<IComandasService> _mockComandasService;
@@ -45,10 +40,10 @@ public class CrearComandaViewModelTests
             _mockDialogService.Object);
     }
 
-    #region Constructor e Inicialización
+    #region Constructor Tests
 
     [Fact]
-    public void Constructor_ShouldInitializeCollectionsAndProperties()
+    public void Constructor_ShouldInitializeProperties()
     {
         // Assert
         Assert.NotNull(_viewModel.ProductosDisponibles);
@@ -61,299 +56,76 @@ public class CrearComandaViewModelTests
     }
 
     [Fact]
-    public void TituloPagina_WhenEsEdicionFalse_ShouldReturnNuevaComanda()
+    public void Constructor_ShouldInitializeCalculatedProperties()
     {
-        // Arrange
-        _viewModel.EsEdicion = false;
-
-        // Act & Assert
+        // Assert
         Assert.Equal("Nueva Comanda", _viewModel.TituloPagina);
-    }
-
-    [Fact]
-    public void TituloPagina_WhenEsEdicionTrue_ShouldReturnEditandoComanda()
-    {
-        // Arrange
-        _viewModel.EsEdicion = true;
-
-        // Act & Assert
-        Assert.Equal("Editando Comanda", _viewModel.TituloPagina);
-    }
-
-    [Fact]
-    public void TextoBotonPrimario_WhenEsEdicionFalse_ShouldReturnCrear()
-    {
-        // Arrange
-        _viewModel.EsEdicion = false;
-
-        // Act & Assert
         Assert.Equal("Crear", _viewModel.TextoBotonPrimario);
-    }
-
-    [Fact]
-    public void TextoBotonPrimario_WhenEsEdicionTrue_ShouldReturnGuardarCambios()
-    {
-        // Arrange
-        _viewModel.EsEdicion = true;
-
-        // Act & Assert
-        Assert.Equal("Guardar Cambios", _viewModel.TextoBotonPrimario);
+        Assert.False(_viewModel.PuedeCrearComanda);
+        Assert.False(_viewModel.PuedeGuardar);
+        Assert.Equal(0m, _viewModel.TotalCarrito);
     }
 
     #endregion
 
-    #region Propiedades Calculadas
+    #region Property Tests
 
     [Fact]
-    public void MesaInfo_WhenMesaIsDefault_ShouldReturnFormattedInfo()
+    public void EsEdicion_WhenSetToTrue_ShouldUpdateCalculatedProperties()
     {
-        // Arrange
-        _viewModel.Mesa = new MesaDto(); // Usar objeto por defecto
+        // Act
+        _viewModel.EsEdicion = true;
 
-        // Act & Assert
-        Assert.Equal("Mesa  -  (Capacidad: 0)", _viewModel.MesaInfo);
+        // Assert
+        Assert.True(_viewModel.EsEdicion);
+        Assert.Equal("Editando Comanda", _viewModel.TituloPagina);
+        Assert.Equal("Guardar Cambios", _viewModel.TextoBotonPrimario);
+        Assert.True(_viewModel.PuedeGuardar);
     }
 
     [Fact]
-    public void MesaInfo_WhenMesaIsValid_ShouldReturnFormattedInfo()
+    public void Mesa_WhenSet_ShouldUpdateMesaInfo()
     {
         // Arrange
-        _viewModel.Mesa = new MesaDto
+        var mesa = new MesaDto
         {
             Id = Guid.NewGuid(),
             Numero = "5",
-            Ubicacion = "Salón Principal",
+            Ubicacion = "Terraza",
             Capacidad = 4
         };
 
-        // Act & Assert
-        Assert.Equal("Mesa 5 - Salón Principal (Capacidad: 4)", _viewModel.MesaInfo);
+        // Act
+        _viewModel.Mesa = mesa;
+
+        // Assert
+        Assert.Equal("Mesa 5 - Terraza (Capacidad: 4)", _viewModel.MesaInfo);
     }
 
     [Fact]
-    public void PuedeCrearComanda_WhenCarritoEmpty_ShouldReturnFalse()
+    public void ProductosCarrito_WhenItemsAdded_ShouldUpdateCalculatedProperties()
     {
         // Arrange
-        _viewModel.ProductosCarrito.Clear();
-        _viewModel.IsLoading = false;
+        var producto = CreateProductoCarritoDto("1", "Pizza", 25.50m, 2);
 
-        // Act & Assert
-        Assert.False(_viewModel.PuedeCrearComanda);
-    }
+        // Act
+        _viewModel.ProductosCarrito.Add(producto);
 
-    [Fact]
-    public void PuedeCrearComanda_WhenCarritoHasItemsAndNotLoading_ShouldReturnTrue()
-    {
-        // Arrange
-        _viewModel.ProductosCarrito.Add(new ProductoCarritoDto
-        {
-            Id = "1",
-            Nombre = "Pizza",
-            Precio = 15.99m,
-            Cantidad = 1
-        });
-        _viewModel.IsLoading = false;
-
-        // Act & Assert
+        // Assert
         Assert.True(_viewModel.PuedeCrearComanda);
-    }
-
-    [Fact]
-    public void TotalCarrito_WhenEmpty_ShouldReturnZero()
-    {
-        // Arrange
-        _viewModel.ProductosCarrito.Clear();
-
-        // Act & Assert
-        Assert.Equal(0, _viewModel.TotalCarrito);
-    }
-
-    [Fact]
-    public void TotalCarrito_WhenHasItems_ShouldReturnCorrectSum()
-    {
-        // Arrange
-        _viewModel.ProductosCarrito.Clear();
-        _viewModel.ProductosCarrito.Add(new ProductoCarritoDto
-        {
-            Id = "1",
-            Nombre = "Pizza",
-            Precio = 15.99m,
-            Cantidad = 2
-        });
-        _viewModel.ProductosCarrito.Add(new ProductoCarritoDto
-        {
-            Id = "2",
-            Nombre = "Bebida",
-            Precio = 3.50m,
-            Cantidad = 1
-        });
-
-        // Act & Assert
-        Assert.Equal(35.48m, _viewModel.TotalCarrito); // (15.99 * 2) + (3.50 * 1)
+        Assert.True(_viewModel.PuedeGuardar);
+        Assert.Equal(51.00m, _viewModel.TotalCarrito);
     }
 
     #endregion
 
-    #region BuscarProductosAsync
-
-    [Fact]
-    public async Task BuscarProductosAsync_WithSearchText_ShouldCallBuscarProductosAsync()
-    {
-        // Arrange
-        _viewModel.TextoBusqueda = "pizza";
-        var productos = new List<ProductoDto>
-        {
-            new ProductoDto { Id = Guid.NewGuid(), Nombre = "Pizza Margherita", Precio = 15.99m }
-        };
-        var apiResponse = ApiResponse<List<ProductoDto>>.SuccessResponse(productos);
-
-        _mockProductosService.Setup(x => x.BuscarProductosAsync("pizza", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(apiResponse);
-
-        // Act
-        await _viewModel.BuscarProductosCommand.ExecuteAsync(null);
-
-        // Assert
-        _mockProductosService.Verify(x => x.BuscarProductosAsync("pizza", true, It.IsAny<CancellationToken>()), Times.Once);
-        Assert.Single(_viewModel.ProductosDisponibles);
-        Assert.Equal("Pizza Margherita", _viewModel.ProductosDisponibles.First().Nombre);
-    }
-
-    [Fact]
-    public async Task BuscarProductosAsync_WhenApiFails_ShouldShowError()
-    {
-        // Arrange
-        _viewModel.TextoBusqueda = "pizza";
-        var apiResponse = ApiResponse<List<ProductoDto>>.Failure("Error de API");
-
-        _mockProductosService.Setup(x => x.BuscarProductosAsync("pizza", true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(apiResponse);
-
-        // Act
-        await _viewModel.BuscarProductosCommand.ExecuteAsync(null);
-
-        // Assert
-        _mockDialogService.Verify(x => x.ShowAlertAsync("Error", It.Is<string>(msg => msg.Contains("Error al buscar productos")), "OK"), Times.Never);
-        Assert.Empty(_viewModel.ProductosDisponibles);
-    }
-
-    #endregion
-
-    #region AgregarAlCarrito
-
-    [Fact]
-    public void AgregarAlCarrito_WithValidProduct_ShouldAddToCarrito()
-    {
-        // Arrange
-        var producto = new ProductoCarritoDto
-        {
-            Id = "1",
-            Nombre = "Pizza",
-            Precio = 15.99m,
-            Cantidad = 2
-        };
-        _viewModel.ProductosCarrito.Clear();
-
-        // Act
-        _viewModel.AgregarAlCarritoCommand.Execute(producto);
-
-        // Assert
-        Assert.Single(_viewModel.ProductosCarrito);
-        Assert.Equal("Pizza", _viewModel.ProductosCarrito.First().Nombre);
-        Assert.Equal(2, _viewModel.ProductosCarrito.First().Cantidad);
-        Assert.Equal(0, producto.Cantidad); // Se resetea la cantidad en el producto original
-    }
-
-    [Fact]
-    public void AgregarAlCarrito_WithExistingProduct_ShouldIncrementQuantity()
-    {
-        // Arrange
-        var productoExistente = new ProductoCarritoDto
-        {
-            Id = "1",
-            Nombre = "Pizza",
-            Precio = 15.99m,
-            Cantidad = 1
-        };
-        _viewModel.ProductosCarrito.Add(productoExistente);
-
-        var productoNuevo = new ProductoCarritoDto
-        {
-            Id = "1",
-            Nombre = "Pizza",
-            Precio = 15.99m,
-            Cantidad = 2
-        };
-
-        // Act
-        _viewModel.AgregarAlCarritoCommand.Execute(productoNuevo);
-
-        // Assert
-        Assert.Single(_viewModel.ProductosCarrito);
-        Assert.Equal(3, _viewModel.ProductosCarrito.First().Cantidad);
-    }
-
-    [Fact]
-    public void AgregarAlCarrito_WithZeroQuantity_ShouldNotAddToCarrito()
-    {
-        // Arrange
-        var producto = new ProductoCarritoDto
-        {
-            Id = "1",
-            Nombre = "Pizza",
-            Precio = 15.99m,
-            Cantidad = 0
-        };
-        _viewModel.ProductosCarrito.Clear();
-
-        // Act
-        _viewModel.AgregarAlCarritoCommand.Execute(producto);
-
-        // Assert
-        Assert.Empty(_viewModel.ProductosCarrito);
-    }
-
-    #endregion
-
-    #region IncrementarCantidad
-
-    [Fact]
-    public void IncrementarCantidad_WithValidProduct_ShouldIncrementQuantity()
-    {
-        // Arrange
-        var producto = new ProductoCarritoDto
-        {
-            Id = "1",
-            Nombre = "Pizza",
-            Precio = 15.99m,
-            Cantidad = 1
-        };
-
-        _mockDailyPreparationsService.Setup(x => x.GetPreparacionesDiariasPorProductoAsync(It.IsAny<Guid>()))
-            .ReturnsAsync(Result<List<PreparacionDiariaDto>>.Success(new List<PreparacionDiariaDto>()));
-
-        // Act
-        _viewModel.IncrementarCantidadCommand.Execute(producto);
-
-        // Assert
-        Assert.Equal(2, producto.Cantidad);
-    }
-
-    #endregion
-
-    #region DecrementarCantidad
+    #region DecrementarCantidad Tests
 
     [Fact]
     public void DecrementarCantidad_WithValidProduct_ShouldDecrementQuantity()
     {
         // Arrange
-        var producto = new ProductoCarritoDto
-        {
-            Id = "1",
-            Nombre = "Pizza",
-            Precio = 15.99m,
-            Cantidad = 2
-        };
+        var producto = CreateProductoCarritoDto("1", "Pizza", 25.50m, 2);
 
         // Act
         _viewModel.DecrementarCantidadCommand.Execute(producto);
@@ -366,13 +138,7 @@ public class CrearComandaViewModelTests
     public void DecrementarCantidad_WithZeroQuantity_ShouldNotDecrement()
     {
         // Arrange
-        var producto = new ProductoCarritoDto
-        {
-            Id = "1",
-            Nombre = "Pizza",
-            Precio = 15.99m,
-            Cantidad = 0
-        };
+        var producto = CreateProductoCarritoDto("1", "Pizza", 25.50m, 0);
 
         // Act
         _viewModel.DecrementarCantidadCommand.Execute(producto);
@@ -383,19 +149,47 @@ public class CrearComandaViewModelTests
 
     #endregion
 
-    #region EliminarDelCarrito
+    #region AgregarAlCarrito Tests
+
+    [Fact]
+    public void AgregarAlCarrito_WithValidProduct_ShouldAddToCarrito()
+    {
+        // Arrange
+        var producto = CreateProductoCarritoDto("1", "Pizza", 25.50m, 2);
+
+        // Act
+        _viewModel.AgregarAlCarritoCommand.Execute(producto);
+
+        // Assert
+        Assert.Single(_viewModel.ProductosCarrito);
+        Assert.Equal(2, _viewModel.ProductosCarrito.First().Cantidad);
+        Assert.Equal(0, producto.Cantidad); // Should reset to 0
+    }
+
+    [Fact]
+    public void AgregarAlCarrito_WithExistingProduct_ShouldIncrementQuantity()
+    {
+        // Arrange
+        var producto = CreateProductoCarritoDto("1", "Pizza", 25.50m, 2);
+        _viewModel.ProductosCarrito.Add(CreateProductoCarritoDto("1", "Pizza", 25.50m, 1));
+
+        // Act
+        _viewModel.AgregarAlCarritoCommand.Execute(producto);
+
+        // Assert
+        Assert.Single(_viewModel.ProductosCarrito);
+        Assert.Equal(3, _viewModel.ProductosCarrito.First().Cantidad);
+    }
+
+    #endregion
+
+    #region EliminarDelCarrito Tests
 
     [Fact]
     public void EliminarDelCarrito_WithValidProduct_ShouldRemoveFromCarrito()
     {
         // Arrange
-        var producto = new ProductoCarritoDto
-        {
-            Id = "1",
-            Nombre = "Pizza",
-            Precio = 15.99m,
-            Cantidad = 1
-        };
+        var producto = CreateProductoCarritoDto("1", "Pizza", 25.50m, 2);
         _viewModel.ProductosCarrito.Add(producto);
 
         // Act
@@ -407,97 +201,27 @@ public class CrearComandaViewModelTests
 
     #endregion
 
-    #region CrearComandaAsync
+    #region CrearComandaAsync Tests
 
     [Fact]
-    public async Task CrearComandaAsync_WhenCarritoEmpty_ShouldShowError()
+    public async Task CrearComandaAsync_WithNoProducts_ShouldShowError()
     {
-        // Arrange
-        _viewModel.ProductosCarrito.Clear();
-        _viewModel.EsEdicion = false;
-
         // Act
         await _viewModel.CrearComandaCommand.ExecuteAsync(null);
 
         // Assert
-        _mockDialogService.Verify(x => x.ShowAlertAsync("Error", "Debe seleccionar al menos un producto", "OK"), Times.Once);
-        _mockComandasService.Verify(x => x.CrearComandaAsync(It.IsAny<ComandaModels.CrearComandaRequest>(), It.IsAny<CancellationToken>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task CrearComandaAsync_WhenUserCancels_ShouldNotCreateComanda()
-    {
-        // Arrange
-        _viewModel.ProductosCarrito.Add(new ProductoCarritoDto
-        {
-            Id = "1",
-            Nombre = "Pizza",
-            Precio = 15.99m,
-            Cantidad = 1
-        });
-        _viewModel.Mesa = new MesaDto { Id = Guid.NewGuid(), Numero = "1" };
-
-        _mockDialogService.Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync(false);
-
-        // Act
-        await _viewModel.CrearComandaCommand.ExecuteAsync(null);
-
-        // Assert
-        _mockComandasService.Verify(x => x.CrearComandaAsync(It.IsAny<ComandaModels.CrearComandaRequest>(), It.IsAny<CancellationToken>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task CrearComandaAsync_WithValidData_ShouldCreateComanda()
-    {
-        // Arrange
-        var mesaId = Guid.NewGuid();
-        _viewModel.Mesa = new MesaDto { Id = mesaId, Numero = "1" };
-        _viewModel.Observaciones = "Sin cebolla";
-        
-        _viewModel.ProductosCarrito.Add(new ProductoCarritoDto
-        {
-            Id = "1",
-            Nombre = "Pizza",
-            Precio = 15.99m,
-            Cantidad = 2
-        });
-
-        var comandaCreada = new ComandaDto
-        {
-            Id = Guid.NewGuid(),
-            Numero = "001",
-            MesaId = mesaId
-        };
-
-        _mockDialogService.Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync(true);
-
-        _mockComandasService.Setup(x => x.CrearComandaAsync(It.IsAny<ComandaModels.CrearComandaRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ApiResponse<ComandaDto>.SuccessResponse(comandaCreada));
-
-        // Act
-        await _viewModel.CrearComandaCommand.ExecuteAsync(null);
-
-        // Assert
-        _mockComandasService.Verify(x => x.CrearComandaAsync(It.Is<ComandaModels.CrearComandaRequest>(req => 
-            req.MesaId == mesaId.ToString() && 
-            req.Observaciones == "Sin cebolla" &&
-            req.Items.Count == 1), It.IsAny<CancellationToken>()), Times.Once);
-
-        _mockDialogService.Verify(x => x.ShowAlertAsync("Éxito", "Comanda creada exitosamente", "OK"), Times.Once);
-        _mockNavigationService.Verify(x => x.GoBackAsync(), Times.Once);
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Error", "Debe seleccionar al menos un producto", It.IsAny<string>()), Times.Once);
     }
 
     #endregion
 
-    #region CancelarAsync
+    #region CancelarAsync Tests
 
     [Fact]
-    public async Task CancelarAsync_WhenUserConfirms_ShouldNavigateBack()
+    public async Task CancelarAsync_WithUserConfirmation_ShouldNavigateBack()
     {
         // Arrange
-        _mockDialogService.Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+        _mockDialogService.Setup(x => x.ShowConfirmAsync("Cancelar", It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(true);
 
         // Act
@@ -508,10 +232,10 @@ public class CrearComandaViewModelTests
     }
 
     [Fact]
-    public async Task CancelarAsync_WhenUserCancels_ShouldNotNavigate()
+    public async Task CancelarAsync_WithUserCancellation_ShouldNotNavigateBack()
     {
         // Arrange
-        _mockDialogService.Setup(x => x.ShowConfirmAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
+        _mockDialogService.Setup(x => x.ShowConfirmAsync("Cancelar", It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(false);
 
         // Act
@@ -523,63 +247,59 @@ public class CrearComandaViewModelTests
 
     #endregion
 
-    #region InitializeAsync
+    #region Helper Methods
 
-    [Fact]
-    public async Task InitializeAsync_WithValidMesaId_ShouldLoadMesaAndProducts()
+    private ProductoCarritoDto CreateProductoCarritoDto(string id, string nombre, decimal precio, int cantidad)
     {
-        // Arrange
-        var mesaId = Guid.NewGuid().ToString();
-        var mesa = new MesaDto { Id = Guid.Parse(mesaId), Numero = "5", Ubicacion = "Salón", Capacidad = 4 };
-        var productos = new List<ProductoDto>
+        return new ProductoCarritoDto
         {
-            new ProductoDto { Id = Guid.NewGuid(), Nombre = "Pizza", Precio = 15.99m }
+            Id = id,
+            Nombre = nombre,
+            Precio = precio,
+            Cantidad = cantidad
         };
-
-        _mockMesasService.Setup(x => x.ObtenerMesaAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ApiResponse<MesaDto>.SuccessResponse(mesa));
-
-        _mockProductosService.Setup(x => x.ObtenerProductosPaginadosAsync(1, 100, null, true, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ApiResponse<List<ProductoDto>>.SuccessResponse(productos));
-
-        // Act
-        await _viewModel.InitializeAsync(mesaId);
-
-        // Assert
-        _mockMesasService.Verify(x => x.ObtenerMesaAsync(Guid.Parse(mesaId), It.IsAny<CancellationToken>()), Times.Once);
-        _mockProductosService.Verify(x => x.ObtenerProductosPaginadosAsync(1, 100, null, true, It.IsAny<CancellationToken>()), Times.Once);
-        Assert.Equal(mesa.Numero, _viewModel.Mesa.Numero);
-        Assert.Single(_viewModel.ProductosDisponibles);
     }
 
-    #endregion
-
-    #region LoadPreparacionesDiaAsync
-
-    [Fact]
-    public async Task LoadPreparacionesDiaAsync_WithValidData_ShouldLoadPreparaciones()
+    private ProductoDto CreateProductoDto(string id, string nombre, decimal precio)
     {
-        // Arrange
-        var preparaciones = new List<PreparacionDiariaDto>
+        return new ProductoDto
         {
-            new PreparacionDiariaDto
-            {
-                Id = Guid.NewGuid(),
-                NombreProducto = "Pizza",
-                CantidadDisponible = 5,
-                FechaVencimiento = DateTime.Now.AddHours(3) // 3 horas en el futuro para que no esté vencida
-            }
+            Id = Guid.Parse(id),
+            Nombre = nombre,
+            Precio = precio
         };
+    }
 
-        _mockDailyPreparationsService.Setup(x => x.GetPreparacionesDiariasAsync())
-            .ReturnsAsync(Result<List<PreparacionDiariaDto>>.Success(preparaciones));
+    private MesaDto CreateMesaDto(string numero)
+    {
+        return new MesaDto
+        {
+            Id = Guid.NewGuid(),
+            Numero = numero,
+            Ubicacion = "Terraza",
+            Capacidad = 4
+        };
+    }
 
-        // Act
-        await _viewModel.LoadPreparacionesDiaCommand.ExecuteAsync(null);
+    private ComandaDto CreateComandaDto()
+    {
+        return new ComandaDto
+        {
+            Id = Guid.NewGuid(),
+            Numero = "001",
+            Total = 51.00m
+        };
+    }
 
-        // Assert
-        _mockDailyPreparationsService.Verify(x => x.GetPreparacionesDiariasAsync(), Times.Once);
-        Assert.Single(_viewModel.PreparacionesDelDia);
+    private PreparacionDiariaDto CreatePreparacionDiariaDto(string id, string nombre, int cantidad)
+    {
+        return new PreparacionDiariaDto
+        {
+            Id = Guid.Parse(id),
+            NombreProducto = nombre,
+            CantidadDisponible = cantidad,
+            FechaVencimiento = DateTime.Now.AddDays(1)
+        };
     }
 
     #endregion

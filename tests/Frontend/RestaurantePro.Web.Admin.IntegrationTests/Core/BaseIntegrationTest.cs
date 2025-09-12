@@ -4,6 +4,7 @@ using RestaurantePro.Infrastructure.Persistence.Contexts;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using RestaurantePro.Web.Admin.IntegrationTests.Core;
+using RestaurantePro.Web.Admin.IntegrationTests.Converters;
 using RestaurantePro.Web.Admin.IntegrationTests.Utils;
 using RestaurantePro.Application.Core.Productos.Commands.CrearProducto;
 
@@ -35,10 +36,24 @@ public abstract class BaseIntegrationTest : IClassFixture<WebApplicationFactory>
     {
         return new JsonSerializerOptions
         {
-            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+            Converters = { 
+                new EstadoUsuarioConverter(),
+                new TipoUsuarioConverter(),
+                new RolUsuarioConverter()
+            },
             PropertyNameCaseInsensitive = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
+    }
+
+    /// <summary>
+    /// Crea un cliente HTTP autenticado para pruebas que requieren autorización
+    /// </summary>
+    protected HttpClient CreateAuthenticatedClient()
+    {
+        var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add("Authorization", "Bearer test-token");
+        return client;
     }
 
     /// <summary>

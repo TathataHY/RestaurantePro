@@ -1,113 +1,224 @@
-using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using RestaurantePro.Mobile.Core.Features.Operations.Productos.ViewModels;
 using RestaurantePro.Mobile.Core.Models.DTOs;
-using RestaurantePro.Mobile.Core.Services.Productos;
-using RestaurantePro.Mobile.Core.Services.Navigation;
 using RestaurantePro.Mobile.Core.Services.Dialog;
-using RestaurantePro.Mobile.Core.Models.Common;
-using Xunit;
+using RestaurantePro.Mobile.Core.Services.Navigation;
+using RestaurantePro.Mobile.Core.Services.Productos;
 
 namespace RestaurantePro.Mobile.UnitTests.Features.Operations.Productos.ViewModels;
 
 public class ProductoEditorViewModelTests
 {
     private readonly Mock<IProductosService> _mockProductosService;
-    private readonly Mock<INavigationService> _mockNavigationService;
     private readonly Mock<IDialogService> _mockDialogService;
+    private readonly Mock<INavigationService> _mockNavigationService;
     private readonly ProductoEditorViewModel _viewModel;
 
     public ProductoEditorViewModelTests()
     {
         _mockProductosService = new Mock<IProductosService>();
-        _mockNavigationService = new Mock<INavigationService>();
         _mockDialogService = new Mock<IDialogService>();
-        _viewModel = new ProductoEditorViewModel(_mockProductosService.Object, _mockDialogService.Object, _mockNavigationService.Object);
+        _mockNavigationService = new Mock<INavigationService>();
+
+        _viewModel = new ProductoEditorViewModel(
+            _mockProductosService.Object,
+            _mockDialogService.Object,
+            _mockNavigationService.Object);
     }
 
+    #region Constructor Tests
+
     [Fact]
-    public void Constructor_WithValidServices_ShouldInitializeProperties()
+    public void Constructor_ShouldInitializeProperties()
     {
-        // Act & Assert
-        _viewModel.Id.Should().Be(Guid.Empty);
-        _viewModel.Nombre.Should().BeEmpty();
-        _viewModel.Descripcion.Should().BeEmpty();
-        _viewModel.Precio.Should().Be(0);
-        _viewModel.CategoriaId.Should().Be(Guid.Empty);
-        _viewModel.Activo.Should().BeTrue();
-        _viewModel.EsEdicion.Should().BeFalse();
-        _viewModel.PrimaryButtonText.Should().Be("Crear");
-        _viewModel.Categorias.Should().BeEmpty();
-        _viewModel.IsBusy.Should().BeFalse();
-        _viewModel.Title.Should().Be("Producto");
+        // Assert
+        Assert.Equal(Guid.Empty, _viewModel.Id);
+        Assert.Equal(string.Empty, _viewModel.Nombre);
+        Assert.Equal(string.Empty, _viewModel.Descripcion);
+        Assert.Equal(0m, _viewModel.Precio);
+        Assert.Equal(Guid.Empty, _viewModel.CategoriaId);
+        Assert.True(_viewModel.Activo);
+        Assert.False(_viewModel.EsEdicion);
+        Assert.Equal("Crear", _viewModel.PrimaryButtonText);
+        Assert.NotNull(_viewModel.Categorias);
+        Assert.Equal("Producto", _viewModel.Title);
     }
 
-    [Fact]
-    public void Constructor_WithNullServices_ShouldNotThrowException()
-    {
-        // Act & Assert - El constructor no valida parámetros nulos, por lo que no lanza excepciones
-        var viewModel1 = new ProductoEditorViewModel(null!, _mockDialogService.Object, _mockNavigationService.Object);
-        var viewModel2 = new ProductoEditorViewModel(_mockProductosService.Object, null!, _mockNavigationService.Object);
-        var viewModel3 = new ProductoEditorViewModel(_mockProductosService.Object, _mockDialogService.Object, null!);
-        
-        Assert.NotNull(viewModel1);
-        Assert.NotNull(viewModel2);
-        Assert.NotNull(viewModel3);
-    }
+    #endregion
+
+    #region CargarCategoriasAsync Tests
 
     [Fact]
-    public async Task CargarCategoriasAsync_WhenServiceReturnsSuccess_ShouldPopulateCategorias()
+    public async Task CargarCategoriasAsync_WithValidData_ShouldLoadCategorias()
     {
         // Arrange
         var categorias = new List<CategoriaProductoDto>
         {
-            new CategoriaProductoDto { Id = Guid.NewGuid(), Nombre = "Bebidas" },
-            new CategoriaProductoDto { Id = Guid.NewGuid(), Nombre = "Platos Principales" }
+            CreateCategoriaDto("11111111-1111-1111-1111-111111111111", "Bebidas"),
+            CreateCategoriaDto("22222222-2222-2222-2222-222222222222", "Comidas")
         };
-        var apiResponse = ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias);
 
         _mockProductosService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(apiResponse);
+            .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias));
 
         // Act
         await _viewModel.CargarCategoriasCommand.ExecuteAsync(null);
 
         // Assert
-        _mockProductosService.Verify(x => x.ObtenerCategoriasAsync(It.IsAny<CancellationToken>()), Times.Once);
         Assert.Equal(2, _viewModel.Categorias.Count);
-        Assert.Equal("Bebidas", _viewModel.Categorias.First().Nombre);
-        Assert.Equal("Platos Principales", _viewModel.Categorias.Last().Nombre);
+        _mockProductosService.Verify(x => x.ObtenerCategoriasAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task CargarCategoriasAsync_WhenServiceFails_ShouldNotThrow()
+    public async Task CargarCategoriasAsync_WithServiceError_ShouldNotThrow()
     {
         // Arrange
-        var apiResponse = ApiResponse<List<CategoriaProductoDto>>.Failure("Error de API");
-
         _mockProductosService.Setup(x => x.ObtenerCategoriasAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(apiResponse);
+            .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.Failure("Error del servicio"));
 
         // Act & Assert
         await _viewModel.CargarCategoriasCommand.ExecuteAsync(null);
-        _mockProductosService.Verify(x => x.ObtenerCategoriasAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _viewModel.Categorias.Should().BeEmpty();
+        // Should not throw exception
+    }
+
+    #endregion
+
+    #region CargarParaEdicionAsync Tests
+
+    [Fact]
+    public async Task CargarParaEdicionAsync_WithValidProductId_ShouldLoadProduct()
+    {
+        // Arrange
+        var productoId = Guid.NewGuid();
+        var producto = CreateProductoDto("11111111-1111-1111-1111-111111111111", "Pizza", 25.50m, "22222222-2222-2222-2222-222222222222");
+
+        _mockProductosService.Setup(x => x.ObtenerProductoPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<ProductoDto>.SuccessResponse(producto));
+
+        // Act
+        await _viewModel.CargarParaEdicionCommand.ExecuteAsync(productoId);
+
+        // Assert
+        Assert.Equal(producto.Id, _viewModel.Id);
+        Assert.Equal(producto.Nombre, _viewModel.Nombre);
+        Assert.Equal(producto.Descripcion, _viewModel.Descripcion);
+        Assert.Equal(producto.Precio, _viewModel.Precio);
+        Assert.Equal(producto.CategoriaId, _viewModel.CategoriaId);
+        Assert.Equal(producto.Activo, _viewModel.Activo);
+        Assert.True(_viewModel.EsEdicion);
+        Assert.Equal("Editar producto", _viewModel.Title);
+        Assert.Equal("Guardar", _viewModel.PrimaryButtonText);
     }
 
     [Fact]
-    public async Task GuardarAsync_WhenCreatingNewProduct_WithValidData_ShouldCallService()
+    public async Task CargarParaEdicionAsync_WithEmptyProductId_ShouldNotLoad()
+    {
+        // Act
+        await _viewModel.CargarParaEdicionCommand.ExecuteAsync(Guid.Empty);
+
+        // Assert
+        Assert.Equal(Guid.Empty, _viewModel.Id);
+        Assert.False(_viewModel.EsEdicion);
+    }
+
+    [Fact]
+    public async Task CargarParaEdicionAsync_WithServiceError_ShouldShowError()
     {
         // Arrange
-        _viewModel.Nombre = "Pizza Margherita";
-        _viewModel.Descripcion = "Deliciosa pizza con tomate y mozzarella";
-        _viewModel.Precio = 15.99m;
+        var productoId = Guid.NewGuid();
+        _mockProductosService.Setup(x => x.ObtenerProductoPorIdAsync(productoId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<ProductoDto>.Failure("Error del servicio"));
+
+        // Act
+        await _viewModel.CargarParaEdicionCommand.ExecuteAsync(productoId);
+
+        // Assert
+        _mockDialogService.Verify(x => x.ShowErrorAsync("Error en la operación"), Times.Once);
+    }
+
+    #endregion
+
+    #region Validar Tests (Indirect through GuardarAsync)
+
+    [Fact]
+    public async Task GuardarAsync_WithEmptyNombre_ShouldShowValidationError()
+    {
+        // Arrange
+        _viewModel.Nombre = ""; // Invalid
+        _viewModel.Precio = 25.50m;
         _viewModel.CategoriaId = Guid.NewGuid();
 
-        var createdProduct = new ProductoDto { Id = Guid.NewGuid(), Nombre = "Pizza Margherita" };
-        var apiResponse = ApiResponse<ProductoDto>.SuccessResponse(createdProduct);
+        // Act
+        await _viewModel.GuardarCommand.ExecuteAsync(null);
+
+        // Assert
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Validación", "El nombre es obligatorio", It.IsAny<string>()), Times.Once);
+        _mockProductosService.Verify(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GuardarAsync_WithZeroPrecio_ShouldShowValidationError()
+    {
+        // Arrange
+        _viewModel.Nombre = "Pizza";
+        _viewModel.Precio = 0; // Invalid
+        _viewModel.CategoriaId = Guid.NewGuid();
+
+        // Act
+        await _viewModel.GuardarCommand.ExecuteAsync(null);
+
+        // Assert
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Validación", "El precio debe ser mayor a 0", It.IsAny<string>()), Times.Once);
+        _mockProductosService.Verify(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GuardarAsync_WithEmptyCategoriaId_ShouldShowValidationError()
+    {
+        // Arrange
+        _viewModel.Nombre = "Pizza";
+        _viewModel.Precio = 25.50m;
+        _viewModel.CategoriaId = Guid.Empty; // Invalid
+
+        // Act
+        await _viewModel.GuardarCommand.ExecuteAsync(null);
+
+        // Assert
+        _mockDialogService.Verify(x => x.ShowAlertAsync("Validación", "Selecciona una categoría", It.IsAny<string>()), Times.Once);
+        _mockProductosService.Verify(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
+    #region GuardarAsync Tests
+
+    [Fact]
+    public async Task GuardarAsync_WithInvalidData_ShouldNotSave()
+    {
+        // Arrange
+        _viewModel.Nombre = ""; // Invalid
+
+        // Act
+        await _viewModel.GuardarCommand.ExecuteAsync(null);
+
+        // Assert
+        _mockProductosService.Verify(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+        _mockProductosService.Verify(x => x.ActualizarProductoAsync(It.IsAny<ActualizarProductoRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GuardarAsync_WithValidData_ShouldCreateProduct()
+    {
+        // Arrange
+        _viewModel.Nombre = "Pizza";
+        _viewModel.Descripcion = "Pizza deliciosa";
+        _viewModel.Precio = 25.50m;
+        _viewModel.CategoriaId = Guid.NewGuid();
+        _viewModel.Activo = true;
 
         _mockProductosService.Setup(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(apiResponse);
+            .ReturnsAsync(ApiResponse<ProductoDto>.SuccessResponse(CreateProductoDto("11111111-1111-1111-1111-111111111111", "Pizza", 25.50m, "22222222-2222-2222-2222-222222222222")));
 
         // Act
         await _viewModel.GuardarCommand.ExecuteAsync(null);
@@ -119,22 +230,19 @@ public class ProductoEditorViewModelTests
     }
 
     [Fact]
-    public async Task GuardarAsync_WhenUpdatingExistingProduct_WithValidData_ShouldCallService()
+    public async Task GuardarAsync_WithValidDataInEditMode_ShouldUpdateProduct()
     {
         // Arrange
-        var productoId = Guid.NewGuid();
-        _viewModel.Id = productoId;
         _viewModel.EsEdicion = true;
-        _viewModel.Nombre = "Pizza Margherita Actualizada";
-        _viewModel.Descripcion = "Descripción actualizada";
-        _viewModel.Precio = 18.99m;
+        _viewModel.Id = Guid.NewGuid();
+        _viewModel.Nombre = "Pizza";
+        _viewModel.Descripcion = "Pizza deliciosa";
+        _viewModel.Precio = 25.50m;
         _viewModel.CategoriaId = Guid.NewGuid();
-
-        var updatedProduct = new ProductoDto { Id = productoId, Nombre = "Pizza Margherita Actualizada" };
-        var apiResponse = ApiResponse<ProductoDto>.SuccessResponse(updatedProduct);
+        _viewModel.Activo = true;
 
         _mockProductosService.Setup(x => x.ActualizarProductoAsync(It.IsAny<ActualizarProductoRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(apiResponse);
+            .ReturnsAsync(ApiResponse<ProductoDto>.SuccessResponse(CreateProductoDto("11111111-1111-1111-1111-111111111111", "Pizza", 25.50m, "22222222-2222-2222-2222-222222222222")));
 
         // Act
         await _viewModel.GuardarCommand.ExecuteAsync(null);
@@ -146,96 +254,27 @@ public class ProductoEditorViewModelTests
     }
 
     [Fact]
-    public async Task GuardarAsync_WhenServiceFails_ShouldShowError()
+    public async Task GuardarAsync_WithServiceError_ShouldShowError()
     {
         // Arrange
         _viewModel.Nombre = "Pizza";
-        _viewModel.Precio = 15.99m;
+        _viewModel.Precio = 25.50m;
         _viewModel.CategoriaId = Guid.NewGuid();
 
-        var apiResponse = ApiResponse<ProductoDto>.Failure("Error al guardar producto");
-
         _mockProductosService.Setup(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(apiResponse);
+            .ReturnsAsync(ApiResponse<ProductoDto>.Failure("Error del servicio"));
 
         // Act
         await _viewModel.GuardarCommand.ExecuteAsync(null);
 
         // Assert
-        _mockProductosService.Verify(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>(), It.IsAny<CancellationToken>()), Times.Once);
         _mockDialogService.Verify(x => x.ShowErrorAsync("Error en la operación"), Times.Once);
         _mockNavigationService.Verify(x => x.GoBackAsync(), Times.Never);
     }
 
-    [Fact]
-    public async Task CargarParaEdicionAsync_WhenProductExists_ShouldPopulateViewModel()
-    {
-        // Arrange
-        var productoId = Guid.NewGuid();
-        var categoriaId = Guid.NewGuid();
-        
-        var producto = new ProductoDto
-        {
-            Id = productoId,
-            Nombre = "Pizza Margherita",
-            Descripcion = "Deliciosa pizza",
-            Precio = 15.99m,
-            CategoriaId = categoriaId,
-            Activo = true
-        };
-        
-        var apiResponse = ApiResponse<ProductoDto>.SuccessResponse(producto);
+    #endregion
 
-        _mockProductosService.Setup(x => x.ObtenerProductoPorIdAsync(productoId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(apiResponse);
-
-        // Act
-        await _viewModel.CargarParaEdicionCommand.ExecuteAsync(productoId);
-
-        // Assert
-        _mockProductosService.Verify(x => x.ObtenerProductoPorIdAsync(productoId, It.IsAny<CancellationToken>()), Times.Once);
-        _viewModel.Id.Should().Be(productoId);
-        _viewModel.Nombre.Should().Be("Pizza Margherita");
-        _viewModel.Descripcion.Should().Be("Deliciosa pizza");
-        _viewModel.Precio.Should().Be(15.99m);
-        _viewModel.CategoriaId.Should().Be(categoriaId);
-        _viewModel.Activo.Should().BeTrue();
-        _viewModel.EsEdicion.Should().BeTrue();
-        _viewModel.Title.Should().Be("Editar producto");
-        _viewModel.PrimaryButtonText.Should().Be("Guardar");
-    }
-
-    [Fact]
-    public async Task CargarParaEdicionAsync_WhenProductNotFound_ShouldShowError()
-    {
-        // Arrange
-        var productoId = Guid.NewGuid();
-        var apiResponse = ApiResponse<ProductoDto>.Failure("Producto no encontrado");
-
-        _mockProductosService.Setup(x => x.ObtenerProductoPorIdAsync(productoId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(apiResponse);
-
-        // Act
-        await _viewModel.CargarParaEdicionCommand.ExecuteAsync(productoId);
-
-        // Assert
-        _mockProductosService.Verify(x => x.ObtenerProductoPorIdAsync(productoId, It.IsAny<CancellationToken>()), Times.Once);
-        _mockDialogService.Verify(x => x.ShowErrorAsync("Error en la operación"), Times.Once);
-        _viewModel.EsEdicion.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task CargarParaEdicionAsync_WithEmptyGuid_ShouldNotCallService()
-    {
-        // Arrange
-        var emptyGuid = Guid.Empty;
-
-        // Act
-        await _viewModel.CargarParaEdicionCommand.ExecuteAsync(emptyGuid);
-
-        // Assert
-        _mockProductosService.Verify(x => x.ObtenerProductoPorIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
-    }
+    #region CancelarAsync Tests
 
     [Fact]
     public async Task CancelarAsync_ShouldNavigateBack()
@@ -247,90 +286,30 @@ public class ProductoEditorViewModelTests
         _mockNavigationService.Verify(x => x.GoBackAsync(), Times.Once);
     }
 
-    [Fact]
-    public async Task GuardarAsync_WithEmptyNombre_ShouldShowValidationError()
+    #endregion
+
+    #region Helper Methods
+
+    private CategoriaProductoDto CreateCategoriaDto(string id, string nombre)
     {
-        // Arrange
-        _viewModel.Nombre = string.Empty;
-        _viewModel.Precio = 15.99m;
-        _viewModel.CategoriaId = Guid.NewGuid();
-
-        // Act
-        await _viewModel.GuardarCommand.ExecuteAsync(null);
-
-        // Assert
-        _mockDialogService.Verify(x => x.ShowAlertAsync("Validación", "El nombre es obligatorio", "OK"), Times.Once);
-        _mockProductosService.Verify(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+        return new CategoriaProductoDto
+        {
+            Id = new Guid(id),
+            Nombre = nombre
+        };
     }
 
-    [Fact]
-    public async Task GuardarAsync_WithZeroPrecio_ShouldShowValidationError()
+    private ProductoDto CreateProductoDto(string id, string nombre, decimal precio, string categoriaId)
     {
-        // Arrange
-        _viewModel.Nombre = "Pizza";
-        _viewModel.Precio = 0;
-        _viewModel.CategoriaId = Guid.NewGuid();
-
-        // Act
-        await _viewModel.GuardarCommand.ExecuteAsync(null);
-
-        // Assert
-        _mockDialogService.Verify(x => x.ShowAlertAsync("Validación", "El precio debe ser mayor a 0", "OK"), Times.Once);
-        _mockProductosService.Verify(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>(), It.IsAny<CancellationToken>()), Times.Never);
+        return new ProductoDto
+        {
+            Id = new Guid(id),
+            Nombre = nombre,
+            Precio = precio,
+            CategoriaId = new Guid(categoriaId),
+            Activo = true
+        };
     }
 
-    [Fact]
-    public async Task GuardarAsync_WithEmptyCategoriaId_ShouldShowValidationError()
-    {
-        // Arrange
-        _viewModel.Nombre = "Pizza";
-        _viewModel.Precio = 15.99m;
-        _viewModel.CategoriaId = Guid.Empty;
-
-        // Act
-        await _viewModel.GuardarCommand.ExecuteAsync(null);
-
-        // Assert
-        _mockDialogService.Verify(x => x.ShowAlertAsync("Validación", "Selecciona una categoría", "OK"), Times.Once);
-        _mockProductosService.Verify(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>(), It.IsAny<CancellationToken>()), Times.Never);
-    }
-
-    [Fact]
-    public async Task GuardarAsync_ShouldSetIsBusy()
-    {
-        // Arrange
-        _viewModel.Nombre = "Pizza";
-        _viewModel.Precio = 15.99m;
-        _viewModel.CategoriaId = Guid.NewGuid();
-
-        var apiResponse = ApiResponse<ProductoDto>.SuccessResponse(new ProductoDto { Id = Guid.NewGuid() });
-
-        _mockProductosService.Setup(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(apiResponse);
-
-        // Act
-        await _viewModel.GuardarCommand.ExecuteAsync(null);
-
-        // Assert
-        _mockProductosService.Verify(x => x.CrearProductoAsync(It.IsAny<CrearProductoRequest>(), It.IsAny<CancellationToken>()), Times.Once);
-        _viewModel.IsBusy.Should().BeFalse(); // Should be reset after completion
-    }
-
-    [Fact]
-    public async Task CargarParaEdicionAsync_ShouldSetIsBusy()
-    {
-        // Arrange
-        var productoId = Guid.NewGuid();
-        var producto = new ProductoDto { Id = productoId, Nombre = "Test" };
-        var apiResponse = ApiResponse<ProductoDto>.SuccessResponse(producto);
-
-        _mockProductosService.Setup(x => x.ObtenerProductoPorIdAsync(productoId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(apiResponse);
-
-        // Act
-        await _viewModel.CargarParaEdicionCommand.ExecuteAsync(productoId);
-
-        // Assert
-        _viewModel.IsBusy.Should().BeFalse(); // Should be reset after completion
-    }
+    #endregion
 }

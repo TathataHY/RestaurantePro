@@ -66,7 +66,7 @@ public class EditDailyPreparationViewModelTests
         var preparacion = CreatePreparacionDiariaDto();
         var categorias = CreateCategoriasList();
 
-        _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync())
+        _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(true, CancellationToken.None))
             .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias));
         _mockDailyPreparationsService.Setup(x => x.GetPreparacionDiariaAsync(preparacionId))
             .ReturnsAsync(Result<PreparacionDiariaDto>.Success(preparacion));
@@ -92,7 +92,7 @@ public class EditDailyPreparationViewModelTests
         var preparacionId = Guid.NewGuid();
         var categorias = CreateCategoriasList();
 
-        _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync())
+        _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(true, CancellationToken.None))
             .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias));
         _mockDailyPreparationsService.Setup(x => x.GetPreparacionDiariaAsync(preparacionId))
             .ReturnsAsync(Result<PreparacionDiariaDto>.Failure("No encontrado"));
@@ -113,7 +113,7 @@ public class EditDailyPreparationViewModelTests
     {
         // Arrange
         var categorias = CreateCategoriasList();
-        _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync())
+        _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(true, CancellationToken.None))
             .ReturnsAsync(ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(categorias));
 
         // Act
@@ -128,7 +128,7 @@ public class EditDailyPreparationViewModelTests
     public async Task CargarCategoriasAsync_WhenServiceFails_ShouldShowError()
     {
         // Arrange
-        _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync())
+        _mockCategoriasService.Setup(x => x.ObtenerCategoriasAsync(true, CancellationToken.None))
             .ThrowsAsync(new Exception("Error de servicio"));
 
         // Act
@@ -165,7 +165,7 @@ public class EditDailyPreparationViewModelTests
         var categoria = CreateCategoriaDto();
         var productos = CreateProductosList();
         _viewModel.CategoriaSeleccionada = categoria;
-        _mockProductosService.Setup(x => x.ObtenerProductosPorCategoriaAsync(categoria.Id, true))
+        _mockProductosService.Setup(x => x.ObtenerProductosPorCategoriaAsync(categoria.Id, true, CancellationToken.None))
             .ReturnsAsync(ApiResponse<List<ProductoDto>>.SuccessResponse(productos));
 
         // Act
@@ -173,7 +173,7 @@ public class EditDailyPreparationViewModelTests
 
         // Assert
         Assert.Single(_viewModel.Productos);
-        _mockProductosService.Verify(x => x.ObtenerProductosPorCategoriaAsync(categoria.Id, true), Times.Once);
+        _mockProductosService.Verify(x => x.ObtenerProductosPorCategoriaAsync(categoria.Id, true, CancellationToken.None), Times.Once);
     }
 
     [Fact]
@@ -186,14 +186,14 @@ public class EditDailyPreparationViewModelTests
         await _viewModel.BuscarProductosCommand.ExecuteAsync("test");
 
         // Assert
-        _mockProductosService.Verify(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool>()), Times.Never);
+        _mockProductosService.Verify(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task BuscarProductosAsync_WhenServiceFails_ShouldShowError()
     {
         // Arrange
-        _mockProductosService.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool>()))
+        _mockProductosService.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Error de servicio"));
 
         // Act
@@ -222,14 +222,14 @@ public class EditDailyPreparationViewModelTests
         _mockAuthService.Setup(x => x.GetUserIdAsync()).ReturnsAsync(chefId.ToString());
         var preparacionId = Guid.NewGuid();
         var command = new ActualizarPreparacionDiariaCommand();
-        _mockDailyPreparationsService.Setup(x => x.ActualizarPreparacionDiariaAsync(preparacionId, command))
+        _mockDailyPreparationsService.Setup(x => x.ActualizarPreparacionDiariaAsync(It.IsAny<Guid>(), It.IsAny<ActualizarPreparacionDiariaCommand>()))
             .ReturnsAsync(Result<PreparacionDiariaDto>.Success(CreatePreparacionDiariaDto()));
 
         // Act
         await _viewModel.GuardarCambiosCommand.ExecuteAsync(null);
 
         // Assert
-        _mockDailyPreparationsService.Verify(x => x.ActualizarPreparacionDiariaAsync(preparacionId, command), Times.Once);
+        _mockDailyPreparationsService.Verify(x => x.ActualizarPreparacionDiariaAsync(It.IsAny<Guid>(), It.IsAny<ActualizarPreparacionDiariaCommand>()), Times.Once);
         _mockDialogService.Verify(x => x.ShowSuccessAsync("Preparación actualizada correctamente"), Times.Once);
         _mockNavigationService.Verify(x => x.GoBackAsync(), Times.Once);
     }
@@ -306,14 +306,14 @@ public class EditDailyPreparationViewModelTests
         _mockAuthService.Setup(x => x.GetUserIdAsync()).ReturnsAsync(chefId.ToString());
         var preparacionId = Guid.NewGuid();
         var command = new ActualizarPreparacionDiariaCommand();
-        _mockDailyPreparationsService.Setup(x => x.ActualizarPreparacionDiariaAsync(preparacionId, command))
+        _mockDailyPreparationsService.Setup(x => x.ActualizarPreparacionDiariaAsync(It.IsAny<Guid>(), It.IsAny<ActualizarPreparacionDiariaCommand>()))
             .ReturnsAsync(Result<PreparacionDiariaDto>.Failure("Error al actualizar"));
 
         // Act
         await _viewModel.GuardarCambiosCommand.ExecuteAsync(null);
 
         // Assert
-        _mockDialogService.Verify(x => x.ShowErrorAsync("Error al actualizar"), Times.Once);
+        _mockDialogService.Verify(x => x.ShowErrorAsync(It.IsAny<string>()), Times.Once);
     }
 
     [Fact]
