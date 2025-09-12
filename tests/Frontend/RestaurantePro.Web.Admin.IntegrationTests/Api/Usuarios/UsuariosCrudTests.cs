@@ -30,13 +30,19 @@ public class UsuariosCrudTests : BaseIntegrationTest
     public async Task CrearUsuario_ConDatosValidos_DeberiaRetornarUsuarioCreado()
     {
         // Arrange
+        var usuarioCreadorId = await CrearUsuarioAdministradorDePruebaAsync();
+        
         var nuevoUsuario = new
         {
+            nombreUsuario = "juan.perez",
             nombreCompleto = "Juan Pérez",
             email = "juan.perez@restaurantepro.com",
+            password = "TempPass123!",
+            confirmarPassword = "TempPass123!",
             telefono = "+1234567890",
             rol = "Mesero",
-            activo = true
+            activo = true,
+            usuarioCreadorId = usuarioCreadorId
         };
 
         var content = new StringContent(
@@ -51,6 +57,8 @@ public class UsuariosCrudTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var responseContent = await response.Content.ReadAsStringAsync();
+        Console.WriteLine($"Response JSON: {responseContent}");
+        
         var responseData = JsonSerializer.Deserialize<ApiResponse<RestaurantePro.Application.Core.Usuarios.DTOs.UsuarioDto>>(responseContent, _jsonOptions);
         
         responseData.Should().NotBeNull();

@@ -35,8 +35,9 @@ public abstract class BaseIntegrationTest : IClassFixture<WebApplicationFactory>
     {
         return new JsonSerializerOptions
         {
-            Converters = { new JsonStringEnumConverter() },
-            PropertyNameCaseInsensitive = true
+            Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
+            PropertyNameCaseInsensitive = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
     }
 
@@ -163,6 +164,18 @@ public abstract class BaseIntegrationTest : IClassFixture<WebApplicationFactory>
     protected static Guid GetFirstCategoriaId(List<Guid> categoriaIds)
     {
         return ProductosTestSeeder.GetFirstCategoriaId(categoriaIds);
+    }
+
+    #endregion
+
+    #region Usuarios Helper Methods
+
+    /// <summary>
+    /// Crea un usuario administrador de prueba y retorna su ID
+    /// </summary>
+    protected async Task<Guid> CrearUsuarioAdministradorDePruebaAsync()
+    {
+        return await UsuariosTestSeeder.SeedUsuarioAdministradorAsync(_context);
     }
 
     #endregion

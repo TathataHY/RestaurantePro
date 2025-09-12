@@ -78,6 +78,13 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
             // Configurar DbContext genérico para repositorios
             services.AddScoped<DbContext>(provider => provider.GetRequiredService<RestauranteProDbContext>());
 
+            // Configurar IApplicationDbContext para handlers
+            services.AddScoped<RestaurantePro.Application.Common.Interfaces.IApplicationDbContext>(provider => 
+                provider.GetRequiredService<RestauranteProDbContext>());
+
+            // Configurar ICurrentUserService para handlers
+            services.AddScoped<RestaurantePro.Application.Common.Interfaces.ICurrentUserService, TestCurrentUserService>();
+
             // Configurar UnitOfWork para pruebas
             services.AddScoped<RestaurantePro.Domain.Core.SharedKernel.Interfaces.IUnitOfWork, 
                 RestaurantePro.Infrastructure.Persistence.Repositories.Base.UnitOfWork>();
@@ -91,6 +98,9 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
             
             services.AddScoped<RestaurantePro.Domain.Core.Productos.Interfaces.IProductoCategoriaRepository, 
                 RestaurantePro.Infrastructure.Persistence.Repositories.Core.ProductoCategoriaRepository>();
+            
+            services.AddScoped<RestaurantePro.Domain.Core.Usuarios.Interfaces.IUsuarioRepository, 
+                RestaurantePro.Infrastructure.Persistence.Repositories.Core.UsuarioRepository>();
             
             // Configurar servicios adicionales para pruebas
             services.AddScoped<RestaurantePro.Domain.Core.SharedKernel.Services.Cache.ICacheService, 

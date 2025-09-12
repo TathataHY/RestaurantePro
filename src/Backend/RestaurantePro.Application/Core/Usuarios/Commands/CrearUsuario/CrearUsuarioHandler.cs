@@ -362,7 +362,7 @@ public class CrearUsuarioHandler : IRequestHandler<CrearUsuarioCommand, Result<U
             NombreUsuario = usuario.NombreUsuario,
             Estado = usuario.Estado,
             TipoUsuario = usuario.TipoUsuario,
-            Rol = usuario.Roles.FirstOrDefault().ToString(),
+            Rol = usuario.Rol, // Usar la propiedad Rol directamente
             NivelAcceso = usuario.NivelAcceso,
             Permisos = usuario.Permisos.ToList(),
             SupervisorId = usuario.SupervisorId,
