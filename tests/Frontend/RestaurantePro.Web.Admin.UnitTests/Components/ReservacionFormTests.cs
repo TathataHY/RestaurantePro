@@ -28,9 +28,9 @@ namespace RestaurantePro.Web.Admin.UnitTests.Components
             Services.AddSingleton(_mockHttpClientFactory.Object);
             Services.AddSingleton(_mockTokenStore.Object);
             Services.AddSingleton(_mockJSRuntime.Object);
-            Services.AddSingleton(new ReservacionesApiService(_mockHttpClientFactory.Object, _mockTokenStore.Object));
-            Services.AddSingleton(new ClientesApiService(_mockHttpClientFactory.Object, _mockTokenStore.Object));
-            Services.AddSingleton(new MesasApiService(_mockHttpClientFactory.Object, _mockTokenStore.Object));
+            Services.AddSingleton<IReservacionesApiService>(new ReservacionesApiService(_mockHttpClientFactory.Object, _mockTokenStore.Object));
+            Services.AddSingleton<IClientesApiService>(new ClientesApiService(_mockHttpClientFactory.Object, _mockTokenStore.Object));
+            Services.AddSingleton<IMesasApiService>(new MesasApiService(_mockHttpClientFactory.Object, _mockTokenStore.Object));
         }
 
         [Fact]

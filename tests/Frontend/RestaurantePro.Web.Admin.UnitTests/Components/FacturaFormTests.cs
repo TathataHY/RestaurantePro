@@ -29,11 +29,11 @@ public class FacturaFormTests : TestContext
         _categoriasApiMock = new Mock<CategoriasApiService>(Mock.Of<IHttpClientFactory>(), Mock.Of<TokenStore>());
         _jsRuntimeMock = new Mock<IJSRuntime>();
 
-        Services.AddSingleton(_facturasApiMock.Object);
-        Services.AddSingleton(_clientesApiMock.Object);
-        Services.AddSingleton(_mesasApiMock.Object);
-        Services.AddSingleton(_usuariosApiMock.Object);
-        Services.AddSingleton(_categoriasApiMock.Object);
+        Services.AddSingleton<IFacturasApiService>(_facturasApiMock.Object);
+        Services.AddSingleton<IClientesApiService>(_clientesApiMock.Object);
+        Services.AddSingleton<IMesasApiService>(_mesasApiMock.Object);
+        Services.AddSingleton<IUsuariosApiService>(_usuariosApiMock.Object);
+        Services.AddSingleton<ICategoriasApiService>(_categoriasApiMock.Object);
         Services.AddSingleton(_jsRuntimeMock.Object);
     }
 

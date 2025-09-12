@@ -9,6 +9,9 @@ using RestaurantePro.Application.Comercial.Promociones.Commands.AplicarPromocion
 using RestaurantePro.Domain.Comercial.Promociones.Enums;
 using System.Text.Json;
 using Xunit;
+using RestaurantePro.Web.Admin.IntegrationTests.Core;
+using MediatR;
+using AppPromociones = RestaurantePro.Application.Comercial.Promociones.DTOs;
 
 namespace RestaurantePro.Web.Admin.IntegrationTests.Api.Promociones;
 
@@ -18,7 +21,7 @@ namespace RestaurantePro.Web.Admin.IntegrationTests.Api.Promociones;
 [Collection("IntegrationTests")]
 public class PromocionesErrorHandlingTests : BaseIntegrationTest
 {
-    public PromocionesErrorHandlingTests(WebApplicationFactory<Program> factory) : base(factory)
+    public PromocionesErrorHandlingTests(WebApplicationFactory factory) : base(factory)
     {
     }
 
@@ -461,8 +464,11 @@ public class PromocionesErrorHandlingTests : BaseIntegrationTest
         var json = JsonSerializer.Serialize(productosIds, GetJsonOptions());
 
         // Act
-        var response = await client.DeleteAsync($"/api/comercial/promociones/{idInexistente}/productos", 
-            new StringContent(json, System.Text.Encoding.UTF8, "application/json"));
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"/api/comercial/promociones/{idInexistente}/productos")
+        {
+            Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+        };
+        var response = await client.SendAsync(request);
 
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.NotFound);

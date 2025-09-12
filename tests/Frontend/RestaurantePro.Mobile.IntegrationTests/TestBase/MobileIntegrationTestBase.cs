@@ -21,6 +21,8 @@ using MediatR;
 using AutoMapper;
 using RestaurantePro.Application.Config.DependencyInjection;
 using FluentValidation;
+using RestaurantePro.Mobile.Core.Services.Notifications;
+using RestaurantePro.Mobile.Core.Services.Realtime;
 
 namespace RestaurantePro.Mobile.IntegrationTests.TestBase;
 
@@ -138,6 +140,26 @@ public class MobileIntegrationTestFixture : WebApplicationFactory<Program>, IDis
             // 🔧 REGISTRAR TEST ANALYTICS SERVICE
             Console.WriteLine("🔧 Registrando TestAnalyticsService en MobileIntegrationTestFixture");
             services.AddScoped<RestaurantePro.Domain.Core.Analytics.Interfaces.IAnalyticsService, TestAnalyticsService>();
+            
+            // 🔧 REGISTRAR TEST NOTIFICATION SERVICE
+            Console.WriteLine("🔧 Registrando TestNotificationService en MobileIntegrationTestFixture");
+            services.AddScoped<RestaurantePro.Mobile.Core.Services.Notifications.INotificationService, TestNotificationService>();
+            
+            // 🔧 REGISTRAR TEST COMANDA REALTIME SERVICE
+            Console.WriteLine("🔧 Registrando TestComandaRealtimeService en MobileIntegrationTestFixture");
+            services.AddScoped<RestaurantePro.Mobile.Core.Services.Realtime.IComandaRealtimeService, TestComandaRealtimeService>();
+            
+            // 🔧 REGISTRAR HTTPCLIENT PARA SERVICIOS MOBILE
+            services.AddHttpClient();
+            
+            // 🔧 REGISTRAR SERVICIOS MOCK DE MOBILE CORE
+            Console.WriteLine("🔧 Registrando servicios mock de Mobile Core en MobileIntegrationTestFixture");
+            services.AddScoped<RestaurantePro.Mobile.Core.Services.Platform.ISecureStorageService, TestSecureStorageService>();
+            services.AddScoped<RestaurantePro.Mobile.Core.Services.Api.IApiService, TestApiService>();
+            services.AddScoped<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService, TestAuthService>();
+            services.AddScoped<RestaurantePro.Mobile.Core.Services.Commercial.IClientesService, TestClientesService>();
+            services.AddScoped<RestaurantePro.Mobile.Core.Services.Commercial.ITarjetasFidelizacionService, TestTarjetasFidelizacionService>();
+            services.AddScoped<RestaurantePro.Mobile.Core.Services.Inventory.IIngredientesService, TestIngredientesService>();
             
             // 🔧 REGISTRAR CONTROLADORES ESPECÍFICOS MANUALMENTE
             services.AddControllers()
@@ -267,6 +289,68 @@ public class TestCacheService : RestaurantePro.Domain.Core.SharedKernel.Services
 }
 
 /// <summary>
+/// Implementación de prueba del servicio de notificaciones para tests móviles
+/// </summary>
+public class TestNotificationService : RestaurantePro.Mobile.Core.Services.Notifications.INotificationService
+{
+    public List<string> ToastMessages { get; } = new();
+    public List<int> VibrationDurations { get; } = new();
+
+    public async Task ShowToastAsync(string message, int durationMs = 2000)
+    {
+        ToastMessages.Add($"{message} (Duration: {durationMs}ms)");
+        await Task.CompletedTask;
+    }
+
+    public Task VibrateAsync(int milliseconds = 100)
+    {
+        VibrationDurations.Add(milliseconds);
+        return Task.CompletedTask;
+    }
+}
+
+/// <summary>
+/// Implementación de prueba del servicio de tiempo real para tests móviles
+/// </summary>
+public class TestComandaRealtimeService : RestaurantePro.Mobile.Core.Services.Realtime.IComandaRealtimeService
+{
+    public event Action? OnNuevaComanda;
+    public event Action? OnComandaActualizada;
+
+    public bool IsStarted { get; private set; }
+    public bool IsStopped { get; private set; }
+    public int StartCallCount { get; private set; }
+    public int StopCallCount { get; private set; }
+
+    public async Task StartAsync(CancellationToken cancellationToken = default)
+    {
+        StartCallCount++;
+        IsStarted = true;
+        IsStopped = false;
+        await Task.CompletedTask;
+    }
+
+    public async Task StopAsync(CancellationToken cancellationToken = default)
+    {
+        StopCallCount++;
+        IsStopped = true;
+        IsStarted = false;
+        await Task.CompletedTask;
+    }
+
+    // Métodos para simular eventos en tests
+    public void SimulateNuevaComanda()
+    {
+        OnNuevaComanda?.Invoke();
+    }
+
+    public void SimulateComandaActualizada()
+    {
+        OnComandaActualizada?.Invoke();
+    }
+}
+
+/// <summary>
 /// Configuración de JWT para tests
 /// </summary>
 public class JwtSettings
@@ -364,5 +448,926 @@ public class TestAnalyticsService : RestaurantePro.Domain.Core.Analytics.Interfa
             new() { Hora = 13, TotalVentas = 650.00m, NumeroComandas = 12, PorcentajeTotalVentas = 52.0m },
             new() { Hora = 14, TotalVentas = 350.00m, NumeroComandas = 6, PorcentajeTotalVentas = 28.0m }
         });
+    }
+}
+
+/// <summary>
+/// Implementación de prueba del servicio de almacenamiento seguro para tests móviles
+/// </summary>
+public class TestSecureStorageService : RestaurantePro.Mobile.Core.Services.Platform.ISecureStorageService
+{
+    private readonly Dictionary<string, string> _store = new();
+
+    public Task<string?> GetAsync(string key)
+    {
+        _store.TryGetValue(key, out var value);
+        return Task.FromResult(value);
+    }
+
+    public Task SetAsync(string key, string value)
+    {
+        _store[key] = value;
+        return Task.CompletedTask;
+    }
+
+    public Task RemoveAsync(string key)
+    {
+        _store.Remove(key);
+        return Task.CompletedTask;
+    }
+
+    public Task ClearAsync()
+    {
+        _store.Clear();
+        return Task.CompletedTask;
+    }
+}
+
+/// <summary>
+/// Implementación de prueba del servicio de API para tests móviles
+/// </summary>
+public class TestApiService : RestaurantePro.Mobile.Core.Services.Api.IApiService
+{
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>> GetAsync<T>(string endpoint, string? token = null, CancellationToken cancellationToken = default)
+    {
+        // Mock response para tests
+        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>
+        {
+            Success = true,
+            Data = default(T),
+            Message = "Mock response"
+        };
+        return Task.FromResult(response);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>> PostAsync<T>(string endpoint, object data, string? token = null, CancellationToken cancellationToken = default)
+    {
+        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>
+        {
+            Success = true,
+            Data = default(T),
+            Message = "Mock response"
+        };
+        return Task.FromResult(response);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>> PutAsync<T>(string endpoint, object data, string? token = null, CancellationToken cancellationToken = default)
+    {
+        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>
+        {
+            Success = true,
+            Data = default(T),
+            Message = "Mock response"
+        };
+        return Task.FromResult(response);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>> PatchAsync<T>(string endpoint, object data, string? token = null, CancellationToken cancellationToken = default)
+    {
+        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<T>
+        {
+            Success = true,
+            Data = default(T),
+            Message = "Mock response"
+        };
+        return Task.FromResult(response);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>> DeleteAsync(string endpoint, string? token = null, CancellationToken cancellationToken = default)
+    {
+        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>
+        {
+            Success = true,
+            Data = true,
+            Message = "Mock response"
+        };
+        return Task.FromResult(response);
+    }
+}
+
+/// <summary>
+/// Implementación de prueba del servicio de autenticación para tests móviles
+/// </summary>
+public class TestAuthService : RestaurantePro.Mobile.Core.Services.Authentication.IAuthService
+{
+    public Task<string?> GetTokenAsync()
+    {
+        return Task.FromResult<string?>("mock-token");
+    }
+
+    public Task<bool> IsAuthenticatedAsync()
+    {
+        return Task.FromResult(true);
+    }
+
+    public Task LogoutAsync()
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.AuthResponse>> LoginAsync(string email, string password, bool recordarme = false)
+    {
+        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.AuthResponse>
+        {
+            Success = true,
+            Data = new RestaurantePro.Mobile.Core.Models.DTOs.AuthResponse
+            {
+                Token = "mock-token",
+                RefreshToken = "mock-refresh-token",
+                User = new RestaurantePro.Mobile.Core.Models.DTOs.AuthUser
+                {
+                    Id = 1,
+                    Email = email,
+                    Nombre = "Test",
+                    Apellido = "User",
+                    Roles = new List<string> { "Mesero" }
+                },
+                ExpiresAt = DateTime.UtcNow.AddHours(1)
+            },
+            Message = "Login successful"
+        };
+        return Task.FromResult(response);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.AuthUser?> GetCurrentUserAsync()
+    {
+        var user = new RestaurantePro.Mobile.Core.Models.DTOs.AuthUser
+        {
+            Id = 1,
+            Email = "test@example.com",
+            Nombre = "Test",
+            Apellido = "User",
+            Roles = new List<string> { "Mesero" }
+        };
+        return Task.FromResult<RestaurantePro.Mobile.Core.Models.DTOs.AuthUser?>(user);
+    }
+
+    public Task<string?> GetUserIdAsync()
+    {
+        return Task.FromResult<string?>("1");
+    }
+}
+
+/// <summary>
+/// Implementación de prueba del servicio de clientes para tests móviles
+/// </summary>
+public class TestClientesService : RestaurantePro.Mobile.Core.Services.Commercial.IClientesService
+{
+    private readonly List<RestaurantePro.Mobile.Core.Models.DTOs.ClienteSummaryDto> _clientes = new()
+    {
+        new RestaurantePro.Mobile.Core.Models.DTOs.ClienteSummaryDto
+        {
+            Id = Guid.NewGuid(),
+            NombreCompleto = "Ana García",
+            Email = "ana@example.com",
+            Telefono = "+1234567890",
+            Activo = true,
+            FechaRegistro = DateTime.UtcNow.AddDays(-30)
+        },
+        new RestaurantePro.Mobile.Core.Models.DTOs.ClienteSummaryDto
+        {
+            Id = Guid.NewGuid(),
+            NombreCompleto = "Carlos López",
+            Email = "carlos@example.com",
+            Telefono = "+0987654321",
+            Activo = true,
+            FechaRegistro = DateTime.UtcNow.AddDays(-15)
+        }
+    };
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.ClienteSummaryDto>>> ObtenerClientesAsync(bool soloActivos = true, CancellationToken cancellationToken = default)
+    {
+        // Verificar cancelación
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var cancelResponse = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.ClienteSummaryDto>>
+            {
+                Success = false,
+                Data = null,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(cancelResponse);
+        }
+
+        var clientes = soloActivos ? _clientes.Where(c => c.Activo).ToList() : _clientes;
+        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.ClienteSummaryDto>>
+        {
+            Success = true,
+            Data = clientes,
+            Message = "Clientes obtenidos exitosamente"
+        };
+        return Task.FromResult(response);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.ClienteDto>> ObtenerClienteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var cliente = _clientes.FirstOrDefault(c => c.Id == id);
+        if (cliente == null)
+        {
+            var errorResponse = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.ClienteDto>
+            {
+                Success = false,
+                Data = null,
+                Message = "Cliente no encontrado"
+            };
+            return Task.FromResult(errorResponse);
+        }
+
+        var clienteDto = new RestaurantePro.Mobile.Core.Models.DTOs.ClienteDto
+        {
+            Id = cliente.Id,
+            NombreCompleto = cliente.NombreCompleto,
+            Email = cliente.Email,
+            Telefono = cliente.Telefono,
+            FechaRegistro = cliente.FechaRegistro,
+            Estado = "Activo",
+            Activo = cliente.Activo,
+            TotalComandas = 5,
+            TotalGastado = 150.50m
+        };
+
+        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.ClienteDto>
+        {
+            Success = true,
+            Data = clienteDto,
+            Message = "Cliente obtenido exitosamente"
+        };
+        return Task.FromResult(response);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.ClienteSummaryDto>>> BuscarClientesAsync(string terminoBusqueda, CancellationToken cancellationToken = default)
+    {
+        var clientes = _clientes.Where(c => c.NombreCompleto.Contains(terminoBusqueda, StringComparison.OrdinalIgnoreCase)).ToList();
+        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.ClienteSummaryDto>>
+        {
+            Success = true,
+            Data = clientes,
+            Message = "Clientes encontrados"
+        };
+        return Task.FromResult(response);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.ClienteDto>> CrearClienteAsync(RestaurantePro.Mobile.Core.Models.DTOs.ClienteDto cliente, CancellationToken cancellationToken = default)
+    {
+        if (cliente == null)
+        {
+            var errorResponse = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.ClienteDto>
+            {
+                Success = false,
+                Data = null,
+                Message = "Cliente no puede ser nulo"
+            };
+            return Task.FromResult(errorResponse);
+        }
+
+        // Verificar cancelación
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var cancelResponse = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.ClienteDto>
+            {
+                Success = false,
+                Data = null,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(cancelResponse);
+        }
+
+        var nuevoCliente = new RestaurantePro.Mobile.Core.Models.DTOs.ClienteDto
+        {
+            Id = Guid.NewGuid(),
+            NombreCompleto = cliente.NombreCompleto,
+            Email = cliente.Email,
+            Telefono = cliente.Telefono,
+            FechaRegistro = DateTime.UtcNow,
+            Estado = "Activo",
+            Activo = true,
+            TotalComandas = 0,
+            TotalGastado = 0
+        };
+
+        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.ClienteDto>
+        {
+            Success = true,
+            Data = nuevoCliente,
+            Message = "Cliente creado exitosamente"
+        };
+        return Task.FromResult(response);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.ClienteDto>> ActualizarClienteAsync(Guid id, RestaurantePro.Mobile.Core.Models.DTOs.ClienteDto cliente, CancellationToken cancellationToken = default)
+    {
+        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.ClienteDto>
+        {
+            Success = true,
+            Data = cliente,
+            Message = "Cliente actualizado exitosamente"
+        };
+        return Task.FromResult(response);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>> EliminarClienteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>
+        {
+            Success = true,
+            Data = true,
+            Message = "Cliente eliminado exitosamente"
+        };
+        return Task.FromResult(response);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.EstadisticasClientesDto>> ObtenerEstadisticasAsync(CancellationToken cancellationToken = default)
+    {
+        var estadisticas = new RestaurantePro.Mobile.Core.Models.DTOs.EstadisticasClientesDto
+        {
+            TotalClientes = _clientes.Count,
+            ClientesActivos = _clientes.Count(c => c.Activo),
+            ClientesNuevosHoy = 0,
+            ClientesInactivos = 0
+        };
+
+        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.EstadisticasClientesDto>
+        {
+            Success = true,
+            Data = estadisticas,
+            Message = "Estadísticas obtenidas exitosamente"
+        };
+        return Task.FromResult(response);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.ClienteSummaryDto>>> ObtenerClientesFrecuentesAsync(int cantidad = 10, CancellationToken cancellationToken = default)
+    {
+        var clientes = _clientes.Take(cantidad).ToList();
+        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.ClienteSummaryDto>>
+        {
+            Success = true,
+            Data = clientes,
+            Message = "Clientes frecuentes obtenidos"
+        };
+        return Task.FromResult(response);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.ClienteSummaryDto>>> ObtenerClientesAsync(RestaurantePro.Mobile.Core.Models.DTOs.FiltroClientesDto filtro, CancellationToken cancellationToken = default)
+    {
+        var clientes = _clientes.AsQueryable();
+
+        if (filtro.SoloActivos.HasValue && filtro.SoloActivos.Value)
+            clientes = clientes.Where(c => c.Activo);
+
+        if (!string.IsNullOrEmpty(filtro.Busqueda))
+            clientes = clientes.Where(c => c.NombreCompleto.Contains(filtro.Busqueda, StringComparison.OrdinalIgnoreCase));
+
+        var resultado = clientes.ToList();
+        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.ClienteSummaryDto>>
+        {
+            Success = true,
+            Data = resultado,
+            Message = "Clientes obtenidos con filtro"
+        };
+        return Task.FromResult(response);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.ClienteSummaryDto>>> ObtenerClientesPorSegmentoAsync(string segmento, CancellationToken cancellationToken = default)
+    {
+        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.ClienteSummaryDto>>
+        {
+            Success = true,
+            Data = _clientes,
+            Message = $"Clientes del segmento {segmento} obtenidos"
+        };
+        return Task.FromResult(response);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.ClienteSummaryDto>>> ObtenerClientesConTarjetaFidelizacionAsync(CancellationToken cancellationToken = default)
+    {
+        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.ClienteSummaryDto>>
+        {
+            Success = true,
+            Data = _clientes,
+            Message = "Clientes con tarjeta de fidelización obtenidos"
+        };
+        return Task.FromResult(response);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.ClienteSummaryDto>>> ObtenerClientesPorFechaRegistroAsync(DateTime fechaDesde, DateTime fechaHasta, CancellationToken cancellationToken = default)
+    {
+        var clientes = _clientes.Where(c => c.FechaRegistro >= fechaDesde && c.FechaRegistro <= fechaHasta).ToList();
+        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.ClienteSummaryDto>>
+        {
+            Success = true,
+            Data = clientes,
+            Message = "Clientes por fecha de registro obtenidos"
+        };
+        return Task.FromResult(response);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>> DesactivarClienteAsync(Guid clienteId, CancellationToken cancellationToken = default)
+    {
+        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>
+        {
+            Success = true,
+            Data = true,
+            Message = "Cliente desactivado exitosamente"
+        };
+        return Task.FromResult(response);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.ComandaDto>>> ObtenerHistorialComandasAsync(Guid clienteId, CancellationToken cancellationToken = default)
+    {
+        var comandas = new List<RestaurantePro.Mobile.Core.Models.DTOs.ComandaDto>();
+        var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.ComandaDto>>
+        {
+            Success = true,
+            Data = comandas,
+            Message = "Historial de comandas obtenido"
+        };
+        return Task.FromResult(response);
+    }
+}
+
+/// <summary>
+/// Mock del servicio de tarjetas de fidelización para tests
+/// </summary>
+public class TestTarjetasFidelizacionService : RestaurantePro.Mobile.Core.Services.Commercial.ITarjetasFidelizacionService
+{
+    private readonly List<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto> _tarjetas = new()
+    {
+        new RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto
+        {
+            Id = Guid.Parse("00000000-0000-0000-0000-000000000001"),
+            CodigoTarjeta = "TARJETA001",
+            NumeroTarjeta = "TARJETA001",
+            PuntosDisponibles = 1000,
+            Estado = "Activa",
+            Activa = true,
+            FechaActivacion = DateTime.Now.AddDays(-30),
+            ClienteId = Guid.Parse("00000000-0000-0000-0000-000000000011"),
+            ClienteNombre = "Cliente Test 1"
+        },
+        new RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto
+        {
+            Id = Guid.Parse("00000000-0000-0000-0000-000000000002"),
+            CodigoTarjeta = "TARJETA002",
+            NumeroTarjeta = "TARJETA002",
+            PuntosDisponibles = 500,
+            Estado = "Activa",
+            Activa = true,
+            FechaActivacion = DateTime.Now.AddDays(-15),
+            ClienteId = Guid.Parse("00000000-0000-0000-0000-000000000012"),
+            ClienteNombre = "Cliente Test 2"
+        }
+    };
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>> BuscarTarjetaAsync(string numeroTarjeta, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var tarjeta = _tarjetas.FirstOrDefault(t => t.NumeroTarjeta == numeroTarjeta);
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>
+        {
+            Success = tarjeta != null,
+            Data = tarjeta,
+            Message = tarjeta != null ? "Tarjeta encontrada" : "Tarjeta no encontrada"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>> ActivarTarjetaAsync(string numeroTarjeta, string nombreCliente, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var tarjeta = _tarjetas.FirstOrDefault(t => t.NumeroTarjeta == numeroTarjeta);
+        if (tarjeta != null)
+        {
+            tarjeta.Estado = "Activa";
+            tarjeta.Activa = true;
+        }
+
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>
+        {
+            Success = tarjeta != null,
+            Data = tarjeta,
+            Message = tarjeta != null ? "Tarjeta activada exitosamente" : "Tarjeta no encontrada para activar"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>> ObtenerTarjetaPorCodigoAsync(string codigo, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var tarjeta = _tarjetas.FirstOrDefault(t => t.CodigoTarjeta == codigo || t.NumeroTarjeta == codigo);
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>
+        {
+            Success = tarjeta != null,
+            Data = tarjeta,
+            Message = tarjeta != null ? "Tarjeta encontrada" : "Tarjeta no encontrada"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>> ObtenerTarjetaAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var tarjeta = _tarjetas.FirstOrDefault(t => t.Id == id);
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>
+        {
+            Success = tarjeta != null,
+            Data = tarjeta,
+            Message = tarjeta != null ? "Tarjeta obtenida" : "Tarjeta no encontrada"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.TransaccionPuntosDto>>> ObtenerHistorialTransaccionesAsync(Guid tarjetaId, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.TransaccionPuntosDto>>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var tarjeta = _tarjetas.FirstOrDefault(t => t.Id == tarjetaId);
+        if (tarjeta == null)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.TransaccionPuntosDto>>
+            {
+                Success = false,
+                Message = "Tarjeta no encontrada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var transacciones = new List<RestaurantePro.Mobile.Core.Models.DTOs.TransaccionPuntosDto>
+        {
+            new RestaurantePro.Mobile.Core.Models.DTOs.TransaccionPuntosDto
+            {
+                Id = Guid.NewGuid(),
+                TipoTransaccion = "Acumulación",
+                Puntos = 100,
+                Monto = 50.00m,
+                FechaTransaccion = DateTime.Now.AddDays(-1),
+                Descripcion = "Compra en restaurante"
+            }
+        };
+
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.TransaccionPuntosDto>>
+        {
+            Success = true,
+            Data = transacciones,
+            Message = "Historial de transacciones obtenido"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>> AcumularPuntosAsync(Guid tarjetaId, decimal montoCompra, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        if (montoCompra <= 0)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>
+            {
+                Success = false,
+                Message = "El monto debe ser mayor a cero"
+            };
+            return Task.FromResult(response);
+        }
+
+        var tarjeta = _tarjetas.FirstOrDefault(t => t.Id == tarjetaId);
+        if (tarjeta != null)
+        {
+            var puntosGanados = (int)(montoCompra * 2); // 2 puntos por cada peso
+            tarjeta.PuntosDisponibles += puntosGanados;
+        }
+
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>
+        {
+            Success = tarjeta != null,
+            Data = tarjeta,
+            Message = tarjeta != null ? "Puntos acumulados exitosamente" : "Tarjeta no encontrada"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>> CanjearPuntosAsync(Guid tarjetaId, int puntosACanjear, decimal descuento, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        if (puntosACanjear <= 0)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>
+            {
+                Success = false,
+                Message = "Los puntos a canjear deben ser mayores a cero"
+            };
+            return Task.FromResult(response);
+        }
+
+        var tarjeta = _tarjetas.FirstOrDefault(t => t.Id == tarjetaId);
+        if (tarjeta != null && tarjeta.PuntosDisponibles >= puntosACanjear)
+        {
+            tarjeta.PuntosDisponibles -= puntosACanjear;
+        }
+        else if (tarjeta != null)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>
+            {
+                Success = false,
+                Message = "Puntos insuficientes para el canje"
+            };
+            return Task.FromResult(response);
+        }
+
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>
+        {
+            Success = tarjeta != null,
+            Data = tarjeta,
+            Message = tarjeta != null ? "Puntos canjeados exitosamente" : "Tarjeta no encontrada"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>>> ObtenerTarjetasActivasAsync(CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var tarjetasActivas = _tarjetas.Where(t => t.Estado == "Activa").ToList();
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>>
+        {
+            Success = true,
+            Data = tarjetasActivas,
+            Message = "Tarjetas activas obtenidas"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>> DesactivarTarjetaAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var tarjeta = _tarjetas.FirstOrDefault(t => t.Id == id);
+        if (tarjeta != null)
+        {
+            tarjeta.Estado = "Inactiva";
+            tarjeta.Activa = false;
+        }
+
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>
+        {
+            Success = tarjeta != null,
+            Data = tarjeta != null,
+            Message = tarjeta != null ? "Tarjeta desactivada exitosamente" : "Tarjeta no encontrada"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>>> ObtenerTarjetasAsync(RestaurantePro.Mobile.Core.Models.DTOs.FiltroTarjetasFidelizacionDto filtro, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var tarjetas = _tarjetas.AsQueryable();
+
+        if (!string.IsNullOrEmpty(filtro.Estado))
+            tarjetas = tarjetas.Where(t => t.Estado == filtro.Estado);
+
+        if (filtro.SoloActivas.HasValue && filtro.SoloActivas.Value)
+            tarjetas = tarjetas.Where(t => t.Activa);
+
+        var resultado = tarjetas.ToList();
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.TarjetaFidelizacionDto>>
+        {
+            Success = true,
+            Data = resultado,
+            Message = "Tarjetas obtenidas con filtro"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<RestaurantePro.Mobile.Core.Models.DTOs.TransaccionPuntosDto>>> ObtenerHistorialAsync(Guid tarjetaId, CancellationToken cancellationToken = default)
+    {
+        return ObtenerHistorialTransaccionesAsync(tarjetaId, cancellationToken);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>> BloquearTarjetaAsync(Guid tarjetaId, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var tarjeta = _tarjetas.FirstOrDefault(t => t.Id == tarjetaId);
+        if (tarjeta != null)
+        {
+            tarjeta.Estado = "Bloqueada";
+            tarjeta.Activa = false;
+        }
+
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>
+        {
+            Success = tarjeta != null,
+            Data = tarjeta != null,
+            Message = tarjeta != null ? "Tarjeta bloqueada exitosamente" : "Tarjeta no encontrada"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.HistorialPuntosDto>> ObtenerHistorialPuntosAsync(Guid tarjetaId, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.HistorialPuntosDto>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var tarjeta = _tarjetas.FirstOrDefault(t => t.Id == tarjetaId);
+        if (tarjeta == null)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.HistorialPuntosDto>
+            {
+                Success = false,
+                Message = "Tarjeta no encontrada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var historial = new RestaurantePro.Mobile.Core.Models.DTOs.HistorialPuntosDto
+        {
+            Id = Guid.NewGuid(),
+            CodigoTarjeta = tarjeta.CodigoTarjeta,
+            PuntosAcumulados = 1000,
+            PuntosCanjeados = 200,
+            PuntosDisponibles = tarjeta.PuntosDisponibles,
+            FechaUltimaTransaccion = DateTime.Now.AddDays(-1),
+            Transacciones = new List<RestaurantePro.Mobile.Core.Models.DTOs.TransaccionPuntosDto>()
+        };
+
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.HistorialPuntosDto>
+        {
+            Success = true,
+            Data = historial,
+            Message = "Historial de puntos obtenido"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.EstadisticasTarjetaDto>> ObtenerEstadisticasAsync(Guid tarjetaId, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.EstadisticasTarjetaDto>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var tarjeta = _tarjetas.FirstOrDefault(t => t.Id == tarjetaId);
+        if (tarjeta == null)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.EstadisticasTarjetaDto>
+            {
+                Success = false,
+                Message = "Tarjeta no encontrada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var estadisticas = new RestaurantePro.Mobile.Core.Models.DTOs.EstadisticasTarjetaDto
+        {
+            TarjetaId = tarjetaId,
+            CodigoTarjeta = tarjeta.CodigoTarjeta,
+            PuntosAcumulados = 1000,
+            PuntosCanjeados = 200,
+            PuntosDisponibles = tarjeta.PuntosDisponibles,
+            MontoTotalGastado = 5000.00m,
+            TotalTransacciones = 25,
+            FechaUltimaTransaccion = DateTime.Now.AddDays(-1),
+            NivelActual = "Oro",
+            PuntosParaSiguienteNivel = 500,
+            BeneficiosDisponibles = "Descuentos especiales, productos exclusivos"
+        };
+
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<RestaurantePro.Mobile.Core.Models.DTOs.EstadisticasTarjetaDto>
+        {
+            Success = true,
+            Data = estadisticas,
+            Message = "Estadísticas obtenidas"
+        };
+        return Task.FromResult(response2);
+    }
+
+    public Task<RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>> EliminarTarjetaAsync(Guid tarjetaId, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            var response = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>
+            {
+                Success = false,
+                Message = "Operación cancelada"
+            };
+            return Task.FromResult(response);
+        }
+
+        var tarjeta = _tarjetas.FirstOrDefault(t => t.Id == tarjetaId);
+        if (tarjeta != null)
+        {
+            _tarjetas.Remove(tarjeta);
+        }
+
+        var response2 = new RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<bool>
+        {
+            Success = tarjeta != null,
+            Data = tarjeta != null,
+            Message = tarjeta != null ? "Tarjeta eliminada exitosamente" : "Tarjeta no encontrada"
+        };
+        return Task.FromResult(response2);
     }
 } 

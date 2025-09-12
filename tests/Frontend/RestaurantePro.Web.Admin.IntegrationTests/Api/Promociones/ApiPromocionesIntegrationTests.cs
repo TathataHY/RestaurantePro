@@ -10,6 +10,9 @@ using RestaurantePro.Application.Comercial.Promociones.Commands.AplicarPromocion
 using RestaurantePro.Domain.Comercial.Promociones.Enums;
 using System.Text.Json;
 using Xunit;
+using RestaurantePro.Web.Admin.IntegrationTests.Core;
+using MediatR;
+using AppPromociones = RestaurantePro.Application.Comercial.Promociones.DTOs;
 
 namespace RestaurantePro.Web.Admin.IntegrationTests.Api.Promociones;
 
@@ -19,7 +22,7 @@ namespace RestaurantePro.Web.Admin.IntegrationTests.Api.Promociones;
 [Collection("IntegrationTests")]
 public class ApiPromocionesIntegrationTests : BaseIntegrationTest
 {
-    public ApiPromocionesIntegrationTests(WebApplicationFactory<Program> factory) : base(factory)
+    public ApiPromocionesIntegrationTests(WebApplicationFactory factory) : base(factory)
     {
     }
 
@@ -36,7 +39,7 @@ public class ApiPromocionesIntegrationTests : BaseIntegrationTest
         // Assert
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<List<PromocionDto>>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<List<AppPromociones.PromocionDto>>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -58,7 +61,7 @@ public class ApiPromocionesIntegrationTests : BaseIntegrationTest
         // Assert
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<PromocionDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppPromociones.PromocionDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -96,7 +99,7 @@ public class ApiPromocionesIntegrationTests : BaseIntegrationTest
         // Assert
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.Created);
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<PromocionDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppPromociones.PromocionDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -129,7 +132,7 @@ public class ApiPromocionesIntegrationTests : BaseIntegrationTest
         // Assert
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<PromocionDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppPromociones.PromocionDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -151,7 +154,7 @@ public class ApiPromocionesIntegrationTests : BaseIntegrationTest
         // Assert
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<PromocionDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppPromociones.PromocionDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -172,7 +175,7 @@ public class ApiPromocionesIntegrationTests : BaseIntegrationTest
         // Assert
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<PromocionDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppPromociones.PromocionDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -215,7 +218,7 @@ public class ApiPromocionesIntegrationTests : BaseIntegrationTest
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
         responseData.Data.Should().NotBeNull();
-        responseData.Data.DescuentoAplicado.Should().BeGreaterThan(0);
+        responseData.Data.MontoDescuento.Should().BeGreaterThan(0);
     }
 
     [Fact]
@@ -233,7 +236,7 @@ public class ApiPromocionesIntegrationTests : BaseIntegrationTest
         // Assert
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<List<PromocionDto>>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<List<AppPromociones.PromocionDto>>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -258,7 +261,7 @@ public class ApiPromocionesIntegrationTests : BaseIntegrationTest
         // Assert
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<PromocionDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppPromociones.PromocionDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
@@ -276,13 +279,16 @@ public class ApiPromocionesIntegrationTests : BaseIntegrationTest
         var json = JsonSerializer.Serialize(productosIds, GetJsonOptions());
 
         // Act
-        var response = await client.DeleteAsync($"/api/comercial/promociones/{promocionId}/productos", 
-            new StringContent(json, System.Text.Encoding.UTF8, "application/json"));
+        var request = new HttpRequestMessage(HttpMethod.Delete, $"/api/comercial/promociones/{promocionId}/productos")
+        {
+            Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
+        };
+        var response = await client.SendAsync(request);
 
         // Assert
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsStringAsync();
-        var responseData = JsonSerializer.Deserialize<ApiResponse<PromocionDto>>(content, GetJsonOptions());
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppPromociones.PromocionDto>>(content, GetJsonOptions());
         
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();

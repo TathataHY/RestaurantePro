@@ -7,6 +7,7 @@ using RestaurantePro.Application.Comercial.Promociones.Commands.AplicarPromocion
 using RestaurantePro.Domain.Comercial.Promociones.Enums;
 using System.Text.Json;
 using Xunit;
+using RestaurantePro.Web.Admin.IntegrationTests.Core;
 
 namespace RestaurantePro.Web.Admin.IntegrationTests.Api.Promociones;
 
@@ -16,7 +17,7 @@ namespace RestaurantePro.Web.Admin.IntegrationTests.Api.Promociones;
 [Collection("IntegrationTests")]
 public class PromocionesPerformanceTests : BaseIntegrationTest
 {
-    public PromocionesPerformanceTests(WebApplicationFactory<Program> factory) : base(factory)
+    public PromocionesPerformanceTests(WebApplicationFactory factory) : base(factory)
     {
     }
 
