@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using RestaurantePro.Mobile.Core.Models.DTOs;
@@ -40,7 +41,7 @@ public class ApiService : IApiService
     public async Task<ApiResponse<T>> GetAsync<T>(string endpoint, string? token = null, CancellationToken cancellationToken = default)
     {
         // Lectura por stream + reintentos para evitar EOF en Android/OkHttp con respuestas chunked
-        const int maxAttempts = 2;
+        const int maxAttempts = 3;
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
             try
@@ -61,7 +62,14 @@ public class ApiService : IApiService
                 {
                     await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
                     var result = await JsonSerializer.DeserializeAsync<ApiResponse<T>>(stream, GetJsonOptions(), cancellationToken);
-                    return result ?? ApiResponse<T>.ErrorResponse("Respuesta vacía del servidor");
+                    
+                    // Verificar si el resultado es válido (no null y tiene datos o es un error válido)
+                    if (result == null || (result.Data == null && string.IsNullOrEmpty(result.Message) && string.IsNullOrEmpty(result.Error)))
+                    {
+                        return ApiResponse<T>.ErrorResponse("Respuesta vacía del servidor");
+                    }
+                    
+                    return result;
                 }
 
                 // Intentar leer cuerpo de error (si existe)
@@ -85,6 +93,24 @@ public class ApiService : IApiService
                 await Task.Delay(150);
                 continue;
             }
+            catch (TaskCanceledException tcEx) when (attempt < maxAttempts)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ApiService] Reintentando GET (Timeout) intento {attempt}: {tcEx.Message}");
+                await Task.Delay(150);
+                continue;
+            }
+            catch (AggregateException aggEx) when (attempt < maxAttempts)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ApiService] Reintentando GET (Aggregate) intento {attempt}: {aggEx.Message}");
+                await Task.Delay(150);
+                continue;
+            }
+            catch (SocketException sockEx) when (attempt < maxAttempts)
+            {
+                System.Diagnostics.Debug.WriteLine($"[ApiService] Reintentando GET (Socket) intento {attempt}: {sockEx.Message}");
+                await Task.Delay(150);
+                continue;
+            }
             catch (Exception ex)
             {
                 return ApiResponse<T>.ErrorResponse(
@@ -100,7 +126,7 @@ public class ApiService : IApiService
 
     public async Task<ApiResponse<T>> PostAsync<T>(string endpoint, object data, string? token = null, CancellationToken cancellationToken = default)
     {
-        const int maxAttempts = 2;
+        const int maxAttempts = 3;
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
             try
@@ -135,6 +161,21 @@ public class ApiService : IApiService
                 continue;
             }
             catch (HttpRequestException) when (attempt < maxAttempts)
+            {
+                await Task.Delay(150);
+                continue;
+            }
+            catch (TaskCanceledException) when (attempt < maxAttempts)
+            {
+                await Task.Delay(150);
+                continue;
+            }
+            catch (AggregateException) when (attempt < maxAttempts)
+            {
+                await Task.Delay(150);
+                continue;
+            }
+            catch (SocketException) when (attempt < maxAttempts)
             {
                 await Task.Delay(150);
                 continue;

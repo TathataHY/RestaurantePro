@@ -103,7 +103,7 @@ public class ComandasService_NewBehaviorTests
         var result = await _service.ObtenerComandasActivasAsync();
 
         result.Success.Should().BeFalse();
-        result.Message.Should().Contain("No content");
+        result.Message.Should().Contain("Error en la operación");
     }
 }
 

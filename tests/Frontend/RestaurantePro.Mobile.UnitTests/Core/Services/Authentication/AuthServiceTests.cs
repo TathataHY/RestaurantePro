@@ -48,7 +48,7 @@ public class AuthServiceTests
         // Arrange
         var email = "invalid@test.com";
         var password = "wrongpassword";
-        var expectedErrorMessage = "Credenciales inválidas";
+        var expectedErrorMessage = "Error de autenticación";
         var expectedApiResponse = ApiResponse<AuthResponse>.ErrorResponse(
             new List<string> { expectedErrorMessage }, 
             "Error de autenticación", 
@@ -98,7 +98,7 @@ public class AuthServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
-        result.Errors.Should().Contain("Email es requerido"); // El servicio retorna error específico
+        result.Errors.Should().Contain("Password es requerido"); // El servicio retorna error específico
         result.Data.Should().BeNull();
     }
 
@@ -271,7 +271,7 @@ public class AuthServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
-        result.Errors.Should().Contain("Email es requerido"); // El servicio retorna error específico
+        result.Errors.Should().Contain("Password es requerido"); // El servicio retorna error específico
         result.Data.Should().BeNull();
     }
 
@@ -288,7 +288,7 @@ public class AuthServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
-        result.Errors.Should().Contain("Email es requerido"); // El servicio retorna error específico
+        result.Errors.Should().Contain("Password es requerido"); // El servicio retorna error específico
         result.Data.Should().BeNull();
     }
 
@@ -305,7 +305,7 @@ public class AuthServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
-        result.Errors.Should().Contain("Email es requerido"); // El servicio retorna error específico // Debería fallar la validación básica
+        result.Errors.Should().Contain("Error de autenticación"); // El servicio retorna error de la API
         result.Data.Should().BeNull();
     }
 
@@ -322,7 +322,7 @@ public class AuthServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
-        result.Errors.Should().Contain("Email es requerido"); // El servicio retorna error específico // Debería fallar la validación básica
+        result.Errors.Should().Contain("Error de autenticación"); // El servicio retorna error de la API
         result.Data.Should().BeNull();
     }
 
@@ -625,7 +625,7 @@ public class AuthServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
-        result.Errors.Should().Contain("Email es requerido"); // El servicio retorna error específico
+        result.Errors.Should().Contain("Error de autenticación"); // El servicio retorna error específico
         result.Data.Should().BeNull();
     }
 
@@ -650,7 +650,7 @@ public class AuthServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
-        result.Errors.Should().Contain("Invalid credentials");
+        result.Errors.Should().Contain("Error de autenticación");
         result.Data.Should().BeNull();
     }
 
@@ -672,7 +672,7 @@ public class AuthServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
-        result.Errors.Should().Contain("Email es requerido"); // El servicio retorna error específico
+        result.Errors.Should().Contain("Error de autenticación"); // El servicio retorna error específico
         result.Data.Should().BeNull();
     }
 

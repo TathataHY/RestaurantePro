@@ -124,8 +124,11 @@ public class ResilienceTests
     public async Task Resilience_FalloServicio_ComandasService_Error500()
     {
         // Arrange - Configurar error 500 del servidor
-        _comandasServiceMock.Setup(c => c.ObtenerComandasActivasAsync(It.IsAny<CancellationToken>()))
+        _comandasServiceMock.Setup(c => c.BuscarComandasAsync(It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ComandaDto>>.ErrorResponse(new List<string> { "Error interno del servidor" }, "Error interno del servidor"));
+        
+        _comandasServiceMock.Setup(c => c.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<EstadisticasComandasDto>.ErrorResponse(new List<string> { "Error interno del servidor" }, "Error interno del servidor"));
 
         var comandasViewModel = new ComandasViewModel(
             _comandasServiceMock.Object,
@@ -139,8 +142,8 @@ public class ResilienceTests
         // Act - Intentar cargar comandas
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null);
 
-        // Assert - Verificar que se manejó el error
-        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        // Assert - Verificar que se manejó el error (2 llamadas: una de LoadComandasAsync y otra de LoadEstadisticasAsync)
+        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(2));
         comandasViewModel.Comandas.Should().BeEmpty();
     }
 
@@ -183,8 +186,11 @@ public class ResilienceTests
             }
         };
 
-        _comandasServiceMock.Setup(c => c.ObtenerComandasActivasAsync(It.IsAny<CancellationToken>()))
+        _comandasServiceMock.Setup(c => c.BuscarComandasAsync(It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<List<ComandaDto>>.SuccessResponse(comandasIncompletas));
+        
+        _comandasServiceMock.Setup(c => c.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<EstadisticasComandasDto>.SuccessResponse(new EstadisticasComandasDto()));
 
         var comandasViewModel = new ComandasViewModel(
             _comandasServiceMock.Object,
@@ -243,10 +249,13 @@ public class ResilienceTests
     public async Task Resilience_RecuperacionAutomatica_ComandasService_ReintentoExitoso()
     {
         // Arrange - Configurar fallo seguido de éxito
-        _comandasServiceMock.SetupSequence(c => c.ObtenerComandasActivasAsync(It.IsAny<CancellationToken>()))
+        _comandasServiceMock.SetupSequence(c => c.BuscarComandasAsync(It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("Error de red"))
             .ThrowsAsync(new HttpRequestException("Error de red"))
             .ReturnsAsync(ApiResponse<List<ComandaDto>>.SuccessResponse(new List<ComandaDto>()));
+        
+        _comandasServiceMock.Setup(c => c.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<EstadisticasComandasDto>.SuccessResponse(new EstadisticasComandasDto()));
 
         var comandasViewModel = new ComandasViewModel(
             _comandasServiceMock.Object,
@@ -262,8 +271,8 @@ public class ResilienceTests
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null); // Fallo
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null); // Éxito
 
-        // Assert - Verificar que se recuperó después de múltiples fallos
-        _comandasServiceMock.Verify(c => c.ObtenerComandasActivasAsync(It.IsAny<CancellationToken>()), Times.Exactly(3));
+        // Assert - Verificar que se recuperó después de múltiples fallos (1 del constructor + 3 del test)
+        _comandasServiceMock.Verify(c => c.BuscarComandasAsync(It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Exactly(4));
     }
 
     [Fact]
@@ -346,7 +355,7 @@ public class ResilienceTests
     {
         // Arrange - Configurar fallos intermitentes
         var callCount = 0;
-        _comandasServiceMock.Setup(c => c.ObtenerComandasActivasAsync(It.IsAny<CancellationToken>()))
+        _comandasServiceMock.Setup(c => c.BuscarComandasAsync(It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(() =>
             {
                 callCount++;
@@ -359,6 +368,9 @@ public class ResilienceTests
                     throw new HttpRequestException("Error de red");
                 }
             });
+        
+        _comandasServiceMock.Setup(c => c.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<EstadisticasComandasDto>.SuccessResponse(new EstadisticasComandasDto()));
 
         var comandasViewModel = new ComandasViewModel(
             _comandasServiceMock.Object,
@@ -378,8 +390,8 @@ public class ResilienceTests
 
         await Task.WhenAll(tasks);
 
-        // Assert - Verificar que se manejaron los fallos
-        _comandasServiceMock.Verify(c => c.ObtenerComandasActivasAsync(It.IsAny<CancellationToken>()), Times.Exactly(5));
+        // Assert - Verificar que se manejaron los fallos (1 del constructor + 5 del test)
+        _comandasServiceMock.Verify(c => c.BuscarComandasAsync(It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Exactly(6));
     }
 
     #endregion
@@ -390,7 +402,10 @@ public class ResilienceTests
     public async Task Resilience_Timeout_ComandasService_OperacionLenta()
     {
         // Arrange - Configurar timeout
-        _comandasServiceMock.Setup(c => c.ObtenerComandasActivasAsync(It.IsAny<CancellationToken>()))
+        _comandasServiceMock.Setup(c => c.BuscarComandasAsync(It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new TaskCanceledException("Operación cancelada por timeout"));
+        
+        _comandasServiceMock.Setup(c => c.ObtenerEstadisticasAsync(It.IsAny<CancellationToken>()))
             .ThrowsAsync(new TaskCanceledException("Operación cancelada por timeout"));
 
         var comandasViewModel = new ComandasViewModel(
@@ -405,8 +420,8 @@ public class ResilienceTests
         // Act - Intentar cargar comandas con timeout
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null);
 
-        // Assert - Verificar que se manejó el timeout
-        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        // Assert - Verificar que se manejó el timeout (3 llamadas: 1 del constructor + 2 del test)
+        _dialogServiceMock.Verify(d => d.ShowAlertAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Exactly(3));
         comandasViewModel.Comandas.Should().BeEmpty();
     }
 

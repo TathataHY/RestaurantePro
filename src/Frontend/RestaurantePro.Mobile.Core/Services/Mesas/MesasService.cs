@@ -3,6 +3,7 @@ using RestaurantePro.Mobile.Core.Services.Api;
 using RestaurantePro.Mobile.Core.Services.Authentication;
 using RestaurantePro.Mobile.Core.Models.Common;
 using System.Text.Json;
+using System.Net.Sockets;
 
 namespace RestaurantePro.Mobile.Core.Services.Mesas;
 
@@ -32,23 +33,50 @@ public class MesasService : IMesasService
         int? capacidadMinima = null,
         CancellationToken cancellationToken = default)
     {
-        if (cancellationToken.IsCancellationRequested)
-            return ApiResponse<List<MesaDto>>.ErrorResponse("Operación cancelada por el usuario");
-        var queryParams = new List<string>();
-        
-        if (!string.IsNullOrWhiteSpace(estado))
-            queryParams.Add($"estado={Uri.EscapeDataString(estado)}");
-        
-        if (!string.IsNullOrWhiteSpace(ubicacion))
-            queryParams.Add($"ubicacion={Uri.EscapeDataString(ubicacion)}");
-        
-        if (capacidadMinima.HasValue)
-            queryParams.Add($"capacidadMinima={capacidadMinima.Value}");
+        try
+        {
+            if (cancellationToken.IsCancellationRequested)
+                return ApiResponse<List<MesaDto>>.ErrorResponse("Operación cancelada por el usuario");
+            var queryParams = new List<string>();
+            
+            if (!string.IsNullOrWhiteSpace(estado))
+                queryParams.Add($"estado={Uri.EscapeDataString(estado)}");
+            
+            if (!string.IsNullOrWhiteSpace(ubicacion))
+                queryParams.Add($"ubicacion={Uri.EscapeDataString(ubicacion)}");
+            
+            if (capacidadMinima.HasValue)
+                queryParams.Add($"capacidadMinima={capacidadMinima.Value}");
 
-        var query = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
-        var endpoint = $"{BasePath}{query}";
-        var token = await _authService.GetTokenAsync();
-        return await _apiService.GetAsync<List<MesaDto>>(endpoint, token);
+            var query = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
+            var endpoint = $"{BasePath}{query}";
+            var token = await _authService.GetTokenAsync();
+            return await _apiService.GetAsync<List<MesaDto>>(endpoint, token);
+        }
+        catch (HttpRequestException ex)
+        {
+            return ApiResponse<List<MesaDto>>.ErrorResponse(ex.Message, "Error de comunicación con el servidor", 500);
+        }
+        catch (TaskCanceledException ex)
+        {
+            return ApiResponse<List<MesaDto>>.ErrorResponse(ex.Message, "Timeout de la operación", 408);
+        }
+        catch (IOException ex)
+        {
+            return ApiResponse<List<MesaDto>>.ErrorResponse(ex.Message, "Error de entrada/salida", 500);
+        }
+        catch (SocketException ex)
+        {
+            return ApiResponse<List<MesaDto>>.ErrorResponse(ex.Message, "Error de conexión de red", 500);
+        }
+        catch (AggregateException ex)
+        {
+            return ApiResponse<List<MesaDto>>.ErrorResponse(ex.Message, "Error de red", 500);
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse<List<MesaDto>>.ErrorResponse(ex.Message, "Error inesperado", 500);
+        }
     }
 
     /// <summary>

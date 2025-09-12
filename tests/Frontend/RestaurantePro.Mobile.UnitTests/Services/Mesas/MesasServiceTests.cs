@@ -630,7 +630,7 @@ public class MesasServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Success.Should().BeFalse(); // El servicio retorna error en estos casos
-        result.Errors.Should().Contain("Multiple errors");
+        result.Errors.Should().Contain("Multiple errors (Network error)");
     }
 
     [Fact]

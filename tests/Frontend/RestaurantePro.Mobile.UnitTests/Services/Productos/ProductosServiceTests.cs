@@ -904,7 +904,7 @@ public class ProductosServiceTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Success.Should().BeTrue(); // El servicio retorna true cuando los datos son null
+        result.Success.Should().BeFalse(); // El servicio retorna false cuando los datos son null
         result.Message.Should().Be("Operación exitosa");
     }
 

@@ -97,7 +97,7 @@ public class AuthService : IAuthService
 
             _logger.LogWarning("Login fallido para usuario: {Email}", email);
             return ApiResponse<AuthResponse>.ErrorResponse(
-                apiResponse?.Errors ?? new List<string> { "Error de autenticación" },
+                "Error de autenticación",
                 "Credenciales inválidas",
                 401);
         }

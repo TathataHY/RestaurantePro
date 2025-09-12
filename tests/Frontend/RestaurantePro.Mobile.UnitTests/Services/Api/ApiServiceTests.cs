@@ -682,7 +682,7 @@ public class ApiServiceTests
 
         // Assert
         Assert.False(result.Success);
-        Assert.Contains("error en la operación", result.Message.ToLower()); // El servicio retorna mensaje genérico
+        Assert.Contains("respuesta vacía del servidor", result.Error.ToLower()); // El servicio retorna mensaje genérico
     }
 
     [Fact]

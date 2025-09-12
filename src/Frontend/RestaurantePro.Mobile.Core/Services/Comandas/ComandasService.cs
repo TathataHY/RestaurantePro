@@ -41,7 +41,7 @@ public class ComandasService : IComandasService
 			else
 			{
 				var msg = result.Message ?? "Error al obtener comandas activas";
-				return ApiResponse<List<ComandaDto>>.ErrorResponse(msg, msg);
+				return ApiResponse<List<ComandaDto>>.ErrorResponse("Error en la operación", "Error en la operación");
 			}
 		}
 		catch (Exception ex)
