@@ -199,7 +199,7 @@ public class ReservacionesApiService : IReservacionesApiService
     /// <summary>
     /// Confirma una reservación
     /// </summary>
-    public async Task<ApiResponse<bool>?> ConfirmarReservacionAsync(ConfirmarReservacionRequest request)
+    public async Task<ApiResponse<bool>?> ConfirmarReservacionInternalAsync(ConfirmarReservacionRequest request)
     {
         try
         {
@@ -221,7 +221,7 @@ public class ReservacionesApiService : IReservacionesApiService
     /// <summary>
     /// Cancela una reservación
     /// </summary>
-    public async Task<ApiResponse<bool>?> CancelarReservacionAsync(CancelarReservacionRequest request)
+    public async Task<ApiResponse<bool>?> CancelarReservacionInternalAsync(CancelarReservacionRequest request)
     {
         try
         {
@@ -243,7 +243,7 @@ public class ReservacionesApiService : IReservacionesApiService
     /// <summary>
     /// Marca la llegada de una reservación
     /// </summary>
-    public async Task<ApiResponse<bool>?> MarcarLlegadaAsync(MarcarLlegadaRequest request)
+    public async Task<ApiResponse<bool>?> MarcarLlegadaInternalAsync(MarcarLlegadaRequest request)
     {
         try
         {
@@ -759,6 +759,57 @@ public class ReservacionesApiService : IReservacionesApiService
         catch (Exception ex)
         {
             Console.WriteLine($"Error al cambiar estado de reservación: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Confirma una reservación
+    /// </summary>
+    public async Task<bool> ConfirmarReservacionAsync(ConfirmarReservacionRequest request)
+    {
+        try
+        {
+            var response = await ConfirmarReservacionInternalAsync(request);
+            return response?.Success ?? false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al confirmar reservación: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Cancela una reservación
+    /// </summary>
+    public async Task<bool> CancelarReservacionAsync(CancelarReservacionRequest request)
+    {
+        try
+        {
+            var response = await CancelarReservacionInternalAsync(request);
+            return response?.Success ?? false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al cancelar reservación: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Marca la llegada de una reservación
+    /// </summary>
+    public async Task<bool> MarcarLlegadaAsync(MarcarLlegadaRequest request)
+    {
+        try
+        {
+            var response = await MarcarLlegadaInternalAsync(request);
+            return response?.Success ?? false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al marcar llegada: {ex.Message}");
             return false;
         }
     }

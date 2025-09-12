@@ -51,7 +51,7 @@ else
                             <div class="d-flex align-items-center">
                                 <div class="me-2">
                                     <small class="text-muted">Actual:</small><br>
-                                    <strong>@ingrediente.StockActual.ToString("N2") @ingrediente.UnidadMedida}</strong>
+                                    <strong>@ingrediente.StockActual.ToString("N2") @GetUnidadMedidaAbreviada(ingrediente.UnidadMedida)</strong>
                                 </div>
                                 <div class="ms-2">
                                     <small class="text-muted">Min:</small><br>
@@ -97,7 +97,7 @@ else
                             <br><small class="text-muted">Total: $@((ingrediente.StockActual * ingrediente.CostoUnitario).ToString("N2"))</small>
                         </td>
                         <td>
-                            @if (ingrediente.FechaVencimiento != DateTime.MinValue)
+                            @if (ingrediente.FechaVencimiento.HasValue && ingrediente.FechaVencimiento != DateTime.MinValue)
                             {
                                 <span class="@GetVencimientoClass(ingrediente.FechaVencimiento.Value)">
                                     @ingrediente.FechaVencimiento?.ToString("dd/MM/yyyy")
@@ -229,5 +229,27 @@ else
             return "Vence mañana";
         
         return $"Vence en {dias} días";
+    }
+
+    private string GetUnidadMedidaAbreviada(UnidadMedida unidad)
+    {
+        return unidad switch
+        {
+            UnidadMedida.Kilogramo => "kg",
+            UnidadMedida.Gramo => "g",
+            UnidadMedida.Litro => "L",
+            UnidadMedida.Mililitro => "ml",
+            UnidadMedida.Unidad => "u",
+            UnidadMedida.Metro => "m",
+            UnidadMedida.Centimetro => "cm",
+            UnidadMedida.MetroCuadrado => "m²",
+            UnidadMedida.MetroCubico => "m³",
+            UnidadMedida.Hora => "h",
+            UnidadMedida.Dia => "d",
+            UnidadMedida.Semana => "sem",
+            UnidadMedida.Mes => "mes",
+            UnidadMedida.Año => "año",
+            _ => unidad.ToString()
+        };
     }
 }

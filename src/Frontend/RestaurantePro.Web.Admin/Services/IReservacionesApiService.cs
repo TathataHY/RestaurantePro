@@ -10,4 +10,7 @@ public interface IReservacionesApiService
     Task<ReservacionDto?> ActualizarReservacionAsync(Guid id, ActualizarReservacionRequest request);
     Task<bool> EliminarReservacionAsync(Guid id);
     Task<bool> CambiarEstadoReservacionAsync(Guid id, EstadoReservacion estado);
+    Task<bool> ConfirmarReservacionAsync(ConfirmarReservacionRequest request);
+    Task<bool> CancelarReservacionAsync(CancelarReservacionRequest request);
+    Task<bool> MarcarLlegadaAsync(MarcarLlegadaRequest request);
 }

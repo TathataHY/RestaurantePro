@@ -12,12 +12,12 @@ namespace RestaurantePro.Web.Admin.UnitTests.Pages;
 
 public class DashboardPageTests : TestContext
 {
-    private readonly Mock<DashboardApiService> _dashboardApiMock;
+    private readonly Mock<IDashboardApiService> _dashboardApiMock;
     private readonly Mock<IJSRuntime> _jsRuntimeMock;
 
     public DashboardPageTests()
     {
-        _dashboardApiMock = new Mock<DashboardApiService>(Mock.Of<IHttpClientFactory>(), Mock.Of<TokenStore>());
+        _dashboardApiMock = new Mock<IDashboardApiService>();
         _jsRuntimeMock = new Mock<IJSRuntime>();
 
         Services.AddSingleton(_dashboardApiMock.Object);
@@ -30,7 +30,7 @@ public class DashboardPageTests : TestContext
     public void Renderizar_DeberiaMostrarTituloYDescripcion()
     {
         // Arrange
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
             .ReturnsAsync(new DashboardResumenDto());
 
         // Act
@@ -45,7 +45,7 @@ public class DashboardPageTests : TestContext
     public void Renderizar_DeberiaMostrarBotonPersonalizarWidgets()
     {
         // Arrange
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
             .ReturnsAsync(new DashboardResumenDto());
 
         // Act
@@ -63,14 +63,16 @@ public class DashboardPageTests : TestContext
     public void Renderizar_ConCargandoTrue_DeberiaMostrarSpinner()
     {
         // Arrange
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
-            .ReturnsAsync((DashboardResumenDto?)null);
+        // Configuramos el mock para que nunca se complete (simulando carga infinita)
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
+            .Returns(new Task<DashboardResumenDto?>(() => null));
 
         // Act
         var component = RenderComponent<RestaurantePro.Web.Admin.Pages.Index>();
 
         // Assert
-        component.Find("div:contains('Cargando dashboard...')").Should().NotBeNull();
+        // El spinner se muestra inicialmente antes de que se complete la carga
+        component.Find("p:contains('Cargando dashboard...')").Should().NotBeNull();
         component.Find("div.animate-spin").Should().NotBeNull();
     }
 
@@ -78,7 +80,7 @@ public class DashboardPageTests : TestContext
     public void Renderizar_ConResumenNull_DeberiaMostrarError()
     {
         // Arrange
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
             .ReturnsAsync((DashboardResumenDto?)null);
 
         // Act
@@ -106,11 +108,14 @@ public class DashboardPageTests : TestContext
             IngresosPorHora = new List<IngresosPorHoraDto>()
         };
 
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
             .ReturnsAsync(resumen);
 
         // Act
         var component = RenderComponent<RestaurantePro.Web.Admin.Pages.Index>();
+        
+        // Esperar a que se complete la carga asíncrona
+        component.WaitForAssertion(() => component.Find("h2:contains('Métricas Principales')").Should().NotBeNull());
 
         // Assert
         component.Find("h2:contains('Métricas Principales')").Should().NotBeNull();
@@ -137,11 +142,14 @@ public class DashboardPageTests : TestContext
             IngresosPorHora = new List<IngresosPorHoraDto>()
         };
 
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
             .ReturnsAsync(resumen);
 
         // Act
         var component = RenderComponent<RestaurantePro.Web.Admin.Pages.Index>();
+        
+        // Esperar a que se complete la carga asíncrona
+        component.WaitForAssertion(() => component.Find("h2:contains('Métricas Principales')").Should().NotBeNull());
 
         // Assert
         component.Find("p:contains('Ventas del Día')").Should().NotBeNull();
@@ -167,11 +175,14 @@ public class DashboardPageTests : TestContext
             IngresosPorHora = new List<IngresosPorHoraDto>()
         };
 
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
             .ReturnsAsync(resumen);
 
         // Act
         var component = RenderComponent<RestaurantePro.Web.Admin.Pages.Index>();
+        
+        // Esperar a que se complete la carga asíncrona
+        component.WaitForAssertion(() => component.Find("h2:contains('Métricas Principales')").Should().NotBeNull());
 
         // Assert
         component.Find("p:contains('$1,500')").Should().NotBeNull();
@@ -191,11 +202,14 @@ public class DashboardPageTests : TestContext
             IngresosPorHora = new List<IngresosPorHoraDto>()
         };
 
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
             .ReturnsAsync(resumen);
 
         // Act
         var component = RenderComponent<RestaurantePro.Web.Admin.Pages.Index>();
+        
+        // Esperar a que se complete la carga asíncrona
+        component.WaitForAssertion(() => component.Find("h2:contains('Métricas Principales')").Should().NotBeNull());
 
         // Assert
         component.Find("canvas#graficoVentasHora").Should().NotBeNull();
@@ -212,11 +226,14 @@ public class DashboardPageTests : TestContext
             IngresosPorHora = new List<IngresosPorHoraDto>()
         };
 
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
             .ReturnsAsync(resumen);
 
         // Act
         var component = RenderComponent<RestaurantePro.Web.Admin.Pages.Index>();
+        
+        // Esperar a que se complete la carga asíncrona
+        component.WaitForAssertion(() => component.Find("h2:contains('Métricas Principales')").Should().NotBeNull());
 
         // Assert
         component.Find("p:contains('Ventas por Hora')").Should().NotBeNull();
@@ -238,11 +255,14 @@ public class DashboardPageTests : TestContext
             IngresosPorHora = new List<IngresosPorHoraDto>()
         };
 
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
             .ReturnsAsync(resumen);
 
         // Act
         var component = RenderComponent<RestaurantePro.Web.Admin.Pages.Index>();
+        
+        // Esperar a que se complete la carga asíncrona
+        component.WaitForAssertion(() => component.Find("h2:contains('Métricas Principales')").Should().NotBeNull());
 
         // Assert
         component.Find("p:contains('Comandas Activas')").Should().NotBeNull();
@@ -263,11 +283,14 @@ public class DashboardPageTests : TestContext
             IngresosPorHora = new List<IngresosPorHoraDto>()
         };
 
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
             .ReturnsAsync(resumen);
 
         // Act
         var component = RenderComponent<RestaurantePro.Web.Admin.Pages.Index>();
+        
+        // Esperar a que se complete la carga asíncrona
+        component.WaitForAssertion(() => component.Find("h2:contains('Métricas Principales')").Should().NotBeNull());
 
         // Assert
         component.Find("p:contains('15 comandas activas')").Should().NotBeNull();
@@ -286,11 +309,14 @@ public class DashboardPageTests : TestContext
             IngresosPorHora = new List<IngresosPorHoraDto>()
         };
 
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
             .ReturnsAsync(resumen);
 
         // Act
         var component = RenderComponent<RestaurantePro.Web.Admin.Pages.Index>();
+        
+        // Esperar a que se complete la carga asíncrona
+        component.WaitForAssertion(() => component.Find("h2:contains('Métricas Principales')").Should().NotBeNull());
 
         // Assert
         component.Find("h2:contains('Alertas y Notificaciones')").Should().NotBeNull();
@@ -310,11 +336,14 @@ public class DashboardPageTests : TestContext
             IngresosPorHora = new List<IngresosPorHoraDto>()
         };
 
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
             .ReturnsAsync(resumen);
 
         // Act
         var component = RenderComponent<RestaurantePro.Web.Admin.Pages.Index>();
+        
+        // Esperar a que se complete la carga asíncrona
+        component.WaitForAssertion(() => component.Find("h2:contains('Métricas Principales')").Should().NotBeNull());
 
         // Assert
         var iconos = component.FindAll("span.material-symbols-outlined");
@@ -337,11 +366,14 @@ public class DashboardPageTests : TestContext
             IngresosPorHora = new List<IngresosPorHoraDto>()
         };
 
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
             .ReturnsAsync(resumen);
 
         // Act
         var component = RenderComponent<RestaurantePro.Web.Admin.Pages.Index>();
+        
+        // Esperar a que se complete la carga asíncrona
+        component.WaitForAssertion(() => component.Find("h2:contains('Métricas Principales')").Should().NotBeNull());
 
         // Assert
         component.Find("h2:contains('Accesos Rápidos')").Should().NotBeNull();
@@ -361,11 +393,14 @@ public class DashboardPageTests : TestContext
             IngresosPorHora = new List<IngresosPorHoraDto>()
         };
 
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
             .ReturnsAsync(resumen);
 
         // Act
         var component = RenderComponent<RestaurantePro.Web.Admin.Pages.Index>();
+        
+        // Esperar a que se complete la carga asíncrona
+        component.WaitForAssertion(() => component.Find("h2:contains('Métricas Principales')").Should().NotBeNull());
 
         // Assert
         var iconos = component.FindAll("span.material-symbols-outlined");
@@ -387,11 +422,14 @@ public class DashboardPageTests : TestContext
             IngresosPorHora = new List<IngresosPorHoraDto>()
         };
 
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
             .ReturnsAsync(resumen);
 
         // Act
         var component = RenderComponent<RestaurantePro.Web.Admin.Pages.Index>();
+        
+        // Esperar a que se complete la carga asíncrona
+        component.WaitForAssertion(() => component.Find("h2:contains('Métricas Principales')").Should().NotBeNull());
 
         // Assert
         var grid = component.Find("div.grid");
@@ -411,11 +449,14 @@ public class DashboardPageTests : TestContext
             IngresosPorHora = new List<IngresosPorHoraDto>()
         };
 
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
             .ReturnsAsync(resumen);
 
         // Act
         var component = RenderComponent<RestaurantePro.Web.Admin.Pages.Index>();
+        
+        // Esperar a que se complete la carga asíncrona
+        component.WaitForAssertion(() => component.Find("h2:contains('Métricas Principales')").Should().NotBeNull());
 
         // Assert
         var contenedor = component.Find("div.bg-gray-50");
@@ -437,11 +478,14 @@ public class DashboardPageTests : TestContext
             IngresosPorHora = new List<IngresosPorHoraDto>()
         };
 
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
             .ReturnsAsync(resumen);
 
         // Act
         var component = RenderComponent<RestaurantePro.Web.Admin.Pages.Index>();
+        
+        // Esperar a que se complete la carga asíncrona
+        component.WaitForAssertion(() => component.Find("h2:contains('Métricas Principales')").Should().NotBeNull());
 
         // Assert
         var botones = component.FindAll("button");
@@ -464,11 +508,14 @@ public class DashboardPageTests : TestContext
             IngresosPorHora = new List<IngresosPorHoraDto>()
         };
 
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
             .ReturnsAsync(resumen);
 
         // Act
         var component = RenderComponent<RestaurantePro.Web.Admin.Pages.Index>();
+        
+        // Esperar a que se complete la carga asíncrona
+        component.WaitForAssertion(() => component.Find("h2:contains('Métricas Principales')").Should().NotBeNull());
 
         // Assert
         var botonPersonalizar = component.Find("button:contains('Personalizar Widgets')");
@@ -491,11 +538,14 @@ public class DashboardPageTests : TestContext
             IngresosPorHora = new List<IngresosPorHoraDto>()
         };
 
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
             .ReturnsAsync(resumen);
 
         // Act
         var component = RenderComponent<RestaurantePro.Web.Admin.Pages.Index>();
+        
+        // Esperar a que se complete la carga asíncrona
+        component.WaitForAssertion(() => component.Find("h2:contains('Métricas Principales')").Should().NotBeNull());
 
         // Assert
         var iconos = component.FindAll("span.material-symbols-outlined");
@@ -509,14 +559,15 @@ public class DashboardPageTests : TestContext
     public void Renderizar_DeberiaInicializarConCargandoTrue()
     {
         // Arrange
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
-            .ReturnsAsync((DashboardResumenDto?)null);
+        // Configuramos el mock para que nunca se complete (simulando carga infinita)
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
+            .Returns(new Task<DashboardResumenDto?>(() => null));
 
         // Act
         var component = RenderComponent<RestaurantePro.Web.Admin.Pages.Index>();
 
         // Assert
-        component.Find("div:contains('Cargando dashboard...')").Should().NotBeNull();
+        component.Find("p:contains('Cargando dashboard...')").Should().NotBeNull();
     }
 
     // ===== PRUEBAS DE CANVAS =====
@@ -531,11 +582,14 @@ public class DashboardPageTests : TestContext
             IngresosPorHora = new List<IngresosPorHoraDto>()
         };
 
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
             .ReturnsAsync(resumen);
 
         // Act
         var component = RenderComponent<RestaurantePro.Web.Admin.Pages.Index>();
+        
+        // Esperar a que se complete la carga asíncrona
+        component.WaitForAssertion(() => component.Find("h2:contains('Métricas Principales')").Should().NotBeNull());
 
         // Assert
         var canvas = component.FindAll("canvas");
@@ -556,11 +610,14 @@ public class DashboardPageTests : TestContext
             IngresosPorHora = new List<IngresosPorHoraDto>()
         };
 
-        _dashboardApiMock.Setup(x => x.ObtenerResumenAsync())
+        _dashboardApiMock.Setup(x => x.ObtenerDashboardAsync())
             .ReturnsAsync(resumen);
 
         // Act
         var component = RenderComponent<RestaurantePro.Web.Admin.Pages.Index>();
+        
+        // Esperar a que se complete la carga asíncrona
+        component.WaitForAssertion(() => component.Find("h2:contains('Métricas Principales')").Should().NotBeNull());
 
         // Assert
         var elementosResponsivos = component.FindAll("[class*='sm:'], [class*='lg:'], [class*='md:']");

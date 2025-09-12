@@ -496,14 +496,14 @@
                 };
 
                 var resultado = await ReservacionesApi.ConfirmarReservacionAsync(request);
-                if (resultado?.Success == true)
+                if (resultado)
                 {
                     await CargarReservaciones();
                     await JSRuntime.InvokeVoidAsync("alert", "Reservación confirmada correctamente");
                 }
                 else
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al confirmar la reservación");
+                    await JSRuntime.InvokeVoidAsync("alert", "Error al confirmar la reservación");
                 }
             }
             catch (Exception ex)
@@ -538,14 +538,14 @@
                 };
 
                 var resultado = await ReservacionesApi.CancelarReservacionAsync(request);
-                if (resultado?.Success == true)
+                if (resultado)
                 {
                     await CargarReservaciones();
                     await JSRuntime.InvokeVoidAsync("alert", "Reservación cancelada correctamente");
                 }
                 else
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al cancelar la reservación");
+                    await JSRuntime.InvokeVoidAsync("alert", "Error al cancelar la reservación");
                 }
             }
             catch (Exception ex)
@@ -571,14 +571,14 @@
                 };
 
                 var resultado = await ReservacionesApi.MarcarLlegadaAsync(request);
-                if (resultado?.Success == true)
+                if (resultado)
                 {
                     await CargarReservaciones();
                     await JSRuntime.InvokeVoidAsync("alert", "Llegada marcada correctamente");
                 }
                 else
                 {
-                    await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al marcar la llegada");
+                    await JSRuntime.InvokeVoidAsync("alert", "Error al marcar la llegada");
                 }
             }
             catch (Exception ex)

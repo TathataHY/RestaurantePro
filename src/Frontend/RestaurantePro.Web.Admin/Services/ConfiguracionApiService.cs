@@ -49,18 +49,18 @@ public class ConfiguracionApiService : IConfiguracionApiService
     /// <summary>
     /// Obtiene configuración por categoría
     /// </summary>
-    public async Task<List<ConfiguracionDto>> ObtenerPorCategoriaAsync(string categoria)
+    public async Task<List<ConfiguracionDto>?> ObtenerPorCategoriaAsync(string categoria)
     {
         try
         {
             var http = CreateClient();
             var resp = await http.GetFromJsonAsync<ApiResponse<List<ConfiguracionDto>>>($"api/admin/configuracion/categoria/{categoria}");
-            return resp?.Data ?? new List<ConfiguracionDto>();
+            return resp?.Data;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error al obtener configuración de categoría {categoria}: {ex.Message}");
-            return new List<ConfiguracionDto>();
+            return null;
         }
     }
 

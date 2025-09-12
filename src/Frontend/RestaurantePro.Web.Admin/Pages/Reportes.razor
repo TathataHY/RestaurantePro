@@ -1,8 +1,8 @@
 @attribute [Authorize]
 @page "/reportes"
-@inject RestaurantePro.Web.Admin.Services.ReportesApiService ReportesApi
-@inject RestaurantePro.Web.Admin.Services.ReportesComercialesApiService ReportesComercialesApi
-@inject RestaurantePro.Web.Admin.Services.ReportesInventarioApiService ReportesInventarioApi
+@inject RestaurantePro.Web.Admin.Services.IReportesApiService ReportesApi
+@inject RestaurantePro.Web.Admin.Services.IReportesComercialesApiService ReportesComercialesApi
+@inject RestaurantePro.Web.Admin.Services.IReportesInventarioApiService ReportesInventarioApi
 @using RestaurantePro.Web.Admin.Models
 @using RestaurantePro.Web.Admin.Components
 @inject IJSRuntime JSRuntime

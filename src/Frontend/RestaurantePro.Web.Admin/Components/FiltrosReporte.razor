@@ -1,7 +1,7 @@
 @using RestaurantePro.Web.Admin.Models
-@inject RestaurantePro.Web.Admin.Services.UsuariosApiService UsuariosApi
-@inject RestaurantePro.Web.Admin.Services.MesasApiService MesasApi
-@inject RestaurantePro.Web.Admin.Services.CategoriasApiService CategoriasApi
+@inject RestaurantePro.Web.Admin.Services.IUsuariosApiService UsuariosApi
+@inject RestaurantePro.Web.Admin.Services.IMesasApiService MesasApi
+@inject RestaurantePro.Web.Admin.Services.ICategoriasApiService CategoriasApi
 
 <div class="card">
     <div class="card-header">
@@ -192,7 +192,7 @@
     {
         try
         {
-            mesas = await MesasApi.ObtenerAsync();
+            mesas = await MesasApi.ObtenerMesasAsync();
         }
         catch (Exception ex)
         {
@@ -205,7 +205,7 @@
     {
         try
         {
-            categorias = await CategoriasApi.ObtenerAsync() ?? new List<CategoriaProductoDto>();
+            categorias = await CategoriasApi.ObtenerCategoriasAsync() ?? new List<CategoriaProductoDto>();
         }
         catch (Exception ex)
         {

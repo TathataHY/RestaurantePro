@@ -8,4 +8,7 @@ public interface IReportesApiService
     Task<ReporteDto?> ObtenerReportePorIdAsync(Guid id);
     Task<byte[]?> GenerarReporteAsync(Guid reporteId, Dictionary<string, object> parametros);
     Task<List<TipoReporte>> ObtenerTiposReporteAsync();
+    Task<ReporteEstadisticasDto?> ObtenerEstadisticasAsync();
+    Task<ReporteVentasDto?> GenerarReporteVentasAsync(ReporteFiltrosDto filtros);
+    Task<ReporteProductosDto?> GenerarReporteProductosAsync(ReporteFiltrosDto filtros);
 }

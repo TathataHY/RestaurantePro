@@ -43,16 +43,18 @@ public class ConfiguracionApiServiceTests
     public async Task ObtenerConfiguracionAsync_ConRespuestaExitosa_DeberiaRetornarLista()
     {
         // Arrange
-        var configuraciones = new List<ConfiguracionDto>
+        var configuracion = new ConfiguracionDto
         {
-            new() { Id = Guid.NewGuid(), Clave = "nombre_restaurante", Valor = "Mi Restaurante", Categoria = "general" },
-            new() { Id = Guid.NewGuid(), Clave = "telefono", Valor = "555-1234", Categoria = "contacto" }
+            Id = Guid.NewGuid(),
+            Clave = "nombre_restaurante",
+            Valor = "Mi Restaurante",
+            Categoria = "general"
         };
 
-        var responseContent = JsonSerializer.Serialize(new ApiResponse<List<ConfiguracionDto>>
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<ConfiguracionDto>
         {
             Success = true,
-            Data = configuraciones
+            Data = configuracion
         });
 
         _httpMessageHandlerMock.Protected()
@@ -309,10 +311,10 @@ public class ConfiguracionApiServiceTests
             }
         };
 
-        var responseContent = JsonSerializer.Serialize(new ApiResponse<List<ConfiguracionDto>>
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<ConfiguracionDto>
         {
             Success = true,
-            Data = configuracionesExtremas
+            Data = configuracionesExtremas[0]
         });
 
         _httpMessageHandlerMock.Protected()
@@ -328,7 +330,7 @@ public class ConfiguracionApiServiceTests
 
         // Assert
         resultado.Should().NotBeNull();
-        resultado!.Clave.Should().Be("test_key");
+        resultado!.Clave.Should().Be(new string('A', 1000));
     }
 
     [Fact]
@@ -485,10 +487,10 @@ public class ConfiguracionApiServiceTests
             new() { Id = Guid.NewGuid(), Clave = "test2", Valor = "valor2", Categoria = "general" }
         };
 
-        var responseContent = JsonSerializer.Serialize(new ApiResponse<List<ConfiguracionDto>>
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<ConfiguracionDto>
         {
             Success = true,
-            Data = configuraciones
+            Data = configuraciones[0]
         });
 
         _httpMessageHandlerMock.Protected()
@@ -704,10 +706,10 @@ public class ConfiguracionApiServiceTests
             FechaActualizacion = DateTime.Now.AddDays(-i + 1)
         }).ToList();
 
-        var responseContent = JsonSerializer.Serialize(new ApiResponse<List<ConfiguracionDto>>
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<ConfiguracionDto>
         {
             Success = true,
-            Data = configuracionesMasivas
+            Data = configuracionesMasivas[0]
         });
 
         _httpMessageHandlerMock.Protected()
@@ -947,10 +949,10 @@ public class ConfiguracionApiServiceTests
             new() { Id = Guid.NewGuid(), Clave = "concurrent_test", Valor = "valor", Categoria = "test" }
         };
 
-        var responseContent = JsonSerializer.Serialize(new ApiResponse<List<ConfiguracionDto>>
+        var responseContent = JsonSerializer.Serialize(new ApiResponse<ConfiguracionDto>
         {
             Success = true,
-            Data = configuraciones
+            Data = configuraciones[0]
         });
 
         _httpMessageHandlerMock.Protected()
