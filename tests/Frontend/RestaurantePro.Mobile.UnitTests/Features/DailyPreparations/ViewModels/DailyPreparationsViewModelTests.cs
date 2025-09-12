@@ -716,7 +716,7 @@ namespace RestaurantePro.Mobile.UnitTests.Features.DailyPreparations.ViewModels
             await vm.CrearNuevaPreparacionCommand.ExecuteAsync(null);
 
             // Assert
-            _mockNav.Verify(n => n.NavigateToAsync("crear-preparacion-diaria", null), Times.Once);
+            _mockNav.Verify(n => n.NavigateToAsync("crear-preparacion-diaria"), Times.Once); // El ViewModel llama sin parámetros adicionales
         }
 
         #endregion

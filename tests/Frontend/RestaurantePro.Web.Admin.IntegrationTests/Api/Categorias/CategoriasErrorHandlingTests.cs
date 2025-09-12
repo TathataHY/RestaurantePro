@@ -227,12 +227,11 @@ public class CategoriasErrorHandlingTests : BaseIntegrationTest
         // Arrange
         _client.Timeout = TimeSpan.FromMilliseconds(100);
 
-        // Act
-        var response = await _client.GetAsync("/api/core/categorias");
-
-        // Assert
-        // El timeout puede causar una excepción, pero el endpoint debería responder normalmente
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.RequestTimeout);
+        // Act & Assert
+        // El timeout muy corto debe causar una TaskCanceledException
+        var act = async () => await _client.GetAsync("/api/core/categorias");
+        await act.Should().ThrowAsync<TaskCanceledException>()
+            .WithMessage("*canceled*");
     }
 
     #endregion

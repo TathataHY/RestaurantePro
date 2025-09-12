@@ -15,6 +15,9 @@ public class ReportesPageTests : TestContext
     private readonly Mock<ReportesApiService> _reportesApiMock;
     private readonly Mock<ReportesComercialesApiService> _reportesComercialesApiMock;
     private readonly Mock<ReportesInventarioApiService> _reportesInventarioApiMock;
+    private readonly Mock<UsuariosApiService> _usuariosApiMock;
+    private readonly Mock<MesasApiService> _mesasApiMock;
+    private readonly Mock<CategoriasApiService> _categoriasApiMock;
     private readonly Mock<IJSRuntime> _jsRuntimeMock;
 
     public ReportesPageTests()
@@ -22,12 +25,26 @@ public class ReportesPageTests : TestContext
         _reportesApiMock = new Mock<ReportesApiService>(Mock.Of<IHttpClientFactory>(), Mock.Of<TokenStore>());
         _reportesComercialesApiMock = new Mock<ReportesComercialesApiService>(Mock.Of<IHttpClientFactory>(), Mock.Of<TokenStore>());
         _reportesInventarioApiMock = new Mock<ReportesInventarioApiService>(Mock.Of<IHttpClientFactory>(), Mock.Of<TokenStore>());
+        _usuariosApiMock = new Mock<UsuariosApiService>(Mock.Of<IHttpClientFactory>(), Mock.Of<TokenStore>());
+        _mesasApiMock = new Mock<MesasApiService>(Mock.Of<IHttpClientFactory>(), Mock.Of<TokenStore>());
+        _categoriasApiMock = new Mock<CategoriasApiService>(Mock.Of<IHttpClientFactory>(), Mock.Of<TokenStore>());
         _jsRuntimeMock = new Mock<IJSRuntime>();
 
         Services.AddSingleton(_reportesApiMock.Object);
         Services.AddSingleton(_reportesComercialesApiMock.Object);
         Services.AddSingleton(_reportesInventarioApiMock.Object);
+        Services.AddSingleton(_usuariosApiMock.Object);
+        Services.AddSingleton(_mesasApiMock.Object);
+        Services.AddSingleton(_categoriasApiMock.Object);
         Services.AddSingleton(_jsRuntimeMock.Object);
+
+        // Configurar mocks con datos por defecto
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(1, 1000, null, true, "NombreCompleto", "asc"))
+            .ReturnsAsync(new List<UsuarioDto>());
+        _mesasApiMock.Setup(x => x.ObtenerAsync(null, null, null))
+            .ReturnsAsync(new List<MesaDto>());
+        _categoriasApiMock.Setup(x => x.ObtenerAsync(false, false))
+            .ReturnsAsync(new List<CategoriaProductoDto>());
     }
 
     // ===== PRUEBAS BÁSICAS DE RENDERIZADO =====
