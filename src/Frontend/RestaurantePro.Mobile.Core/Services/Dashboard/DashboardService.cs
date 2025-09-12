@@ -37,8 +37,17 @@ public class DashboardService : IDashboardService
             
             if (response.Success && response.Data != null)
             {
-                _logger.LogInformation("Ventas del día obtenidas exitosamente: {TotalVentas}", response.Data.TotalVentas);
-                return response.Data.TotalVentas;
+                var totalVentas = response.Data.TotalVentas;
+                
+                // Validar que las ventas sean consistentes (no negativas)
+                if (totalVentas < 0)
+                {
+                    _logger.LogWarning("Datos inconsistentes recibidos: ventas negativas ({TotalVentas}), usando datos simulados", totalVentas);
+                    return await GetSimulatedTodaySalesAsync();
+                }
+                
+                _logger.LogInformation("Ventas del día obtenidas exitosamente: {TotalVentas}", totalVentas);
+                return totalVentas;
             }
             else
             {

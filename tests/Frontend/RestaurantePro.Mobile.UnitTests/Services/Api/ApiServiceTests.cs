@@ -805,10 +805,6 @@ public class ApiServiceTests
         // Arrange
         var expectedData = new { Id = 1, Name = "Test" };
         var jsonResponse = JsonSerializer.Serialize(ApiResponse<object>.SuccessResponse(expectedData, "Success"));
-        var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
-        {
-            Content = new StringContent(jsonResponse, Encoding.UTF8, "application/json")
-        };
 
         _mockHttpMessageHandler
             .Protected()
@@ -816,7 +812,10 @@ public class ApiServiceTests
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(httpResponse);
+            .ReturnsAsync(() => new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(jsonResponse, Encoding.UTF8, "application/json")
+            });
 
         // Act
         var task1 = _apiService.GetAsync<object>("test-endpoint-1");
@@ -836,10 +835,6 @@ public class ApiServiceTests
         var requestData = new { Name = "Test", Value = 123 };
         var expectedResponse = new { Id = 1, Name = "Test", Value = 123 };
         var jsonResponse = JsonSerializer.Serialize(ApiResponse<object>.SuccessResponse(expectedResponse, "Created"));
-        var httpResponse = new HttpResponseMessage(HttpStatusCode.Created)
-        {
-            Content = new StringContent(jsonResponse, Encoding.UTF8, "application/json")
-        };
 
         _mockHttpMessageHandler
             .Protected()
@@ -847,7 +842,10 @@ public class ApiServiceTests
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(httpResponse);
+            .ReturnsAsync(() => new HttpResponseMessage(HttpStatusCode.Created)
+            {
+                Content = new StringContent(jsonResponse, Encoding.UTF8, "application/json")
+            });
 
         // Act
         var task1 = _apiService.PostAsync<object>("test-endpoint-1", requestData);
