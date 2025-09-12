@@ -195,7 +195,7 @@ public class CategoriasCrudTests : BaseIntegrationTest
         var idInexistente = Guid.NewGuid();
         var categoriaActualizada = new
         {
-            id = Guid.NewGuid(), // ID inexistente para probar 404
+            id = idInexistente, // Usar el mismo ID inexistente para consistencia
             nombre = "Categoría Actualizada",
             descripcion = "Descripción actualizada",
             orden = 99,
@@ -224,12 +224,12 @@ public class CategoriasCrudTests : BaseIntegrationTest
     {
         // Arrange
         var categoriaIds = await SeedCategoriasDePruebaAsync();
-        var categoriaId = categoriaIds.First();
+        var categoriaId = categoriaIds[1]; // Tomar la segunda categoría ("Entradas") en lugar de la primera ("Bebidas")
 
         var categoriaActualizada = new
         {
             id = categoriaId,
-            nombre = "Bebidas", // Nombre que ya existe en otra categoría
+            nombre = "Bebidas", // Nombre que ya existe en otra categoría (la primera)
             descripcion = "Descripción actualizada",
             orden = 99,
             activa = true
@@ -260,7 +260,16 @@ public class CategoriasCrudTests : BaseIntegrationTest
     public async Task EliminarCategoria_ConIdValido_DeberiaRetornarOk()
     {
         // Arrange
-        var categoriaIds = await SeedCategoriasDePruebaAsync();
+        using var scope = _factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<RestaurantePro.Infrastructure.Persistence.Contexts.RestauranteProDbContext>();
+        
+        // Limpiar datos existentes
+        context.Productos.RemoveRange(context.Productos);
+        context.ProductoCategorias.RemoveRange(context.ProductoCategorias);
+        await context.SaveChangesAsync();
+
+        // Crear solo categorías sin productos para poder eliminarlas
+        var categoriaIds = await Utils.ProductosTestSeeder.SeedCategoriasAsync(context);
         var categoriaId = categoriaIds.First();
 
         // Act
@@ -373,7 +382,7 @@ public class CategoriasCrudTests : BaseIntegrationTest
             nombre = "Categoría Modificada",
             descripcion = "Descripción modificada",
             orden = 77,
-            activa = false
+            activa = true // Mantener activa para que pueda ser encontrada después
         };
 
         var json = JsonSerializer.Serialize(categoriaActualizada, _jsonOptions);

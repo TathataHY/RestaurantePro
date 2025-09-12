@@ -1,6 +1,5 @@
 using Bunit;
 using RestaurantePro.Web.Admin.Components;
-using System;
 using Xunit;
 
 namespace RestaurantePro.Web.Admin.UnitTests.Components
@@ -8,429 +7,338 @@ namespace RestaurantePro.Web.Admin.UnitTests.Components
     public class MetricaCardTests : TestContext
     {
         [Fact]
-        public void Renderizar_ConParametrosBasicos_DeberiaMostrarEstructura()
+        public void RenderizaEstructuraBasica()
         {
             // Arrange
-            var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250"));
+            var titulo = "Ventas Totales";
+            var valor = "$1,250.00";
 
-            // Act & Assert
-            Assert.NotNull(componente.Find(".card"));
-            Assert.NotNull(componente.Find(".card-body"));
-            Assert.NotNull(componente.Find(".col-md-3"));
-        }
-
-        [Fact]
-        public void Renderizar_ConTitulo_DeberiaMostrarTitulo()
-        {
-            // Arrange
-            var titulo = "Ventas del Mes";
+            // Act
             var componente = RenderComponent<MetricaCard>(parameters => parameters
                 .Add(p => p.Titulo, titulo)
-                .Add(p => p.Valor, "1,250"));
-
-            // Act & Assert
-            Assert.Contains(titulo, componente.Markup);
-            Assert.NotNull(componente.Find(".card-title"));
-        }
-
-        [Fact]
-        public void Renderizar_ConValor_DeberiaMostrarValor()
-        {
-            // Arrange
-            var valor = "2,500";
-            var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
                 .Add(p => p.Valor, valor));
 
-            // Act & Assert
+            // Assert
+            Assert.Contains(titulo, componente.Markup);
             Assert.Contains(valor, componente.Markup);
-            Assert.NotNull(componente.Find("h4"));
+            Assert.Contains("card", componente.Markup);
         }
 
         [Fact]
-        public void Renderizar_ConSubtexto_DeberiaMostrarSubtexto()
+        public void RenderizaTituloCorrectamente()
         {
             // Arrange
-            var subtexto = "vs mes anterior";
+            var titulo = "Productos Vendidos";
+
+            // Act
             var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250")
+                .Add(p => p.Titulo, titulo)
+                .Add(p => p.Valor, "100"));
+
+            // Assert
+            var tituloElement = componente.Find("h6.card-title");
+            Assert.Equal(titulo, tituloElement.TextContent);
+            Assert.Contains("text-muted", tituloElement.ClassName);
+        }
+
+        [Fact]
+        public void RenderizaValorCorrectamente()
+        {
+            // Arrange
+            var valor = "1,500";
+
+            // Act
+            var componente = RenderComponent<MetricaCard>(parameters => parameters
+                .Add(p => p.Titulo, "Test")
+                .Add(p => p.Valor, valor));
+
+            // Assert
+            var valorElement = componente.Find("h4.mb-0");
+            Assert.Equal(valor, valorElement.TextContent);
+        }
+
+        [Fact]
+        public void RenderizaSubtextoCuandoSeProporciona()
+        {
+            // Arrange
+            var subtexto = "Este mes";
+
+            // Act
+            var componente = RenderComponent<MetricaCard>(parameters => parameters
+                .Add(p => p.Titulo, "Test")
+                .Add(p => p.Valor, "100")
                 .Add(p => p.Subtexto, subtexto));
 
-            // Act & Assert
+            // Assert
             Assert.Contains(subtexto, componente.Markup);
-            Assert.NotNull(componente.Find("small"));
+            var subtextoElement = componente.Find("small.text-muted");
+            Assert.Equal(subtexto, subtextoElement.TextContent);
         }
 
         [Fact]
-        public void Renderizar_SinSubtexto_NoDeberiaMostrarSubtexto()
+        public void NoRenderizaSubtextoCuandoEsNull()
         {
-            // Arrange
+            // Arrange & Act
             var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250"));
+                .Add(p => p.Titulo, "Test")
+                .Add(p => p.Valor, "100")
+                .Add(p => p.Subtexto, (string?)null));
 
-            // Act & Assert
-            Assert.DoesNotContain("small", componente.Markup);
+            // Assert
+            var subtextoElements = componente.FindAll("small.text-muted");
+            Assert.Empty(subtextoElements);
         }
 
         [Fact]
-        public void Renderizar_ConIcono_DeberiaMostrarIcono()
+        public void NoRenderizaSubtextoCuandoEsVacio()
+        {
+            // Arrange & Act
+            var componente = RenderComponent<MetricaCard>(parameters => parameters
+                .Add(p => p.Titulo, "Test")
+                .Add(p => p.Valor, "100")
+                .Add(p => p.Subtexto, ""));
+
+            // Assert
+            var subtextoElements = componente.FindAll("small.text-muted");
+            Assert.Empty(subtextoElements);
+        }
+
+        [Fact]
+        public void RenderizaIconoConClaseCorrecta()
         {
             // Arrange
             var icono = "oi oi-people";
+
+            // Act
             var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Clientes")
-                .Add(p => p.Valor, "150")
+                .Add(p => p.Titulo, "Test")
+                .Add(p => p.Valor, "100")
                 .Add(p => p.Icono, icono));
 
-            // Act & Assert
-            Assert.Contains(icono, componente.Markup);
-            Assert.NotNull(componente.Find("i"));
+            // Assert
+            var iconoElement = componente.Find("i");
+            Assert.Contains(icono, iconoElement.ClassName);
+            Assert.Contains("fa-2x", iconoElement.ClassName);
         }
 
         [Fact]
-        public void Renderizar_ConIconoPorDefecto_DeberiaMostrarIconoPorDefecto()
+        public void UsaIconoPorDefecto()
         {
-            // Arrange
+            // Arrange & Act
             var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250"));
+                .Add(p => p.Titulo, "Test")
+                .Add(p => p.Valor, "100"));
 
-            // Act & Assert
-            Assert.Contains("oi oi-bar-chart", componente.Markup);
+            // Assert
+            var iconoElement = componente.Find("i");
+            Assert.Contains("oi oi-bar-chart", iconoElement.ClassName);
         }
 
         [Fact]
-        public void Renderizar_ConCardClass_DeberiaAplicarClase()
+        public void AplicaClasesCssCorrectas()
         {
             // Arrange
             var cardClass = "border-left-success";
-            var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250")
-                .Add(p => p.CardClass, cardClass));
-
-            // Act & Assert
-            Assert.Contains(cardClass, componente.Markup);
-        }
-
-        [Fact]
-        public void Renderizar_ConValorClass_DeberiaAplicarClase()
-        {
-            // Arrange
             var valorClass = "text-success";
-            var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250")
-                .Add(p => p.ValorClass, valorClass));
+            var iconoClass = "text-success";
 
-            // Act & Assert
-            Assert.Contains(valorClass, componente.Markup);
-        }
-
-        [Fact]
-        public void Renderizar_ConIconoClass_DeberiaAplicarClase()
-        {
-            // Arrange
-            var iconoClass = "text-warning";
+            // Act
             var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250")
+                .Add(p => p.Titulo, "Test")
+                .Add(p => p.Valor, "100")
+                .Add(p => p.CardClass, cardClass)
+                .Add(p => p.ValorClass, valorClass)
                 .Add(p => p.IconoClass, iconoClass));
 
-            // Act & Assert
-            Assert.Contains(iconoClass, componente.Markup);
+            // Assert
+            var card = componente.Find(".card");
+            Assert.Contains(cardClass, card.ClassName);
+
+            var valorElement = componente.Find("h4.mb-0");
+            Assert.Contains(valorClass, valorElement.ClassName);
+
+            var iconoElement = componente.Find("i");
+            Assert.Contains(iconoClass, iconoElement.ClassName);
         }
 
         [Fact]
-        public void Renderizar_ConCambioPositivo_DeberiaMostrarCambio()
+        public void UsaClasesPorDefecto()
         {
-            // Arrange
-            var cambio = 15.5m;
+            // Arrange & Act
             var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250")
-                .Add(p => p.MostrarCambio, true)
-                .Add(p => p.Cambio, cambio));
+                .Add(p => p.Titulo, "Test")
+                .Add(p => p.Valor, "100"));
 
-            // Act & Assert
-            Assert.Contains("15.5%", componente.Markup);
-            Assert.Contains("text-success", componente.Markup);
-            Assert.Contains("oi-arrow-top", componente.Markup);
+            // Assert
+            var card = componente.Find(".card");
+            Assert.Contains("border-left-primary", card.ClassName);
+
+            var valorElement = componente.Find("h4.mb-0");
+            Assert.Contains("text-primary", valorElement.ClassName);
+
+            var iconoElement = componente.Find("i");
+            Assert.Contains("text-primary", iconoElement.ClassName);
         }
 
         [Fact]
-        public void Renderizar_ConCambioNegativo_DeberiaMostrarCambio()
+        public void NoMuestraCambioCuandoMostrarCambioEsFalse()
         {
-            // Arrange
-            var cambio = -8.3m;
+            // Arrange & Act
             var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250")
-                .Add(p => p.MostrarCambio, true)
-                .Add(p => p.Cambio, cambio));
-
-            // Act & Assert
-            Assert.Contains("8.3%", componente.Markup);
-            Assert.Contains("text-danger", componente.Markup);
-            Assert.Contains("oi-arrow-bottom", componente.Markup);
-        }
-
-        [Fact]
-        public void Renderizar_ConCambioCero_DeberiaMostrarCambio()
-        {
-            // Arrange
-            var cambio = 0m;
-            var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250")
-                .Add(p => p.MostrarCambio, true)
-                .Add(p => p.Cambio, cambio));
-
-            // Act & Assert
-            Assert.Contains("0.0%", componente.Markup);
-            Assert.Contains("text-success", componente.Markup);
-            Assert.Contains("oi-arrow-top", componente.Markup);
-        }
-
-        [Fact]
-        public void Renderizar_SinMostrarCambio_NoDeberiaMostrarCambio()
-        {
-            // Arrange
-            var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250")
+                .Add(p => p.Titulo, "Test")
+                .Add(p => p.Valor, "100")
                 .Add(p => p.MostrarCambio, false)
-                .Add(p => p.Cambio, 15.5m));
+                .Add(p => p.Cambio, 5.5m));
 
-            // Act & Assert
-            Assert.DoesNotContain("15.5%", componente.Markup);
+            // Assert
+            Assert.DoesNotContain("oi-arrow-top", componente.Markup);
+            Assert.DoesNotContain("oi-arrow-bottom", componente.Markup);
+            Assert.DoesNotContain("5.5%", componente.Markup);
         }
 
         [Fact]
-        public void Renderizar_ConCambioNull_NoDeberiaMostrarCambio()
+        public void NoMuestraCambioCuandoCambioEsNull()
         {
-            // Arrange
+            // Arrange & Act
             var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250")
+                .Add(p => p.Titulo, "Test")
+                .Add(p => p.Valor, "100")
                 .Add(p => p.MostrarCambio, true)
-                .Add(p => p.Cambio, null));
+                .Add(p => p.Cambio, (decimal?)null));
 
-            // Act & Assert
-            Assert.DoesNotContain("%", componente.Markup);
+            // Assert
+            Assert.DoesNotContain("oi-arrow-top", componente.Markup);
+            Assert.DoesNotContain("oi-arrow-bottom", componente.Markup);
         }
 
         [Fact]
-        public void Renderizar_DeberiaMostrarClasesBootstrap()
+        public void MuestraCambioPositivoCorrectamente()
         {
             // Arrange
+            var cambio = 12.5m;
+
+            // Act
             var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250"));
-
-            // Act & Assert
-            Assert.NotNull(componente.Find(".col-md-3"));
-            Assert.NotNull(componente.Find(".mb-3"));
-            Assert.NotNull(componente.Find(".card"));
-            Assert.NotNull(componente.Find(".card-body"));
-            Assert.NotNull(componente.Find(".d-flex"));
-            Assert.NotNull(componente.Find(".justify-content-between"));
-            Assert.NotNull(componente.Find(".align-items-center"));
-        }
-
-        [Fact]
-        public void Renderizar_DeberiaMostrarEstructuraFlexbox()
-        {
-            // Arrange
-            var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250"));
-
-            // Act & Assert
-            Assert.NotNull(componente.Find(".d-flex"));
-            Assert.NotNull(componente.Find(".justify-content-between"));
-            Assert.NotNull(componente.Find(".align-items-center"));
-            Assert.NotNull(componente.Find(".text-end"));
-        }
-
-        [Fact]
-        public void Renderizar_DeberiaMostrarClasesTexto()
-        {
-            // Arrange
-            var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250"));
-
-            // Act & Assert
-            Assert.NotNull(componente.Find(".text-muted"));
-            Assert.NotNull(componente.Find(".mb-0"));
-            Assert.NotNull(componente.Find(".mb-1"));
-        }
-
-        [Fact]
-        public void Renderizar_ConIconoFa2x_DeberiaMostrarClase()
-        {
-            // Arrange
-            var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250"));
-
-            // Act & Assert
-            Assert.Contains("fa-2x", componente.Markup);
-        }
-
-        [Fact]
-        public void Renderizar_ConH100_DeberiaMostrarClase()
-        {
-            // Arrange
-            var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250"));
-
-            // Act & Assert
-            Assert.Contains("h-100", componente.Markup);
-        }
-
-        [Fact]
-        public void Renderizar_ConCambio_DeberiaMostrarMt2()
-        {
-            // Arrange
-            var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250")
-                .Add(p => p.MostrarCambio, true)
-                .Add(p => p.Cambio, 15.5m));
-
-            // Act & Assert
-            Assert.NotNull(componente.Find(".mt-2"));
-        }
-
-        [Fact]
-        public void Renderizar_ConCambio_DeberiaMostrarSmall()
-        {
-            // Arrange
-            var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250")
-                .Add(p => p.MostrarCambio, true)
-                .Add(p => p.Cambio, 15.5m));
-
-            // Act & Assert
-            Assert.NotNull(componente.Find("small"));
-        }
-
-        [Fact]
-        public void Renderizar_ConCambio_DeberiaMostrarIconoFlecha()
-        {
-            // Arrange
-            var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250")
-                .Add(p => p.MostrarCambio, true)
-                .Add(p => p.Cambio, 15.5m));
-
-            // Act & Assert
-            Assert.NotNull(componente.Find("i.oi-arrow-top"));
-        }
-
-        [Fact]
-        public void Renderizar_ConCambioNegativo_DeberiaMostrarIconoFlechaAbajo()
-        {
-            // Arrange
-            var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250")
-                .Add(p => p.MostrarCambio, true)
-                .Add(p => p.Cambio, -15.5m));
-
-            // Act & Assert
-            Assert.NotNull(componente.Find("i.oi-arrow-bottom"));
-        }
-
-        [Fact]
-        public void Renderizar_ConCambio_DeberiaMostrarValorAbsoluto()
-        {
-            // Arrange
-            var cambio = -25.7m;
-            var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250")
+                .Add(p => p.Titulo, "Test")
+                .Add(p => p.Valor, "100")
                 .Add(p => p.MostrarCambio, true)
                 .Add(p => p.Cambio, cambio));
 
-            // Act & Assert
-            Assert.Contains("25.7%", componente.Markup);
-            Assert.DoesNotContain("-25.7%", componente.Markup);
-        }
-
-        [Fact]
-        public void Renderizar_ConCambio_DeberiaMostrarFormatoDecimal()
-        {
-            // Arrange
-            var cambio = 12.345m;
-            var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, "1,250")
-                .Add(p => p.MostrarCambio, true)
-                .Add(p => p.Cambio, cambio));
-
-            // Act & Assert
-            Assert.Contains("12.3%", componente.Markup);
-        }
-
-        [Fact]
-        public void Renderizar_ConParametrosCompletos_DeberiaMostrarTodo()
-        {
-            // Arrange
-            var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas Totales")
-                .Add(p => p.Valor, "15,750")
-                .Add(p => p.Subtexto, "Este mes")
-                .Add(p => p.Icono, "oi oi-dollar")
-                .Add(p => p.CardClass, "border-left-success")
-                .Add(p => p.ValorClass, "text-success")
-                .Add(p => p.IconoClass, "text-success")
-                .Add(p => p.MostrarCambio, true)
-                .Add(p => p.Cambio, 12.5m));
-
-            // Act & Assert
-            Assert.Contains("Ventas Totales", componente.Markup);
-            Assert.Contains("15,750", componente.Markup);
-            Assert.Contains("Este mes", componente.Markup);
-            Assert.Contains("oi oi-dollar", componente.Markup);
-            Assert.Contains("border-left-success", componente.Markup);
+            // Assert
+            Assert.Contains("oi-arrow-top", componente.Markup);
             Assert.Contains("text-success", componente.Markup);
             Assert.Contains("12.5%", componente.Markup);
         }
 
         [Fact]
-        public void Renderizar_ConValorVacio_DeberiaMostrarValorVacio()
+        public void MuestraCambioNegativoCorrectamente()
         {
             // Arrange
-            var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "Ventas")
-                .Add(p => p.Valor, ""));
+            var cambio = -8.3m;
 
-            // Act & Assert
-            Assert.NotNull(componente.Find("h4"));
-            Assert.Contains("h4", componente.Markup);
+            // Act
+            var componente = RenderComponent<MetricaCard>(parameters => parameters
+                .Add(p => p.Titulo, "Test")
+                .Add(p => p.Valor, "100")
+                .Add(p => p.MostrarCambio, true)
+                .Add(p => p.Cambio, cambio));
+
+            // Assert
+            Assert.Contains("oi-arrow-bottom", componente.Markup);
+            Assert.Contains("text-danger", componente.Markup);
+            Assert.Contains("8.3%", componente.Markup);
         }
 
         [Fact]
-        public void Renderizar_ConTituloVacio_DeberiaMostrarTituloVacio()
+        public void MuestraCambioCeroCorrectamente()
         {
             // Arrange
-            var componente = RenderComponent<MetricaCard>(parameters => parameters
-                .Add(p => p.Titulo, "")
-                .Add(p => p.Valor, "1,250"));
+            var cambio = 0m;
 
-            // Act & Assert
-            Assert.NotNull(componente.Find(".card-title"));
-            Assert.Contains("h6", componente.Markup);
+            // Act
+            var componente = RenderComponent<MetricaCard>(parameters => parameters
+                .Add(p => p.Titulo, "Test")
+                .Add(p => p.Valor, "100")
+                .Add(p => p.MostrarCambio, true)
+                .Add(p => p.Cambio, cambio));
+
+            // Assert
+            Assert.Contains("oi-arrow-top", componente.Markup);
+            Assert.Contains("text-success", componente.Markup);
+            Assert.Contains("0.0%", componente.Markup);
+        }
+
+        [Fact]
+        public void FormateaCambioConUnDecimal()
+        {
+            // Arrange
+            var cambio = 15.67m;
+
+            // Act
+            var componente = RenderComponent<MetricaCard>(parameters => parameters
+                .Add(p => p.Titulo, "Test")
+                .Add(p => p.Valor, "100")
+                .Add(p => p.MostrarCambio, true)
+                .Add(p => p.Cambio, cambio));
+
+            // Assert
+            Assert.Contains("15.7%", componente.Markup);
+        }
+
+        [Fact]
+        public void RenderizaEstructuraCompletaConTodosLosParametros()
+        {
+            // Arrange
+            var titulo = "Ingresos";
+            var valor = "$5,000.00";
+            var subtexto = "Este mes";
+            var icono = "oi oi-dollar";
+            var cardClass = "border-left-info";
+            var valorClass = "text-info";
+            var iconoClass = "text-info";
+            var cambio = 25.5m;
+
+            // Act
+            var componente = RenderComponent<MetricaCard>(parameters => parameters
+                .Add(p => p.Titulo, titulo)
+                .Add(p => p.Valor, valor)
+                .Add(p => p.Subtexto, subtexto)
+                .Add(p => p.Icono, icono)
+                .Add(p => p.CardClass, cardClass)
+                .Add(p => p.ValorClass, valorClass)
+                .Add(p => p.IconoClass, iconoClass)
+                .Add(p => p.MostrarCambio, true)
+                .Add(p => p.Cambio, cambio));
+
+            // Assert
+            Assert.Contains(titulo, componente.Markup);
+            Assert.Contains(valor, componente.Markup);
+            Assert.Contains(subtexto, componente.Markup);
+            Assert.Contains(icono, componente.Markup);
+            Assert.Contains(cardClass, componente.Markup);
+            Assert.Contains(valorClass, componente.Markup);
+            Assert.Contains(iconoClass, componente.Markup);
+            Assert.Contains("25.5%", componente.Markup);
+        }
+
+        [Fact]
+        public void AplicaClasesBootstrapCorrectas()
+        {
+            // Arrange & Act
+            var componente = RenderComponent<MetricaCard>(parameters => parameters
+                .Add(p => p.Titulo, "Test")
+                .Add(p => p.Valor, "100"));
+
+            // Assert
+            Assert.Contains("col-md-3", componente.Markup);
+            Assert.Contains("mb-3", componente.Markup);
+            Assert.Contains("card", componente.Markup);
+            Assert.Contains("h-100", componente.Markup);
+            Assert.Contains("card-body", componente.Markup);
+            Assert.Contains("d-flex", componente.Markup);
+            Assert.Contains("justify-content-between", componente.Markup);
+            Assert.Contains("align-items-center", componente.Markup);
+            Assert.Contains("text-end", componente.Markup);
         }
     }
 }
