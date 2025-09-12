@@ -43,28 +43,10 @@ namespace RestaurantePro.Mobile.IntegrationTests.TestBase;
 public class MobileIntegrationTestFixture : WebApplicationFactory<Program>, IDisposable
 {
     private bool _disposed = false;
-    private static bool _seedExecuted = false;
-    private static readonly object _seedLock = new object();
-
     public MobileIntegrationTestFixture()
     {
-        // 🔧 EJECUTAR SEED DATA UNA SOLA VEZ GLOBALMENTE
-        lock (_seedLock)
-        {
-            if (!_seedExecuted)
-            {
-                Console.WriteLine("🔧 EJECUTANDO SEED DE DATOS GLOBAL...");
-                using var scope = Services.CreateScope();
-                var seedService = scope.ServiceProvider.GetRequiredService<ISeedDataService>();
-                seedService.SeedAsync().Wait();
-                _seedExecuted = true;
-                Console.WriteLine("✅ Seed de datos global completado");
-            }
-            else
-            {
-                Console.WriteLine("ℹ️ Seed de datos ya ejecutado, saltando...");
-            }
-        }
+        // 🔧 CONFIGURAR SEED DATA PARA CADA TEST
+        Console.WriteLine("🔧 CONFIGURANDO FIXTURE PARA TESTS...");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -121,14 +103,23 @@ public class MobileIntegrationTestFixture : WebApplicationFactory<Program>, IDis
             
             services.AddDbContext<RestauranteProDbContext>(options =>
             {
-                options.UseInMemoryDatabase($"TestDb_{Guid.NewGuid()}");
+                options.UseInMemoryDatabase("TestDb_Shared");
             });
 
             // 🔧 REGISTRAR SERVICIOS DE INFRAESTRUCTURA
             services.AddPersistenceServices(configuration, isTestEnvironment: true);
             
+            // 🔧 REGISTRAR SERVICIO DE SEED
+            services.AddScoped<ISeedDataService, TestSeedDataService>();
+            
             // 🔧 CONFIGURAR IDENTITY SIN JWT BEARER PARA TESTS (como en los tests del backend)
             TestIdentityConfiguration.ConfigureIdentityForTests(services, configuration);
+            
+            // 🔧 EJECUTAR SEED DATA UNA SOLA VEZ AL CONFIGURAR LA BD
+            var serviceProvider = services.BuildServiceProvider();
+            using var scope = serviceProvider.CreateScope();
+            var seedService = scope.ServiceProvider.GetRequiredService<ISeedDataService>();
+            seedService.SeedAsync().Wait();
             
             // 🔧 RE-REGISTRAR AUTENTICACIÓN PARA FORZAR EL HANDLER DE TEST COMO ESQUEMA POR DEFECTO
             services.AddAuthentication(options =>
