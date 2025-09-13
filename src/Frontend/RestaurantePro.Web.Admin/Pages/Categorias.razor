@@ -6,20 +6,13 @@
 
 <PageTitle>Categorías</PageTitle>
 
-<div class="flex-1 px-4 sm:px-6 lg:px-8 py-8 bg-gray-50 dark:bg-gray-900">
-    <div class="max-w-7xl mx-auto">
-        <div class="flex flex-wrap justify-between items-center gap-4 mb-8">
-            <div class="flex-1 min-w-0">
-                <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Gestión de Categorías</h2>
-                <p class="text-gray-500 dark:text-gray-400 mt-1">
-                    Administra las categorías de productos de tu restaurante. Crea, edita y elimina categorías para organizar tu menú de manera efectiva.
-                </p>
-            </div>
-            <button class="flex items-center justify-center gap-2 rounded-md h-10 px-4 bg-primary-color text-white text-sm font-medium shadow-md hover:bg-blue-700 transition-colors" @onclick="NuevaCategoria">
-                <span class="material-symbols-outlined">add</span>
-                <span class="truncate">Nueva Categoría</span>
-            </button>
-        </div>
+<div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Gestión de Categorías</h1>
+    <button class="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors" @onclick="NuevaCategoria">
+        <span class="material-symbols-outlined">add</span>
+        <span class="truncate">Nueva Categoría</span>
+    </button>
+</div>
 
         <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-8">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Filtros</h3>
@@ -28,12 +21,14 @@
                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Nombre</span>
                     <input class="form-input w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary-color focus:border-primary-color transition" 
                            placeholder="Buscar por nombre" 
-                           @bind="filtro" />
+                           @bind="filtro" 
+                           @oninput="BuscarAsync" />
                 </label>
                 <label class="flex flex-col gap-2">
                     <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Estado</span>
                     <select class="form-select w-full rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary-color focus:border-primary-color transition" 
-                            @bind="estadoFiltro">
+                            value="@estadoFiltro" 
+                            @onchange="OnEstadoChanged">
                         <option value="">Todos</option>
                         <option value="true">Activo</option>
                         <option value="false">Inactivo</option>
@@ -60,21 +55,21 @@
         {
             <!-- Métricas principales -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <div class="neumorphic-light dark:neumorphic-dark p-6 flex flex-col gap-2">
-                    <p class="text-gray-600 dark:text-gray-300 font-medium">Total de Categorías</p>
-                    <p class="text-3xl font-bold text-gray-900 dark:text-white">@(categorias?.Count ?? 0)</p>
+                <div class="flex flex-col gap-2 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+                    <p class="text-sm font-medium text-gray-500">Total de Categorías</p>
+                    <p class="text-3xl font-bold text-gray-900">@(categorias?.Count ?? 0)</p>
                 </div>
-                <div class="neumorphic-light dark:neumorphic-dark p-6 flex flex-col gap-2">
-                    <p class="text-gray-600 dark:text-gray-300 font-medium">Categorías Activas</p>
-                    <p class="text-3xl font-bold text-gray-900 dark:text-white">@(categorias?.Count(c => c.Activa) ?? 0)</p>
+                <div class="flex flex-col gap-2 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+                    <p class="text-sm font-medium text-gray-500">Categorías Activas</p>
+                    <p class="text-3xl font-bold text-green-600">@(categorias?.Count(c => c.Activa) ?? 0)</p>
                 </div>
-                <div class="neumorphic-light dark:neumorphic-dark p-6 flex flex-col gap-2">
-                    <p class="text-gray-600 dark:text-gray-300 font-medium">Productos Asociados</p>
-                    <p class="text-3xl font-bold text-gray-900 dark:text-white">@(categorias?.Sum(c => c.CantidadProductos) ?? 0)</p>
+                <div class="flex flex-col gap-2 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+                    <p class="text-sm font-medium text-gray-500">Productos Asociados</p>
+                    <p class="text-3xl font-bold text-blue-600">@(categorias?.Sum(c => c.CantidadProductos) ?? 0)</p>
                 </div>
-                <div class="neumorphic-light dark:neumorphic-dark p-6 flex flex-col gap-2">
-                    <p class="text-gray-600 dark:text-gray-300 font-medium">Categoría Más Popular</p>
-                    <p class="text-xl font-bold text-gray-900 dark:text-white truncate">@(categorias?.OrderByDescending(c => c.CantidadProductos).FirstOrDefault()?.Nombre ?? "N/A")</p>
+                <div class="flex flex-col gap-2 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+                    <p class="text-sm font-medium text-gray-500">Categoría Más Popular</p>
+                    <p class="text-xl font-bold text-orange-500 truncate">@(categorias?.OrderByDescending(c => c.CantidadProductos).FirstOrDefault()?.Nombre ?? "N/A")</p>
                 </div>
             </div>
             @if (categorias == null || !categorias.Any())
@@ -132,8 +127,6 @@
                 </div>
             }
         }
-    </div>
-</div>
 
 <!-- Modal para Crear/Editar Categoría -->
 @if (mostrandoModal)
@@ -431,8 +424,9 @@
         try
         {
             var soloActivas = estadoFiltro == "true";
+            var soloInactivas = estadoFiltro == "false";
             var ocultarVacias = false; // Por ahora no implementamos este filtro
-            categorias = await CategoriasApi.ObtenerAsync(soloActivas, ocultarVacias);
+            categorias = await CategoriasApi.ObtenerAsync(soloActivas, soloInactivas, ocultarVacias);
         }
         catch (Exception ex)
         {
@@ -447,21 +441,50 @@
 
     private async Task BuscarAsync()
     {
-        if (string.IsNullOrWhiteSpace(filtro))
+        try
         {
-            await CargarAsync();
-        }
-        else
-        {
-            try
+            if (string.IsNullOrWhiteSpace(filtro))
             {
+                // Si no hay filtro de texto, aplicar solo el filtro de estado
+                var soloActivas = false;
+                var soloInactivas = false;
+                var ocultarVacias = false;
+                
+                if (estadoFiltro == "true")
+                {
+                    soloActivas = true;
+                }
+                else if (estadoFiltro == "false")
+                {
+                    soloInactivas = true;
+                }
+                // Si estadoFiltro está vacío, ambos son false = todas las categorías
+                
+                categorias = await CategoriasApi.ObtenerAsync(soloActivas, soloInactivas, ocultarVacias);
+            }
+            else
+            {
+                // Si hay filtro de texto, buscar por texto
                 categorias = await CategoriasApi.BuscarAsync(filtro);
-            }
-            catch (Exception ex)
-            {
-                await JSRuntime.InvokeVoidAsync("alert", $"Error al buscar categorías: {ex.Message}");
+                
+                // Aplicar filtro de estado después de la búsqueda por texto
+                if (!string.IsNullOrWhiteSpace(estadoFiltro))
+                {
+                    var soloActivas = estadoFiltro == "true";
+                    categorias = categorias?.Where(c => c.Activa == soloActivas).ToList();
+                }
             }
         }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"Error al buscar categorías: {ex.Message}");
+        }
+    }
+
+    private async Task OnEstadoChanged(ChangeEventArgs e)
+    {
+        estadoFiltro = e.Value?.ToString() ?? string.Empty;
+        await BuscarAsync();
     }
 
     private void NuevaCategoria()

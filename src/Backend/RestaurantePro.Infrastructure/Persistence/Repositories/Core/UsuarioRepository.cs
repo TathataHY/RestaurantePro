@@ -59,6 +59,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
             
             if (soloActivos)
                 query = query.Where(u => u.Estado == EstadoUsuario.Activo);
+            else
+                query = query.Where(u => u.Estado != EstadoUsuario.Activo);
             
             return await query.ToListAsync(cancellationToken);
         }

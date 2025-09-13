@@ -18,7 +18,8 @@ public class UsuariosApiService : IUsuariosApiService
         int pageNumber = 1,
         int pageSize = 10,
         string? filtro = null,
-        bool soloActivos = true,
+        bool? soloActivos = null,
+        string? rol = null,
         string orderBy = "NombreCompleto",
         string orderDirection = "asc")
     {
@@ -32,10 +33,20 @@ public class UsuariosApiService : IUsuariosApiService
                 http.DefaultRequestHeaders.Add("X-Bearer-Token", _tokenStore.Token);
             }
         }
-        var url = $"api/core/usuarios?pageNumber={pageNumber}&pageSize={pageSize}&soloActivos={soloActivos}&orderBy={orderBy}&orderDirection={orderDirection}";
+        var url = $"api/core/usuarios?pageNumber={pageNumber}&pageSize={pageSize}&orderBy={orderBy}&orderDirection={orderDirection}";
+        
+        // Solo agregar soloActivos si tiene un valor específico
+        if (soloActivos.HasValue)
+        {
+            url += $"&soloActivos={soloActivos.Value}";
+        }
         if (!string.IsNullOrWhiteSpace(filtro))
         {
             url += $"&filtro={Uri.EscapeDataString(filtro)}";
+        }
+        if (!string.IsNullOrWhiteSpace(rol))
+        {
+            url += $"&rol={Uri.EscapeDataString(rol)}";
         }
         var res = await http.GetAsync(url);
         if (!res.IsSuccessStatusCode)

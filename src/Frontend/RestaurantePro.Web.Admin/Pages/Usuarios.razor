@@ -5,150 +5,416 @@
 
 @inject RestaurantePro.Web.Admin.Services.IUsuariosApiService UsuariosApi
 @inject RestaurantePro.Web.Admin.Services.IAuthApiService Auth
+@inject IJSRuntime JSRuntime
 
-<h3>Usuarios</h3>
-<p class="text-muted">Gestión de personal y roles.</p>
+<div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+    <h1 class="text-3xl font-bold text-gray-900">Gestión de Usuarios</h1>
+    <button class="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors" @onclick="AbrirCrear">
+        <span class="material-symbols-outlined">add</span>
+        <span class="truncate">Nuevo Usuario</span>
+    </button>
+</div>
 
-<div class="row mb-3">
-  <div class="col-md-4">
-    <input class="form-control" placeholder="Buscar por nombre o email" @bind="filtro" />
-  </div>
-  <div class="col-md-2">
-    <button class="btn btn-primary w-100" @onclick="BuscarAsync">Buscar</button>
-  </div>
-  <div class="col-md-2">
-    <button class="btn btn-outline-secondary w-100" @onclick="VerPerfilAsync">Ver perfil</button>
+<!-- Dashboard de estadísticas -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="flex flex-col gap-2 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+        <p class="text-sm font-medium text-gray-500">Total de Usuarios</p>
+        <p class="text-3xl font-bold text-gray-900">@totalUsuarios</p>
+    </div>
+    <div class="flex flex-col gap-2 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+        <p class="text-sm font-medium text-gray-500">Usuarios Activos</p>
+        <p class="text-3xl font-bold text-green-600">@usuariosActivos</p>
+    </div>
+    <div class="flex flex-col gap-2 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+        <p class="text-sm font-medium text-gray-500">Usuarios Inactivos</p>
+        <p class="text-3xl font-bold text-red-500">@usuariosInactivos</p>
+    </div>
+    <div class="flex flex-col gap-2 rounded-xl bg-white p-6 shadow-sm border border-gray-200">
+        <p class="text-sm font-medium text-gray-500">Roles Diferentes</p>
+        <p class="text-3xl font-bold text-blue-600">@rolesDiferentes</p>
+    </div>
+</div>
+
+<!-- Filtros y acciones -->
+<div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
+    <h2 class="text-xl font-bold text-gray-900 mb-4">Filtros Avanzados</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+        <label class="flex flex-col gap-1.5">
+            <span class="text-sm font-medium text-gray-700">Buscar por nombre o email</span>
+            <input class="form-input w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                   placeholder="Nombre o email del usuario" 
+                   type="text" 
+                   @bind="filtro" 
+                   @onkeyup="OnFiltroChanged" />
+        </label>
+        
+        <label class="flex flex-col gap-1.5">
+            <span class="text-sm font-medium text-gray-700">Estado</span>
+            <select class="form-select w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                    value="@estadoFiltro" 
+                    @onchange="OnEstadoChanged">
+                <option value="">Todos</option>
+                <option value="true">Activos</option>
+                <option value="false">Inactivos</option>
+            </select>
+        </label>
+        
+        <label class="flex flex-col gap-1.5">
+            <span class="text-sm font-medium text-gray-700">Rol</span>
+            <select class="form-select w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                    value="@rolFiltro" 
+                    @onchange="OnRolChanged">
+                <option value="">Todos los roles</option>
+                <option value="Admin">Admin</option>
+                <option value="Gerente">Gerente</option>
+                <option value="Mesero">Mesero</option>
+                <option value="Cocinero">Cocinero</option>
+                <option value="Cajero">Cajero</option>
+            </select>
+        </label>
+        
+        <div class="flex gap-2">
+            <button class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium" 
+                    @onclick="BuscarAsync">
+                <span class="material-symbols-outlined text-sm">search</span>
+                Buscar
+            </button>
+            <button class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors" 
+                    @onclick="VerPerfilAsync" 
+                    title="Ver perfil actual">
+                <span class="material-symbols-outlined text-sm">person</span>
+            </button>
+        </div>
+    </div>
+    
     @if (!string.IsNullOrEmpty(perfilInfo))
     {
-      <span class="d-block mt-1 text-muted small">@perfilInfo</span>
+        <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p class="text-sm text-blue-800">@perfilInfo</p>
+        </div>
     }
-  </div>
-  <div class="col-md-2 d-flex align-items-center">
-    <div class="form-check">
-      <input class="form-check-input" type="checkbox" id="chkIncluirInactivos" checked="@incluirInactivos" @onchange="OnIncluirInactivosChanged" />
-      <label class="form-check-label" for="chkIncluirInactivos">Incluir inactivos</label>
-    </div>
-  </div>
-  <div class="col-md-2 text-end">
-    <button class="btn btn-success" @onclick="AbrirCrear">Nuevo Usuario</button>
-  </div>
-  
 </div>
 
-<div class="table-responsive">
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>Nombre</th>
-        <th>Usuario</th>
-        <th>Email</th>
-        <th>Rol</th>
-        <th>Nivel</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      @if (usuarios is null)
-      {
-        <tr><td colspan="6">Cargando...</td></tr>
-      }
-      else if (!usuarios.Any())
-      {
-        <tr><td colspan="6">Sin resultados o no autorizado.</td></tr>
-      }
-      else
-      {
-        @foreach (var u in usuarios)
+<!-- Tabla de usuarios -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nivel</th>
+                    <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                    <th class="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                @if (usuarios is null)
+                {
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                            <div class="flex flex-col items-center gap-2">
+                                <span class="material-symbols-outlined text-4xl text-gray-300">hourglass_empty</span>
+                                <span>Cargando usuarios...</span>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                else if (!usuarios.Any())
+                {
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                            <div class="flex flex-col items-center gap-2">
+                                <span class="material-symbols-outlined text-4xl text-gray-300">person_off</span>
+                                <span>No se encontraron usuarios</span>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var u in usuarios)
+                    {
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10">
+                                        <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                            <span class="text-blue-600 font-medium text-sm">
+                                                @(u.NombreCompleto?.Substring(0, Math.Min(2, u.NombreCompleto.Length)).ToUpper() ?? "U")
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">@u.NombreCompleto</div>
+                                        <div class="text-sm text-gray-500">@u.NombreUsuario</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">@u.Email</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    @u.Rol
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                @u.NivelAcceso
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if (u.Estado == "Activo")
+                                {
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5"></span>
+                                        Activo
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        <span class="w-1.5 h-1.5 bg-red-400 rounded-full mr-1.5"></span>
+                                        Inactivo
+                                    </span>
+                                }
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex items-center justify-end gap-2">
+                                    <button class="text-blue-600 hover:text-blue-900 transition-colors" 
+                                            @onclick="(() => AbrirEditar(u))" 
+                                            title="Editar usuario">
+                                        <span class="material-symbols-outlined text-lg">edit</span>
+                                    </button>
+                                    <button class="text-red-600 hover:text-red-900 transition-colors" 
+                                            @onclick="(() => ConfirmarEliminar(u))" 
+                                            title="Eliminar usuario">
+                                        <span class="material-symbols-outlined text-lg">delete</span>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+        <!-- Modal para crear/editar usuario -->
+        @if (mostrandoModal)
         {
-          <tr>
-            <td>@u.NombreCompleto</td>
-            <td>@u.NombreUsuario</td>
-            <td>@u.Email</td>
-            <td>@u.Rol</td>
-            <td>@u.NivelAcceso</td>
-            <td class="text-end">
-              <div class="btn-group">
-                <button class="btn btn-sm btn-info" @onclick="(() => AbrirEditar(u))">Editar</button>
-                <button class="btn btn-sm btn-danger" @onclick="(() => ConfirmarEliminar(u))">Eliminar</button>
-              </div>
-            </td>
-          </tr>
-        }
-      }
-    </tbody>
-  </table>
-</div>
+            <div aria-labelledby="modal-title" aria-modal="true" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" role="dialog">
+                <div class="relative flex flex-col bg-white rounded-xl shadow-2xl w-full max-w-2xl m-4 max-h-[85vh] overflow-hidden">
+            <!-- Header del Modal -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center justify-center rounded-full bg-blue-100 shrink-0 size-10">
+                        <span class="material-symbols-outlined text-blue-600">@(modalTitulo.Contains("Nuevo") ? "person_add" : "edit")</span>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900" id="modal-title">@modalTitulo</h2>
+                        <p class="text-sm text-gray-500">@(modalTitulo.Contains("Nuevo") ? "Crea un nuevo usuario para el sistema" : "Modifica los datos del usuario")</p>
+                    </div>
+                </div>
+                <button type="button" class="text-gray-400 hover:text-gray-600 transition-colors" @onclick="CerrarModal">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
 
-@if (mostrandoModal)
-{
-  <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5)">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">@modalTitulo</h5>
-          <button type="button" class="btn-close" @onclick="CerrarModal"></button>
+                    <EditForm Model="editModel" OnValidSubmit="GuardarAsync">
+                        <DataAnnotationsValidator />
+
+                        <!-- Body del Modal -->
+                        <div class="flex-1 overflow-y-auto p-6 max-h-[60vh]">
+                            <div class="space-y-6">
+                        <!-- Información Personal -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Información Personal</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre completo</label>
+                                    <InputText class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                               @bind-Value="editModel.NombreCompleto" 
+                                               placeholder="Nombre completo del usuario" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                    <InputText class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                               @bind-Value="editModel.Email" 
+                                               placeholder="correo@ejemplo.com" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información de Acceso -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Información de Acceso</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nombre de usuario</label>
+                                    <InputText class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                               @bind-Value="editModel.NombreUsuario" 
+                                               placeholder="Nombre de usuario único" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Rol</label>
+                                    <select class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                            @bind="editModel.Rol">
+                                        <option value="">Seleccionar rol</option>
+                                        <option value="Admin">Admin</option>
+                                        <option value="Gerente">Gerente</option>
+                                        <option value="Mesero">Mesero</option>
+                                        <option value="Cocinero">Cocinero</option>
+                                        <option value="Cajero">Cajero</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información Adicional -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Información Adicional</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                                    <InputText class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                               @bind-Value="editModel.Telefono" 
+                                               placeholder="Número de teléfono" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Nivel de acceso</label>
+                                    <select class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                            @bind="editModel.NivelAcceso">
+                                        <option value="1">1 - Básico</option>
+                                        <option value="2">2 - Intermedio</option>
+                                        <option value="3">3 - Avanzado</option>
+                                        <option value="4">4 - Supervisor</option>
+                                        <option value="5">5 - Administrador</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (esCreacion)
+                        {
+                            <!-- Contraseña Temporal -->
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Contraseña Temporal</h3>
+                                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                    <div class="flex items-start">
+                                        <span class="material-symbols-outlined text-yellow-600 mr-2">info</span>
+                                        <div>
+                                            <p class="text-sm text-yellow-800 font-medium">Contraseña temporal</p>
+                                            <p class="text-sm text-yellow-700 mt-1">El usuario deberá cambiar esta contraseña en su primer inicio de sesión.</p>
+                                        </div>
+                                    </div>
+                                    <div class="mt-4 space-y-3">
+                                        <div class="flex gap-2">
+                                            <div class="flex-1">
+                                                <InputText class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                                           @bind-Value="editCreate.Password" 
+                                                           type="password" 
+                                                           placeholder="Ingresa una contraseña temporal" />
+                                            </div>
+                                            <button type="button" 
+                                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+                                                    @onclick="GenerarContraseñaTemporal">
+                                                <span class="material-symbols-outlined text-sm">refresh</span>
+                                                Generar
+                                            </button>
+                                        </div>
+                                        <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="material-symbols-outlined text-green-600 text-sm">key</span>
+                                                    <span class="text-sm text-green-800 font-medium">Contraseña generada:</span>
+                                                </div>
+                                                <button type="button" 
+                                                        class="text-green-600 hover:text-green-800 transition-colors"
+                                                        @onclick="CopiarContraseña"
+                                                        title="Copiar contraseña">
+                                                    <span class="material-symbols-outlined text-sm">content_copy</span>
+                                                </button>
+                                            </div>
+                                            <div class="mt-2">
+                                                <span class="font-mono text-lg font-bold text-green-900 bg-green-100 px-3 py-1 rounded border">@contraseñaSugerida</span>
+                                            </div>
+                                            <p class="text-xs text-green-700 mt-2">Esta contraseña se ha generado automáticamente y es segura para uso temporal.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                        <!-- Footer del Modal -->
+                        <div class="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
+                    <button type="button" 
+                            class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium" 
+                            @onclick="CerrarModal">
+                        Cancelar
+                    </button>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                        <span class="material-symbols-outlined text-sm mr-2">save</span>
+                        Guardar Usuario
+                    </button>
+                </div>
+            </EditForm>
         </div>
-        <div class="modal-body">
-          <EditForm Model="editModel" OnValidSubmit="GuardarAsync">
-            <DataAnnotationsValidator />
-            <div class="mb-3">
-              <label class="form-label">Nombre completo</label>
-              <InputText class="form-control" @bind-Value="editModel.NombreCompleto" />
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Nombre de usuario</label>
-              <InputText class="form-control" @bind-Value="editModel.NombreUsuario" />
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Email</label>
-              <InputText class="form-control" @bind-Value="editModel.Email" />
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Rol</label>
-              <InputText class="form-control" @bind-Value="editModel.Rol" />
-            </div>
-            @if (esCreacion)
-            {
-              <div class="mb-3">
-                <label class="form-label">Contraseña temporal</label>
-                <InputText class="form-control" @bind-Value="editCreate.Password" type="password" />
-              </div>
-            }
-            <div class="text-end">
-              <button class="btn btn-secondary me-2" type="button" @onclick="CerrarModal">Cancelar</button>
-              <button class="btn btn-primary" type="submit">Guardar</button>
-            </div>
-          </EditForm>
-        </div>
-      </div>
     </div>
-  </div>
 }
 
 @if (mostrandoConfirmarEliminar)
 {
-  <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.5)">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Eliminar usuario</h5>
-          <button type="button" class="btn-close" @onclick="CerrarConfirmarEliminar"></button>
+    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @onclick="CerrarConfirmarEliminar"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <span class="material-symbols-outlined text-red-600">warning</span>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                Eliminar Usuario
+                            </h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500">
+                                    ¿Estás seguro de que deseas eliminar al usuario 
+                                    <span class="font-medium text-gray-900">@usuarioAEliminar?.NombreCompleto</span>? 
+                                    Esta acción no se puede deshacer.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" 
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm" 
+                            @onclick="EliminarAsync">
+                        Eliminar
+                    </button>
+                    <button type="button" 
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" 
+                            @onclick="CerrarConfirmarEliminar">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
         </div>
-        <div class="modal-body">
-          <p>¿Seguro que deseas eliminar a <strong>@usuarioAEliminar?.NombreCompleto</strong>?</p>
-          <div class="text-end">
-            <button class="btn btn-secondary me-2" @onclick="CerrarConfirmarEliminar">Cancelar</button>
-            <button class="btn btn-danger" @onclick="EliminarAsync">Eliminar</button>
-          </div>
-        </div>
-      </div>
     </div>
-  </div>
 }
 
 @code {
   private List<UsuarioDto>? usuarios;
   private string filtro = string.Empty;
+  private string estadoFiltro = string.Empty;
+  private string rolFiltro = string.Empty;
   private bool incluirInactivos = false;
   private bool mostrandoModal = false;
   private string modalTitulo = string.Empty;
@@ -157,6 +423,15 @@
   private CreateUsuarioRequest editCreate = new();
   private UsuarioDto? usuarioAEliminar;
   private string perfilInfo = string.Empty;
+  
+  // Métricas para los cards
+  private int totalUsuarios = 0;
+  private int usuariosActivos = 0;
+  private int usuariosInactivos = 0;
+  private int rolesDiferentes = 0;
+  
+  // Contraseña temporal
+  private string contraseñaSugerida = string.Empty;
 
   protected override async Task OnInitializedAsync()
   {
@@ -165,16 +440,85 @@
 
   private async Task CargarAsync()
   {
+    // Determinar qué usuarios obtener basado en el filtro de estado
+    bool? soloActivos = null; // null = todos, true = solo activos, false = solo inactivos
+    
+    if (estadoFiltro == "true")
+      soloActivos = true;  // Solo activos
+    else if (estadoFiltro == "false")
+      soloActivos = false; // Solo inactivos
+    // Si estadoFiltro está vacío, soloActivos queda null (todos)
+    
     usuarios = await UsuariosApi.ObtenerUsuariosAsync(
       1,
       20,
       string.IsNullOrWhiteSpace(filtro) ? null : filtro,
-      soloActivos: !incluirInactivos
+      soloActivos: soloActivos, // Pasar null para mostrar todos
+      rol: string.IsNullOrWhiteSpace(rolFiltro) ? null : rolFiltro
     );
+    
+    // Calcular métricas
+    if (usuarios != null)
+    {
+      totalUsuarios = usuarios.Count;
+      usuariosActivos = usuarios.Count(u => u.Estado == "Activo");
+      usuariosInactivos = usuarios.Count(u => u.Estado != "Activo");
+      rolesDiferentes = usuarios.Select(u => u.Rol).Distinct().Count();
+    }
+    
     StateHasChanged();
   }
 
   private Task BuscarAsync() => CargarAsync();
+  
+  private async Task OnFiltroChanged(KeyboardEventArgs e)
+  {
+    if (e.Key == "Enter")
+    {
+      await BuscarAsync();
+    }
+  }
+  
+  private async Task OnEstadoChanged(ChangeEventArgs e)
+  {
+    estadoFiltro = e.Value?.ToString() ?? string.Empty;
+    await BuscarAsync();
+  }
+  
+  private async Task OnRolChanged(ChangeEventArgs e)
+  {
+    rolFiltro = e.Value?.ToString() ?? string.Empty;
+    await BuscarAsync();
+  }
+  
+  private void GenerarContraseñaTemporal()
+  {
+    // Generar contraseña temporal segura
+    var random = new Random();
+    var caracteres = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*";
+    var contraseña = new char[12];
+    
+    for (int i = 0; i < contraseña.Length; i++)
+    {
+      contraseña[i] = caracteres[random.Next(caracteres.Length)];
+    }
+    
+    contraseñaSugerida = new string(contraseña);
+    editCreate.Password = contraseñaSugerida; // Asignar automáticamente
+  }
+  
+  private async Task CopiarContraseña()
+  {
+    try
+    {
+      await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", contraseñaSugerida);
+      await JSRuntime.InvokeVoidAsync("alert", "Contraseña copiada al portapapeles");
+    }
+    catch (Exception ex)
+    {
+      await JSRuntime.InvokeVoidAsync("alert", $"Error al copiar: {ex.Message}");
+    }
+  }
 
   private void AbrirCrear()
   {
@@ -182,6 +526,7 @@
     modalTitulo = "Nuevo usuario";
     editModel = new UsuarioDto();
     editCreate = new CreateUsuarioRequest();
+    GenerarContraseñaTemporal(); // Generar contraseña automáticamente
     mostrandoModal = true;
   }
 

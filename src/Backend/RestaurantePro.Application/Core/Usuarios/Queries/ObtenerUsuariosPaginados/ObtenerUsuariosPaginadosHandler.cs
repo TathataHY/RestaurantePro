@@ -25,10 +25,23 @@ public class ObtenerUsuariosPaginadosHandler : IRequestHandler<ObtenerUsuariosPa
             _logger.LogInformation("Obteniendo usuarios paginados - Página: {PageNumber}, Tamaño: {PageSize}", 
                 request.PageNumber, request.PageSize);
 
-            // Obtener todos los usuarios
-            var usuarios = await _usuarioService.ObtenerTodosAsync(request.SoloActivos, cancellationToken);
+            // Obtener usuarios según el filtro
+            IEnumerable<Usuario> usuarios;
+            
+            if (request.SoloActivos.HasValue)
+            {
+                // Filtro específico: solo activos o solo inactivos
+                usuarios = await _usuarioService.ObtenerTodosAsync(request.SoloActivos.Value, cancellationToken);
+            }
+            else
+            {
+                // Sin filtro: todos los usuarios (activos e inactivos)
+                var usuariosActivos = await _usuarioService.ObtenerTodosAsync(true, cancellationToken);
+                var usuariosInactivos = await _usuarioService.ObtenerTodosAsync(false, cancellationToken);
+                usuarios = usuariosActivos.Concat(usuariosInactivos);
+            }
 
-            // Aplicar filtro si se especifica
+            // Aplicar filtro de texto si se especifica
             if (!string.IsNullOrWhiteSpace(request.Filtro))
             {
                 usuarios = usuarios.Where(u => 
@@ -36,6 +49,12 @@ public class ObtenerUsuariosPaginadosHandler : IRequestHandler<ObtenerUsuariosPa
                     u.Email.Contains(request.Filtro, StringComparison.OrdinalIgnoreCase) ||
                     u.NombreUsuario.Contains(request.Filtro, StringComparison.OrdinalIgnoreCase))
                     .ToList();
+            }
+
+            // Aplicar filtro por rol si se especifica
+            if (!string.IsNullOrWhiteSpace(request.Rol))
+            {
+                usuarios = usuarios.Where(u => u.Rol == request.Rol).ToList();
             }
 
             // Aplicar ordenamiento

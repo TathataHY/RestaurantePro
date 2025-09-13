@@ -8,7 +8,8 @@ public interface IUsuariosApiService
         int pageNumber = 1,
         int pageSize = 10,
         string? filtro = null,
-        bool soloActivos = true,
+        bool? soloActivos = null,
+        string? rol = null,
         string orderBy = "NombreCompleto",
         string orderDirection = "asc");
 

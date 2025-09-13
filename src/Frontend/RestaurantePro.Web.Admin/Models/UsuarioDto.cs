@@ -11,6 +11,7 @@ public class UsuarioDto
     public int NivelAcceso { get; set; }
     public bool EsAdministrador { get; set; }
     public string? Telefono { get; set; }
+    public string Estado { get; set; } = "Activo";
 }
 
 

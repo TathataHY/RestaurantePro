@@ -50,26 +50,43 @@ public class CategoriasController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<List<CategoriaProductoDto>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<List<CategoriaProductoDto>>>> GetCategorias(
         [FromQuery] bool soloActivas = true,
+        [FromQuery] bool soloInactivas = false,
         [FromQuery] bool ocultarVacias = true)
     {
-        _logger.LogInformation("🏷️ GET /api/categorias - SoloActivas: {SoloActivas}, OcultarVacias: {OcultarVacias}", 
-            soloActivas, ocultarVacias);
+        _logger.LogInformation("🏷️ GET /api/categorias - SoloActivas: {SoloActivas}, SoloInactivas: {SoloInactivas}, OcultarVacias: {OcultarVacias}", 
+            soloActivas, soloInactivas, ocultarVacias);
 
         try
         {
             List<Domain.Core.Productos.Entities.ProductoCategoria> categorias;
 
-            if (ocultarVacias)
+            // Obtener categorías según el filtro
+            if (soloInactivas)
             {
-                // Usar la política de visibilidad que filtra categorías vacías
-                categorias = await _visibilidadPolicy.ObtenerCategoriasVisiblesAsync(ocultarVacias);
+                categorias = await _categoriaRepository.ObtenerInactivasAsync();
+            }
+            else if (soloActivas)
+            {
+                categorias = await _categoriaRepository.ObtenerActivasAsync();
             }
             else
             {
-                // Obtener todas las categorías según el filtro de activas
-                categorias = soloActivas 
-                    ? await _categoriaRepository.ObtenerActivasAsync()
-                    : await _categoriaRepository.ObtenerTodasAsync();
+                categorias = await _categoriaRepository.ObtenerTodasAsync();
+            }
+            
+            // Si se solicita ocultar vacías, filtrar después
+            if (ocultarVacias)
+            {
+                var categoriasConProductos = new List<Domain.Core.Productos.Entities.ProductoCategoria>();
+                foreach (var categoria in categorias)
+                {
+                    var productosCategoria = await _productoRepository.ObtenerPorCategoriaAsync(categoria.Id, soloActivas);
+                    if (productosCategoria.Any())
+                    {
+                        categoriasConProductos.Add(categoria);
+                    }
+                }
+                categorias = categoriasConProductos;
             }
 
             // Mapear a DTOs con información adicional

@@ -32,6 +32,11 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
             return await _dbSet.ToListAsync(cancellationToken);
         }
 
+        public async Task<List<ProductoCategoria>> ObtenerInactivasAsync(CancellationToken cancellationToken = default)
+        {
+            return await _dbSet.Where(c => !c.EstaActivo).ToListAsync(cancellationToken);
+        }
+
         public async Task AgregarAsync(ProductoCategoria categoria, CancellationToken cancellationToken = default)
         {
             await base.AgregarAsync(categoria, cancellationToken);

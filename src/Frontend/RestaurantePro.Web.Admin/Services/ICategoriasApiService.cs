@@ -5,7 +5,7 @@ namespace RestaurantePro.Web.Admin.Services;
 public interface ICategoriasApiService
 {
     Task<List<CategoriaProductoDto>> ObtenerCategoriasAsync();
-    Task<List<CategoriaProductoDto>?> ObtenerAsync(bool soloActivas = false, bool ocultarVacias = false);
+    Task<List<CategoriaProductoDto>?> ObtenerAsync(bool soloActivas = false, bool soloInactivas = false, bool ocultarVacias = false);
     Task<CategoriaProductoDto?> ObtenerPorIdAsync(Guid id);
     Task<List<CategoriaProductoDto>?> BuscarAsync(string filtro);
     Task<ApiResponse<CategoriaProductoDto>?> CrearAsync(CreateCategoriaRequest request);

@@ -76,7 +76,7 @@ public class CrearProductoHandler : IRequestHandler<CrearProductoCommand, Result
                     .ConNombre(nombreSanitizado)
                     .ConDescripcion(descripcionSanitizada)
                     .ConPrecio(request.Precio)
-                    .EnCategoria(request.CategoriaId)
+                    .EnCategoria(request.CategoriaId, categoria.Nombre)
                     .Construir();
 
                 if (!resultado.Succeeded)

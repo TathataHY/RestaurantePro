@@ -26,6 +26,11 @@ namespace RestaurantePro.Domain.Core.Productos.Interfaces
         Task<List<ProductoCategoria>> ObtenerTodasAsync(CancellationToken cancellationToken = default);
         
         /// <summary>
+        /// Obtiene todas las categorías inactivas
+        /// </summary>
+        Task<List<ProductoCategoria>> ObtenerInactivasAsync(CancellationToken cancellationToken = default);
+        
+        /// <summary>
         /// Agrega una nueva categoría
         /// </summary>
         Task AgregarAsync(ProductoCategoria categoria, CancellationToken cancellationToken = default);

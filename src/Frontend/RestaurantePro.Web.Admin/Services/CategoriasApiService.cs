@@ -28,11 +28,11 @@ public class CategoriasApiService : ICategoriasApiService
         return http;
     }
 
-    public async Task<List<CategoriaProductoDto>> ObtenerAsync(bool soloActivas = false, bool ocultarVacias = false)
+    public async Task<List<CategoriaProductoDto>> ObtenerAsync(bool soloActivas = false, bool soloInactivas = false, bool ocultarVacias = false)
     {
         var http = CreateClient();
         var resp = await http.GetFromJsonAsync<ApiResponse<List<CategoriaProductoDto>>>(
-            $"api/core/categorias?soloActivas={soloActivas}&ocultarVacias={ocultarVacias}");
+            $"api/core/categorias?soloActivas={soloActivas}&soloInactivas={soloInactivas}&ocultarVacias={ocultarVacias}");
         return resp?.Data ?? new List<CategoriaProductoDto>();
     }
 

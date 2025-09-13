@@ -4,6 +4,34 @@
 @using RestaurantePro.Web.Admin.Models
 @using RestaurantePro.Web.Admin.Services
 
+<style>
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    
+    .product-card {
+        transition: all 0.2s ease-in-out;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .view-toggle {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    }
+    
+    .view-toggle-active {
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        color: white;
+        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+    }
+</style>
+
 <PageTitle>Productos</PageTitle>
 
 <div class="flex justify-between items-center mb-8">
@@ -104,7 +132,7 @@ else
                             <button class="text-primary-color hover:text-primary-color/80 transition-colors" @onclick="(() => Editar(p.Id))" title="Editar">
                                 <span class="material-symbols-outlined">edit</span>
                             </button>
-                            <button class="text-red-500 hover:text-red-400 ml-2 transition-colors" @onclick="(() => Eliminar(p.Id))" title="Eliminar">
+                            <button class="text-red-500 hover:text-red-400 ml-2 transition-colors" @onclick="(() => ConfirmarEliminar(p.Id, p.Nombre))" title="Eliminar">
                                 <span class="material-symbols-outlined">delete</span>
                             </button>
                         </td>
@@ -256,7 +284,14 @@ else
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="category-new">Categoría</label>
                                     <select class="mt-1 block w-full rounded-lg border-border-light bg-input-bg-light focus:ring-primary-color focus:border-primary-color transition" 
                                             id="category-new" 
-                                            @bind="nuevo.CategoriaId">
+                                            value="@nuevo.CategoriaId"
+                                            @onchange="@(async (e) => { 
+                                                if (Guid.TryParse(e.Value?.ToString(), out var categoriaId)) 
+                                                { 
+                                                    nuevo.CategoriaId = categoriaId; 
+                                                    Console.WriteLine($"🔍 Categoría seleccionada: {categoriaId}");
+                                                } 
+                                            })">
                                         @foreach (var c in categorias)
                                         {
                                             <option value="@c.Id">@c.Nombre</option>
@@ -303,11 +338,96 @@ else
                 }
                 
                 <div class="flex justify-end gap-4 mt-8">
-                    <button @onclick="CerrarModal" class="py-2 px-4 rounded-lg border border-border-light text-text-light hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors" type="button">
+                    <button @onclick="CerrarModal" 
+                            disabled="@guardando"
+                            class="py-2 px-4 rounded-lg border border-border-light text-text-light hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                            type="button">
                         Cancelar
                     </button>
-                    <button @onclick="GuardarAsync" class="py-2 px-4 rounded-lg bg-primary-color text-white font-bold shadow-md hover:bg-primary-color/90 transition-colors" type="submit">
-                        Guardar Producto
+                    <button @onclick="GuardarAsync" 
+                            disabled="@guardando"
+                            class="py-2 px-4 rounded-lg bg-primary-color text-white font-bold shadow-md hover:bg-primary-color/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2" 
+                            type="submit">
+                        @if (guardando)
+                        {
+                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <span>Guardando...</span>
+                        }
+                        else
+                        {
+                            <span>Guardar Producto</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@* Modal de confirmación para eliminación *@
+@if (mostrandoConfirmacionEliminar)
+{
+    <div class="fixed inset-0 z-30 bg-black/50" @onclick="CerrarConfirmacionEliminar">
+        <div class="fixed inset-0 z-40 flex items-center justify-center p-4">
+            <div class="bg-background-light rounded-lg shadow-xl p-6 w-full max-w-md" @onclick:stopPropagation="true">
+                <div class="flex items-center mb-4">
+                    <div class="flex-shrink-0 w-10 h-10 mx-auto flex items-center justify-center rounded-full bg-red-100">
+                        <span class="material-symbols-outlined text-red-600">warning</span>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <h3 class="text-lg font-medium text-text-light mb-2">¿Eliminar producto?</h3>
+                    <p class="text-sm text-gray-500 mb-6">
+                        ¿Estás seguro de que quieres eliminar el producto <strong>"@productoAEliminar?.Nombre"</strong>? 
+                        Esta acción no se puede deshacer.
+                    </p>
+                </div>
+                <div class="flex gap-3">
+                    <button @onclick="CerrarConfirmacionEliminar" 
+                            class="flex-1 py-2 px-4 rounded-lg border border-border-light text-text-light hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                        Cancelar
+                    </button>
+                    <button @onclick="EliminarConfirmado" 
+                            disabled="@eliminando"
+                            class="flex-1 py-2 px-4 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                        @if (eliminando)
+                        {
+                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <span>Eliminando...</span>
+                        }
+                        else
+                        {
+                            <span>Eliminar</span>
+                        }
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@* Notificaciones de éxito/error *@
+@if (mostrandoNotificacion)
+{
+    <div class="fixed top-4 right-4 z-50">
+        <div class="bg-white rounded-lg shadow-lg border-l-4 @(notificacionExito ? "border-green-500" : "border-red-500") p-4 max-w-sm">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    @if (notificacionExito)
+                    {
+                        <span class="material-symbols-outlined text-green-500">check_circle</span>
+                    }
+                    else
+                    {
+                        <span class="material-symbols-outlined text-red-500">error</span>
+                    }
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-900">@mensajeNotificacion</p>
+                </div>
+                <div class="ml-auto pl-3">
+                    <button @onclick="CerrarNotificacion" class="text-gray-400 hover:text-gray-600">
+                        <span class="material-symbols-outlined">close</span>
                     </button>
                 </div>
             </div>
@@ -335,10 +455,28 @@ else
     private bool editando = false;
     private CreateProductoRequest nuevo = new();
     private UpdateProductoRequest edicion = new();
+    
+    // Variables para confirmación de eliminación
+    private bool mostrandoConfirmacionEliminar = false;
+    private ProductoDto? productoAEliminar = null;
+    
+    // Variables para notificaciones
+    private bool mostrandoNotificacion = false;
+    private bool notificacionExito = true;
+    private string mensajeNotificacion = string.Empty;
+    
+    // Variables para estados de carga
+    private bool guardando = false;
+    private bool eliminando = false;
 
     protected override async Task OnInitializedAsync()
     {
         categorias = await Api.ObtenerCategoriasAsync() ?? new List<CategoriaProductoDto>();
+        Console.WriteLine($"🔍 Categorías cargadas: {categorias.Count}");
+        foreach (var cat in categorias)
+        {
+            Console.WriteLine($"  - {cat.Nombre}: Id={cat.Id}, Activa={cat.Activa}");
+        }
         await BuscarAsync();
     }
 
@@ -360,7 +498,16 @@ else
     private void Nuevo()
     {
         editando = false;
-        nuevo = new CreateProductoRequest { Activo = true, CategoriaId = categorias.FirstOrDefault()?.Id ?? Guid.Empty };
+        // Asignar la primera categoría activa disponible, o Guid.Empty si no hay categorías
+        var primeraCategoria = categorias.FirstOrDefault(c => c.Activa);
+        Console.WriteLine($"🔍 Creando nuevo producto - Categorías disponibles: {categorias.Count}");
+        Console.WriteLine($"🔍 Primera categoría activa: {primeraCategoria?.Nombre} (Id: {primeraCategoria?.Id})");
+        
+        nuevo = new CreateProductoRequest { 
+            Activo = true, 
+            CategoriaId = primeraCategoria?.Id ?? Guid.Empty 
+        };
+        Console.WriteLine($"🔍 CategoriaId asignado: {nuevo.CategoriaId}");
         mostrandoModal = true;
     }
 
@@ -388,16 +535,152 @@ else
 
     private async Task GuardarAsync()
     {
+        // Validaciones del lado cliente
         if (editando)
         {
-            var res = await Api.ActualizarAsync(edicion);
+            if (string.IsNullOrWhiteSpace(edicion.Nombre))
+            {
+                MostrarNotificacion("El nombre del producto es requerido", false);
+                return;
+            }
+            if (edicion.Precio <= 0)
+            {
+                MostrarNotificacion("El precio debe ser mayor a 0", false);
+                return;
+            }
+            if (edicion.CategoriaId == Guid.Empty)
+            {
+                MostrarNotificacion("Debe seleccionar una categoría", false);
+                return;
+            }
         }
         else
         {
-            var res = await Api.CrearAsync(nuevo);
+            if (string.IsNullOrWhiteSpace(nuevo.Nombre))
+            {
+                MostrarNotificacion("El nombre del producto es requerido", false);
+                return;
+            }
+            if (nuevo.Precio <= 0)
+            {
+                MostrarNotificacion("El precio debe ser mayor a 0", false);
+                return;
+            }
+            if (nuevo.CategoriaId == Guid.Empty)
+            {
+                MostrarNotificacion("Debe seleccionar una categoría", false);
+                return;
+            }
         }
-        mostrandoModal = false;
-        await BuscarAsync();
+        
+        guardando = true;
+        
+        try
+        {
+            if (editando)
+            {
+                Console.WriteLine($"🔍 Editando producto - CategoriaId: {edicion.CategoriaId}");
+                var res = await Api.ActualizarAsync(edicion);
+                if (res != null)
+                {
+                    MostrarNotificacion("Producto actualizado exitosamente", true);
+                }
+                else
+                {
+                    MostrarNotificacion("Error al actualizar el producto", false);
+                    return; // No cerrar modal si hay error
+                }
+            }
+            else
+            {
+                Console.WriteLine($"🔍 Creando producto - CategoriaId: {nuevo.CategoriaId}");
+                Console.WriteLine($"🔍 Datos del nuevo producto: Nombre={nuevo.Nombre}, Precio={nuevo.Precio}, Activo={nuevo.Activo}");
+                var res = await Api.CrearAsync(nuevo);
+                if (res != null)
+                {
+                    MostrarNotificacion("Producto creado exitosamente", true);
+                }
+                else
+                {
+                    MostrarNotificacion("Error al crear el producto", false);
+                    return; // No cerrar modal si hay error
+                }
+            }
+            
+            mostrandoModal = false;
+            await BuscarAsync();
+        }
+        catch (Exception ex)
+        {
+            MostrarNotificacion($"Error: {ex.Message}", false);
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    private void MostrarNotificacion(string mensaje, bool esExito)
+    {
+        mensajeNotificacion = mensaje;
+        notificacionExito = esExito;
+        mostrandoNotificacion = true;
+        
+        // Auto-cerrar después de 5 segundos
+        Task.Delay(5000).ContinueWith(_ => {
+            InvokeAsync(() => {
+                mostrandoNotificacion = false;
+                StateHasChanged();
+            });
+        });
+    }
+
+    private void CerrarNotificacion()
+    {
+        mostrandoNotificacion = false;
+    }
+
+    private void ConfirmarEliminar(Guid id, string nombre)
+    {
+        productoAEliminar = new ProductoDto { Id = id, Nombre = nombre };
+        mostrandoConfirmacionEliminar = true;
+    }
+
+    private void CerrarConfirmacionEliminar()
+    {
+        mostrandoConfirmacionEliminar = false;
+        productoAEliminar = null;
+    }
+
+    private async Task EliminarConfirmado()
+    {
+        if (productoAEliminar == null) return;
+        
+        eliminando = true;
+        mostrandoConfirmacionEliminar = false;
+        
+        try
+        {
+            var resultado = await Api.EliminarAsync(productoAEliminar.Id);
+            if (resultado)
+            {
+                MostrarNotificacion($"Producto '{productoAEliminar.Nombre}' eliminado exitosamente", true);
+                await BuscarAsync();
+            }
+            else
+            {
+                MostrarNotificacion("Error al eliminar el producto", false);
+            }
+        }
+        catch (Exception ex)
+        {
+            MostrarNotificacion($"Error al eliminar el producto: {ex.Message}", false);
+        }
+        finally
+        {
+            eliminando = false;
+            productoAEliminar = null;
+        }
     }
 
     private async Task Eliminar(Guid id)

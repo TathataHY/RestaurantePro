@@ -41,7 +41,8 @@ public class UsuariosController : ControllerBase
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string? filtro = null,
-        [FromQuery] bool soloActivos = true,
+        [FromQuery] bool? soloActivos = null,
+        [FromQuery] string? rol = null,
         [FromQuery] string orderBy = "NombreCompleto",
         [FromQuery] string orderDirection = "asc")
     {
@@ -53,6 +54,7 @@ public class UsuariosController : ControllerBase
             PageSize = pageSize,
             Filtro = filtro,
             SoloActivos = soloActivos,
+            Rol = rol,
             OrderBy = orderBy,
             OrderDirection = orderDirection
         };

@@ -21,9 +21,14 @@ public class ObtenerUsuariosPaginadosQuery : IRequest<Result<List<UsuarioDto>>>
     public string? Filtro { get; set; }
 
     /// <summary>
-    /// Filtrar solo usuarios activos
+    /// Filtrar solo usuarios activos (null = todos, true = solo activos, false = solo inactivos)
     /// </summary>
-    public bool SoloActivos { get; set; } = true;
+    public bool? SoloActivos { get; set; } = null;
+
+    /// <summary>
+    /// Filtrar por rol específico
+    /// </summary>
+    public string? Rol { get; set; }
 
     /// <summary>
     /// Campo por el cual ordenar
@@ -60,7 +65,7 @@ public class ObtenerUsuariosPaginadosQuery : IRequest<Result<List<UsuarioDto>>>
         {
             PageNumber = pageNumber,
             PageSize = pageSize,
-            SoloActivos = true,
+            SoloActivos = null,
             OrderBy = "NombreCompleto",
             OrderDirection = "asc"
         };
@@ -79,7 +84,7 @@ public class ObtenerUsuariosPaginadosQuery : IRequest<Result<List<UsuarioDto>>>
             PageNumber = pageNumber,
             PageSize = pageSize,
             Filtro = filtro,
-            SoloActivos = true,
+            SoloActivos = null,
             OrderBy = "NombreCompleto",
             OrderDirection = "asc"
         };
