@@ -38,7 +38,7 @@ public class FiltrosReporteTests : TestContext
             new() { Id = Guid.NewGuid(), NombreCompleto = "María García", Roles = new List<string> { "Mesero" } }
         };
 
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(meseros);
 
         // Act
@@ -48,7 +48,7 @@ public class FiltrosReporteTests : TestContext
             .Add(p => p.Generando, false));
 
         // Assert
-        _usuariosApiMock.Verify(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+        _usuariosApiMock.Verify(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         Assert.Contains("Juan Pérez", component.Markup);
         Assert.Contains("María García", component.Markup);
     }
@@ -120,7 +120,7 @@ public class FiltrosReporteTests : TestContext
             new() { Id = Guid.NewGuid(), NombreCompleto = "Carlos López", Roles = new List<string> { "Mesero" } }
         };
 
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(usuarios);
 
         // Act
@@ -142,7 +142,7 @@ public class FiltrosReporteTests : TestContext
         var filtros = new ReporteFiltrosDto();
         var onFiltrosAplicados = EventCallback<ReporteFiltrosDto>.Empty;
 
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ThrowsAsync(new Exception("API Error"));
         _mesasApiMock.Setup(x => x.ObtenerMesasAsync())
             .ThrowsAsync(new Exception("API Error"));

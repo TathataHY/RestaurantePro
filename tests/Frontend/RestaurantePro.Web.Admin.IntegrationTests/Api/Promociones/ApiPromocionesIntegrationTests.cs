@@ -319,25 +319,43 @@ public class ApiPromocionesIntegrationTests : BaseIntegrationTest
 
     private async Task<Guid> SeedPromocionAsync()
     {
-        var command = new CrearPromocionCommand
+        var promocion = new
         {
             Codigo = "TEST10",
             Nombre = "Promoción Test",
             Descripcion = "Promoción de prueba",
-            Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
+            Tipo = "PorcentajeTotal",
             ValorDescuento = 10,
             MontoMinimo = 50,
-            FechaInicio = DateTime.UtcNow,
-            FechaFin = DateTime.UtcNow.AddDays(30),
+            FechaInicio = DateTime.UtcNow.AddDays(10), // Fecha futura para pasar validación
+            FechaFin = DateTime.UtcNow.AddDays(40),
             MaximoUsos = 50,
             EsAcumulable = false,
             Prioridad = 1,
             Condiciones = "Válida para todos los productos"
         };
 
-        var mediator = _factory.Services.GetRequiredService<IMediator>();
-        var result = await mediator.Send(command);
-        return result.Value.Id;
+        var client = CreateAuthenticatedClient();
+        var json = JsonSerializer.Serialize(promocion, GetJsonOptions());
+        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+        
+        var response = await client.PostAsync("/api/comercial/promociones", content);
+        
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            throw new Exception($"Error creando promoción: {response.StatusCode} - {errorContent}");
+        }
+        
+        var responseContent = await response.Content.ReadAsStringAsync();
+        var responseData = JsonSerializer.Deserialize<ApiResponse<AppPromociones.PromocionDto>>(responseContent, GetJsonOptions());
+        
+        if (responseData?.Data == null)
+        {
+            throw new Exception($"Respuesta inválida: {responseContent}");
+        }
+        
+        return responseData.Data.Id;
     }
 
     private async Task<Guid> SeedPromocionActivaAsync()
@@ -438,14 +456,16 @@ public class ApiPromocionesIntegrationTests : BaseIntegrationTest
         var promocionId = await SeedPromocionAsync();
         var productosIds = await SeedProductosAsync();
         
-        var command = new AsignarProductosCommand
+        var client = CreateAuthenticatedClient();
+        var json = JsonSerializer.Serialize(productosIds, GetJsonOptions());
+        
+        var request = new HttpRequestMessage(HttpMethod.Post, $"/api/comercial/promociones/{promocionId}/productos")
         {
-            PromocionId = promocionId,
-            ProductosIds = productosIds
+            Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json")
         };
-
-        var mediator = _factory.Services.GetRequiredService<IMediator>();
-        await mediator.Send(command);
+        
+        var response = await client.SendAsync(request);
+        response.EnsureSuccessStatusCode();
         
         return promocionId;
     }

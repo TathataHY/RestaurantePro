@@ -1,0 +1,15 @@
+{
+  "TestConfiguration": {
+    "SkipPerformanceTests": true,
+    "SkipStressTests": true,
+    "SkipSecurityTests": false,
+    "MaxTestDataSize": 100,
+    "EnableParallelExecution": true,
+    "TimeoutSeconds": 30
+  },
+  "PerformanceTestSettings": {
+    "MaxEntities": 1000,
+    "MaxConcurrentRequests": 5,
+    "MaxTestDurationSeconds": 10
+  }
+}

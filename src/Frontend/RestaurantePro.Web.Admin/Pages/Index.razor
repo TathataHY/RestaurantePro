@@ -27,41 +27,56 @@
         <div class="flex items-center gap-4">
             <label class="text-gray-700 text-sm font-medium">Período:</label>
             <div class="flex gap-2">
-                <button @onclick="() => SeleccionarPeriodo('hoy')" 
-                        class="px-3 py-1 rounded-md text-sm font-medium transition-colors @(periodoSeleccionado == "hoy" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200")">
+                <button @onclick="SeleccionarHoy" 
+                        class="px-3 py-1 rounded-md text-sm font-medium transition-colors bg-blue-100 text-blue-700">
                     Hoy
                 </button>
-                <button @onclick="() => SeleccionarPeriodo('ayer')" 
-                        class="px-3 py-1 rounded-md text-sm font-medium transition-colors @(periodoSeleccionado == "ayer" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200")">
+                <button @onclick="SeleccionarAyer" 
+                        class="px-3 py-1 rounded-md text-sm font-medium transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200">
                     Ayer
                 </button>
-                <button @onclick="() => SeleccionarPeriodo('semana')" 
-                        class="px-3 py-1 rounded-md text-sm font-medium transition-colors @(periodoSeleccionado == "semana" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200")">
+                <button @onclick="SeleccionarSemana" 
+                        class="px-3 py-1 rounded-md text-sm font-medium transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200">
                     Esta Semana
                 </button>
-                <button @onclick="() => SeleccionarPeriodo('mes')" 
-                        class="px-3 py-1 rounded-md text-sm font-medium transition-colors @(periodoSeleccionado == "mes" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200")">
+                <button @onclick="SeleccionarMes" 
+                        class="px-3 py-1 rounded-md text-sm font-medium transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200">
                     Este Mes
                 </button>
             </div>
         </div>
         <div class="text-sm text-gray-500">
-            @if (periodoSeleccionado == "hoy")
-            {
-                <span>Mostrando datos de hoy (@DateTime.Today.ToString("dd/MM/yyyy"))</span>
-            }
-            else if (periodoSeleccionado == "ayer")
-            {
-                <span>Mostrando datos de ayer (@DateTime.Today.AddDays(-1).ToString("dd/MM/yyyy"))</span>
-            }
-            else if (periodoSeleccionado == "semana")
-            {
-                <span>Mostrando datos de esta semana (@DateTime.Today.AddDays(-6).ToString("dd/MM") - @DateTime.Today.ToString("dd/MM/yyyy"))</span>
-            }
-            else if (periodoSeleccionado == "mes")
-            {
-                <span>Mostrando datos de este mes (@DateTime.Today.ToString("MMMM yyyy"))</span>
-            }
+            <span>Mostrando datos de hoy (@DateTime.Today.ToString("dd/MM/yyyy"))</span>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros por Turno -->
+<div class="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-center gap-4">
+            <label class="text-gray-700 text-sm font-medium">Turno:</label>
+            <div class="flex gap-2">
+                <button @onclick="SeleccionarMañana" 
+                        class="@GetTurnoButtonClass(mañana)">
+                    Mañana
+                </button>
+                <button @onclick="SeleccionarTarde" 
+                        class="@GetTurnoButtonClass(tarde)">
+                    Tarde
+                </button>
+                <button @onclick="SeleccionarNoche" 
+                        class="@GetTurnoButtonClass(noche)">
+                    Noche
+                </button>
+                <button @onclick="SeleccionarMadrugada" 
+                        class="@GetTurnoButtonClass(madrugada)">
+                    Madrugada
+                </button>
+            </div>
+        </div>
+        <div class="text-sm text-gray-500">
+            <span>Turno: @GetTurnoDisplayText()</span>
         </div>
     </div>
 </div>
@@ -122,7 +137,7 @@
             <!-- Gráficos Interactivos -->
             <section class="mt-8">
                 <h2 class="text-gray-800 text-xl font-bold leading-tight tracking-tight mb-4">Gráficos Interactivos</h2>
-                <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
                     <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                         <p class="text-gray-800 text-base font-medium mb-4">Ventas por Hora</p>
                         <div class="h-64">
@@ -145,13 +160,20 @@
                             <canvas id="graficoProductosVendidos"></canvas>
                         </div>
                     </div>
+
+                    <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm lg:col-span-2 xl:col-span-1">
+                        <p class="text-gray-800 text-base font-medium mb-4">Estados de Mesas</p>
+                        <div class="h-64">
+                            <canvas id="graficoEstadosMesas"></canvas>
+                        </div>
+                    </div>
                 </div>
             </section>
 
             <!-- Métricas en Tiempo Real -->
             <section class="mt-8">
                 <h2 class="text-gray-800 text-xl font-bold leading-tight tracking-tight mb-4">Métricas en Tiempo Real</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                         <div class="flex items-center gap-3">
                             <div class="flex items-center justify-center rounded-lg bg-green-100 text-green-600 size-10 shrink-0">
@@ -327,6 +349,13 @@
     private DashboardResumenDto? resumen;
     private bool cargando = true;
     private string periodoSeleccionado = "hoy";
+    private string turnoSeleccionado = "mañana";
+    
+    // Constantes para los turnos
+    private const string mañana = "mañana";
+    private const string tarde = "tarde";
+    private const string noche = "noche";
+    private const string madrugada = "madrugada";
     private Timer? _timer;
 
     protected override async Task OnInitializedAsync()
@@ -344,11 +373,11 @@
 
         try
         {
-            resumen = await DashboardApi.ObtenerDashboardAsync();
+            resumen = await DashboardApi.ObtenerDashboardAsync(periodoSeleccionado, turnoSeleccionado);
             
             if (resumen != null)
             {
-                Console.WriteLine("Datos del dashboard cargados correctamente");
+                Console.WriteLine($"Datos del dashboard cargados correctamente - Período: {periodoSeleccionado}, Turno: {turnoSeleccionado}");
                 // Esperar un poco y luego intentar crear los gráficos automáticamente
                 _ = Task.Run(async () => {
                     await Task.Delay(3000); // Esperar 3 segundos
@@ -372,12 +401,79 @@
         periodoSeleccionado = periodo;
         Console.WriteLine($"Período seleccionado: {periodo}");
         
-        // Aquí podrías implementar la lógica para cargar datos específicos del período
-        // Por ahora solo actualizamos la UI
-        StateHasChanged();
+        // Recargar datos con el nuevo período
+        await CargarDatos();
+    }
+
+    private async Task SeleccionarHoy()
+    {
+        await SeleccionarPeriodo("hoy");
+    }
+
+    private async Task SeleccionarAyer()
+    {
+        await SeleccionarPeriodo("ayer");
+    }
+
+    private async Task SeleccionarSemana()
+    {
+        await SeleccionarPeriodo("semana");
+    }
+
+    private async Task SeleccionarMes()
+    {
+        await SeleccionarPeriodo("mes");
+    }
+
+    private async Task SeleccionarMañana()
+    {
+        await SeleccionarTurnoEspecifico("mañana");
+    }
+
+    private async Task SeleccionarTarde()
+    {
+        await SeleccionarTurnoEspecifico("tarde");
+    }
+
+    private async Task SeleccionarNoche()
+    {
+        await SeleccionarTurnoEspecifico("noche");
+    }
+
+    private async Task SeleccionarMadrugada()
+    {
+        await SeleccionarTurnoEspecifico("madrugada");
+    }
+
+    private async Task SeleccionarTurnoEspecifico(string turno)
+    {
+        turnoSeleccionado = turno;
+        Console.WriteLine($"Turno seleccionado: {turnoSeleccionado}");
         
-        // Recargar gráficos con el nuevo período
-        await CrearGraficos();
+        // Recargar datos con el nuevo turno
+        await CargarDatos();
+    }
+
+    private string GetTurnoButtonClass(string turno)
+    {
+        var baseClass = "px-3 py-1 rounded-md text-sm font-medium transition-colors";
+        if (turnoSeleccionado == turno)
+        {
+            return $"{baseClass} bg-blue-100 text-blue-700";
+        }
+        return $"{baseClass} bg-gray-100 text-gray-700 hover:bg-gray-200";
+    }
+
+    private string GetTurnoDisplayText()
+    {
+        return turnoSeleccionado switch
+        {
+            "mañana" => "Mañana (6:00 AM - 12:00 PM)",
+            "tarde" => "Tarde (12:00 PM - 6:00 PM)",
+            "noche" => "Noche (6:00 PM - 12:00 AM)",
+            "madrugada" => "Madrugada (12:00 AM - 6:00 AM)",
+            _ => "Mañana (6:00 AM - 12:00 PM)"
+        };
     }
 
     private int CalcularTiempoPromedio()
@@ -391,6 +487,16 @@
         return 0;
     }
 
+    private string GetPeriodoButtonClass(string periodo)
+    {
+        var baseClass = "px-3 py-1 rounded-md text-sm font-medium transition-colors";
+        if (periodoSeleccionado == periodo)
+        {
+            return $"{baseClass} bg-blue-100 text-blue-700";
+        }
+        return $"{baseClass} bg-gray-100 text-gray-700 hover:bg-gray-200";
+    }
+
     private async Task ActualizarDatos()
     {
         await CargarDatos();
@@ -401,7 +507,7 @@
         try
         {
             // Solo actualizar las métricas sin recargar todo el dashboard
-            var nuevoResumen = await DashboardApi.ObtenerDashboardAsync();
+            var nuevoResumen = await DashboardApi.ObtenerDashboardAsync(periodoSeleccionado, turnoSeleccionado);
             if (nuevoResumen != null)
             {
                 resumen = nuevoResumen;
@@ -486,6 +592,10 @@
                             window.dashboardCharts.destruirGrafico(window.graficoProductosVendidos);
                             window.graficoProductosVendidos = null;
                         }
+                        if (window.graficoEstadosMesas) {
+                            window.dashboardCharts.destruirGrafico(window.graficoEstadosMesas);
+                            window.graficoEstadosMesas = null;
+                        }
                     }
                 ");
             }
@@ -517,17 +627,35 @@
                 window.graficoIngresosCategoria = window.dashboardCharts.crearGraficoIngresosCategoria('graficoIngresosCategoria', {System.Text.Json.JsonSerializer.Serialize(datosCategorias)});
             ");
 
-            // Crear gráfico de productos más vendidos
-            var datosProductosVendidos = resumen.ProductosMasVendidos.Select(p => new { 
-                nombre = p.Nombre, 
-                cantidadVendida = p.CantidadVendida,
-                ingresos = (double)p.Ingresos
-            }).ToArray();
-            
-            Console.WriteLine($"Creando gráfico de productos más vendidos con {datosProductosVendidos.Length} productos");
-            await JSRuntime.InvokeVoidAsync("eval", $@"
+        // Crear gráfico de productos más vendidos
+        var datosProductosVendidos = resumen.ProductosMasVendidos.Select(p => new { 
+            nombre = p.Nombre, 
+            cantidadVendida = p.CantidadVendida,
+            ingresos = (double)p.Ingresos
+        }).ToArray();
+        
+        Console.WriteLine($"Creando gráfico de productos más vendidos con {datosProductosVendidos.Length} productos");
+        await JSRuntime.InvokeVoidAsync("eval", $@"
+            if (window.dashboardCharts && window.dashboardCharts.crearGraficoProductosVendidos) {{
                 window.graficoProductosVendidos = window.dashboardCharts.crearGraficoProductosVendidos('graficoProductosVendidos', {System.Text.Json.JsonSerializer.Serialize(datosProductosVendidos)});
-            ");
+            }} else {{
+                console.error('dashboardCharts.crearGraficoProductosVendidos no está disponible');
+            }}
+        ");
+
+        // Crear gráfico de estados de mesas
+        var datosEstadosMesas = new[]
+        {
+            new { estado = "Ocupadas", cantidad = resumen.EstadoMesas.Ocupadas },
+            new { estado = "Disponibles", cantidad = resumen.EstadoMesas.Disponibles },
+            new { estado = "Reservadas", cantidad = resumen.EstadoMesas.Reservadas },
+            new { estado = "En Limpieza", cantidad = resumen.EstadoMesas.EnLimpieza }
+        };
+        
+        Console.WriteLine($"Creando gráfico de estados de mesas con {datosEstadosMesas.Length} estados");
+        await JSRuntime.InvokeVoidAsync("eval", $@"
+            window.graficoEstadosMesas = window.dashboardCharts.crearGraficoEstadosMesas('graficoEstadosMesas', {System.Text.Json.JsonSerializer.Serialize(datosEstadosMesas)});
+        ");
             
             Console.WriteLine("Gráficos creados exitosamente");
         }
@@ -539,6 +667,9 @@
 
     public void Dispose()
     {
+        // Limpiar timer
+        _timer?.Dispose();
+        
         // Limpiar gráficos al destruir el componente
         try
         {

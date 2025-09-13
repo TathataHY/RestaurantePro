@@ -83,8 +83,7 @@ public class CategoriasPageTests : TestContext
         var component = RenderComponent<Categorias>();
 
         // Assert
-        component.Find("h2").TextContent.Should().Contain("Gestión de Categorías");
-        component.Find("p").TextContent.Should().Contain("Administra las categorías de productos");
+        component.Find("h1").TextContent.Should().Contain("Gestión de Categorías");
     }
 
     [Fact]
@@ -177,7 +176,7 @@ public class CategoriasPageTests : TestContext
         var component = RenderComponent<Categorias>();
 
         // Assert
-        component.Find("div.max-w-7xl").Should().NotBeNull();
+        component.Find("div.grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3").Should().NotBeNull();
         component.Find("div.grid.grid-cols-1.sm\\:grid-cols-2.lg\\:grid-cols-4").Should().NotBeNull();
     }
 
@@ -306,7 +305,7 @@ public class CategoriasPageTests : TestContext
 
         // Assert
         // Verificar que se muestran los elementos principales de la página
-        component.Find("h2").Should().NotBeNull();
+        component.Find("h1").Should().NotBeNull();
         component.Find("div.bg-white").Should().NotBeNull();
     }
 

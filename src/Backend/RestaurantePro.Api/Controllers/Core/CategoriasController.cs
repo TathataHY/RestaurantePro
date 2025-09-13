@@ -192,10 +192,10 @@ public class CategoriasController : ControllerBase
     /// <summary>
     /// Busca categorías por nombre
     /// </summary>
-    [HttpGet("buscar")]
+    [HttpGet("buscar", Name = "BuscarCategorias")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<List<CategoriaProductoDto>>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<ApiResponse<List<CategoriaProductoDto>>>> BuscarCategorias([FromQuery] string nombre)
+    public async Task<ActionResult<ApiResponse<List<CategoriaProductoDto>>>> BuscarCategorias([FromQuery] string? nombre = null)
     {
         _logger.LogInformation("🔍 GET /api/core/categorias/buscar - Nombre: {Nombre}", nombre);
 
@@ -203,8 +203,36 @@ public class CategoriasController : ControllerBase
         {
             if (string.IsNullOrWhiteSpace(nombre))
             {
-                // Si no hay término de búsqueda, devolver todas las categorías activas
-                return await GetCategorias(true, true);
+                // Si no hay término de búsqueda, devolver todas las categorías activas directamente
+                _logger.LogInformation("🔍 Término vacío - obteniendo todas las categorías activas");
+                var todasCategorias = await _categoriaRepository.ObtenerActivasAsync();
+                
+                // Mapear directamente a DTOs
+                var categoriasVaciasDto = new List<CategoriaProductoDto>();
+                foreach (var categoria in todasCategorias)
+                {
+                    var productosCategoria = await _productoRepository.ObtenerPorCategoriaAsync(categoria.Id, true);
+                    
+                    var categoriaDto = new CategoriaProductoDto
+                    {
+                        Id = categoria.Id,
+                        Nombre = categoria.Nombre,
+                        Descripcion = categoria.Descripcion,
+                        Color = categoria.Color,
+                        Icono = categoria.Icono,
+                        Orden = categoria.Orden,
+                        Activa = categoria.EstaActivo,
+                        CantidadProductos = productosCategoria.Count,
+                        ProductosDisponibles = productosCategoria.Count(p => p.EstaActivo),
+                        FechaCreacion = categoria.FechaCreacion
+                    };
+                    
+                    categoriasVaciasDto.Add(categoriaDto);
+                }
+                
+                var responseVacias = ApiResponse<List<CategoriaProductoDto>>.SuccessResponse(
+                    categoriasVaciasDto, "Categorías obtenidas exitosamente");
+                return Ok(responseVacias);
             }
 
             // Buscar categorías que contengan el nombre

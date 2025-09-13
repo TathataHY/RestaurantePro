@@ -203,6 +203,77 @@ window.dashboardCharts = {
         });
     },
 
+    // Crear gráfico de estados de mesas (dona)
+    crearGraficoEstadosMesas: function (canvasId, datos) {
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js no está disponible');
+            return null;
+        }
+        
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) {
+            console.error('Canvas no encontrado:', canvasId);
+            return null;
+        }
+        
+        const ctx = canvas.getContext('2d');
+        return new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: datos.map(d => d.estado),
+                datasets: [{
+                    data: datos.map(d => d.cantidad),
+                    backgroundColor: [
+                        '#ef4444', // Rojo para Ocupadas
+                        '#10b981', // Verde para Libres
+                        '#f59e0b', // Amarillo para Reservadas
+                        '#6b7280'  // Gris para Mantenimiento
+                    ],
+                    borderColor: [
+                        '#dc2626',
+                        '#059669',
+                        '#d97706',
+                        '#4b5563'
+                    ],
+                    borderWidth: 2,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const data = datos[context.dataIndex];
+                                const total = datos.reduce((sum, d) => sum + d.cantidad, 0);
+                                const porcentaje = ((data.cantidad / total) * 100).toFixed(1);
+                                return `${data.estado}: ${data.cantidad} mesas (${porcentaje}%)`;
+                            }
+                        }
+                    }
+                },
+                cutout: '60%',
+                elements: {
+                    arc: {
+                        borderWidth: 2
+                    }
+                }
+            }
+        });
+    },
+
     // Crear gráfico de ventas por día (mantener para compatibilidad)
     crearGraficoVentas: function (canvasId, datos) {
         const ctx = document.getElementById(canvasId).getContext('2d');
@@ -354,8 +425,12 @@ window.dashboardCharts = {
 
     // Destruir gráfico existente
     destruirGrafico: function (chart) {
-        if (chart) {
-            chart.destroy();
+        if (chart && typeof chart.destroy === 'function') {
+            try {
+                chart.destroy();
+            } catch (error) {
+                console.warn('Error al destruir gráfico:', error);
+            }
         }
     }
 };

@@ -92,8 +92,27 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
     /// </summary>
     protected async Task CleanupDatabaseAsync()
     {
-        _context.Database.EnsureDeleted();
-        _context.Database.EnsureCreated();
+        // Solo limpiar datos, no recrear la base de datos
+        var allEntities = _context.ChangeTracker.Entries()
+            .Where(e => e.State == EntityState.Added || e.State == EntityState.Modified || e.State == EntityState.Deleted)
+            .ToList();
+        
+        foreach (var entity in allEntities)
+        {
+            entity.State = EntityState.Detached;
+        }
+        
+        // Limpiar todas las tablas principales
+        _context.Usuarios.RemoveRange(_context.Usuarios);
+        _context.Clientes.RemoveRange(_context.Clientes);
+        _context.Productos.RemoveRange(_context.Productos);
+        _context.ProductoCategorias.RemoveRange(_context.ProductoCategorias);
+        _context.Ingredientes.RemoveRange(_context.Ingredientes);
+        _context.Recetas.RemoveRange(_context.Recetas);
+        _context.Promociones.RemoveRange(_context.Promociones);
+        _context.MovimientosInventario.RemoveRange(_context.MovimientosInventario);
+        _context.OrdenesCompra.RemoveRange(_context.OrdenesCompra);
+        
         await _context.SaveChangesAsync();
     }
 

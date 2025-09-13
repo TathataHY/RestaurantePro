@@ -68,7 +68,7 @@ public class RecetasPageTests : TestContext
 
         _recetasApiMock.Setup(x => x.ObtenerRecetasPaginadasAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool?>(), It.IsAny<Guid?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(recetas);
-        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(productos);
         _inventarioApiMock.Setup(x => x.ObtenerIngredientesPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<InventarioFiltrosDto>()))
             .ReturnsAsync(ingredientes);
@@ -126,7 +126,7 @@ public class RecetasPageTests : TestContext
 
         _recetasApiMock.Setup(x => x.ObtenerRecetasPaginadasAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool?>(), It.IsAny<Guid?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(paginacion);
-        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(productos);
         _inventarioApiMock.Setup(x => x.ObtenerIngredientesPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<InventarioFiltrosDto>()))
             .ReturnsAsync(ingredientes);
@@ -197,7 +197,7 @@ public class RecetasPageTests : TestContext
 
         _recetasApiMock.Setup(x => x.ObtenerRecetasPaginadasAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool?>(), It.IsAny<Guid?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(paginacion);
-        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(productos);
         _inventarioApiMock.Setup(x => x.ObtenerIngredientesPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<InventarioFiltrosDto>()))
             .ReturnsAsync(ingredientes);
@@ -241,7 +241,7 @@ public class RecetasPageTests : TestContext
 
         _recetasApiMock.Setup(x => x.ObtenerRecetasPaginadasAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool?>(), It.IsAny<Guid?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(recetas);
-        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(productos);
         _inventarioApiMock.Setup(x => x.ObtenerIngredientesPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<InventarioFiltrosDto>()))
             .ReturnsAsync(ingredientes);
@@ -287,7 +287,7 @@ public class RecetasPageTests : TestContext
 
         _recetasApiMock.Setup(x => x.ObtenerRecetasPaginadasAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool?>(), It.IsAny<Guid?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(recetas);
-        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(productos);
         _inventarioApiMock.Setup(x => x.ObtenerIngredientesPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<InventarioFiltrosDto>()))
             .ReturnsAsync(ingredientes);
@@ -331,7 +331,7 @@ public class RecetasPageTests : TestContext
 
         _recetasApiMock.Setup(x => x.ObtenerRecetasPaginadasAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool?>(), It.IsAny<Guid?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(recetas);
-        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(productos);
         _inventarioApiMock.Setup(x => x.ObtenerIngredientesPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<InventarioFiltrosDto>()))
             .ReturnsAsync(ingredientes);
@@ -374,7 +374,7 @@ public class RecetasPageTests : TestContext
 
         _recetasApiMock.Setup(x => x.ObtenerRecetasPaginadasAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool?>(), It.IsAny<Guid?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(recetas);
-        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(productos);
         _inventarioApiMock.Setup(x => x.ObtenerIngredientesPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<InventarioFiltrosDto>()))
             .ReturnsAsync(ingredientes);
@@ -419,7 +419,7 @@ public class RecetasPageTests : TestContext
 
         _recetasApiMock.Setup(x => x.ObtenerRecetasPaginadasAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool?>(), It.IsAny<Guid?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(recetas);
-        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(productos);
         _inventarioApiMock.Setup(x => x.ObtenerIngredientesPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<InventarioFiltrosDto>()))
             .ReturnsAsync(ingredientes);
@@ -465,7 +465,7 @@ public class RecetasPageTests : TestContext
 
         _recetasApiMock.Setup(x => x.ObtenerRecetasPaginadasAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool?>(), It.IsAny<Guid?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(recetas);
-        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(productos);
         _inventarioApiMock.Setup(x => x.ObtenerIngredientesPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<InventarioFiltrosDto>()))
             .ReturnsAsync(ingredientes);
@@ -511,7 +511,7 @@ public class RecetasPageTests : TestContext
 
         _recetasApiMock.Setup(x => x.ObtenerRecetasPaginadasAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool?>(), It.IsAny<Guid?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(recetas);
-        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(productos);
         _inventarioApiMock.Setup(x => x.ObtenerIngredientesPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<InventarioFiltrosDto>()))
             .ReturnsAsync(ingredientes);
@@ -529,7 +529,7 @@ public class RecetasPageTests : TestContext
         // Arrange
         _recetasApiMock.Setup(x => x.ObtenerRecetasPaginadasAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool?>(), It.IsAny<Guid?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ThrowsAsync(new Exception("Error de red"));
-        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ThrowsAsync(new Exception("Error de red"));
         _inventarioApiMock.Setup(x => x.ObtenerIngredientesPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<InventarioFiltrosDto>()))
             .ThrowsAsync(new Exception("Error de red"));
@@ -572,7 +572,7 @@ public class RecetasPageTests : TestContext
 
         _recetasApiMock.Setup(x => x.ObtenerRecetasPaginadasAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<bool?>(), It.IsAny<Guid?>(), It.IsAny<string?>(), It.IsAny<string?>(), It.IsAny<string?>()))
             .ReturnsAsync(recetas);
-        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(productos);
         _inventarioApiMock.Setup(x => x.ObtenerIngredientesPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<InventarioFiltrosDto>()))
             .ReturnsAsync(ingredientes);

@@ -67,11 +67,17 @@ public class ObtenerProductosPaginadosHandler : IRequestHandler<ObtenerProductos
             var totalCount = productos.Count();
             var productosArray = productos.ToArray();
             
+            _logger.LogInformation("🔍 Paginación - Total: {Total}, Página: {PageNumber}, Tamaño: {PageSize}", 
+                totalCount, request.PageNumber, request.PageSize);
+            
             var itemsToSkip = (request.PageNumber - 1) * request.PageSize;
             var productosPagina = productosArray
                 .Skip(itemsToSkip)
                 .Take(request.PageSize)
                 .ToList();
+                
+            _logger.LogInformation("📊 Paginación - Items a saltar: {ItemsToSkip}, Items devueltos: {ItemsReturned}", 
+                itemsToSkip, productosPagina.Count);
 
             // Mapear a DTOs
             var productosDto = _mapper.Map<List<ProductoDto>>(productosPagina);

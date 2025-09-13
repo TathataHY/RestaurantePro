@@ -49,6 +49,8 @@ public class ProductosController : ControllerBase
     public async Task<ActionResult<ApiResponse<PaginatedList<ProductoDto>>>> GetProductos(
         [FromQuery] int PageNumber = 1,
         [FromQuery] int PageSize = 10,
+        [FromQuery] int? tamanoPagina = null, // Compatibilidad con tests
+        [FromQuery] int? pagina = null, // Compatibilidad con tests (número de página)
         [FromQuery] string? filtro = null,
         [FromQuery] Guid? categoriaId = null,
         [FromQuery] bool soloActivos = true,
@@ -61,8 +63,15 @@ public class ProductosController : ControllerBase
         [FromQuery] string orderBy = "Nombre",
         [FromQuery] string orderDirection = "asc")
     {
+        // Usar tamanoPagina si está presente, sino usar PageSize
+        var pageSize = tamanoPagina ?? PageSize;
+        // Usar pagina si está presente, sino usar PageNumber
+        var pageNumber = pagina ?? PageNumber;
+        
+        _logger.LogInformation("🔍 Parámetros recibidos - PageNumber: {PageNumber}, pagina: {pagina}, PageSize: {PageSize}, tamanoPagina: {tamanoPagina}", 
+            PageNumber, pagina, PageSize, tamanoPagina);
         _logger.LogInformation("📋 GET /api/core/productos - Filtro: '{Filtro}', CategoriaId: {CategoriaId}, SoloActivos: {SoloActivos}, PageNumber: {PageNumber}, PageSize: {PageSize}", 
-            filtro, categoriaId, soloActivos, PageNumber, PageSize);
+            filtro, categoriaId, soloActivos, pageNumber, pageSize);
         
         // Validar que los parámetros de query string sean válidos
         if (!ModelState.IsValid)
@@ -81,7 +90,7 @@ public class ProductosController : ControllerBase
         }
         
         // Validar parámetros de paginación
-        if (PageNumber < 1)
+        if (pageNumber < 1)
         {
             var errorResponse = ApiResponse<PaginatedList<ProductoDto>>.ErrorResponse(
                 new List<string> { "El número de página debe ser mayor a 0" }, 
@@ -90,7 +99,7 @@ public class ProductosController : ControllerBase
             return BadRequest(errorResponse);
         }
         
-        if (PageSize < 1 || PageSize > 100)
+        if (pageSize < 1 || pageSize > 100)
         {
             var errorResponse = ApiResponse<PaginatedList<ProductoDto>>.ErrorResponse(
                 new List<string> { "El tamaño de página debe estar entre 1 y 100" }, 
@@ -111,8 +120,8 @@ public class ProductosController : ControllerBase
 
         var query = new ObtenerProductosPaginadosQuery
         {
-            PageNumber = PageNumber,
-            PageSize = PageSize,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
             Filtro = filtro,
             CategoriaId = categoriaId,
             SoloActivos = soloActivos,

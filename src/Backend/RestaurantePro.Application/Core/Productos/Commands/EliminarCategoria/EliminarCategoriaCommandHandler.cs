@@ -40,14 +40,20 @@ public class EliminarCategoriaCommandHandler : IRequestHandler<EliminarCategoria
             }
 
             // Verificar si la categoría tiene productos asociados
+            _logger.LogInformation("🔍 Verificando productos asociados para categoría {Id}", request.Id);
             var productosAsociados = await _productoRepository.ObtenerPorCategoriaAsync(request.Id, false, cancellationToken);
+            
+            _logger.LogInformation("📊 Productos encontrados: {Count} productos asociados a categoría {Id}", 
+                productosAsociados.Count, request.Id);
             
             if (productosAsociados.Any())
             {
-                _logger.LogWarning("No se puede eliminar la categoría {Id} porque tiene {Count} productos asociados", 
+                _logger.LogWarning("❌ No se puede eliminar la categoría {Id} porque tiene {Count} productos asociados", 
                     request.Id, productosAsociados.Count);
                 return Result.Failure($"No se puede eliminar la categoría porque tiene {productosAsociados.Count} productos asociados");
             }
+            
+            _logger.LogInformation("✅ Categoría {Id} no tiene productos asociados, procediendo con eliminación", request.Id);
 
             // Desactivar la categoría (soft delete)
             categoria.Desactivar();

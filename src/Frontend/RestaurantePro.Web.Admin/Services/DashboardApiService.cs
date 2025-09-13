@@ -34,12 +34,13 @@ public class DashboardApiService : IDashboardApiService
     /// <summary>
     /// Obtiene el resumen completo del dashboard
     /// </summary>
-    public async Task<DashboardResumenDto?> ObtenerResumenAsync()
+    public async Task<DashboardResumenDto?> ObtenerResumenAsync(string? periodo = "hoy", string? turno = "todos")
     {
         try
         {
             var http = CreateClient();
-            var resp = await http.GetFromJsonAsync<ApiResponse<DashboardResumenDto>>("api/admin/dashboard/resumen");
+            var url = $"api/admin/dashboard/resumen?periodo={periodo}&turno={turno}";
+            var resp = await http.GetFromJsonAsync<ApiResponse<DashboardResumenDto>>(url);
             return resp?.Data;
         }
         catch (Exception)
@@ -221,9 +222,9 @@ public class DashboardApiService : IDashboardApiService
     /// <summary>
     /// Obtiene el dashboard completo
     /// </summary>
-    public async Task<DashboardResumenDto?> ObtenerDashboardAsync()
+    public async Task<DashboardResumenDto?> ObtenerDashboardAsync(string? periodo = "hoy", string? turno = "todos")
     {
-        return await ObtenerResumenAsync();
+        return await ObtenerResumenAsync(periodo, turno);
     }
 
     /// <summary>

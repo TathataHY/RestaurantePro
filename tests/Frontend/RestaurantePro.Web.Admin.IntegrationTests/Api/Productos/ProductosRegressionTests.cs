@@ -247,9 +247,9 @@ public class ProductosRegressionTests : BaseIntegrationTest
         {
             new { Pagina = 1, Tamano = 5, EsperadoMax = 5 },
             new { Pagina = 2, Tamano = 5, EsperadoMax = 5 },
-            new { Pagina = 3, Tamano = 5, EsperadoMax = 5 },
-            new { Pagina = 1, Tamano = 20, EsperadoMax = 15 },
-            new { Pagina = 2, Tamano = 20, EsperadoMax = 0 }
+            new { Pagina = 3, Tamano = 5, EsperadoMax = 0 }, // Página 3 con 5 items debería devolver 0 (solo hay 10 productos)
+            new { Pagina = 1, Tamano = 20, EsperadoMax = 10 }, // Página 1 con 20 items devuelve todos los 10 productos
+            new { Pagina = 2, Tamano = 20, EsperadoMax = 0 } // Página 2 con 20 items debería devolver 0
         };
 
         // Act & Assert
@@ -266,6 +266,10 @@ public class ProductosRegressionTests : BaseIntegrationTest
             apiResponse.Should().NotBeNull();
             apiResponse!.Success.Should().BeTrue();
             apiResponse.Data.Should().NotBeNull();
+            
+            // Log para debugging
+            Console.WriteLine($"Página {caso.Pagina}, Tamaño {caso.Tamano}: Esperado max {caso.EsperadoMax}, Obtenido {apiResponse.Data!.Items.Count}");
+            
             apiResponse.Data!.Items.Count.Should().BeLessOrEqualTo(caso.EsperadoMax);
         }
     }

@@ -30,7 +30,7 @@ public class ProductosPageTests : TestContext
     {
         _productosApiMock.Setup(x => x.ObtenerProductosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>()))
                         .ReturnsAsync(new PaginatedList<ProductoDto> { Items = new List<ProductoDto>() });
-        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(), It.IsAny<string>(), It.IsAny<string>()))
+        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<string>()))
                         .ReturnsAsync(new PaginatedList<ProductoDto> { Items = new List<ProductoDto>() });
         _productosApiMock.Setup(x => x.ObtenerCategoriasAsync())
                         .ReturnsAsync(new List<CategoriaProductoDto>());
@@ -48,7 +48,7 @@ public class ProductosPageTests : TestContext
                         .ReturnsAsync(new PaginatedList<ProductoDto> { Items = productos, TotalCount = 2, PageNumber = 1, PageSize = 10 });
         _productosApiMock.Setup(x => x.ObtenerCategoriasAsync())
                         .ReturnsAsync(new List<CategoriaProductoDto>());
-        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(), It.IsAny<string>(), It.IsAny<string>()))
+        _productosApiMock.Setup(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<string>()))
                         .ReturnsAsync(new PaginatedList<ProductoDto> { Items = productos, TotalCount = 2, PageNumber = 1, PageSize = 10 });
     }
 
@@ -146,7 +146,7 @@ public class ProductosPageTests : TestContext
         var component = RenderComponent<Productos>();
 
         // Assert
-        _productosApiMock.Verify(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(), It.IsAny<string>(), It.IsAny<string>()), Times.AtLeastOnce);
+        _productosApiMock.Verify(x => x.ObtenerProductosPaginadosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<Guid?>(), It.IsAny<bool>(), It.IsAny<decimal?>(), It.IsAny<decimal?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<string>()), Times.AtLeastOnce);
     }
 
     [Fact]

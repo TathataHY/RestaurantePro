@@ -105,7 +105,7 @@ public class ProductosApiServiceTests
             });
 
         // Act
-        var resultado = await _service.ObtenerProductosPaginadosAsync(1, 10, null, null, true, "Nombre", "asc");
+        var resultado = await _service.ObtenerProductosPaginadosAsync(1, 10, null, null, true, orderBy: "Nombre", orderDirection: "asc");
 
         // Assert
         resultado.Should().NotBeNull();
@@ -478,7 +478,7 @@ public class ProductosApiServiceTests
 
         // Act & Assert
         await Assert.ThrowsAsync<HttpRequestException>(() => 
-            _service.ObtenerProductosPaginadosAsync(1, 10, null, null, true, "Nombre", "asc"));
+            _service.ObtenerProductosPaginadosAsync(1, 10, null, null, true, orderBy: "Nombre", orderDirection: "asc"));
     }
 
     // ===== PRUEBAS DE SEGURIDAD =====
@@ -693,7 +693,7 @@ public class ProductosApiServiceTests
         var tasks = new List<Task<PaginatedList<ProductoDto>?>>();
         for (int i = 0; i < 20; i++)
         {
-            tasks.Add(_service.ObtenerProductosPaginadosAsync(1, 10, null, null, true, "Nombre", "asc"));
+            tasks.Add(_service.ObtenerProductosPaginadosAsync(1, 10, null, null, true, orderBy: "Nombre", orderDirection: "asc"));
         }
 
         var resultados = await Task.WhenAll(tasks);

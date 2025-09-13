@@ -23,9 +23,9 @@ public class RegistroPageTests : TestContext
         // Act
         var cut = RenderComponent<Pages.Registro>();
 
-        cut.Find("input[placeholder='Nombre completo']").Change("Juan Pérez");
-        cut.Find("input[placeholder='Email']").Change("juan@example.com");
-        cut.Find("input[placeholder='Teléfono (e.g. +56912345678)']").Change("+56912345678");
+        cut.Find("input[placeholder='Ej: María López']").Change("Juan Pérez");
+        cut.Find("input[placeholder='nombre@dominio.com']").Change("juan@example.com");
+        cut.Find("input[placeholder='+56912345678']").Change("+56912345678");
         cut.Find("form").Submit();
 
         // Assert

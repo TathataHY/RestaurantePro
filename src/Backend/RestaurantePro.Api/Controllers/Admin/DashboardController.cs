@@ -33,18 +33,21 @@ public class DashboardController : ControllerBase
     }
 
     /// <summary>
-    /// Obtiene el resumen completo del dashboard
+    /// Obtiene el resumen completo del dashboard con filtros opcionales
     /// </summary>
     [HttpGet("resumen")]
     [ProducesResponseType(typeof(ApiResponse<DashboardResumenDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<ApiResponse<DashboardResumenDto>>> ObtenerResumen()
+    public async Task<ActionResult<ApiResponse<DashboardResumenDto>>> ObtenerResumen(
+        [FromQuery] string? periodo = "hoy",
+        [FromQuery] string? turno = "todos")
     {
-        _logger.LogInformation("📊 GET /api/admin/dashboard/resumen - Usuario: {UserId}", _currentUserService.UserId);
+        _logger.LogInformation("📊 GET /api/admin/dashboard/resumen - Usuario: {UserId}, Período: {Periodo}, Turno: {Turno}", 
+            _currentUserService.UserId, periodo, turno);
 
         try
         {
-            var resumen = await _dashboardService.ObtenerResumenAsync();
+            var resumen = await _dashboardService.ObtenerResumenAsync(periodo, turno);
             
             return Ok(ApiResponse<DashboardResumenDto>.SuccessResponse(resumen));
         }

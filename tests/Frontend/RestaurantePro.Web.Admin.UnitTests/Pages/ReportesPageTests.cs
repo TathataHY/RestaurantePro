@@ -39,7 +39,7 @@ public class ReportesPageTests : TestContext
         Services.AddSingleton(_jsRuntimeMock.Object);
 
         // Configurar mocks con datos por defecto
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(1, 1000, null, true, "NombreCompleto", "asc"))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(1, 1000, null, true, null, "NombreCompleto", "asc"))
             .ReturnsAsync(new List<UsuarioDto>());
         _mesasApiMock.Setup(x => x.ObtenerMesasAsync())
             .ReturnsAsync(new List<MesaDto>());

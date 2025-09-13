@@ -51,10 +51,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
             {
                 query = query.Where(p => p.EstaActivo);
             }
-            else
-            {
-                query = query.Where(p => !p.EstaActivo);
-            }
+            // Si soloActivos = false, no aplicar filtro adicional (obtener todos los productos)
             return await query.ToListAsync(cancellationToken);
         }
 

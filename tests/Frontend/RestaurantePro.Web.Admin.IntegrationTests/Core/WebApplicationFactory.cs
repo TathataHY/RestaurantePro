@@ -179,8 +179,8 @@ public class WebApplicationFactory : WebApplicationFactory<RestaurantePro.Api.Pr
 
     public async Task InitializeAsync()
     {
-        // Usar un nombre fijo para la base de datos compartida entre tests
-        _databaseName = "RestaurantePro_IntegrationTests_Shared";
+        // Usar un nombre único para cada instancia de factory
+        _databaseName = $"RestaurantePro_IntegrationTests_{Guid.NewGuid():N}";
         
         // Crear la base de datos en memoria
         using var scope = Services.CreateScope();

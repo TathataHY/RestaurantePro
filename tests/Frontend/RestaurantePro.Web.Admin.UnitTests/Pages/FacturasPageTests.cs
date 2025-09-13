@@ -44,7 +44,7 @@ namespace RestaurantePro.Web.Admin.UnitTests.Pages;
                         .ReturnsAsync(new PaginatedList<FacturaDto> { Items = new List<FacturaDto>() });
         _facturasApiMock.Setup(x => x.ObtenerEstadisticasAsync())
                         .ReturnsAsync(new FacturaEstadisticasDto());
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
                         .ReturnsAsync(new List<UsuarioDto>());
         _clientesApiMock.Setup(x => x.ObtenerClientesAsync())
                         .ReturnsAsync(new List<ClienteDto>());
@@ -90,7 +90,7 @@ namespace RestaurantePro.Web.Admin.UnitTests.Pages;
                         .ReturnsAsync(new PaginatedList<FacturaDto> { Items = facturas, TotalCount = 2, PageNumber = 1, PageSize = 10 });
         _facturasApiMock.Setup(x => x.ObtenerEstadisticasAsync())
                         .ReturnsAsync(estadisticas);
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
                         .ReturnsAsync(new List<UsuarioDto>());
         _clientesApiMock.Setup(x => x.ObtenerClientesAsync())
                         .ReturnsAsync(new List<ClienteDto>());
