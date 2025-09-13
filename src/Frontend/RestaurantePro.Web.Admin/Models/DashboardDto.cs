@@ -11,6 +11,7 @@ public class DashboardMetricasDto
     public decimal VentasAyer { get; set; }
     public decimal VentasSemana { get; set; }
     public decimal VentasMes { get; set; }
+    public decimal VentasTotalDia { get; set; } // Ventas totales del día completo (todos los turnos)
     public int MesasOcupadas { get; set; }
     public int MesasDisponibles { get; set; }
     public int TotalMesas { get; set; }

@@ -3,15 +3,23 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using RestaurantePro.Api.IntegrationTests.TestBase;
 using RestaurantePro.Domain.Comercial.Clientes.Entities;
+using RestaurantePro.Domain.Comercial.Clientes.ValueObjects;
 using RestaurantePro.Domain.Comercial.Facturacion.Entities;
+using RestaurantePro.Domain.Comercial.Facturacion.Enums;
 using RestaurantePro.Domain.Operaciones.Comandas.Entities;
-using RestaurantePro.Domain.Operaciones.Comandas.ValueObjects;
+using RestaurantePro.Domain.Operaciones.Comandas.Enums;
 using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
 using RestaurantePro.Domain.Core.Productos.Entities;
+using RestaurantePro.Domain.Core.Productos.ValueObjects;
+using RestaurantePro.Domain.Core.SharedKernel.ValueObjects;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 using System.Net.Http;
 using System.Text.Json;
 using Xunit;
+using RestaurantePro.Api.Models;
+using RestaurantePro.Api.Models.Requests;
+using RestaurantePro.Application.Common.Models.Dashboard;
 
 namespace RestaurantePro.Api.IntegrationTests.Dashboard;
 
@@ -23,6 +31,22 @@ public class DashboardWebIntegrationTests : ApiIntegrationTestBase, IClassFixtur
 {
     public DashboardWebIntegrationTests(TestWebApplicationFactory factory) : base(factory)
     {
+    }
+
+    private async Task<string> ObtenerTokenAdminAsync()
+    {
+        var loginRequest = new LoginRequest
+        {
+            Email = "admin@restaurantepro.com",
+            Password = "AdminRestaurante123!"
+        };
+        
+        var loginResponse = await HttpClient.PostAsJsonAsync("/api/auth/login", loginRequest);
+        loginResponse.EnsureSuccessStatusCode();
+        var loginContent = await loginResponse.Content.ReadAsStringAsync();
+        var loginApiResponse = JsonSerializer.Deserialize<ApiResponse<AuthResponse>>(loginContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        
+        return loginApiResponse!.Data!.Token;
     }
 
     #region Tests de Filtros de Período
@@ -400,10 +424,10 @@ public class DashboardWebIntegrationTests : ApiIntegrationTestBase, IClassFixtur
         Assert.Equal(0, dashboard.Data.Metricas.ComandasActivas);
         Assert.Empty(dashboard.Data.ProductosMasVendidos);
         
-        // VentasUltimos7Dias puede tener datos para los últimos 7 días con ventas en 0
-        Assert.True(dashboard.Data.VentasUltimos7Dias.All(v => v.Monto == 0));
+        // VentasPorPeriodo puede tener datos para los últimos 7 días con ventas en 0
+        Assert.True(dashboard.Data.VentasPorPeriodo.All(v => v.Ventas == 0));
         // IngresosPorHora puede tener datos para las 24 horas con ingresos en 0
-        Assert.True(dashboard.Data.IngresosPorHora.All(i => i.Monto == 0));
+        Assert.True(dashboard.Data.IngresosPorHora.All(i => i.Ingresos == 0));
     }
 
     [Fact]
@@ -440,25 +464,23 @@ public class DashboardWebIntegrationTests : ApiIntegrationTestBase, IClassFixtur
 
     private async Task CrearDatosSimuladosCompletosAsync()
     {
-        var hoy = DateTime.Today;
+        var hoy = DateTime.Now.Date; // Usar medianoche de hoy para evitar problemas de tiempo
         var ayer = hoy.AddDays(-1);
         var semana = hoy.AddDays(-7);
         var mes = hoy.AddDays(-30);
 
         // Crear clientes
         var cliente1 = Cliente.Crear(
-            "Juan",
-            "Pérez",
+            ClienteNombre.Crear("Juan", "Pérez"),
             "juan@email.com",
             "1234567890",
-            "12345678"
+            new DateTime(1990, 1, 1)
         );
         var cliente2 = Cliente.Crear(
-            "María",
-            "González",
+            ClienteNombre.Crear("María", "González"),
             "maria@email.com",
             "0987654321",
-            "87654321"
+            new DateTime(1985, 5, 15)
         );
 
         DbContext.Clientes.AddRange(cliente1, cliente2);
@@ -482,42 +504,42 @@ public class DashboardWebIntegrationTests : ApiIntegrationTestBase, IClassFixtur
         var producto1 = Producto.Crear(
             "Pizza Margherita",
             "Pizza con tomate, mozzarella y albahaca",
-            PrecioProducto.Crear(12.99m, "USD"),
+            new PrecioProducto(12.99m),
             categoriaPizzas.Id,
             "Pizzas"
         );
         var producto2 = Producto.Crear(
             "Hamburguesa Clásica",
             "Hamburguesa con carne, lechuga, tomate y cebolla",
-            PrecioProducto.Crear(15.00m, "USD"),
+            new PrecioProducto(15.00m),
             categoriaHamburguesas.Id,
             "Hamburguesas"
         );
         var producto3 = Producto.Crear(
             "Ensalada César",
             "Ensalada con lechuga, pollo, crutones y aderezo césar",
-            PrecioProducto.Crear(10.00m, "USD"),
+            new PrecioProducto(10.00m),
             categoriaEnsaladas.Id,
             "Ensaladas"
         );
         var producto4 = Producto.Crear(
             "Pasta Carbonara",
             "Pasta con crema, huevo, panceta y parmesano",
-            PrecioProducto.Crear(20.00m, "USD"),
+            new PrecioProducto(20.00m),
             categoriaPastas.Id,
             "Pastas"
         );
         var producto5 = Producto.Crear(
             "Coca Cola",
             "Bebida gaseosa de cola",
-            PrecioProducto.Crear(3.50m, "USD"),
+            new PrecioProducto(3.50m),
             categoriaBebidas.Id,
             "Bebidas"
         );
         var producto6 = Producto.Crear(
             "Tiramisú",
             "Postre italiano con café y mascarpone",
-            PrecioProducto.Crear(8.00m, "USD"),
+            new PrecioProducto(8.00m),
             categoriaPostres.Id,
             "Postres"
         );
@@ -533,11 +555,11 @@ public class DashboardWebIntegrationTests : ApiIntegrationTestBase, IClassFixtur
         var producto6Id = producto6.Id;
 
         // Crear mesas
-        var mesa1 = Mesa.Crear("Mesa 1", 4, "Interior");
-        var mesa2 = Mesa.Crear("Mesa 2", 2, "Terraza");
-        var mesa3 = Mesa.Crear("Mesa 3", 6, "Interior");
-        var mesa4 = Mesa.Crear("Mesa 4", 4, "Interior");
-        var mesa5 = Mesa.Crear("Mesa 5", 2, "Terraza");
+        var mesa1 = Mesa.Crear(1, 4, "Interior");
+        var mesa2 = Mesa.Crear(2, 2, "Terraza");
+        var mesa3 = Mesa.Crear(3, 6, "Interior");
+        var mesa4 = Mesa.Crear(4, 4, "Interior");
+        var mesa5 = Mesa.Crear(5, 2, "Terraza");
 
         DbContext.Mesas.AddRange(mesa1, mesa2, mesa3, mesa4, mesa5);
         await DbContext.SaveChangesAsync();
@@ -672,10 +694,10 @@ public class DashboardWebIntegrationTests : ApiIntegrationTestBase, IClassFixtur
         DbContext.Facturas.AddRange(factura1, factura2, factura3, factura4, factura5, factura6, factura7);
 
         // Crear comandas
-        // Comanda 1: En Proceso (Mesa 1)
+        // Comanda 1: En Proceso (Mesa 1) - 8:00 AM de hoy
         var comanda1 = Comanda.Crear(
             null,
-            hoy.AddHours(9),
+            hoy.AddHours(8),
             null,
             mesa1Id,
             "Cliente en mesa 1",
@@ -684,10 +706,10 @@ public class DashboardWebIntegrationTests : ApiIntegrationTestBase, IClassFixtur
         comanda1.AgregarProducto(producto1Id, 1, 12.99m);
         comanda1.ActualizarEstado(EstadoComanda.EnProceso);
 
-        // Comanda 2: Lista (Mesa 5)
+        // Comanda 2: Lista (Mesa 5) - 10:00 AM de hoy
         var comanda2 = Comanda.Crear(
             null,
-            hoy.AddHours(13),
+            hoy.AddHours(10),
             null,
             mesa5Id,
             "Cliente en mesa 5",
@@ -697,10 +719,10 @@ public class DashboardWebIntegrationTests : ApiIntegrationTestBase, IClassFixtur
         comanda2.ActualizarEstado(EstadoComanda.EnProceso);
         comanda2.ActualizarEstado(EstadoComanda.Lista);
 
-        // Comanda 3: Entregada (Hoy)
+        // Comanda 3: Entregada (Hoy) - 11:00 AM de hoy
         var comanda3 = Comanda.Crear(
             null,
-            hoy.AddHours(19),
+            hoy.AddHours(11),
             null,
             mesa2Id,
             "Cliente en mesa 2",
@@ -753,7 +775,7 @@ public class DashboardResumenDto
 {
     public DashboardMetricasDto Metricas { get; set; } = new();
     public List<ProductoMasVendidoDto> ProductosMasVendidos { get; set; } = new();
-    public List<VentaPorPeriodoDto> VentasUltimos7Dias { get; set; } = new();
+    public List<VentaPorPeriodoDto> VentasPorPeriodo { get; set; } = new();
     public EstadoMesasDto EstadoMesas { get; set; } = new();
     public ComandasPorEstadoDto ComandasPorEstado { get; set; } = new();
     public List<IngresosPorHoraDto> IngresosPorHora { get; set; } = new();
@@ -790,9 +812,8 @@ public class ProductoMasVendidoDto
 public class VentaPorPeriodoDto
 {
     public DateTime Fecha { get; set; }
-    public decimal Monto { get; set; }
-    public int CantidadComandas { get; set; }
-    public int CantidadProductos { get; set; }
+    public decimal Ventas { get; set; }
+    public int CantidadFacturas { get; set; }
 }
 
 public class EstadoMesasDto
@@ -807,9 +828,9 @@ public class EstadoMesasDto
 public class ComandasPorEstadoDto
 {
     public int Pendientes { get; set; }
-    public int EnPreparacion { get; set; }
+    public int EnProceso { get; set; }
     public int Listas { get; set; }
-    public int Completadas { get; set; }
+    public int Entregadas { get; set; }
     public int Canceladas { get; set; }
     public int Total { get; set; }
 }
@@ -817,6 +838,6 @@ public class ComandasPorEstadoDto
 public class IngresosPorHoraDto
 {
     public int Hora { get; set; }
-    public decimal Monto { get; set; }
-    public int CantidadComandas { get; set; }
+    public decimal Ingresos { get; set; }
+    public int CantidadFacturas { get; set; }
 }

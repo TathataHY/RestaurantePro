@@ -467,26 +467,13 @@ public class ReportesVentasTests : BaseIntegrationTest
         var random = new Random();
         var monto = (decimal)(random.NextDouble() * 1000 + 50); // Entre $50 y $1050
         
-        var factura = new RestaurantePro.Domain.Comercial.Facturacion.Entities.Factura
-        {
-            Id = Guid.NewGuid(),
-            NumeroFactura = $"FAC-{DateTime.Now:yyyyMMdd}-{random.Next(1000, 9999)}",
-            TipoFactura = RestaurantePro.Domain.Comercial.Facturacion.Enums.TipoFactura.Normal,
-            Estado = incluirCanceladas && random.NextDouble() < 0.1 ? 
-                RestaurantePro.Domain.Comercial.Facturacion.Enums.EstadoFactura.Anulada : 
-                RestaurantePro.Domain.Comercial.Facturacion.Enums.EstadoFactura.Pagada,
-            FechaEmision = DateTime.Now.AddDays(-random.Next(0, 30)),
-            FechaPago = DateTime.Now.AddDays(-random.Next(0, 30)),
-            ClienteId = await ObtenerClienteAleatorioAsync(context),
-            NombreCliente = $"Cliente Test {random.Next(1, 100)}",
-            Subtotal = monto * 0.85m,
-            TotalImpuestos = monto * 0.15m,
-            TotalDescuentos = 0,
-            Total = monto,
-            TotalPagado = monto,
-            FechaCreacion = DateTime.Now.AddDays(-random.Next(0, 30)),
-            ComandasIds = new List<Guid> { Guid.NewGuid() }
-        };
+        var factura = RestaurantePro.Domain.Comercial.Facturacion.Entities.Factura.Crear(
+            numeroFactura: $"FAC-{DateTime.Now:yyyyMMdd}-{random.Next(1000, 9999)}",
+            tipoFactura: RestaurantePro.Domain.Comercial.Facturacion.Enums.TipoFactura.Normal,
+            nombreCliente: $"Cliente Test {random.Next(1, 100)}",
+            clienteId: await ObtenerClienteAleatorioAsync(context),
+            fechaEmision: DateTime.Now.AddDays(-random.Next(0, 15))
+        );
         
         context.Facturas.Add(factura);
         await context.SaveChangesAsync();
@@ -499,24 +486,13 @@ public class ReportesVentasTests : BaseIntegrationTest
         
         var random = new Random();
         
-        var factura = new RestaurantePro.Domain.Comercial.Facturacion.Entities.Factura
-        {
-            Id = Guid.NewGuid(),
-            NumeroFactura = $"FAC-{DateTime.Now:yyyyMMdd}-{random.Next(1000, 9999)}",
-            TipoFactura = RestaurantePro.Domain.Comercial.Facturacion.Enums.TipoFactura.Normal,
-            Estado = RestaurantePro.Domain.Comercial.Facturacion.Enums.EstadoFactura.Pagada,
-            FechaEmision = DateTime.Now.AddDays(-random.Next(0, 30)),
-            FechaPago = DateTime.Now.AddDays(-random.Next(0, 30)),
-            ClienteId = await ObtenerClienteAleatorioAsync(context),
-            NombreCliente = $"Cliente Test {random.Next(1, 100)}",
-            Subtotal = monto * 0.85m,
-            TotalImpuestos = monto * 0.15m,
-            TotalDescuentos = 0,
-            Total = monto,
-            TotalPagado = monto,
-            FechaCreacion = DateTime.Now.AddDays(-random.Next(0, 30)),
-            ComandasIds = new List<Guid> { Guid.NewGuid() }
-        };
+        var factura = RestaurantePro.Domain.Comercial.Facturacion.Entities.Factura.Crear(
+            numeroFactura: $"FAC-{DateTime.Now:yyyyMMdd}-{random.Next(1000, 9999)}",
+            tipoFactura: RestaurantePro.Domain.Comercial.Facturacion.Enums.TipoFactura.Normal,
+            nombreCliente: $"Cliente Test {random.Next(1, 100)}",
+            clienteId: await ObtenerClienteAleatorioAsync(context),
+            fechaEmision: DateTime.Now.AddDays(-random.Next(0, 15))
+        );
         
         context.Facturas.Add(factura);
         await context.SaveChangesAsync();
@@ -531,14 +507,12 @@ public class ReportesVentasTests : BaseIntegrationTest
         
         for (int i = 0; i < cantidad; i++)
         {
-            var cliente = new RestaurantePro.Domain.Core.Entities.Cliente
-            {
-                Id = Guid.NewGuid(),
-                Nombre = $"Cliente Test {i + 1}",
-                Email = $"cliente{i + 1}@test.com",
-                Telefono = $"555-{i + 1:0000}",
-                FechaCreacion = DateTime.Now.AddDays(-Random.Shared.Next(0, 30))
-            };
+            var cliente = RestaurantePro.Domain.Comercial.Clientes.Entities.Cliente.Crear(
+                nombre: RestaurantePro.Domain.Comercial.Clientes.ValueObjects.ClienteNombre.Crear($"Cliente Test {i + 1}", ""),
+                email: $"cliente{i + 1}@test.com",
+                telefono: $"555-{i + 1:0000}",
+                fechaNacimiento: DateTime.Now.AddYears(-30)
+            );
             
             context.Clientes.Add(cliente);
             clienteIds.Add(cliente.Id);
@@ -556,33 +530,28 @@ public class ReportesVentasTests : BaseIntegrationTest
         var context = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
         
         // Obtener una categoría existente o crear una
-        var categoria = await context.Categorias.FirstOrDefaultAsync();
+        var categoria = await context.ProductoCategorias.FirstOrDefaultAsync();
         if (categoria == null)
         {
-            categoria = new RestaurantePro.Domain.Core.Entities.Categoria
-            {
-                Id = Guid.NewGuid(),
-                Nombre = "Categoría Test",
-                Descripcion = "Categoría para pruebas",
-                EstaActiva = true,
-                FechaCreacion = DateTime.Now
-            };
-            context.Categorias.Add(categoria);
+            categoria = RestaurantePro.Domain.Core.Productos.Entities.ProductoCategoria.Crear(
+                nombre: "Categoría Test",
+                descripcion: "Categoría para pruebas",
+                orden: 1,
+                color: "#FF5722",
+                icono: "🍽️"
+            );
+            context.ProductoCategorias.Add(categoria);
             await context.SaveChangesAsync();
         }
         
         for (int i = 0; i < cantidad; i++)
         {
-            var producto = new RestaurantePro.Domain.Core.Entities.Producto
-            {
-                Id = Guid.NewGuid(),
-                Nombre = $"Producto Test {i + 1}",
-                Descripcion = $"Descripción del producto {i + 1}",
-                Precio = (decimal)(Random.Shared.NextDouble() * 100 + 10), // Entre $10 y $110
-                CategoriaId = categoria.Id,
-                EstaActivo = true,
-                FechaCreacion = DateTime.Now.AddDays(-Random.Shared.Next(0, 30))
-            };
+            var producto = RestaurantePro.Domain.Core.Productos.Entities.Producto.Crear(
+                nombre: $"Producto Test {i + 1}",
+                descripcion: $"Descripción del producto {i + 1}",
+                precio: new RestaurantePro.Domain.Core.Productos.ValueObjects.PrecioProducto((decimal)(Random.Shared.NextDouble() * 100 + 10)), // Entre $10 y $110
+                categoriaId: categoria.Id
+            );
             
             context.Productos.Add(producto);
             productoIds.Add(producto.Id);
@@ -598,14 +567,12 @@ public class ReportesVentasTests : BaseIntegrationTest
         if (!clientes.Any())
         {
             // Crear un cliente si no hay ninguno
-            var cliente = new RestaurantePro.Domain.Core.Entities.Cliente
-            {
-                Id = Guid.NewGuid(),
-                Nombre = "Cliente Test",
-                Email = "cliente@test.com",
-                Telefono = "555-0000",
-                FechaCreacion = DateTime.Now
-            };
+            var cliente = RestaurantePro.Domain.Comercial.Clientes.Entities.Cliente.Crear(
+                nombre: RestaurantePro.Domain.Comercial.Clientes.ValueObjects.ClienteNombre.Crear("Cliente Test", ""),
+                email: "cliente@test.com",
+                telefono: "555-0000",
+                fechaNacimiento: DateTime.Now.AddYears(-30)
+            );
             context.Clientes.Add(cliente);
             await context.SaveChangesAsync();
             return cliente.Id;

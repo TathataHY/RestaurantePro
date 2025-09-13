@@ -57,6 +57,10 @@
         <div class="flex items-center gap-4">
             <label class="text-gray-700 text-sm font-medium">Turno:</label>
             <div class="flex gap-2">
+                <button @onclick="SeleccionarTodos" 
+                        class="@GetTurnoButtonClass(todos)">
+                    Todos
+                </button>
                 <button @onclick="SeleccionarMañana" 
                         class="@GetTurnoButtonClass(mañana)">
                     Mañana
@@ -124,11 +128,11 @@
                     </div>
                     
                     <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                        <p class="text-gray-600 text-sm font-medium">Ingresos por Período</p>
-                        <p class="text-gray-900 text-3xl font-bold">@resumen.Metricas.VentasHoy.ToString("C0")</p>
-                        <div class="flex items-center gap-1 text-green-600 text-sm font-medium">
-                            <span class="material-symbols-outlined text-base">arrow_upward</span>
-                            <span>+8%</span>
+                        <p class="text-gray-600 text-sm font-medium">Ventas Total del Día</p>
+                        <p class="text-gray-900 text-3xl font-bold">@resumen.Metricas.VentasTotalDia.ToString("C0")</p>
+                        <div class="flex items-center gap-1 text-blue-600 text-sm font-medium">
+                            <span class="material-symbols-outlined text-base">trending_up</span>
+                            <span>Todos los turnos</span>
                         </div>
                     </div>
                 </div>
@@ -349,9 +353,10 @@
     private DashboardResumenDto? resumen;
     private bool cargando = true;
     private string periodoSeleccionado = "hoy";
-    private string turnoSeleccionado = "mañana";
+    private string turnoSeleccionado = "todos";
     
     // Constantes para los turnos
+    private const string todos = "todos";
     private const string mañana = "mañana";
     private const string tarde = "tarde";
     private const string noche = "noche";
@@ -378,6 +383,34 @@
             if (resumen != null)
             {
                 Console.WriteLine($"Datos del dashboard cargados correctamente - Período: {periodoSeleccionado}, Turno: {turnoSeleccionado}");
+                
+                // 🔍 LOGS DE DEBUG - DATOS RECIBIDOS DEL BACKEND
+                Console.WriteLine("=== 📊 DATOS RECIBIDOS DEL BACKEND ===");
+                Console.WriteLine($"💰 Ventas Hoy: ${resumen.Metricas.VentasHoy:N2}");
+                Console.WriteLine($"💰 Ventas Total Día: ${resumen.Metricas.VentasTotalDia:N2}");
+                Console.WriteLine($"💰 Ventas Ayer: ${resumen.Metricas.VentasAyer:N2}");
+                Console.WriteLine($"💰 Ventas Semana: ${resumen.Metricas.VentasSemana:N2}");
+                Console.WriteLine($"💰 Ventas Mes: ${resumen.Metricas.VentasMes:N2}");
+                Console.WriteLine($"🏢 Mesas Ocupadas: {resumen.Metricas.MesasOcupadas}");
+                Console.WriteLine($"🏢 Mesas Disponibles: {resumen.Metricas.MesasDisponibles}");
+                Console.WriteLine($"🏢 Total Mesas: {resumen.Metricas.TotalMesas}");
+                Console.WriteLine($"📋 Comandas Activas: {resumen.Metricas.ComandasActivas}");
+                Console.WriteLine($"📋 Comandas Completadas: {resumen.Metricas.ComandasCompletadas}");
+                Console.WriteLine($"📦 Productos Vendidos Hoy: {resumen.Metricas.ProductosVendidosHoy}");
+                Console.WriteLine($"👥 Clientes Atendidos Hoy: {resumen.Metricas.ClientesAtendidosHoy}");
+                Console.WriteLine($"💳 Promedio Ticket: ${resumen.Metricas.PromedioTicket:N2}");
+                Console.WriteLine($"📈 Crecimiento Ventas: {resumen.Metricas.CrecimientoVentas:N1}%");
+                Console.WriteLine($"⏰ Última Actualización: {resumen.Metricas.UltimaActualizacion}");
+                
+                // Logs de datos de gráficos
+                Console.WriteLine("=== 📊 DATOS DE GRÁFICOS ===");
+                Console.WriteLine($"📈 Ventas Últimos 7 Días: {resumen.VentasUltimos7Dias?.Count ?? 0} elementos");
+                Console.WriteLine($"📈 Ingresos por Hora: {resumen.IngresosPorHora?.Count ?? 0} elementos");
+                Console.WriteLine($"🏆 Productos Más Vendidos: {resumen.ProductosMasVendidos?.Count ?? 0} elementos");
+                Console.WriteLine($"🍽️ Estados de Mesas: {resumen.EstadoMesas?.Ocupadas ?? 0} ocupadas, {resumen.EstadoMesas?.Disponibles ?? 0} disponibles");
+                Console.WriteLine($"📋 Comandas por Estado: Pendientes={resumen.ComandasPorEstado?.Pendientes ?? 0}, EnPreparacion={resumen.ComandasPorEstado?.EnPreparacion ?? 0}, Listas={resumen.ComandasPorEstado?.Listas ?? 0}, Completadas={resumen.ComandasPorEstado?.Completadas ?? 0}");
+                Console.WriteLine("=== 🔚 FIN DATOS RECIBIDOS ===");
+                
                 // Esperar un poco y luego intentar crear los gráficos automáticamente
                 _ = Task.Run(async () => {
                     await Task.Delay(3000); // Esperar 3 segundos
@@ -425,6 +458,11 @@
         await SeleccionarPeriodo("mes");
     }
 
+    private async Task SeleccionarTodos()
+    {
+        await SeleccionarTurnoEspecifico("todos");
+    }
+
     private async Task SeleccionarMañana()
     {
         await SeleccionarTurnoEspecifico("mañana");
@@ -468,11 +506,12 @@
     {
         return turnoSeleccionado switch
         {
+            "todos" => "Todos los turnos (24 horas)",
             "mañana" => "Mañana (6:00 AM - 12:00 PM)",
             "tarde" => "Tarde (12:00 PM - 6:00 PM)",
             "noche" => "Noche (6:00 PM - 12:00 AM)",
             "madrugada" => "Madrugada (12:00 AM - 6:00 AM)",
-            _ => "Mañana (6:00 AM - 12:00 PM)"
+            _ => "Todos los turnos (24 horas)"
         };
     }
 

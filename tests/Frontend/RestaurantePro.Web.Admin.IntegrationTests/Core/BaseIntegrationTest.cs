@@ -97,35 +97,16 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
             _context.ChangeTracker.Clear();
             
             // Limpiar todas las tablas principales de manera segura
-            var tablesToClean = new[]
-            {
-                _context.Usuarios,
-                _context.Clientes,
-                _context.Productos,
-                _context.ProductoCategorias,
-                _context.Ingredientes,
-                _context.Recetas,
-                _context.Promociones,
-                _context.MovimientosInventario,
-                _context.OrdenesCompra
-            };
 
-            foreach (var table in tablesToClean)
-            {
-                try
-                {
-                    var entities = table.ToList();
-                    if (entities.Any())
-                    {
-                        table.RemoveRange(entities);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // Log del error pero continuar con otras tablas
-                    Console.WriteLine($"Warning: Error cleaning table {table.GetType().Name}: {ex.Message}");
-                }
-            }
+            await LimpiarTabla(_context.Usuarios);
+            await LimpiarTabla(_context.Clientes);
+            await LimpiarTabla(_context.Productos);
+            await LimpiarTabla(_context.ProductoCategorias);
+            await LimpiarTabla(_context.Ingredientes);
+            await LimpiarTabla(_context.Recetas);
+            await LimpiarTabla(_context.Promociones);
+            await LimpiarTabla(_context.MovimientosInventario);
+            await LimpiarTabla(_context.OrdenesCompra);
             
             await _context.SaveChangesAsync();
         }
@@ -435,4 +416,21 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
     }
 
     #endregion
+
+    private async Task LimpiarTabla<T>(DbSet<T> dbSet) where T : class
+    {
+        try
+        {
+            var entities = await dbSet.ToListAsync();
+            if (entities.Any())
+            {
+                dbSet.RemoveRange(entities);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Ignorar errores de limpieza para evitar fallos en tests
+            Console.WriteLine($"Error limpiando tabla {typeof(T).Name}: {ex.Message}");
+        }
+    }
 }
