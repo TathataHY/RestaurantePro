@@ -8,6 +8,9 @@ using RestaurantePro.Application.Common.Models;
 using RestaurantePro.Application.Inventario.MovimientosInventario.DTOs;
 using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Enums;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
+using RestaurantePro.Infrastructure.Persistence.Contexts;
+using RestaurantePro.Domain.Inventario.Ingredientes.Movimientos.Entities;
 
 namespace RestaurantePro.Web.Admin.IntegrationTests.Api.Inventario.MovimientosInventario;
 
@@ -28,6 +31,7 @@ public class ApiMovimientosInventarioIntegrationTests : BaseIntegrationTest
     public async Task ObtenerMovimientos_ConFiltros_DeberiaRetornarListaPaginada()
     {
         // Arrange
+        await SeedMovimientosInventarioAsync(5); // Crear 5 movimientos de prueba
         var query = "?pageNumber=1&pageSize=10&fechaInicio=2024-01-01&fechaFin=2024-12-31";
 
         // Act
@@ -443,4 +447,94 @@ public class ActualizarMovimientoRequest
     public string? Motivo { get; set; }
     public string? Observaciones { get; set; }
 }
+
+    #region Métodos de Seeding
+
+    /// <summary>
+    /// Crea datos de prueba para movimientos de inventario
+    /// </summary>
+    private async Task SeedMovimientosInventarioAsync(int cantidad = 5)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
+        
+        // Crear ingredientes e usuarios primero
+        var ingredientes = await CrearIngredientesDePruebaAsync(context, 3);
+        var usuarios = await CrearUsuariosDePruebaAsync(context, 2);
+        
+        for (int i = 0; i < cantidad; i++)
+        {
+            var movimiento = MovimientoInventario.CrearIngreso(
+                ingredientes[i % ingredientes.Count],
+                10 + i * 5,
+                $"Ingreso de prueba {i + 1}",
+                DateTime.UtcNow.AddDays(-i)
+            );
+            
+            context.MovimientosInventario.Add(movimiento);
+        }
+        
+        await context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Crea ingredientes de prueba
+    /// </summary>
+    private async Task<List<Guid>> CrearIngredientesDePruebaAsync(RestauranteProDbContext context, int cantidad)
+    {
+        var ingredientes = new List<Guid>();
+        
+        for (int i = 0; i < cantidad; i++)
+        {
+            var ingredienteId = Guid.NewGuid();
+            await context.Database.ExecuteSqlRawAsync(@"
+                INSERT INTO Inventario.Ingredientes (Id, Nombre, Descripcion, UnidadMedida, PrecioUnitario, StockActual, StockMinimo, EstaActivo, FechaCreacion, FechaModificacion)
+                VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9})",
+                ingredienteId,
+                $"Ingrediente Test {i + 1}",
+                $"Descripción del ingrediente {i + 1}",
+                "Kilogramo",
+                10.50m + i,
+                100 + i * 10,
+                10 + i,
+                true,
+                DateTime.UtcNow,
+                DateTime.UtcNow
+            );
+            
+            ingredientes.Add(ingredienteId);
+        }
+        
+        return ingredientes;
+    }
+
+    /// <summary>
+    /// Crea usuarios de prueba
+    /// </summary>
+    private async Task<List<Guid>> CrearUsuariosDePruebaAsync(RestauranteProDbContext context, int cantidad)
+    {
+        var usuarios = new List<Guid>();
+        
+        for (int i = 0; i < cantidad; i++)
+        {
+            var usuarioId = Guid.NewGuid();
+            await context.Database.ExecuteSqlRawAsync(@"
+                INSERT INTO Core.Usuarios (Id, Nombre, Email, Telefono, EstaActivo, FechaCreacion, FechaModificacion)
+                VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6})",
+                usuarioId,
+                $"Usuario Test {i + 1}",
+                $"usuario{i + 1}@test.com",
+                $"+123456789{i}",
+                true,
+                DateTime.UtcNow,
+                DateTime.UtcNow
+            );
+            
+            usuarios.Add(usuarioId);
+        }
+        
+        return usuarios;
+    }
+
+    #endregion
 

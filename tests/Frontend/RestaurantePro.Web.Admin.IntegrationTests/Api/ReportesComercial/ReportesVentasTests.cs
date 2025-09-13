@@ -43,6 +43,8 @@ public class ReportesVentasTests : BaseIntegrationTest
         
         var responseData = JsonSerializer.Deserialize<ApiResponse<AppReportes.ReporteVentasDto>>(content, GetJsonOptions());
         
+        _logger.LogInformation($"ResponseData: Success={responseData?.Success}, Data={responseData?.Data?.TotalVentas}");
+        
         responseData.Should().NotBeNull();
         responseData.Success.Should().BeTrue();
         responseData.Data.Should().NotBeNull();

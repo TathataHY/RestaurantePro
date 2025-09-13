@@ -106,12 +106,15 @@ public class DashboardService : IDashboardService
                 ? ((ventas - ventasAnterior) / ventasAnterior) * 100
                 : 0;
 
+            // Calcular métricas específicas según el período
+            var (ventasHoy, ventasAyer, ventasSemana, ventasMes) = await CalcularMetricasVentasPorPeriodo(periodo, turno);
+
             return new DashboardMetricasDto
             {
-                VentasHoy = ventas,
-                VentasAyer = ventasAnterior,
-                VentasSemana = ventas, // Se ajustará según el período
-                VentasMes = ventas,   // Se ajustará según el período
+                VentasHoy = ventasHoy,
+                VentasAyer = ventasAyer,
+                VentasSemana = ventasSemana,
+                VentasMes = ventasMes,
                 ComandasActivas = comandasActivas,
                 MesasOcupadas = mesasOcupadas,
                 TotalMesas = mesas.Count(),
@@ -351,6 +354,61 @@ public class DashboardService : IDashboardService
             "mes" => (hoy.AddDays(-60), hoy.AddDays(-30)),
             _ => (hoy.AddDays(-1), hoy) // "hoy" por defecto
         };
+    }
+
+    private async Task<(decimal ventasHoy, decimal ventasAyer, decimal ventasSemana, decimal ventasMes)> CalcularMetricasVentasPorPeriodo(string periodo, string turno)
+    {
+        // Calcular ventas de hoy (siempre del día actual)
+        var (fechaInicioHoy, fechaFinHoy) = CalcularRangoFechas("hoy");
+        var facturasHoy = await _facturaRepository.ObtenerPorRangoFechasAsync(fechaInicioHoy, fechaFinHoy);
+        var ventasHoy = facturasHoy.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
+
+        // Calcular ventas de ayer (siempre del día anterior)
+        var (fechaInicioAyer, fechaFinAyer) = CalcularRangoFechas("ayer");
+        var facturasAyer = await _facturaRepository.ObtenerPorRangoFechasAsync(fechaInicioAyer, fechaFinAyer);
+        var ventasAyer = facturasAyer.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
+
+        // Calcular ventas de la semana (últimos 7 días)
+        var (fechaInicioSemana, fechaFinSemana) = CalcularRangoFechas("hoy");
+        fechaInicioSemana = fechaInicioSemana.AddDays(-7); // Últimos 7 días
+        var facturasSemana = await _facturaRepository.ObtenerPorRangoFechasAsync(fechaInicioSemana, fechaFinSemana);
+        var ventasSemana = facturasSemana.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
+
+        // Calcular ventas del mes (últimos 30 días)
+        var (fechaInicioMes, fechaFinMes) = CalcularRangoFechas("hoy");
+        fechaInicioMes = fechaInicioMes.AddDays(-29); // Últimos 30 días
+        var facturasMes = await _facturaRepository.ObtenerPorRangoFechasAsync(fechaInicioMes, fechaFinMes);
+        var ventasMes = facturasMes.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
+
+        // Aplicar filtro de turno solo a la métrica específica del período solicitado
+        if (turno != "todos")
+        {
+            var (horaInicio, horaFin) = CalcularRangoHoras(turno);
+            
+            // Solo aplicar filtro de turno a la métrica del período solicitado
+            if (periodo == "hoy")
+            {
+                var facturasHoyFiltradas = facturasHoy.Where(f => f.FechaEmision.Hour >= horaInicio && f.FechaEmision.Hour < horaFin);
+                ventasHoy = facturasHoyFiltradas.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
+            }
+            else if (periodo == "ayer")
+            {
+                var facturasAyerFiltradas = facturasAyer.Where(f => f.FechaEmision.Hour >= horaInicio && f.FechaEmision.Hour < horaFin);
+                ventasAyer = facturasAyerFiltradas.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
+            }
+            else if (periodo == "semana")
+            {
+                var facturasSemanaFiltradas = facturasSemana.Where(f => f.FechaEmision.Hour >= horaInicio && f.FechaEmision.Hour < horaFin);
+                ventasSemana = facturasSemanaFiltradas.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
+            }
+            else if (periodo == "mes")
+            {
+                var facturasMesFiltradas = facturasMes.Where(f => f.FechaEmision.Hour >= horaInicio && f.FechaEmision.Hour < horaFin);
+                ventasMes = facturasMesFiltradas.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
+            }
+        }
+
+        return (ventasHoy, ventasAyer, ventasSemana, ventasMes);
     }
 
     #endregion

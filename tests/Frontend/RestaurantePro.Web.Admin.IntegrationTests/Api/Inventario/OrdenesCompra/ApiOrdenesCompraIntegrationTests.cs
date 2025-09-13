@@ -9,6 +9,8 @@ using System.Net;
 using System.Text.Json;
 using FluentAssertions;
 using Xunit;
+using Microsoft.EntityFrameworkCore;
+using RestaurantePro.Infrastructure.Persistence.Contexts;
 
 namespace RestaurantePro.Web.Admin.IntegrationTests.Api.Inventario.OrdenesCompra;
 
@@ -28,6 +30,7 @@ public class ApiOrdenesCompraIntegrationTests : BaseIntegrationTest
     public async Task GetOrdenesCompra_ConParametrosValidos_DeberiaRetornarListaPaginada()
     {
         // Arrange
+        await SeedOrdenesCompraAsync(5); // Crear 5 órdenes de compra
         var query = new ObtenerOrdenesCompraPaginadasQuery
         {
             PageNumber = 1,
@@ -302,6 +305,17 @@ public class ApiOrdenesCompraIntegrationTests : BaseIntegrationTest
 }
 
 /// <summary>
+/// Command para representar un item de orden de compra
+/// </summary>
+public class OrdenCompraItemCommand
+{
+    public Guid IngredienteId { get; set; }
+    public int Cantidad { get; set; }
+    public decimal PrecioUnitario { get; set; }
+    public string? Observaciones { get; set; }
+}
+
+/// <summary>
 /// Command para crear una nueva orden de compra
 /// </summary>
 public class CrearOrdenCompraCommand
@@ -354,15 +368,88 @@ public class ObtenerOrdenesCompraPaginadasQuery
     public Guid? ProveedorId { get; set; }
     public DateTime? FechaDesde { get; set; }
     public DateTime? FechaHasta { get; set; }
-}
+    #region Métodos de Seeding
 
-/// <summary>
-/// Command para representar un item de orden de compra
-/// </summary>
-public class OrdenCompraItemCommand
-{
-    public Guid IngredienteId { get; set; }
-    public int Cantidad { get; set; }
-    public decimal PrecioUnitario { get; set; }
-    public string? Observaciones { get; set; }
+    /// <summary>
+    /// Crea datos de prueba para órdenes de compra usando SQL directo
+    /// </summary>
+    private async Task SeedOrdenesCompraAsync(int cantidad = 5)
+    {
+        using var scope = _factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<RestauranteProDbContext>();
+        
+        // Crear proveedores e ingredientes primero usando SQL directo
+        await CrearProveedoresDePruebaAsync(context, 3);
+        await CrearIngredientesDePruebaAsync(context, 10);
+        
+        // Crear órdenes de compra usando SQL directo
+        for (int i = 0; i < cantidad; i++)
+        {
+            var ordenId = Guid.NewGuid();
+            var proveedorId = Guid.NewGuid(); // Usar un ID fijo para simplificar
+            
+            // Insertar orden de compra directamente
+            await context.Database.ExecuteSqlRawAsync(@"
+                INSERT INTO Inventario.OrdenesCompra (Id, ProveedorId, FechaEmision, FechaEntregaEstimada, Estado, Total, Observaciones, FechaCreacion, FechaModificacion)
+                VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8})",
+                ordenId,
+                proveedorId,
+                DateTime.Now.AddDays(-i),
+                DateTime.Now.AddDays(-i + 7),
+                0, // EstadoOrdenCompra.Pendiente
+                100.00m,
+                $"Orden de prueba {i + 1}",
+                DateTime.Now.AddDays(-i),
+                DateTime.Now.AddDays(-i)
+            );
+        }
+    }
+
+    /// <summary>
+    /// Crea proveedores de prueba usando SQL directo
+    /// </summary>
+    private async Task CrearProveedoresDePruebaAsync(RestauranteProDbContext context, int cantidad)
+    {
+        for (int i = 0; i < cantidad; i++)
+        {
+            var proveedorId = Guid.NewGuid();
+            await context.Database.ExecuteSqlRawAsync(@"
+                INSERT INTO Inventario.Proveedores (Id, Nombre, Contacto, Telefono, Direccion, EstaActivo, FechaCreacion, FechaModificacion)
+                VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7})",
+                proveedorId,
+                $"Proveedor Test {i + 1}",
+                $"contacto{i + 1}@proveedor.com",
+                $"555-{i + 1:0000}",
+                $"Dirección {i + 1}",
+                true,
+                DateTime.Now.AddDays(-i),
+                DateTime.Now.AddDays(-i)
+            );
+        }
+    }
+
+    /// <summary>
+    /// Crea ingredientes de prueba usando SQL directo
+    /// </summary>
+    private async Task CrearIngredientesDePruebaAsync(RestauranteProDbContext context, int cantidad)
+    {
+        for (int i = 0; i < cantidad; i++)
+        {
+            var ingredienteId = Guid.NewGuid();
+            await context.Database.ExecuteSqlRawAsync(@"
+                INSERT INTO Inventario.Ingredientes (Id, Nombre, Descripcion, UnidadMedida, StockMinimo, EstaActivo, FechaCreacion, FechaModificacion)
+                VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7})",
+                ingredienteId,
+                $"Ingrediente Test {i + 1}",
+                $"Descripción del ingrediente {i + 1}",
+                0, // UnidadMedida.Kilogramo
+                10,
+                true,
+                DateTime.Now.AddDays(-i),
+                DateTime.Now.AddDays(-i)
+            );
+        }
+    }
+
+    #endregion
 }

@@ -78,6 +78,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
         public async Task<IEnumerable<Factura>> ObtenerPorRangoFechasAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken = default)
         {
             return await _dbSet
+                .Include(f => f.Detalles)
                 .Where(f => f.FechaEmision >= fechaInicio && f.FechaEmision <= fechaFin && f.Estado != EstadoFactura.Anulada)
                 .OrderByDescending(f => f.FechaEmision)
                 .ToListAsync(cancellationToken);
