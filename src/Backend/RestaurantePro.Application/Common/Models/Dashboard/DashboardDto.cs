@@ -55,7 +55,7 @@ public class DashboardEstadoMesasDto
     public int Ocupadas { get; set; }
     public int Disponibles { get; set; }
     public int Reservadas { get; set; }
-    public int Mantenimiento { get; set; }
+    public int EnLimpieza { get; set; }
     public int Total { get; set; }
 }
 
@@ -64,12 +64,11 @@ public class DashboardEstadoMesasDto
 /// </summary>
 public class DashboardComandasPorEstadoDto
 {
-    public int Creadas { get; set; }
+    public int Pendientes { get; set; }
     public int EnProceso { get; set; }
-    public int Lista { get; set; }
-    public int Entregada { get; set; }
-    public int Finalizada { get; set; }
-    public int Cancelada { get; set; }
+    public int Listas { get; set; }
+    public int Entregadas { get; set; }
+    public int Canceladas { get; set; }
     public int Total { get; set; }
 }
 
@@ -94,4 +93,5 @@ public class DashboardResumenDto
     public DashboardEstadoMesasDto EstadoMesas { get; set; } = new();
     public DashboardComandasPorEstadoDto ComandasPorEstado { get; set; } = new();
     public List<DashboardIngresosPorHoraDto> IngresosPorHora { get; set; } = new();
+    public DateTime UltimaActualizacion { get; set; }
 }

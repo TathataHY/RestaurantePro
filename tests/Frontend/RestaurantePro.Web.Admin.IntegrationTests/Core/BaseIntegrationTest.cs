@@ -36,11 +36,10 @@ public abstract class BaseIntegrationTest : IAsyncLifetime
         return new JsonSerializerOptions
         {
             Converters = { 
+                new JsonStringEnumConverter(),
                 new EstadoUsuarioConverter(),
                 new TipoUsuarioConverter(),
-                new RolUsuarioConverter(),
-                new TipoPromocionConverter(),
-                new EstadoPromocionConverter()
+                new RolUsuarioConverter()
             },
             PropertyNameCaseInsensitive = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase

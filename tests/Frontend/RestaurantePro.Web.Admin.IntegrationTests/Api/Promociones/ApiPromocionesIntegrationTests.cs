@@ -381,7 +381,7 @@ public class ApiPromocionesIntegrationTests : BaseIntegrationTest
                 Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
                 ValorDescuento = 20,
                 MontoMinimo = 100,
-                FechaInicio = DateTime.UtcNow,
+                FechaInicio = DateTime.UtcNow.AddDays(10), // Fecha futura para pasar validación
                 FechaFin = DateTime.UtcNow.AddDays(30),
                 EsAcumulable = false,
                 Prioridad = 1
@@ -420,7 +420,7 @@ public class ApiPromocionesIntegrationTests : BaseIntegrationTest
                 Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.PorcentajeTotal,
                 ValorDescuento = 10,
                 MontoMinimo = 100,
-                FechaInicio = DateTime.UtcNow,
+                FechaInicio = DateTime.UtcNow.AddDays(10), // Fecha futura para pasar validación
                 FechaFin = DateTime.UtcNow.AddDays(30),
                 EsAcumulable = false,
                 Prioridad = 1
@@ -433,7 +433,7 @@ public class ApiPromocionesIntegrationTests : BaseIntegrationTest
                 Tipo = RestaurantePro.Domain.Comercial.Promociones.Enums.TipoPromocion.MontoFijoTotal,
                 ValorDescuento = 25,
                 MontoMinimo = 200,
-                FechaInicio = DateTime.UtcNow,
+                FechaInicio = DateTime.UtcNow.AddDays(10), // Fecha futura para pasar validación
                 FechaFin = DateTime.UtcNow.AddDays(30),
                 EsAcumulable = false,
                 Prioridad = 2

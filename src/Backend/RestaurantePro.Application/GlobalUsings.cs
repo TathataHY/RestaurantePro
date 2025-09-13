@@ -47,7 +47,7 @@ global using RestaurantePro.Domain.Core.SharedKernel.Interfaces;
 global using IUnitOfWork = RestaurantePro.Domain.Core.SharedKernel.Interfaces.IUnitOfWork;
 
 // Alias para Result para evitar errores de tipado
-global using r = RestaurantePro.Domain.Core.SharedKernel.Results.Result;
+global using DomainResult = RestaurantePro.Domain.Core.SharedKernel.Results.Result;
 
 // Alias para EstadoReservacion - usar solo el del Domain
 global using EstadoReservacionDomain = RestaurantePro.Domain.Operaciones.Reservaciones.Enums.EstadoReservacion;
