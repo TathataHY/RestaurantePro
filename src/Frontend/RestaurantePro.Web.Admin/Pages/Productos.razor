@@ -36,10 +36,26 @@
 
 <div class="flex justify-between items-center mb-8">
     <h1 class="text-3xl font-bold text-text-light">Gestión de Productos y Menú</h1>
-    <button @onclick="Nuevo" class="flex items-center gap-2 bg-primary-color text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-color/90 transition-colors">
-        <span class="material-symbols-outlined">add</span>
-        <span>Crear Producto</span>
-    </button>
+    <div class="flex items-center gap-4">
+        <!-- Selector de Vista -->
+        <div class="flex items-center view-toggle rounded-lg p-1">
+            <button @onclick='() => CambiarVista("tabla")' 
+                    class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 @(vistaActual == "tabla" ? "view-toggle-active" : "text-gray-600 hover:text-gray-900")">
+                <span class="material-symbols-outlined text-base">table_view</span>
+                <span>Tabla</span>
+            </button>
+            <button @onclick='() => CambiarVista("tarjetas")' 
+                    class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 @(vistaActual == "tarjetas" ? "view-toggle-active" : "text-gray-600 hover:text-gray-900")">
+                <span class="material-symbols-outlined text-base">grid_view</span>
+                <span>Tarjetas</span>
+            </button>
+        </div>
+        
+        <button @onclick="Nuevo" class="flex items-center gap-2 bg-primary-color text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-color/90 transition-colors">
+            <span class="material-symbols-outlined">add</span>
+            <span>Crear Producto</span>
+        </button>
+    </div>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -96,51 +112,125 @@ else if (productos.Items.Count == 0)
 }
 else
 {
-    <div class="bg-background-light rounded-lg shadow-sm overflow-hidden border border-border-light">
-        <table class="w-full">
-            <thead class="bg-sidebar-bg-light">
-                <tr>
-                    <th class="p-4 text-left text-sm font-bold uppercase tracking-wider text-gray-500">Nombre</th>
-                    <th class="p-4 text-left text-sm font-bold uppercase tracking-wider text-gray-500">Categoría</th>
-                    <th class="p-4 text-left text-sm font-bold uppercase tracking-wider text-gray-500">Precio</th>
-                    <th class="p-4 text-center text-sm font-bold uppercase tracking-wider text-gray-500">Disponibilidad</th>
-                    <th class="p-4 text-right text-sm font-bold uppercase tracking-wider text-gray-500">Acciones</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-border-light">
-                @foreach (var p in productos.Items)
-                {
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                        <td class="p-4 font-medium text-text-light">@p.Nombre</td>
-                        <td class="p-4 text-gray-500">@p.CategoriaNombre</td>
-                        <td class="p-4 text-gray-500">$@p.Precio.ToString("N0")</td>
-                        <td class="p-4 text-center">
+    @if (vistaActual == "tabla")
+    {
+        <!-- Vista de Tabla -->
+        <div class="bg-background-light rounded-lg shadow-sm overflow-hidden border border-border-light">
+            <table class="w-full">
+                <thead class="bg-sidebar-bg-light">
+                    <tr>
+                        <th class="p-4 text-left text-sm font-bold uppercase tracking-wider text-gray-500">Nombre</th>
+                        <th class="p-4 text-left text-sm font-bold uppercase tracking-wider text-gray-500">Categoría</th>
+                        <th class="p-4 text-left text-sm font-bold uppercase tracking-wider text-gray-500">Precio</th>
+                        <th class="p-4 text-center text-sm font-bold uppercase tracking-wider text-gray-500">Disponibilidad</th>
+                        <th class="p-4 text-right text-sm font-bold uppercase tracking-wider text-gray-500">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-border-light">
+                    @foreach (var p in productos.Items)
+                    {
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <td class="p-4 font-medium text-text-light">@p.Nombre</td>
+                            <td class="p-4 text-gray-500">@p.CategoriaNombre</td>
+                            <td class="p-4 text-gray-500">$@p.Precio.ToString("N0")</td>
+                            <td class="p-4 text-center">
+                                @if (p.Activo)
+                                {
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-success-color/10 text-success-color">
+                                        Disponible
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-warning-color/10 text-warning-color">
+                                        Agotado
+                                    </span>
+                                }
+                            </td>
+                            <td class="p-4 text-right">
+                                <button class="text-primary-color hover:text-primary-color/80 transition-colors" @onclick="(() => Editar(p.Id))" title="Editar">
+                                    <span class="material-symbols-outlined">edit</span>
+                                </button>
+                                <button class="text-red-500 hover:text-red-400 ml-2 transition-colors" @onclick="(() => ConfirmarEliminar(p.Id, p.Nombre))" title="Eliminar">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <!-- Vista de Tarjetas -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            @foreach (var p in productos.Items)
+            {
+                <div class="bg-background-light rounded-lg shadow-sm border border-border-light overflow-hidden product-card">
+                    <!-- Imagen del Producto (placeholder) -->
+                    <div class="h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center relative">
+                        <span class="material-symbols-outlined text-6xl text-gray-400">restaurant</span>
+                        <!-- Badge de estado en la esquina -->
+                        <div class="absolute top-3 right-3">
                             @if (p.Activo)
                             {
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-success-color/10 text-success-color">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-success-color/90 text-white">
+                                    <span class="w-2 h-2 bg-white rounded-full mr-1"></span>
                                     Disponible
                                 </span>
                             }
                             else
                             {
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-warning-color/10 text-warning-color">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-warning-color/90 text-white">
+                                    <span class="w-2 h-2 bg-white rounded-full mr-1"></span>
                                     Agotado
                                 </span>
                             }
-                        </td>
-                        <td class="p-4 text-right">
-                            <button class="text-primary-color hover:text-primary-color/80 transition-colors" @onclick="(() => Editar(p.Id))" title="Editar">
-                                <span class="material-symbols-outlined">edit</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Contenido de la Tarjeta -->
+                    <div class="p-4">
+                        <!-- Header con nombre -->
+                        <div class="mb-3">
+                            <h3 class="font-semibold text-text-light text-lg leading-tight mb-1">@p.Nombre</h3>
+                            
+                            <!-- Categoría -->
+                            <div class="flex items-center text-gray-500 text-sm">
+                                <span class="material-symbols-outlined text-base mr-1">category</span>
+                                <span>@p.CategoriaNombre</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Descripción (si existe) -->
+                        @if (!string.IsNullOrWhiteSpace(p.Descripcion))
+                        {
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-2">@p.Descripcion</p>
+                        }
+                        
+                        <!-- Precio -->
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-2xl font-bold text-primary-color">$@p.Precio.ToString("N0")</span>
+                        </div>
+                        
+                        <!-- Botones de Acción -->
+                        <div class="flex gap-2">
+                            <button @onclick="(() => Editar(p.Id))" 
+                                    class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary-color text-white rounded-lg hover:bg-primary-color/90 transition-colors text-sm font-medium">
+                                <span class="material-symbols-outlined text-base">edit</span>
+                                <span>Editar</span>
                             </button>
-                            <button class="text-red-500 hover:text-red-400 ml-2 transition-colors" @onclick="(() => ConfirmarEliminar(p.Id, p.Nombre))" title="Eliminar">
-                                <span class="material-symbols-outlined">delete</span>
+                            <button @onclick="(() => ConfirmarEliminar(p.Id, p.Nombre))" 
+                                    class="flex items-center justify-center px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
+                                <span class="material-symbols-outlined text-base">delete</span>
                             </button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
     
     <div class="flex justify-between items-center mt-6">
         <small class="text-gray-500">Página @paginaActual de @productos.TotalPages (Total: @productos.TotalCount)</small>
@@ -468,6 +558,9 @@ else
     // Variables para estados de carga
     private bool guardando = false;
     private bool eliminando = false;
+    
+    // Variables para vista
+    private string vistaActual = "tabla"; // "tabla" o "tarjetas"
 
     protected override async Task OnInitializedAsync()
     {
@@ -638,6 +731,12 @@ else
     private void CerrarNotificacion()
     {
         mostrandoNotificacion = false;
+    }
+
+    private void CambiarVista(string nuevaVista)
+    {
+        vistaActual = nuevaVista;
+        StateHasChanged();
     }
 
     private void ConfirmarEliminar(Guid id, string nombre)
