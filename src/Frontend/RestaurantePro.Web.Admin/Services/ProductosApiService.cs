@@ -81,6 +81,27 @@ public class ProductosApiService : IProductosApiService
         var res = await http.PostAsJsonAsync("api/core/productos", dto);
         if (!res.IsSuccessStatusCode)
         {
+            // Intentar leer el mensaje de error del servidor
+            try
+            {
+                var errorContent = await res.Content.ReadAsStringAsync();
+                Console.WriteLine($"❌ Error al crear producto: {res.StatusCode} - {errorContent}");
+                
+                // Si es un error de validación, lanzar excepción con el mensaje
+                if (res.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                {
+                    var errorResponse = await res.Content.ReadFromJsonAsync<ApiResponse<object>>();
+                    if (errorResponse?.Message != null)
+                    {
+                        throw new InvalidOperationException(errorResponse.Message);
+                    }
+                    throw new InvalidOperationException("Ya existe un producto con ese nombre o hay un error de validación");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error al procesar respuesta de error: {ex.Message}");
+            }
             return null;
         }
         var resp = await res.Content.ReadFromJsonAsync<ApiResponse<ProductoDto>>();

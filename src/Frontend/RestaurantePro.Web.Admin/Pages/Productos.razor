@@ -547,6 +547,11 @@ else
     <div class="fixed inset-0 z-10 bg-black/50" @onclick="CerrarModal">
         <div class="fixed inset-0 z-20 flex items-center justify-center p-4">
             <div class="bg-background-light rounded-lg shadow-xl p-8 w-full max-w-2xl" @onclick:stopPropagation="true">
+                <!-- Debug temporal para verificar renderizado del modal -->
+                <div class="text-xs text-purple-500 mb-4 border border-purple-300 p-2 bg-purple-50">
+                    <strong>DEBUG MODAL:</strong> mostrandoModal=@mostrandoModal, editando=@editando
+                </div>
+                
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-bold text-text-light">@(editando ? "Editar Producto" : "Crear / Editar Producto")</h2>
                     <button @onclick="CerrarModal" class="text-gray-400 hover:text-gray-600 transition-colors">
@@ -691,9 +696,23 @@ else
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Imagen del Producto</label>
+                                
+                                <!-- Debug temporal -->
+                                <div class="text-xs text-blue-500 mb-2 border border-blue-300 p-2 bg-blue-50">
+                                    <strong>DEBUG AZUL:</strong> editando=@editando, edicion?.ImagenUrl=@(edicion?.ImagenUrl ?? "null")
+                                </div>
+                                <div class="text-xs text-green-500 mb-2 border border-green-300 p-2 bg-green-50">
+                                    <strong>DEBUG VERDE:</strong> GetImageUrl resultado: @(GetImageUrl(edicion?.ImagenUrl ?? nuevo?.ImagenUrl) ?? "null")
+                                </div>
+                                
                                 <ImageUpload ProductoId="@(edicion?.Id ?? Guid.Empty)" 
-                                           ImageUrl="@(edicion?.ImagenUrl ?? nuevo?.ImagenUrl)" 
+                                           ImageUrl="@GetImageUrl(edicion?.ImagenUrl ?? nuevo?.ImagenUrl)" 
                                            ImageUrlChanged="@OnImagenChanged" />
+                                
+                                <!-- Debug temporal -->
+                                <div class="text-xs text-red-500 mt-2 border border-red-300 p-2 bg-red-50">
+                                    <strong>DEBUG ROJO:</strong> ImageUrl pasada al componente: @(GetImageUrl(edicion?.ImagenUrl ?? nuevo?.ImagenUrl)?.Substring(0, Math.Min(50, GetImageUrl(edicion?.ImagenUrl ?? nuevo?.ImagenUrl)?.Length ?? 0)) ?? "null")
+                                </div>
                             </div>
                             <div class="flex items-center">
                                 <input class="h-4 w-4 text-primary-color focus:ring-primary-color border-border-light rounded" 
@@ -910,6 +929,10 @@ else
             CategoriaId = primeraCategoria?.Id ?? Guid.Empty 
         };
         Console.WriteLine($"🔍 CategoriaId asignado: {nuevo.CategoriaId}");
+        Console.WriteLine($"🔍 Estado antes de abrir modal crear: mostrandoModal={mostrandoModal}, editando={editando}");
+        Console.WriteLine($"🔍 ImagenUrl en nuevo ANTES: {(string.IsNullOrEmpty(nuevo.ImagenUrl) ? "null" : nuevo.ImagenUrl.Substring(0, Math.Min(50, nuevo.ImagenUrl.Length)) + "...")}");
+        Console.WriteLine($"🔍 imagenTemporal ANTES: {(string.IsNullOrEmpty(imagenTemporal) ? "null" : imagenTemporal.Substring(0, Math.Min(50, imagenTemporal.Length)) + "...")}");
+        
         mostrandoModal = true;
     }
 
@@ -925,14 +948,33 @@ else
             Descripcion = p.Descripcion,
             Precio = p.Precio,
             CategoriaId = p.CategoriaId,
-            Activo = p.Activo
+            Activo = p.Activo,
+            ImagenUrl = p.ImagenUrl // ✅ Agregar la imagen existente
         };
+        Console.WriteLine($"🔍 Editando producto - CategoriaId: {edicion.CategoriaId}");
+        Console.WriteLine($"🔍 ImagenUrl del producto: {(string.IsNullOrEmpty(p.ImagenUrl) ? "null" : p.ImagenUrl.Substring(0, Math.Min(50, p.ImagenUrl.Length)) + "...")}");
+        Console.WriteLine($"🔍 ImagenUrl en edicion ANTES: {(string.IsNullOrEmpty(edicion.ImagenUrl) ? "null" : edicion.ImagenUrl.Substring(0, Math.Min(50, edicion.ImagenUrl.Length)) + "...")}");
+        
+        // Verificar si la imagen se asignó correctamente
+        edicion.ImagenUrl = p.ImagenUrl;
+        
+        Console.WriteLine($"🔍 ImagenUrl en edicion DESPUÉS: {(string.IsNullOrEmpty(edicion.ImagenUrl) ? "null" : edicion.ImagenUrl.Substring(0, Math.Min(50, edicion.ImagenUrl.Length)) + "...")}");
+        Console.WriteLine($"🔍 Estado antes de abrir modal: mostrandoModal={mostrandoModal}, editando={editando}");
+        
         mostrandoModal = true;
+        
+        // Forzar actualización del estado
+        StateHasChanged();
     }
 
     private void CerrarModal()
     {
         mostrandoModal = false;
+        editando = false;
+        imagenTemporal = null; // Limpiar imagen temporal
+        edicion = new UpdateProductoRequest(); // Limpiar objeto de edición
+        nuevo = new CreateProductoRequest(); // Limpiar objeto nuevo
+        Console.WriteLine("🔍 Modal cerrado - Estado limpiado");
     }
 
     private async Task GuardarAsync()
@@ -995,6 +1037,19 @@ else
         }
         else
         {
+            // Validaciones adicionales antes de crear
+            if (string.IsNullOrWhiteSpace(nuevo.Nombre))
+            {
+                MostrarNotificacion("El nombre del producto es requerido", false);
+                return;
+            }
+            
+            if (nuevo.Precio <= 0)
+            {
+                MostrarNotificacion("El precio debe ser mayor a 0", false);
+                return;
+            }
+            
             Console.WriteLine($"🔍 Creando producto - CategoriaId: {nuevo.CategoriaId}");
             Console.WriteLine($"🔍 Datos del nuevo producto: Nombre={nuevo.Nombre}, Precio={nuevo.Precio}, Activo={nuevo.Activo}");
             var res = await Api.CrearAsync(nuevo);
@@ -1010,7 +1065,7 @@ else
                 }
                 else
                 {
-                    MostrarNotificacion("Error al crear el producto", false);
+                    MostrarNotificacion("Error al crear el producto. Verifica que el nombre no esté duplicado", false);
                     return; // No cerrar modal si hay error
                 }
             }
@@ -1061,6 +1116,37 @@ else
         {
             Console.WriteLine($"❌ Error al subir imagen temporal: {ex.Message}");
         }
+    }
+
+    private string? GetImageUrl(string? imageUrl)
+    {
+        Console.WriteLine($"🔍 GetImageUrl llamado con: {(string.IsNullOrEmpty(imageUrl) ? "null" : imageUrl.Substring(0, Math.Min(50, imageUrl.Length)) + "...")}");
+        
+        if (string.IsNullOrEmpty(imageUrl))
+        {
+            Console.WriteLine("🔍 GetImageUrl: imageUrl es null o vacía, retornando null");
+            return null;
+        }
+            
+        // Si ya es una URL completa (data: o http:), devolverla tal como está
+        if (imageUrl.StartsWith("data:") || imageUrl.StartsWith("http"))
+        {
+            Console.WriteLine($"🔍 GetImageUrl: URL completa detectada, retornando tal como está");
+            return imageUrl;
+        }
+            
+        // Si es una ruta relativa, construir la URL completa
+        if (imageUrl.StartsWith("/uploads/"))
+        {
+            var fullUrl = $"http://localhost:8080{imageUrl}";
+            Console.WriteLine($"🔍 GetImageUrl: Ruta relativa detectada, construyendo URL completa: {fullUrl}");
+            return fullUrl;
+        }
+            
+        // Si no tiene el prefijo /uploads/, agregarlo
+        var constructedUrl = $"http://localhost:8080/uploads/productos/{imageUrl}";
+        Console.WriteLine($"🔍 GetImageUrl: Construyendo URL con prefijo: {constructedUrl}");
+        return constructedUrl;
     }
 
     private async Task OnImagenChanged(string? imagenUrl)

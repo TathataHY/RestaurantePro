@@ -362,10 +362,24 @@ public class ProductosController : ControllerBase
 
             // 3. Crear directorio si no existe
             var carpetaImagenes = "uploads/productos";
-            var directorioImagenes = Path.Combine(_environment.WebRootPath, carpetaImagenes);
+            var directorioImagenes = Path.Combine(_environment.WebRootPath ?? _environment.ContentRootPath, carpetaImagenes);
+            
+            // Log para debuggear
+            _logger.LogInformation($"🔍 WebRootPath: {_environment.WebRootPath}");
+            _logger.LogInformation($"🔍 ContentRootPath: {_environment.ContentRootPath}");
+            _logger.LogInformation($"🔍 DirectorioImagenes: {directorioImagenes}");
+            
+            // Si aún es null, usar directorio temporal
+            if (string.IsNullOrEmpty(directorioImagenes))
+            {
+                directorioImagenes = Path.Combine(Path.GetTempPath(), "restaurantepro", "uploads", "productos");
+                _logger.LogWarning($"⚠️ Usando directorio temporal: {directorioImagenes}");
+            }
+            
             if (!Directory.Exists(directorioImagenes))
             {
                 Directory.CreateDirectory(directorioImagenes);
+                _logger.LogInformation($"✅ Directorio creado: {directorioImagenes}");
             }
 
             // 4. Generar nombre único para el archivo

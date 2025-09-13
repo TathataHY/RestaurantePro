@@ -29,7 +29,7 @@ public class UsuariosPageTests : TestContext
     public void Renderizar_DeberiaMostrarTituloYDescripcion()
     {
         // Arrange
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new List<UsuarioDto>());
 
         // Act
@@ -44,7 +44,7 @@ public class UsuariosPageTests : TestContext
     public void Renderizar_DeberiaMostrarControlesDeBusqueda()
     {
         // Arrange
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new List<UsuarioDto>());
 
         // Act
@@ -61,7 +61,7 @@ public class UsuariosPageTests : TestContext
     public void Renderizar_DeberiaMostrarCheckboxIncluirInactivos()
     {
         // Arrange
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new List<UsuarioDto>());
 
         // Act
@@ -80,7 +80,7 @@ public class UsuariosPageTests : TestContext
     public void Renderizar_DeberiaMostrarTablaConEncabezados()
     {
         // Arrange
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new List<UsuarioDto>());
 
         // Act
@@ -105,7 +105,7 @@ public class UsuariosPageTests : TestContext
     public void Renderizar_ConUsuariosNull_DeberiaMostrarCargando()
     {
         // Arrange
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync((List<UsuarioDto>?)null);
 
         // Act
@@ -119,7 +119,7 @@ public class UsuariosPageTests : TestContext
     public void Renderizar_ConListaVacia_DeberiaMostrarSinResultados()
     {
         // Arrange
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new List<UsuarioDto>());
 
         // Act
@@ -155,7 +155,7 @@ public class UsuariosPageTests : TestContext
             }
         };
 
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(usuarios);
 
         // Act
@@ -183,7 +183,7 @@ public class UsuariosPageTests : TestContext
             new UsuarioDto { Id = Guid.NewGuid(), NombreCompleto = "Test User" }
         };
 
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(usuarios);
 
         // Act
@@ -200,7 +200,7 @@ public class UsuariosPageTests : TestContext
     public void Renderizar_DeberiaMostrarBotonNuevoUsuario()
     {
         // Arrange
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new List<UsuarioDto>());
 
         // Act
@@ -218,7 +218,7 @@ public class UsuariosPageTests : TestContext
     public void Renderizar_ConModalCerrado_NoDeberiaMostrarModal()
     {
         // Arrange
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new List<UsuarioDto>());
 
         // Act
@@ -233,7 +233,7 @@ public class UsuariosPageTests : TestContext
     public void Renderizar_ConModalAbierto_DeberiaMostrarModal()
     {
         // Arrange
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new List<UsuarioDto>());
 
         // Act
@@ -252,7 +252,7 @@ public class UsuariosPageTests : TestContext
     public void Renderizar_ConModalAbierto_DeberiaMostrarFormulario()
     {
         // Arrange
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new List<UsuarioDto>());
 
         // Act
@@ -270,7 +270,7 @@ public class UsuariosPageTests : TestContext
     public void Renderizar_ConModalCreacion_DeberiaMostrarCampoPassword()
     {
         // Arrange
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new List<UsuarioDto>());
 
         // Act
@@ -288,7 +288,7 @@ public class UsuariosPageTests : TestContext
     public void Renderizar_ConModalConfirmacionCerrado_NoDeberiaMostrarModal()
     {
         // Arrange
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new List<UsuarioDto>());
 
         // Act
@@ -308,7 +308,7 @@ public class UsuariosPageTests : TestContext
             new UsuarioDto { Id = Guid.NewGuid(), NombreCompleto = "Test User" }
         };
 
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(usuarios);
 
         // Act
@@ -330,7 +330,7 @@ public class UsuariosPageTests : TestContext
             new UsuarioDto { Id = Guid.NewGuid(), NombreCompleto = "Test User" }
         };
 
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(usuarios);
 
         // Act
@@ -349,7 +349,7 @@ public class UsuariosPageTests : TestContext
     public void Renderizar_DeberiaTenerEstructuraResponsiva()
     {
         // Arrange
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new List<UsuarioDto>());
 
         // Act
@@ -367,7 +367,7 @@ public class UsuariosPageTests : TestContext
     public void Renderizar_DeberiaTenerTablaResponsiva()
     {
         // Arrange
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new List<UsuarioDto>());
 
         // Act
@@ -387,7 +387,7 @@ public class UsuariosPageTests : TestContext
     public void Renderizar_DeberiaMostrarTodosLosBotones()
     {
         // Arrange
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new List<UsuarioDto>());
 
         // Act
@@ -406,7 +406,7 @@ public class UsuariosPageTests : TestContext
     public void Renderizar_DeberiaMostrarBotonesConClasesCorrectas()
     {
         // Arrange
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new List<UsuarioDto>());
 
         // Act
@@ -426,7 +426,7 @@ public class UsuariosPageTests : TestContext
     public void Renderizar_DeberiaMostrarFormularioDeBusqueda()
     {
         // Arrange
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new List<UsuarioDto>());
 
         // Act
@@ -442,7 +442,7 @@ public class UsuariosPageTests : TestContext
     public void Renderizar_DeberiaMostrarFormularioDeEdicion()
     {
         // Arrange
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new List<UsuarioDto>());
 
         // Act
@@ -463,7 +463,7 @@ public class UsuariosPageTests : TestContext
     public void Renderizar_DeberiaMostrarValidacionesEnFormulario()
     {
         // Arrange
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new List<UsuarioDto>());
 
         // Act
@@ -481,7 +481,7 @@ public class UsuariosPageTests : TestContext
     public void Renderizar_DeberiaTenerAtributosDeAccesibilidad()
     {
         // Arrange
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new List<UsuarioDto>());
 
         // Act
@@ -501,7 +501,7 @@ public class UsuariosPageTests : TestContext
     public void Renderizar_DeberiaInicializarConValoresPorDefecto()
     {
         // Arrange
-        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool>(), It.IsAny<string>(), It.IsAny<string>()))
+        _usuariosApiMock.Setup(x => x.ObtenerUsuariosAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<string?>(), It.IsAny<bool?>(), It.IsAny<string?>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(new List<UsuarioDto>());
 
         // Act

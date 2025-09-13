@@ -239,6 +239,18 @@ public class DashboardApiService : IDashboardApiService
     /// </summary>
     private DashboardResumenDto CrearDatosEjemplo()
     {
+        var random = new Random();
+        var ingresosPorHora = new List<IngresosPorHoraDto>();
+        for (int hora = 12; hora <= 22; hora++)
+        {
+            ingresosPorHora.Add(new IngresosPorHoraDto
+            {
+                Hora = hora,
+                Monto = random.Next(50, 300),
+                CantidadComandas = random.Next(2, 12)
+            });
+        }
+
         return new DashboardResumenDto
         {
             Metricas = new DashboardMetricasDto
@@ -280,7 +292,8 @@ public class DashboardApiService : IDashboardApiService
                 Completadas = 45,
                 Canceladas = 1,
                 Total = 61
-            }
+            },
+            IngresosPorHora = ingresosPorHora
         };
     }
 }

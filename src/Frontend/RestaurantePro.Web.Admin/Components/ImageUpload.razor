@@ -8,12 +8,26 @@
     @if (!string.IsNullOrEmpty(ImageUrl))
     {
         <div class="relative group">
-            <img src="@ImageUrl" alt="Imagen actual" 
-                 class="w-full h-48 object-contain rounded-lg border-2 border-gray-200 bg-gray-50 shadow-sm transition-all duration-200 group-hover:shadow-md" />
+            <!-- Debug info temporal -->
+            <div class="text-xs text-gray-500 mb-2">
+                DEBUG: ImageUrl length: @ImageUrl.Length | Tipo: @(ImageUrl.StartsWith("data:") ? "Base64" : "URL")
+            </div>
+            
+            <div class="w-full h-48 rounded-lg border-2 border-gray-200 bg-gray-50 shadow-sm transition-all duration-200 group-hover:shadow-md overflow-hidden flex items-center justify-center">
+                <img src="@ImageUrl" alt="Imagen actual" 
+                     class="max-w-full max-h-full object-contain" 
+                     style="max-width: 100%; max-height: 100%; width: auto; height: auto;"
+                     onerror="console.error('Error cargando imagen:', this.src)" />
+            </div>
             <button type="button" 
                     @onclick="EliminarImagen"
                     class="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100">
                 ×
+            </button>
+            <button type="button" 
+                    @onclick="ClickFileInput"
+                    class="absolute bottom-2 right-2 bg-blue-500 hover:bg-blue-600 text-white text-xs px-3 py-1 rounded shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100">
+                Cambiar
             </button>
             <div class="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
                 Vista previa
@@ -21,38 +35,42 @@
         </div>
     }
 
-    <!-- Área de subida -->
-    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
-        
-        <InputFile id="fileInput" OnChange="OnFileSelected" 
-                   accept="image/*" 
-                   class="hidden" 
-                   @ref="fileInput" />
-        
-        @if (isUploading)
-        {
-            <div class="space-y-2">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p class="text-sm text-gray-600">Subiendo imagen...</p>
-            </div>
-        }
-        else
-        {
-            <div class="space-y-2">
-                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-                <p class="text-sm text-gray-600">
-                    <button type="button" @onclick="ClickFileInput" class="text-blue-600 hover:text-blue-500 font-medium">
-                        Haz clic para seleccionar una imagen
-                    </button>
-                </p>
-                <p class="text-xs text-gray-500">
-                    PNG, JPG, GIF hasta 5MB
-                </p>
-            </div>
-        }
-    </div>
+    <!-- InputFile siempre disponible (oculto) -->
+    <InputFile id="fileInput" OnChange="OnFileSelected" 
+               accept="image/*" 
+               class="hidden" 
+               @ref="fileInput" />
+
+    <!-- Área de subida (solo se muestra si no hay imagen o se está subiendo) -->
+    @if (string.IsNullOrEmpty(ImageUrl) || isUploading)
+    {
+        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+            
+            @if (isUploading)
+            {
+                <div class="space-y-2">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <p class="text-sm text-gray-600">Subiendo imagen...</p>
+                </div>
+            }
+            else
+            {
+                <div class="space-y-2">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <p class="text-sm text-gray-600">
+                        <button type="button" @onclick="ClickFileInput" class="text-blue-600 hover:text-blue-500 font-medium">
+                            Haz clic para seleccionar una imagen
+                        </button>
+                    </p>
+                    <p class="text-xs text-gray-500">
+                        PNG, JPG, GIF hasta 5MB
+                    </p>
+                </div>
+            }
+        </div>
+    }
 
     <!-- Mensaje de error -->
     @if (!string.IsNullOrEmpty(errorMessage))
@@ -72,6 +90,16 @@
     private InputFile? fileInput;
     private bool isUploading = false;
     private string? errorMessage;
+    
+    protected override void OnParametersSet()
+    {
+        Console.WriteLine($"🔍 ImageUpload - ProductoId: {ProductoId}, ImageUrl: {(string.IsNullOrEmpty(ImageUrl) ? "null" : ImageUrl.Substring(0, Math.Min(50, ImageUrl.Length)) + "...")}");
+        Console.WriteLine($"🔍 ImageUpload - Estado interno: fileInput={fileInput != null}, isUploading={isUploading}");
+        Console.WriteLine($"🔍 ImageUpload - Parámetros recibidos correctamente");
+        
+        // Forzar actualización del estado cuando cambia la ImageUrl
+        StateHasChanged();
+    }
 
     private async Task OnFileSelected(InputFileChangeEventArgs e)
     {
@@ -140,13 +168,19 @@
             
             string previewUrl = null;
             
-            // Intentar usar JavaScript optimizado primero
+            // Verificar si JavaScript está disponible
             try
             {
-                previewUrl = await JSRuntime.InvokeAsync<string>("imageUpload.createOptimizedPreview", archivo);
-                if (!string.IsNullOrEmpty(previewUrl))
+                var jsAvailable = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.imageUpload !== 'undefined'");
+                Console.WriteLine($"🔍 JavaScript disponible: {jsAvailable}");
+                
+                if (jsAvailable)
                 {
-                    Console.WriteLine($"🔍 Vista previa optimizada creada - Base64 length: {previewUrl.Length}");
+                    previewUrl = await JSRuntime.InvokeAsync<string>("imageUpload.createOptimizedPreview", archivo);
+                    if (!string.IsNullOrEmpty(previewUrl))
+                    {
+                        Console.WriteLine($"🔍 Vista previa optimizada creada - Base64 length: {previewUrl.Length}");
+                    }
                 }
             }
             catch (Exception jsEx)
@@ -157,14 +191,25 @@
             // Fallback a versión C# si JavaScript falla
             if (string.IsNullOrEmpty(previewUrl))
             {
-                using var stream = archivo.OpenReadStream(5 * 1024 * 1024);
-                var buffer = new byte[stream.Length];
-                await stream.ReadAsync(buffer, 0, (int)stream.Length);
+                Console.WriteLine($"⚠️ Usando fallback C# para archivo de {archivo.Size} bytes");
+                
+                // Para imágenes muy grandes, limitar el tamaño de lectura
+                var maxSize = 2 * 1024 * 1024; // 2MB máximo
+                var readSize = Math.Min(archivo.Size, maxSize);
+                
+                using var stream = archivo.OpenReadStream(maxSize);
+                var buffer = new byte[readSize];
+                await stream.ReadAsync(buffer, 0, (int)readSize);
                 
                 var base64 = Convert.ToBase64String(buffer);
                 previewUrl = $"data:{archivo.ContentType};base64,{base64}";
                 
-                Console.WriteLine($"🔍 Vista previa C# creada - Tipo: {archivo.ContentType}, Base64 length: {base64.Length}");
+                Console.WriteLine($"🔍 Vista previa C# creada - Tipo: {archivo.ContentType}, Tamaño leído: {readSize}, Base64 length: {base64.Length}");
+                
+                if (archivo.Size > maxSize)
+                {
+                    Console.WriteLine($"⚠️ Imagen truncada - Archivo original: {archivo.Size} bytes, Leído: {readSize} bytes");
+                }
             }
             
             Console.WriteLine($"🔍 URL de vista previa: {previewUrl.Substring(0, Math.Min(100, previewUrl.Length))}...");
@@ -189,7 +234,17 @@
 
     private async Task ClickFileInput()
     {
-        await JSRuntime.InvokeVoidAsync("eval", "document.getElementById('fileInput').click()");
+        Console.WriteLine($"🔍 ClickFileInput llamado - fileInput es null: {fileInput == null}");
+        if (fileInput != null)
+        {
+            // Forzar el click en el InputFile usando JavaScript
+            await JSRuntime.InvokeVoidAsync("eval", "document.getElementById('fileInput').click()");
+            Console.WriteLine("✅ InputFile click disparado");
+        }
+        else
+        {
+            Console.WriteLine("❌ fileInput es null - no se puede hacer click");
+        }
     }
 
     private async Task EliminarImagen()

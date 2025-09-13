@@ -27,7 +27,7 @@ public class CategoriasPageTests : TestContext
 
     private void SetupMocks()
     {
-        _categoriasApiMock.Setup(x => x.ObtenerAsync(It.IsAny<bool>(), It.IsAny<bool>()))
+        _categoriasApiMock.Setup(x => x.ObtenerAsync(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
                         .ReturnsAsync(new List<CategoriaProductoDto>());
         _categoriasApiMock.Setup(x => x.BuscarAsync(It.IsAny<string>()))
                         .ReturnsAsync(new List<CategoriaProductoDto>());
@@ -65,7 +65,7 @@ public class CategoriasPageTests : TestContext
             }
         };
 
-        _categoriasApiMock.Setup(x => x.ObtenerAsync(It.IsAny<bool>(), It.IsAny<bool>()))
+        _categoriasApiMock.Setup(x => x.ObtenerAsync(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
                         .ReturnsAsync(categorias);
         _categoriasApiMock.Setup(x => x.BuscarAsync(It.IsAny<string>()))
                         .ReturnsAsync(categorias);
@@ -191,7 +191,7 @@ public class CategoriasPageTests : TestContext
         var component = RenderComponent<Categorias>();
 
         // Assert
-        _categoriasApiMock.Verify(x => x.ObtenerAsync(It.IsAny<bool>(), It.IsAny<bool>()), Times.Once);
+        _categoriasApiMock.Verify(x => x.ObtenerAsync(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Once);
     }
 
     [Fact]
@@ -221,7 +221,7 @@ public class CategoriasPageTests : TestContext
         component.Find("button:contains('Aplicar Filtros')").Click();
 
         // Assert
-        _categoriasApiMock.Verify(x => x.ObtenerAsync(It.IsAny<bool>(), It.IsAny<bool>()), Times.AtLeast(2));
+        _categoriasApiMock.Verify(x => x.ObtenerAsync(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.AtLeast(2));
     }
 
     [Fact]
@@ -284,7 +284,7 @@ public class CategoriasPageTests : TestContext
     public void Renderizar_ConError_DeberiaManejarExcepciones()
     {
         // Arrange
-        _categoriasApiMock.Setup(x => x.ObtenerAsync(It.IsAny<bool>(), It.IsAny<bool>()))
+        _categoriasApiMock.Setup(x => x.ObtenerAsync(It.IsAny<bool>(), It.IsAny<bool>(), It.IsAny<bool>()))
                         .ThrowsAsync(new Exception("Error de conexión"));
 
         // Act

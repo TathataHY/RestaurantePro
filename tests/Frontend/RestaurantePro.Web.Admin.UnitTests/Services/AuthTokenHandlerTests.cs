@@ -15,7 +15,7 @@ public class AuthTokenHandlerTests
         _innerHandlerMock = new Mock<HttpMessageHandler>();
         _tokenStore = new TokenStore();
         
-        var handler = new AuthTokenHandler(_tokenStore)
+        var handler = new AuthTokenHandler()
         {
             InnerHandler = _innerHandlerMock.Object
         };

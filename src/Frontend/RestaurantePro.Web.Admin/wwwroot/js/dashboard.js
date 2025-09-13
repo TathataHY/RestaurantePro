@@ -2,7 +2,17 @@
 window.dashboardCharts = {
     // Crear gráfico de ventas por hora
     crearGraficoVentasHora: function (canvasId, datos) {
-        const ctx = document.getElementById(canvasId).getContext('2d');
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js no está disponible');
+            return null;
+        }
+        
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) {
+            console.error('Canvas no encontrado:', canvasId);
+            return null;
+        }
+        const ctx = canvas.getContext('2d');
         return new Chart(ctx, {
             type: 'line',
             data: {
@@ -68,7 +78,17 @@ window.dashboardCharts = {
 
     // Crear gráfico de ingresos por categoría (gráfico de dona)
     crearGraficoIngresosCategoria: function (canvasId, datos) {
-        const ctx = document.getElementById(canvasId).getContext('2d');
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js no está disponible');
+            return null;
+        }
+        
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) {
+            console.error('Canvas no encontrado:', canvasId);
+            return null;
+        }
+        const ctx = canvas.getContext('2d');
         return new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -98,6 +118,85 @@ window.dashboardCharts = {
                 elements: {
                     arc: {
                         borderWidth: 0
+                    }
+                }
+            }
+        });
+    },
+
+    // Crear gráfico de productos más vendidos (barras horizontales)
+    crearGraficoProductosVendidos: function (canvasId, datos) {
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js no está disponible');
+            return null;
+        }
+        
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) {
+            console.error('Canvas no encontrado:', canvasId);
+            return null;
+        }
+        const ctx = canvas.getContext('2d');
+        return new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: datos.map(d => d.nombre),
+                datasets: [{
+                    label: 'Cantidad Vendida',
+                    data: datos.map(d => d.cantidadVendida),
+                    backgroundColor: '#10b981',
+                    borderColor: '#059669',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const data = datos[context.dataIndex];
+                                return `${data.nombre}: ${data.cantidadVendida} unidades - $${data.ingresos.toLocaleString()}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#f3f4f6'
+                        },
+                        ticks: {
+                            color: '#6b7280',
+                            font: {
+                                size: 12
+                            },
+                            stepSize: 1
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#6b7280',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                },
+                elements: {
+                    bar: {
+                        borderWidth: 1
                     }
                 }
             }

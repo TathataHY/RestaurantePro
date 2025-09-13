@@ -15,12 +15,19 @@ public class AuthData
 public class AuthTokenHandler : DelegatingHandler
 {
     private readonly TokenStore _tokenStore;
-    private readonly IAuthApiService _authService;
+    private readonly IAuthApiService? _authService;
 
     public AuthTokenHandler(TokenStore tokenStore, IAuthApiService authService)
     {
         _tokenStore = tokenStore;
         _authService = authService;
+    }
+
+    // Constructor para pruebas unitarias
+    public AuthTokenHandler()
+    {
+        _tokenStore = new TokenStore();
+        _authService = null;
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -44,7 +51,8 @@ public class AuthTokenHandler : DelegatingHandler
         // Si recibimos un 401 y tenemos un refresh token, intentar renovar
         if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized && 
             !string.IsNullOrWhiteSpace(_tokenStore.RefreshToken) &&
-            !request.RequestUri!.AbsolutePath.Contains("/auth/"))
+            !request.RequestUri!.AbsolutePath.Contains("/auth/") &&
+            _authService != null)
         {
             Console.WriteLine("🔑 Token expirado, intentando renovar...");
             
@@ -85,12 +93,18 @@ public class AuthTokenHandler : DelegatingHandler
 
 public class TokenStore
 {
-    private readonly IJSRuntime _jsRuntime;
+    private readonly IJSRuntime? _jsRuntime;
     private bool _isInitialized = false;
 
     public TokenStore(IJSRuntime jsRuntime)
     {
         _jsRuntime = jsRuntime;
+    }
+
+    // Constructor para pruebas unitarias
+    public TokenStore()
+    {
+        _jsRuntime = null;
     }
 
     public string Token { get; set; } = string.Empty;
@@ -107,6 +121,13 @@ public class TokenStore
         try
         {
             Console.WriteLine("TokenStore: Iniciando carga de autenticación...");
+            
+            // Si no hay jsRuntime (modo prueba), no hacer nada
+            if (_jsRuntime == null)
+            {
+                _isInitialized = true;
+                return;
+            }
             
             // Esperar un poco para asegurar que JavaScript esté listo
             await Task.Delay(100);

@@ -212,6 +212,10 @@ public static class ApplicationServiceCollection
         // - INotificationService 
         // - ISignalRService (para notificaciones tiempo real)
         
+        // ✅ SERVICIOS DE DASHBOARD
+        // Servicio para métricas y datos del dashboard administrativo
+        services.AddScoped<IDashboardService, DashboardService>();
+        
         // ✅ SERVICIOS DE RECETAS
         // Servicios para cálculo de costos y gestión de recetas
         // TODO: Agregar cuando se implementen servicios específicos como:

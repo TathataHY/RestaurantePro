@@ -99,6 +99,9 @@ namespace RestaurantePro.Api
             
             app.UseRouting();
             
+            // 📁 CONFIGURAR ARCHIVOS ESTÁTICOS PARA IMÁGENES
+            app.UseStaticFiles();
+            
             // 🔧 CONFIGURAR CORS - PERMITIR ACCESO DESDE EMULADORES ANDROID
             app.UseCors("AllowAll");
             
