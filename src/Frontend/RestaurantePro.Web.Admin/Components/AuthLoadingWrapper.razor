@@ -1,0 +1,78 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IJSRuntime JSRuntime
+
+<div class="auth-loading-wrapper">
+    @if (_isLoading)
+    {
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <p>Cargando...</p>
+        </div>
+    }
+    else
+    {
+        @ChildContent
+    }
+</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    private bool _isLoading = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                // Verificar si hay autenticación en localStorage
+                var hasAuth = await JSRuntime.InvokeAsync<bool>("authPersistence.isAuthenticated");
+                if (!hasAuth)
+                {
+                    _isLoading = false;
+                    StateHasChanged();
+                }
+                else
+                {
+                    // Esperar un poco para que se inicialice la autenticación
+                    await Task.Delay(100);
+                    _isLoading = false;
+                    StateHasChanged();
+                }
+            }
+            catch
+            {
+                _isLoading = false;
+                StateHasChanged();
+            }
+        }
+    }
+}
+
+<style>
+    .auth-loading-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .loading-container {
+        text-align: center;
+    }
+
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px;
+    }
+
+    @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>

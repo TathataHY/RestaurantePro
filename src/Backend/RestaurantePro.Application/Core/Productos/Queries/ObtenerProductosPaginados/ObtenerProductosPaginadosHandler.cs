@@ -18,8 +18,8 @@ public class ObtenerProductosPaginadosHandler : IRequestHandler<ObtenerProductos
 
     public async Task<Result<PaginatedList<ProductoDto>>> Handle(ObtenerProductosPaginadosQuery request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("📄 Obteniendo productos paginados - Página: {PageNumber}, Tamaño: {PageSize}", 
-            request.PageNumber, request.PageSize);
+            _logger.LogInformation("📄 Obteniendo productos paginados - Página: {PageNumber}, Tamaño: {PageSize}, SoloActivos: {SoloActivos}, CategoriaId: {CategoriaId}", 
+                request.PageNumber, request.PageSize, request.SoloActivos, request.CategoriaId);
 
         try
         {
@@ -82,6 +82,13 @@ public class ObtenerProductosPaginadosHandler : IRequestHandler<ObtenerProductos
 
             _logger.LogInformation("✅ Productos obtenidos: {Count} de {Total} - Página {PageNumber}/{TotalPages}", 
                 resultado.Items.Count, resultado.TotalCount, resultado.PageNumber, resultado.TotalPages);
+            
+            // Log detallado de los productos para debugging
+            _logger.LogInformation("🔍 Productos en la página actual:");
+            foreach (var producto in resultado.Items)
+            {
+                _logger.LogInformation("  - {Nombre}: Activo={Activo}", producto.Nombre, producto.Activo);
+            }
 
             return Result.Success(resultado);
         }

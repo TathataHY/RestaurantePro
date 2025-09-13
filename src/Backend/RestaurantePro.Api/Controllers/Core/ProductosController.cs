@@ -33,15 +33,16 @@ public class ProductosController : ControllerBase
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedList<ProductoDto>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<PaginatedList<ProductoDto>>>> GetProductos(
-        [FromQuery] int pagina = 1,
-        [FromQuery] int tamanoPagina = 10,
+        [FromQuery] int PageNumber = 1,
+        [FromQuery] int PageSize = 10,
         [FromQuery] string? filtro = null,
         [FromQuery] Guid? categoriaId = null,
         [FromQuery] bool soloActivos = true,
         [FromQuery] string orderBy = "Nombre",
         [FromQuery] string orderDirection = "asc")
     {
-        _logger.LogInformation("📋 GET /api/core/productos");
+        _logger.LogInformation("📋 GET /api/core/productos - Filtro: '{Filtro}', CategoriaId: {CategoriaId}, SoloActivos: {SoloActivos}, PageNumber: {PageNumber}, PageSize: {PageSize}", 
+            filtro, categoriaId, soloActivos, PageNumber, PageSize);
         
         // Validar que los parámetros de query string sean válidos
         if (!ModelState.IsValid)
@@ -60,7 +61,7 @@ public class ProductosController : ControllerBase
         }
         
         // Validar parámetros de paginación
-        if (pagina < 1)
+        if (PageNumber < 1)
         {
             var errorResponse = ApiResponse<PaginatedList<ProductoDto>>.ErrorResponse(
                 new List<string> { "El número de página debe ser mayor a 0" }, 
@@ -68,8 +69,8 @@ public class ProductosController : ControllerBase
                 StatusCodes.Status400BadRequest);
             return BadRequest(errorResponse);
         }
-
-        if (tamanoPagina < 1 || tamanoPagina > 100)
+        
+        if (PageSize < 1 || PageSize > 100)
         {
             var errorResponse = ApiResponse<PaginatedList<ProductoDto>>.ErrorResponse(
                 new List<string> { "El tamaño de página debe estar entre 1 y 100" }, 
@@ -90,8 +91,8 @@ public class ProductosController : ControllerBase
 
         var query = new ObtenerProductosPaginadosQuery
         {
-            PageNumber = pagina,
-            PageSize = tamanoPagina,
+            PageNumber = PageNumber,
+            PageSize = PageSize,
             Filtro = filtro,
             CategoriaId = categoriaId,
             SoloActivos = soloActivos,

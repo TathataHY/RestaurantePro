@@ -24,13 +24,14 @@
             <input class="w-full pl-10 pr-4 py-2.5 rounded-lg border-border-light bg-input-bg-light focus:ring-primary-color focus:border-primary-color transition" 
                    id="search" 
                    placeholder="Buscar por nombre..." 
-                   @bind-value="filtro" 
-                   @bind-value:event="oninput" />
+                   value="@filtro" 
+                   @oninput="@(async (e) => { filtro = e.Value?.ToString() ?? ""; await OnFiltroChanged(); })" />
         </div>
     </div>
     <div>
         <select class="w-full py-2.5 px-4 rounded-lg border-border-light bg-input-bg-light focus:ring-primary-color focus:border-primary-color transition" 
-                @bind="categoriaIdString">
+                value="@categoriaIdString"
+                @onchange="@(async (e) => { categoriaIdString = e.Value?.ToString() ?? ""; await OnFiltroChanged(); })">
             <option value="">Categoría</option>
             @foreach (var c in categorias)
             {
@@ -40,7 +41,8 @@
     </div>
     <div>
         <select class="w-full py-2.5 px-4 rounded-lg border-border-light bg-input-bg-light focus:ring-primary-color focus:border-primary-color transition" 
-                @bind="soloActivos">
+                value="@(soloActivos ? "true" : "false")"
+                @onchange="@(async (e) => { soloActivos = bool.Parse(e.Value?.ToString() ?? "true"); await OnFiltroChanged(); })">
             <option value="true">Disponible</option>
             <option value="false">Agotado</option>
         </select>
@@ -343,9 +345,16 @@ else
     private async Task BuscarAsync()
     {
         cargando = true;
+        Console.WriteLine($"BuscarAsync: filtro='{filtro}', categoriaId={categoriaId}, soloActivos={soloActivos}");
         productos = await Api.ObtenerProductosPaginadosAsync(paginaActual, tamanoPagina, filtro, categoriaId, soloActivos, orderBy, orderDirection) ?? new PaginatedList<ProductoDto>();
         cargando = false;
         StateHasChanged();
+    }
+
+    private async Task OnFiltroChanged()
+    {
+        paginaActual = 1; // Reset a la primera página cuando cambian los filtros
+        await BuscarAsync();
     }
 
     private void Nuevo()

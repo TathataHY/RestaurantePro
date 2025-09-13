@@ -24,12 +24,24 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
 
         public async Task<IEnumerable<Producto>> ObtenerTodosAsync(bool soloActivos = true, CancellationToken cancellationToken = default)
         {
+            _logger.LogInformation("🔍 ProductoRepository.ObtenerTodosAsync - soloActivos: {SoloActivos}", soloActivos);
+            
             var query = _dbSet.AsNoTracking().AsQueryable();
             if (soloActivos)
             {
                 query = query.Where(p => p.EstaActivo);
+                _logger.LogInformation("🔍 Aplicando filtro: Solo productos activos");
             }
-            return await query.ToListAsync(cancellationToken);
+            else
+            {
+                query = query.Where(p => !p.EstaActivo);
+                _logger.LogInformation("🔍 Aplicando filtro: Solo productos inactivos");
+            }
+            
+            var productos = await query.ToListAsync(cancellationToken);
+            _logger.LogInformation("🔍 Productos obtenidos: {Count} productos", productos.Count);
+            
+            return productos;
         }
 
         public async Task<List<Producto>> ObtenerPorCategoriaAsync(Guid categoriaId, bool soloActivos = true, CancellationToken cancellationToken = default)
@@ -38,6 +50,10 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Core
             if (soloActivos)
             {
                 query = query.Where(p => p.EstaActivo);
+            }
+            else
+            {
+                query = query.Where(p => !p.EstaActivo);
             }
             return await query.ToListAsync(cancellationToken);
         }

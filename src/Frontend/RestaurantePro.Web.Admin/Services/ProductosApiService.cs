@@ -39,9 +39,9 @@ public class ProductosApiService : IProductosApiService
     {
         var http = CreateClient();
         var ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        var url = $"api/core/productos?PageNumber={pageNumber}&PageSize={pageSize}&SoloActivos={soloActivos}&OrderBy={Uri.EscapeDataString(orderBy)}&OrderDirection={Uri.EscapeDataString(orderDirection)}&_ts={ts}";
-        if (!string.IsNullOrWhiteSpace(filtro)) url += "&Filtro=" + Uri.EscapeDataString(filtro);
-        if (categoriaId.HasValue) url += "&CategoriaId=" + categoriaId.Value;
+        var url = $"api/core/productos?PageNumber={pageNumber}&PageSize={pageSize}&soloActivos={soloActivos}&orderBy={Uri.EscapeDataString(orderBy)}&orderDirection={Uri.EscapeDataString(orderDirection)}&_ts={ts}";
+        if (!string.IsNullOrWhiteSpace(filtro)) url += "&filtro=" + Uri.EscapeDataString(filtro);
+        if (categoriaId.HasValue) url += "&categoriaId=" + categoriaId.Value;
         var resp = await http.GetFromJsonAsync<ApiResponse<PaginatedList<ProductoDto>>>(url);
         return resp?.Data ?? new PaginatedList<ProductoDto>();
     }

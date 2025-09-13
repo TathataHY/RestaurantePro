@@ -128,7 +128,7 @@
       error = "Usuario o contraseña inválidos";
       return;
     }
-    AuthState.SetAuth(resp);
+    await AuthState.SetAuthAsync(resp);
     if (!string.IsNullOrWhiteSpace(returnUrl))
     {
       Nav.NavigateTo(returnUrl);

@@ -163,9 +163,9 @@
         userName = isAuthenticated ? user.Identity?.Name ?? "" : string.Empty;
     }
 
-    private void Logout()
+    private async Task Logout()
     {
-        AuthState.Logout();
+        await AuthState.LogoutAsync();
         Nav.NavigateTo("/login", true);
     }
 }
