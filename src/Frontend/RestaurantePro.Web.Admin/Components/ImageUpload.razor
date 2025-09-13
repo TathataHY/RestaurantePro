@@ -1,0 +1,215 @@
+@using Microsoft.AspNetCore.Components.Forms
+@using RestaurantePro.Web.Admin.Services
+@inject IProductosApiService Api
+@inject IJSRuntime JSRuntime
+
+<div class="space-y-4">
+    <!-- Vista previa de imagen actual -->
+    @if (!string.IsNullOrEmpty(ImageUrl))
+    {
+        <div class="relative group">
+            <img src="@ImageUrl" alt="Imagen actual" 
+                 class="w-full h-48 object-contain rounded-lg border-2 border-gray-200 bg-gray-50 shadow-sm transition-all duration-200 group-hover:shadow-md" />
+            <button type="button" 
+                    @onclick="EliminarImagen"
+                    class="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg transition-all duration-200 opacity-0 group-hover:opacity-100">
+                ×
+            </button>
+            <div class="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                Vista previa
+            </div>
+        </div>
+    }
+
+    <!-- Área de subida -->
+    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+        
+        <InputFile id="fileInput" OnChange="OnFileSelected" 
+                   accept="image/*" 
+                   class="hidden" 
+                   @ref="fileInput" />
+        
+        @if (isUploading)
+        {
+            <div class="space-y-2">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p class="text-sm text-gray-600">Subiendo imagen...</p>
+            </div>
+        }
+        else
+        {
+            <div class="space-y-2">
+                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <p class="text-sm text-gray-600">
+                    <button type="button" @onclick="ClickFileInput" class="text-blue-600 hover:text-blue-500 font-medium">
+                        Haz clic para seleccionar una imagen
+                    </button>
+                </p>
+                <p class="text-xs text-gray-500">
+                    PNG, JPG, GIF hasta 5MB
+                </p>
+            </div>
+        }
+    </div>
+
+    <!-- Mensaje de error -->
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            @errorMessage
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string? ImageUrl { get; set; }
+    [Parameter] public EventCallback<string?> ImageUrlChanged { get; set; }
+    [Parameter] public Guid ProductoId { get; set; }
+    [Parameter] public string ApiBaseUrl { get; set; } = "http://localhost:8080";
+
+    private InputFile? fileInput;
+    private bool isUploading = false;
+    private string? errorMessage;
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        await SubirArchivo(e.File);
+    }
+
+    private async Task SubirArchivo(IBrowserFile archivo)
+    {
+        errorMessage = null;
+        isUploading = true;
+
+        try
+        {
+            // Validar tipo de archivo
+            if (!archivo.ContentType.StartsWith("image/"))
+            {
+                errorMessage = "Solo se permiten archivos de imagen (PNG, JPG, GIF, etc.)";
+                isUploading = false;
+                return;
+            }
+
+            // Validar tamaño (5MB)
+            if (archivo.Size > 5 * 1024 * 1024)
+            {
+                errorMessage = "El archivo es demasiado grande. Tamaño máximo: 5MB";
+                isUploading = false;
+                return;
+            }
+
+            // Si el ProductoId es vacío (producto nuevo), crear vista previa
+            if (ProductoId == Guid.Empty)
+            {
+                await CrearVistaPrevia(archivo);
+                return;
+            }
+
+            // Usar el servicio de API que maneja la autenticación
+            using var stream = archivo.OpenReadStream(5 * 1024 * 1024);
+            var uploadedUrl = await Api.SubirImagenAsync(ProductoId, stream, archivo.Name, archivo.ContentType);
+            
+            if (!string.IsNullOrEmpty(uploadedUrl))
+            {
+                await ImageUrlChanged.InvokeAsync(uploadedUrl);
+                await JSRuntime.InvokeVoidAsync("alert", "Imagen subida exitosamente");
+            }
+            else
+            {
+                errorMessage = "Error al subir la imagen. Verifica tu conexión y permisos.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error inesperado: {ex.Message}";
+        }
+        finally
+        {
+            isUploading = false;
+        }
+    }
+
+    private async Task CrearVistaPrevia(IBrowserFile archivo)
+    {
+        try
+        {
+            Console.WriteLine($"🔍 Creando vista previa para archivo: {archivo.Name}, Tamaño: {archivo.Size}");
+            
+            string previewUrl = null;
+            
+            // Intentar usar JavaScript optimizado primero
+            try
+            {
+                previewUrl = await JSRuntime.InvokeAsync<string>("imageUpload.createOptimizedPreview", archivo);
+                if (!string.IsNullOrEmpty(previewUrl))
+                {
+                    Console.WriteLine($"🔍 Vista previa optimizada creada - Base64 length: {previewUrl.Length}");
+                }
+            }
+            catch (Exception jsEx)
+            {
+                Console.WriteLine($"⚠️ JavaScript no disponible, usando fallback C#: {jsEx.Message}");
+            }
+            
+            // Fallback a versión C# si JavaScript falla
+            if (string.IsNullOrEmpty(previewUrl))
+            {
+                using var stream = archivo.OpenReadStream(5 * 1024 * 1024);
+                var buffer = new byte[stream.Length];
+                await stream.ReadAsync(buffer, 0, (int)stream.Length);
+                
+                var base64 = Convert.ToBase64String(buffer);
+                previewUrl = $"data:{archivo.ContentType};base64,{base64}";
+                
+                Console.WriteLine($"🔍 Vista previa C# creada - Tipo: {archivo.ContentType}, Base64 length: {base64.Length}");
+            }
+            
+            Console.WriteLine($"🔍 URL de vista previa: {previewUrl.Substring(0, Math.Min(100, previewUrl.Length))}...");
+            
+            await ImageUrlChanged.InvokeAsync(previewUrl);
+            await JSRuntime.InvokeVoidAsync("alert", "Imagen seleccionada. Se subirá al servidor cuando guardes el producto.");
+            
+            // Forzar actualización del estado
+            StateHasChanged();
+            Console.WriteLine($"✅ Vista previa enviada al componente padre");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error al crear vista previa: {ex.Message}");
+            errorMessage = $"Error al procesar la imagen: {ex.Message}";
+        }
+        finally
+        {
+            isUploading = false;
+        }
+    }
+
+    private async Task ClickFileInput()
+    {
+        await JSRuntime.InvokeVoidAsync("eval", "document.getElementById('fileInput').click()");
+    }
+
+    private async Task EliminarImagen()
+    {
+        await ImageUrlChanged.InvokeAsync(null);
+        await JSRuntime.InvokeVoidAsync("alert", "Imagen eliminada");
+    }
+}
+
+<style>
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>

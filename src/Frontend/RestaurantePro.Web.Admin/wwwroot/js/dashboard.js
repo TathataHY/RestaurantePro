@@ -273,3 +273,58 @@ window.formatearMoneda = function (valor) {
 window.formatearPorcentaje = function (valor) {
     return valor.toFixed(1) + '%';
 };
+
+// Función para crear vista previa optimizada de imagen
+window.createOptimizedPreview = function (file) {
+    return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = function() {
+            // Calcular nuevas dimensiones manteniendo proporción
+            let newWidth = img.width;
+            let newHeight = img.height;
+            
+            const maxWidth = 800;
+            const maxHeight = 600;
+            const quality = 0.8;
+            
+            // Redimensionar solo si es necesario
+            if (newWidth > maxWidth) {
+                newHeight = (newHeight * maxWidth) / newWidth;
+                newWidth = maxWidth;
+            }
+            
+            if (newHeight > maxHeight) {
+                newWidth = (newWidth * maxHeight) / newHeight;
+                newHeight = maxHeight;
+            }
+            
+            // Configurar canvas
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            
+            // Aplicar suavizado para mejor calidad
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            
+            // Dibujar imagen redimensionada
+            ctx.drawImage(img, 0, 0, newWidth, newHeight);
+            
+            // Convertir a base64 con calidad optimizada
+            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+            
+            resolve(dataUrl);
+        };
+        
+        img.onerror = function() {
+            console.error('Error al cargar la imagen');
+            resolve(null);
+        };
+        
+        // Crear URL del archivo
+        const fileUrl = URL.createObjectURL(file);
+        img.src = fileUrl;
+    });
+};

@@ -190,7 +190,7 @@
     {
         try
         {
-            var resultado = await ProductosApi.ObtenerProductosPaginadosAsync(1, 1000, null, null, true, "Nombre", "asc");
+            var resultado = await ProductosApi.ObtenerProductosPaginadosAsync(1, 1000, null, null, true, null, null, null, null, null, null, "Nombre", "asc");
             productos = resultado?.Items?.ToList() ?? new List<ProductoDto>();
         }
         catch (Exception ex)

@@ -76,6 +76,12 @@ public class ActualizarProductoHandler : IRequestHandler<ActualizarProductoComma
                 producto.Desactivar();
             }
 
+            // Actualizar la imagen si se proporciona
+            if (producto.ImagenUrl != request.ImagenUrl)
+            {
+                producto.ActualizarImagen(request.ImagenUrl);
+            }
+
             // Persistir los cambios
             await _repository.ActualizarAsync(producto, cancellationToken);
 

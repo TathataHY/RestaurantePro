@@ -28,6 +28,36 @@ public class ObtenerProductosPaginadosQuery : IRequest<Result<PaginatedList<Prod
     public bool SoloActivos { get; set; } = true;
 
     /// <summary>
+    /// Precio mínimo para filtrar
+    /// </summary>
+    public decimal? PrecioMinimo { get; set; }
+
+    /// <summary>
+    /// Precio máximo para filtrar
+    /// </summary>
+    public decimal? PrecioMaximo { get; set; }
+
+    /// <summary>
+    /// Fecha de creación desde
+    /// </summary>
+    public DateTime? FechaCreacionDesde { get; set; }
+
+    /// <summary>
+    /// Fecha de creación hasta
+    /// </summary>
+    public DateTime? FechaCreacionHasta { get; set; }
+
+    /// <summary>
+    /// Nivel de popularidad mínimo (0-10)
+    /// </summary>
+    public int? PopularidadMinima { get; set; }
+
+    /// <summary>
+    /// Nivel de popularidad máximo (0-10)
+    /// </summary>
+    public int? PopularidadMaxima { get; set; }
+
+    /// <summary>
     /// Campo para ordenar los resultados
     /// </summary>
     public string OrderBy { get; set; } = "Nombre";

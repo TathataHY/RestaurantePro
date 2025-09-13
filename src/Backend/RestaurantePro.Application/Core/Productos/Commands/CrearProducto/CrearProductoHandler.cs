@@ -86,6 +86,12 @@ public class CrearProductoHandler : IRequestHandler<CrearProductoCommand, Result
                 }
 
                 var producto = resultado.Value;
+                
+                // 3.1. Asignar imagen si se proporciona
+                if (!string.IsNullOrEmpty(request.ImagenUrl))
+                {
+                    producto.ActualizarImagen(request.ImagenUrl);
+                }
                 productoId = producto.Id;
                 productoNombre = producto.Nombre;
                 

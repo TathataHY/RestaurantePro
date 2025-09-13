@@ -35,13 +35,34 @@ public class ProductosApiService : IProductosApiService
         return resp?.Data ?? new List<CategoriaProductoDto>();
     }
 
-    public async Task<PaginatedList<ProductoDto>> ObtenerProductosPaginadosAsync(int pageNumber, int pageSize, string? filtro, Guid? categoriaId, bool soloActivos, string orderBy, string orderDirection)
+    public async Task<PaginatedList<ProductoDto>> ObtenerProductosPaginadosAsync(
+        int pageNumber, 
+        int pageSize, 
+        string? filtro, 
+        Guid? categoriaId, 
+        bool soloActivos, 
+        decimal? precioMinimo = null,
+        decimal? precioMaximo = null,
+        DateTime? fechaCreacionDesde = null,
+        DateTime? fechaCreacionHasta = null,
+        int? popularidadMinima = null,
+        int? popularidadMaxima = null,
+        string orderBy = "Nombre", 
+        string orderDirection = "asc")
     {
         var http = CreateClient();
         var ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         var url = $"api/core/productos?PageNumber={pageNumber}&PageSize={pageSize}&soloActivos={soloActivos}&orderBy={Uri.EscapeDataString(orderBy)}&orderDirection={Uri.EscapeDataString(orderDirection)}&_ts={ts}";
+        
         if (!string.IsNullOrWhiteSpace(filtro)) url += "&filtro=" + Uri.EscapeDataString(filtro);
         if (categoriaId.HasValue) url += "&categoriaId=" + categoriaId.Value;
+        if (precioMinimo.HasValue) url += "&precioMinimo=" + precioMinimo.Value;
+        if (precioMaximo.HasValue) url += "&precioMaximo=" + precioMaximo.Value;
+        if (fechaCreacionDesde.HasValue) url += "&fechaCreacionDesde=" + fechaCreacionDesde.Value.ToString("yyyy-MM-dd");
+        if (fechaCreacionHasta.HasValue) url += "&fechaCreacionHasta=" + fechaCreacionHasta.Value.ToString("yyyy-MM-dd");
+        if (popularidadMinima.HasValue) url += "&popularidadMinima=" + popularidadMinima.Value;
+        if (popularidadMaxima.HasValue) url += "&popularidadMaxima=" + popularidadMaxima.Value;
+        
         var resp = await http.GetFromJsonAsync<ApiResponse<PaginatedList<ProductoDto>>>(url);
         return resp?.Data ?? new PaginatedList<ProductoDto>();
     }
@@ -90,7 +111,26 @@ public class ProductosApiService : IProductosApiService
     /// </summary>
     public async Task<PaginatedList<ProductoDto>?> ObtenerProductosAsync(int pageNumber = 1, int pageSize = 20, string? filtro = null)
     {
-        return await ObtenerProductosPaginadosAsync(pageNumber, pageSize, filtro ?? string.Empty, null, true, "Nombre", "asc");
+        return await ObtenerProductosPaginadosAsync(pageNumber, pageSize, filtro ?? string.Empty, null, true, null, null, null, null, null, null, "Nombre", "asc");
+    }
+
+    /// <summary>
+    /// Obtiene estadísticas de productos
+    /// </summary>
+    public async Task<EstadisticasProductosDto?> ObtenerEstadisticasAsync()
+    {
+        try
+        {
+            var http = CreateClient();
+            var ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var resp = await http.GetFromJsonAsync<ApiResponse<EstadisticasProductosDto>>($"api/core/productos/estadisticas?_ts={ts}");
+            return resp?.Data;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al obtener estadísticas de productos: {ex.Message}");
+            return null;
+        }
     }
 
     /// <summary>
@@ -152,6 +192,35 @@ public class ProductosApiService : IProductosApiService
         var http = CreateClient();
         var res = await http.PostAsync($"api/core/productos/{id}/cambiar-estado?activo={activo}", null);
         return res.IsSuccessStatusCode;
+    }
+
+    /// <summary>
+    /// Sube una imagen para un producto
+    /// </summary>
+    public async Task<string?> SubirImagenAsync(Guid productoId, Stream archivo, string nombreArchivo, string contentType)
+    {
+        try
+        {
+            var http = CreateClient();
+            var content = new MultipartFormDataContent();
+            var streamContent = new StreamContent(archivo);
+            streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+            content.Add(streamContent, "archivo", nombreArchivo);
+
+            var response = await http.PostAsync($"api/core/productos/{productoId}/imagen", content);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<ApiResponse<string>>();
+                return result?.Data;
+            }
+            
+            return null;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 }
 

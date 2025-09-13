@@ -51,14 +51,204 @@
             </button>
         </div>
         
-        <button @onclick="Nuevo" class="flex items-center gap-2 bg-primary-color text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-color/90 transition-colors">
-            <span class="material-symbols-outlined">add</span>
-            <span>Crear Producto</span>
+        <button @onclick="ToggleDashboard" class="flex items-center gap-2 border border-primary-color text-primary-color font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-color hover:text-white transition-colors">
+            <span class="material-symbols-outlined">@(mostrandoDashboard ? "dashboard" : "analytics")</span>
+            <span>@(mostrandoDashboard ? "Ocultar Dashboard" : "Ver Dashboard")</span>
         </button>
-    </div>
+    <button @onclick="Nuevo" class="flex items-center gap-2 bg-primary-color text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-color/90 transition-colors">
+        <span class="material-symbols-outlined">add</span>
+        <span>Crear Producto</span>
+    </button>
+</div>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+<!-- Dashboard de Estadísticas -->
+@if (mostrandoDashboard)
+{
+    @if (cargandoEstadisticas)
+    {
+        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-xl border border-blue-200 dark:border-gray-700 p-6 mb-6">
+            <div class="flex items-center justify-center py-12">
+                <div class="text-center">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-color mx-auto mb-4"></div>
+                    <p class="text-gray-600 dark:text-gray-300">Calculando estadísticas...</p>
+                </div>
+            </div>
+        </div>
+    }
+    else if (estadisticas != null && estadisticas.TotalProductos > 0)
+{
+    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-xl border border-blue-200 dark:border-gray-700 p-6 mb-6">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">📊 Dashboard de Productos</h2>
+                <p class="text-gray-600 dark:text-gray-300">Métricas y estadísticas en tiempo real</p>
+            </div>
+            <button @onclick="ToggleDashboard" class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        <!-- Métricas Principales -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total de Productos -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center">
+                    <div class="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
+                        <span class="material-symbols-outlined text-blue-600 dark:text-blue-400">inventory</span>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Total Productos</p>
+                        <p class="text-2xl font-bold text-gray-900 dark:text-white">@estadisticas.TotalProductos</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Productos Activos -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center">
+                    <div class="p-3 bg-green-100 dark:bg-green-900 rounded-full">
+                        <span class="material-symbols-outlined text-green-600 dark:text-green-400">check_circle</span>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Activos</p>
+                        <p class="text-2xl font-bold text-green-600 dark:text-green-400">@estadisticas.ProductosActivos</p>
+                        <p class="text-xs text-gray-500">@((estadisticas.TotalProductos > 0 ? (estadisticas.ProductosActivos * 100.0 / estadisticas.TotalProductos) : 0).ToString("F1"))% del total</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Productos Inactivos -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center">
+                    <div class="p-3 bg-red-100 dark:bg-red-900 rounded-full">
+                        <span class="material-symbols-outlined text-red-600 dark:text-red-400">cancel</span>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Inactivos</p>
+                        <p class="text-2xl font-bold text-red-600 dark:text-red-400">@estadisticas.ProductosInactivos</p>
+                        <p class="text-xs text-gray-500">@((estadisticas.TotalProductos > 0 ? (estadisticas.ProductosInactivos * 100.0 / estadisticas.TotalProductos) : 0).ToString("F1"))% del total</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Precio Promedio -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div class="flex items-center">
+                    <div class="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-full">
+                        <span class="material-symbols-outlined text-yellow-600 dark:text-yellow-400">attach_money</span>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Precio Promedio</p>
+                        <p class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">$@estadisticas.PrecioPromedio.ToString("F0")</p>
+                        <p class="text-xs text-gray-500">Rango: $@estadisticas.PrecioMinimo.ToString("F0") - $@estadisticas.PrecioMaximo.ToString("F0")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gráficos y Análisis -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Distribución por Categoría -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">📈 Productos por Categoría</h3>
+                <div class="space-y-3">
+                    @foreach (var categoria in estadisticas.ProductosPorCategoria.OrderByDescending(x => x.Cantidad).Take(5))
+                    {
+                        var porcentaje = estadisticas.TotalProductos > 0 ? (categoria.Cantidad * 100.0 / estadisticas.TotalProductos) : 0;
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">@categoria.Nombre</span>
+                                    <span class="text-sm text-gray-500">@categoria.Cantidad (@porcentaje.ToString("F1")%)</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                    <div class="bg-blue-600 h-2 rounded-full" style="width: @(porcentaje)%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+            
+            <!-- Productos por Popularidad -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">⭐ Distribución de Popularidad</h3>
+                <div class="space-y-3">
+                    @foreach (var nivel in estadisticas.ProductosPorPopularidad.OrderByDescending(x => x.Nivel))
+                    {
+                        var porcentaje = estadisticas.TotalProductos > 0 ? (nivel.Cantidad * 100.0 / estadisticas.TotalProductos) : 0;
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <span class="material-symbols-outlined text-sm @(i <= nivel.Nivel ? "text-yellow-400" : "text-gray-300")">star</span>
+                                }
+                            </div>
+                            <div class="flex-1 mx-3">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">@nivel.Nivel estrellas</span>
+                                    <span class="text-sm text-gray-500">@nivel.Cantidad (@porcentaje.ToString("F1")%)</span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                    <div class="bg-yellow-400 h-2 rounded-full" style="width: @(porcentaje)%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <!-- Productos Recientes -->
+        <div class="mt-6 bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">🆕 Productos Recientes</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                @foreach (var producto in estadisticas.ProductosRecientes.Take(6))
+                {
+                    <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <div class="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center">
+                            <span class="material-symbols-outlined text-gray-500">restaurant</span>
+                        </div>
+                        <div class="ml-3 flex-1">
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">@producto.Nombre</p>
+                            <p class="text-xs text-gray-500">@producto.FechaCreacion.ToString("dd/MM/yyyy")</p>
+                        </div>
+                        <span class="material-symbols-outlined text-sm @(producto.Activo ? "text-green-500" : "text-red-500")">
+                            @(producto.Activo ? "check_circle" : "cancel")
+                        </span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    }
+    else if (estadisticas != null && estadisticas.TotalProductos == 0)
+    {
+        <div class="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-gray-800 dark:to-gray-900 rounded-xl border border-yellow-200 dark:border-gray-700 p-6 mb-6">
+            <div class="flex items-center justify-center py-8">
+                <div class="text-center">
+                    <span class="material-symbols-outlined text-4xl text-yellow-500 mb-4">warning</span>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Sin datos disponibles</h3>
+                    <p class="text-gray-600 dark:text-gray-300">No se encontraron productos para mostrar estadísticas</p>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+<!-- Panel de Filtros -->
+<div class="bg-background-light rounded-lg border border-border-light p-4 mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-text-light">Filtros de Búsqueda</h3>
+        <button @onclick="ToggleFiltrosAvanzados" class="flex items-center gap-2 text-primary-color hover:text-primary-color/80 transition-colors">
+            <span class="material-symbols-outlined">@(mostrandoFiltrosAvanzados ? "expand_less" : "expand_more")</span>
+            <span class="text-sm font-medium">@(mostrandoFiltrosAvanzados ? "Ocultar filtros avanzados" : "Mostrar filtros avanzados")</span>
+        </button>
+    </div>
+    
+    <!-- Filtros Básicos -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
     <div class="md:col-span-2">
         <label class="sr-only" for="search">Buscar</label>
         <div class="relative">
@@ -91,6 +281,86 @@
             <option value="false">Agotado</option>
         </select>
     </div>
+    </div>
+    
+    <!-- Filtros Avanzados -->
+    @if (mostrandoFiltrosAvanzados)
+    {
+        <div class="border-t border-border-light pt-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Filtro de Precio -->
+                <div>
+                    <label class="block text-sm font-medium text-text-light mb-2">Rango de Precio</label>
+                    <div class="flex gap-2">
+                        <input type="number" 
+                               value="@precioMinimo" 
+                               @onchange="@(async (e) => { precioMinimo = decimal.TryParse(e.Value?.ToString(), out var val) ? val : null; await OnFiltroChanged(); })"
+                               placeholder="Mín"
+                               min="0"
+                               step="0.01"
+                               class="flex-1 px-3 py-2 border border-border-light rounded-lg focus:ring-2 focus:ring-primary-color focus:border-transparent bg-background-light text-text-light">
+                        <input type="number" 
+                               value="@precioMaximo" 
+                               @onchange="@(async (e) => { precioMaximo = decimal.TryParse(e.Value?.ToString(), out var val) ? val : null; await OnFiltroChanged(); })"
+                               placeholder="Máx"
+                               min="0"
+                               step="0.01"
+                               class="flex-1 px-3 py-2 border border-border-light rounded-lg focus:ring-2 focus:ring-primary-color focus:border-transparent bg-background-light text-text-light">
+                    </div>
+                </div>
+                
+                <!-- Filtro de Fecha de Creación -->
+                <div>
+                    <label class="block text-sm font-medium text-text-light mb-2">Fecha de Creación</label>
+                    <div class="flex gap-2">
+                        <input type="date" 
+                               value="@fechaCreacionDesde?.ToString("yyyy-MM-dd")" 
+                               @onchange="@(async (e) => { fechaCreacionDesde = DateTime.TryParse(e.Value?.ToString(), out var val) ? val : null; await OnFiltroChanged(); })"
+                               class="flex-1 px-3 py-2 border border-border-light rounded-lg focus:ring-2 focus:ring-primary-color focus:border-transparent bg-background-light text-text-light">
+                        <input type="date" 
+                               value="@fechaCreacionHasta?.ToString("yyyy-MM-dd")" 
+                               @onchange="@(async (e) => { fechaCreacionHasta = DateTime.TryParse(e.Value?.ToString(), out var val) ? val : null; await OnFiltroChanged(); })"
+                               class="flex-1 px-3 py-2 border border-border-light rounded-lg focus:ring-2 focus:ring-primary-color focus:border-transparent bg-background-light text-text-light">
+                    </div>
+                </div>
+                
+                <!-- Filtro de Popularidad -->
+                <div>
+                    <label class="block text-sm font-medium text-text-light mb-2">Nivel de Popularidad</label>
+                    <div class="flex gap-2">
+                        <input type="number" 
+                               value="@popularidadMinima" 
+                               @onchange="@(async (e) => { popularidadMinima = int.TryParse(e.Value?.ToString(), out var val) ? val : null; await OnFiltroChanged(); })"
+                               placeholder="Mín"
+                               min="0"
+                               max="10"
+                               class="flex-1 px-3 py-2 border border-border-light rounded-lg focus:ring-2 focus:ring-primary-color focus:border-transparent bg-background-light text-text-light">
+                        <input type="number" 
+                               value="@popularidadMaxima" 
+                               @onchange="@(async (e) => { popularidadMaxima = int.TryParse(e.Value?.ToString(), out var val) ? val : null; await OnFiltroChanged(); })"
+                               placeholder="Máx"
+                               min="0"
+                               max="10"
+                               class="flex-1 px-3 py-2 border border-border-light rounded-lg focus:ring-2 focus:ring-primary-color focus:border-transparent bg-background-light text-text-light">
+                    </div>
+                </div>
+                
+                <!-- Botones de Acción -->
+                <div class="flex items-end">
+                    <div class="flex gap-2 w-full">
+                        <button @onclick="LimpiarFiltrosAvanzados" 
+                                class="flex-1 px-4 py-2 border border-border-light text-text-light rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                            Limpiar
+                        </button>
+                        <button @onclick="OnFiltroChanged" 
+                                class="flex-1 px-4 py-2 bg-primary-color text-white rounded-lg hover:bg-primary-color/90 transition-colors">
+                            Buscar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 @if (cargando)
@@ -115,51 +385,64 @@ else
     @if (vistaActual == "tabla")
     {
         <!-- Vista de Tabla -->
-        <div class="bg-background-light rounded-lg shadow-sm overflow-hidden border border-border-light">
-            <table class="w-full">
-                <thead class="bg-sidebar-bg-light">
-                    <tr>
-                        <th class="p-4 text-left text-sm font-bold uppercase tracking-wider text-gray-500">Nombre</th>
-                        <th class="p-4 text-left text-sm font-bold uppercase tracking-wider text-gray-500">Categoría</th>
-                        <th class="p-4 text-left text-sm font-bold uppercase tracking-wider text-gray-500">Precio</th>
-                        <th class="p-4 text-center text-sm font-bold uppercase tracking-wider text-gray-500">Disponibilidad</th>
-                        <th class="p-4 text-right text-sm font-bold uppercase tracking-wider text-gray-500">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-border-light">
-                    @foreach (var p in productos.Items)
-                    {
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                            <td class="p-4 font-medium text-text-light">@p.Nombre</td>
-                            <td class="p-4 text-gray-500">@p.CategoriaNombre</td>
-                            <td class="p-4 text-gray-500">$@p.Precio.ToString("N0")</td>
-                            <td class="p-4 text-center">
-                                @if (p.Activo)
-                                {
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-success-color/10 text-success-color">
-                                        Disponible
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-warning-color/10 text-warning-color">
-                                        Agotado
-                                    </span>
-                                }
-                            </td>
-                            <td class="p-4 text-right">
-                                <button class="text-primary-color hover:text-primary-color/80 transition-colors" @onclick="(() => Editar(p.Id))" title="Editar">
-                                    <span class="material-symbols-outlined">edit</span>
-                                </button>
+    <div class="bg-background-light rounded-lg shadow-sm overflow-hidden border border-border-light">
+        <table class="w-full">
+            <thead class="bg-sidebar-bg-light">
+                <tr>
+                    <th class="p-4 text-left text-sm font-bold uppercase tracking-wider text-gray-500">Imagen</th>
+                    <th class="p-4 text-left text-sm font-bold uppercase tracking-wider text-gray-500">Nombre</th>
+                    <th class="p-4 text-left text-sm font-bold uppercase tracking-wider text-gray-500">Categoría</th>
+                    <th class="p-4 text-left text-sm font-bold uppercase tracking-wider text-gray-500">Precio</th>
+                    <th class="p-4 text-center text-sm font-bold uppercase tracking-wider text-gray-500">Disponibilidad</th>
+                    <th class="p-4 text-right text-sm font-bold uppercase tracking-wider text-gray-500">Acciones</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-border-light">
+                @foreach (var p in productos.Items)
+                {
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <td class="p-4">
+                            @if (!string.IsNullOrEmpty(p.ImagenUrl))
+                            {
+                                <img src="@p.ImagenUrl" alt="@p.Nombre" class="w-12 h-12 object-cover rounded-lg" />
+                            }
+                            else
+                            {
+                                <div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                                    <span class="material-symbols-outlined text-gray-400 text-lg">restaurant</span>
+                                </div>
+                            }
+                        </td>
+                        <td class="p-4 font-medium text-text-light">@p.Nombre</td>
+                        <td class="p-4 text-gray-500">@p.CategoriaNombre</td>
+                        <td class="p-4 text-gray-500">$@p.Precio.ToString("N0")</td>
+                        <td class="p-4 text-center">
+                            @if (p.Activo)
+                            {
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-success-color/10 text-success-color">
+                                    Disponible
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-warning-color/10 text-warning-color">
+                                    Agotado
+                                </span>
+                            }
+                        </td>
+                        <td class="p-4 text-right">
+                            <button class="text-primary-color hover:text-primary-color/80 transition-colors" @onclick="(() => Editar(p.Id))" title="Editar">
+                                <span class="material-symbols-outlined">edit</span>
+                            </button>
                                 <button class="text-red-500 hover:text-red-400 ml-2 transition-colors" @onclick="(() => ConfirmarEliminar(p.Id, p.Nombre))" title="Eliminar">
-                                    <span class="material-symbols-outlined">delete</span>
-                                </button>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
     }
     else
     {
@@ -168,9 +451,19 @@ else
             @foreach (var p in productos.Items)
             {
                 <div class="bg-background-light rounded-lg shadow-sm border border-border-light overflow-hidden product-card">
-                    <!-- Imagen del Producto (placeholder) -->
-                    <div class="h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center relative">
-                        <span class="material-symbols-outlined text-6xl text-gray-400">restaurant</span>
+                    <!-- Imagen del Producto -->
+                    <div class="h-48 relative overflow-hidden">
+                        @if (!string.IsNullOrEmpty(p.ImagenUrl))
+                        {
+                            <img src="@p.ImagenUrl" alt="@p.Nombre" class="w-full h-full object-cover" />
+                        }
+                        else
+                        {
+                            <div class="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                                <span class="material-symbols-outlined text-6xl text-gray-400">restaurant</span>
+                            </div>
+                        }
+                        
                         <!-- Badge de estado en la esquina -->
                         <div class="absolute top-3 right-3">
                             @if (p.Activo)
@@ -397,22 +690,10 @@ else
                                 </div>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Imagen del Producto</label>
-                                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-border-light border-dashed rounded-lg">
-                                    <div class="space-y-1 text-center">
-                                        <svg aria-hidden="true" class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48">
-                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                        </svg>
-                                        <div class="flex text-sm text-gray-600 dark:text-gray-400">
-                                            <label class="relative cursor-pointer bg-background-light rounded-md font-medium text-primary-color hover:text-primary-color/80 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-color" for="file-upload-new">
-                                                <span>Sube un archivo</span>
-                                                <input class="sr-only" id="file-upload-new" name="file-upload" type="file"/>
-                                            </label>
-                                            <p class="pl-1">o arrastra y suelta</p>
-                                        </div>
-                                        <p class="text-xs text-gray-500">PNG, JPG, GIF hasta 10MB</p>
-                                    </div>
-                                </div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Imagen del Producto</label>
+                                <ImageUpload ProductoId="@(edicion?.Id ?? Guid.Empty)" 
+                                           ImageUrl="@(edicion?.ImagenUrl ?? nuevo?.ImagenUrl)" 
+                                           ImageUrlChanged="@OnImagenChanged" />
                             </div>
                             <div class="flex items-center">
                                 <input class="h-4 w-4 text-primary-color focus:ring-primary-color border-border-light rounded" 
@@ -545,6 +826,7 @@ else
     private bool editando = false;
     private CreateProductoRequest nuevo = new();
     private UpdateProductoRequest edicion = new();
+    private string? imagenTemporal = null; // Para almacenar la imagen en base64 antes de crear el producto
     
     // Variables para confirmación de eliminación
     private bool mostrandoConfirmacionEliminar = false;
@@ -561,6 +843,20 @@ else
     
     // Variables para vista
     private string vistaActual = "tabla"; // "tabla" o "tarjetas"
+    
+    // Variables para filtros avanzados
+    private bool mostrandoFiltrosAvanzados = false;
+    private decimal? precioMinimo;
+    private decimal? precioMaximo;
+    private DateTime? fechaCreacionDesde;
+    private DateTime? fechaCreacionHasta;
+    private int? popularidadMinima;
+    private int? popularidadMaxima;
+    
+    // Variables para dashboard
+    private bool mostrandoDashboard = false;
+    private EstadisticasProductosDto? estadisticas;
+    private bool cargandoEstadisticas = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -577,7 +873,20 @@ else
     {
         cargando = true;
         Console.WriteLine($"BuscarAsync: filtro='{filtro}', categoriaId={categoriaId}, soloActivos={soloActivos}");
-        productos = await Api.ObtenerProductosPaginadosAsync(paginaActual, tamanoPagina, filtro, categoriaId, soloActivos, orderBy, orderDirection) ?? new PaginatedList<ProductoDto>();
+        productos = await Api.ObtenerProductosPaginadosAsync(
+            paginaActual, 
+            tamanoPagina, 
+            filtro, 
+            categoriaId, 
+            soloActivos,
+            precioMinimo,
+            precioMaximo,
+            fechaCreacionDesde,
+            fechaCreacionHasta,
+            popularidadMinima,
+            popularidadMaxima,
+            orderBy, 
+            orderDirection) ?? new PaginatedList<ProductoDto>();
         cargando = false;
         StateHasChanged();
     }
@@ -683,14 +992,20 @@ else
                     MostrarNotificacion("Error al actualizar el producto", false);
                     return; // No cerrar modal si hay error
                 }
-            }
-            else
-            {
-                Console.WriteLine($"🔍 Creando producto - CategoriaId: {nuevo.CategoriaId}");
-                Console.WriteLine($"🔍 Datos del nuevo producto: Nombre={nuevo.Nombre}, Precio={nuevo.Precio}, Activo={nuevo.Activo}");
-                var res = await Api.CrearAsync(nuevo);
+        }
+        else
+        {
+            Console.WriteLine($"🔍 Creando producto - CategoriaId: {nuevo.CategoriaId}");
+            Console.WriteLine($"🔍 Datos del nuevo producto: Nombre={nuevo.Nombre}, Precio={nuevo.Precio}, Activo={nuevo.Activo}");
+            var res = await Api.CrearAsync(nuevo);
                 if (res != null)
                 {
+                    // Si hay una imagen temporal, subirla ahora que el producto existe
+                    if (!string.IsNullOrEmpty(imagenTemporal) && imagenTemporal.StartsWith("data:"))
+                    {
+                        await SubirImagenTemporal(res.Id, imagenTemporal);
+                    }
+                    
                     MostrarNotificacion("Producto creado exitosamente", true);
                 }
                 else
@@ -710,7 +1025,69 @@ else
         finally
         {
             guardando = false;
+            imagenTemporal = null; // Limpiar imagen temporal
         }
+    }
+
+    private async Task SubirImagenTemporal(Guid productoId, string imagenBase64)
+    {
+        try
+        {
+            // Convertir base64 a stream
+            var base64Data = imagenBase64.Split(',')[1]; // Remover "data:image/...;base64,"
+            var bytes = Convert.FromBase64String(base64Data);
+            
+            using var stream = new MemoryStream(bytes);
+            
+            // Determinar el tipo de contenido
+            string contentType = "image/jpeg"; // Por defecto
+            if (imagenBase64.Contains("image/png"))
+                contentType = "image/png";
+            else if (imagenBase64.Contains("image/gif"))
+                contentType = "image/gif";
+            
+            var uploadedUrl = await Api.SubirImagenAsync(productoId, stream, $"producto_{productoId}.jpg", contentType);
+            
+            if (!string.IsNullOrEmpty(uploadedUrl))
+            {
+                Console.WriteLine($"✅ Imagen subida exitosamente para producto {productoId}: {uploadedUrl}");
+            }
+            else
+            {
+                Console.WriteLine($"❌ Error al subir imagen para producto {productoId}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error al subir imagen temporal: {ex.Message}");
+        }
+    }
+
+    private async Task OnImagenChanged(string? imagenUrl)
+    {
+        Console.WriteLine($"🔍 OnImagenChanged llamado - editando: {editando}");
+        Console.WriteLine($"🔍 imagenUrl recibida: {(string.IsNullOrEmpty(imagenUrl) ? "null" : imagenUrl.Substring(0, Math.Min(50, imagenUrl.Length)) + "...")}");
+        
+        if (editando)
+        {
+            edicion.ImagenUrl = imagenUrl;
+            Console.WriteLine($"🔍 Imagen asignada a edicion: {edicion.ImagenUrl?.Substring(0, Math.Min(50, edicion.ImagenUrl.Length))}...");
+        }
+        else
+        {
+            // Para productos nuevos, almacenar la imagen temporal
+            if (!string.IsNullOrEmpty(imagenUrl) && imagenUrl.StartsWith("data:"))
+            {
+                imagenTemporal = imagenUrl;
+                Console.WriteLine($"🔍 Imagen temporal almacenada - Base64 length: {imagenUrl.Length}");
+            }
+            nuevo.ImagenUrl = imagenUrl;
+            Console.WriteLine($"🔍 Imagen asignada a nuevo: {nuevo.ImagenUrl?.Substring(0, Math.Min(50, nuevo.ImagenUrl.Length))}...");
+        }
+        
+        // Forzar actualización del estado para mostrar la imagen
+        StateHasChanged();
+        Console.WriteLine($"✅ OnImagenChanged completado - StateHasChanged() llamado");
     }
 
     private void MostrarNotificacion(string mensaje, bool esExito)
@@ -739,6 +1116,77 @@ else
         StateHasChanged();
     }
 
+    private void ToggleFiltrosAvanzados()
+    {
+        mostrandoFiltrosAvanzados = !mostrandoFiltrosAvanzados;
+        StateHasChanged();
+    }
+
+    private async Task LimpiarFiltrosAvanzados()
+    {
+        precioMinimo = null;
+        precioMaximo = null;
+        fechaCreacionDesde = null;
+        fechaCreacionHasta = null;
+        popularidadMinima = null;
+        popularidadMaxima = null;
+        
+        await OnFiltroChanged();
+        StateHasChanged();
+    }
+
+    private async Task ToggleDashboard()
+    {
+        mostrandoDashboard = !mostrandoDashboard;
+        
+        if (mostrandoDashboard && estadisticas == null)
+        {
+            await CargarEstadisticas();
+        }
+        
+        StateHasChanged();
+    }
+
+    private async Task CargarEstadisticas()
+    {
+        if (cargandoEstadisticas) return;
+        
+        cargandoEstadisticas = true;
+        Console.WriteLine("🔄 Iniciando carga de estadísticas...");
+        
+        try
+        {
+            // Usar el endpoint específico de estadísticas
+            Console.WriteLine("📡 Llamando al endpoint de estadísticas...");
+            estadisticas = await Api.ObtenerEstadisticasAsync();
+            
+            if (estadisticas != null)
+            {
+                Console.WriteLine($"✅ Estadísticas obtenidas: {estadisticas.TotalProductos} productos totales");
+                Console.WriteLine($"📊 Productos activos: {estadisticas.ProductosActivos}");
+                Console.WriteLine($"📊 Productos inactivos: {estadisticas.ProductosInactivos}");
+                Console.WriteLine($"💰 Precio promedio: {estadisticas.PrecioPromedio:C}");
+            }
+            else
+            {
+                Console.WriteLine("⚠️ No se pudieron obtener estadísticas de la API");
+                estadisticas = new EstadisticasProductosDto(); // Crear estadísticas vacías
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"❌ Error al cargar estadísticas: {ex.Message}");
+            Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+            estadisticas = new EstadisticasProductosDto(); // Crear estadísticas vacías en caso de error
+        }
+        finally
+        {
+            cargandoEstadisticas = false;
+            Console.WriteLine("🏁 Carga de estadísticas completada");
+        }
+    }
+
+
     private void ConfirmarEliminar(Guid id, string nombre)
     {
         productoAEliminar = new ProductoDto { Id = id, Nombre = nombre };
@@ -764,7 +1212,7 @@ else
             if (resultado)
             {
                 MostrarNotificacion($"Producto '{productoAEliminar.Nombre}' eliminado exitosamente", true);
-                await BuscarAsync();
+        await BuscarAsync();
             }
             else
             {

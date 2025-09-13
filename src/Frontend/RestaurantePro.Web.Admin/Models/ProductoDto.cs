@@ -10,6 +10,11 @@ public class ProductoDto
     public decimal Precio { get; set; }
     public int Popularidad { get; set; }
     public bool Activo { get; set; }
+    public string? ImagenUrl { get; set; }
+    public DateTime FechaCreacion { get; set; }
+    public DateTime? FechaModificacion { get; set; }
+    public string CreadoPor { get; set; } = string.Empty;
+    public string? ModificadoPor { get; set; }
 }
 
 

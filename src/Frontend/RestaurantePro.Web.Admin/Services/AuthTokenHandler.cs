@@ -15,10 +15,12 @@ public class AuthData
 public class AuthTokenHandler : DelegatingHandler
 {
     private readonly TokenStore _tokenStore;
+    private readonly IAuthApiService _authService;
 
-    public AuthTokenHandler(TokenStore tokenStore)
+    public AuthTokenHandler(TokenStore tokenStore, IAuthApiService authService)
     {
         _tokenStore = tokenStore;
+        _authService = authService;
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -36,7 +38,48 @@ public class AuthTokenHandler : DelegatingHandler
                 request.Headers.Add("X-Bearer-Token", token);
             }
         }
-        return await base.SendAsync(request, cancellationToken);
+
+        var response = await base.SendAsync(request, cancellationToken);
+
+        // Si recibimos un 401 y tenemos un refresh token, intentar renovar
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized && 
+            !string.IsNullOrWhiteSpace(_tokenStore.RefreshToken) &&
+            !request.RequestUri!.AbsolutePath.Contains("/auth/"))
+        {
+            Console.WriteLine("🔑 Token expirado, intentando renovar...");
+            
+            var refreshResult = await _authService.RefreshTokenAsync(_tokenStore.RefreshToken);
+            if (refreshResult != null)
+            {
+                Console.WriteLine("✅ Token renovado exitosamente");
+                
+                // Actualizar el token en el store
+                await _tokenStore.SetAuthAsync(
+                    refreshResult.Token,
+                    refreshResult.Expiration,
+                    refreshResult.RefreshToken,
+                    _tokenStore.UserName,
+                    _tokenStore.Roles
+                );
+
+                // Reintentar la solicitud original con el nuevo token
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", refreshResult.Token);
+                if (request.Headers.Contains("X-Bearer-Token"))
+                {
+                    request.Headers.Remove("X-Bearer-Token");
+                }
+                request.Headers.Add("X-Bearer-Token", refreshResult.Token);
+
+                return await base.SendAsync(request, cancellationToken);
+            }
+            else
+            {
+                Console.WriteLine("❌ No se pudo renovar el token, limpiando autenticación");
+                await _tokenStore.ClearAsync();
+            }
+        }
+
+        return response;
     }
 }
 

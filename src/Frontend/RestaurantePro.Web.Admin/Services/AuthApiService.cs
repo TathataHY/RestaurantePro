@@ -49,6 +49,28 @@ public class AuthApiService : IAuthApiService
         var res = await http.PostAsync("api/auth/refresh", null);
         return res.IsSuccessStatusCode;
     }
+
+    public async Task<AuthResponse?> RefreshTokenAsync(string refreshToken)
+    {
+        try
+        {
+            var http = _httpFactory.CreateClient("Api");
+            var request = new { Token = string.Empty, RefreshToken = refreshToken };
+            var res = await http.PostAsJsonAsync("api/auth/refresh", request);
+            
+            if (!res.IsSuccessStatusCode)
+            {
+                return null;
+            }
+            
+            var api = await res.Content.ReadFromJsonAsync<ApiResponse<AuthResponse>>();
+            return api?.Data;
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }
 
 

@@ -47,6 +47,11 @@ public class ProductoDto
     public int Popularidad { get; set; }
 
     /// <summary>
+    /// URL de la imagen del producto
+    /// </summary>
+    public string? ImagenUrl { get; set; }
+
+    /// <summary>
     /// Fecha de creación
     /// </summary>
     public DateTime FechaCreacion { get; set; }

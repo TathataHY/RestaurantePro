@@ -57,6 +57,9 @@ public class ObtenerProductosPaginadosHandler : IRequestHandler<ObtenerProductos
                     (p.Descripcion?.ToLowerInvariant().Contains(filtroLower) ?? false));
             }
 
+            // Aplicar filtros avanzados
+            productos = ApplyAdvancedFilters(productos, request);
+
             // Aplicar ordenamiento
             productos = ApplyOrdering(productos, request.OrderBy, request.OrderDirection);
 
@@ -97,6 +100,44 @@ public class ObtenerProductosPaginadosHandler : IRequestHandler<ObtenerProductos
             _logger.LogError(ex, "❌ Error al obtener productos paginados");
             return Result.Failure<PaginatedList<ProductoDto>>($"Error interno al obtener productos: {ex.Message}");
         }
+    }
+
+    private static IEnumerable<Producto> ApplyAdvancedFilters(IEnumerable<Producto> productos, ObtenerProductosPaginadosQuery request)
+    {
+        // Filtro por rango de precios
+        if (request.PrecioMinimo.HasValue)
+        {
+            productos = productos.Where(p => p.Precio?.Valor >= request.PrecioMinimo.Value);
+        }
+
+        if (request.PrecioMaximo.HasValue)
+        {
+            productos = productos.Where(p => p.Precio?.Valor <= request.PrecioMaximo.Value);
+        }
+
+        // Filtro por rango de fechas de creación
+        if (request.FechaCreacionDesde.HasValue)
+        {
+            productos = productos.Where(p => p.FechaCreacion >= request.FechaCreacionDesde.Value);
+        }
+
+        if (request.FechaCreacionHasta.HasValue)
+        {
+            productos = productos.Where(p => p.FechaCreacion <= request.FechaCreacionHasta.Value);
+        }
+
+        // Filtro por rango de popularidad
+        if (request.PopularidadMinima.HasValue)
+        {
+            productos = productos.Where(p => p.Popularidad >= request.PopularidadMinima.Value);
+        }
+
+        if (request.PopularidadMaxima.HasValue)
+        {
+            productos = productos.Where(p => p.Popularidad <= request.PopularidadMaxima.Value);
+        }
+
+        return productos;
     }
 
     private static IEnumerable<Producto> ApplyOrdering(IEnumerable<Producto> productos, string orderBy, string orderDirection)

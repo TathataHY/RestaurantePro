@@ -8,4 +8,5 @@ public class ActualizarProductoCommand : IRequest<Result<ProductoDto>>
     public decimal Precio { get; set; }
     public Guid CategoriaId { get; set; }
     public bool Activo { get; set; } = true;
+    public string? ImagenUrl { get; set; }
 } 

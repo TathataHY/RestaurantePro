@@ -8,4 +8,5 @@ public interface IAuthApiService
     Task<AuthUserDto?> GetProfileAsync();
     Task<bool> LogoutAsync();
     Task<bool> RefreshTokenAsync();
+    Task<AuthResponse?> RefreshTokenAsync(string refreshToken);
 }

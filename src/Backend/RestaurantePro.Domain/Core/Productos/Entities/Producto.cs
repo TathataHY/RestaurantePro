@@ -56,6 +56,11 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
         public int Popularidad { get; private set; }
 
         /// <summary>
+        /// URL de la imagen del producto
+        /// </summary>
+        public string? ImagenUrl { get; private set; }
+
+        /// <summary>
         /// Receta asociada al producto
         /// </summary>
         public ICollection<Receta> Recetas { get; private set; } = new List<Receta>();
@@ -164,6 +169,17 @@ namespace RestaurantePro.Domain.Core.Productos.Entities
         {
             FechaExpiracion = fechaExpiracion;
             MarkAsModified();
+        }
+
+        /// <summary>
+        /// Actualiza la URL de la imagen del producto
+        /// </summary>
+        public void ActualizarImagen(string? imagenUrl)
+        {
+            ImagenUrl = imagenUrl;
+            MarkAsModified();
+            
+            AddDomainEvent(new ImagenProductoActualizada(Id, imagenUrl));
         }
 
         /// <summary>

@@ -17,6 +17,8 @@ public class CreateProductoRequest
     [Required]
     public Guid CategoriaId { get; set; }
 
+    public string? ImagenUrl { get; set; }
+
     public bool Activo { get; set; } = true;
 }
 

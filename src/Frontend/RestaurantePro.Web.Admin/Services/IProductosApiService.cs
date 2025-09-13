@@ -14,9 +14,24 @@ public interface IProductosApiService
     
     // Métodos específicos de la página
     Task<List<CategoriaProductoDto>> ObtenerCategoriasAsync();
-    Task<PaginatedList<ProductoDto>> ObtenerProductosPaginadosAsync(int pageNumber, int pageSize, string? filtro, Guid? categoriaId, bool soloActivos, string orderBy, string orderDirection);
+    Task<PaginatedList<ProductoDto>> ObtenerProductosPaginadosAsync(
+        int pageNumber, 
+        int pageSize, 
+        string? filtro, 
+        Guid? categoriaId, 
+        bool soloActivos, 
+        decimal? precioMinimo = null,
+        decimal? precioMaximo = null,
+        DateTime? fechaCreacionDesde = null,
+        DateTime? fechaCreacionHasta = null,
+        int? popularidadMinima = null,
+        int? popularidadMaxima = null,
+        string orderBy = "Nombre", 
+        string orderDirection = "asc");
     Task<ProductoDto?> ObtenerPorIdAsync(Guid id);
     Task<ProductoDto?> CrearAsync(CreateProductoRequest dto);
     Task<ProductoDto?> ActualizarAsync(UpdateProductoRequest dto);
     Task<bool> EliminarAsync(Guid id);
+    Task<EstadisticasProductosDto?> ObtenerEstadisticasAsync();
+    Task<string?> SubirImagenAsync(Guid productoId, Stream archivo, string nombreArchivo, string contentType);
 }

@@ -603,7 +603,7 @@
     {
         try
         {
-            var productosPaginados = await ProductosApi.ObtenerProductosPaginadosAsync(1, 1000, "", null, true, "Nombre", "Asc");
+            var productosPaginados = await ProductosApi.ObtenerProductosPaginadosAsync(1, 1000, "", null, true, null, null, null, null, null, null, "Nombre", "Asc");
             productos = productosPaginados.Items.ToList();
         }
         catch (Exception ex)

@@ -4,7 +4,10 @@ using RestaurantePro.Application.Core.Productos.Commands.EliminarProducto;
 using RestaurantePro.Application.Core.Productos.Queries.ObtenerProductoPorId;
 using RestaurantePro.Application.Core.Productos.Queries.ObtenerProductosPaginados;
 using RestaurantePro.Application.Core.Productos.Queries.ObtenerProductosPorCategoria;
+using RestaurantePro.Application.Core.Productos.Queries.ObtenerEstadisticasProductos;
 using RestaurantePro.Application.Core.Productos.DTOs;
+using RestaurantePro.Domain.Core.Productos.Interfaces;
+using RestaurantePro.Domain.Core.SharedKernel.Services.Cache;
 
 namespace RestaurantePro.Api.Controllers.Core;
 
@@ -19,11 +22,22 @@ public class ProductosController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly ILogger<ProductosController> _logger;
+    private readonly IProductoRepository _productoRepository;
+    private readonly IWebHostEnvironment _environment;
+    private readonly ICacheService _cache;
 
-    public ProductosController(IMediator mediator, ILogger<ProductosController> logger)
+    public ProductosController(
+        IMediator mediator, 
+        ILogger<ProductosController> logger,
+        IProductoRepository productoRepository,
+        IWebHostEnvironment environment,
+        ICacheService cache)
     {
         _mediator = mediator;
         _logger = logger;
+        _productoRepository = productoRepository;
+        _environment = environment;
+        _cache = cache;
     }
 
     /// <summary>
@@ -38,6 +52,12 @@ public class ProductosController : ControllerBase
         [FromQuery] string? filtro = null,
         [FromQuery] Guid? categoriaId = null,
         [FromQuery] bool soloActivos = true,
+        [FromQuery] decimal? precioMinimo = null,
+        [FromQuery] decimal? precioMaximo = null,
+        [FromQuery] DateTime? fechaCreacionDesde = null,
+        [FromQuery] DateTime? fechaCreacionHasta = null,
+        [FromQuery] int? popularidadMinima = null,
+        [FromQuery] int? popularidadMaxima = null,
         [FromQuery] string orderBy = "Nombre",
         [FromQuery] string orderDirection = "asc")
     {
@@ -96,6 +116,12 @@ public class ProductosController : ControllerBase
             Filtro = filtro,
             CategoriaId = categoriaId,
             SoloActivos = soloActivos,
+            PrecioMinimo = precioMinimo,
+            PrecioMaximo = precioMaximo,
+            FechaCreacionDesde = fechaCreacionDesde,
+            FechaCreacionHasta = fechaCreacionHasta,
+            PopularidadMinima = popularidadMinima,
+            PopularidadMaxima = popularidadMaxima,
             OrderBy = orderBy,
             OrderDirection = orderDirection
         };
@@ -262,5 +288,155 @@ public class ProductosController : ControllerBase
         var response = ApiResponse<bool>.SuccessResponse(
             result.Value, "Producto eliminado exitosamente");
         return Ok(response);
+    }
+
+    /// <summary>
+    /// Obtiene estadísticas de productos
+    /// </summary>
+    [HttpGet("estadisticas")]
+    [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
+    [ProducesResponseType(typeof(ApiResponse<EstadisticasProductosDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<EstadisticasProductosDto>>> GetEstadisticas()
+    {
+        _logger.LogInformation("📊 GET /api/core/productos/estadisticas");
+        
+        var query = new ObtenerEstadisticasProductosQuery();
+        var result = await _mediator.Send(query);
+        
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<EstadisticasProductosDto>.ErrorResponse(
+                result.Errors, "Error al obtener estadísticas de productos", StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+
+        var response = ApiResponse<EstadisticasProductosDto>.SuccessResponse(
+            result.Value, "Estadísticas obtenidas exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Sube una imagen para un producto específico
+    /// </summary>
+    [HttpPost("{productoId}/imagen")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<string>>> SubirImagen(
+        Guid productoId, 
+        IFormFile archivo)
+    {
+        _logger.LogInformation("📸 POST /api/core/productos/{ProductoId}/imagen", productoId);
+
+        if (archivo == null)
+        {
+            var errorResponse = ApiResponse<string>.ErrorResponse(
+                new List<string> { "No se ha proporcionado ningún archivo" }, 
+                "Archivo requerido", 
+                StatusCodes.Status400BadRequest);
+            return BadRequest(errorResponse);
+        }
+
+        try
+        {
+            // 1. Validar que el producto existe
+            var producto = await _productoRepository.ObtenerPorIdAsync(productoId);
+            if (producto == null)
+            {
+                var errorResponse = ApiResponse<string>.ErrorResponse(
+                    new List<string> { $"Producto con ID {productoId} no encontrado" }, 
+                    "Producto no encontrado", 
+                    StatusCodes.Status404NotFound);
+                return NotFound(errorResponse);
+            }
+
+            // 2. Validar archivo
+            if (!ValidarArchivo(archivo, out var errorValidacion))
+            {
+                var errorResponse = ApiResponse<string>.ErrorResponse(
+                    new List<string> { errorValidacion }, 
+                    "Archivo inválido", 
+                    StatusCodes.Status400BadRequest);
+                return BadRequest(errorResponse);
+            }
+
+            // 3. Crear directorio si no existe
+            var carpetaImagenes = "uploads/productos";
+            var directorioImagenes = Path.Combine(_environment.WebRootPath, carpetaImagenes);
+            if (!Directory.Exists(directorioImagenes))
+            {
+                Directory.CreateDirectory(directorioImagenes);
+            }
+
+            // 4. Generar nombre único para el archivo
+            var extension = Path.GetExtension(archivo.FileName).ToLowerInvariant();
+            var nombreArchivo = $"{producto.Id}_{DateTime.UtcNow:yyyyMMddHHmmss}{extension}";
+            var rutaCompleta = Path.Combine(directorioImagenes, nombreArchivo);
+
+            // 5. Guardar archivo
+            using (var stream = new FileStream(rutaCompleta, FileMode.Create))
+            {
+                await archivo.CopyToAsync(stream);
+            }
+
+            // 6. Generar URL relativa
+            var urlImagen = $"/{carpetaImagenes}/{nombreArchivo}";
+
+            // 7. Actualizar producto con nueva imagen
+            producto.ActualizarImagen(urlImagen);
+            await _productoRepository.ActualizarAsync(producto);
+
+            // 8. Invalidar caché
+            try
+            {
+                _cache.InvalidatePattern($"productos:lista:*");
+                _cache.InvalidatePattern($"producto:{producto.Id}");
+            }
+            catch (Exception cacheEx)
+            {
+                _logger.LogWarning(cacheEx, "No se pudo invalidar caché tras subir imagen para producto {Id}", producto.Id);
+            }
+
+            _logger.LogInformation("✅ Imagen subida exitosamente: {UrlImagen}", urlImagen);
+            var response = ApiResponse<string>.SuccessResponse(urlImagen, "Imagen subida exitosamente");
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "💥 Error inesperado al subir imagen para producto: {ProductoId}", productoId);
+            var errorResponse = ApiResponse<string>.ErrorResponse(
+                new List<string> { $"Error interno del servidor: {ex.Message}" }, 
+                "Error al subir imagen", 
+                StatusCodes.Status500InternalServerError);
+            return StatusCode(500, errorResponse);
+        }
+    }
+
+    private bool ValidarArchivo(IFormFile archivo, out string error)
+    {
+        error = string.Empty;
+
+        if (archivo == null || archivo.Length == 0)
+        {
+            error = "No se ha seleccionado ningún archivo";
+            return false;
+        }
+
+        const long tamañoMaximo = 5 * 1024 * 1024; // 5MB
+        if (archivo.Length > tamañoMaximo)
+        {
+            error = $"El archivo es demasiado grande. Tamaño máximo permitido: {tamañoMaximo / (1024 * 1024)}MB";
+            return false;
+        }
+
+        var extensionesPermitidas = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+        var extension = Path.GetExtension(archivo.FileName).ToLowerInvariant();
+        if (!extensionesPermitidas.Contains(extension))
+        {
+            error = $"Tipo de archivo no permitido. Extensiones permitidas: {string.Join(", ", extensionesPermitidas)}";
+            return false;
+        }
+
+        return true;
     }
 } 
