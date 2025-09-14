@@ -111,17 +111,17 @@ public class DashboardService : IDashboardService
             // Calcular métricas específicas según el período
             var (ventasHoy, ventasAyer, ventasSemana, ventasMes) = await CalcularMetricasVentasPorPeriodo(periodo, turno);
             
-            // Calcular ventas totales del día completo (todos los turnos)
-            var ventasTotalDia = await CalcularVentasTotalDia();
+            // Calcular ventas totales del período seleccionado (todos los turnos)
+            var ventasTotalDia = await CalcularVentasTotalPeriodo(periodo);
 
             // Calcular métricas faltantes
-            var (productosVendidosHoy, clientesAtendidosHoy, promedioTicket) = await CalcularMetricasAdicionales(facturas, turno);
+            var (productosVendidosHoy, clientesAtendidosHoy, promedioTicket) = await CalcularMetricasAdicionales(facturas, turno, periodo);
             var tiempoPromedio = await CalcularTiempoPromedioComandasAsync(periodo, turno);
             var mesasDisponibles = mesas.Count() - mesasOcupadas;
             var comandasCompletadas = comandas.Count(c => c.Estado == EstadoComanda.Entregada);
 
-            _logger.LogInformation("🔍 DEBUG: Métricas adicionales - ProductosVendidosHoy: {ProductosVendidosHoy}, ClientesAtendidosHoy: {ClientesAtendidosHoy}, PromedioTicket: {PromedioTicket}, MesasDisponibles: {MesasDisponibles}, ComandasCompletadas: {ComandasCompletadas}", 
-                productosVendidosHoy, clientesAtendidosHoy, promedioTicket, mesasDisponibles, comandasCompletadas);
+            _logger.LogInformation("🔍 DEBUG: Métricas adicionales para período '{Periodo}' - ProductosVendidos: {ProductosVendidosHoy}, ClientesAtendidos: {ClientesAtendidosHoy}, PromedioTicket: {PromedioTicket}, MesasDisponibles: {MesasDisponibles}, ComandasCompletadas: {ComandasCompletadas}", 
+                periodo, productosVendidosHoy, clientesAtendidosHoy, promedioTicket, mesasDisponibles, comandasCompletadas);
 
             return new DashboardMetricasDto
             {
@@ -350,19 +350,54 @@ public class DashboardService : IDashboardService
             var (fechaInicio, fechaFin) = CalcularRangoFechas(periodo);
             var (horaInicio, horaFin) = CalcularRangoHoras(turno);
 
-            // Aplicar filtro de turno a las fechas
-            if (turno != "todos")
-            {
-                fechaInicio = fechaInicio.Date.AddHours(horaInicio);
-                fechaFin = fechaFin.Date.AddHours(horaFin);
-            }
-
             var ingresosPorHora = new List<DashboardIngresosPorHoraDto>();
 
+            // Para períodos de "semana" y "mes", obtener todas las facturas y agrupar por hora
+            if (periodo == "semana" || periodo == "mes")
+            {
+                // Obtener todas las facturas del período
+                var todasLasFacturas = await _facturaRepository.ObtenerPorRangoFechasAsync(fechaInicio, fechaFin);
+                var facturasPagadas = todasLasFacturas.Where(f => f.Estado == EstadoFactura.Pagada).ToList();
+
+                _logger.LogInformation("💰 DEBUG: Período {Periodo} - Total facturas: {TotalFacturas}, Facturas pagadas: {FacturasPagadas}", 
+                    periodo, todasLasFacturas.Count(), facturasPagadas.Count());
+
+                // Inicializar todas las horas con 0
+                for (int hora = horaInicio; hora < horaFin; hora++)
+                {
+                    ingresosPorHora.Add(new DashboardIngresosPorHoraDto
+                    {
+                        Hora = hora,
+                        Monto = 0
+                    });
+                }
+
+                // Agrupar facturas por hora y sumar ingresos
+                var facturasPorHora = facturasPagadas.GroupBy(f => f.FechaEmision.Hour).ToList();
+                
+                foreach (var grupo in facturasPorHora)
+                {
+                    var hora = grupo.Key;
+                    var ingresosHora = grupo.Sum(f => f.Total);
+                    
+                    // Buscar la entrada correspondiente a esta hora
+                    var entrada = ingresosPorHora.FirstOrDefault(i => i.Hora == hora);
+                    if (entrada != null)
+                    {
+                        entrada.Monto = ingresosHora;
+                    }
+                    
+                    _logger.LogInformation("💰 DEBUG: Hora {Hora}: {Facturas} facturas, Total: {Ingresos}", 
+                        hora, grupo.Count(), ingresosHora);
+                }
+            }
+            else
+            {
+                // Para períodos de "hoy" y "ayer", usar la lógica original
             for (int hora = horaInicio; hora < horaFin; hora++)
             {
                 var horaInicioActual = fechaInicio.Date.AddHours(hora);
-                var horaFinActual = fechaInicio.Date.AddHours(hora + 1).AddTicks(-1); // Incluir solo hasta 59:59.9999999
+                    var horaFinActual = fechaInicio.Date.AddHours(hora + 1).AddTicks(-1);
 
                 var facturas = await _facturaRepository.ObtenerPorRangoFechasAsync(horaInicioActual, horaFinActual);
                 var ingresos = facturas.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
@@ -370,8 +405,9 @@ public class DashboardService : IDashboardService
                 ingresosPorHora.Add(new DashboardIngresosPorHoraDto
                 {
                     Hora = hora,
-                    Monto = ingresos
+                        Monto = ingresos
                 });
+                }
             }
 
             return ingresosPorHora;
@@ -430,18 +466,20 @@ public class DashboardService : IDashboardService
     {
         _logger.LogInformation("🔍 DEBUG: CalcularMetricasVentasPorPeriodo - Periodo: {Periodo}, Turno: {Turno}", periodo, turno);
         
-        // Calcular ventas de hoy (siempre del día actual)
-        var (fechaInicioHoy, fechaFinHoy) = CalcularRangoFechas("hoy");
-        var facturasHoy = await _facturaRepository.ObtenerPorRangoFechasAsync(fechaInicioHoy, fechaFinHoy);
-        var facturasPagadas = facturasHoy.Where(f => f.Estado == EstadoFactura.Pagada).ToList();
-        var ventasHoy = facturasPagadas.Sum(f => f.Total);
+        // IMPORTANTE: Las métricas principales deben reflejar el período seleccionado
+        // "VentasHoy" en realidad representa "Ventas del período seleccionado"
         
-        _logger.LogInformation("🔍 DEBUG: Rango fechas hoy: {FechaInicio} a {FechaFin}", fechaInicioHoy, fechaFinHoy);
-        _logger.LogInformation("🔍 DEBUG: Facturas hoy encontradas: {Count}, Facturas pagadas: {Pagadas}, Ventas hoy iniciales: {VentasHoy}", 
-            facturasHoy.Count(), facturasPagadas.Count, ventasHoy);
+        var (fechaInicioPeriodo, fechaFinPeriodo) = CalcularRangoFechas(periodo);
+        var facturasPeriodo = await _facturaRepository.ObtenerPorRangoFechasAsync(fechaInicioPeriodo, fechaFinPeriodo);
+        var facturasPagadas = facturasPeriodo.Where(f => f.Estado == EstadoFactura.Pagada).ToList();
+        var ventasPeriodo = facturasPagadas.Sum(f => f.Total);
         
-        // Log detallado de cada factura
-        foreach (var factura in facturasHoy)
+        _logger.LogInformation("🔍 DEBUG: Rango fechas período seleccionado: {FechaInicio} a {FechaFin}", fechaInicioPeriodo, fechaFinPeriodo);
+        _logger.LogInformation("🔍 DEBUG: Facturas período encontradas: {Count}, Facturas pagadas: {Pagadas}, Ventas período: {VentasPeriodo}", 
+            facturasPeriodo.Count(), facturasPagadas.Count, ventasPeriodo);
+        
+        // Log detallado de cada factura del período
+        foreach (var factura in facturasPeriodo)
         {
             _logger.LogInformation("🔍 DEBUG: Factura {Id} - Estado: {Estado}, Fecha: {Fecha}, Total: {Total}", 
                 factura.Id, factura.Estado, factura.FechaEmision, factura.Total);
@@ -473,36 +511,60 @@ public class DashboardService : IDashboardService
             // Solo aplicar filtro de turno a la métrica del período solicitado
             if (periodo == "hoy")
             {
-                var facturasHoyFiltradas = facturasHoy.Where(f => f.FechaEmision.Hour >= horaInicio && f.FechaEmision.Hour < horaFin);
-                ventasHoy = facturasHoyFiltradas.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
-                _logger.LogInformation("🔍 DEBUG: Facturas hoy filtradas: {Count}, Ventas hoy filtradas: {VentasHoy}", facturasHoyFiltradas.Count(), ventasHoy);
+                var facturasHoyFiltradas = facturasPeriodo.Where(f => f.FechaEmision.Hour >= horaInicio && f.FechaEmision.Hour < horaFin);
+                ventasPeriodo = facturasHoyFiltradas.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
+                _logger.LogInformation("🔍 DEBUG: Facturas hoy filtradas: {Count}, Ventas hoy filtradas: {VentasHoy}", facturasHoyFiltradas.Count(), ventasPeriodo);
             }
             else if (periodo == "ayer")
             {
-                var facturasAyerFiltradas = facturasAyer.Where(f => f.FechaEmision.Hour >= horaInicio && f.FechaEmision.Hour < horaFin);
-                ventasAyer = facturasAyerFiltradas.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
+                var facturasAyerFiltradas = facturasPeriodo.Where(f => f.FechaEmision.Hour >= horaInicio && f.FechaEmision.Hour < horaFin);
+                ventasPeriodo = facturasAyerFiltradas.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
+                _logger.LogInformation("🔍 DEBUG: Facturas ayer filtradas: {Count}, Ventas ayer filtradas: {VentasAyer}", facturasAyerFiltradas.Count(), ventasPeriodo);
             }
             else if (periodo == "semana")
             {
-                var facturasSemanaFiltradas = facturasSemana.Where(f => f.FechaEmision.Hour >= horaInicio && f.FechaEmision.Hour < horaFin);
-                ventasSemana = facturasSemanaFiltradas.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
+                var facturasSemanaFiltradas = facturasPeriodo.Where(f => f.FechaEmision.Hour >= horaInicio && f.FechaEmision.Hour < horaFin);
+                ventasPeriodo = facturasSemanaFiltradas.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
             }
             else if (periodo == "mes")
             {
-                var facturasMesFiltradas = facturasMes.Where(f => f.FechaEmision.Hour >= horaInicio && f.FechaEmision.Hour < horaFin);
-                ventasMes = facturasMesFiltradas.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
+                var facturasMesFiltradas = facturasPeriodo.Where(f => f.FechaEmision.Hour >= horaInicio && f.FechaEmision.Hour < horaFin);
+                ventasPeriodo = facturasMesFiltradas.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
             }
         }
 
-        _logger.LogInformation("🔍 DEBUG: Valores finales - VentasHoy: {VentasHoy}, VentasAyer: {VentasAyer}, VentasSemana: {VentasSemana}, VentasMes: {VentasMes}", 
-            ventasHoy, ventasAyer, ventasSemana, ventasMes);
+        _logger.LogInformation("🔍 DEBUG: Valores finales - VentasHoy (período seleccionado): {VentasHoy}, VentasAyer: {VentasAyer}, VentasSemana: {VentasSemana}, VentasMes: {VentasMes}", 
+            ventasPeriodo, ventasAyer, ventasSemana, ventasMes);
         
-        return (ventasHoy, ventasAyer, ventasSemana, ventasMes);
+        return (ventasPeriodo, ventasAyer, ventasSemana, ventasMes);
     }
 
     /// <summary>
     /// Calcula las ventas totales del día completo (todos los turnos)
     /// </summary>
+    private async Task<decimal> CalcularVentasTotalPeriodo(string? periodo)
+    {
+        try
+        {
+            var (fechaInicio, fechaFin) = CalcularRangoFechas(periodo);
+            
+            var facturas = await _facturaRepository.ObtenerPorRangoFechasAsync(fechaInicio, fechaFin);
+            var facturasFiltradas = facturas.Where(f => f.Estado == EstadoFactura.Pagada).ToList();
+            
+            var total = facturasFiltradas.Sum(f => f.Total);
+            
+            _logger.LogInformation("🔍 DEBUG: CalcularVentasTotalPeriodo - Período: {Periodo}, Fecha inicio: {FechaInicio}, Fecha fin: {FechaFin}, Total facturas: {TotalFacturas}, Total ventas: {TotalVentas}", 
+                periodo, fechaInicio, fechaFin, facturasFiltradas.Count, total);
+            
+            return total;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error al calcular ventas totales del período {Periodo}", periodo);
+            return 0;
+        }
+    }
+
     private async Task<decimal> CalcularVentasTotalDia()
     {
         try
@@ -525,18 +587,22 @@ public class DashboardService : IDashboardService
     /// <summary>
     /// Calcula métricas adicionales del dashboard
     /// </summary>
-    private async Task<(int productosVendidosHoy, int clientesAtendidosHoy, decimal promedioTicket)> CalcularMetricasAdicionales(IEnumerable<Factura> facturas, string? turno)
+    private async Task<(int productosVendidosHoy, int clientesAtendidosHoy, decimal promedioTicket)> CalcularMetricasAdicionales(IEnumerable<Factura> facturas, string? turno, string? periodo)
     {
         try
         {
-            _logger.LogInformation("🔍 DEBUG: CalcularMetricasAdicionales - Iniciando cálculo");
+            _logger.LogInformation("🔍 DEBUG: CalcularMetricasAdicionales - Iniciando cálculo para período: {Periodo}", periodo);
+            
+            // IMPORTANTE: Usar las facturas del período seleccionado, no las pasadas como parámetro
+            var (fechaInicio, fechaFin) = CalcularRangoFechas(periodo);
+            var facturasPeriodo = await _facturaRepository.ObtenerPorRangoFechasAsync(fechaInicio, fechaFin);
             
             // Aplicar filtro de turno si es necesario
-            var facturasFiltradas = facturas.ToList();
+            var facturasFiltradas = facturasPeriodo.ToList();
             if (turno != "todos")
             {
                 var (horaInicio, horaFin) = CalcularRangoHoras(turno);
-                facturasFiltradas = facturas.Where(f => f.FechaEmision.Hour >= horaInicio && f.FechaEmision.Hour < horaFin).ToList();
+                facturasFiltradas = facturasPeriodo.Where(f => f.FechaEmision.Hour >= horaInicio && f.FechaEmision.Hour < horaFin).ToList();
             }
 
             _logger.LogInformation("🔍 DEBUG: Facturas filtradas para métricas adicionales: {Count}", facturasFiltradas.Count);
@@ -574,8 +640,8 @@ public class DashboardService : IDashboardService
             var clientesAtendidosHoy = clientesUnicos.Count;
             var promedioTicket = cantidadFacturas > 0 ? totalVentas / cantidadFacturas : 0;
 
-            _logger.LogInformation("🔍 DEBUG: Resultados - ProductosVendidosHoy: {ProductosVendidosHoy}, ClientesAtendidosHoy: {ClientesAtendidosHoy}, PromedioTicket: {PromedioTicket}", 
-                productosVendidosHoy, clientesAtendidosHoy, promedioTicket);
+            _logger.LogInformation("🔍 DEBUG: Resultados para período '{Periodo}' - ProductosVendidos: {ProductosVendidosHoy}, ClientesAtendidos: {ClientesAtendidosHoy}, PromedioTicket: {PromedioTicket}", 
+                periodo, productosVendidosHoy, clientesAtendidosHoy, promedioTicket);
 
             return (productosVendidosHoy, clientesAtendidosHoy, promedioTicket);
         }

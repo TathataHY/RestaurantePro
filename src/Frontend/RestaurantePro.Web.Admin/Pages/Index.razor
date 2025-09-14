@@ -13,34 +13,28 @@
         <h1 class="text-gray-900 text-3xl font-bold leading-tight">Dashboard Ejecutivo</h1>
         <p class="text-gray-500 text-base font-normal leading-normal">Resumen de métricas clave y operaciones.</p>
     </div>
-    <div>
-        <button class="flex items-center gap-2 rounded-lg bg-[var(--primary-color)] px-4 py-2 text-white text-sm font-bold shadow-sm hover:bg-opacity-90" @onclick="CrearGraficos">
-            <span class="material-symbols-outlined">add</span>
-            <span class="truncate">Cargar Gráficos</span>
-        </button>
-    </div>
 </div>
 
 <!-- Selector de Período -->
 <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div class="flex items-center gap-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <label class="text-gray-700 text-sm font-medium">Período:</label>
-            <div class="flex gap-2">
+            <div class="grid grid-cols-2 gap-2 sm:flex sm:gap-2">
                 <button @onclick="SeleccionarHoy" 
-                        class="px-3 py-1 rounded-md text-sm font-medium transition-colors @(periodoSeleccionado == "hoy" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200")">
+                        class="px-3 py-2 rounded-md text-sm font-medium transition-colors min-h-[44px] flex items-center justify-center @(periodoSeleccionado == "hoy" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200")">
                     Hoy
                 </button>
                 <button @onclick="SeleccionarAyer" 
-                        class="px-3 py-1 rounded-md text-sm font-medium transition-colors @(periodoSeleccionado == "ayer" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200")">
+                        class="px-3 py-2 rounded-md text-sm font-medium transition-colors min-h-[44px] flex items-center justify-center @(periodoSeleccionado == "ayer" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200")">
                     Ayer
                 </button>
                 <button @onclick="SeleccionarSemana" 
-                        class="px-3 py-1 rounded-md text-sm font-medium transition-colors @(periodoSeleccionado == "semana" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200")">
+                        class="px-3 py-2 rounded-md text-sm font-medium transition-colors min-h-[44px] flex items-center justify-center @(periodoSeleccionado == "semana" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200")">
                     Esta Semana
                 </button>
                 <button @onclick="SeleccionarMes" 
-                        class="px-3 py-1 rounded-md text-sm font-medium transition-colors @(periodoSeleccionado == "mes" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200")">
+                        class="px-3 py-2 rounded-md text-sm font-medium transition-colors min-h-[44px] flex items-center justify-center @(periodoSeleccionado == "mes" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200")">
                     Este Mes
                 </button>
             </div>
@@ -54,9 +48,9 @@
 <!-- Filtros por Turno -->
 <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6 shadow-sm">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div class="flex items-center gap-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <label class="text-gray-700 text-sm font-medium">Turno:</label>
-            <div class="flex gap-2">
+            <div class="grid grid-cols-3 gap-2 sm:flex sm:gap-2">
                 <button @onclick="SeleccionarTodos" 
                         class="@GetTurnoButtonClass(todos)">
                     Todos
@@ -101,7 +95,7 @@
                 <h2 class="text-gray-800 text-xl font-bold leading-tight tracking-tight mb-4">Métricas Principales</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                        <p class="text-gray-600 text-sm font-medium">Ventas del Día</p>
+                        <p class="text-gray-600 text-sm font-medium">@GetVentasLabel()</p>
                         <p class="text-gray-900 text-3xl font-bold">@resumen.Metricas.VentasHoy.ToString("C0")</p>
                         <div class="flex items-center gap-1 text-green-600 text-sm font-medium">
                             <span class="material-symbols-outlined text-base">arrow_upward</span>
@@ -128,7 +122,7 @@
                     </div>
                     
                     <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                        <p class="text-gray-600 text-sm font-medium">Ventas Total del Día</p>
+                        <p class="text-gray-600 text-sm font-medium">@GetVentasTotalLabel()</p>
                         <p class="text-gray-900 text-3xl font-bold">@resumen.Metricas.VentasTotalDia.ToString("C0")</p>
                         <div class="flex items-center gap-1 text-blue-600 text-sm font-medium">
                             <span class="material-symbols-outlined text-base">trending_up</span>
@@ -495,7 +489,7 @@
 
     private string GetTurnoButtonClass(string turno)
     {
-        var baseClass = "px-3 py-1 rounded-md text-sm font-medium transition-colors";
+        var baseClass = "px-3 py-2 rounded-md text-sm font-medium transition-colors min-h-[44px] flex items-center justify-center";
         if (turnoSeleccionado == turno)
         {
             return $"{baseClass} bg-blue-100 text-blue-700";
@@ -709,6 +703,28 @@
             "semana" => $"{DateTime.Today.AddDays(-7):dd/MM/yyyy} - {DateTime.Today:dd/MM/yyyy}",
             "mes" => $"{DateTime.Today.AddDays(-30):dd/MM/yyyy} - {DateTime.Today:dd/MM/yyyy}",
             _ => DateTime.Today.ToString("dd/MM/yyyy")
+        };
+    }
+
+    private string GetVentasLabel()
+    {
+        return periodoSeleccionado switch
+        {
+            "ayer" => "Ventas de Ayer",
+            "semana" => "Ventas de la Semana",
+            "mes" => "Ventas del Mes",
+            _ => "Ventas del Día"
+        };
+    }
+
+    private string GetVentasTotalLabel()
+    {
+        return periodoSeleccionado switch
+        {
+            "ayer" => "Ventas Total de Ayer",
+            "semana" => "Ventas Total de la Semana",
+            "mes" => "Ventas Total del Mes",
+            _ => "Ventas Total del Día"
         };
     }
 
