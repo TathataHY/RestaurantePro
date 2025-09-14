@@ -38,6 +38,11 @@ namespace RestaurantePro.Domain.Core.Usuarios.Enums
         /// <summary>
         /// Alias para EncargadoInventario - Gerente de inventario
         /// </summary>
-        GerenteInventario = EncargadoInventario
+        GerenteInventario = EncargadoInventario,
+        
+        /// <summary>
+        /// Empleado genérico del restaurante
+        /// </summary>
+        Empleado = 7
     }
 } 

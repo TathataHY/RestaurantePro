@@ -167,11 +167,9 @@
         isAuthenticated = user.Identity?.IsAuthenticated ?? false;
         userName = isAuthenticated ? user.Identity?.Name ?? "" : string.Empty;
         
-        // Verificar si el usuario tiene rol de Admin o Gerente
-        IsAdminOrGerente = user.IsInRole("Admin") || 
-                          user.IsInRole("Administrador") ||
+        // Verificar si el usuario tiene rol de Administrador o Gerente
+        IsAdminOrGerente = user.IsInRole("Administrador") ||
                           user.IsInRole("Gerente") || 
-                          TokenStore.Roles.Contains("Admin") || 
                           TokenStore.Roles.Contains("Administrador") ||
                           TokenStore.Roles.Contains("Gerente");
     }

@@ -99,6 +99,11 @@ namespace RestaurantePro.Domain.Core.Usuarios.Entities
         public string? Posicion { get; private set; }
         
         /// <summary>
+        /// Teléfono del usuario
+        /// </summary>
+        public string? Telefono { get; private set; }
+        
+        /// <summary>
         /// Identificación fiscal/legal del usuario (DNI, Cédula, etc.)
         /// </summary>
         public string? Identificacion { get; private set; }
@@ -156,9 +161,9 @@ namespace RestaurantePro.Domain.Core.Usuarios.Entities
         public static Usuario Crear(string nombreUsuario, string nombreCompleto, string email, RolUsuario rol, string password = "")
         {
             var usuario = new Usuario(nombreUsuario, nombreCompleto, email, rol);
-            // Actualizar el evento para incluir la contraseña
+            // Actualizar el evento para incluir la contraseña y el rol
             usuario.ClearDomainEvents();
-            usuario.AddDomainEvent(new UsuarioCreado(usuario.Id, usuario.NombreUsuario, usuario.Email, usuario.Estado, password, usuario.TipoUsuario));
+            usuario.AddDomainEvent(new UsuarioCreado(usuario.Id, usuario.NombreUsuario, usuario.Email, usuario.Estado, password, usuario.Rol, usuario.TipoUsuario));
             return usuario;
         }
         
@@ -193,10 +198,18 @@ namespace RestaurantePro.Domain.Core.Usuarios.Entities
         /// <summary>
         /// Actualiza los datos del usuario
         /// </summary>
-        public void Actualizar(string nombreCompleto, string email)
+        public void Actualizar(string nombreCompleto, string email, string? telefono = null, string? nombreUsuario = null)
         {
             NombreCompleto = nombreCompleto;
             Email = email;
+            if (telefono != null)
+            {
+                Telefono = telefono;
+            }
+            if (nombreUsuario != null)
+            {
+                NombreUsuario = nombreUsuario;
+            }
             MarkAsModified();
             
             ValidarInvariantes();
@@ -491,6 +504,7 @@ namespace RestaurantePro.Domain.Core.Usuarios.Entities
                 RolUsuario.Mesero => "Mesero",
                 RolUsuario.Cocinero => "Cocinero",
                 RolUsuario.EncargadoInventario => "EncargadoInventario",
+                RolUsuario.Empleado => "Empleado",
                 _ => "Empleado"
             };
         }
@@ -508,6 +522,7 @@ namespace RestaurantePro.Domain.Core.Usuarios.Entities
                 RolUsuario.Cajero => 4,
                 RolUsuario.Mesero => 3,
                 RolUsuario.Cocinero => 3,
+                RolUsuario.Empleado => 2,
                 _ => 1
             };
         }

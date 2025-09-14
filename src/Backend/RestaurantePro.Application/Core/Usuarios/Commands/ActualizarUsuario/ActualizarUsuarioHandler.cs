@@ -32,6 +32,10 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
             _logger.LogInformation("Iniciando actualización de usuario: {UsuarioId}, Campos: {Campos}, Crítico: {EsCritico}",
                 request.UsuarioId, string.Join(", ", request.ObtenerCamposAModificar()), request.TieneCambiosCriticos());
 
+            // 🔍 LOG: Verificar datos recibidos del frontend
+            _logger.LogInformation("🔍 [TELEFONO DEBUG BACKEND] Datos recibidos - Nombre: '{Nombre}', NombreUsuario: '{NombreUsuario}', Email: '{Email}', Telefono: '{Telefono}'", 
+                request.Nombre ?? "NULL", request.NombreUsuario ?? "NULL", request.Email ?? "NULL", request.Telefono ?? "NULL");
+
             // 1. Obtener usuario actual completo
             var usuarioResult = await ObtenerUsuarioCompleto(request.UsuarioId, cancellationToken);
             if (!usuarioResult.Succeeded)
@@ -245,19 +249,33 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
         try
         {
         // Aplicar cambios básicos
-            if (!string.IsNullOrWhiteSpace(request.Nombre))
+            if (!string.IsNullOrWhiteSpace(request.Nombre) || !string.IsNullOrWhiteSpace(request.NombreUsuario) || !string.IsNullOrWhiteSpace(request.Email) || !string.IsNullOrWhiteSpace(request.Telefono))
             {
-                usuario.Actualizar(request.Nombre, usuario.Email);
-            }
-
-            if (!string.IsNullOrWhiteSpace(request.Email))
-            {
-                usuario.Actualizar(usuario.NombreCompleto, request.Email);
+                var nombreActualizar = !string.IsNullOrWhiteSpace(request.Nombre) ? request.Nombre : usuario.NombreCompleto;
+                var nombreUsuarioActualizar = !string.IsNullOrWhiteSpace(request.NombreUsuario) ? request.NombreUsuario : usuario.NombreUsuario;
+                var emailActualizar = !string.IsNullOrWhiteSpace(request.Email) ? request.Email : usuario.Email;
+                var telefonoActualizar = !string.IsNullOrWhiteSpace(request.Telefono) ? request.Telefono : usuario.Telefono;
+                
+                usuario.Actualizar(nombreActualizar, emailActualizar, telefonoActualizar, nombreUsuarioActualizar);
             }
 
         // Aplicar cambios de rol y permisos
             if (!string.IsNullOrWhiteSpace(request.Rol))
             {
+                // 🔐 VALIDACIÓN: Verificar si es el último administrador
+                if (usuario.EsAdministrador && request.Rol != "Administrador")
+                {
+                    var totalAdministradores = await _context.Usuarios
+                        .CountAsync(u => u.Rol == "Administrador" && u.Estado == EstadoUsuario.Activo, cancellationToken);
+                    
+                    if (totalAdministradores <= 1)
+                    {
+                        _logger.LogWarning("🚨 Intento de cambiar rol del último administrador del sistema: {Email} de {RolActual} a {RolNuevo}", 
+                            usuario.Email, usuario.Rol, request.Rol);
+                        return Result.Failure<bool>("No se puede cambiar el rol del último administrador del sistema. Debe haber al menos un administrador activo.");
+                    }
+                }
+
                 if (Enum.TryParse<RolUsuario>(request.Rol, true, out var nuevoRol))
                 {
                     usuario.EstablecerRol(request.Rol, request.NivelAcceso ?? usuario.NivelAcceso);
@@ -440,12 +458,12 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
         {
             // Propiedades que SÍ existen en Usuario dominio
             "Nombre" => usuario.NombreCompleto,
+            "NombreUsuario" => usuario.NombreUsuario,
             "Email" => usuario.Email,
             "Rol" => usuario.Roles.FirstOrDefault().ToString(),
             "Activo" => usuario.Estado == EstadoUsuario.Activo,
             
-            // TODO: Descomentar cuando Usuario tenga estas propiedades
-            // "Telefono" => usuario.Telefono,
+            "Telefono" => usuario.Telefono,
             // "Identificacion" => usuario.Identificacion,
             // "Direccion" => usuario.Direccion,
             // "NivelAcceso" => usuario.NivelAcceso,
@@ -673,11 +691,16 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
 
     private async Task<UsuarioDto> MapearUsuarioADto(Usuario usuario)
     {
+        // 🔍 LOG: Verificar datos del usuario antes de mapear
+        _logger.LogInformation("🔍 [TELEFONO DEBUG] MapearUsuarioADto - ID: {Id}, Email: {Email}, Telefono: '{Telefono}'", 
+            usuario.Id, usuario.Email, usuario.Telefono ?? "NULL");
+
         var usuarioDto = new UsuarioDto
         {
             Id = usuario.Id,
             NombreCompleto = usuario.NombreCompleto,
             Email = usuario.Email,
+            Telefono = usuario.Telefono,
             NombreUsuario = usuario.NombreUsuario,
             Estado = usuario.Estado,
             TipoUsuario = usuario.TipoUsuario,
@@ -693,6 +716,10 @@ public class ActualizarUsuarioHandler : IRequestHandler<ActualizarUsuarioCommand
             EsAdministrador = usuario.EsAdministrador,
             Roles = usuario.Roles.Select(r => r.ToString()).ToList()
         };
+
+        // 🔍 LOG: Verificar DTO resultante
+        _logger.LogInformation("🔍 [TELEFONO DEBUG] DTO mapeado - ID: {Id}, Email: {Email}, Telefono: '{Telefono}'", 
+            usuarioDto.Id, usuarioDto.Email, usuarioDto.Telefono ?? "NULL");
 
         return usuarioDto;
     }

@@ -1,0 +1,415 @@
+@using RestaurantePro.Web.Admin.Models
+
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+    <div class="relative z-50 flex flex-col w-full max-w-3xl bg-white rounded-2xl shadow-lg overflow-hidden m-4">
+        <!-- Header del Modal -->
+        <div class="flex items-center justify-between p-6 border-b border-[var(--border-color)]">
+            <div>
+                <h2 class="text-2xl font-bold text-[var(--primary-text-color)]">Detalles del Usuario</h2>
+                <p class="text-sm text-[var(--secondary-text-color)]">Información completa sobre @Usuario?.NombreCompleto</p>
+            </div>
+            <button class="p-2 rounded-full hover:bg-gray-100 transition-colors" @onclick="CerrarModal">
+                <span class="material-symbols-outlined text-[var(--secondary-text-color)]">close</span>
+            </button>
+        </div>
+
+        <!-- Body del Modal -->
+        <div class="p-6 space-y-8 overflow-y-auto max-h-[70vh]">
+            <!-- Estado Actual -->
+            <section>
+                <h3 class="text-lg font-bold text-[var(--primary-text-color)] mb-4">Estado Actual</h3>
+                <div class="flex items-center gap-4 rounded-lg @GetEstadoClass() p-4 border @GetEstadoBorderClass()">
+                    <div class="flex items-center justify-center rounded-full @GetEstadoIconClass() shrink-0 size-12 @GetEstadoTextClass()">
+                        <span class="material-symbols-outlined text-3xl">person</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <p class="text-base font-semibold @GetEstadoTextClass()">@Usuario?.Estado</p>
+                        <p class="text-sm @GetEstadoSubtextClass()">Última actualización: @Usuario?.FechaActualizacion?.ToString("dd 'de' MMMM, yyyy, HH:mm")</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Información Personal -->
+            <section>
+                <h3 class="text-lg font-bold text-[var(--primary-text-color)] mb-4">Información Personal</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-[var(--container-background)] rounded-lg p-4">
+                        <p class="text-sm font-medium text-[var(--secondary-text-color)]">Nombre Completo</p>
+                        <p class="text-lg font-semibold text-[var(--primary-text-color)]">@Usuario?.NombreCompleto</p>
+                    </div>
+                    <div class="bg-[var(--container-background)] rounded-lg p-4">
+                        <p class="text-sm font-medium text-[var(--secondary-text-color)]">Nombre de Usuario</p>
+                        <p class="text-lg font-semibold text-[var(--primary-text-color)]">@Usuario?.NombreUsuario</p>
+                    </div>
+                    <div class="bg-[var(--container-background)] rounded-lg p-4">
+                        <p class="text-sm font-medium text-[var(--secondary-text-color)]">Email</p>
+                        <p class="text-lg font-semibold text-[var(--primary-text-color)]">@Usuario?.Email</p>
+                    </div>
+                    <div class="bg-[var(--container-background)] rounded-lg p-4">
+                        <p class="text-sm font-medium text-[var(--secondary-text-color)]">Teléfono</p>
+                        <p class="text-lg font-semibold text-[var(--primary-text-color)]">@(string.IsNullOrEmpty(Usuario?.Telefono) ? "No especificado" : Usuario.Telefono)</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Información de Acceso y Roles -->
+            <section>
+                <h3 class="text-lg font-bold text-[var(--primary-text-color)] mb-4">Información de Acceso</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-[var(--container-background)] rounded-lg p-4">
+                        <p class="text-sm font-medium text-[var(--secondary-text-color)]">Rol Principal</p>
+                        <p class="text-lg font-semibold text-[var(--primary-text-color)]">@Usuario?.Rol</p>
+                    </div>
+                    <div class="bg-[var(--container-background)] rounded-lg p-4">
+                        <p class="text-sm font-medium text-[var(--secondary-text-color)]">Nivel de Acceso</p>
+                        <p class="text-lg font-semibold text-[var(--primary-text-color)]">@Usuario?.NivelAcceso / 10</p>
+                    </div>
+                    <div class="bg-[var(--container-background)] rounded-lg p-4">
+                        <p class="text-sm font-medium text-[var(--secondary-text-color)]">Es Administrador</p>
+                        <p class="text-lg font-semibold @(Usuario?.EsAdministrador == true ? "text-green-600" : "text-gray-600")">
+                            @(Usuario?.EsAdministrador == true ? "Sí" : "No")
+                        </p>
+                    </div>
+                    <div class="bg-[var(--container-background)] rounded-lg p-4">
+                        <p class="text-sm font-medium text-[var(--secondary-text-color)]">Tipo de Usuario</p>
+                        <p class="text-lg font-semibold text-[var(--primary-text-color)]">@Usuario?.TipoUsuario</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Roles Asignados -->
+            <section>
+                <h3 class="text-lg font-bold text-[var(--primary-text-color)] mb-4">Roles Asignados</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    @if (Usuario?.Roles?.Any() == true)
+                    {
+                        @foreach (var rol in Usuario.Roles)
+                        {
+                            <div class="flex items-center gap-2 p-3 rounded-lg @GetRolClass(rol) border @GetRolBorderClass(rol)">
+                                <span class="material-symbols-outlined @GetRolIconClass(rol)">@GetRolIcon(rol)</span>
+                                <span class="text-sm font-medium @GetRolTextClass(rol)">@rol</span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="col-span-full text-center text-[var(--secondary-text-color)] py-4">
+                            No hay roles asignados
+                        </div>
+                    }
+                </div>
+            </section>
+
+            <!-- Información del Sistema -->
+            <section>
+                <h3 class="text-lg font-bold text-[var(--primary-text-color)] mb-4">Información del Sistema</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-[var(--container-background)] rounded-lg p-4">
+                        <p class="text-sm font-medium text-[var(--secondary-text-color)]">ID del Usuario</p>
+                        <p class="text-sm font-mono text-[var(--primary-text-color)]">@Usuario?.Id</p>
+                    </div>
+                    <div class="bg-[var(--container-background)] rounded-lg p-4">
+                        <p class="text-sm font-medium text-[var(--secondary-text-color)]">ID de Identity</p>
+                        <p class="text-sm font-mono text-[var(--primary-text-color)]">@(string.IsNullOrEmpty(Usuario?.IdentityId) ? "No asignado" : Usuario.IdentityId)</p>
+                    </div>
+                    <div class="bg-[var(--container-background)] rounded-lg p-4">
+                        <p class="text-sm font-medium text-[var(--secondary-text-color)]">Fecha de Creación</p>
+                        <p class="text-lg font-semibold text-[var(--primary-text-color)]">@Usuario?.FechaCreacion.ToString("dd 'de' MMMM, yyyy")</p>
+                    </div>
+                    <div class="bg-[var(--container-background)] rounded-lg p-4">
+                        <p class="text-sm font-medium text-[var(--secondary-text-color)]">Último Acceso</p>
+                        <p class="text-lg font-semibold text-[var(--primary-text-color)]">@(Usuario?.UltimoAcceso?.ToString("dd 'de' MMMM, yyyy, HH:mm") ?? "Nunca")</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Actividad Reciente -->
+            <section>
+                <h3 class="text-lg font-bold text-[var(--primary-text-color)] mb-4">Actividad Reciente</h3>
+                <div class="overflow-x-auto rounded-lg border border-[var(--border-color)]">
+                    <table class="w-full text-left">
+                        <thead class="bg-[var(--container-background)]">
+                            <tr>
+                                <th class="px-4 py-3 text-sm font-semibold text-[var(--primary-text-color)]">Fecha</th>
+                                <th class="px-4 py-3 text-sm font-semibold text-[var(--primary-text-color)]">Hora</th>
+                                <th class="px-4 py-3 text-sm font-semibold text-[var(--primary-text-color)]">Actividad</th>
+                                <th class="px-4 py-3 text-sm font-semibold text-[var(--primary-text-color)] text-center">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[var(--border-color)]">
+                            @if (actividad?.Any() == true)
+                            {
+                                @foreach (var item in actividad)
+                                {
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-4 py-3 text-sm text-[var(--secondary-text-color)]">@item.Fecha.ToString("dd 'de' MMMM, yyyy")</td>
+                                        <td class="px-4 py-3 text-sm text-[var(--secondary-text-color)]">@item.Hora.ToString(@"hh\:mm")</td>
+                                        <td class="px-4 py-3 text-sm text-[var(--secondary-text-color)]">@item.Descripcion</td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span class="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full @GetActividadEstadoClass(item.Estado)">@item.Estado</span>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="4" class="px-4 py-8 text-center text-[var(--secondary-text-color)]">
+                                        No hay actividad reciente registrada
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Notas y Observaciones -->
+            <section>
+                <h3 class="text-lg font-bold text-[var(--primary-text-color)] mb-4">Notas y Observaciones</h3>
+                <div class="space-y-4">
+                    <textarea class="form-textarea w-full rounded-lg border-[var(--border-color)] bg-white placeholder:text-[var(--secondary-text-color)] focus:border-[var(--primary-color)] focus:ring-1 focus:ring-[var(--primary-color)] transition" 
+                              placeholder="Agregar notas sobre el usuario..." 
+                              rows="4" 
+                              @bind="notasTemporales"></textarea>
+                    @if (!string.IsNullOrEmpty(Usuario?.Notas))
+                    {
+                        <div class="bg-[var(--container-background)] rounded-lg p-4">
+                            <p class="text-sm font-medium text-[var(--primary-text-color)] mb-2">Notas actuales:</p>
+                            <p class="text-sm text-[var(--secondary-text-color)]">@Usuario.Notas</p>
+                        </div>
+                    }
+                </div>
+            </section>
+        </div>
+
+        <!-- Footer del Modal -->
+        <div class="flex justify-end gap-4 p-6 border-t border-[var(--border-color)] bg-gray-50">
+            <button class="px-6 py-2.5 rounded-lg text-sm font-bold text-[var(--secondary-text-color)] hover:bg-gray-200 transition-colors" 
+                    @onclick="CerrarModal">
+                Cerrar
+            </button>
+            <button class="px-6 py-2.5 rounded-lg bg-[var(--primary-color)] text-white text-sm font-bold hover:bg-blue-700 transition-colors" 
+                    @onclick="GuardarNotas" 
+                    disabled="@guardando">
+                @if (guardando)
+                {
+                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                }
+                else
+                {
+                    <span>Guardar Notas</span>
+                }
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool Mostrar { get; set; }
+    [Parameter] public UsuarioDto? Usuario { get; set; }
+    [Parameter] public EventCallback OnCerrar { get; set; }
+    [Parameter] public EventCallback<string> OnGuardarNotas { get; set; }
+
+    private string notasTemporales = string.Empty;
+    private bool guardando = false;
+
+    // Datos de ejemplo para la actividad
+    private List<ActividadUsuario> actividad = new();
+
+    protected override void OnParametersSet()
+    {
+        if (Usuario != null)
+        {
+            notasTemporales = Usuario.Notas ?? string.Empty;
+            CargarActividad();
+        }
+    }
+
+    private void CargarActividad()
+    {
+        // Datos de ejemplo - en una implementación real, esto vendría de un servicio
+        actividad = new List<ActividadUsuario>
+        {
+            new() { Fecha = DateTime.Now.AddDays(-1), Hora = new TimeSpan(14, 30, 0), Descripcion = "Inicio de sesión", Estado = "Exitoso" },
+            new() { Fecha = DateTime.Now.AddDays(-2), Hora = new TimeSpan(09, 15, 0), Descripcion = "Actualización de perfil", Estado = "Exitoso" },
+            new() { Fecha = DateTime.Now.AddDays(-3), Hora = new TimeSpan(16, 45, 0), Descripcion = "Inicio de sesión", Estado = "Exitoso" }
+        };
+    }
+
+    private string GetEstadoClass()
+    {
+        return Usuario?.Estado switch
+        {
+            "Activo" => "bg-green-50",
+            "Inactivo" => "bg-red-50",
+            "PendienteConfirmacion" => "bg-yellow-50",
+            "Bloqueado" => "bg-gray-50",
+            _ => "bg-gray-50"
+        };
+    }
+
+    private string GetEstadoBorderClass()
+    {
+        return Usuario?.Estado switch
+        {
+            "Activo" => "border-green-200",
+            "Inactivo" => "border-red-200",
+            "PendienteConfirmacion" => "border-yellow-200",
+            "Bloqueado" => "border-gray-200",
+            _ => "border-gray-200"
+        };
+    }
+
+    private string GetEstadoIconClass()
+    {
+        return Usuario?.Estado switch
+        {
+            "Activo" => "bg-green-100",
+            "Inactivo" => "bg-red-100",
+            "PendienteConfirmacion" => "bg-yellow-100",
+            "Bloqueado" => "bg-gray-100",
+            _ => "bg-gray-100"
+        };
+    }
+
+    private string GetEstadoTextClass()
+    {
+        return Usuario?.Estado switch
+        {
+            "Activo" => "text-green-800",
+            "Inactivo" => "text-red-800",
+            "PendienteConfirmacion" => "text-yellow-800",
+            "Bloqueado" => "text-gray-800",
+            _ => "text-gray-800"
+        };
+    }
+
+    private string GetEstadoSubtextClass()
+    {
+        return Usuario?.Estado switch
+        {
+            "Activo" => "text-green-600",
+            "Inactivo" => "text-red-600",
+            "PendienteConfirmacion" => "text-yellow-600",
+            "Bloqueado" => "text-gray-600",
+            _ => "text-gray-600"
+        };
+    }
+
+    private string GetRolClass(string rol)
+    {
+        return rol switch
+        {
+            "Administrador" => "bg-red-50",
+            "Gerente" => "bg-blue-50",
+            "Mesero" => "bg-green-50",
+            "Cocinero" => "bg-orange-50",
+            "Cajero" => "bg-purple-50",
+            "Empleado" => "bg-gray-50",
+            "EncargadoInventario" => "bg-indigo-50",
+            _ => "bg-gray-50"
+        };
+    }
+
+    private string GetRolBorderClass(string rol)
+    {
+        return rol switch
+        {
+            "Administrador" => "border-red-200",
+            "Gerente" => "border-blue-200",
+            "Mesero" => "border-green-200",
+            "Cocinero" => "border-orange-200",
+            "Cajero" => "border-purple-200",
+            "Empleado" => "border-gray-200",
+            "EncargadoInventario" => "border-indigo-200",
+            _ => "border-gray-200"
+        };
+    }
+
+    private string GetRolIconClass(string rol)
+    {
+        return rol switch
+        {
+            "Administrador" => "text-red-600",
+            "Gerente" => "text-blue-600",
+            "Mesero" => "text-green-600",
+            "Cocinero" => "text-orange-600",
+            "Cajero" => "text-purple-600",
+            "Empleado" => "text-gray-600",
+            "EncargadoInventario" => "text-indigo-600",
+            _ => "text-gray-600"
+        };
+    }
+
+    private string GetRolTextClass(string rol)
+    {
+        return rol switch
+        {
+            "Administrador" => "text-red-800",
+            "Gerente" => "text-blue-800",
+            "Mesero" => "text-green-800",
+            "Cocinero" => "text-orange-800",
+            "Cajero" => "text-purple-800",
+            "Empleado" => "text-gray-800",
+            "EncargadoInventario" => "text-indigo-800",
+            _ => "text-gray-800"
+        };
+    }
+
+    private string GetRolIcon(string rol)
+    {
+        return rol switch
+        {
+            "Administrador" => "admin_panel_settings",
+            "Gerente" => "supervisor_account",
+            "Mesero" => "restaurant",
+            "Cocinero" => "kitchen",
+            "Cajero" => "point_of_sale",
+            "Empleado" => "badge",
+            "EncargadoInventario" => "inventory",
+            _ => "person"
+        };
+    }
+
+    private string GetActividadEstadoClass(string estado)
+    {
+        return estado switch
+        {
+            "Exitoso" => "bg-green-100 text-green-800",
+            "Fallido" => "bg-red-100 text-red-800",
+            "En Proceso" => "bg-blue-100 text-blue-800",
+            _ => "bg-gray-100 text-gray-800"
+        };
+    }
+
+    private async Task CerrarModal()
+    {
+        await OnCerrar.InvokeAsync();
+    }
+
+    private async Task GuardarNotas()
+    {
+        guardando = true;
+        StateHasChanged();
+
+        try
+        {
+            await OnGuardarNotas.InvokeAsync(notasTemporales);
+            await CerrarModal();
+        }
+        finally
+        {
+            guardando = false;
+            StateHasChanged();
+        }
+    }
+
+    public class ActividadUsuario
+    {
+        public DateTime Fecha { get; set; }
+        public TimeSpan Hora { get; set; }
+        public string Descripcion { get; set; } = string.Empty;
+        public string Estado { get; set; } = string.Empty;
+    }
+}

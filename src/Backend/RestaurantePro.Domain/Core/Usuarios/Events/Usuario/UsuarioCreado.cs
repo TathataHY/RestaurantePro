@@ -36,15 +36,21 @@ namespace RestaurantePro.Domain.Core.Usuarios.Events.Usuario
         public string Password { get; }
         
         /// <summary>
+        /// Rol del usuario (para asignación en Identity)
+        /// </summary>
+        public string Rol { get; }
+        
+        /// <summary>
         /// Constructor del evento
         /// </summary>
-        public UsuarioCreado(Guid usuarioId, string nombreUsuario, string email, EstadoUsuario estado, string password, TipoUsuario tipoUsuario = TipoUsuario.Empleado)
+        public UsuarioCreado(Guid usuarioId, string nombreUsuario, string email, EstadoUsuario estado, string password, string rol, TipoUsuario tipoUsuario = TipoUsuario.Empleado)
         {
             UsuarioId = usuarioId;
             NombreUsuario = nombreUsuario;
             Email = email;
             Estado = estado;
             Password = password;
+            Rol = rol;
             TipoUsuario = tipoUsuario;
         }
     }

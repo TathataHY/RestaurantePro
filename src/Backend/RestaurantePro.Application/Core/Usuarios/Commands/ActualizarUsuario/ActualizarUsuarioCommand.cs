@@ -17,6 +17,11 @@ public class ActualizarUsuarioCommand : IRequest<Result<UsuarioDto>>
     public string? Nombre { get; set; }
 
     /// <summary>
+    /// Nuevo nombre de usuario (único en el sistema)
+    /// </summary>
+    public string? NombreUsuario { get; set; }
+
+    /// <summary>
     /// Nuevo email del usuario (único en el sistema)
     /// </summary>
     public string? Email { get; set; }
@@ -346,6 +351,7 @@ public class ActualizarUsuarioCommand : IRequest<Result<UsuarioDto>>
     public bool TieneAlMenosUnCambio()
     {
         return !string.IsNullOrWhiteSpace(Nombre) ||
+               !string.IsNullOrWhiteSpace(NombreUsuario) ||
                !string.IsNullOrWhiteSpace(Email) ||
                !string.IsNullOrWhiteSpace(Telefono) ||
                !string.IsNullOrWhiteSpace(Identificacion) ||
@@ -372,6 +378,7 @@ public class ActualizarUsuarioCommand : IRequest<Result<UsuarioDto>>
         var campos = new List<string>();
 
         if (!string.IsNullOrWhiteSpace(Nombre)) campos.Add("Nombre");
+        if (!string.IsNullOrWhiteSpace(NombreUsuario)) campos.Add("NombreUsuario");
         if (!string.IsNullOrWhiteSpace(Email)) campos.Add("Email");
         if (!string.IsNullOrWhiteSpace(Telefono)) campos.Add("Telefono");
         if (!string.IsNullOrWhiteSpace(Identificacion)) campos.Add("Identificacion");

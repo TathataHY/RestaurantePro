@@ -14,8 +14,8 @@ public interface IUsuariosApiService
         string orderDirection = "asc");
 
     Task<UsuarioDto?> ObtenerPorIdAsync(Guid id);
-    Task<UsuarioDto?> CrearAsync(CrearUsuarioRequest request);
-    Task<UsuarioDto?> ActualizarAsync(Guid id, ActualizarUsuarioRequest request);
+    Task<(UsuarioDto? Data, string? ErrorMessage)> CrearAsync(CrearUsuarioRequest request);
+    Task<(UsuarioDto? Data, string? ErrorMessage)> ActualizarAsync(Guid id, ActualizarUsuarioRequest request);
     Task<bool> EliminarAsync(Guid id);
     Task<bool> CambiarEstadoAsync(Guid id, bool activo);
     Task<List<string>> ObtenerRolesDisponiblesAsync();

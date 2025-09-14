@@ -301,6 +301,7 @@ namespace RestaurantePro.Domain.Core.Usuarios.Services
                 RolUsuario.Cajero => 4,
                 RolUsuario.Mesero => 3,
                 RolUsuario.Cocinero => 3,
+                RolUsuario.Empleado => 2,
                 _ => 1
             };
         }

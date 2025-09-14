@@ -1,3 +1,6 @@
+using RestaurantePro.Application.Common.DTOs;
+using RestaurantePro.Application.Core.Usuarios.Commands.ActualizarUsuario;
+
 namespace RestaurantePro.Application.Config.Mappings;
 
 /// <summary>
@@ -59,6 +62,39 @@ public class CoreMappingProfile : Profile
     /// </summary>
     private void ConfigureUsuarioMappings()
     {
+        // ✏️ DTO Request → Command (Input)  
+        CreateMap<ActualizarUsuarioRequest, ActualizarUsuarioCommand>()
+            .ForMember(dest => dest.UsuarioId, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.Nombre, opt => opt.MapFrom(src => src.NombreCompleto)) // ✅ MAPEO CORREGIDO
+            .ForMember(dest => dest.NombreUsuario, opt => opt.MapFrom(src => src.NombreUsuario))
+            .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
+            .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => src.Telefono))
+            .ForMember(dest => dest.Rol, opt => opt.MapFrom(src => src.Rol))
+            .ForMember(dest => dest.NivelAcceso, opt => opt.MapFrom(src => src.NivelAcceso ?? 1))
+            .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.Activo))
+            .ForMember(dest => dest.Identificacion, opt => opt.Ignore())
+            .ForMember(dest => dest.Direccion, opt => opt.MapFrom(src => src.Direccion))
+            .ForMember(dest => dest.UsuarioAutorizaId, opt => opt.MapFrom(src => src.UsuarioAutorizaId))
+            .ForMember(dest => dest.MotivoActualizacion, opt => opt.MapFrom(src => src.MotivoActualizacion))
+            .ForMember(dest => dest.ObservacionesAdicionales, opt => opt.MapFrom(src => src.ObservacionesAdicionales))
+            .ForMember(dest => dest.NotificarUsuario, opt => opt.MapFrom(src => src.NotificarUsuario))
+            .ForMember(dest => dest.NotificarSupervisor, opt => opt.MapFrom(src => src.NotificarSupervisor))
+            .ForMember(dest => dest.RequiereAprobacion, opt => opt.MapFrom(src => src.RequiereAprobacion))
+            .ForMember(dest => dest.CrearBackup, opt => opt.MapFrom(src => src.CrearBackup))
+            .ForMember(dest => dest.Prioridad, opt => opt.MapFrom(src => src.Prioridad))
+            .ForMember(dest => dest.DocumentosAdjuntos, opt => opt.MapFrom(src => src.DocumentosAdjuntos))
+            .ForMember(dest => dest.InvalidarSesionesActivas, opt => opt.MapFrom(src => src.InvalidarSesionesActivas))
+            .ForMember(dest => dest.FechaEfectivacambios, opt => opt.MapFrom(src => src.FechaEfectivacambios))
+            .ForMember(dest => dest.PermisosEspecificos, opt => opt.Ignore())
+            .ForMember(dest => dest.SupervisorId, opt => opt.Ignore())
+            .ForMember(dest => dest.Departamento, opt => opt.Ignore())
+            .ForMember(dest => dest.Posicion, opt => opt.Ignore())
+            .ForMember(dest => dest.FechaIngreso, opt => opt.Ignore())
+            .ForMember(dest => dest.SalarioBase, opt => opt.Ignore())
+            .ForMember(dest => dest.HorarioTrabajo, opt => opt.Ignore())
+            .ForMember(dest => dest.ConfiguracionNotificaciones, opt => opt.Ignore())
+            .ForMember(dest => dest.Preferencias, opt => opt.MapFrom(src => new Dictionary<string, object>()));
+
         // 🔄 Entidad → DTO Principal (Response)
         CreateMap<Usuario, UsuarioDto>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
@@ -78,7 +114,7 @@ public class CoreMappingProfile : Profile
             .ForMember(dest => dest.MotivoBloqueo, opt => opt.MapFrom(src => src.MotivoBloqueo))
             .ForMember(dest => dest.EsAdministrador, opt => opt.MapFrom(src => src.EsAdministrador))
             .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => src.Roles.Select(r => r.ToString())))
-            .ForMember(dest => dest.Telefono, opt => opt.Ignore()) // No existe en la entidad Usuario
+            .ForMember(dest => dest.Telefono, opt => opt.MapFrom(src => src.Telefono))
             .ForMember(dest => dest.FechaCreacion, opt => opt.MapFrom(src => src.FechaCreacion))
             .ForMember(dest => dest.FechaModificacion, opt => opt.Ignore()) // No existe en la entidad Usuario
             .ForMember(dest => dest.CreadoPor, opt => opt.Ignore()) // No existe en la entidad Usuario

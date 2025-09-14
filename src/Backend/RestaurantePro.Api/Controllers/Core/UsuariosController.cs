@@ -9,6 +9,8 @@ using RestaurantePro.Application.Core.Usuarios.Commands.ResetPasswordUsuario;
 using RestaurantePro.Application.Core.Usuarios.Queries.ObtenerUsuariosPaginados;
 using RestaurantePro.Application.Core.Usuarios.Queries.ObtenerUsuarioPorId;
 using RestaurantePro.Application.Core.Usuarios.DTOs;
+using RestaurantePro.Application.Common.DTOs;
+using AutoMapper;
 
 namespace RestaurantePro.Api.Controllers.Core;
 
@@ -23,11 +25,13 @@ public class UsuariosController : ControllerBase
 {
     private readonly IMediator _mediator;
     private readonly ILogger<UsuariosController> _logger;
+    private readonly IMapper _mapper;
 
-    public UsuariosController(IMediator mediator, ILogger<UsuariosController> logger)
+    public UsuariosController(IMediator mediator, ILogger<UsuariosController> logger, IMapper mapper)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
     }
 
     /// <summary>
@@ -149,11 +153,12 @@ public class UsuariosController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<UsuarioDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<ApiResponse<UsuarioDto>>> ActualizarUsuario(Guid id, [FromBody] ActualizarUsuarioCommand command)
+    public async Task<ActionResult<ApiResponse<UsuarioDto>>> ActualizarUsuario(Guid id, [FromBody] ActualizarUsuarioRequest request)
     {
         _logger.LogInformation("✏️ PUT /api/core/usuarios/{Id}", id);
 
-        // Asignar el ID de la URL al comando
+        // Mapear el request al comando usando AutoMapper
+        var command = _mapper.Map<ActualizarUsuarioCommand>(request);
         command.UsuarioId = id;
 
         var result = await _mediator.Send(command);

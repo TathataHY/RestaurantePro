@@ -77,8 +77,8 @@ namespace RestaurantePro.Infrastructure.Identity.EventHandlers
                     _logger.LogInformation("✅ Usuario creado exitosamente en Identity: {Email}", evento.Email);
                     _logger.LogInformation("🔑 Contraseña utilizada: {Password}", passwordAUsar);
                     
-                    // Asignar rol por defecto basado en el tipo de usuario
-                    await AsignarRolPorDefecto(identityUser, evento.TipoUsuario);
+                    // Asignar rol del evento (del formulario)
+                    await AsignarRolDelEvento(identityUser, evento.Rol);
                 }
                 else
                 {
@@ -103,37 +103,33 @@ namespace RestaurantePro.Infrastructure.Identity.EventHandlers
         }
 
         /// <summary>
-        /// Asigna un rol por defecto basado en el tipo de usuario
+        /// Asigna el rol del evento (del formulario) al usuario en Identity
         /// </summary>
-        private async Task AsignarRolPorDefecto(ApplicationUser user, Domain.Core.Usuarios.Enums.TipoUsuario tipoUsuario)
+        private async Task AsignarRolDelEvento(ApplicationUser user, string rolDelEvento)
         {
             try
             {
-                string rolPorDefecto = tipoUsuario switch
+                if (string.IsNullOrEmpty(rolDelEvento))
                 {
-                    Domain.Core.Usuarios.Enums.TipoUsuario.Administrador => "Administrador",
-                    Domain.Core.Usuarios.Enums.TipoUsuario.Gerente => "Gerente",
-                    Domain.Core.Usuarios.Enums.TipoUsuario.Mesero => "Mesero",
-                    Domain.Core.Usuarios.Enums.TipoUsuario.Cocinero => "Cocinero",
-                    Domain.Core.Usuarios.Enums.TipoUsuario.Cajero => "Cajero",
-                    _ => "Empleado"
-                };
+                    _logger.LogWarning("⚠️ No se especificó rol para usuario {Email}, asignando rol por defecto", user.Email);
+                    rolDelEvento = "Empleado";
+                }
 
-                var result = await _userManager.AddToRoleAsync(user, rolPorDefecto);
+                var result = await _userManager.AddToRoleAsync(user, rolDelEvento);
                 
                 if (result.Succeeded)
                 {
-                    _logger.LogInformation("✅ Rol '{Rol}' asignado exitosamente a usuario {Email}", rolPorDefecto, user.Email);
+                    _logger.LogInformation("✅ Rol '{Rol}' asignado exitosamente a usuario {Email}", rolDelEvento, user.Email);
                 }
                 else
                 {
                     var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                    _logger.LogWarning("⚠️ Error al asignar rol '{Rol}' a usuario {Email}: {Errors}", rolPorDefecto, user.Email, errors);
+                    _logger.LogWarning("⚠️ Error al asignar rol '{Rol}' a usuario {Email}: {Errors}", rolDelEvento, user.Email, errors);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error al asignar rol por defecto a usuario {Email}", user.Email);
+                _logger.LogError(ex, "❌ Error al asignar rol del evento a usuario {Email}", user.Email);
             }
         }
     }

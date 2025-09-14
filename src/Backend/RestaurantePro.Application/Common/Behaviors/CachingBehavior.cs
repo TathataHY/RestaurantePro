@@ -132,6 +132,11 @@ public class CachingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
             {
                 return TimeSpan.Zero;
             }
+            // SIN caché para usuarios paginados (datos cambian frecuentemente)
+            if (requestName.Contains("usuario"))
+            {
+                return TimeSpan.Zero;
+            }
             return TimeSpan.FromSeconds(15);
         }
 
@@ -139,7 +144,7 @@ public class CachingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
         {
             var name when name.Contains("obtenerproductoporid") => TimeSpan.FromSeconds(10), // Detalle de producto: TTL corto
             var name when name.Contains("obtenerproducto") => TimeSpan.FromMinutes(15), // Otros productos: TTL estándar
-            var name when name.Contains("obtenerusuario") => TimeSpan.FromMinutes(10),   // Usuarios cambian moderadamente
+            var name when name.Contains("obtenerusuario") => TimeSpan.Zero,   // SIN caché para usuarios (datos cambian frecuentemente)
             var name when name.Contains("obtenercomanda") => TimeSpan.FromSeconds(15),   // Comandas cambian muy rápido (cocina)
             var name when name.Contains("obtenermesa") => TimeSpan.FromSeconds(30),      // Mesas cambian muy rápido
             var name when name.Contains("obtenermesaporid") => TimeSpan.FromSeconds(15), // Mesa individual cambia muy rápido

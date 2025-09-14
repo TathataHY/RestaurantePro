@@ -72,6 +72,7 @@ public class ObtenerUsuariosPaginadosHandler : IRequestHandler<ObtenerUsuariosPa
                 Id = u.Id,
                 NombreCompleto = u.NombreCompleto,
                 Email = u.Email,
+                Telefono = u.Telefono,
                 NombreUsuario = u.NombreUsuario,
                 Estado = u.Estado,
                 TipoUsuario = u.TipoUsuario,
@@ -87,6 +88,14 @@ public class ObtenerUsuariosPaginadosHandler : IRequestHandler<ObtenerUsuariosPa
                 EsAdministrador = u.EsAdministrador,
                 Roles = u.Roles.Select(r => r.ToString()).ToList()
             }).ToList();
+
+            // 🔍 LOG: Verificar que el teléfono se mapee correctamente
+            var usuarioConTelefono = usuariosDto.FirstOrDefault(u => u.Email == "ana.martinez@restaurantepro.com");
+            if (usuarioConTelefono != null)
+            {
+                _logger.LogInformation("🔍 [TELEFONO DEBUG] Usuario paginado - ID: {Id}, Email: {Email}, Telefono: '{Telefono}'", 
+                    usuarioConTelefono.Id, usuarioConTelefono.Email, usuarioConTelefono.Telefono ?? "NULL");
+            }
 
             _logger.LogInformation("Usuarios obtenidos exitosamente - Total: {Total}, Página: {PageNumber}", 
                 usuariosDto.Count, request.PageNumber);

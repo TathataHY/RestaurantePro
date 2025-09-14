@@ -32,11 +32,16 @@ public class ObtenerUsuarioPorIdHandler : IRequestHandler<ObtenerUsuarioPorIdQue
                 return Result.Failure<UsuarioDto>("Usuario no encontrado");
             }
 
+            // 🔍 LOG: Verificar datos del usuario desde la base de datos
+            _logger.LogInformation("🔍 [TELEFONO DEBUG] Usuario desde BD - ID: {Id}, Email: {Email}, Telefono: '{Telefono}'", 
+                usuario.Id, usuario.Email, usuario.Telefono ?? "NULL");
+
             var usuarioDto = new UsuarioDto
             {
                 Id = usuario.Id,
                 NombreCompleto = usuario.NombreCompleto,
                 Email = usuario.Email,
+                Telefono = usuario.Telefono,
                 NombreUsuario = usuario.NombreUsuario,
                 Estado = usuario.Estado,
                 TipoUsuario = usuario.TipoUsuario,
@@ -52,6 +57,10 @@ public class ObtenerUsuarioPorIdHandler : IRequestHandler<ObtenerUsuarioPorIdQue
                 EsAdministrador = usuario.EsAdministrador,
                 Roles = usuario.Roles.Select(r => r.ToString()).ToList()
             };
+
+            // 🔍 LOG: Verificar datos del DTO antes de retornar
+            _logger.LogInformation("🔍 [TELEFONO DEBUG] DTO creado - ID: {Id}, Email: {Email}, Telefono: '{Telefono}'", 
+                usuarioDto.Id, usuarioDto.Email, usuarioDto.Telefono ?? "NULL");
 
             _logger.LogInformation("Usuario obtenido exitosamente: {Email}", usuario.Email);
 

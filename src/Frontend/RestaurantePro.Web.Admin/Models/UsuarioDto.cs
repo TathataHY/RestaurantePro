@@ -12,6 +12,12 @@ public class UsuarioDto
     public bool EsAdministrador { get; set; }
     public string? Telefono { get; set; }
     public string Estado { get; set; } = "Activo";
+    public string TipoUsuario { get; set; } = string.Empty;
+    public string? IdentityId { get; set; }
+    public DateTime FechaCreacion { get; set; }
+    public DateTime? FechaActualizacion { get; set; }
+    public DateTime? UltimoAcceso { get; set; }
+    public string? Notas { get; set; }
 }
 
 
