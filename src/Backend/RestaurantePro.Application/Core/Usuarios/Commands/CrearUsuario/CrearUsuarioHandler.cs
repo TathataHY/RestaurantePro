@@ -10,7 +10,6 @@ public class CrearUsuarioHandler : IRequestHandler<CrearUsuarioCommand, Result<U
     private readonly IEmailService _emailService;
     private readonly ICurrentUserService _currentUserService;
     private readonly IHtmlSanitizerService _htmlSanitizerService;
-
     public CrearUsuarioHandler(
         IApplicationDbContext context,
         IMapper mapper,
@@ -73,6 +72,7 @@ public class CrearUsuarioHandler : IRequestHandler<CrearUsuarioCommand, Result<U
             await RegistrarEventoAuditoria(usuario, request.UsuarioCreadorId);
 
             // 11. Mapear a DTO y devolver resultado
+            // NOTA: La creación en Identity se maneja automáticamente por el evento UsuarioCreado_SincronizarConIdentityHandler
             var usuarioDto = await MapearUsuarioADto(usuario);
 
             _logger.LogInformation("Usuario {NombreUsuario} creado exitosamente con ID {UsuarioId}. Rol: {Rol}",
@@ -133,7 +133,7 @@ public class CrearUsuarioHandler : IRequestHandler<CrearUsuarioCommand, Result<U
     {
         return new InformacionSeguridadDto
         {
-            PasswordHash = await HashPassword(request.Password),
+            PasswordHash = "", // Ya no necesitamos hashear aquí, Identity lo hará
             Salt = GenerarSalt(),
             TokenActivacion = GenerarTokenActivacion(),
             FechaCreacion = DateTime.UtcNow,
@@ -154,7 +154,7 @@ public class CrearUsuarioHandler : IRequestHandler<CrearUsuarioCommand, Result<U
         var nombreCompletoSanitizado = _htmlSanitizerService.SanitizeHtml(request.NombreCompleto);
         var emailSanitizado = _htmlSanitizerService.SanitizeHtml(request.Email);
 
-        var usuario = Usuario.Crear(nombreUsuarioSanitizado, nombreCompletoSanitizado, emailSanitizado, rolEnum);
+        var usuario = Usuario.Crear(nombreUsuarioSanitizado, nombreCompletoSanitizado, emailSanitizado, rolEnum, request.Password);
 
         _logger.LogInformation("Usuario {NombreUsuario} creado usando factory domain method", usuario.NombreUsuario);
 
@@ -283,14 +283,6 @@ public class CrearUsuarioHandler : IRequestHandler<CrearUsuarioCommand, Result<U
         };
     }
 
-    private async Task<string> HashPassword(string password)
-    {
-        using (var sha256 = SHA256.Create())
-        {
-            var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password + GenerarSalt()));
-            return Convert.ToBase64String(hashedBytes);
-        }
-    }
 
     private string GenerarSalt()
     {
@@ -306,6 +298,7 @@ public class CrearUsuarioHandler : IRequestHandler<CrearUsuarioCommand, Result<U
     {
         return Guid.NewGuid().ToString("N")[..16].ToUpper();
     }
+
 
     private string GenerarMensajeBienvenida(Usuario usuario, string passwordTemporal)
     {

@@ -140,9 +140,9 @@ else
             Console.WriteLine($"🔍 WebAdminAccessGuard - Tiene rol operativo: {hasOperationalRole}");
             Console.WriteLine($"🔍 WebAdminAccessGuard - Tiene rol admin: {hasAdminRole}");
 
-            // Lógica corregida: SOLO permitir acceso si tiene rol administrativo
-            // Bloquear si tiene rol operativo O si no tiene rol administrativo
-            IsAuthorizedForWebAdmin = hasAdminRole && !hasOperationalRole;
+            // Lógica corregida: Permitir acceso si tiene rol administrativo
+            // Solo bloquear si NO tiene rol administrativo Y tiene rol operativo
+            IsAuthorizedForWebAdmin = hasAdminRole || !hasOperationalRole;
 
             Console.WriteLine($"🔍 WebAdminAccessGuard - Acceso autorizado: {IsAuthorizedForWebAdmin}");
 

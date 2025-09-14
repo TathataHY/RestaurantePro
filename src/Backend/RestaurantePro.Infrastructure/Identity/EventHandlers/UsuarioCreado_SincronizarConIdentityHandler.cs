@@ -55,18 +55,27 @@ namespace RestaurantePro.Infrastructure.Identity.EventHandlers
                     UltimaModificacion = DateTime.UtcNow
                 };
 
-                // Generar contraseña por defecto (similar al seeder)
-                var passwordPorDefecto = GenerarPasswordPorDefecto(evento.NombreUsuario);
+                // Usar la contraseña del evento si está disponible, sino generar una por defecto
+                var passwordAUsar = !string.IsNullOrEmpty(evento.Password) 
+                    ? evento.Password 
+                    : GenerarPasswordPorDefecto(evento.NombreUsuario);
                 
-                _logger.LogInformation("🔑 Generando contraseña por defecto para {Email}", evento.Email);
+                if (!string.IsNullOrEmpty(evento.Password))
+                {
+                    _logger.LogInformation("🔑 Usando contraseña del formulario para {Email}", evento.Email);
+                }
+                else
+                {
+                    _logger.LogInformation("🔑 Generando contraseña por defecto para {Email}", evento.Email);
+                }
 
                 // Crear el usuario en Identity
-                var result = await _userManager.CreateAsync(identityUser, passwordPorDefecto);
+                var result = await _userManager.CreateAsync(identityUser, passwordAUsar);
                 
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("✅ Usuario creado exitosamente en Identity: {Email}", evento.Email);
-                    _logger.LogInformation("🔑 Contraseña por defecto: {Password}", passwordPorDefecto);
+                    _logger.LogInformation("🔑 Contraseña utilizada: {Password}", passwordAUsar);
                     
                     // Asignar rol por defecto basado en el tipo de usuario
                     await AsignarRolPorDefecto(identityUser, evento.TipoUsuario);

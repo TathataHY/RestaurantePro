@@ -147,15 +147,19 @@ namespace RestaurantePro.Domain.Core.Usuarios.Entities
             _roles.Add(rol);
             
             ValidarInvariantes();
-            AddDomainEvent(new UsuarioCreado(Id, NombreUsuario, Email, Estado, TipoUsuario));
+            // El evento se dispara desde el método Crear() para incluir la contraseña
         }
         
         /// <summary>
         /// Crea un nuevo usuario en el sistema
         /// </summary>
-        public static Usuario Crear(string nombreUsuario, string nombreCompleto, string email, RolUsuario rol)
+        public static Usuario Crear(string nombreUsuario, string nombreCompleto, string email, RolUsuario rol, string password = "")
         {
-            return new Usuario(nombreUsuario, nombreCompleto, email, rol);
+            var usuario = new Usuario(nombreUsuario, nombreCompleto, email, rol);
+            // Actualizar el evento para incluir la contraseña
+            usuario.ClearDomainEvents();
+            usuario.AddDomainEvent(new UsuarioCreado(usuario.Id, usuario.NombreUsuario, usuario.Email, usuario.Estado, password, usuario.TipoUsuario));
+            return usuario;
         }
         
         /// <summary>
