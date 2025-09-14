@@ -25,16 +25,6 @@ public class UsuarioActivado_SincronizarConIdentityHandler : IDomainEventHandler
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         
-        // Log para confirmar que el manejador se está registrando
-        _logger.LogInformation("🔧 [MANEJADOR] UsuarioActivado_SincronizarConIdentityHandler construido e inicializado");
-        Console.WriteLine("🔧 [MANEJADOR] UsuarioActivado_SincronizarConIdentityHandler construido e inicializado");
-        Console.WriteLine("🔧 [MANEJADOR] UsuarioActivado_SincronizarConIdentityHandler construido e inicializado");
-        Console.WriteLine("🔧 [MANEJADOR] UsuarioActivado_SincronizarConIdentityHandler construido e inicializado");
-        
-        // Log extremo para debugging
-        System.Console.Out.WriteLine("🔧 [MANEJADOR] OUT: UsuarioActivado_SincronizarConIdentityHandler construido e inicializado");
-        System.Console.Error.WriteLine("🔧 [MANEJADOR] ERROR: UsuarioActivado_SincronizarConIdentityHandler construido e inicializado");
-        System.Console.Out.WriteLine("🔧 [MANEJADOR] OUT: UsuarioActivado_SincronizarConIdentityHandler construido e inicializado");
     }
 
     /// <summary>
@@ -44,8 +34,6 @@ public class UsuarioActivado_SincronizarConIdentityHandler : IDomainEventHandler
     {
         try
         {
-            _logger.LogInformation("🚀 [MANEJADOR] EJECUTÁNDOSE: UsuarioActivado_SincronizarConIdentityHandler");
-            Console.WriteLine("🚀 [MANEJADOR] EJECUTÁNDOSE: UsuarioActivado_SincronizarConIdentityHandler");
             _logger.LogInformation("🔄 Sincronizando usuario activado con Identity: {UsuarioId}", domainEvent.UsuarioId);
 
             // Primero obtener el email del usuario desde la base de datos del dominio

@@ -82,7 +82,7 @@ else
     private string UserRole { get; set; } = "Usuario";
 
     // Roles que NO pueden acceder a la Web Administrativa
-    private readonly string[] OperationalRoles = { "Mesero", "Cocinero", "Cajero", "Supervisor" };
+    private readonly string[] OperationalRoles = { "Mesero", "Cocinero", "Cajero", "Supervisor", "Empleado" };
     
     // Roles que SÍ pueden acceder a la Web Administrativa
     private readonly string[] AdminRoles = { "Admin", "Administrador", "Gerente", "Propietario" };
@@ -140,9 +140,9 @@ else
             Console.WriteLine($"🔍 WebAdminAccessGuard - Tiene rol operativo: {hasOperationalRole}");
             Console.WriteLine($"🔍 WebAdminAccessGuard - Tiene rol admin: {hasAdminRole}");
 
-            // Lógica simplificada: Si tiene rol administrativo, permitir acceso
-            // Solo bloquear si tiene rol operativo Y no tiene rol administrativo
-            IsAuthorizedForWebAdmin = hasAdminRole || (!hasOperationalRole && !hasAdminRole);
+            // Lógica corregida: SOLO permitir acceso si tiene rol administrativo
+            // Bloquear si tiene rol operativo O si no tiene rol administrativo
+            IsAuthorizedForWebAdmin = hasAdminRole && !hasOperationalRole;
 
             Console.WriteLine($"🔍 WebAdminAccessGuard - Acceso autorizado: {IsAuthorizedForWebAdmin}");
 

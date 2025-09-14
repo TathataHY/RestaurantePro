@@ -84,19 +84,42 @@ public class IdentityUsersSeeder : ISeedData
 
     public async Task<bool> ExistsAsync(RestauranteProDbContext context, CancellationToken cancellationToken = default)
     {
-        // Verificar si al menos un usuario del dominio existe en Identity
+        // Verificar si TODOS los usuarios del dominio están correctamente sincronizados en Identity
         var usuariosDominio = await ObtenerUsuariosDominio(context, null!, cancellationToken);
+        
+        if (!usuariosDominio.Any())
+        {
+            return false; // No hay usuarios del dominio, no necesita ejecutarse
+        }
         
         foreach (var usuario in usuariosDominio.Take(5)) // Solo verificar los primeros 5
         {
             var usuarioIdentity = await _userManager.FindByEmailAsync(usuario.Email);
-            if (usuarioIdentity != null)
+            if (usuarioIdentity == null)
             {
-                return true; // Al menos un usuario existe en Identity
+                return false; // Usuario no existe en Identity, necesita sincronización
+            }
+            
+            // Verificar que el usuario esté activo y confirmado si debe estarlo
+            if (usuario.Estado == Domain.Core.Usuarios.Enums.EstadoUsuario.Activo)
+            {
+                if (!usuarioIdentity.Activo || !usuarioIdentity.EmailConfirmed)
+                {
+                    return false; // Usuario no está correctamente activado, necesita sincronización
+                }
+            }
+            
+            // Verificar que el usuario tenga contraseña válida
+            var passwordEsperada = GenerarPasswordPorDefecto(usuario.NombreUsuario);
+            var passwordValida = await _userManager.CheckPasswordAsync(usuarioIdentity, passwordEsperada);
+            if (!passwordValida)
+            {
+                Console.WriteLine($"🔐 [DEBUG] Usuario {usuario.NombreUsuario} no tiene contraseña válida. Esperada: {passwordEsperada}");
+                return false; // Usuario no tiene contraseña válida, necesita sincronización
             }
         }
         
-        return false;
+        return true; // Todos los usuarios están correctamente sincronizados
     }
 
     private async Task<List<Usuario>> ObtenerUsuariosDominio(
@@ -213,8 +236,11 @@ public class IdentityUsersSeeder : ISeedData
 
             // Generar contraseña por defecto
             var password = GenerarPasswordPorDefecto(usuarioDominio.NombreUsuario);
+            logger.LogInformation("🔐 Generando contraseña para usuario {Username}: {Password} ({PasswordLength} caracteres)", 
+                usuarioDominio.NombreUsuario, password, password.Length);
             
-            var result = await _userManager.CreateAsync(usuarioIdentity, password);
+            // Crear usuario sin contraseña primero
+            var result = await _userManager.CreateAsync(usuarioIdentity);
             
             if (!result.Succeeded)
             {
@@ -223,6 +249,33 @@ public class IdentityUsersSeeder : ISeedData
                     usuarioDominio.NombreUsuario, errors);
                 return SyncResult.Error;
             }
+
+            // Agregar contraseña después de crear el usuario
+            var addPasswordResult = await _userManager.AddPasswordAsync(usuarioIdentity, password);
+            
+            if (!addPasswordResult.Succeeded)
+            {
+                var errors = string.Join(", ", addPasswordResult.Errors.Select(e => e.Description));
+                logger.LogError("❌ Error agregando contraseña para usuario {Username}: {Errors}", 
+                    usuarioDominio.NombreUsuario, errors);
+                
+                // Limpiar el usuario creado si falló la contraseña
+                await _userManager.DeleteAsync(usuarioIdentity);
+                return SyncResult.Error;
+            }
+
+            // Validar que la contraseña se generó correctamente
+            var passwordValidationResult = await _userManager.CheckPasswordAsync(usuarioIdentity, password);
+            if (!passwordValidationResult)
+            {
+                logger.LogError("❌ Error crítico: La contraseña no es válida para el usuario {Username} después de AddPasswordAsync", 
+                    usuarioDominio.NombreUsuario);
+                await _userManager.DeleteAsync(usuarioIdentity);
+                return SyncResult.Error;
+            }
+            
+            logger.LogInformation("✅ Usuario {Username} creado exitosamente con contraseña válida", 
+                usuarioDominio.NombreUsuario);
 
             // Asignar rol
             var nombreRolIdentity = MapearRolDominioAIdentity(usuarioDominio.Rol);
@@ -279,6 +332,41 @@ public class IdentityUsersSeeder : ISeedData
                 necesitaActualizacion = true;
             }
 
+            // Verificar y regenerar contraseña si es necesario
+            var passwordEsperada = GenerarPasswordPorDefecto(usuarioDominio.NombreUsuario);
+            var passwordValida = await _userManager.CheckPasswordAsync(usuarioIdentity, passwordEsperada);
+            if (!passwordValida)
+            {
+                logger.LogInformation("🔐 Regenerando contraseña para usuario {Username}: {Password}", 
+                    usuarioDominio.NombreUsuario, passwordEsperada);
+                
+                // Remover contraseña actual
+                await _userManager.RemovePasswordAsync(usuarioIdentity);
+                
+                // Agregar nueva contraseña
+                var resultadoPassword = await _userManager.AddPasswordAsync(usuarioIdentity, passwordEsperada);
+                if (!resultadoPassword.Succeeded)
+                {
+                    var errors = string.Join(", ", resultadoPassword.Errors.Select(e => e.Description));
+                    logger.LogError("❌ Error regenerando contraseña para usuario {Username}: {Errors}", 
+                        usuarioDominio.NombreUsuario, errors);
+                    return SyncResult.Error;
+                }
+                
+                // Verificar que la nueva contraseña sea válida
+                var nuevaPasswordValida = await _userManager.CheckPasswordAsync(usuarioIdentity, passwordEsperada);
+                if (!nuevaPasswordValida)
+                {
+                    logger.LogError("❌ Error crítico: La contraseña regenerada no es válida para el usuario {Username}", 
+                        usuarioDominio.NombreUsuario);
+                    return SyncResult.Error;
+                }
+                
+                logger.LogInformation("✅ Contraseña regenerada exitosamente para usuario {Username}", 
+                    usuarioDominio.NombreUsuario);
+                necesitaActualizacion = true;
+            }
+
             // Actualizar si es necesario
             if (necesitaActualizacion)
             {
@@ -323,6 +411,7 @@ public class IdentityUsersSeeder : ISeedData
         // Para usuarios críticos (admin), usar la contraseña por defecto
         if (username == "admin")
         {
+            Console.WriteLine($"🔐 [DEBUG] Generando contraseña para admin: AdminRestaurante123!");
             return "AdminRestaurante123!";
         }
 
@@ -332,9 +421,12 @@ public class IdentityUsersSeeder : ISeedData
             // Remover puntos y convertir a PascalCase
             var partes = username.Split('.');
             var usernamePascalCase = string.Join("", partes.Select(p => char.ToUpper(p[0]) + p.Substring(1).ToLower()));
-            return $"{usernamePascalCase}123!";
+            var password = $"{usernamePascalCase}123!";
+            Console.WriteLine($"🔐 [DEBUG] Generando contraseña para {username}: {password}");
+            return password;
         }
         // Fallback
+        Console.WriteLine($"🔐 [DEBUG] Usando contraseña fallback: DemoUser123!");
         return "DemoUser123!";
     }
 

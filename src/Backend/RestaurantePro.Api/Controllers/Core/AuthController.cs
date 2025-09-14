@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using RestaurantePro.Api.Common;
 using RestaurantePro.Application.Common.Interfaces;
 using RestaurantePro.Application.Common.Models;
 using RestaurantePro.Api.Models.Requests;
+using RestaurantePro.Infrastructure.Identity.Models;
 
 namespace RestaurantePro.Api.Controllers.Core;
 
@@ -18,11 +20,13 @@ public class AuthController : ControllerBase
 {
     private readonly IIdentityService _identityService;
     private readonly ILogger<AuthController> _logger;
+    private readonly UserManager<ApplicationUser> _userManager;
 
-    public AuthController(IIdentityService identityService, ILogger<AuthController> logger)
+    public AuthController(IIdentityService identityService, ILogger<AuthController> logger, UserManager<ApplicationUser> userManager)
     {
         _identityService = identityService ?? throw new ArgumentNullException(nameof(identityService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
     }
 
     /// <summary>
@@ -240,6 +244,64 @@ public class AuthController : ControllerBase
         }
     }
 
+
+
+    /// <summary>
+    /// Endpoint de mantenimiento para regenerar contraseña de un usuario
+    /// </summary>
+    [HttpPost("regenerate-password")]
+    [Authorize(Roles = "Administrador")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<object>>> RegeneratePassword([FromBody] RegeneratePasswordRequest request)
+    {
+        _logger.LogInformation("🔧 POST /api/auth/regenerate-password - Usuario: {Email}", request.Email);
+
+        try
+        {
+            var user = await _userManager.FindByEmailAsync(request.Email);
+            if (user == null)
+            {
+                return BadRequest(ApiResponse<object>.ErrorResponse("Usuario no encontrado", "No se encontró un usuario con el email especificado"));
+            }
+
+            // Eliminar hash actual
+            user.PasswordHash = null;
+            user.SecurityStamp = null;
+            
+            // Regenerar contraseña
+            var result = await _userManager.AddPasswordAsync(user, request.NewPassword);
+            
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                _logger.LogError("❌ Error regenerando contraseña para usuario {Email}: {Errors}", request.Email, errors);
+                return BadRequest(ApiResponse<object>.ErrorResponse(errors, "Error regenerando contraseña"));
+            }
+
+            // Verificar que la nueva contraseña funciona
+            var passwordValid = await _userManager.CheckPasswordAsync(user, request.NewPassword);
+            
+            var response = new
+            {
+                Email = request.Email,
+                Success = result.Succeeded,
+                PasswordValid = passwordValid,
+                Message = passwordValid ? "Contraseña regenerada exitosamente" : "Error: La nueva contraseña no es válida"
+            };
+
+            _logger.LogInformation("✅ Contraseña regenerada exitosamente para usuario {Email}", request.Email);
+            return Ok(ApiResponse<object>.SuccessResponse(response, "Operación completada"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error regenerando contraseña para usuario {Email}", request.Email);
+            return BadRequest(ApiResponse<object>.ErrorResponse(ex.Message, "Error interno del servidor"));
+        }
+    }
+
+
+
     /// <summary>
     /// Cierra la sesión del usuario (logout)
     /// </summary>
@@ -256,4 +318,6 @@ public class AuthController : ControllerBase
         var response = ApiResponse<bool>.SuccessResponse(true, "Sesión cerrada exitosamente");
         return Ok(response);
     }
+
+
 } 

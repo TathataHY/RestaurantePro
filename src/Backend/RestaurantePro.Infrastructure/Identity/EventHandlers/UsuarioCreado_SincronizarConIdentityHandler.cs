@@ -20,37 +20,20 @@ namespace RestaurantePro.Infrastructure.Identity.EventHandlers
             _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             
-            // Log para confirmar que el manejador se está construyendo
-            _logger.LogInformation("🔧 [MANEJADOR] UsuarioCreado_SincronizarConIdentityHandler construido e inicializado");
-            Console.WriteLine("🔧 [MANEJADOR] UsuarioCreado_SincronizarConIdentityHandler construido e inicializado");
-            Console.WriteLine("🔧 [MANEJADOR] UsuarioCreado_SincronizarConIdentityHandler construido e inicializado");
-            Console.WriteLine("🔧 [MANEJADOR] UsuarioCreado_SincronizarConIdentityHandler construido e inicializado");
-            
-            // Log extremo para debugging
-            System.Console.Out.WriteLine("🔧 [MANEJADOR] OUT: UsuarioCreado_SincronizarConIdentityHandler construido e inicializado");
-            System.Console.Error.WriteLine("🔧 [MANEJADOR] ERROR: UsuarioCreado_SincronizarConIdentityHandler construido e inicializado");
-            System.Console.Out.WriteLine("🔧 [MANEJADOR] OUT: UsuarioCreado_SincronizarConIdentityHandler construido e inicializado");
-            System.Console.Error.WriteLine("🔧 [MANEJADOR] ERROR: UsuarioCreado_SincronizarConIdentityHandler construido e inicializado");
-            System.Console.Out.WriteLine("🔧 [MANEJADOR] OUT: UsuarioCreado_SincronizarConIdentityHandler construido e inicializado");
-            System.Console.Error.WriteLine("🔧 [MANEJADOR] ERROR: UsuarioCreado_SincronizarConIdentityHandler construido e inicializado");
         }
 
         public async Task Handle(UsuarioCreado evento, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("🚀 [MANEJADOR] EJECUTÁNDOSE: UsuarioCreado_SincronizarConIdentityHandler");
-            Console.WriteLine("🚀 [MANEJADOR] EJECUTÁNDOSE: UsuarioCreado_SincronizarConIdentityHandler");
             
             try
             {
                 _logger.LogInformation("🔄 Creando usuario en Identity: {UsuarioId} - {Email}", evento.UsuarioId, evento.Email);
-                Console.WriteLine($"🔄 Creando usuario en Identity: {evento.UsuarioId} - {evento.Email}");
 
                 // Verificar si el usuario ya existe en Identity
                 var existingUser = await _userManager.FindByEmailAsync(evento.Email);
                 if (existingUser != null)
                 {
                     _logger.LogWarning("⚠️ Usuario {Email} ya existe en Identity, saltando creación", evento.Email);
-                    Console.WriteLine($"⚠️ Usuario {evento.Email} ya existe en Identity, saltando creación");
                     return;
                 }
 
@@ -76,7 +59,6 @@ namespace RestaurantePro.Infrastructure.Identity.EventHandlers
                 var passwordPorDefecto = GenerarPasswordPorDefecto(evento.NombreUsuario);
                 
                 _logger.LogInformation("🔑 Generando contraseña por defecto para {Email}", evento.Email);
-                Console.WriteLine($"🔑 Generando contraseña por defecto para {evento.Email}");
 
                 // Crear el usuario en Identity
                 var result = await _userManager.CreateAsync(identityUser, passwordPorDefecto);
@@ -84,8 +66,7 @@ namespace RestaurantePro.Infrastructure.Identity.EventHandlers
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("✅ Usuario creado exitosamente en Identity: {Email}", evento.Email);
-                    Console.WriteLine($"✅ Usuario creado exitosamente en Identity: {evento.Email}");
-                    Console.WriteLine($"🔑 Contraseña por defecto: {passwordPorDefecto}");
+                    _logger.LogInformation("🔑 Contraseña por defecto: {Password}", passwordPorDefecto);
                     
                     // Asignar rol por defecto basado en el tipo de usuario
                     await AsignarRolPorDefecto(identityUser, evento.TipoUsuario);
@@ -94,13 +75,11 @@ namespace RestaurantePro.Infrastructure.Identity.EventHandlers
                 {
                     var errors = string.Join(", ", result.Errors.Select(e => e.Description));
                     _logger.LogError("❌ Error al crear usuario en Identity: {Email} - Errores: {Errors}", evento.Email, errors);
-                    Console.WriteLine($"❌ Error al crear usuario en Identity: {evento.Email} - Errores: {errors}");
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "❌ Error inesperado al sincronizar usuario creado con Identity: {Email}", evento.Email);
-                Console.WriteLine($"❌ Error inesperado al sincronizar usuario creado con Identity: {evento.Email} - {ex.Message}");
             }
         }
 
@@ -136,19 +115,16 @@ namespace RestaurantePro.Infrastructure.Identity.EventHandlers
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("✅ Rol '{Rol}' asignado exitosamente a usuario {Email}", rolPorDefecto, user.Email);
-                    Console.WriteLine($"✅ Rol '{rolPorDefecto}' asignado exitosamente a usuario {user.Email}");
                 }
                 else
                 {
                     var errors = string.Join(", ", result.Errors.Select(e => e.Description));
                     _logger.LogWarning("⚠️ Error al asignar rol '{Rol}' a usuario {Email}: {Errors}", rolPorDefecto, user.Email, errors);
-                    Console.WriteLine($"⚠️ Error al asignar rol '{rolPorDefecto}' a usuario {user.Email}: {errors}");
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "❌ Error al asignar rol por defecto a usuario {Email}", user.Email);
-                Console.WriteLine($"❌ Error al asignar rol por defecto a usuario {user.Email}: {ex.Message}");
             }
         }
     }
