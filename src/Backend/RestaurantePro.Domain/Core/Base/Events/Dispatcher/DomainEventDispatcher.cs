@@ -50,10 +50,53 @@ namespace RestaurantePro.Domain.Core.Base.Events.Dispatcher
                 var handlersFound = false;
                 bool hasExceptionOccurred = false;
                 
-                // Log detallado para debugging
-                Console.WriteLine($"[Dispatcher] 🔍 Buscando handlers para evento: {eventType.Name}");
-                Console.WriteLine($"[Dispatcher] 🔍 Tipo de handler buscado: {handlerType.Name}");
-                Console.WriteLine($"[Dispatcher] 🔍 Tipo de colección: {handlerWrapperType.Name}");
+            // Log detallado para debugging
+            Console.WriteLine($"[Dispatcher] 🔍 Buscando handlers para evento: {eventType.Name}");
+            Console.WriteLine($"[Dispatcher] 🔍 Tipo de handler buscado: {handlerType.Name}");
+            Console.WriteLine($"[Dispatcher] 🔍 Tipo de colección: {handlerWrapperType.Name}");
+            
+            // Log adicional para diagnosticar el problema
+            Console.WriteLine($"[Dispatcher] 🔧 ServiceProvider: {_serviceProvider?.GetType().Name ?? "NULL"}");
+            Console.WriteLine($"[Dispatcher] 🔧 EventType FullName: {eventType.FullName}");
+            Console.WriteLine($"[Dispatcher] 🔧 HandlerType FullName: {handlerType.FullName}");
+            Console.WriteLine($"[Dispatcher] 🔧 HandlerWrapperType FullName: {handlerWrapperType.FullName}");
+            
+            // Verificar si el servicio está registrado
+            try
+            {
+                var service = _serviceProvider.GetService(handlerWrapperType);
+                if (service != null)
+                {
+                    Console.WriteLine($"✅ [Dispatcher] Servicio encontrado: {service.GetType().Name}");
+                    
+                    // Verificar si es una colección y si está vacía
+                    if (service is IEnumerable<object> serviceEnumerable)
+                    {
+                        var serviceList = serviceEnumerable.ToList();
+                        Console.WriteLine($"🔍 [Dispatcher] Colección de servicios: {serviceList.Count} elementos");
+                        
+                        if (serviceList.Count == 0)
+                        {
+                            Console.WriteLine($"❌ [Dispatcher] PROBLEMA: La colección de servicios está vacía!");
+                        }
+                        else
+                        {
+                            foreach (var item in serviceList)
+                            {
+                                Console.WriteLine($"✅ [Dispatcher] Servicio encontrado: {item.GetType().Name}");
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"❌ [Dispatcher] Servicio NO encontrado para tipo: {handlerWrapperType.Name}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ [Dispatcher] Error al obtener servicio: {ex.Message}");
+            }
                 
                 // Si hay manejadores, despacharlos
                 if (handlers != null && handlers.Any())

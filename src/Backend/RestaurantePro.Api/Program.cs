@@ -24,6 +24,11 @@ namespace RestaurantePro.Api
     {
         public static async Task Main(string[] args)
         {
+            // Log extremo para debugging
+            Console.WriteLine("🚀 [PROGRAM] MAIN INICIADO");
+            Console.WriteLine("🚀 [PROGRAM] MAIN INICIADO");
+            Console.WriteLine("🚀 [PROGRAM] MAIN INICIADO");
+            
             var builder = WebApplication.CreateBuilder(args);
 
             // Agregar servicios al contenedor
@@ -67,8 +72,18 @@ namespace RestaurantePro.Api
             
             if (!isTestingMode)
             {
+                // Log para confirmar que se está ejecutando
+                Console.WriteLine("🚀 [PROGRAM] Iniciando AddInfrastructureServices...");
+                Console.WriteLine("🚀 [PROGRAM] Iniciando AddInfrastructureServices...");
+                Console.WriteLine("🚀 [PROGRAM] Iniciando AddInfrastructureServices...");
+                
                 // En producción/desarrollo: usar Infrastructure completa
                 builder.Services.AddInfrastructureServices(builder.Configuration);
+                
+                // Log para confirmar que se completó
+                Console.WriteLine("✅ [PROGRAM] AddInfrastructureServices completado");
+                Console.WriteLine("✅ [PROGRAM] AddInfrastructureServices completado");
+                Console.WriteLine("✅ [PROGRAM] AddInfrastructureServices completado");
                 
                 // En producción/desarrollo: usar Application Services completa
                 builder.Services.AddApplicationServices(builder.Configuration);

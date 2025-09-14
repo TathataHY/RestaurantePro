@@ -1,0 +1,155 @@
+using Microsoft.AspNetCore.Identity;
+using RestaurantePro.Domain.Core.Base.Events.Handlers;
+using RestaurantePro.Domain.Core.Usuarios.Events.Usuario;
+using RestaurantePro.Infrastructure.Identity.Models;
+
+namespace RestaurantePro.Infrastructure.Identity.EventHandlers
+{
+    /// <summary>
+    /// Manejador de eventos que sincroniza usuarios creados en el dominio con Identity
+    /// </summary>
+    public class UsuarioCreado_SincronizarConIdentityHandler : IDomainEventHandler<UsuarioCreado>
+    {
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogger<UsuarioCreado_SincronizarConIdentityHandler> _logger;
+
+        public UsuarioCreado_SincronizarConIdentityHandler(
+            UserManager<ApplicationUser> userManager,
+            ILogger<UsuarioCreado_SincronizarConIdentityHandler> logger)
+        {
+            _userManager = userManager ?? throw new ArgumentNullException(nameof(userManager));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            
+            // Log para confirmar que el manejador se está construyendo
+            _logger.LogInformation("🔧 [MANEJADOR] UsuarioCreado_SincronizarConIdentityHandler construido e inicializado");
+            Console.WriteLine("🔧 [MANEJADOR] UsuarioCreado_SincronizarConIdentityHandler construido e inicializado");
+            Console.WriteLine("🔧 [MANEJADOR] UsuarioCreado_SincronizarConIdentityHandler construido e inicializado");
+            Console.WriteLine("🔧 [MANEJADOR] UsuarioCreado_SincronizarConIdentityHandler construido e inicializado");
+            
+            // Log extremo para debugging
+            System.Console.Out.WriteLine("🔧 [MANEJADOR] OUT: UsuarioCreado_SincronizarConIdentityHandler construido e inicializado");
+            System.Console.Error.WriteLine("🔧 [MANEJADOR] ERROR: UsuarioCreado_SincronizarConIdentityHandler construido e inicializado");
+            System.Console.Out.WriteLine("🔧 [MANEJADOR] OUT: UsuarioCreado_SincronizarConIdentityHandler construido e inicializado");
+            System.Console.Error.WriteLine("🔧 [MANEJADOR] ERROR: UsuarioCreado_SincronizarConIdentityHandler construido e inicializado");
+            System.Console.Out.WriteLine("🔧 [MANEJADOR] OUT: UsuarioCreado_SincronizarConIdentityHandler construido e inicializado");
+            System.Console.Error.WriteLine("🔧 [MANEJADOR] ERROR: UsuarioCreado_SincronizarConIdentityHandler construido e inicializado");
+        }
+
+        public async Task Handle(UsuarioCreado evento, CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("🚀 [MANEJADOR] EJECUTÁNDOSE: UsuarioCreado_SincronizarConIdentityHandler");
+            Console.WriteLine("🚀 [MANEJADOR] EJECUTÁNDOSE: UsuarioCreado_SincronizarConIdentityHandler");
+            
+            try
+            {
+                _logger.LogInformation("🔄 Creando usuario en Identity: {UsuarioId} - {Email}", evento.UsuarioId, evento.Email);
+                Console.WriteLine($"🔄 Creando usuario en Identity: {evento.UsuarioId} - {evento.Email}");
+
+                // Verificar si el usuario ya existe en Identity
+                var existingUser = await _userManager.FindByEmailAsync(evento.Email);
+                if (existingUser != null)
+                {
+                    _logger.LogWarning("⚠️ Usuario {Email} ya existe en Identity, saltando creación", evento.Email);
+                    Console.WriteLine($"⚠️ Usuario {evento.Email} ya existe en Identity, saltando creación");
+                    return;
+                }
+
+                // Crear nuevo usuario en Identity
+                var identityUser = new ApplicationUser
+                {
+                    UserName = evento.NombreUsuario,
+                    Email = evento.Email,
+                    EmailConfirmed = false, // Requerirá confirmación de email
+                    LockoutEnabled = true,
+                    AccessFailedCount = 0,
+                    // Campos requeridos por la base de datos
+                    Nombre = evento.NombreUsuario, // Usar el nombre de usuario como nombre temporal
+                    Apellidos = "Usuario", // Apellido temporal por defecto
+                    FotoPerfil = "", // Foto de perfil vacía por defecto
+                    RefreshToken = "", // Refresh token vacío por defecto
+                    Activo = evento.Estado == Domain.Core.Usuarios.Enums.EstadoUsuario.Activo,
+                    FechaCreacion = DateTime.UtcNow,
+                    UltimaModificacion = DateTime.UtcNow
+                };
+
+                // Generar contraseña por defecto (similar al seeder)
+                var passwordPorDefecto = GenerarPasswordPorDefecto(evento.NombreUsuario);
+                
+                _logger.LogInformation("🔑 Generando contraseña por defecto para {Email}", evento.Email);
+                Console.WriteLine($"🔑 Generando contraseña por defecto para {evento.Email}");
+
+                // Crear el usuario en Identity
+                var result = await _userManager.CreateAsync(identityUser, passwordPorDefecto);
+                
+                if (result.Succeeded)
+                {
+                    _logger.LogInformation("✅ Usuario creado exitosamente en Identity: {Email}", evento.Email);
+                    Console.WriteLine($"✅ Usuario creado exitosamente en Identity: {evento.Email}");
+                    Console.WriteLine($"🔑 Contraseña por defecto: {passwordPorDefecto}");
+                    
+                    // Asignar rol por defecto basado en el tipo de usuario
+                    await AsignarRolPorDefecto(identityUser, evento.TipoUsuario);
+                }
+                else
+                {
+                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                    _logger.LogError("❌ Error al crear usuario en Identity: {Email} - Errores: {Errors}", evento.Email, errors);
+                    Console.WriteLine($"❌ Error al crear usuario en Identity: {evento.Email} - Errores: {errors}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error inesperado al sincronizar usuario creado con Identity: {Email}", evento.Email);
+                Console.WriteLine($"❌ Error inesperado al sincronizar usuario creado con Identity: {evento.Email} - {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Genera una contraseña por defecto basada en el nombre de usuario
+        /// </summary>
+        private static string GenerarPasswordPorDefecto(string nombreUsuario)
+        {
+            // Lógica similar al seeder de Identity
+            var passwordBase = $"RestaurantePro_{nombreUsuario}2024!";
+            return passwordBase;
+        }
+
+        /// <summary>
+        /// Asigna un rol por defecto basado en el tipo de usuario
+        /// </summary>
+        private async Task AsignarRolPorDefecto(ApplicationUser user, Domain.Core.Usuarios.Enums.TipoUsuario tipoUsuario)
+        {
+            try
+            {
+                string rolPorDefecto = tipoUsuario switch
+                {
+                    Domain.Core.Usuarios.Enums.TipoUsuario.Administrador => "Administrador",
+                    Domain.Core.Usuarios.Enums.TipoUsuario.Gerente => "Gerente",
+                    Domain.Core.Usuarios.Enums.TipoUsuario.Mesero => "Mesero",
+                    Domain.Core.Usuarios.Enums.TipoUsuario.Cocinero => "Cocinero",
+                    Domain.Core.Usuarios.Enums.TipoUsuario.Cajero => "Cajero",
+                    _ => "Empleado"
+                };
+
+                var result = await _userManager.AddToRoleAsync(user, rolPorDefecto);
+                
+                if (result.Succeeded)
+                {
+                    _logger.LogInformation("✅ Rol '{Rol}' asignado exitosamente a usuario {Email}", rolPorDefecto, user.Email);
+                    Console.WriteLine($"✅ Rol '{rolPorDefecto}' asignado exitosamente a usuario {user.Email}");
+                }
+                else
+                {
+                    var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                    _logger.LogWarning("⚠️ Error al asignar rol '{Rol}' a usuario {Email}: {Errors}", rolPorDefecto, user.Email, errors);
+                    Console.WriteLine($"⚠️ Error al asignar rol '{rolPorDefecto}' a usuario {user.Email}: {errors}");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error al asignar rol por defecto a usuario {Email}", user.Email);
+                Console.WriteLine($"❌ Error al asignar rol por defecto a usuario {user.Email}: {ex.Message}");
+            }
+        }
+    }
+}
