@@ -229,6 +229,65 @@
             </tbody>
         </table>
     </div>
+
+    <!-- Controles de Paginación -->
+    @if (usuarios != null && usuarios.Any())
+    {
+        <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-gray-700">
+                    Mostrando <span class="font-medium">@((paginaActual - 1) * tamañoPagina + 1)</span> 
+                    a <span class="font-medium">@Math.Min(paginaActual * tamañoPagina, totalUsuariosPagina)</span> 
+                    de <span class="font-medium">@totalUsuariosPagina</span> usuarios
+                </span>
+                
+                <div class="flex items-center gap-2">
+                    <label class="text-sm text-gray-700">Mostrar:</label>
+                    <select class="rounded-md border-gray-300 text-sm" @onchange="@(async (e) => await CambiarTamañoPaginaAsync(int.Parse(e.Value?.ToString() ?? "10")))">
+                        <option value="5" selected="@(tamañoPagina == 5)">5</option>
+                        <option value="10" selected="@(tamañoPagina == 10)">10</option>
+                        <option value="20" selected="@(tamañoPagina == 20)">20</option>
+                        <option value="50" selected="@(tamañoPagina == 50)">50</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <!-- Botón Anterior -->
+                <button class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        @onclick="PaginaAnteriorAsync" 
+                        disabled="@(paginaActual == 1)">
+                    <span class="material-symbols-outlined text-sm">chevron_left</span>
+                </button>
+
+                <!-- Números de página -->
+                @{
+                    var paginasVisibles = ObtenerPaginasVisibles();
+                }
+                @foreach (var pagina in paginasVisibles)
+                {
+                    if (pagina == -1)
+                    {
+                        <span class="px-3 py-2 text-sm text-gray-500">...</span>
+                    }
+                    else
+                    {
+                        <button class="px-3 py-2 text-sm font-medium rounded-md @(pagina == paginaActual ? "bg-blue-600 text-white" : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50")"
+                                @onclick="@(async () => await IrAPaginaAsync(pagina))">
+                            @pagina
+                        </button>
+                    }
+                }
+
+                <!-- Botón Siguiente -->
+                <button class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        @onclick="PaginaSiguienteAsync" 
+                        disabled="@(paginaActual == totalPaginas)">
+                    <span class="material-symbols-outlined text-sm">chevron_right</span>
+                </button>
+            </div>
+        </div>
+    }
 </div>
 
         <!-- Modal para ver detalles de usuario -->
@@ -339,61 +398,77 @@
                         @if (esCreacion)
                         {
                             <!-- Contraseña Temporal -->
-                            <div>
-                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Contraseña Temporal</h3>
+                            <div class="space-y-6">
+                                <h3 class="text-lg font-semibold text-gray-900">Contraseña Temporal</h3>
+                                
+                                <!-- Información de contraseña temporal -->
                                 <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                                    <div class="flex items-start">
-                                        <span class="material-symbols-outlined text-yellow-600 mr-2">info</span>
+                                    <div class="flex items-start gap-3">
+                                        <span class="material-symbols-outlined text-yellow-600 text-lg">info</span>
                                         <div>
                                             <p class="text-sm text-yellow-800 font-medium">Contraseña temporal</p>
                                             <p class="text-sm text-yellow-700 mt-1">El usuario deberá cambiar esta contraseña en su primer inicio de sesión.</p>
                                         </div>
                                     </div>
-                                    <div class="mt-4 space-y-3">
-                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
-                                                <div class="flex gap-2">
-                                                    <InputText class="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
-                                                               @bind-Value="editCreate.Password" 
-                                                               type="password" 
-                                                               placeholder="Ingresa una contraseña temporal" />
-                                                    <button type="button" 
-                                                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
-                                                            @onclick="GenerarContraseñaTemporal">
-                                                        <span class="material-symbols-outlined text-sm">refresh</span>
-                                                        Generar
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label class="block text-sm font-medium text-gray-700 mb-2">Confirmar Contraseña</label>
-                                                <InputText class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
-                                                           @bind-Value="editCreate.ConfirmarPassword" 
-                                                           type="password" 
-                                                           placeholder="Confirma la contraseña" />
-                                            </div>
+                                </div>
+
+                                <!-- Campos de contraseña -->
+                                <div class="space-y-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <!-- Campo de contraseña -->
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700">Contraseña</label>
+                                            <InputText class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                                       @bind-Value="editCreate.Password" 
+                                                       type="password" 
+                                                       placeholder="Ingresa una contraseña temporal" />
                                         </div>
-                                        <div class="bg-green-50 border border-green-200 rounded-lg p-3">
-                                            <div class="flex items-center justify-between">
-                                                <div class="flex items-center gap-2">
-                                                    <span class="material-symbols-outlined text-green-600 text-sm">key</span>
-                                                    <span class="text-sm text-green-800 font-medium">Contraseña generada:</span>
-                                                </div>
-                                                <button type="button" 
-                                                        class="text-green-600 hover:text-green-800 transition-colors"
-                                                        @onclick="CopiarContraseña"
-                                                        title="Copiar contraseña">
-                                                    <span class="material-symbols-outlined text-sm">content_copy</span>
-                                                </button>
-                                            </div>
-                                            <div class="mt-2">
-                                                <span class="font-mono text-lg font-bold text-green-900 bg-green-100 px-3 py-1 rounded border">@contraseñaSugerida</span>
-                                            </div>
-                                            <p class="text-xs text-green-700 mt-2">Esta contraseña se ha generado automáticamente y es segura para uso temporal.</p>
+                                        
+                                        <!-- Campo de confirmación -->
+                                        <div class="space-y-2">
+                                            <label class="block text-sm font-medium text-gray-700">Confirmar Contraseña</label>
+                                            <InputText class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                                       @bind-Value="editCreate.ConfirmarPassword" 
+                                                       type="password" 
+                                                       placeholder="Confirma la contraseña" />
                                         </div>
                                     </div>
+                                    
+                                    <!-- Botón generar separado -->
+                                    <div class="flex justify-center">
+                                        <button type="button" 
+                                                class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-3 shadow-sm"
+                                                @onclick="GenerarContraseñaTemporal">
+                                            <span class="material-symbols-outlined">refresh</span>
+                                            Generar Contraseña Segura
+                                        </button>
+                                    </div>
                                 </div>
+
+                                <!-- Sección de contraseña generada -->
+                                @if (!string.IsNullOrEmpty(contraseñaSugerida))
+                                {
+                                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 space-y-3">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-2">
+                                                <span class="material-symbols-outlined text-green-600">key</span>
+                                                <span class="text-sm text-green-800 font-medium">Contraseña generada:</span>
+                                            </div>
+                                            <button type="button" 
+                                                    class="text-green-600 hover:text-green-800 transition-colors p-1 rounded hover:bg-green-100"
+                                                    @onclick="CopiarContraseña"
+                                                    title="Copiar contraseña">
+                                                <span class="material-symbols-outlined">content_copy</span>
+                                            </button>
+                                        </div>
+                                        
+                                        <div class="bg-green-100 border border-green-300 rounded-lg p-3">
+                                            <span class="font-mono text-lg font-bold text-green-900 break-all">@contraseñaSugerida</span>
+                                        </div>
+                                        
+                                        <p class="text-xs text-green-700">Esta contraseña se ha generado automáticamente y es segura para uso temporal.</p>
+                                    </div>
+                                }
                             </div>
                         }
                     </div>
@@ -420,10 +495,10 @@
 @if (mostrandoConfirmarEliminar)
 {
     <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="flex items-center justify-center min-h-screen px-4 py-8 text-center sm:block sm:p-0">
             <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @onclick="CerrarConfirmarEliminar"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
                         <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
@@ -463,10 +538,10 @@
 @if (mostrandoConfirmarActivar)
 {
     <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="flex items-center justify-center min-h-screen px-4 py-8 text-center sm:block sm:p-0">
             <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @onclick="CerrarConfirmarActivar"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
                         <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
@@ -495,6 +570,49 @@
                     <button type="button" 
                             class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" 
                             @onclick="CerrarConfirmarActivar">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (mostrandoConfirmarReactivar)
+{
+    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen px-4 py-8 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @onclick="CerrarConfirmarReactivar"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <span class="material-symbols-outlined text-green-600">person_add</span>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                Reactivar Usuario
+                            </h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500">
+                                    ¿Estás seguro de que deseas reactivar al usuario 
+                                    <span class="font-medium text-gray-900">@usuarioAActivar?.NombreCompleto</span>? 
+                                    El usuario podrá acceder nuevamente al sistema.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" 
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm" 
+                            @onclick="ReactivarAsync">
+                        Reactivar
+                    </button>
+                    <button type="button" 
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" 
+                            @onclick="CerrarConfirmarReactivar">
                         Cancelar
                     </button>
                 </div>
@@ -564,6 +682,12 @@
   
   // Contraseña temporal
   private string contraseñaSugerida = string.Empty;
+  
+  // Estado de paginación
+  private int paginaActual = 1;
+  private int tamañoPagina = 10;
+  private int totalUsuariosPagina = 0;
+  private int totalPaginas = 0;
 
   protected override async Task OnInitializedAsync()
   {
@@ -582,42 +706,190 @@
     // Si estadoFiltro está vacío, soloActivos queda null (todos)
     
     usuarios = await UsuariosApi.ObtenerUsuariosAsync(
-      1,
-      20,
+      paginaActual,
+      tamañoPagina,
       string.IsNullOrWhiteSpace(filtro) ? null : filtro,
       soloActivos: soloActivos, // Pasar null para mostrar todos
       rol: string.IsNullOrWhiteSpace(rolFiltro) ? null : rolFiltro
     );
     
-    // Calcular métricas
+    // Calcular métricas y paginación
     if (usuarios != null)
     {
+      // Para métricas, usamos la lista paginada actual
+      // TODO: El backend debería devolver información de paginación completa
       totalUsuarios = usuarios.Count;
       usuariosActivos = usuarios.Count(u => u.Estado == "Activo");
       usuariosInactivos = usuarios.Count(u => u.Estado != "Activo");
       rolesDiferentes = usuarios.Select(u => u.Rol).Distinct().Count();
+      
+      // Calcular paginación temporal
+      // Si recibimos exactamente el tamaño de página, asumimos que hay más usuarios
+      if (usuarios.Count == tamañoPagina)
+      {
+        // Hay más usuarios disponibles
+        totalUsuariosPagina = usuarios.Count + 1; // Mínimo 1 más
+      }
+      else
+      {
+        // Esta es la última página o no hay más usuarios
+        totalUsuariosPagina = usuarios.Count;
+      }
+      
+      totalPaginas = Math.Max(1, (int)Math.Ceiling((double)totalUsuariosPagina / tamañoPagina));
+      
+      // 🔍 DEBUG: Log de variables de paginación
+      Console.WriteLine($"🔍 [PAGINACION DEBUG] paginaActual: {paginaActual}, tamañoPagina: {tamañoPagina}, totalUsuariosPagina: {totalUsuariosPagina}, totalPaginas: {totalPaginas}");
     }
     
     StateHasChanged();
   }
 
-  private Task BuscarAsync() => CargarAsync();
+  private async Task BuscarAsync()
+  {
+    paginaActual = 1; // Resetear a la primera página al buscar
+    await CargarAsync();
+  }
+
+  private async Task ReactivarAsync()
+  {
+    if (usuarioAActivar == null) return;
+    
+    try
+    {
+      // Obtener el ID del usuario actual del DOMINIO para autorización
+      var usuarioAutorizaId = await ObtenerUsuarioCreadorIdDelDominioAsync();
+      
+      if (usuarioAutorizaId == Guid.Empty)
+      {
+        MostrarNotificacion("Error de autenticación: No se puede identificar al usuario actual. Por favor, inicie sesión nuevamente.", false);
+        mostrandoConfirmarReactivar = false;
+        return;
+      }
+
+      // Usar el método ActualizarAsync existente para reactivar el usuario
+      var (actualizado, errorMessage) = await UsuariosApi.ActualizarAsync(usuarioAActivar.Id, new ActualizarUsuarioRequest
+      {
+        Id = usuarioAActivar.Id,
+        Activo = true,
+        UsuarioAutorizaId = usuarioAutorizaId,
+        MotivoActualizacion = "Reactivación de usuario desde Web Administrativa",
+        Prioridad = 1, // Prioridad baja para reactivación
+        RequiereAprobacion = false, // Reactivación no requiere aprobación
+        NotificarUsuario = true,
+        NotificarSupervisor = false,
+        CrearBackup = false, // No crear backup para reactivación
+        InvalidarSesionesActivas = false // No invalidar sesiones para reactivación
+      });
+
+      mostrandoConfirmarReactivar = false;
+      
+      if (actualizado != null)
+      {
+        MostrarNotificacion("Usuario reactivado exitosamente", true);
+        await RefrescarListaAsync();
+      }
+      else
+      {
+        // Mostrar el error de validación al usuario
+        MostrarNotificacion(errorMessage ?? "Error desconocido al reactivar el usuario", false);
+      }
+    }
+    catch (Exception ex)
+    {
+      MostrarNotificacion($"Error al reactivar usuario: {ex.Message}", false);
+      mostrandoConfirmarReactivar = false;
+    }
+  }
 
   private async Task RefrescarListaAsync()
   {
-    // Refrescar la lista sin filtros para mostrar todos los usuarios actualizados
-    usuarios = await UsuariosApi.ObtenerUsuariosAsync(1, 20);
-    
-    // Calcular métricas
-    if (usuarios != null)
+    await CargarAsync();
+  }
+
+  // Métodos de paginación
+  private async Task IrAPaginaAsync(int pagina)
+  {
+    if (pagina >= 1 && pagina <= totalPaginas)
     {
-      totalUsuarios = usuarios.Count;
-      usuariosActivos = usuarios.Count(u => u.Estado == "Activo");
-      usuariosInactivos = usuarios.Count(u => u.Estado != "Activo");
-      rolesDiferentes = usuarios.Select(u => u.Rol).Distinct().Count();
+      paginaActual = pagina;
+      await CargarAsync();
+    }
+  }
+
+  private async Task CambiarTamañoPaginaAsync(int nuevoTamaño)
+  {
+    tamañoPagina = nuevoTamaño;
+    paginaActual = 1; // Volver a la primera página
+    await CargarAsync();
+  }
+
+  private async Task PaginaAnteriorAsync()
+  {
+    if (paginaActual > 1)
+    {
+      await IrAPaginaAsync(paginaActual - 1);
+    }
+  }
+
+  private async Task PaginaSiguienteAsync()
+  {
+    if (paginaActual < totalPaginas)
+    {
+      await IrAPaginaAsync(paginaActual + 1);
+    }
+  }
+
+  private List<int> ObtenerPaginasVisibles()
+  {
+    var paginas = new List<int>();
+    
+    if (totalPaginas <= 7)
+    {
+      // Si hay 7 páginas o menos, mostrar todas
+      for (int i = 1; i <= totalPaginas; i++)
+      {
+        paginas.Add(i);
+      }
+    }
+    else
+    {
+      // Lógica para mostrar páginas con puntos suspensivos
+      if (paginaActual <= 4)
+      {
+        // Mostrar primeras páginas
+        for (int i = 1; i <= 5; i++)
+        {
+          paginas.Add(i);
+        }
+        paginas.Add(-1); // Puntos suspensivos
+        paginas.Add(totalPaginas);
+      }
+      else if (paginaActual >= totalPaginas - 3)
+      {
+        // Mostrar últimas páginas
+        paginas.Add(1);
+        paginas.Add(-1); // Puntos suspensivos
+        for (int i = totalPaginas - 4; i <= totalPaginas; i++)
+        {
+          paginas.Add(i);
+        }
+      }
+      else
+      {
+        // Mostrar páginas alrededor de la actual
+        paginas.Add(1);
+        paginas.Add(-1); // Puntos suspensivos
+        for (int i = paginaActual - 1; i <= paginaActual + 1; i++)
+        {
+          paginas.Add(i);
+        }
+        paginas.Add(-1); // Puntos suspensivos
+        paginas.Add(totalPaginas);
+      }
     }
     
-    StateHasChanged();
+    return paginas;
   }
   
   private async Task OnFiltroChanged(KeyboardEventArgs e)

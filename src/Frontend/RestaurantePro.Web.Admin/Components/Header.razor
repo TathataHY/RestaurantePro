@@ -1,0 +1,185 @@
+@using RestaurantePro.Web.Admin.Auth
+@inject IJSRuntime JSRuntime
+@inject JwtAuthenticationStateProvider AuthState
+@inject NavigationManager Nav
+
+<header class="modern-header">
+    <div class="header-container">
+        <!-- Logo y título -->
+        <div class="header-brand">
+            <svg class="header-logo" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7V17L12 22L22 17V7L12 2Z" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                <path d="M2 7L12 12L22 7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                <path d="M12 22V12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            </svg>
+            <h1 class="header-title">RestaurantePro</h1>
+        </div>
+
+        <!-- Controles del header -->
+        <div class="header-controls">
+            <!-- Toggle de tema -->
+            <button class="theme-toggle @(isDarkMode ? "active" : "")" @onclick="ToggleTheme" title="Cambiar tema">
+                <span class="material-symbols-outlined light-icon">light_mode</span>
+                <span class="material-symbols-outlined dark-icon">dark_mode</span>
+            </button>
+
+            <!-- Información del usuario -->
+            @if (isAuthenticated)
+            {
+                <div class="user-info">
+                    <div class="user-avatar">
+                        @if (!string.IsNullOrEmpty(userName))
+                        {
+                            <span class="user-initial">@userName.Substring(0, 1).ToUpper()</span>
+                        }
+                        else
+                        {
+                            <span class="material-symbols-outlined">person</span>
+                        }
+                    </div>
+                    <div class="user-details">
+                        <span class="user-name">@userName</span>
+                        <span class="user-role">@GetUserRole()</span>
+                    </div>
+                </div>
+
+                <!-- Menú de usuario -->
+                <div class="user-menu">
+                    <button class="user-menu-toggle" @onclick="ToggleUserMenu">
+                        <span class="material-symbols-outlined">more_vert</span>
+                    </button>
+                    
+                    @if (showUserMenu)
+                    {
+                        <div class="user-menu-dropdown">
+                            <a href="#" class="user-menu-item">
+                                <span class="material-symbols-outlined">person</span>
+                                Mi Perfil
+                            </a>
+                            <a href="#" class="user-menu-item">
+                                <span class="material-symbols-outlined">settings</span>
+                                Configuración
+                            </a>
+                            <div class="user-menu-divider"></div>
+                            <button class="user-menu-item logout-item" @onclick="Logout">
+                                <span class="material-symbols-outlined">logout</span>
+                                Cerrar Sesión
+                            </button>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <a href="login" class="login-link">
+                    <span class="material-symbols-outlined">login</span>
+                    Iniciar Sesión
+                </a>
+            }
+        </div>
+    </div>
+</header>
+
+@code {
+    private bool isDarkMode = false;
+    private bool isAuthenticated = false;
+    private string userName = string.Empty;
+    private bool showUserMenu = false;
+    private string userRole = string.Empty;
+
+    [CascadingParameter] private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Cargar preferencia de tema desde localStorage
+        await LoadThemePreference();
+        
+        // Cargar estado de autenticación
+        await LoadAuthState();
+    }
+
+    private async Task LoadThemePreference()
+    {
+        try
+        {
+            var theme = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "theme");
+            isDarkMode = theme == "dark";
+            await ApplyTheme();
+        }
+        catch
+        {
+            isDarkMode = false;
+        }
+    }
+
+    private async Task LoadAuthState()
+    {
+        var authState = await AuthenticationStateTask;
+        var user = authState.User;
+        isAuthenticated = user.Identity?.IsAuthenticated ?? false;
+        userName = isAuthenticated ? user.Identity?.Name ?? "" : string.Empty;
+        
+        // Obtener rol del usuario
+        if (isAuthenticated)
+        {
+            userRole = user.IsInRole("Administrador") ? "Administrador" :
+                      user.IsInRole("Gerente") ? "Gerente" :
+                      user.IsInRole("Mesero") ? "Mesero" :
+                      user.IsInRole("Cocinero") ? "Cocinero" : "Usuario";
+        }
+    }
+
+    private async Task ToggleTheme()
+    {
+        isDarkMode = !isDarkMode;
+        await ApplyTheme();
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "theme", isDarkMode ? "dark" : "light");
+    }
+
+    private async Task ApplyTheme()
+    {
+        if (isDarkMode)
+        {
+            await JSRuntime.InvokeVoidAsync("document.body.setAttribute", "data-theme", "dark");
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("document.body.setAttribute", "data-theme", "light");
+        }
+    }
+
+    private void ToggleUserMenu()
+    {
+        showUserMenu = !showUserMenu;
+    }
+
+    private async Task Logout()
+    {
+        await AuthState.LogoutAsync();
+        Nav.NavigateTo("/login", true);
+    }
+
+    private string GetUserRole()
+    {
+        return userRole;
+    }
+
+    // Cerrar menú al hacer clic fuera
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("eval", @"
+                document.addEventListener('click', function(e) {
+                    const userMenu = document.querySelector('.user-menu');
+                    const userMenuToggle = document.querySelector('.user-menu-toggle');
+                    const userMenuDropdown = document.querySelector('.user-menu-dropdown');
+                    
+                    if (userMenu && userMenuDropdown && !userMenu.contains(e.target)) {
+                        userMenuDropdown.style.display = 'none';
+                    }
+                });
+            ");
+        }
+    }
+}

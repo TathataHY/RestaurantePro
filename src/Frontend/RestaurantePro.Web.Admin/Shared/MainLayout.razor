@@ -1,4 +1,5 @@
 ﻿@inherits LayoutComponentBase
+@using RestaurantePro.Web.Admin.Components
 
 <PageTitle>RestaurantePro Admin</PageTitle>
 
@@ -8,17 +9,8 @@
     </div>
 
     <main class="main-content">
-        <div class="top-row">
-            <div class="d-flex align-items-center gap-3">
-                <h1 class="h4 mb-0 fw-bold text-primary">RestaurantePro Admin</h1>
-                <div class="d-flex align-items-center gap-2">
-                    <small class="text-muted">@DateTime.Now.ToString("dddd, dd MMMM yyyy")</small>
-                    <button class="theme-toggle @(isDarkMode ? "active" : "")" @onclick="ToggleTheme" title="Cambiar tema">
-                    </button>
-                </div>
-            </div>
-        </div>
-
+        <RestaurantePro.Web.Admin.Components.Header />
+        
         <article class="content">
             @Body
         </article>
@@ -26,41 +18,5 @@
 </div>
 
 @code {
-    private bool isDarkMode = false;
-
-    protected override async Task OnInitializedAsync()
-    {
-        // Cargar preferencia de tema desde localStorage
-        LoadThemePreference();
-    }
-
-    private void LoadThemePreference()
-    {
-        // Aquí podrías cargar la preferencia desde localStorage
-        // Por ahora usamos el tema claro por defecto
-        isDarkMode = false;
-        StateHasChanged();
-    }
-
-    private async Task ToggleTheme()
-    {
-        isDarkMode = !isDarkMode;
-        
-        // Aplicar tema al body
-        if (isDarkMode)
-        {
-            await JSRuntime.InvokeVoidAsync("document.body.setAttribute", "data-theme", "dark");
-        }
-        else
-        {
-            await JSRuntime.InvokeVoidAsync("document.body.setAttribute", "data-theme", "light");
-        }
-        
-        // Guardar preferencia (opcional)
-        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "theme", isDarkMode ? "dark" : "light");
-        
-        StateHasChanged();
-    }
-
-    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+    // El header ahora maneja toda la funcionalidad de tema y autenticación
 }

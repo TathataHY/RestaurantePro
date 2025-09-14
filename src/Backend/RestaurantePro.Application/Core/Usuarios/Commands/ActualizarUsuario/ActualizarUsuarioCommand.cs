@@ -404,11 +404,18 @@ public class ActualizarUsuarioCommand : IRequest<Result<UsuarioDto>>
     /// </summary>
     public bool TieneCambiosCriticos()
     {
-        return !string.IsNullOrWhiteSpace(Rol) ||
-               NivelAcceso.HasValue ||
-               Activo == false ||
-               SalarioBase.HasValue ||
-               PermisosEspecificos.Any();
+        var esCritico = !string.IsNullOrWhiteSpace(Rol) ||
+                       (NivelAcceso.HasValue && NivelAcceso != 1) || // Solo cambios de NivelAcceso diferentes a 1 son críticos
+                       Activo == false || // Solo la desactivación es crítica, la reactivación no
+                       SalarioBase.HasValue ||
+                       PermisosEspecificos.Any();
+        
+        // 🔍 DEBUG: Log para identificar qué está causando que sea crítico
+        Console.WriteLine($"🔍 [DEBUG TieneCambiosCriticos] UsuarioId: {UsuarioId}, EsCritico: {esCritico}");
+        Console.WriteLine($"🔍 [DEBUG] Rol: '{Rol}', NivelAcceso: {NivelAcceso}, Activo: {Activo}, SalarioBase: {SalarioBase}");
+        Console.WriteLine($"🔍 [DEBUG] RequiereAprobacion: {RequiereAprobacion}");
+        
+        return esCritico;
     }
 
     /// <summary>
