@@ -18,10 +18,11 @@ public class DashboardMetricasDto
     public int ComandasActivas { get; set; }
     public int ComandasCompletadas { get; set; }
     public int ProductosVendidosHoy { get; set; }
-    public int ClientesAtendidosHoy { get; set; }
-    public decimal PromedioTicket { get; set; }
-    public decimal CrecimientoVentas { get; set; }
-    public DateTime UltimaActualizacion { get; set; }
+        public int ClientesAtendidosHoy { get; set; }
+        public decimal PromedioTicket { get; set; }
+        public int TiempoPromedio { get; set; } // en minutos
+        public decimal CrecimientoVentas { get; set; }
+        public DateTime UltimaActualizacion { get; set; }
 }
 
 /// <summary>
@@ -44,7 +45,7 @@ public class DashboardProductoMasVendidoDto
 public class DashboardVentaPorPeriodoDto
 {
     public DateTime Fecha { get; set; }
-    public decimal Ventas { get; set; }
+    public decimal Monto { get; set; } // Cambiado para coincidir con el frontend
     public int CantidadFacturas { get; set; }
 }
 
@@ -79,8 +80,18 @@ public class DashboardComandasPorEstadoDto
 public class DashboardIngresosPorHoraDto
 {
     public int Hora { get; set; }
-    public decimal Ingresos { get; set; }
+    public decimal Monto { get; set; } // Cambiado para coincidir con el frontend
     public int CantidadFacturas { get; set; }
+}
+
+/// <summary>
+/// DTO para ingresos por categoría del dashboard
+/// </summary>
+public class DashboardIngresosPorCategoriaDto
+{
+    public string Categoria { get; set; } = string.Empty;
+    public decimal Monto { get; set; }
+    public decimal Porcentaje { get; set; }
 }
 
 /// <summary>
@@ -94,5 +105,6 @@ public class DashboardResumenDto
     public DashboardEstadoMesasDto EstadoMesas { get; set; } = new();
     public DashboardComandasPorEstadoDto ComandasPorEstado { get; set; } = new();
     public List<DashboardIngresosPorHoraDto> IngresosPorHora { get; set; } = new();
+    public List<DashboardIngresosPorCategoriaDto> IngresosPorCategoria { get; set; } = new();
     public DateTime UltimaActualizacion { get; set; }
 }

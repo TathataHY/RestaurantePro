@@ -404,9 +404,10 @@
                 
                 // Logs de datos de gráficos
                 Console.WriteLine("=== 📊 DATOS DE GRÁFICOS ===");
-                Console.WriteLine($"📈 Ventas Últimos 7 Días: {resumen.VentasUltimos7Dias?.Count ?? 0} elementos");
+                Console.WriteLine($"📈 Ventas Últimos 7 Días: {resumen.VentasPorPeriodo?.Count ?? 0} elementos");
                 Console.WriteLine($"📈 Ingresos por Hora: {resumen.IngresosPorHora?.Count ?? 0} elementos");
                 Console.WriteLine($"🏆 Productos Más Vendidos: {resumen.ProductosMasVendidos?.Count ?? 0} elementos");
+                Console.WriteLine($"🏷️ Ingresos por Categoría: {resumen.IngresosPorCategoria?.Count ?? 0} elementos");
                 Console.WriteLine($"🍽️ Estados de Mesas: {resumen.EstadoMesas?.Ocupadas ?? 0} ocupadas, {resumen.EstadoMesas?.Disponibles ?? 0} disponibles");
                 Console.WriteLine($"📋 Comandas por Estado: Pendientes={resumen.ComandasPorEstado?.Pendientes ?? 0}, EnPreparacion={resumen.ComandasPorEstado?.EnPreparacion ?? 0}, Listas={resumen.ComandasPorEstado?.Listas ?? 0}, Completadas={resumen.ComandasPorEstado?.Completadas ?? 0}");
                 Console.WriteLine("=== 🔚 FIN DATOS RECIBIDOS ===");
@@ -644,24 +645,29 @@
             }
 
             // Crear gráfico de ventas por hora
-            var datosVentasHora = resumen.IngresosPorHora.Select(i => new { 
-                hora = i.Hora, 
+            var datosVentasHora = resumen.IngresosPorHora?.Select(i => new { 
+                hora = i.Hora.ToString("00"), 
                 monto = (double)i.Monto 
-            }).ToArray();
+            }).ToArray() ?? new object[0];
             
             Console.WriteLine($"Creando gráfico de ventas por hora con {datosVentasHora.Length} datos");
+            Console.WriteLine($"📊 DEBUG: IngresosPorHora datos: {System.Text.Json.JsonSerializer.Serialize(resumen.IngresosPorHora)}");
             await JSRuntime.InvokeVoidAsync("eval", $@"
                 window.graficoVentasHora = window.dashboardCharts.crearGraficoVentasHora('graficoVentasHora', {System.Text.Json.JsonSerializer.Serialize(datosVentasHora)});
             ");
 
-            // Crear gráfico de ingresos por categoría (datos de ejemplo)
-            var datosCategorias = new[] {
-                new { categoria = "Entradas", porcentaje = 25, color = "#3b82f6" },
-                new { categoria = "Platos Principales", porcentaje = 60, color = "#8b5cf6" },
-                new { categoria = "Postres", porcentaje = 15, color = "#10b981" }
-            };
+                // Crear gráfico de ingresos por categoría (datos reales del backend)
+                var coloresCategorias = new[] { "#ef4444", "#10b981", "#f59e0b", "#3b82f6", "#8b5cf6", "#06b6d4", "#84cc16", "#f97316" };
+                var datosCategorias = resumen.IngresosPorCategoria?.Select((c, index) => new { 
+                    categoria = c.Categoria, 
+                    porcentaje = (double)c.Porcentaje,
+                    monto = (double)c.Monto,
+                    color = coloresCategorias[index % coloresCategorias.Length]
+                }).ToArray() ?? new object[0];
             
-            Console.WriteLine("Creando gráfico de ingresos por categoría");
+            Console.WriteLine($"Creando gráfico de ingresos por categoría con {datosCategorias.Length} categorías");
+            Console.WriteLine($"📊 DEBUG: IngresosPorCategoria datos: {System.Text.Json.JsonSerializer.Serialize(datosCategorias)}");
+            
             await JSRuntime.InvokeVoidAsync("eval", $@"
                 window.graficoIngresosCategoria = window.dashboardCharts.crearGraficoIngresosCategoria('graficoIngresosCategoria', {System.Text.Json.JsonSerializer.Serialize(datosCategorias)});
             ");

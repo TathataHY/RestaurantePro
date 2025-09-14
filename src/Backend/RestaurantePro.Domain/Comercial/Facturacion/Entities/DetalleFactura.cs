@@ -1,3 +1,5 @@
+using RestaurantePro.Domain.Core.Productos.Entities;
+
 namespace RestaurantePro.Domain.Comercial.Facturacion.Entities
 {
     /// <summary>
@@ -14,6 +16,11 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Entities
         /// Identificador del producto o servicio
         /// </summary>
         public Guid ProductoId { get; private set; }
+
+        /// <summary>
+        /// Navegación al producto
+        /// </summary>
+        public Producto? Producto { get; private set; }
 
         /// <summary>
         /// Descripción del producto o servicio

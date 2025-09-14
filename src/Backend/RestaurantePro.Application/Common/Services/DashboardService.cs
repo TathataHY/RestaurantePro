@@ -48,6 +48,7 @@ public class DashboardService : IDashboardService
             var estadoMesas = await ObtenerEstadoMesasAsync();
             var comandasPorEstado = await ObtenerComandasPorEstadoAsync(periodo, turno);
             var ingresosPorHora = await ObtenerIngresosPorHoraAsync(periodo, turno);
+            var ingresosPorCategoria = await ObtenerIngresosPorCategoriaAsync(periodo, turno);
 
             return new DashboardResumenDto
             {
@@ -57,6 +58,7 @@ public class DashboardService : IDashboardService
                 EstadoMesas = estadoMesas,
                 ComandasPorEstado = comandasPorEstado,
                 IngresosPorHora = ingresosPorHora,
+                IngresosPorCategoria = ingresosPorCategoria,
                 UltimaActualizacion = DateTime.Now
             };
         }
@@ -113,7 +115,7 @@ public class DashboardService : IDashboardService
             var ventasTotalDia = await CalcularVentasTotalDia();
 
             // Calcular métricas faltantes
-            var (productosVendidosHoy, clientesAtendidosHoy, promedioTicket) = await CalcularMetricasAdicionales(facturas, turno);
+            var (productosVendidosHoy, clientesAtendidosHoy, promedioTicket, tiempoPromedio) = await CalcularMetricasAdicionales(facturas, turno);
             var mesasDisponibles = mesas.Count() - mesasOcupadas;
             var comandasCompletadas = comandas.Count(c => c.Estado == EstadoComanda.Entregada);
 
@@ -135,6 +137,7 @@ public class DashboardService : IDashboardService
                 ProductosVendidosHoy = productosVendidosHoy,
                 ClientesAtendidosHoy = clientesAtendidosHoy,
                 PromedioTicket = promedioTicket,
+                TiempoPromedio = tiempoPromedio,
                 CrecimientoVentas = crecimientoVentas,
                 UltimaActualizacion = DateTime.Now
             };
@@ -194,11 +197,23 @@ public class DashboardService : IDashboardService
 
         try
         {
-            // Para ventas por período, siempre usar los últimos N días desde hoy hacia atrás
-            var fechaFin = DateTime.Today.AddDays(1).AddTicks(-1); // Final del día de hoy
-            var fechaInicio = fechaFin.AddDays(-dias + 1).Date; // Inicio de los últimos N días
+            // Calcular fechas según el período solicitado
+            var (fechaInicio, fechaFin) = CalcularRangoFechas(periodo);
             
-            _logger.LogInformation("🔍 DEBUG: Ventas por período - Fecha inicio: {FechaInicio}, Fecha fin: {FechaFin}", fechaInicio, fechaFin);
+            // Si el período es específico (hoy, ayer, etc.), usar solo ese día
+            // Si no, usar los últimos N días desde hoy hacia atrás
+            if (periodo == "hoy" || periodo == "ayer" || periodo == "semana" || periodo == "mes")
+            {
+                // Para períodos específicos, usar solo ese período
+                _logger.LogInformation("🔍 DEBUG: Ventas por período específico - Fecha inicio: {FechaInicio}, Fecha fin: {FechaFin}", fechaInicio, fechaFin);
+            }
+            else
+            {
+                // Para otros casos, usar los últimos N días desde hoy hacia atrás
+                fechaFin = DateTime.Today.AddDays(1).AddTicks(-1); // Final del día de hoy
+                fechaInicio = fechaFin.AddDays(-dias + 1).Date; // Inicio de los últimos N días
+                _logger.LogInformation("🔍 DEBUG: Ventas por período - Últimos {Dias} días - Fecha inicio: {FechaInicio}, Fecha fin: {FechaFin}", dias, fechaInicio, fechaFin);
+            }
             
             var (horaInicio, horaFin) = CalcularRangoHoras(turno);
 
@@ -211,7 +226,32 @@ public class DashboardService : IDashboardService
 
             var ventasPorDia = new List<DashboardVentaPorPeriodoDto>();
 
-            for (int i = 0; i < dias; i++)
+            // Determinar cuántos días procesar según el período
+            int diasAProcesar;
+            if (periodo == "hoy")
+            {
+                diasAProcesar = 1; // Solo el día de hoy
+            }
+            else if (periodo == "ayer")
+            {
+                diasAProcesar = 1; // Solo el día de ayer
+            }
+            else if (periodo == "semana")
+            {
+                diasAProcesar = 7; // Últimos 7 días
+            }
+            else if (periodo == "mes")
+            {
+                diasAProcesar = 30; // Últimos 30 días
+            }
+            else
+            {
+                diasAProcesar = dias; // Usar el parámetro dias
+            }
+
+            _logger.LogInformation("🔍 DEBUG: Procesando {DiasAProcesar} días para período '{Periodo}'", diasAProcesar, periodo);
+
+            for (int i = 0; i < diasAProcesar; i++)
             {
                 var fecha = fechaInicio.AddDays(i);
                 var fechaInicioDia = fecha.Date.AddHours(horaInicio);
@@ -227,7 +267,7 @@ public class DashboardService : IDashboardService
                 ventasPorDia.Add(new DashboardVentaPorPeriodoDto
                 {
                     Fecha = fecha,
-                    Ventas = ventasDia
+                    Monto = ventasDia
                 });
             }
 
@@ -254,7 +294,7 @@ public class DashboardService : IDashboardService
                 Disponibles = mesas.Count(m => m.Estado == EstadoMesa.Disponible),
                 Ocupadas = mesas.Count(m => m.Estado == EstadoMesa.Ocupada),
                 Reservadas = mesas.Count(m => m.Estado == EstadoMesa.Reservada),
-                EnLimpieza = mesas.Count(m => m.Estado == EstadoMesa.EnLimpieza),
+                EnLimpieza = mesas.Count(m => m.Estado == EstadoMesa.FueraDeServicio), // Mapear FueraDeServicio a EnLimpieza para el frontend
                 Total = mesas.Count()
             };
         }
@@ -321,7 +361,7 @@ public class DashboardService : IDashboardService
             for (int hora = horaInicio; hora < horaFin; hora++)
             {
                 var horaInicioActual = fechaInicio.Date.AddHours(hora);
-                var horaFinActual = fechaInicio.Date.AddHours(hora + 1);
+                var horaFinActual = fechaInicio.Date.AddHours(hora + 1).AddTicks(-1); // Incluir solo hasta 59:59.9999999
 
                 var facturas = await _facturaRepository.ObtenerPorRangoFechasAsync(horaInicioActual, horaFinActual);
                 var ingresos = facturas.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
@@ -329,7 +369,7 @@ public class DashboardService : IDashboardService
                 ingresosPorHora.Add(new DashboardIngresosPorHoraDto
                 {
                     Hora = hora,
-                    Ingresos = ingresos
+                    Monto = ingresos
                 });
             }
 
@@ -511,7 +551,7 @@ public class DashboardService : IDashboardService
                     // Contar productos vendidos
                     if (factura.Detalles != null)
                     {
-                        productosVendidosHoy += factura.Detalles.Sum(d => d.Cantidad);
+                        productosVendidosHoy += (int)factura.Detalles.Sum(d => d.Cantidad);
                         _logger.LogInformation("🔍 DEBUG: Factura {Id} - Detalles: {DetallesCount}, Cantidad total: {CantidadTotal}", 
                             factura.Id, factura.Detalles.Count, factura.Detalles.Sum(d => d.Cantidad));
                     }
@@ -531,16 +571,113 @@ public class DashboardService : IDashboardService
             var clientesAtendidosHoy = clientesUnicos.Count;
             var promedioTicket = cantidadFacturas > 0 ? totalVentas / cantidadFacturas : 0;
 
-            _logger.LogInformation("🔍 DEBUG: Resultados - ProductosVendidosHoy: {ProductosVendidosHoy}, ClientesAtendidosHoy: {ClientesAtendidosHoy}, PromedioTicket: {PromedioTicket}", 
-                productosVendidosHoy, clientesAtendidosHoy, promedioTicket);
+            // Calcular tiempo promedio de comandas (en minutos)
+            var tiempoPromedio = await CalcularTiempoPromedioComandasAsync(periodo, turno);
 
-            return (productosVendidosHoy, clientesAtendidosHoy, promedioTicket);
+            _logger.LogInformation("🔍 DEBUG: Resultados - ProductosVendidosHoy: {ProductosVendidosHoy}, ClientesAtendidosHoy: {ClientesAtendidosHoy}, PromedioTicket: {PromedioTicket}, TiempoPromedio: {TiempoPromedio}", 
+                productosVendidosHoy, clientesAtendidosHoy, promedioTicket, tiempoPromedio);
+
+            return (productosVendidosHoy, clientesAtendidosHoy, promedioTicket, tiempoPromedio);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Error al calcular métricas adicionales");
-            return (0, 0, 0);
+            return (0, 0, 0, 0);
         }
+    }
+
+    private async Task<int> CalcularTiempoPromedioComandasAsync(string periodo, string turno)
+    {
+        try
+        {
+            _logger.LogInformation("⏱️ Calculando tiempo promedio de comandas - Período: {Periodo}, Turno: {Turno}", periodo, turno);
+            
+            var (fechaInicio, fechaFin) = CalcularRangoFechas(periodo);
+            var comandas = await _comandaRepository.ObtenerPorRangoFechasAsync(fechaInicio, fechaFin);
+            
+            // Filtrar por turno si no es "todos"
+            if (turno != "todos")
+            {
+                var (horaInicio, horaFin) = CalcularRangoHoras(turno);
+                comandas = comandas.Where(c => 
+                    c.FechaCreacion.Hour >= horaInicio && 
+                    c.FechaCreacion.Hour < horaFin).ToList();
+            }
+            
+            if (!comandas.Any())
+            {
+                _logger.LogInformation("⏱️ No hay comandas para calcular tiempo promedio");
+                return 0;
+            }
+            
+            var tiempoTotalMinutos = comandas.Sum(c => 
+                (int)(c.FechaActualizacion - c.FechaCreacion).TotalMinutes);
+            
+            var tiempoPromedio = tiempoTotalMinutos / comandas.Count();
+            
+            _logger.LogInformation("⏱️ Tiempo promedio calculado - Total comandas: {TotalComandas}, Tiempo total: {TiempoTotal} min, Tiempo promedio: {TiempoPromedio} min", 
+                comandas.Count(), tiempoTotalMinutos, tiempoPromedio);
+            
+            return tiempoPromedio;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error al calcular tiempo promedio de comandas");
+            return 0;
+        }
+    }
+
+    private async Task<List<DashboardIngresosPorCategoriaDto>> ObtenerIngresosPorCategoriaAsync(string periodo, string turno)
+    {
+        _logger.LogInformation("🏷️ Obteniendo ingresos por categoría - Período: {Periodo}, Turno: {Turno}", periodo, turno);
+        
+        var (fechaInicio, fechaFin) = CalcularRangoFechas(periodo);
+        var facturas = await _facturaRepository.ObtenerPorRangoFechasAsync(fechaInicio, fechaFin);
+        
+        // Filtrar por turno si no es "todos"
+        if (turno != "todos")
+        {
+            var (horaInicio, horaFin) = CalcularRangoHoras(turno);
+            facturas = facturas.Where(f => 
+                f.FechaEmision.Hour >= horaInicio && 
+                f.FechaEmision.Hour < horaFin).ToList();
+        }
+        
+        // Filtrar solo facturas pagadas
+        var facturasPagadas = facturas.Where(f => f.Estado == EstadoFactura.Pagada).ToList();
+        
+        // Agrupar por categoría de productos
+        var ingresosPorCategoria = new Dictionary<string, decimal>();
+        
+        foreach (var factura in facturasPagadas)
+        {
+            // Obtener detalles de la factura con productos
+            var detalles = await _facturaRepository.ObtenerDetallesConProductosAsync(factura.Id);
+            
+            foreach (var detalle in detalles)
+            {
+                var categoria = detalle.Producto?.CategoriaNombre ?? "Sin Categoría";
+                var monto = detalle.PrecioUnitario * detalle.Cantidad;
+                
+                if (ingresosPorCategoria.ContainsKey(categoria))
+                    ingresosPorCategoria[categoria] += monto;
+                else
+                    ingresosPorCategoria[categoria] = monto;
+            }
+        }
+        
+                    // Convertir a DTO
+                    var resultado = ingresosPorCategoria.Select(kvp => new DashboardIngresosPorCategoriaDto
+                    {
+                        Categoria = kvp.Key,
+                        Monto = kvp.Value,
+                        Porcentaje = facturasPagadas.Sum(f => f.Total) > 0 ? 
+                            Math.Round((kvp.Value / facturasPagadas.Sum(f => f.Total)) * 100, 1) : 0
+                    }).OrderByDescending(x => x.Monto).ToList();
+        
+        _logger.LogInformation("🏷️ Ingresos por categoría completados - Total categorías: {Count}", resultado.Count);
+        
+        return resultado;
     }
 
     #endregion

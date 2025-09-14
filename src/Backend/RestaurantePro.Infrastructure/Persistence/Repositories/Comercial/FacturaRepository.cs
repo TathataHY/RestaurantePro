@@ -188,5 +188,16 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Comercial
                 }
             }
         }
+
+        /// <summary>
+        /// Obtiene los detalles de una factura con información de productos
+        /// </summary>
+        public async Task<IEnumerable<DetalleFactura>> ObtenerDetallesConProductosAsync(Guid facturaId, CancellationToken cancellationToken = default)
+        {
+            return await _dbContext.Set<DetalleFactura>()
+                .Include(d => d.Producto)
+                .Where(d => d.FacturaId == facturaId)
+                .ToListAsync(cancellationToken);
+        }
     }
 } 

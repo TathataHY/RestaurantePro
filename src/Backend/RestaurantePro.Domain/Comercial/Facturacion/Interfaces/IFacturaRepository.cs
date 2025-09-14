@@ -92,5 +92,13 @@ namespace RestaurantePro.Domain.Comercial.Facturacion.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Task completado cuando se recargan los detalles</returns>
         Task RecargarDetallesAsync(Guid facturaId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene los detalles de una factura con información de productos
+        /// </summary>
+        /// <param name="facturaId">Identificador de la factura</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Lista de detalles de factura con productos</returns>
+        Task<IEnumerable<DetalleFactura>> ObtenerDetallesConProductosAsync(Guid facturaId, CancellationToken cancellationToken = default);
     }
 } 

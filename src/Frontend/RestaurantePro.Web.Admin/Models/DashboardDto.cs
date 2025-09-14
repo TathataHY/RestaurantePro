@@ -84,14 +84,25 @@ public class IngresosPorHoraDto
 }
 
 /// <summary>
+/// DTO para ingresos por categoría
+/// </summary>
+public class IngresosPorCategoriaDto
+{
+    public string Categoria { get; set; } = string.Empty;
+    public decimal Monto { get; set; }
+    public decimal Porcentaje { get; set; }
+}
+
+/// <summary>
 /// DTO para resumen de dashboard
 /// </summary>
 public class DashboardResumenDto
 {
     public DashboardMetricasDto Metricas { get; set; } = new();
     public List<ProductoMasVendidoDto> ProductosMasVendidos { get; set; } = new();
-    public List<VentaPorPeriodoDto> VentasUltimos7Dias { get; set; } = new();
+    public List<VentaPorPeriodoDto> VentasPorPeriodo { get; set; } = new(); // Cambiado para coincidir con el backend
     public EstadoMesasDto EstadoMesas { get; set; } = new();
     public ComandasPorEstadoDto ComandasPorEstado { get; set; } = new();
     public List<IngresosPorHoraDto> IngresosPorHora { get; set; } = new();
+    public List<IngresosPorCategoriaDto> IngresosPorCategoria { get; set; } = new();
 }
