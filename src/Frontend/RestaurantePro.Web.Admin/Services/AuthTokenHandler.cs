@@ -9,6 +9,8 @@ public class AuthData
     public string Expiration { get; set; } = string.Empty;
     public string? RefreshToken { get; set; }
     public string? UserName { get; set; }
+    public string? UserId { get; set; }
+    public string? DomainUserId { get; set; }
     public string[]? Roles { get; set; }
 }
 
@@ -67,6 +69,8 @@ public class AuthTokenHandler : DelegatingHandler
                     refreshResult.Expiration,
                     refreshResult.RefreshToken,
                     _tokenStore.UserName,
+                    _tokenStore.UserId,
+                    _tokenStore.DomainUserId,
                     _tokenStore.Roles
                 );
 
@@ -111,6 +115,8 @@ public class TokenStore
     public DateTime Expiration { get; set; }
     public string? RefreshToken { get; set; }
     public string UserName { get; set; } = string.Empty;
+    public string UserId { get; set; } = string.Empty;
+    public string? DomainUserId { get; set; }
     public List<string> Roles { get; set; } = new();
     public bool IsAuthenticated => !string.IsNullOrWhiteSpace(Token) && Expiration > DateTime.UtcNow;
 
@@ -144,9 +150,12 @@ public class TokenStore
                 }
                 RefreshToken = authData.RefreshToken;
                 UserName = authData.UserName ?? string.Empty;
+                UserId = authData.UserId ?? string.Empty;
+                DomainUserId = authData.DomainUserId;
                 Roles = authData.Roles?.ToList() ?? new List<string>();
                 
                 Console.WriteLine($"TokenStore: Token cargado - Token: {!string.IsNullOrWhiteSpace(Token)}");
+                Console.WriteLine($"TokenStore: UserId cargado: '{UserId}'");
                 Console.WriteLine($"TokenStore: Expiration: {Expiration:yyyy-MM-dd HH:mm:ss} UTC");
                 Console.WriteLine($"TokenStore: Now: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
                 Console.WriteLine($"TokenStore: IsAuthenticated: {IsAuthenticated}");
@@ -166,17 +175,19 @@ public class TokenStore
         _isInitialized = true;
     }
 
-    public async Task SetAuthAsync(string token, DateTime expiration, string? refreshToken, string userName, List<string> roles)
+    public async Task SetAuthAsync(string token, DateTime expiration, string? refreshToken, string userName, string userId, string? domainUserId, List<string> roles)
     {
         Token = token;
         Expiration = expiration;
         RefreshToken = refreshToken;
         UserName = userName;
+        UserId = userId;
+        DomainUserId = domainUserId;
         Roles = roles;
 
         try
         {
-            await _jsRuntime.InvokeVoidAsync("authPersistence.saveAuth", token, expiration.ToString("O"), refreshToken, userName, roles.ToArray());
+            await _jsRuntime.InvokeVoidAsync("authPersistence.saveAuth", token, expiration.ToString("O"), refreshToken, userName, userId, domainUserId, roles.ToArray());
         }
         catch
         {
@@ -190,6 +201,8 @@ public class TokenStore
         Expiration = DateTime.MinValue;
         RefreshToken = null;
         UserName = string.Empty;
+        UserId = string.Empty;
+        DomainUserId = null;
         Roles.Clear();
 
         try
@@ -209,6 +222,8 @@ public class TokenStore
         Expiration = DateTime.MinValue;
         RefreshToken = null;
         UserName = string.Empty;
+        UserId = string.Empty;
+        DomainUserId = null;
         Roles.Clear();
     }
 }

@@ -6,6 +6,7 @@ using RestaurantePro.Application.Common.Models;
 using RestaurantePro.Domain.Core.SharedKernel.Results;
 using RestaurantePro.Infrastructure.Identity.Extensions;
 using RestaurantePro.Infrastructure.Identity.Models;
+using RestaurantePro.Infrastructure.Persistence.Contexts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,19 +21,22 @@ namespace RestaurantePro.Infrastructure.Identity.Services
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IJwtTokenService _jwtTokenService;
         private readonly ILogger<IdentityService> _logger;
+        private readonly CoreDbContext _coreDbContext;
 
         public IdentityService(
             UserManager<IdentityApplicationUser> userManager,
             SignInManager<IdentityApplicationUser> signInManager,
             RoleManager<ApplicationRole> roleManager,
             IJwtTokenService jwtTokenService,
-            ILogger<IdentityService> logger)
+            ILogger<IdentityService> logger,
+            CoreDbContext coreDbContext)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
             _jwtTokenService = jwtTokenService;
             _logger = logger;
+            _coreDbContext = coreDbContext;
         }
 
         public async Task<Result<string>> RegisterAsync(string nombre, string apellidos, string email, string username, string password, string rol)
@@ -190,6 +194,10 @@ namespace RestaurantePro.Infrastructure.Identity.Services
             var roles = await _userManager.GetRolesAsync(user);
             var tokenResponse = _jwtTokenService.GenerateToken(user.Id.ToString(), user.UserName, user.Email, roles);
             
+            // Buscar el ID del dominio del usuario
+            var domainUserId = await ObtenerDomainUserIdAsync(user.Email);
+            _logger.LogInformation("🔍 DomainUserId obtenido para {Email}: {DomainUserId}", user.Email, domainUserId);
+            
             // Si el usuario quiere que se recuerde, generar un refresh token
             if (recordarme)
             {
@@ -203,6 +211,7 @@ namespace RestaurantePro.Infrastructure.Identity.Services
             {
                 Success = true,
                 UserId = user.Id.ToString(),
+                DomainUserId = domainUserId,
                 UserName = user.UserName,
                 Token = tokenResponse.AccessToken,
                 RefreshToken = recordarme ? user.RefreshToken : null,
@@ -340,6 +349,37 @@ namespace RestaurantePro.Infrastructure.Identity.Services
                     Email = user.Email,
                     Roles = user.UserRoles.Select(ur => ur.Role.Name).ToList()
                 }).ToListAsync();
+        }
+
+        /// <summary>
+        /// Obtiene el ID del dominio del usuario basado en su email
+        /// </summary>
+        /// <param name="email">Email del usuario</param>
+        /// <returns>ID del dominio del usuario o null si no se encuentra</returns>
+        private async Task<string?> ObtenerDomainUserIdAsync(string email)
+        {
+            try
+            {
+                _logger.LogInformation("🔍 Buscando usuario en dominio por email: {Email}", email);
+                
+                // Verificar si hay usuarios en la tabla
+                var totalUsuarios = await _coreDbContext.Usuarios.CountAsync();
+                _logger.LogInformation("🔍 Total de usuarios en dominio: {Total}", totalUsuarios);
+                
+                var usuarioDominio = await _coreDbContext.Usuarios
+                    .Where(u => u.Email == email)
+                    .Select(u => new { u.Id })
+                    .FirstOrDefaultAsync();
+
+                _logger.LogInformation("🔍 Usuario encontrado en dominio: {Usuario}", usuarioDominio?.Id);
+                
+                return usuarioDominio?.Id.ToString();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo obtener el ID del dominio para el usuario {Email}", email);
+                return null;
+            }
         }
     }
 } 

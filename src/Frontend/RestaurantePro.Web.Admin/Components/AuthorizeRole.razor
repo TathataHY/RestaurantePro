@@ -1,0 +1,77 @@
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject RestaurantePro.Web.Admin.Services.TokenStore TokenStore
+
+@if (IsAuthorized)
+{
+    @ChildContent
+}
+else if (ShowUnauthorized)
+{
+    <div class="flex flex-col items-center justify-center min-h-[400px] p-8">
+        <div class="text-center">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                <span class="material-symbols-outlined text-red-600 text-2xl">block</span>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Acceso Denegado</h3>
+            <p class="text-sm text-gray-500 mb-4">
+                No tienes permisos para acceder a esta sección.
+            </p>
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-md">
+                <div class="flex items-start">
+                    <span class="material-symbols-outlined text-yellow-600 mr-2 mt-0.5">info</span>
+                    <div class="text-sm">
+                        <p class="text-yellow-800 font-medium">Roles permitidos:</p>
+                        <p class="text-yellow-700 mt-1">@string.Join(", ", AllowedRoles)</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-6">
+                <a href="/" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <span class="material-symbols-outlined text-sm mr-2">home</span>
+                    Ir al Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string[] AllowedRoles { get; set; } = Array.Empty<string>();
+    [Parameter] public bool ShowUnauthorized { get; set; } = true;
+
+    private bool IsAuthorized { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckAuthorization();
+    }
+
+    private async Task CheckAuthorization()
+    {
+        try
+        {
+            // Obtener el estado de autenticación
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            
+            if (!authState.User.Identity?.IsAuthenticated == true)
+            {
+                IsAuthorized = false;
+                return;
+            }
+
+            // Verificar si el usuario tiene alguno de los roles permitidos
+            IsAuthorized = AllowedRoles.Any(role => 
+                authState.User.IsInRole(role) || 
+                TokenStore.Roles.Contains(role)
+            );
+
+            StateHasChanged();
+        }
+        catch (Exception)
+        {
+            IsAuthorized = false;
+        }
+    }
+}

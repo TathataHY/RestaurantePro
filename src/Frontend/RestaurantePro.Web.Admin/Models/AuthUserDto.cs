@@ -3,6 +3,7 @@ namespace RestaurantePro.Web.Admin.Models;
 public class AuthUserDto
 {
     public string Id { get; set; } = string.Empty;
+    public string? DomainUserId { get; set; }
     public string UserName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public List<string> Roles { get; set; } = new();

@@ -1,12 +1,14 @@
 // Funciones para manejar la persistencia de autenticación en localStorage
 window.authPersistence = {
     // Guardar datos de autenticación
-    saveAuth: function (token, expiration, refreshToken, userName, roles) {
+    saveAuth: function (token, expiration, refreshToken, userName, userId, domainUserId, roles) {
         try {
             localStorage.setItem('auth_token', token);
             localStorage.setItem('auth_expiration', expiration);
             localStorage.setItem('auth_refresh_token', refreshToken || '');
             localStorage.setItem('auth_username', userName);
+            localStorage.setItem('auth_userid', userId || '');
+            localStorage.setItem('auth_domain_userid', domainUserId || '');
             localStorage.setItem('auth_roles', roles.join(','));
             return true;
         } catch (error) {
@@ -22,6 +24,8 @@ window.authPersistence = {
             const expiration = localStorage.getItem('auth_expiration');
             const refreshToken = localStorage.getItem('auth_refresh_token');
             const userName = localStorage.getItem('auth_username');
+            const userId = localStorage.getItem('auth_userid');
+            const domainUserId = localStorage.getItem('auth_domain_userid');
             const roles = localStorage.getItem('auth_roles');
 
             if (token && expiration) {
@@ -39,6 +43,8 @@ window.authPersistence = {
                         Expiration: expiration,
                         RefreshToken: refreshToken,
                         UserName: userName,
+                        UserId: userId,
+                        DomainUserId: domainUserId,
                         Roles: roles ? roles.split(',') : []
                     };
                 } else {
@@ -61,6 +67,8 @@ window.authPersistence = {
             localStorage.removeItem('auth_expiration');
             localStorage.removeItem('auth_refresh_token');
             localStorage.removeItem('auth_username');
+            localStorage.removeItem('auth_userid');
+            localStorage.removeItem('auth_domain_userid');
             localStorage.removeItem('auth_roles');
             return true;
         } catch (error) {

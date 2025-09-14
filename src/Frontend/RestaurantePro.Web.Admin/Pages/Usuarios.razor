@@ -1,10 +1,14 @@
+@using RestaurantePro.Web.Admin.Components
 @attribute [Authorize]
 @page "/usuarios"
 
 <PageTitle>Usuarios</PageTitle>
 
+<AuthorizeRole AllowedRoles="@(new[] { "Admin", "Administrador", "Gerente" })">
+
 @inject RestaurantePro.Web.Admin.Services.IUsuariosApiService UsuariosApi
 @inject RestaurantePro.Web.Admin.Services.IAuthApiService Auth
+@inject RestaurantePro.Web.Admin.Services.TokenStore TokenStore
 @inject IJSRuntime JSRuntime
 
 <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
@@ -181,6 +185,14 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end gap-2">
+                                    @if (u.Estado == "PendienteConfirmacion")
+                                    {
+                                        <button class="text-green-600 hover:text-green-900 transition-colors" 
+                                                @onclick="(() => ConfirmarActivar(u))" 
+                                                title="Activar usuario">
+                                            <span class="material-symbols-outlined text-lg">check_circle</span>
+                                        </button>
+                                    }
                                     <button class="text-blue-600 hover:text-blue-900 transition-colors" 
                                             @onclick="(() => AbrirEditar(u))" 
                                             title="Editar usuario">
@@ -310,19 +322,29 @@
                                         </div>
                                     </div>
                                     <div class="mt-4 space-y-3">
-                                        <div class="flex gap-2">
-                                            <div class="flex-1">
-                                                <InputText class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
-                                                           @bind-Value="editCreate.Password" 
-                                                           type="password" 
-                                                           placeholder="Ingresa una contraseña temporal" />
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+                                                <div class="flex gap-2">
+                                                    <InputText class="flex-1 rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                                               @bind-Value="editCreate.Password" 
+                                                               type="password" 
+                                                               placeholder="Ingresa una contraseña temporal" />
+                                                    <button type="button" 
+                                                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
+                                                            @onclick="GenerarContraseñaTemporal">
+                                                        <span class="material-symbols-outlined text-sm">refresh</span>
+                                                        Generar
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <button type="button" 
-                                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center gap-2"
-                                                    @onclick="GenerarContraseñaTemporal">
-                                                <span class="material-symbols-outlined text-sm">refresh</span>
-                                                Generar
-                                            </button>
+                                            <div>
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">Confirmar Contraseña</label>
+                                                <InputText class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                                           @bind-Value="editCreate.ConfirmarPassword" 
+                                                           type="password" 
+                                                           placeholder="Confirma la contraseña" />
+                                            </div>
                                         </div>
                                         <div class="bg-green-50 border border-green-200 rounded-lg p-3">
                                             <div class="flex items-center justify-between">
@@ -410,6 +432,49 @@
     </div>
 }
 
+@if (mostrandoConfirmarActivar)
+{
+    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @onclick="CerrarConfirmarActivar"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <span class="material-symbols-outlined text-green-600">check_circle</span>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                                Activar Usuario
+                            </h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500">
+                                    ¿Estás seguro de que deseas activar al usuario 
+                                    <span class="font-medium text-gray-900">@usuarioAActivar?.NombreCompleto</span>? 
+                                    Esto le permitirá acceder al sistema.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" 
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm" 
+                            @onclick="ActivarAsync">
+                        Activar
+                    </button>
+                    <button type="button" 
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm" 
+                            @onclick="CerrarConfirmarActivar">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
   private List<UsuarioDto>? usuarios;
   private string filtro = string.Empty;
@@ -420,8 +485,9 @@
   private string modalTitulo = string.Empty;
   private bool esCreacion = true;
   private UsuarioDto? editModel = new();
-  private CreateUsuarioRequest editCreate = new();
+  private CrearUsuarioRequest editCreate = new();
   private UsuarioDto? usuarioAEliminar;
+  private UsuarioDto? usuarioAActivar;
   private string perfilInfo = string.Empty;
   
   // Métricas para los cards
@@ -470,6 +536,23 @@
   }
 
   private Task BuscarAsync() => CargarAsync();
+
+  private async Task RefrescarListaAsync()
+  {
+    // Refrescar la lista sin filtros para mostrar todos los usuarios actualizados
+    usuarios = await UsuariosApi.ObtenerUsuariosAsync(1, 20);
+    
+    // Calcular métricas
+    if (usuarios != null)
+    {
+      totalUsuarios = usuarios.Count;
+      usuariosActivos = usuarios.Count(u => u.Estado == "Activo");
+      usuariosInactivos = usuarios.Count(u => u.Estado != "Activo");
+      rolesDiferentes = usuarios.Select(u => u.Rol).Distinct().Count();
+    }
+    
+    StateHasChanged();
+  }
   
   private async Task OnFiltroChanged(KeyboardEventArgs e)
   {
@@ -493,18 +576,55 @@
   
   private void GenerarContraseñaTemporal()
   {
-    // Generar contraseña temporal segura
+    // Generar contraseña temporal segura que cumpla con las validaciones del backend
     var random = new Random();
-    var caracteres = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%&*";
+    
+    // Asegurar que tenga al menos: 1 mayúscula, 1 minúscula, 1 número, 1 carácter especial
+    var mayusculas = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    var minusculas = "abcdefghijklmnopqrstuvwxyz";
+    var numeros = "0123456789";
+    var especiales = "!@#$%&*";
+    
     var contraseña = new char[12];
     
+    // Garantizar al menos un carácter de cada tipo
+    contraseña[0] = mayusculas[random.Next(mayusculas.Length)];
+    contraseña[1] = minusculas[random.Next(minusculas.Length)];
+    contraseña[2] = numeros[random.Next(numeros.Length)];
+    contraseña[3] = especiales[random.Next(especiales.Length)];
+    
+    // Llenar el resto con caracteres aleatorios
+    var todosCaracteres = mayusculas + minusculas + numeros + especiales;
+    for (int i = 4; i < contraseña.Length; i++)
+    {
+      contraseña[i] = todosCaracteres[random.Next(todosCaracteres.Length)];
+    }
+    
+    // Mezclar la contraseña para mayor seguridad
     for (int i = 0; i < contraseña.Length; i++)
     {
-      contraseña[i] = caracteres[random.Next(caracteres.Length)];
+      int j = random.Next(contraseña.Length);
+      (contraseña[i], contraseña[j]) = (contraseña[j], contraseña[i]);
     }
     
     contraseñaSugerida = new string(contraseña);
     editCreate.Password = contraseñaSugerida; // Asignar automáticamente
+    editCreate.ConfirmarPassword = contraseñaSugerida; // También confirmar
+  }
+
+  private int CalcularNivelAcceso(string rol)
+  {
+    // Calcular el nivel de acceso según el rol
+    return rol?.ToLower() switch
+    {
+      "admin" => 5,
+      "gerente" => 4,
+      "supervisor" => 3,
+      "mesero" => 2,
+      "cocinero" => 2,
+      "cajero" => 2,
+      _ => 1
+    };
   }
   
   private async Task CopiarContraseña()
@@ -525,7 +645,7 @@
     esCreacion = true;
     modalTitulo = "Nuevo usuario";
     editModel = new UsuarioDto();
-    editCreate = new CreateUsuarioRequest();
+    editCreate = new CrearUsuarioRequest();
     GenerarContraseñaTemporal(); // Generar contraseña automáticamente
     mostrandoModal = true;
   }
@@ -548,10 +668,70 @@
 
   private void CerrarModal() => mostrandoModal = false;
 
+  private async Task MostrarErrorAsync(string mensaje)
+  {
+    // Mostrar error al usuario (puedes implementar un toast o modal de error)
+    // Por ahora, simplemente loggeamos el error
+    Console.WriteLine($"ERROR: {mensaje}");
+    
+    // Cerrar el modal si está abierto
+    if (mostrandoModal)
+    {
+      mostrandoModal = false;
+    }
+    
+    // Opcional: Mostrar un toast o notificación al usuario
+    // await ToastService.ShowErrorAsync(mensaje);
+    
+    await Task.CompletedTask;
+  }
+
+  private async Task<Guid> ObtenerUsuarioCreadorIdDelDominioAsync()
+  {
+    try
+    {
+      // Primero intentar obtener el DomainUserId del TokenStore
+      if (!string.IsNullOrEmpty(TokenStore.DomainUserId) && Guid.TryParse(TokenStore.DomainUserId, out var domainIdFromToken))
+      {
+        return domainIdFromToken;
+      }
+
+      // Si no está en el token, obtener el perfil del usuario autenticado
+      var perfil = await Auth.GetProfileAsync();
+      if (perfil?.DomainUserId != null && Guid.TryParse(perfil.DomainUserId, out var domainIdFromProfile))
+      {
+        return domainIdFromProfile;
+      }
+
+      return Guid.Empty;
+    }
+    catch
+    {
+      return Guid.Empty;
+    }
+  }
+
   private async Task GuardarAsync()
   {
-    if (esCreacion)
-    {
+      if (esCreacion)
+      {
+        // Obtener el ID del usuario actual del DOMINIO (no de Identity)
+        var usuarioCreadorId = await ObtenerUsuarioCreadorIdDelDominioAsync();
+        
+        if (usuarioCreadorId == Guid.Empty)
+        {
+          await MostrarErrorAsync("Error de autenticación: No se puede identificar al usuario actual. Por favor, inicie sesión nuevamente.");
+          return;
+        }
+      
+      // Limpiar el formato del teléfono (solo números)
+      var telefonoLimpio = editModel?.Telefono != null 
+        ? new string(editModel.Telefono.Where(char.IsDigit).ToArray())
+        : null;
+
+      // Calcular el nivel de acceso según el rol
+      var nivelAcceso = CalcularNivelAcceso(editModel?.Rol ?? string.Empty);
+
       var creado = await UsuariosApi.CrearAsync(new CrearUsuarioRequest
       {
         NombreCompleto = editModel?.NombreCompleto ?? string.Empty,
@@ -559,27 +739,50 @@
         Email = editModel?.Email ?? string.Empty,
         Rol = editModel?.Rol ?? string.Empty,
         Password = editCreate.Password,
-        Telefono = editModel?.Telefono
+        ConfirmarPassword = editCreate.ConfirmarPassword,
+        Telefono = telefonoLimpio,
+        UsuarioCreadorId = usuarioCreadorId,
+        NivelAcceso = nivelAcceso
       });
       if (creado != null)
       {
         mostrandoModal = false;
-        await CargarAsync();
+        await RefrescarListaAsync();
       }
     }
     else if (editModel != null)
     {
+      // Obtener el ID del usuario actual del DOMINIO para autorización
+      var usuarioAutorizaId = await ObtenerUsuarioCreadorIdDelDominioAsync();
+      
+      if (usuarioAutorizaId == Guid.Empty)
+      {
+        await MostrarErrorAsync("Error de autenticación: No se puede identificar al usuario actual. Por favor, inicie sesión nuevamente.");
+        return;
+      }
+
+      // Calcular el nivel de acceso según el rol
+      var nivelAcceso = CalcularNivelAcceso(editModel.Rol ?? string.Empty);
+
       var actualizado = await UsuariosApi.ActualizarAsync(editModel.Id, new ActualizarUsuarioRequest
       {
+        Id = editModel.Id,
         NombreCompleto = editModel.NombreCompleto,
         Email = editModel.Email,
         Rol = editModel.Rol,
-        Telefono = editModel.Telefono
+        Telefono = editModel.Telefono,
+        NivelAcceso = nivelAcceso,
+        UsuarioAutorizaId = usuarioAutorizaId,
+        MotivoActualizacion = "Actualización de información personal desde Web Admin",
+        Prioridad = 2,
+        RequiereAprobacion = true, // Cambiar a true para cambios críticos como rol
+        NotificarUsuario = true,
+        NotificarSupervisor = false
       });
       if (actualizado != null)
       {
         mostrandoModal = false;
-        await CargarAsync();
+        await RefrescarListaAsync();
       }
     }
   }
@@ -590,8 +793,17 @@
     mostrandoConfirmarEliminar = true;
   }
 
+  private void ConfirmarActivar(UsuarioDto u)
+  {
+    usuarioAActivar = u;
+    mostrandoConfirmarActivar = true;
+  }
+
   private bool mostrandoConfirmarEliminar = false;
   private void CerrarConfirmarEliminar() => mostrandoConfirmarEliminar = false;
+  
+  private bool mostrandoConfirmarActivar = false;
+  private void CerrarConfirmarActivar() => mostrandoConfirmarActivar = false;
 
   private async Task EliminarAsync()
   {
@@ -600,7 +812,50 @@
     mostrandoConfirmarEliminar = false;
     if (ok)
     {
-      await CargarAsync();
+      await RefrescarListaAsync();
+    }
+  }
+
+  private async Task ActivarAsync()
+  {
+    if (usuarioAActivar == null) return;
+    
+    try
+    {
+      // Obtener el ID del usuario actual del DOMINIO para autorización
+      var usuarioAutorizaId = await ObtenerUsuarioCreadorIdDelDominioAsync();
+      
+      if (usuarioAutorizaId == Guid.Empty)
+      {
+        await MostrarErrorAsync("Error de autenticación: No se puede identificar al usuario actual. Por favor, inicie sesión nuevamente.");
+        mostrandoConfirmarActivar = false;
+        return;
+      }
+
+      // Usar el método ActualizarAsync existente para activar el usuario
+      var actualizado = await UsuariosApi.ActualizarAsync(usuarioAActivar.Id, new ActualizarUsuarioRequest
+      {
+        Id = usuarioAActivar.Id,
+        Activo = true,
+        UsuarioAutorizaId = usuarioAutorizaId,
+        MotivoActualizacion = "Activación de usuario desde Web Administrativa",
+        Prioridad = 2,
+        RequiereAprobacion = false, // Activación no requiere aprobación
+        NotificarUsuario = true,
+        NotificarSupervisor = false
+      });
+
+      mostrandoConfirmarActivar = false;
+      
+      if (actualizado != null)
+      {
+        await RefrescarListaAsync();
+      }
+    }
+    catch (Exception ex)
+    {
+      await MostrarErrorAsync($"Error al activar usuario: {ex.Message}");
+      mostrandoConfirmarActivar = false;
     }
   }
 
@@ -623,5 +878,5 @@
     await CargarAsync();
   }
 }
-
+</AuthorizeRole>
 

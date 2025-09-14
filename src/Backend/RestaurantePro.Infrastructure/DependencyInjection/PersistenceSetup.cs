@@ -335,6 +335,7 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
             services.AddScoped<ISeedData, EstadosSeeder>();
             services.AddScoped<ISeedData, UsuarioAdminSeeder>(); // Restaurado - crea usuario en dominio
             services.AddScoped<ISeedData, IdentityUsersSeeder>(); // Sincroniza con Identity
+            services.AddScoped<ISeedData, SyncUsersBidirectionalSeeder>(); // Sincronización bidireccional
             
             // SEEDERS DEMO (solo si NO es entorno de test)
             if (!isTestEnvironment)

@@ -127,9 +127,14 @@ public class AuthResponse
     public DateTime Expiration { get; set; }
     
     /// <summary>
-    /// ID del usuario autenticado
+    /// ID del usuario autenticado (Identity)
     /// </summary>
     public string UserId { get; set; }
+    
+    /// <summary>
+    /// ID del usuario en el dominio (Core.Usuarios)
+    /// </summary>
+    public string? DomainUserId { get; set; }
     
     /// <summary>
     /// Nombre del usuario autenticado

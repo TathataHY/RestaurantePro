@@ -45,7 +45,7 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
 
     public async Task SetAuthAsync(AuthResponse auth)
     {
-        await _tokenStore.SetAuthAsync(auth.Token, auth.Expiration, auth.RefreshToken, auth.UserName, auth.Roles);
+        await _tokenStore.SetAuthAsync(auth.Token, auth.Expiration, auth.RefreshToken, auth.UserName, auth.UserId, auth.DomainUserId, auth.Roles);
         var identity = BuildIdentityFromTokenStore();
         NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(new ClaimsPrincipal(identity))));
     }
@@ -57,6 +57,8 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
         _tokenStore.Expiration = auth.Expiration;
         _tokenStore.RefreshToken = auth.RefreshToken;
         _tokenStore.UserName = auth.UserName;
+        _tokenStore.UserId = auth.UserId;
+        _tokenStore.DomainUserId = auth.DomainUserId;
         _tokenStore.Roles = auth.Roles;
         var identity = BuildIdentityFromTokenStore();
         NotifyAuthenticationStateChanged(Task.FromResult(new AuthenticationState(new ClaimsPrincipal(identity))));

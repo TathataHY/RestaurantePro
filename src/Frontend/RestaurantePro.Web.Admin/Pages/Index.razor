@@ -4,6 +4,7 @@
 @using RestaurantePro.Web.Admin.Models
 @using RestaurantePro.Web.Admin.Components
 @inject IJSRuntime JSRuntime
+@implements IDisposable
 
 <PageTitle>Dashboard Ejecutivo</PageTitle>
 
@@ -431,36 +432,6 @@
             
             if (resumen != null)
             {
-                Console.WriteLine($"Datos del dashboard cargados correctamente - Período: {periodoSeleccionado}, Turno: {turnoSeleccionado}");
-                
-                // 🔍 LOGS DE DEBUG - DATOS RECIBIDOS DEL BACKEND
-                Console.WriteLine("=== 📊 DATOS RECIBIDOS DEL BACKEND ===");
-                Console.WriteLine($"💰 Ventas Hoy: ${resumen.Metricas.VentasHoy:N2}");
-                Console.WriteLine($"💰 Ventas Total Día: ${resumen.Metricas.VentasTotalDia:N2}");
-                Console.WriteLine($"💰 Ventas Ayer: ${resumen.Metricas.VentasAyer:N2}");
-                Console.WriteLine($"💰 Ventas Semana: ${resumen.Metricas.VentasSemana:N2}");
-                Console.WriteLine($"💰 Ventas Mes: ${resumen.Metricas.VentasMes:N2}");
-                Console.WriteLine($"🏢 Mesas Ocupadas: {resumen.Metricas.MesasOcupadas}");
-                Console.WriteLine($"🏢 Mesas Disponibles: {resumen.Metricas.MesasDisponibles}");
-                Console.WriteLine($"🏢 Total Mesas: {resumen.Metricas.TotalMesas}");
-                Console.WriteLine($"📋 Comandas Activas: {resumen.Metricas.ComandasActivas}");
-                Console.WriteLine($"📋 Comandas Completadas: {resumen.Metricas.ComandasCompletadas}");
-                Console.WriteLine($"📦 Productos Vendidos Hoy: {resumen.Metricas.ProductosVendidosHoy}");
-                Console.WriteLine($"👥 Clientes Atendidos Hoy: {resumen.Metricas.ClientesAtendidosHoy}");
-                Console.WriteLine($"💳 Promedio Ticket: ${resumen.Metricas.PromedioTicket:N2}");
-                Console.WriteLine($"📈 Crecimiento Ventas: {resumen.Metricas.CrecimientoVentas:N1}%");
-                Console.WriteLine($"⏰ Última Actualización: {resumen.Metricas.UltimaActualizacion}");
-                
-                // Logs de datos de gráficos
-                Console.WriteLine("=== 📊 DATOS DE GRÁFICOS ===");
-                Console.WriteLine($"📈 Ventas Últimos 7 Días: {resumen.VentasPorPeriodo?.Count ?? 0} elementos");
-                Console.WriteLine($"📈 Ingresos por Hora: {resumen.IngresosPorHora?.Count ?? 0} elementos");
-                Console.WriteLine($"🏆 Productos Más Vendidos: {resumen.ProductosMasVendidos?.Count ?? 0} elementos");
-                Console.WriteLine($"🏷️ Ingresos por Categoría: {resumen.IngresosPorCategoria?.Count ?? 0} elementos");
-                Console.WriteLine($"🍽️ Estados de Mesas: {resumen.EstadoMesas?.Ocupadas ?? 0} ocupadas, {resumen.EstadoMesas?.Disponibles ?? 0} disponibles");
-                Console.WriteLine($"📋 Comandas por Estado: Pendientes={resumen.ComandasPorEstado?.Pendientes ?? 0}, EnPreparacion={resumen.ComandasPorEstado?.EnPreparacion ?? 0}, Listas={resumen.ComandasPorEstado?.Listas ?? 0}, Completadas={resumen.ComandasPorEstado?.Completadas ?? 0}");
-                Console.WriteLine("=== 🔚 FIN DATOS RECIBIDOS ===");
-                
                 // Esperar un poco y luego intentar crear los gráficos automáticamente
                 _ = Task.Run(async () => {
                     await Task.Delay(3000); // Esperar 3 segundos
@@ -470,7 +441,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error al cargar datos del dashboard: {ex.Message}");
+            // Error al cargar datos del dashboard
         }
         finally
         {
@@ -482,7 +453,6 @@
     private async Task SeleccionarPeriodo(string periodo)
     {
         periodoSeleccionado = periodo;
-        Console.WriteLine($"Período seleccionado: {periodo}");
         
         // Recargar datos con el nuevo período
         await CargarDatos();
@@ -536,7 +506,6 @@
     private async Task SeleccionarTurnoEspecifico(string turno)
     {
         turnoSeleccionado = turno;
-        Console.WriteLine($"Turno seleccionado: {turnoSeleccionado}");
         
         // Recargar datos con el nuevo turno
         await CargarDatos();
@@ -591,26 +560,23 @@
             {
                 resumen = nuevoResumen;
                 await InvokeAsync(StateHasChanged);
-                Console.WriteLine("Métricas actualizadas en tiempo real");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error al actualizar métricas en tiempo real: {ex.Message}");
+            // Error al actualizar métricas en tiempo real
         }
     }
 
     private async Task CrearGraficos()
     {
-        if (resumen == null) 
+        if (resumen == null)
         {
-            Console.WriteLine("No hay datos del resumen para crear gráficos");
             return;
         }
 
         try
         {
-            Console.WriteLine("Iniciando creación de gráficos...");
             
             // Verificar si Chart.js está disponible (intentar múltiples veces)
             bool chartJSCargado = false;
@@ -619,16 +585,13 @@
                 chartJSCargado = await JSRuntime.InvokeAsync<bool>("eval", "typeof Chart !== 'undefined'");
                 if (chartJSCargado)
                 {
-                    Console.WriteLine("Chart.js está disponible");
                     break;
                 }
-                Console.WriteLine($"Intento {i + 1}: Chart.js no está disponible, esperando...");
                 await Task.Delay(1000);
             }
             
             if (!chartJSCargado)
             {
-                Console.WriteLine("Chart.js no está disponible después de 5 intentos. Intentando cargar desde CDN...");
                 await JSRuntime.InvokeVoidAsync("eval", @"
                     if (typeof Chart === 'undefined') {
                         var script = document.createElement('script');
@@ -649,7 +612,6 @@
                 chartJSCargado = await JSRuntime.InvokeAsync<bool>("eval", "typeof Chart !== 'undefined'");
                 if (!chartJSCargado)
                 {
-                    Console.WriteLine("Chart.js no se pudo cargar. Saltando creación de gráficos.");
                     return;
                 }
             }
@@ -680,7 +642,6 @@
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error al destruir gráficos existentes: {ex.Message}");
             }
 
             // Crear gráfico de ventas por hora
@@ -689,8 +650,6 @@
                 monto = (double)i.Monto 
             }).ToArray() ?? new object[0];
             
-            Console.WriteLine($"Creando gráfico de ventas por hora con {datosVentasHora.Length} datos");
-            Console.WriteLine($"📊 DEBUG: IngresosPorHora datos: {System.Text.Json.JsonSerializer.Serialize(resumen.IngresosPorHora)}");
             await JSRuntime.InvokeVoidAsync("eval", $@"
                 window.graficoVentasHora = window.dashboardCharts.crearGraficoVentasHora('graficoVentasHora', {System.Text.Json.JsonSerializer.Serialize(datosVentasHora)});
             ");
@@ -704,8 +663,6 @@
                     color = coloresCategorias[index % coloresCategorias.Length]
                 }).ToArray() ?? new object[0];
             
-            Console.WriteLine($"Creando gráfico de ingresos por categoría con {datosCategorias.Length} categorías");
-            Console.WriteLine($"📊 DEBUG: IngresosPorCategoria datos: {System.Text.Json.JsonSerializer.Serialize(datosCategorias)}");
             
             await JSRuntime.InvokeVoidAsync("eval", $@"
                 window.graficoIngresosCategoria = window.dashboardCharts.crearGraficoIngresosCategoria('graficoIngresosCategoria', {System.Text.Json.JsonSerializer.Serialize(datosCategorias)});
@@ -718,7 +675,6 @@
             ingresos = (double)p.Ingresos
         }).ToArray();
         
-        Console.WriteLine($"Creando gráfico de productos más vendidos con {datosProductosVendidos.Length} productos");
         await JSRuntime.InvokeVoidAsync("eval", $@"
             if (window.dashboardCharts && window.dashboardCharts.crearGraficoProductosVendidos) {{
                 window.graficoProductosVendidos = window.dashboardCharts.crearGraficoProductosVendidos('graficoProductosVendidos', {System.Text.Json.JsonSerializer.Serialize(datosProductosVendidos)});
@@ -736,16 +692,14 @@
             new { estado = "En Limpieza", cantidad = resumen.EstadoMesas.EnLimpieza }
         };
         
-        Console.WriteLine($"Creando gráfico de estados de mesas con {datosEstadosMesas.Length} estados");
         await JSRuntime.InvokeVoidAsync("eval", $@"
             window.graficoEstadosMesas = window.dashboardCharts.crearGraficoEstadosMesas('graficoEstadosMesas', {System.Text.Json.JsonSerializer.Serialize(datosEstadosMesas)});
         ");
             
-            Console.WriteLine("Gráficos creados exitosamente");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error al crear gráficos: {ex.Message}");
+            // Error al crear gráficos
         }
     }
 
@@ -785,8 +739,9 @@
 
     public void Dispose()
     {
-        // Limpiar timer
+        // Limpiar timer - CRÍTICO para evitar peticiones continuas
         _timer?.Dispose();
+        _timer = null;
         
         // Limpiar gráficos al destruir el componente
         try
