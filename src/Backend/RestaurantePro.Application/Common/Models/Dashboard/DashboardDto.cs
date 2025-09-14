@@ -108,3 +108,16 @@ public class DashboardResumenDto
     public List<DashboardIngresosPorCategoriaDto> IngresosPorCategoria { get; set; } = new();
     public DateTime UltimaActualizacion { get; set; }
 }
+
+/// <summary>
+/// DTO para detalles de mesa en el mapa interactivo
+/// </summary>
+public class MesaDetalleDto
+{
+    public Guid Id { get; set; }
+    public int Numero { get; set; }
+    public int Capacidad { get; set; }
+    public string Estado { get; set; } = string.Empty;
+    public string Ubicacion { get; set; } = string.Empty;
+    public string Color { get; set; } = string.Empty;
+}

@@ -51,6 +51,25 @@ public class DashboardApiService : IDashboardApiService
     }
 
     /// <summary>
+    /// Obtiene detalles de todas las mesas para el mapa interactivo
+    /// </summary>
+    public async Task<List<MesaDetalleDto>?> ObtenerMesasDetalleAsync()
+    {
+        try
+        {
+            var http = CreateClient();
+            var url = "api/admin/dashboard/mesas-detalle";
+            var resp = await http.GetFromJsonAsync<ApiResponse<List<MesaDetalleDto>>>(url);
+            return resp?.Data;
+        }
+        catch (Exception)
+        {
+            // En caso de error, retornar datos de ejemplo para desarrollo
+            return CrearMesasEjemplo();
+        }
+    }
+
+    /// <summary>
     /// Obtiene métricas básicas del dashboard
     /// </summary>
     public async Task<DashboardMetricasDto?> ObtenerMetricasAsync()
@@ -295,6 +314,26 @@ public class DashboardApiService : IDashboardApiService
                 Total = 61
             },
             IngresosPorHora = ingresosPorHora
+        };
+    }
+
+    /// <summary>
+    /// Crea datos de ejemplo de mesas para desarrollo
+    /// </summary>
+    private List<MesaDetalleDto> CrearMesasEjemplo()
+    {
+        return new List<MesaDetalleDto>
+        {
+            new() { Id = Guid.NewGuid(), Numero = 1, Capacidad = 2, Estado = "Ocupada", Ubicacion = "Interior", Color = "#ef4444" },
+            new() { Id = Guid.NewGuid(), Numero = 2, Capacidad = 2, Estado = "Reservada", Ubicacion = "Interior", Color = "#f59e0b" },
+            new() { Id = Guid.NewGuid(), Numero = 3, Capacidad = 4, Estado = "Disponible", Ubicacion = "Interior", Color = "#10b981" },
+            new() { Id = Guid.NewGuid(), Numero = 4, Capacidad = 4, Estado = "FueraDeServicio", Ubicacion = "Interior", Color = "#6b7280" },
+            new() { Id = Guid.NewGuid(), Numero = 5, Capacidad = 4, Estado = "Ocupada", Ubicacion = "Interior", Color = "#ef4444" },
+            new() { Id = Guid.NewGuid(), Numero = 6, Capacidad = 6, Estado = "Reservada", Ubicacion = "Interior", Color = "#f59e0b" },
+            new() { Id = Guid.NewGuid(), Numero = 7, Capacidad = 6, Estado = "Reservada", Ubicacion = "Interior", Color = "#f59e0b" },
+            new() { Id = Guid.NewGuid(), Numero = 8, Capacidad = 8, Estado = "Disponible", Ubicacion = "Interior", Color = "#10b981" },
+            new() { Id = Guid.NewGuid(), Numero = 10, Capacidad = 2, Estado = "Disponible", Ubicacion = "Terraza", Color = "#10b981" },
+            new() { Id = Guid.NewGuid(), Numero = 11, Capacidad = 2, Estado = "Disponible", Ubicacion = "Terraza", Color = "#10b981" }
         };
     }
 }

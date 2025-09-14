@@ -48,6 +48,12 @@ public interface IDashboardService
     Task<DashboardEstadoMesasDto> ObtenerEstadoMesasAsync();
 
     /// <summary>
+    /// Obtiene detalles de todas las mesas para el mapa interactivo
+    /// </summary>
+    /// <returns>Lista de detalles de mesas</returns>
+    Task<List<MesaDetalleDto>> ObtenerMesasDetalleAsync();
+
+    /// <summary>
     /// Obtiene comandas por estado
     /// </summary>
     /// <param name="periodo">Período de filtro: hoy, ayer, semana, mes</param>

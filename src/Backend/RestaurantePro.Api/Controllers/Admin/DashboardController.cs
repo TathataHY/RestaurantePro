@@ -196,4 +196,27 @@ public class DashboardController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Obtiene detalles de todas las mesas para el mapa interactivo
+    /// </summary>
+    [HttpGet("mesas-detalle")]
+    [ProducesResponseType(typeof(ApiResponse<List<MesaDetalleDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<ApiResponse<List<MesaDetalleDto>>>> ObtenerMesasDetalle()
+    {
+        _logger.LogInformation("🪑 GET /api/admin/dashboard/mesas-detalle");
+
+        try
+        {
+            var mesas = await _dashboardService.ObtenerMesasDetalleAsync();
+
+            return Ok(ApiResponse<List<MesaDetalleDto>>.SuccessResponse(mesas));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error al obtener detalles de las mesas");
+            return StatusCode(500, ApiResponse<object>.ErrorResponse("Error interno del servidor", "Error interno del servidor"));
+        }
+    }
+
 }

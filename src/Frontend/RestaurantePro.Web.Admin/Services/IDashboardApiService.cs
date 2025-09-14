@@ -9,4 +9,5 @@ public interface IDashboardApiService
     Task<List<ProductoMasVendidoDto>> ObtenerProductosMasVendidosAsync();
     Task<List<VentaPorPeriodoDto>> ObtenerVentasUltimos7DiasAsync();
     Task<EstadoMesasDto?> ObtenerEstadoMesasAsync();
+    Task<List<MesaDetalleDto>?> ObtenerMesasDetalleAsync();
 }

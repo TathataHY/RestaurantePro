@@ -306,6 +306,38 @@ public class DashboardService : IDashboardService
         }
     }
 
+    public async Task<List<MesaDetalleDto>> ObtenerMesasDetalleAsync()
+    {
+        _logger.LogInformation("🪑 Obteniendo detalles de las mesas para el mapa");
+
+        try
+        {
+            var mesas = await _mesaRepository.ObtenerTodasAsync();
+
+            return mesas.Select(m => new MesaDetalleDto
+            {
+                Id = m.Id,
+                Numero = m.Numero,
+                Capacidad = m.Capacidad,
+                Estado = m.Estado.ToString(),
+                Ubicacion = m.Ubicacion,
+                Color = m.Estado switch
+                {
+                    EstadoMesa.Disponible => "#10b981", // Verde
+                    EstadoMesa.Ocupada => "#ef4444",    // Rojo
+                    EstadoMesa.Reservada => "#f59e0b",  // Amarillo
+                    EstadoMesa.FueraDeServicio => "#6b7280", // Gris
+                    _ => "#6b7280"
+                }
+            }).OrderBy(m => m.Numero).ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error al obtener detalles de las mesas");
+            return new List<MesaDetalleDto>();
+        }
+    }
+
     public async Task<DashboardComandasPorEstadoDto> ObtenerComandasPorEstadoAsync(string? periodo = "hoy", string? turno = "todos")
     {
         _logger.LogInformation("📋 Obteniendo comandas por estado - Período: {Periodo}, Turno: {Turno}", periodo, turno);
