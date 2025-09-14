@@ -115,7 +115,8 @@ public class DashboardService : IDashboardService
             var ventasTotalDia = await CalcularVentasTotalDia();
 
             // Calcular métricas faltantes
-            var (productosVendidosHoy, clientesAtendidosHoy, promedioTicket, tiempoPromedio) = await CalcularMetricasAdicionales(facturas, turno);
+            var (productosVendidosHoy, clientesAtendidosHoy, promedioTicket) = await CalcularMetricasAdicionales(facturas, turno);
+            var tiempoPromedio = await CalcularTiempoPromedioComandasAsync(periodo, turno);
             var mesasDisponibles = mesas.Count() - mesasOcupadas;
             var comandasCompletadas = comandas.Count(c => c.Estado == EstadoComanda.Entregada);
 
@@ -388,10 +389,12 @@ public class DashboardService : IDashboardService
     {
         var hoy = DateTime.Today;
         var finDelDia = hoy.AddDays(1).AddTicks(-1); // 23:59:59.9999999
+        var ayer = hoy.AddDays(-1);
+        var finDelDiaAyer = ayer.AddDays(1).AddTicks(-1); // 23:59:59.9999999 de ayer
 
         return periodo switch
         {
-            "ayer" => (hoy.AddDays(-1), hoy),
+            "ayer" => (ayer, finDelDiaAyer),
             "semana" => (hoy.AddDays(-7), finDelDia),
             "mes" => (hoy.AddDays(-30), finDelDia),
             _ => (hoy, finDelDia) // "hoy" por defecto - hasta el final del día
@@ -571,18 +574,15 @@ public class DashboardService : IDashboardService
             var clientesAtendidosHoy = clientesUnicos.Count;
             var promedioTicket = cantidadFacturas > 0 ? totalVentas / cantidadFacturas : 0;
 
-            // Calcular tiempo promedio de comandas (en minutos)
-            var tiempoPromedio = await CalcularTiempoPromedioComandasAsync(periodo, turno);
+            _logger.LogInformation("🔍 DEBUG: Resultados - ProductosVendidosHoy: {ProductosVendidosHoy}, ClientesAtendidosHoy: {ClientesAtendidosHoy}, PromedioTicket: {PromedioTicket}", 
+                productosVendidosHoy, clientesAtendidosHoy, promedioTicket);
 
-            _logger.LogInformation("🔍 DEBUG: Resultados - ProductosVendidosHoy: {ProductosVendidosHoy}, ClientesAtendidosHoy: {ClientesAtendidosHoy}, PromedioTicket: {PromedioTicket}, TiempoPromedio: {TiempoPromedio}", 
-                productosVendidosHoy, clientesAtendidosHoy, promedioTicket, tiempoPromedio);
-
-            return (productosVendidosHoy, clientesAtendidosHoy, promedioTicket, tiempoPromedio);
+            return (productosVendidosHoy, clientesAtendidosHoy, promedioTicket);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Error al calcular métricas adicionales");
-            return (0, 0, 0, 0);
+            return (0, 0, 0);
         }
     }
 
@@ -604,19 +604,23 @@ public class DashboardService : IDashboardService
                     c.FechaCreacion.Hour < horaFin).ToList();
             }
             
-            if (!comandas.Any())
+            // IMPORTANTE: Calcular tiempo para comandas FINALIZADAS (estado 5)
+            // Esto refleja el tiempo total desde creación hasta finalización completa
+            var comandasFinalizadas = comandas.Where(c => c.Estado == EstadoComanda.Finalizada).ToList();
+            
+            if (!comandasFinalizadas.Any())
             {
-                _logger.LogInformation("⏱️ No hay comandas para calcular tiempo promedio");
+                _logger.LogInformation("⏱️ No hay comandas finalizadas para calcular tiempo promedio");
                 return 0;
             }
             
-            var tiempoTotalMinutos = comandas.Sum(c => 
-                (int)(c.FechaActualizacion - c.FechaCreacion).TotalMinutes);
+            var tiempoTotalMinutos = comandasFinalizadas.Sum(c => 
+                (int)((c.FechaActualizacion - c.FechaCreacion)?.TotalMinutes ?? 0));
             
-            var tiempoPromedio = tiempoTotalMinutos / comandas.Count();
+            var tiempoPromedio = tiempoTotalMinutos / comandasFinalizadas.Count();
             
-            _logger.LogInformation("⏱️ Tiempo promedio calculado - Total comandas: {TotalComandas}, Tiempo total: {TiempoTotal} min, Tiempo promedio: {TiempoPromedio} min", 
-                comandas.Count(), tiempoTotalMinutos, tiempoPromedio);
+            _logger.LogInformation("⏱️ Tiempo promedio calculado - Total comandas: {TotalComandas}, Comandas finalizadas: {ComandasFinalizadas}, Tiempo total: {TiempoTotal} min, Tiempo promedio: {TiempoPromedio} min", 
+                comandas.Count(), comandasFinalizadas.Count(), tiempoTotalMinutos, tiempoPromedio);
             
             return tiempoPromedio;
         }

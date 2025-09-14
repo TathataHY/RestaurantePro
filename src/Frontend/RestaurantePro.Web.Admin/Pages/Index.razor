@@ -28,25 +28,25 @@
             <label class="text-gray-700 text-sm font-medium">Período:</label>
             <div class="flex gap-2">
                 <button @onclick="SeleccionarHoy" 
-                        class="px-3 py-1 rounded-md text-sm font-medium transition-colors bg-blue-100 text-blue-700">
+                        class="px-3 py-1 rounded-md text-sm font-medium transition-colors @(periodoSeleccionado == "hoy" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200")">
                     Hoy
                 </button>
                 <button @onclick="SeleccionarAyer" 
-                        class="px-3 py-1 rounded-md text-sm font-medium transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200">
+                        class="px-3 py-1 rounded-md text-sm font-medium transition-colors @(periodoSeleccionado == "ayer" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200")">
                     Ayer
                 </button>
                 <button @onclick="SeleccionarSemana" 
-                        class="px-3 py-1 rounded-md text-sm font-medium transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200">
+                        class="px-3 py-1 rounded-md text-sm font-medium transition-colors @(periodoSeleccionado == "semana" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200")">
                     Esta Semana
                 </button>
                 <button @onclick="SeleccionarMes" 
-                        class="px-3 py-1 rounded-md text-sm font-medium transition-colors bg-gray-100 text-gray-700 hover:bg-gray-200">
+                        class="px-3 py-1 rounded-md text-sm font-medium transition-colors @(periodoSeleccionado == "mes" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200")">
                     Este Mes
                 </button>
             </div>
         </div>
         <div class="text-sm text-gray-500">
-            <span>Mostrando datos de hoy (@DateTime.Today.ToString("dd/MM/yyyy"))</span>
+            <span>Mostrando datos de @(periodoSeleccionado switch { "hoy" => "hoy", "ayer" => "ayer", "semana" => "esta semana", "mes" => "este mes", _ => "hoy" }) (@GetFechaMostrada())</span>
         </div>
     </div>
 </div>
@@ -221,7 +221,7 @@
                             </div>
                             <div>
                                 <p class="text-gray-500 text-xs font-medium">Tiempo Promedio</p>
-                                <p class="text-gray-900 text-lg font-bold">@CalcularTiempoPromedio() min</p>
+                                <p class="text-gray-900 text-lg font-bold">@(resumen?.Metricas.TiempoPromedio ?? 0) min</p>
                             </div>
                         </div>
                     </div>
@@ -516,16 +516,6 @@
         };
     }
 
-    private int CalcularTiempoPromedio()
-    {
-        // Simulación de tiempo promedio por mesa (en minutos)
-        // En una implementación real, esto vendría de la base de datos
-        if (resumen?.EstadoMesas.Ocupadas > 0)
-        {
-            return (resumen.EstadoMesas.Ocupadas * 45) / resumen.EstadoMesas.Ocupadas; // 45 minutos promedio
-        }
-        return 0;
-    }
 
     private string GetPeriodoButtonClass(string periodo)
     {
@@ -708,6 +698,18 @@
         {
             Console.WriteLine($"Error al crear gráficos: {ex.Message}");
         }
+    }
+
+    private string GetFechaMostrada()
+    {
+        return periodoSeleccionado switch
+        {
+            "hoy" => DateTime.Today.ToString("dd/MM/yyyy"),
+            "ayer" => DateTime.Today.AddDays(-1).ToString("dd/MM/yyyy"),
+            "semana" => $"{DateTime.Today.AddDays(-7):dd/MM/yyyy} - {DateTime.Today:dd/MM/yyyy}",
+            "mes" => $"{DateTime.Today.AddDays(-30):dd/MM/yyyy} - {DateTime.Today:dd/MM/yyyy}",
+            _ => DateTime.Today.ToString("dd/MM/yyyy")
+        };
     }
 
     public void Dispose()

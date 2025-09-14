@@ -20,6 +20,7 @@ public class DashboardMetricasDto
     public int ProductosVendidosHoy { get; set; }
     public int ClientesAtendidosHoy { get; set; }
     public decimal PromedioTicket { get; set; }
+    public int TiempoPromedio { get; set; } // en minutos
     public decimal CrecimientoVentas { get; set; }
     public DateTime UltimaActualizacion { get; set; }
 }
