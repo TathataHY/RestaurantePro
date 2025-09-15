@@ -44,24 +44,7 @@
                         <span class="material-symbols-outlined">more_vert</span>
                     </button>
                     
-                    @if (showUserMenu)
-                    {
-                        <div class="user-menu-dropdown">
-                            <a href="#" class="user-menu-item">
-                                <span class="material-symbols-outlined">person</span>
-                                Mi Perfil
-                            </a>
-                            <a href="#" class="user-menu-item">
-                                <span class="material-symbols-outlined">settings</span>
-                                Configuración
-                            </a>
-                            <div class="user-menu-divider"></div>
-                            <button class="user-menu-item logout-item" @onclick="Logout">
-                                <span class="material-symbols-outlined">logout</span>
-                                Cerrar Sesión
-                            </button>
-                        </div>
-                    }
+                    @* El dropdown ahora se crea via JavaScript portal *@
                 </div>
             }
             else
@@ -107,9 +90,21 @@
     }
 
 
-    private void ToggleUserMenu()
+    private async Task ToggleUserMenu()
     {
         showUserMenu = !showUserMenu;
+        
+        if (showUserMenu)
+        {
+            // Esperar a que el DOM se actualice
+            await Task.Delay(10);
+            await JSRuntime.InvokeVoidAsync("createUserMenuPortal");
+        }
+        else
+        {
+            // Eliminar el portal cuando se cierra
+            await JSRuntime.InvokeVoidAsync("removeUserMenuPortal");
+        }
     }
 
     private async Task Logout()
@@ -151,16 +146,90 @@
             // Cargar estado inicial del sidebar
             await JSRuntime.InvokeVoidAsync("loadSidebarState");
 
-            // Cerrar menú de usuario al hacer clic fuera
+            // Portal del menú de usuario directamente en el body
             await JSRuntime.InvokeVoidAsync("eval", @"
-                document.addEventListener('click', function(e) {
-                    const userMenu = document.querySelector('.user-menu');
-                    const userMenuDropdown = document.querySelector('.user-menu-dropdown');
-                    
-                    if (userMenu && userMenuDropdown && !userMenu.contains(e.target)) {
-                        userMenuDropdown.style.display = 'none';
+                window.createUserMenuPortal = function() {
+                    // Eliminar portal existente si hay uno
+                    const existingPortal = document.getElementById('user-menu-portal');
+                    if (existingPortal) {
+                        existingPortal.remove();
                     }
-                });
+
+                    // Crear el portal
+                    const portal = document.createElement('div');
+                    portal.id = 'user-menu-portal';
+                    portal.style.position = 'fixed';
+                    portal.style.zIndex = '99999999';
+                    portal.style.top = '0';
+                    portal.style.left = '0';
+                    portal.style.width = '100%';
+                    portal.style.height = '100%';
+                    portal.style.pointerEvents = 'none';
+                    
+                    // Crear el dropdown
+                    const dropdown = document.createElement('div');
+                    dropdown.className = 'user-menu-portal-dropdown';
+                    dropdown.style.position = 'absolute';
+                    dropdown.style.background = 'white';
+                    dropdown.style.border = '1px solid #e5e7eb';
+                    dropdown.style.borderRadius = '8px';
+                    dropdown.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+                    dropdown.style.minWidth = '12rem';
+                    dropdown.style.padding = '0.5rem 0';
+                    dropdown.style.pointerEvents = 'auto';
+                    
+                    // Posicionar el dropdown
+                    const userMenu = document.querySelector('.user-menu');
+                    if (userMenu) {
+                        const rect = userMenu.getBoundingClientRect();
+                        dropdown.style.top = (rect.bottom + 8) + 'px';
+                        dropdown.style.right = (window.innerWidth - rect.right) + 'px';
+                    }
+                    
+                    // Agregar contenido del menú
+                    dropdown.innerHTML = `
+                        <a href='#' class='user-menu-item' style='display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; color: #374151; text-decoration: none; font-size: 0.875rem;'>
+                            <span class='material-symbols-outlined'>person</span>
+                            Mi Perfil
+                        </a>
+                        <a href='#' class='user-menu-item' style='display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; color: #374151; text-decoration: none; font-size: 0.875rem;'>
+                            <span class='material-symbols-outlined'>settings</span>
+                            Configuración
+                        </a>
+                        <div style='height: 1px; background: #e5e7eb; margin: 0.5rem 0;'></div>
+                        <button class='user-menu-item logout-item' style='display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; color: #dc2626; text-decoration: none; font-size: 0.875rem; background: none; border: none; width: 100%; text-align: left; cursor: pointer;'>
+                            <span class='material-symbols-outlined'>logout</span>
+                            Cerrar Sesión
+                        </button>
+                    `;
+                    
+                    // Agregar hover effects
+                    dropdown.querySelectorAll('.user-menu-item').forEach(item => {
+                        item.addEventListener('mouseenter', () => {
+                            item.style.backgroundColor = '#f3f4f6';
+                        });
+                        item.addEventListener('mouseleave', () => {
+                            item.style.backgroundColor = 'transparent';
+                        });
+                    });
+                    
+                    portal.appendChild(dropdown);
+                    document.body.appendChild(portal);
+                    
+                    // Cerrar al hacer clic fuera
+                    portal.addEventListener('click', function(e) {
+                        if (e.target === portal) {
+                            window.removeUserMenuPortal();
+                        }
+                    });
+                };
+
+                window.removeUserMenuPortal = function() {
+                    const portal = document.getElementById('user-menu-portal');
+                    if (portal) {
+                        portal.remove();
+                    }
+                };
             ");
         }
     }

@@ -281,6 +281,32 @@ body {
   padding: 1.5rem !important;
 }
 
+/* Clases responsive personalizadas para móvil */
+@media (min-width: 475px) {
+  .xs\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Mejoras específicas para el mapa de mesas en móvil */
+@media (max-width: 640px) {
+  .grid.grid-cols-2.xs\:grid-cols-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+  
+  /* Hacer que las mesas sean más táctiles en móvil */
+  .group:hover .absolute {
+    opacity: 0;
+  }
+  
+  /* Mostrar tooltip al tocar en móvil */
+  .group:active .absolute,
+  .group:focus .absolute {
+    opacity: 1;
+  }
+}
+
 .sidebar {
   grid-area: sidebar;
   background: #f9fafb;

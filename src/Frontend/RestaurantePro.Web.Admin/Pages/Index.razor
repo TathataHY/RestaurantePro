@@ -254,48 +254,52 @@
                     </div>
                     
                     <!-- Mapa Interactivo de Mesas -->
-                    <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm mt-6">
-                        <div class="flex items-center justify-between mb-4">
+                    <div class="rounded-lg border border-gray-200 bg-white p-4 sm:p-6 shadow-sm mt-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
                             <p class="text-gray-800 text-base font-medium">Mapa de Mesas</p>
-                            <div class="flex items-center gap-2 text-sm text-gray-500">
+                            <div class="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
                                 <div class="flex items-center gap-1">
                                     <div class="w-3 h-3 rounded-full bg-green-500"></div>
-                                    <span>Disponible</span>
+                                    <span class="hidden sm:inline">Disponible</span>
+                                    <span class="sm:hidden">Disp.</span>
                                 </div>
                                 <div class="flex items-center gap-1">
                                     <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                                    <span>Ocupada</span>
+                                    <span class="hidden sm:inline">Ocupada</span>
+                                    <span class="sm:hidden">Ocup.</span>
                                 </div>
                                 <div class="flex items-center gap-1">
                                     <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                                    <span>Reservada</span>
+                                    <span class="hidden sm:inline">Reservada</span>
+                                    <span class="sm:hidden">Reserv.</span>
                                 </div>
                                 <div class="flex items-center gap-1">
                                     <div class="w-3 h-3 rounded-full bg-gray-500"></div>
-                                    <span>Fuera de Servicio</span>
+                                    <span class="hidden sm:inline">Fuera de Servicio</span>
+                                    <span class="sm:hidden">Fuera</span>
                                 </div>
                             </div>
                         </div>
                         
                         @if (mesasDetalle != null && mesasDetalle.Any())
                         {
-                            <div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-3">
+                            <div class="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2 sm:gap-3 overflow-x-auto">
                                 @foreach (var mesa in mesasDetalle.OrderBy(m => m.Numero))
                                 {
-                                    <div class="relative group">
-                                        <div class="w-full h-16 rounded-lg border-2 border-gray-300 flex flex-col items-center justify-center text-xs font-medium transition-all duration-200 hover:scale-105 cursor-pointer"
+                                    <div class="relative group min-w-0">
+                                        <div class="w-full h-12 sm:h-16 rounded-lg border-2 border-gray-300 flex flex-col items-center justify-center text-xs font-medium transition-all duration-200 hover:scale-105 cursor-pointer"
                                              style="background-color: @mesa.Color; border-color: @mesa.Color;"
                                              title="Mesa @mesa.Numero - @mesa.Estado - Capacidad: @mesa.Capacidad - @mesa.Ubicacion">
-                                            <div class="text-white font-bold">@mesa.Numero</div>
-                                            <div class="text-white text-xs opacity-90">@mesa.Capacidad</div>
+                                            <div class="text-white font-bold text-xs sm:text-sm">@mesa.Numero</div>
+                                            <div class="text-white text-xs opacity-90 hidden sm:block">@mesa.Capacidad</div>
                                         </div>
                                         
-                                        <!-- Tooltip -->
-                                        <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
-                                            <div class="font-semibold">Mesa @mesa.Numero</div>
-                                            <div>Estado: @mesa.Estado</div>
-                                            <div>Capacidad: @mesa.Capacidad personas</div>
-                                            <div>Ubicación: @mesa.Ubicacion</div>
+                                        <!-- Tooltip mejorado para móvil -->
+                                        <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 sm:px-3 py-1 sm:py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 max-w-xs">
+                                            <div class="font-semibold text-center">Mesa @mesa.Numero</div>
+                                            <div class="text-center">Estado: @mesa.Estado</div>
+                                            <div class="text-center">Capacidad: @mesa.Capacidad personas</div>
+                                            <div class="text-center text-xs">Ubicación: @mesa.Ubicacion</div>
                                             <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                                         </div>
                                     </div>
