@@ -27,9 +27,5 @@ public class ActualizarMesaCommandValidator : AbstractValidator<ActualizarMesaCo
             .WithMessage("La ubicación es requerida")
             .MaximumLength(100)
             .WithMessage("La ubicación no puede tener más de 100 caracteres");
-
-        RuleFor(x => x.Tipo)
-            .MaximumLength(50)
-            .WithMessage("El tipo no puede tener más de 50 caracteres");
     }
 } 

@@ -404,7 +404,7 @@ else
                         <td class="p-4">
                             @if (!string.IsNullOrEmpty(p.ImagenUrl))
                             {
-                                <img src="@p.ImagenUrl" alt="@p.Nombre" class="w-12 h-12 object-cover rounded-lg" />
+                                <img src="@GetImageUrl(p.ImagenUrl)" alt="@p.Nombre" class="w-12 h-12 object-cover rounded-lg" />
                             }
                             else
                             {
@@ -455,7 +455,7 @@ else
                     <div class="h-48 relative overflow-hidden">
                         @if (!string.IsNullOrEmpty(p.ImagenUrl))
                         {
-                            <img src="@p.ImagenUrl" alt="@p.Nombre" class="w-full h-full object-cover" />
+                            <img src="@GetImageUrl(p.ImagenUrl)" alt="@p.Nombre" class="w-full h-full object-cover" />
                         }
                         else
                         {
@@ -546,18 +546,17 @@ else
 {
     <div class="fixed inset-0 z-10 bg-black/50" @onclick="CerrarModal">
         <div class="fixed inset-0 z-20 flex items-center justify-center p-4">
-            <div class="bg-background-light rounded-lg shadow-xl p-8 w-full max-w-2xl" @onclick:stopPropagation="true">
-                <!-- Debug temporal para verificar renderizado del modal -->
-                <div class="text-xs text-purple-500 mb-4 border border-purple-300 p-2 bg-purple-50">
-                    <strong>DEBUG MODAL:</strong> mostrandoModal=@mostrandoModal, editando=@editando
-                </div>
-                
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-text-light">@(editando ? "Editar Producto" : "Crear / Editar Producto")</h2>
+            <div class="bg-background-light rounded-lg shadow-xl w-full max-w-2xl max-h-[95vh] flex flex-col" @onclick:stopPropagation="true">
+                <!-- Header fijo -->
+                <div class="flex justify-between items-center p-8 pb-4 border-b border-gray-200">
+                    <h2 class="text-2xl font-bold text-text-light">@(editando ? "Editar Producto" : "Crear Producto")</h2>
                     <button @onclick="CerrarModal" class="text-gray-400 hover:text-gray-600 transition-colors">
                         <span class="material-symbols-outlined">close</span>
                     </button>
                 </div>
+                
+                <!-- Área de contenido con scroll -->
+                <div class="flex-1 overflow-y-auto p-8 pt-4" style="max-height: calc(95vh - 200px);">
                 
                 @if (editando)
                 {
@@ -610,21 +609,9 @@ else
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Imagen del Producto</label>
-                                <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-border-light border-dashed rounded-lg">
-                                    <div class="space-y-1 text-center">
-                                        <svg aria-hidden="true" class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 48 48">
-                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                        </svg>
-                                        <div class="flex text-sm text-gray-600 dark:text-gray-400">
-                                            <label class="relative cursor-pointer bg-background-light rounded-md font-medium text-primary-color hover:text-primary-color/80 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-color" for="file-upload-edit">
-                                                <span>Sube un archivo</span>
-                                                <input class="sr-only" id="file-upload-edit" name="file-upload" type="file"/>
-                                            </label>
-                                            <p class="pl-1">o arrastra y suelta</p>
-                                        </div>
-                                        <p class="text-xs text-gray-500">PNG, JPG, GIF hasta 10MB</p>
-                                    </div>
-                                </div>
+                                <ImageUpload @key="(editando ? edicion?.Id : Guid.Empty)" ProductoId="@(edicion?.Id ?? Guid.Empty)" 
+                                           ImageUrl="@(editando ? GetImageUrl(edicion?.ImagenUrl) : GetImageUrl(nuevo?.ImagenUrl))" 
+                                           ImageUrlChanged="@OnImagenChanged" />
                             </div>
                             <div class="flex items-center">
                                 <input class="h-4 w-4 text-primary-color focus:ring-primary-color border-border-light rounded" 
@@ -696,23 +683,9 @@ else
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Imagen del Producto</label>
-                                
-                                <!-- Debug temporal -->
-                                <div class="text-xs text-blue-500 mb-2 border border-blue-300 p-2 bg-blue-50">
-                                    <strong>DEBUG AZUL:</strong> editando=@editando, edicion?.ImagenUrl=@(edicion?.ImagenUrl ?? "null")
-                                </div>
-                                <div class="text-xs text-green-500 mb-2 border border-green-300 p-2 bg-green-50">
-                                    <strong>DEBUG VERDE:</strong> GetImageUrl resultado: @(GetImageUrl(edicion?.ImagenUrl ?? nuevo?.ImagenUrl) ?? "null")
-                                </div>
-                                
-                                <ImageUpload ProductoId="@(edicion?.Id ?? Guid.Empty)" 
-                                           ImageUrl="@GetImageUrl(edicion?.ImagenUrl ?? nuevo?.ImagenUrl)" 
+                                <ImageUpload @key="(editando ? edicion?.Id : Guid.Empty)" ProductoId="@(edicion?.Id ?? Guid.Empty)" 
+                                           ImageUrl="@(editando ? GetImageUrl(edicion?.ImagenUrl) : GetImageUrl(nuevo?.ImagenUrl))" 
                                            ImageUrlChanged="@OnImagenChanged" />
-                                
-                                <!-- Debug temporal -->
-                                <div class="text-xs text-red-500 mt-2 border border-red-300 p-2 bg-red-50">
-                                    <strong>DEBUG ROJO:</strong> ImageUrl pasada al componente: @(GetImageUrl(edicion?.ImagenUrl ?? nuevo?.ImagenUrl)?.Substring(0, Math.Min(50, GetImageUrl(edicion?.ImagenUrl ?? nuevo?.ImagenUrl)?.Length ?? 0)) ?? "null")
-                                </div>
                             </div>
                             <div class="flex items-center">
                                 <input class="h-4 w-4 text-primary-color focus:ring-primary-color border-border-light rounded" 
@@ -727,27 +700,32 @@ else
                     </EditForm>
                 }
                 
-                <div class="flex justify-end gap-4 mt-8">
-                    <button @onclick="CerrarModal" 
-                            disabled="@guardando"
-                            class="py-2 px-4 rounded-lg border border-border-light text-text-light hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
-                            type="button">
-                        Cancelar
-                    </button>
-                    <button @onclick="GuardarAsync" 
-                            disabled="@guardando"
-                            class="py-2 px-4 rounded-lg bg-primary-color text-white font-bold shadow-md hover:bg-primary-color/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2" 
-                            type="submit">
-                        @if (guardando)
-                        {
-                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            <span>Guardando...</span>
-                        }
-                        else
-                        {
-                            <span>Guardar Producto</span>
-                        }
-                    </button>
+                </div>
+                
+                <!-- Footer fijo con botones -->
+                <div class="border-t border-gray-200 p-8 pt-4">
+                    <div class="flex justify-end gap-4">
+                        <button @onclick="CerrarModal" 
+                                disabled="@guardando"
+                                class="py-2 px-4 rounded-lg border border-border-light text-text-light hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+                                type="button">
+                            Cancelar
+                        </button>
+                        <button @onclick="GuardarAsync" 
+                                disabled="@guardando"
+                                class="py-2 px-4 rounded-lg bg-primary-color text-white font-bold shadow-md hover:bg-primary-color/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2" 
+                                type="submit">
+                            @if (guardando)
+                            {
+                                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <span>Guardando...</span>
+                            }
+                            else
+                            {
+                                <span>Guardar Producto</span>
+                            }
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -880,18 +858,12 @@ else
     protected override async Task OnInitializedAsync()
     {
         categorias = await Api.ObtenerCategoriasAsync() ?? new List<CategoriaProductoDto>();
-        Console.WriteLine($"🔍 Categorías cargadas: {categorias.Count}");
-        foreach (var cat in categorias)
-        {
-            Console.WriteLine($"  - {cat.Nombre}: Id={cat.Id}, Activa={cat.Activa}");
-        }
         await BuscarAsync();
     }
 
     private async Task BuscarAsync()
     {
         cargando = true;
-        Console.WriteLine($"BuscarAsync: filtro='{filtro}', categoriaId={categoriaId}, soloActivos={soloActivos}");
         productos = await Api.ObtenerProductosPaginadosAsync(
             paginaActual, 
             tamanoPagina, 
@@ -921,17 +893,11 @@ else
         editando = false;
         // Asignar la primera categoría activa disponible, o Guid.Empty si no hay categorías
         var primeraCategoria = categorias.FirstOrDefault(c => c.Activa);
-        Console.WriteLine($"🔍 Creando nuevo producto - Categorías disponibles: {categorias.Count}");
-        Console.WriteLine($"🔍 Primera categoría activa: {primeraCategoria?.Nombre} (Id: {primeraCategoria?.Id})");
         
         nuevo = new CreateProductoRequest { 
             Activo = true, 
             CategoriaId = primeraCategoria?.Id ?? Guid.Empty 
         };
-        Console.WriteLine($"🔍 CategoriaId asignado: {nuevo.CategoriaId}");
-        Console.WriteLine($"🔍 Estado antes de abrir modal crear: mostrandoModal={mostrandoModal}, editando={editando}");
-        Console.WriteLine($"🔍 ImagenUrl en nuevo ANTES: {(string.IsNullOrEmpty(nuevo.ImagenUrl) ? "null" : nuevo.ImagenUrl.Substring(0, Math.Min(50, nuevo.ImagenUrl.Length)) + "...")}");
-        Console.WriteLine($"🔍 imagenTemporal ANTES: {(string.IsNullOrEmpty(imagenTemporal) ? "null" : imagenTemporal.Substring(0, Math.Min(50, imagenTemporal.Length)) + "...")}");
         
         mostrandoModal = true;
     }
@@ -949,17 +915,10 @@ else
             Precio = p.Precio,
             CategoriaId = p.CategoriaId,
             Activo = p.Activo,
-            ImagenUrl = p.ImagenUrl // ✅ Agregar la imagen existente
+            ImagenUrl = p.ImagenUrl
         };
-        Console.WriteLine($"🔍 Editando producto - CategoriaId: {edicion.CategoriaId}");
-        Console.WriteLine($"🔍 ImagenUrl del producto: {(string.IsNullOrEmpty(p.ImagenUrl) ? "null" : p.ImagenUrl.Substring(0, Math.Min(50, p.ImagenUrl.Length)) + "...")}");
-        Console.WriteLine($"🔍 ImagenUrl en edicion ANTES: {(string.IsNullOrEmpty(edicion.ImagenUrl) ? "null" : edicion.ImagenUrl.Substring(0, Math.Min(50, edicion.ImagenUrl.Length)) + "...")}");
-        
-        // Verificar si la imagen se asignó correctamente
-        edicion.ImagenUrl = p.ImagenUrl;
-        
-        Console.WriteLine($"🔍 ImagenUrl en edicion DESPUÉS: {(string.IsNullOrEmpty(edicion.ImagenUrl) ? "null" : edicion.ImagenUrl.Substring(0, Math.Min(50, edicion.ImagenUrl.Length)) + "...")}");
-        Console.WriteLine($"🔍 Estado antes de abrir modal: mostrandoModal={mostrandoModal}, editando={editando}");
+        // Normalizar la URL de la imagen a una URL absoluta para asegurar la previsualización
+        edicion.ImagenUrl = GetImageUrl(edicion.ImagenUrl);
         
         mostrandoModal = true;
         
@@ -974,7 +933,6 @@ else
         imagenTemporal = null; // Limpiar imagen temporal
         edicion = new UpdateProductoRequest(); // Limpiar objeto de edición
         nuevo = new CreateProductoRequest(); // Limpiar objeto nuevo
-        Console.WriteLine("🔍 Modal cerrado - Estado limpiado");
     }
 
     private async Task GuardarAsync()
@@ -1023,10 +981,15 @@ else
         {
             if (editando)
             {
-                Console.WriteLine($"🔍 Editando producto - CategoriaId: {edicion.CategoriaId}");
                 var res = await Api.ActualizarAsync(edicion);
                 if (res != null)
                 {
+                    // Si hay una imagen temporal (vista previa), subirla ahora
+                    if (!string.IsNullOrEmpty(edicion.ImagenUrl) && edicion.ImagenUrl.StartsWith("data:"))
+                    {
+                        await SubirImagenTemporal(edicion.Id, edicion.ImagenUrl);
+                    }
+                    
                     MostrarNotificacion("Producto actualizado exitosamente", true);
                 }
                 else
@@ -1050,8 +1013,6 @@ else
                 return;
             }
             
-            Console.WriteLine($"🔍 Creando producto - CategoriaId: {nuevo.CategoriaId}");
-            Console.WriteLine($"🔍 Datos del nuevo producto: Nombre={nuevo.Nombre}, Precio={nuevo.Precio}, Activo={nuevo.Activo}");
             var res = await Api.CrearAsync(nuevo);
                 if (res != null)
                 {
@@ -1120,44 +1081,26 @@ else
 
     private string? GetImageUrl(string? imageUrl)
     {
-        Console.WriteLine($"🔍 GetImageUrl llamado con: {(string.IsNullOrEmpty(imageUrl) ? "null" : imageUrl.Substring(0, Math.Min(50, imageUrl.Length)) + "...")}");
-        
         if (string.IsNullOrEmpty(imageUrl))
-        {
-            Console.WriteLine("🔍 GetImageUrl: imageUrl es null o vacía, retornando null");
             return null;
-        }
             
         // Si ya es una URL completa (data: o http:), devolverla tal como está
         if (imageUrl.StartsWith("data:") || imageUrl.StartsWith("http"))
-        {
-            Console.WriteLine($"🔍 GetImageUrl: URL completa detectada, retornando tal como está");
             return imageUrl;
-        }
             
         // Si es una ruta relativa, construir la URL completa
         if (imageUrl.StartsWith("/uploads/"))
-        {
-            var fullUrl = $"http://localhost:8080{imageUrl}";
-            Console.WriteLine($"🔍 GetImageUrl: Ruta relativa detectada, construyendo URL completa: {fullUrl}");
-            return fullUrl;
-        }
+            return $"http://localhost:8080{imageUrl}";
             
         // Si no tiene el prefijo /uploads/, agregarlo
-        var constructedUrl = $"http://localhost:8080/uploads/productos/{imageUrl}";
-        Console.WriteLine($"🔍 GetImageUrl: Construyendo URL con prefijo: {constructedUrl}");
-        return constructedUrl;
+        return $"http://localhost:8080/uploads/productos/{imageUrl}";
     }
 
     private async Task OnImagenChanged(string? imagenUrl)
     {
-        Console.WriteLine($"🔍 OnImagenChanged llamado - editando: {editando}");
-        Console.WriteLine($"🔍 imagenUrl recibida: {(string.IsNullOrEmpty(imagenUrl) ? "null" : imagenUrl.Substring(0, Math.Min(50, imagenUrl.Length)) + "...")}");
-        
         if (editando)
         {
             edicion.ImagenUrl = imagenUrl;
-            Console.WriteLine($"🔍 Imagen asignada a edicion: {edicion.ImagenUrl?.Substring(0, Math.Min(50, edicion.ImagenUrl.Length))}...");
         }
         else
         {
@@ -1165,15 +1108,12 @@ else
             if (!string.IsNullOrEmpty(imagenUrl) && imagenUrl.StartsWith("data:"))
             {
                 imagenTemporal = imagenUrl;
-                Console.WriteLine($"🔍 Imagen temporal almacenada - Base64 length: {imagenUrl.Length}");
             }
             nuevo.ImagenUrl = imagenUrl;
-            Console.WriteLine($"🔍 Imagen asignada a nuevo: {nuevo.ImagenUrl?.Substring(0, Math.Min(50, nuevo.ImagenUrl.Length))}...");
         }
         
         // Forzar actualización del estado para mostrar la imagen
         StateHasChanged();
-        Console.WriteLine($"✅ OnImagenChanged completado - StateHasChanged() llamado");
     }
 
     private void MostrarNotificacion(string mensaje, bool esExito)
@@ -1238,37 +1178,23 @@ else
         if (cargandoEstadisticas) return;
         
         cargandoEstadisticas = true;
-        Console.WriteLine("🔄 Iniciando carga de estadísticas...");
         
         try
         {
-            // Usar el endpoint específico de estadísticas
-            Console.WriteLine("📡 Llamando al endpoint de estadísticas...");
             estadisticas = await Api.ObtenerEstadisticasAsync();
             
-            if (estadisticas != null)
+            if (estadisticas == null)
             {
-                Console.WriteLine($"✅ Estadísticas obtenidas: {estadisticas.TotalProductos} productos totales");
-                Console.WriteLine($"📊 Productos activos: {estadisticas.ProductosActivos}");
-                Console.WriteLine($"📊 Productos inactivos: {estadisticas.ProductosInactivos}");
-                Console.WriteLine($"💰 Precio promedio: {estadisticas.PrecioPromedio:C}");
-            }
-            else
-            {
-                Console.WriteLine("⚠️ No se pudieron obtener estadísticas de la API");
                 estadisticas = new EstadisticasProductosDto(); // Crear estadísticas vacías
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Error al cargar estadísticas: {ex.Message}");
-            Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
             estadisticas = new EstadisticasProductosDto(); // Crear estadísticas vacías en caso de error
         }
         finally
         {
             cargandoEstadisticas = false;
-            Console.WriteLine("🏁 Carga de estadísticas completada");
         }
     }
 

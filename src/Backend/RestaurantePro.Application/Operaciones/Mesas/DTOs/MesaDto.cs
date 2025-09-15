@@ -39,11 +39,6 @@ public class MesaDto : BaseDto
     public string Zona { get; set; } = string.Empty;
     
     /// <summary>
-    /// Tipo de mesa
-    /// </summary>
-    public string Tipo { get; set; } = string.Empty;
-    
-    /// <summary>
     /// Hora de la última actualización
     /// </summary>
     public DateTime UltimaActualizacion { get; set; }

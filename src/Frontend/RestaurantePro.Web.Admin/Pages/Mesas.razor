@@ -63,7 +63,7 @@
 <!-- Filtros y acciones -->
 <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8">
     <h2 class="text-xl font-bold text-gray-900 mb-4">Filtros Avanzados</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
         <label class="flex flex-col gap-1.5">
             <span class="text-sm font-medium text-gray-700">Estado</span>
             <select class="form-select w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" @bind="estado" @bind:after="BuscarAsync">
@@ -76,11 +76,15 @@
         </label>
         <label class="flex flex-col gap-1.5">
             <span class="text-sm font-medium text-gray-700">Zona</span>
-            <input class="form-input w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
-                   placeholder="Zona/Ubicación" 
-                   type="text" 
-                   @bind="ubicacion" 
-                   @onkeyup="OnFiltroChanged" />
+            <select class="form-select w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" @bind="ubicacion" @bind:after="BuscarAsync">
+                <option value="">Todas las zonas</option>
+                <option value="Interior">Interior</option>
+                <option value="Terraza">Terraza</option>
+                <option value="VIP">VIP</option>
+                <option value="Ventana">Ventana</option>
+                <option value="Privada">Privada</option>
+                <option value="Barra">Barra</option>
+            </select>
         </label>
         <label class="flex flex-col gap-1.5">
             <span class="text-sm font-medium text-gray-700">Capacidad Mínima</span>
@@ -90,16 +94,6 @@
                    min="1" 
                    @bind="capacidadMinima" 
                    @onkeyup="OnFiltroChanged" />
-        </label>
-        <label class="flex flex-col gap-1.5">
-            <span class="text-sm font-medium text-gray-700">Tipo</span>
-            <select class="form-select w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" @bind="tipoFiltro" @bind:after="BuscarAsync">
-                <option value="">Todos los tipos</option>
-                <option value="Interior">Interior</option>
-                <option value="Exterior">Exterior</option>
-                <option value="VIP">VIP</option>
-                <option value="Privada">Privada</option>
-            </select>
         </label>
         <button class="w-full lg:w-auto flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors" @onclick="BuscarAsync">
             <span class="material-symbols-outlined text-base">filter_alt</span>
@@ -149,7 +143,6 @@ else
                             <th class="px-6 py-3" scope="col">Capacidad</th>
                             <th class="px-6 py-3" scope="col">Estado</th>
                             <th class="px-6 py-3" scope="col">Zona</th>
-                            <th class="px-6 py-3" scope="col">Tipo</th>
                             <th class="px-6 py-3 text-right" scope="col">Acciones</th>
                         </tr>
                     </thead>
@@ -165,7 +158,6 @@ else
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @GetEstadoClass(m.Estado)">@m.Estado</span>
                                 </td>
                                 <td class="px-6 py-4 text-gray-900">@m.Zona</td>
-                                <td class="px-6 py-4 text-gray-900">@m.Tipo</td>
                                 <td class="px-6 py-4 text-right space-x-2">
                                     <button class="p-1 text-gray-400 hover:text-blue-600" @onclick="() => VerDetalles(m)" title="Ver detalles">
                                         <span class="material-symbols-outlined">visibility</span>
@@ -207,10 +199,6 @@ else
                         <div class="flex items-center gap-2">
                             <span class="material-symbols-outlined text-gray-400 text-sm">location_on</span>
                             <span class="text-sm text-gray-600">@m.Zona</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="material-symbols-outlined text-gray-400 text-sm">restaurant</span>
-                            <span class="text-sm text-gray-600">@m.Tipo</span>
                         </div>
                     </div>
                     
@@ -394,7 +382,6 @@ else
       Numero = int.Parse(m.Numero),
       Capacidad = m.Capacidad,
       Zona = m.Zona,
-      Tipo = m.Tipo,
       Estado = m.Estado,
       Descripcion = m.Descripcion,
       Notas = m.Notas,

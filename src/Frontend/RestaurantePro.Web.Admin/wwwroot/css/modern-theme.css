@@ -1534,7 +1534,7 @@ body {
 }
 
 /* ===== RESPONSIVE ===== */
-@media (max-width: 768px) {
+@media (max-width: 1023px) {
   .page {
     grid-template-columns: 1fr;
     grid-template-areas: "main";
@@ -1545,8 +1545,13 @@ body {
     top: 0;
     left: 0;
     width: 256px;
+    height: 100vh;
     transform: translateX(-100%);
     z-index: 1000;
+    transition: transform 0.3s ease-in-out;
+    background: #f9fafb;
+    border-right: 1px solid #e5e7eb;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
   }
   
   .sidebar.open {
@@ -1555,10 +1560,25 @@ body {
   
   .main-content {
     grid-area: main;
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
   }
   
   .content {
     padding: var(--spacing-md);
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    padding-left: var(--spacing-md) !important;
+  }
+  
+  /* Asegurar que todo el contenido ocupe el ancho completo */
+  .main-content > *,
+  .content > * {
+    width: 100% !important;
+    max-width: none !important;
   }
   
   .metric-card {

@@ -76,4 +76,5 @@ public class ObtenerMesasQueryHandler : IRequestHandler<ObtenerMesasQuery, Resul
             return Result.Failure<List<MesaDto>>($"Error interno: {ex.Message}");
         }
     }
+
 } 

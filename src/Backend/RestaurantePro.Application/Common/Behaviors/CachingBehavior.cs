@@ -142,7 +142,7 @@ public class CachingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
 
         return requestName switch
         {
-            var name when name.Contains("obtenerproductoporid") => TimeSpan.FromSeconds(10), // Detalle de producto: TTL corto
+            var name when name.Contains("obtenerproductoporid") => TimeSpan.Zero, // SIN caché para detalle de producto (datos cambian al editar)
             var name when name.Contains("obtenerproducto") => TimeSpan.FromMinutes(15), // Otros productos: TTL estándar
             var name when name.Contains("obtenerusuario") => TimeSpan.Zero,   // SIN caché para usuarios (datos cambian frecuentemente)
             var name when name.Contains("obtenercomanda") => TimeSpan.FromSeconds(15),   // Comandas cambian muy rápido (cocina)

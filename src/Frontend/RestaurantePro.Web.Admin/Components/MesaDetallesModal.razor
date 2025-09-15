@@ -42,10 +42,6 @@
                         <p class="text-lg font-semibold text-[var(--primary-text-color)]">@Mesa?.Zona</p>
                     </div>
                     <div class="bg-[var(--container-background)] rounded-lg p-4">
-                        <p class="text-sm font-medium text-[var(--secondary-text-color)]">Tipo</p>
-                        <p class="text-lg font-semibold text-[var(--primary-text-color)]">@Mesa?.Tipo</p>
-                    </div>
-                    <div class="bg-[var(--container-background)] rounded-lg p-4">
                         <p class="text-sm font-medium text-[var(--secondary-text-color)]">Cliente Actual</p>
                         <p class="text-lg font-semibold text-[var(--primary-text-color)]">@(string.IsNullOrEmpty(Mesa?.NombreCliente) ? "Sin cliente" : Mesa.NombreCliente)</p>
                     </div>

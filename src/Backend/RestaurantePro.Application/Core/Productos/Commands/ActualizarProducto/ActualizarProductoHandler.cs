@@ -56,6 +56,17 @@ public class ActualizarProductoHandler : IRequestHandler<ActualizarProductoComma
                 ? request.Descripcion 
                 : _sanitizer.SanitizeText(request.Descripcion);
 
+            // Validar unicidad del nombre (excluyendo el producto actual)
+            if (producto.Nombre != nombreSanitizado)
+            {
+                var productoExistente = await _repository.ObtenerPorNombreAsync(nombreSanitizado, cancellationToken);
+                if (productoExistente != null && productoExistente.Id != request.Id)
+                {
+                    _logger.LogWarning("❌ Ya existe un producto con el nombre: {Nombre}", nombreSanitizado);
+                    return Result.Failure<ProductoDto>($"Ya existe un producto con el nombre '{nombreSanitizado}'");
+                }
+            }
+
             // Actualizar los datos básicos del producto
             var nuevoPrecio = new PrecioProducto(request.Precio);
             producto.Actualizar(nombreSanitizado, descripcionSanitizada, nuevoPrecio);

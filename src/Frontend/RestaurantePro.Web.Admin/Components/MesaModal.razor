@@ -81,24 +81,6 @@
                             <ValidationMessage For="@(() => Model.Zona)" class="text-red-500 text-sm mt-1" />
                         </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1" for="table-type">Tipo de Mesa <span class="text-red-500">*</span></label>
-                            <div class="relative">
-                                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">table_bar</span>
-                                <InputSelect class="w-full appearance-none pl-10 pr-10 py-2.5 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" 
-                                            id="table-type" 
-                                            @bind-Value="Model.Tipo">
-                                    <option value="">Selecciona un tipo</option>
-                                    <option value="Estándar">Estándar</option>
-                                    <option value="Alta">Alta</option>
-                                    <option value="Baja">Baja</option>
-                                    <option value="Booth">Booth</option>
-                                    <option value="VIP">VIP</option>
-                                </InputSelect>
-                                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
-                            </div>
-                            <ValidationMessage For="@(() => Model.Tipo)" class="text-red-500 text-sm mt-1" />
-                        </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1" for="description">Descripción (Opcional)</label>
@@ -233,7 +215,6 @@
             Numero = editarModel.Numero,
             Capacidad = editarModel.Capacidad,
             Zona = editarModel.Zona,
-            Tipo = editarModel.Tipo,
             Estado = editarModel.Estado,
             Descripcion = editarModel.Descripcion,
             Notas = editarModel.Notas,
@@ -257,7 +238,6 @@
             EditarModel.Numero = Model.Numero;
             EditarModel.Capacidad = Model.Capacidad;
             EditarModel.Zona = Model.Zona;
-            EditarModel.Tipo = Model.Tipo;
             EditarModel.Estado = Model.Estado;
             EditarModel.Descripcion = Model.Descripcion;
             EditarModel.Notas = Model.Notas;

@@ -62,7 +62,7 @@ public class MesasController : ControllerBase
         { 
             Estado = estado, 
             Ubicacion = ubicacion, 
-            CapacidadMinima = capacidadMinima 
+            CapacidadMinima = capacidadMinima
         };
         
         var result = await _mediator.Send(query);
