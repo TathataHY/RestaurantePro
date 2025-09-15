@@ -1,5 +1,5 @@
 ﻿<div class="navbar">
-    <div class="navbar-brand">
+    <div class="navbar-brand" title="RestaurantePro">
         <span class="material-symbols-outlined">restaurant_menu</span>
         RestaurantePro
     </div>
@@ -10,7 +10,7 @@
         <!-- Dashboard -->
         <div class="nav-section">
             <div class="nav-item">
-                <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
+                <NavLink class="nav-link" href="/" Match="NavLinkMatch.All" title="Dashboard">
                     <span class="material-symbols-outlined">dashboard</span> Dashboard
                 </NavLink>
             </div>
@@ -20,17 +20,17 @@
         <div class="nav-section">
             <div class="nav-section-title">Productos</div>
             <div class="nav-item">
-                <NavLink class="nav-link" href="productos">
+                <NavLink class="nav-link" href="productos" title="Productos">
                     <span class="material-symbols-outlined">inventory_2</span> Productos
                 </NavLink>
             </div>
             <div class="nav-item">
-                <NavLink class="nav-link" href="categorias">
+                <NavLink class="nav-link" href="categorias" title="Categorías">
                     <span class="material-symbols-outlined">category</span> Categorías
                 </NavLink>
             </div>
             <div class="nav-item">
-                <NavLink class="nav-link" href="recetas">
+                <NavLink class="nav-link" href="recetas" title="Recetas">
                     <span class="material-symbols-outlined">restaurant</span> Recetas
                 </NavLink>
             </div>
@@ -40,22 +40,22 @@
         <div class="nav-section">
             <div class="nav-section-title">Operaciones</div>
             <div class="nav-item">
-                <NavLink class="nav-link" href="mesas">
+                <NavLink class="nav-link" href="mesas" title="Mesas">
                     <span class="material-symbols-outlined">table_restaurant</span> Mesas
                 </NavLink>
             </div>
             <div class="nav-item">
-                <NavLink class="nav-link" href="comandas">
+                <NavLink class="nav-link" href="comandas" title="Comandas">
                     <span class="material-symbols-outlined">receipt_long</span> Comandas
                 </NavLink>
             </div>
             <div class="nav-item">
-                <NavLink class="nav-link" href="reservaciones">
+                <NavLink class="nav-link" href="reservaciones" title="Reservaciones">
                     <span class="material-symbols-outlined">event_available</span> Reservaciones
                 </NavLink>
             </div>
             <div class="nav-item">
-                <NavLink class="nav-link" href="preparaciones">
+                <NavLink class="nav-link" href="preparaciones" title="Preparaciones">
                     <span class="material-symbols-outlined">kitchen</span> Preparaciones
                 </NavLink>
             </div>
@@ -65,17 +65,17 @@
         <div class="nav-section">
             <div class="nav-section-title">Comercial</div>
             <div class="nav-item">
-                <NavLink class="nav-link" href="clientes">
+                <NavLink class="nav-link" href="clientes" title="Clientes">
                     <span class="material-symbols-outlined">people</span> Clientes
                 </NavLink>
             </div>
             <div class="nav-item">
-                <NavLink class="nav-link" href="facturas">
+                <NavLink class="nav-link" href="facturas" title="Facturas">
                     <span class="material-symbols-outlined">receipt</span> Facturas
                 </NavLink>
             </div>
             <div class="nav-item">
-                <NavLink class="nav-link" href="promociones">
+                <NavLink class="nav-link" href="promociones" title="Promociones">
                     <span class="material-symbols-outlined">local_offer</span> Promociones
                 </NavLink>
             </div>
@@ -85,12 +85,12 @@
         <div class="nav-section">
             <div class="nav-section-title">Inventario</div>
             <div class="nav-item">
-                <NavLink class="nav-link" href="inventario">
+                <NavLink class="nav-link" href="inventario" title="Inventario">
                     <span class="material-symbols-outlined">inventory</span> Inventario
                 </NavLink>
             </div>
             <div class="nav-item">
-                <NavLink class="nav-link" href="proveedores">
+                <NavLink class="nav-link" href="proveedores" title="Proveedores">
                     <span class="material-symbols-outlined">local_shipping</span> Proveedores
                 </NavLink>
             </div>
@@ -100,7 +100,7 @@
         <div class="nav-section">
             <div class="nav-section-title">Reportes</div>
             <div class="nav-item">
-                <NavLink class="nav-link" href="reportes">
+                <NavLink class="nav-link" href="reportes" title="Reportes">
                     <span class="material-symbols-outlined">analytics</span> Reportes
                 </NavLink>
             </div>
@@ -112,14 +112,14 @@
             <div class="nav-section">
                 <div class="nav-section-title">Sistema</div>
                 <div class="nav-item">
-                    <NavLink class="nav-link" href="usuarios">
-                        <span class="material-symbols-outlined">person</span> Usuarios
-                    </NavLink>
+                <NavLink class="nav-link" href="usuarios" title="Usuarios">
+                    <span class="material-symbols-outlined">person</span> Usuarios
+                </NavLink>
                 </div>
                 <div class="nav-item">
-                    <NavLink class="nav-link" href="notificaciones">
-                        <span class="material-symbols-outlined">notifications</span> Notificaciones
-                    </NavLink>
+                <NavLink class="nav-link" href="notificaciones" title="Notificaciones">
+                    <span class="material-symbols-outlined">notifications</span> Notificaciones
+                </NavLink>
                 </div>
             </div>
         }
@@ -147,14 +147,16 @@
 </div>
 
 @code {
-    private bool collapseNavMenu = true;
+    private bool isSidebarCollapsed = false;
     private bool isDarkMode = false;
 
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private string? SidebarCssClass => isSidebarCollapsed ? "collapsed" : null;
+    private string? NavTextCssClass => isSidebarCollapsed ? "hidden" : null;
 
-    private void ToggleNavMenu()
+    public void ToggleSidebar()
     {
-        collapseNavMenu = !collapseNavMenu;
+        isSidebarCollapsed = !isSidebarCollapsed;
+        StateHasChanged();
     }
 
     [CascadingParameter] private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;

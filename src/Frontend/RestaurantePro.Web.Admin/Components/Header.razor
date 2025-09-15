@@ -5,6 +5,11 @@
 
 <header class="modern-header">
     <div class="header-container">
+        <!-- Botón de toggle del sidebar -->
+        <button class="sidebar-toggle" @onclick="ToggleSidebar" title="Alternar menú">
+            <span class="material-symbols-outlined">menu</span>
+        </button>
+
         <!-- Logo y título -->
         <div class="header-brand">
             <span class="header-logo material-symbols-outlined">restaurant_menu</span>
@@ -124,11 +129,29 @@
         return userRole;
     }
 
-    // Cerrar menú al hacer clic fuera
+    private async Task ToggleSidebar()
+    {
+        try
+        {
+            Console.WriteLine("ToggleSidebar called");
+            var result = await JSRuntime.InvokeAsync<bool>("toggleSidebar");
+            Console.WriteLine($"toggleSidebar JavaScript executed, result: {result}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error calling toggleSidebar: {ex.Message}");
+        }
+    }
+
+    // Cerrar menú al hacer clic fuera y cargar estado del sidebar
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            // Cargar estado inicial del sidebar
+            await JSRuntime.InvokeVoidAsync("loadSidebarState");
+
+            // Cerrar menú de usuario al hacer clic fuera
             await JSRuntime.InvokeVoidAsync("eval", @"
                 document.addEventListener('click', function(e) {
                     const userMenu = document.querySelector('.user-menu');

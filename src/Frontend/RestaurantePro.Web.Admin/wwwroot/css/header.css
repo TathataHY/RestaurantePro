@@ -15,6 +15,32 @@
   transition: all var(--transition-normal);
 }
 
+/* ===== BOTÓN TOGGLE SIDEBAR ===== */
+.sidebar-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  background: #f3f4f6;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: #111827;
+  margin-right: 1rem;
+}
+
+.sidebar-toggle:hover {
+  background: #e5e7eb;
+  transform: scale(1.05);
+}
+
+.sidebar-toggle .material-symbols-outlined {
+  font-size: 1.25rem;
+  color: #111827;
+}
+
 .header-container {
   display: flex;
   align-items: center;

@@ -4,8 +4,8 @@
 <PageTitle>RestaurantePro Admin</PageTitle>
 
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
+    <div class="sidebar @(isSidebarCollapsed ? "collapsed" : "")">
+        <NavMenu @ref="navMenuComponent" />
     </div>
 
     <main class="main-content">
@@ -18,5 +18,13 @@
 </div>
 
 @code {
-    // El header ahora maneja toda la funcionalidad de tema y autenticación
+    private bool isSidebarCollapsed = false;
+    private NavMenu? navMenuComponent;
+
+    public void ToggleSidebar()
+    {
+        isSidebarCollapsed = !isSidebarCollapsed;
+        navMenuComponent?.ToggleSidebar();
+        StateHasChanged();
+    }
 }
