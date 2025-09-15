@@ -1,55 +1,166 @@
 @page "/registro"
 @inject RestaurantePro.Web.Public.Services.ClientesPublicApiService Api
 
+<PageTitle>Registro de Clientes - RestaurantePro</PageTitle>
 <HeadContent>
     <link rel="canonical" href="/registro" />
-    <meta property="og:title" content="Registro de clientes - RestaurantePro" />
-    <meta property="og:description" content="Regístrate para recibir novedades y beneficios." />
+    <meta property="og:title" content="Registro de Clientes - RestaurantePro" />
+    <meta property="og:description" content="Únete a nuestra comunidad y recibe beneficios exclusivos, promociones especiales y novedades del restaurante." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="/registro" />
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Registro de clientes - RestaurantePro" />
-    <meta name="twitter:description" content="Regístrate para recibir novedades y beneficios." />
+    <meta name="twitter:title" content="Registro de Clientes - RestaurantePro" />
+    <meta name="twitter:description" content="Únete a nuestra comunidad y recibe beneficios exclusivos, promociones especiales y novedades del restaurante." />
 </HeadContent>
 
-<h3>Registro de clientes</h3>
+<!-- Hero Section -->
+<section class="register-hero">
+    <div class="register-hero-content">
+        <h1 class="register-hero-title">Únete a Nuestra Comunidad</h1>
+        <p class="register-hero-subtitle">
+            Regístrate y disfruta de beneficios exclusivos, promociones especiales 
+            y las últimas novedades de nuestro restaurante.
+        </p>
+    </div>
+</section>
 
-<EditForm EditContext="editContext!" OnValidSubmit="Registrar">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-    <div class="form-card mb-3">
-        <div class="row g-3">
-            <div class="col-12 col-md-6">
-                <label class="form-label">Nombre completo</label>
-                <InputText @bind-Value="form.Nombre" class="form-control" placeholder="Ej: María López" />
+<!-- Formulario de Registro -->
+<section class="register-main">
+    <div class="register-container">
+        <div class="register-form-container">
+            <div class="register-form-card">
+                <div class="register-form-header">
+                    <h2 class="register-form-title">Crear Cuenta</h2>
+                    <p class="register-form-subtitle">Completa tus datos para comenzar</p>
+                </div>
+                
+                <div class="register-form-body">
+                    <EditForm EditContext="editContext!" OnValidSubmit="Registrar">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="validation-summary" />
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Nombre completo *</label>
+                                <InputText @bind-Value="form.Nombre" class="form-input" placeholder="Ej: María López" />
+                                <ValidationMessage For="@(() => form.Nombre)" class="form-error" />
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Correo electrónico *</label>
+                                <InputText @bind-Value="form.Email" class="form-input" placeholder="nombre@dominio.com" />
+                                <ValidationMessage For="@(() => form.Email)" class="form-error" />
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Teléfono *</label>
+                                <InputText @bind-Value="form.Telefono" class="form-input" placeholder="+56912345678" />
+                                <div class="form-hint">Mínimo 8 caracteres</div>
+                                <ValidationMessage For="@(() => form.Telefono)" class="form-error" />
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Fecha de nacimiento *</label>
+                                <InputDate @bind-Value="form.FechaNacimiento" class="form-input" />
+                                <ValidationMessage For="@(() => form.FechaNacimiento)" class="form-error" />
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button class="register-submit-button" disabled="@(!esFormularioValido || enviando)">
+                                @if (enviando)
+                                {
+                                    <div class="button-loading">
+                                        <div class="button-spinner"></div>
+                                        Registrando...
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span>Crear Cuenta</span>
+                                }
+                            </button>
+                            
+                            @if (exito)
+                            {
+                                <div class="register-success">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                    ¡Registro exitoso! Bienvenido a nuestra comunidad.
+                                </div>
+                            }
+                            
+                            @if (!string.IsNullOrEmpty(error))
+                            {
+                                <div class="register-error">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    @error
+                                </div>
+                            }
+                        </div>
+                    </EditForm>
+                </div>
             </div>
-            <div class="col-12 col-md-6">
-                <label class="form-label">Email</label>
-                <InputText @bind-Value="form.Email" class="form-control" placeholder="nombre@dominio.com" />
-            </div>
-            <div class="col-12 col-md-6">
-                <label class="form-label">Teléfono</label>
-                <InputText @bind-Value="form.Telefono" class="form-control" placeholder="+56912345678" />
-                <div class="form-hint">Mínimo 8 caracteres</div>
-            </div>
-            <div class="col-12 col-md-6">
-                <label class="form-label">Fecha de nacimiento</label>
-                <InputDate @bind-Value="form.FechaNacimiento" class="form-control" />
-            </div>
-            <div class="col-12">
-                <button class="btn btn-primary" disabled="@(!esFormularioValido || enviando)">@(enviando ? "Registrando..." : "Registrarme")</button>
-                @if (exito)
-                {
-                    <span class="ms-2 text-success">¡Registro exitoso!</span>
-                }
-                @if (!string.IsNullOrEmpty(error))
-                {
-                    <span class="ms-2 text-danger">@error</span>
-                }
+        </div>
+        
+        <!-- Beneficios del Registro -->
+        <div class="register-benefits">
+            <h3 class="benefits-title">¿Por qué registrarte?</h3>
+            <div class="benefits-list">
+                <div class="benefit-item">
+                    <div class="benefit-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                        </svg>
+                    </div>
+                    <div class="benefit-content">
+                        <h4 class="benefit-title">Promociones Exclusivas</h4>
+                        <p class="benefit-description">Recibe ofertas especiales y descuentos únicos</p>
+                    </div>
+                </div>
+                
+                <div class="benefit-item">
+                    <div class="benefit-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM4 19h6v-6H4v6zM4 5h6V1H4v4zM15 1h5l-5 5V1z"></path>
+                        </svg>
+                    </div>
+                    <div class="benefit-content">
+                        <h4 class="benefit-title">Reservas Prioritarias</h4>
+                        <p class="benefit-description">Acceso anticipado a nuevas fechas y horarios</p>
+                    </div>
+                </div>
+                
+                <div class="benefit-item">
+                    <div class="benefit-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="benefit-content">
+                        <h4 class="benefit-title">Novedades del Menú</h4>
+                        <p class="benefit-description">Sé el primero en conocer nuestros nuevos platos</p>
+                    </div>
+                </div>
+                
+                <div class="benefit-item">
+                    <div class="benefit-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="benefit-content">
+                        <h4 class="benefit-title">Experiencia Personalizada</h4>
+                        <p class="benefit-description">Recomendaciones basadas en tus preferencias</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</EditForm>
+</section>
 
 @code {
     private RestaurantePro.Web.Public.Services.PublicClienteRegisterRequest form = new()

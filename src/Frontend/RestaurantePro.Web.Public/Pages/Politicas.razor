@@ -1,56 +1,257 @@
 @page "/politicas"
 
-<PageTitle>Políticas</PageTitle>
+<PageTitle>Políticas del Restaurante - RestaurantePro</PageTitle>
 <HeadContent>
     <link rel="canonical" href="/politicas" />
-    <meta property="og:title" content="Políticas - RestaurantePro" />
-    <meta property="og:description" content="Reservas, cancelaciones, alergias, privacidad y cookies." />
+    <meta property="og:title" content="Políticas del Restaurante - RestaurantePro" />
+    <meta property="og:description" content="Conoce nuestras políticas de reservas, cancelaciones, alergias, privacidad y términos de servicio para una experiencia transparente y segura." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="/politicas" />
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Políticas - RestaurantePro" />
-    <meta name="twitter:description" content="Reservas, cancelaciones, alergias, privacidad y cookies." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Políticas del Restaurante - RestaurantePro" />
+    <meta name="twitter:description" content="Conoce nuestras políticas de reservas, cancelaciones, alergias, privacidad y términos de servicio para una experiencia transparente y segura." />
 </HeadContent>
 
-<h3>Políticas del Restaurante</h3>
+<!-- Hero Section -->
+<section class="policies-hero">
+    <div class="policies-hero-content">
+        <h1 class="policies-hero-title">Políticas del Restaurante</h1>
+        <p class="policies-hero-subtitle">
+            Conoce nuestras políticas para garantizar una experiencia transparente, segura y satisfactoria para todos nuestros huéspedes.
+        </p>
+    </div>
+</section>
 
-<div class="accordion" id="politicasAccordion">
-  <div class="accordion-item">
-    <h2 class="accordion-header" id="heading1">
-      <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1" aria-expanded="true" aria-controls="collapse1">
-        Reservas y cancelaciones
-      </button>
-    </h2>
-    <div id="collapse1" class="accordion-collapse collapse show" aria-labelledby="heading1" data-bs-parent="#politicasAccordion">
-      <div class="accordion-body">
-        Las reservas se mantienen por 15 minutos. Si no puedes asistir, te pedimos cancelar con 2 horas de anticipación.
-      </div>
+<!-- Políticas Principales -->
+<section class="policies-main">
+    <div class="policies-container">
+        <div class="policies-grid">
+            <!-- Reservas y Cancelaciones -->
+            <div class="policy-card">
+                <div class="policy-header">
+                    <div class="policy-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="policy-title">Reservas y Cancelaciones</h2>
+                </div>
+                <div class="policy-content">
+                    <div class="policy-section">
+                        <h3 class="policy-section-title">Política de Reservas</h3>
+                        <ul class="policy-list">
+                            <li>Las reservas se mantienen por <strong>15 minutos</strong> después de la hora programada</li>
+                            <li>Reservas para grupos de 8+ personas requieren confirmación telefónica</li>
+                            <li>Reservas especiales (eventos, celebraciones) deben realizarse con 48 horas de anticipación</li>
+                            <li>Nos reservamos el derecho de modificar o cancelar reservas en casos excepcionales</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="policy-section">
+                        <h3 class="policy-section-title">Política de Cancelaciones</h3>
+                        <ul class="policy-list">
+                            <li>Cancelaciones sin costo hasta <strong>2 horas</strong> antes de la reserva</li>
+                            <li>Cancelaciones tardías pueden incurrir en una tarifa del 50% del valor estimado</li>
+                            <li>No-shows serán cobrados el 100% del valor estimado de la reserva</li>
+                            <li>Para eventos especiales, se requiere cancelación con 24 horas de anticipación</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alergias e Intolerancias -->
+            <div class="policy-card">
+                <div class="policy-header">
+                    <div class="policy-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="policy-title">Alergias e Intolerancias</h2>
+                </div>
+                <div class="policy-content">
+                    <div class="policy-section">
+                        <h3 class="policy-section-title">Compromiso con la Seguridad</h3>
+                        <ul class="policy-list">
+                            <li>Informa a nuestro equipo sobre <strong>cualquier alergia o restricción alimentaria</strong></li>
+                            <li>Nuestro personal está capacitado para manejar solicitudes especiales</li>
+                            <li>Ofrecemos alternativas sin gluten, lácteos, nueces y otros alérgenos comunes</li>
+                            <li>Los ingredientes pueden contener trazas de alérgenos debido a la preparación compartida</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="policy-section">
+                        <h3 class="policy-section-title">Recomendaciones</h3>
+                        <ul class="policy-list">
+                            <li>Comunica tus alergias al hacer la reserva</li>
+                            <li>Consulta con nuestro chef sobre opciones seguras</li>
+                            <li>Informa a tu mesero sobre cualquier restricción al llegar</li>
+                            <li>En caso de reacción alérgica, notifica inmediatamente al personal</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Privacidad y Cookies -->
+            <div class="policy-card">
+                <div class="policy-header">
+                    <div class="policy-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="policy-title">Privacidad y Cookies</h2>
+                </div>
+                <div class="policy-content">
+                    <div class="policy-section">
+                        <h3 class="policy-section-title">Protección de Datos</h3>
+                        <ul class="policy-list">
+                            <li>Respetamos tu privacidad y protegemos tus datos personales</li>
+                            <li>No compartimos información personal con terceros sin tu consentimiento</li>
+                            <li>Utilizamos medidas de seguridad para proteger tus datos</li>
+                            <li>Puedes solicitar la eliminación de tus datos en cualquier momento</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="policy-section">
+                        <h3 class="policy-section-title">Uso de Cookies</h3>
+                        <ul class="policy-list">
+                            <li>Utilizamos cookies para mejorar tu experiencia en nuestro sitio web</li>
+                            <li>Las cookies nos ayudan a recordar tus preferencias</li>
+                            <li>Puedes desactivar las cookies en la configuración de tu navegador</li>
+                            <li>Algunas funciones del sitio pueden no funcionar sin cookies</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Términos de Servicio -->
+            <div class="policy-card">
+                <div class="policy-header">
+                    <div class="policy-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="policy-title">Términos de Servicio</h2>
+                </div>
+                <div class="policy-content">
+                    <div class="policy-section">
+                        <h3 class="policy-section-title">Uso del Restaurante</h3>
+                        <ul class="policy-list">
+                            <li>El restaurante se reserva el derecho de admisión</li>
+                            <li>Se prohíbe fumar en todas las áreas del restaurante</li>
+                            <li>Los menores de edad deben estar acompañados por un adulto</li>
+                            <li>El consumo de alcohol está restringido a mayores de 18 años</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="policy-section">
+                        <h3 class="policy-section-title">Responsabilidades</h3>
+                        <ul class="policy-list">
+                            <li>Los huéspedes son responsables de sus pertenencias personales</li>
+                            <li>El restaurante no se hace responsable por objetos perdidos o robados</li>
+                            <li>Se prohíbe el uso de cámaras profesionales sin autorización</li>
+                            <li>El comportamiento inapropiado puede resultar en la expulsión del local</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Política de Pagos -->
+            <div class="policy-card">
+                <div class="policy-header">
+                    <div class="policy-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="policy-title">Política de Pagos</h2>
+                </div>
+                <div class="policy-content">
+                    <div class="policy-section">
+                        <h3 class="policy-section-title">Métodos de Pago</h3>
+                        <ul class="policy-list">
+                            <li>Aceptamos efectivo, tarjetas de crédito y débito</li>
+                            <li>También aceptamos pagos móviles (Apple Pay, Google Pay)</li>
+                            <li>Para grupos grandes, se puede solicitar facturación corporativa</li>
+                            <li>Los precios incluyen impuestos aplicables</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="policy-section">
+                        <h3 class="policy-section-title">Propinas y Servicio</h3>
+                        <ul class="policy-list">
+                            <li>Las propinas son opcionales pero muy apreciadas</li>
+                            <li>El servicio no está incluido en el precio de los platos</li>
+                            <li>Puedes agregar propina al total de tu cuenta</li>
+                            <li>Las propinas se distribuyen equitativamente entre el personal</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Política de Eventos -->
+            <div class="policy-card">
+                <div class="policy-header">
+                    <div class="policy-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="policy-title">Eventos y Celebraciones</h2>
+                </div>
+                <div class="policy-content">
+                    <div class="policy-section">
+                        <h3 class="policy-section-title">Reservas para Eventos</h3>
+                        <ul class="policy-list">
+                            <li>Los eventos requieren reserva previa con 48 horas de anticipación</li>
+                            <li>Se requiere un depósito del 50% para confirmar el evento</li>
+                            <li>Los menús especiales deben confirmarse con 24 horas de anticipación</li>
+                            <li>Ofrecemos espacios privados para grupos de 20+ personas</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="policy-section">
+                        <h3 class="policy-section-title">Decoración y Personalización</h3>
+                        <ul class="policy-list">
+                            <li>Permitimos decoración personalizada con restricciones</li>
+                            <li>No se permiten velas abiertas por seguridad</li>
+                            <li>La música debe mantenerse a un volumen apropiado</li>
+                            <li>Los globos deben estar sujetos para evitar obstrucciones</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="accordion-item">
-    <h2 class="accordion-header" id="heading2">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2" aria-expanded="false" aria-controls="collapse2">
-        Alergias e intolerancias
-      </button>
-    </h2>
-    <div id="collapse2" class="accordion-collapse collapse" aria-labelledby="heading2" data-bs-parent="#politicasAccordion">
-      <div class="accordion-body">
-        Informa a nuestro equipo sobre cualquier alergia o restricción alimentaria. Haremos lo posible por adaptarnos.
-      </div>
+</section>
+
+<!-- Información de Contacto -->
+<section class="policies-contact">
+    <div class="contact-container">
+        <div class="contact-content">
+            <h2 class="contact-title">¿Tienes Preguntas sobre Nuestras Políticas?</h2>
+            <p class="contact-subtitle">
+                Si necesitas aclaraciones sobre alguna de nuestras políticas o tienes sugerencias, 
+                no dudes en contactarnos. Estamos aquí para ayudarte.
+            </p>
+            <div class="contact-actions">
+                <a href="/contacto" class="contact-button primary">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                    Contáctanos
+                </a>
+                <a href="tel:+15551234567" class="contact-button secondary">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                    </svg>
+                    Llamar Ahora
+                </a>
+            </div>
+        </div>
     </div>
-  </div>
-  <div class="accordion-item">
-    <h2 class="accordion-header" id="heading3">
-      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3" aria-expanded="false" aria-controls="collapse3">
-        Privacidad y cookies
-      </button>
-    </h2>
-    <div id="collapse3" class="accordion-collapse collapse" aria-labelledby="heading3" data-bs-parent="#politicasAccordion">
-      <div class="accordion-body">
-        Respetamos tu privacidad. Usamos cookies para mejorar tu experiencia. No compartimos datos con terceros sin tu consentimiento.
-      </div>
-    </div>
-  </div>
-</div>
+</section>
 
 

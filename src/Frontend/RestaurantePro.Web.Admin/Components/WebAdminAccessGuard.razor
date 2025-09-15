@@ -4,7 +4,26 @@
 @inject RestaurantePro.Web.Admin.Services.TokenStore TokenStore
 @inject NavigationManager Navigation
 
-@if (IsAuthorizedForWebAdmin)
+@if (isLoading)
+{
+    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <div class="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+            <!-- Spinner de carga -->
+            <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-blue-100 mb-6">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+            
+            <!-- Título -->
+            <h1 class="text-2xl font-bold text-gray-900 mb-4">Verificando Acceso</h1>
+            
+            <!-- Mensaje -->
+            <p class="text-gray-600">
+                Estamos verificando tus permisos para acceder a la Web Administrativa...
+            </p>
+        </div>
+    </div>
+}
+else if (IsAuthorizedForWebAdmin)
 {
     @ChildContent
 }
@@ -78,6 +97,7 @@ else
 @code {
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
+    private bool isLoading = true;
     private bool IsAuthorizedForWebAdmin { get; set; } = false;
     private string UserRole { get; set; } = "Usuario";
 
@@ -96,6 +116,9 @@ else
     {
         try
         {
+            isLoading = true;
+            StateHasChanged();
+            
             // Obtener la URL actual
             var currentUri = Navigation.ToBaseRelativePath(Navigation.Uri);
             
@@ -103,6 +126,7 @@ else
             if (currentUri.StartsWith("login", StringComparison.OrdinalIgnoreCase))
             {
                 IsAuthorizedForWebAdmin = true;
+                isLoading = false;
                 return;
             }
             
@@ -145,13 +169,18 @@ else
             IsAuthorizedForWebAdmin = hasAdminRole || !hasOperationalRole;
 
             Console.WriteLine($"🔍 WebAdminAccessGuard - Acceso autorizado: {IsAuthorizedForWebAdmin}");
-
-            StateHasChanged();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"❌ Error en CheckWebAdminAccess: {ex.Message}");
             IsAuthorizedForWebAdmin = false;
+        }
+        finally
+        {
+            // Pequeño delay para que la pantalla de carga se vea
+            await Task.Delay(500);
+            isLoading = false;
+            StateHasChanged();
         }
     }
 

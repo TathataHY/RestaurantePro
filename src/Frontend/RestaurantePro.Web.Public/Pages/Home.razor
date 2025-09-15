@@ -1,79 +1,169 @@
 ﻿@page "/"
 
-<PageTitle>Inicio</PageTitle>
+<PageTitle>Inicio - RestaurantePro</PageTitle>
 <HeadContent>
     <link rel="canonical" href="/" />
-    <meta property="og:title" content="RestaurantePro - Sabores que inspiran" />
-    <meta property="og:description" content="Ingredientes frescos, técnica moderna y un servicio que te hará volver." />
+    <meta property="og:title" content="RestaurantePro - Experiencia Culinaria de Excelencia" />
+    <meta property="og:description" content="Descubre un mundo de sabores elaborados con pasión y precisión. Nuestro menú presenta una mezcla de platos tradicionales y contemporáneos." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="/" />
-    <meta property="og:image" content="https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1200&auto=format&fit=crop" />
+    <meta property="og:image" content="https://lh3.googleusercontent.com/aida-public/AB6AXuC9cj6qQmANcLouPt4J4beNm0ITF7WaJxcdeeBqz9rq00GORAayEi-1NMWjXDwtN2X1vqanxq_wFHiFrdpg5GUBmzDm73OsqvUIb0KLBD9BrsbwW-PCkz9zN-aDRmtSsuzFRDnUa-JMMXtfmjjkTzsCpjKE2koYrYilToSrpV2jbVnWti7e-60nkb5u0lABWq8eEJYg7w0hwICZXIueZPxO37-5_E7V_-OnS99B2NZ98RmMZeVCjKtMO8UU5PImDVZ-cGhlnoG06oPA" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="RestaurantePro - Sabores que inspiran" />
-    <meta name="twitter:description" content="Ingredientes frescos, técnica moderna y un servicio que te hará volver." />
-    <meta name="twitter:image" content="https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1200&auto=format&fit=crop" />
-    <meta name="description" content="Restaurante con sabores auténticos y experiencias memorables." />
+    <meta name="twitter:title" content="RestaurantePro - Experiencia Culinaria de Excelencia" />
+    <meta name="twitter:description" content="Descubre un mundo de sabores elaborados con pasión y precisión. Nuestro menú presenta una mezcla de platos tradicionales y contemporáneos." />
+    <meta name="twitter:image" content="https://lh3.googleusercontent.com/aida-public/AB6AXuC9cj6qQmANcLouPt4J4beNm0ITF7WaJxcdeeBqz9rq00GORAayEi-1NMWjXDwtN2X1vqanxq_wFHiFrdpg5GUBmzDm73OsqvUIb0KLBD9BrsbwW-PCkz9zN-aDRmtSsuzFRDnUa-JMMXtfmjjkTzsCpjKE2koYrYilToSrpV2jbVnWti7e-60nkb5u0lABWq8eEJYg7w0hwICZXIueZPxO37-5_E7V_-OnS99B2NZ98RmMZeVCjKtMO8UU5PImDVZ-cGhlnoG06oPA" />
+    <meta name="description" content="Restaurante con sabores auténticos y experiencias memorables. Ingredientes frescos, técnica moderna y un servicio excepcional." />
 }</HeadContent>
 
-<section class="hero d-flex align-items-center text-white text-center mb-4">
-    <div class="container py-5">
-        <h1 class="display-5 fw-bold">Sabores que inspiran</h1>
-        <p class="col-lg-8 mx-auto lead">Ingredientes frescos, técnica moderna y un servicio que te hará volver.</p>
-        <div class="d-inline-flex gap-2">
-            <a href="/menu" class="btn btn-primary btn-lg">Ver Menú</a>
-            <a href="/resenas" class="btn btn-outline-light btn-lg">Reseñas</a>
-            <button class="btn btn-success btn-lg" disabled title="Próximamente">Reservar</button>
+<!-- Hero Section -->
+<section class="hero-modern" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC9cj6qQmANcLouPt4J4beNm0ITF7WaJxcdeeBqz9rq00GORAayEi-1NMWjXDwtN2X1vqanxq_wFHiFrdpg5GUBmzDm73OsqvUIb0KLBD9BrsbwW-PCkz9zN-aDRmtSsuzFRDnUa-JMMXtfmjjkTzsCpjKE2koYrYilToSrpV2jbVnWti7e-60nkb5u0lABWq8eEJYg7w0hwICZXIueZPxO37-5_E7V_-OnS99B2NZ98RmMZeVCjKtMO8UU5PImDVZ-cGhlnoG06oPA');">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <h1 class="hero-title">Experiencia Culinaria de Excelencia</h1>
+        <p class="hero-subtitle">
+            Descubre un mundo de sabores elaborados con pasión y precisión. Nuestro menú presenta una mezcla de platos tradicionales y contemporáneos, preparados con los ingredientes más frescos.
+        </p>
+        <div class="hero-buttons">
+            <a href="/menu" class="hero-button hero-button-primary">Ver Menú</a>
+            <a href="/resenas" class="hero-button btn-outline-light">Reseñas</a>
         </div>
-        <div class="mt-2"><small class="opacity-75">Reservas: función en desarrollo</small></div>
-    </div>
-
-    <style>
-        .hero {
-            min-height: 420px;
-            border-radius: .5rem;
-            background:
-                linear-gradient(rgba(0,0,0,.45), rgba(0,0,0,.45)),
-                url('https://images.unsplash.com/photo-1544025162-d76694265947?q=80&w=1470&auto=format&fit=crop') center/cover no-repeat;
-        }
-    </style>
-</section>
-
-<section class="container mb-5">
-    <h3 class="mb-3">Destacados</h3>
-    <div class="row row-cols-1 row-cols-md-3 g-3">
-        @foreach (var i in Enumerable.Range(1,3))
-        {
-            <div class="col">
-                <div class="card h-100">
-                    <img src="https://picsum.photos/seed/food@i/600/300" class="card-img-top" alt="Plato destacado @i" />
-                    <div class="card-body">
-                        <h5 class="card-title">Plato destacado @i</h5>
-                        <p class="card-text">Una selección especial de nuestro chef, perfecta para compartir.</p>
-                    </div>
-                </div>
-            </div>
-        }
     </div>
 </section>
 
-<section class="container mb-5">
-    <h3 class="mb-3">Testimonios</h3>
-    <div class="row row-cols-1 row-cols-md-2 g-3">
-        <div class="col">
-            <div class="card h-100">
-                <div class="card-body">
-                    <p class="card-text">“La mejor experiencia culinaria que he tenido en meses.”</p>
-                    <h6 class="card-subtitle text-muted">Ana P.</h6>
-                </div>
+<!-- Featured Dishes Section -->
+<section class="featured-section">
+    <h2 class="featured-title">Platos Destacados</h2>
+    <div class="featured-grid">
+        <div class="featured-card">
+            <div class="featured-card-image" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCAZZ8qEbV6gAiMN9HAdMfC22kvUw046JXBD08i0oa5Y60QTP_RgDOJcsCqejC4IWoFG2K4YGUvx-YJ6jiG-1W8JL6LxFqdTI8_VDHWy_i9W5MfQRTxJ74RpVhN8H_T83fmU-LKJkAk5EATe65gkgQ25O48DNi-IX8_ElpW_kfj_ieYh7kQBXC4n_7Y6hOz_nEKuPqqDTzcMLmCobaGKfd3OmJ3-xHM3JaqvTOuUSUBvtaQovcDaJby7OrlraWwMqzeMeO9gOpcHqMN');"></div>
+            <div class="featured-card-content">
+                <h3 class="featured-card-title">Bistec de Ribeye a la Parrilla</h3>
+                <p class="featured-card-description">
+                    Tierno bistec de ribeye asado a la perfección, servido con verduras asadas y puré de papas.
+                </p>
             </div>
         </div>
-        <div class="col">
-            <div class="card h-100">
-                <div class="card-body">
-                    <p class="card-text">“Atención espectacular y platos con mucho sabor.”</p>
-                    <h6 class="card-subtitle text-muted">Luis M.</h6>
+        <div class="featured-card">
+            <div class="featured-card-image" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA2LDSL4gnxafnkXpT2OvoAqC_E3F2ln66a2bl-_kUKMXPEM5m8jeQpSZqIkXmcwGNdR9LTcaw51t7slxPxDObEidMrvEQ78M_ym9gayA81kyu0H_OHn_qFkl6meGroUgsxdbYj4Ld2QdP0JW7gNCjP2GrPrWJ-ZAW8adhBjLVwYniOm3iQktCqEIZQFlJM47QefJIGrJLGrsnWpjyzBWzSBNhhzFU2fw4idMIIIyfuMOLMQgD9ccPq2ycoyuFiqMPM4YmpDysL7f74');"></div>
+            <div class="featured-card-content">
+                <h3 class="featured-card-title">Extravagancia de Mariscos</h3>
+                <p class="featured-card-description">
+                    Una selección de los mariscos más frescos, incluyendo langosta, camarones y ostras, servidos con una variedad de salsas.
+                </p>
+            </div>
+        </div>
+        <div class="featured-card">
+            <div class="featured-card-image" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCpEzRUdKrNHCKTkTQ8bCBO2KpzUF7Gg6WKzwQ1MjtcuYRdEAFcWWwMiPXB35mwfVNHz0b1t9NnnlEbGd9j-EJHOesgpig5RXACXtQ1PrdECdAK7a2wNih1ao-iMpkHrH6S6ASAKBkZFupOCT5r4qEQ-1RupLQ6hOxIxAv_G0nmDGww5K26ht_u5guF4gVQCGBOCB0lFS74m_M4SLxfvhUBpoza_dgQTAL6S95zwe8Mk0mGQfK6-8Rk4HN8nKO0GYBP1lgXsRh7jyfL');"></div>
+            <div class="featured-card-content">
+                <h3 class="featured-card-title">Delicia Vegetariana</h3>
+                <p class="featured-card-description">
+                    Pasta artesanal mezclada con verduras de temporada y una salsa ligera y sabrosa.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- About Section -->
+<section class="about-section">
+    <div class="about-content">
+        <h2 class="about-title">Nuestra Historia</h2>
+        <p class="about-text">
+            En RestaurantePro, nuestro viaje comenzó con un sueño simple: crear una experiencia gastronómica que deleite los sentidos y nutra el alma. Fundado por la Chef Isabella Rossi, nuestro restaurante es un testimonio de su pasión por las artes culinarias y su compromiso de usar solo los ingredientes más finos, de origen local. Desde nuestros humildes comienzos hasta nuestro éxito actual, nos hemos mantenido dedicados a brindar un servicio excepcional y crear momentos memorables para nuestros huéspedes.
+        </p>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="testimonials-section">
+    <h2 class="testimonials-title">Lo Que Dicen Nuestros Clientes</h2>
+    <div class="testimonials-grid">
+        <div class="testimonial-card">
+            <div class="testimonial-header">
+                <div class="testimonial-avatar" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDQylRCnOU7gAlxqRL8lCZOw2uNV4u4h0RAKVEd-ocFYT5Fi7MHEkHtrt-IP-5Ha26n3bSwjAiymf3SIuArU94dbW5WmjRDUXPxESAdEc8iyfwQgIUWrQWPVkMxvB5X8EN1dWny1BqygNLwxS54BtKBIyMfxvR0sARcLHlrgPhT1P-XsEm5MhG8Y-znz2q9TXF891NJoT6eMotMgbqkcJdijuje2S7Ab4W1wU-rbWtTTLbY8EBhoKdHJVleHL_hLnOXR65_G0txFmwl');"></div>
+                <div class="testimonial-info">
+                    <div class="testimonial-name">Ethan Harper</div>
+                    <div class="testimonial-date">hace 2 meses</div>
                 </div>
             </div>
+            <div class="testimonial-rating">
+                <svg class="star" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34L66.61,153.8,21.5,114.38a16,16,0,0,1,9.11-28.06l59.46-5.15,23.21-55.36a15.95,15.95,0,0,1,29.44,0h0L166,81.17l59.44,5.15a16,16,0,0,1,9.11,28.06Z"></path>
+                </svg>
+                <svg class="star" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34L66.61,153.8,21.5,114.38a16,16,0,0,1,9.11-28.06l59.46-5.15,23.21-55.36a15.95,15.95,0,0,1,29.44,0h0L166,81.17l59.44,5.15a16,16,0,0,1,9.11,28.06Z"></path>
+                </svg>
+                <svg class="star" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34L66.61,153.8,21.5,114.38a16,16,0,0,1,9.11-28.06l59.46-5.15,23.21-55.36a15.95,15.95,0,0,1,29.44,0h0L166,81.17l59.44,5.15a16,16,0,0,1,9.11,28.06Z"></path>
+                </svg>
+                <svg class="star" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34L66.61,153.8,21.5,114.38a16,16,0,0,1,9.11-28.06l59.46-5.15,23.21-55.36a15.95,15.95,0,0,1,29.44,0h0L166,81.17l59.44,5.15a16,16,0,0,1,9.11,28.06Z"></path>
+                </svg>
+                <svg class="star" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34L66.61,153.8,21.5,114.38a16,16,0,0,1,9.11-28.06l59.46-5.15,23.21-55.36a15.95,15.95,0,0,1,29.44,0h0L166,81.17l59.44,5.15a16,16,0,0,1,9.11,28.06Z"></path>
+                </svg>
+            </div>
+            <p class="testimonial-text">
+                "¡La comida fue absolutamente divina! Cada plato fue una obra maestra, y el servicio fue impecable. Recomiendo altamente el bistec de ribeye a la parrilla."
+            </p>
+        </div>
+        <div class="testimonial-card">
+            <div class="testimonial-header">
+                <div class="testimonial-avatar" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCRHV_Ub-BvXfLuZxOPE8ZH_ph8u9VqAL9PoRANZRbkyOL4tD-GLCHhU8nnmFqGzkxY3Inqg5TjpWeb5oNLmAz1GayBqrfE0Ga22C26o-l7ESXk2gFs0bomcoEI4cB7kzQYXU_xku0WaV4SjkgJoAK6Tn8MOWtuVSDIqi4hZ_DpWyF7DdW9_0wo_bqWg2eeesCuMPe7gxaMEhX7wCLGTCLtGaVr90Tgi1IFI23Pc8fKqCHMtqio2YSNU3jOymm-fd0VbR_piJJ0GDsm');"></div>
+                <div class="testimonial-info">
+                    <div class="testimonial-name">Sophia Bennett</div>
+                    <div class="testimonial-date">hace 3 meses</div>
+                </div>
+            </div>
+            <div class="testimonial-rating">
+                <svg class="star" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34L66.61,153.8,21.5,114.38a16,16,0,0,1,9.11-28.06l59.46-5.15,23.21-55.36a15.95,15.95,0,0,1,29.44,0h0L166,81.17l59.44,5.15a16,16,0,0,1,9.11,28.06Z"></path>
+                </svg>
+                <svg class="star" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34L66.61,153.8,21.5,114.38a16,16,0,0,1,9.11-28.06l59.46-5.15,23.21-55.36a15.95,15.95,0,0,1,29.44,0h0L166,81.17l59.44,5.15a16,16,0,0,1,9.11,28.06Z"></path>
+                </svg>
+                <svg class="star" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34L66.61,153.8,21.5,114.38a16,16,0,0,1,9.11-28.06l59.46-5.15,23.21-55.36a15.95,15.95,0,0,1,29.44,0h0L166,81.17l59.44,5.15a16,16,0,0,1,9.11,28.06Z"></path>
+                </svg>
+                <svg class="star" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34L66.61,153.8,21.5,114.38a16,16,0,0,1,9.11-28.06l59.46-5.15,23.21-55.36a15.95,15.95,0,0,1,29.44,0h0L166,81.17l59.44,5.15a16,16,0,0,1,9.11,28.06Z"></path>
+                </svg>
+                <svg class="star empty" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M239.2,97.29a16,16,0,0,0-13.81-11L166,81.17,142.72,25.81h0a15.95,15.95,0,0,0-29.44,0L90.07,81.17,30.61,86.32a16,16,0,0,0-9.11,28.06L66.61,153.8,53.09,212.34a16,16,0,0,0,23.84,17.34l51-31,51.11,31a16,16,0,0,0,23.84-17.34l-13.51-58.6,45.1-39.36A16,16,0,0,0,239.2,97.29Zm-15.22,5-45.1,39.36a16,16,0,0,0-5.08,15.71L187.35,216v0l-51.07-31a15.9,15.9,0,0,0-16.54,0l-51,31h0L82.2,157.4a16,16,0,0,0-5.08-15.71L32,102.35a.37.37,0,0,1,0-.09l59.44-5.14a16,16,0,0,0,13.35-9.75L128,32.08l23.2,55.29a16,16,0,0,0,13.35,9.75L224,102.26S224,102.32,224,102.33Z"></path>
+                </svg>
+            </div>
+            <p class="testimonial-text">
+                "Una maravillosa experiencia gastronómica con una atmósfera acogedora. El plato de mariscos estaba fresco y delicioso, aunque el servicio podría haber sido un poco más rápido."
+            </p>
+        </div>
+        <div class="testimonial-card">
+            <div class="testimonial-header">
+                <div class="testimonial-avatar" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuB2C7jf1ElmkSGbIDPtIMMgJFWReoIXErJ8bNyidcEKtzsElXexkHgEG_ef-vQ1QQyNr3RLE3a_4lE_ZwCVW2Je_7HNv6w0JO0DwXorXmvOlLVWDigFjCPNSaHzbYRpuXwJMa6UfaXKeRpjsOSehTXaq-wZXdcwOBssNy9B208jM7-LSTB1-Mrs6E26rzi0bfPZW7jReiCZ5CEpWLDVFAOKomnWr5198c4mpJ7mZDaeKQpSouCk2GM2gKwNsDqMrEgQtg22mO5reSlP');"></div>
+                <div class="testimonial-info">
+                    <div class="testimonial-name">Liam Carter</div>
+                    <div class="testimonial-date">hace 4 meses</div>
+                </div>
+            </div>
+            <div class="testimonial-rating">
+                <svg class="star" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34L66.61,153.8,21.5,114.38a16,16,0,0,1,9.11-28.06l59.46-5.15,23.21-55.36a15.95,15.95,0,0,1,29.44,0h0L166,81.17l59.44,5.15a16,16,0,0,1,9.11,28.06Z"></path>
+                </svg>
+                <svg class="star" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34L66.61,153.8,21.5,114.38a16,16,0,0,1,9.11-28.06l59.46-5.15,23.21-55.36a15.95,15.95,0,0,1,29.44,0h0L166,81.17l59.44,5.15a16,16,0,0,1,9.11,28.06Z"></path>
+                </svg>
+                <svg class="star" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34L66.61,153.8,21.5,114.38a16,16,0,0,1,9.11-28.06l59.46-5.15,23.21-55.36a15.95,15.95,0,0,1,29.44,0h0L166,81.17l59.44,5.15a16,16,0,0,1,9.11,28.06Z"></path>
+                </svg>
+                <svg class="star" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34L66.61,153.8,21.5,114.38a16,16,0,0,1,9.11-28.06l59.46-5.15,23.21-55.36a15.95,15.95,0,0,1,29.44,0h0L166,81.17l59.44,5.15a16,16,0,0,1,9.11,28.06Z"></path>
+                </svg>
+                <svg class="star" fill="currentColor" viewBox="0 0 256 256">
+                    <path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34L66.61,153.8,21.5,114.38a16,16,0,0,1,9.11-28.06l59.46-5.15,23.21-55.36a15.95,15.95,0,0,1,29.44,0h0L166,81.17l59.44,5.15a16,16,0,0,1,9.11,28.06Z"></path>
+                </svg>
+            </div>
+            <p class="testimonial-text">
+                "¡RestaurantePro es una joya! La pasta vegetariana estaba llena de sabor, y el personal fue increíblemente amigable. No puedo esperar a regresar."
+            </p>
         </div>
     </div>
 </section>

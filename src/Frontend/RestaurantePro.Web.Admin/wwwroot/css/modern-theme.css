@@ -177,6 +177,28 @@
   --border-color: #334155;
 }
 
+/* ===== TEMA OSCURO - TOGGLE EN SIDEBAR ===== */
+[data-theme="dark"] .theme-toggle {
+  background: #4b5563;
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+  background: #6b7280;
+}
+
+[data-theme="dark"] .theme-toggle.active {
+  background: #3b82f6;
+}
+
+[data-theme="dark"] .theme-toggle .light-icon,
+[data-theme="dark"] .theme-toggle .dark-icon {
+  color: #d1d5db;
+}
+
+[data-theme="dark"] .theme-toggle-text {
+  color: #f9fafb;
+}
+
 /* ===== RESET Y BASE ===== */
 * {
   box-sizing: border-box;
@@ -236,12 +258,16 @@ body {
   grid-area: main;
   background-color: var(--bg-secondary);
   min-height: 100vh;
+  position: relative;
+  z-index: 1;
 }
 
 /* El top-row ahora es manejado por el componente Header */
 
 .content {
-  padding: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  position: relative;
+  z-index: 1;
 }
 
 /* ===== NAVEGACIÓN ===== */
@@ -291,6 +317,10 @@ body {
 .nav-bottom {
   margin-top: auto;
   padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
 
 .nav-section {
@@ -623,37 +653,76 @@ body {
   font-size: 1.125rem;
 }
 
-/* ===== TOGGLE MODO OSCURO ===== */
+/* ===== TOGGLE MODO OSCURO EN SIDEBAR ===== */
+.theme-toggle-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 16px;
+  padding: 0 16px;
+}
+
 .theme-toggle {
   position: relative;
   width: 60px;
   height: 30px;
-  background: var(--gray-300);
+  background: #d1d5db;
   border-radius: 15px;
   cursor: pointer;
-  transition: background var(--transition-normal);
+  transition: all var(--transition-normal);
   border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.theme-toggle:hover {
+  background: #9ca3af;
+  transform: scale(1.05);
 }
 
 .theme-toggle.active {
-  background: var(--primary-500);
+  background: #3b82f6;
 }
 
-.theme-toggle::after {
-  content: '';
+.theme-toggle .light-icon,
+.theme-toggle .dark-icon {
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 26px;
-  height: 26px;
-  background: white;
-  border-radius: 50%;
-  transition: transform var(--transition-normal);
-  box-shadow: var(--shadow-sm);
+  font-size: 1rem;
+  color: #6b7280;
+  transition: all var(--transition-normal);
 }
 
-.theme-toggle.active::after {
-  transform: translateX(30px);
+.theme-toggle .light-icon {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.theme-toggle .dark-icon {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.theme-toggle.active .light-icon {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.theme-toggle.active .dark-icon {
+  opacity: 1;
+  transform: translateX(0);
+  color: white;
+}
+
+.theme-toggle-text {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #111827;
+  white-space: nowrap;
+  transition: color var(--transition-normal);
 }
 
 /* ===== DASHBOARD EJECUTIVO ===== */
@@ -1521,6 +1590,15 @@ body {
   color: var(--error-600);
 }
 
+/* ===== MODALES GENERALES ===== */
+/* Asegurar que todos los modales aparezcan sobre el header (que ahora tiene z-index: 1) */
+[class*="modal"], 
+[class*="Modal"],
+.fixed.inset-0,
+.z-50 {
+  z-index: 50 !important;
+}
+
 /* ===== MODAL DE PRODUCTO ===== */
 .product-modal-overlay {
   position: fixed;
@@ -1822,6 +1900,22 @@ body {
   background-color: #f9fafb;
   border-color: #e5e7eb;
   color: #6b7280;
+}
+
+/* ===== FORZAR Z-INDEX DE MODALES ===== */
+/* Regla con máxima especificidad para asegurar que los modales aparezcan sobre el header (z-index: 1) */
+html body div.fixed.inset-0.z-50.flex.items-center.justify-center.bg-black\/30 {
+  z-index: 50 !important;
+}
+
+/* Regla alternativa para cualquier modal */
+html body div[class*="fixed"][class*="inset-0"][class*="z-50"] {
+  z-index: 50 !important;
+}
+
+/* Regla para elementos con backdrop */
+html body div[class*="bg-black"][class*="30"] {
+  z-index: 50 !important;
 }
 
 /* Características especiales */

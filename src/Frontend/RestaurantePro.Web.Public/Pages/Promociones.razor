@@ -1,51 +1,139 @@
 @page "/promociones"
 @inject RestaurantePro.Web.Public.Services.PromocionesApiService Api
+@inject IJSRuntime JS
 
-<PageTitle>Promociones</PageTitle>
+<PageTitle>Promociones Especiales - RestaurantePro</PageTitle>
 <HeadContent>
     <link rel="canonical" href="/promociones" />
-    <meta property="og:title" content="Promociones - RestaurantePro" />
-    <meta property="og:description" content="Conoce nuestras promociones vigentes." />
+    <meta property="og:title" content="Promociones Especiales - RestaurantePro" />
+    <meta property="og:description" content="Descubre nuestras promociones exclusivas y ofertas especiales. Ahorra en tu próxima visita con nuestros códigos de descuento." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="/promociones" />
     <meta property="og:image" content="https://images.unsplash.com/photo-1499636136210-6f4ee915583e?q=80&w=1200&auto=format&fit=crop" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Promociones - RestaurantePro" />
-    <meta name="twitter:description" content="Conoce nuestras promociones vigentes." />
+    <meta name="twitter:title" content="Promociones Especiales - RestaurantePro" />
+    <meta name="twitter:description" content="Descubre nuestras promociones exclusivas y ofertas especiales. Ahorra en tu próxima visita con nuestros códigos de descuento." />
     <meta name="twitter:image" content="https://images.unsplash.com/photo-1499636136210-6f4ee915583e?q=80&w=1200&auto=format&fit=crop" />
 </HeadContent>
 
-<h3>Promociones</h3>
+<!-- Hero Section -->
+<section class="promotions-hero">
+    <div class="promotions-hero-content">
+        <h1 class="promotions-hero-title">Promociones Especiales</h1>
+        <p class="promotions-hero-subtitle">
+            Descubre nuestras ofertas exclusivas y ahorra en tu próxima visita. 
+            ¡No te pierdas estas oportunidades únicas!
+        </p>
+    </div>
+</section>
 
-@if (cargando)
-{
-    <p>Cargando promociones...</p>
-}
-else if (items.Count == 0)
-{
-    <p>No hay promociones vigentes.</p>
-}
-else
-{
-    <div class="row row-cols-1 row-cols-md-2 g-3">
-        @foreach (var p in items)
+<!-- Promociones -->
+<section class="promotions-main">
+    <div class="promotions-container">
+        @if (cargando)
         {
-            <div class="col">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">@p.Nombre</h5>
-                        <h6 class="card-subtitle text-muted">Código: @p.Codigo</h6>
-                        <p class="card-text mt-2">@p.Descripcion</p>
-                        <div class="d-flex gap-3 small text-muted">
-                            <span>Inicio: @p.FechaInicio.ToLocalTime().ToString("d")</span>
-                            <span>Fin: @p.FechaFin.ToLocalTime().ToString("d")</span>
+            <div class="promotions-loading">
+                <div class="loading-spinner"></div>
+                <p class="loading-text">Cargando promociones...</p>
+            </div>
+        }
+        else if (items.Count == 0)
+        {
+            <div class="promotions-empty">
+                <div class="promotions-empty-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                    </svg>
+                </div>
+                <h3 class="promotions-empty-title">No hay promociones vigentes</h3>
+                <p class="promotions-empty-text">Pronto tendremos nuevas ofertas especiales para ti.</p>
+                <a href="/contacto" class="promotions-empty-button">Contáctanos para más información</a>
+            </div>
+        }
+        else
+        {
+            <div class="promotions-grid">
+                @foreach (var p in items)
+                {
+                    <div class="promotion-card">
+                        <div class="promotion-header">
+                            <div class="promotion-badge">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                                </svg>
+                                Oferta Especial
+                            </div>
+                            <div class="promotion-dates">
+                                <span class="promotion-date-start">@p.FechaInicio.ToLocalTime().ToString("dd MMM")</span>
+                                <span class="promotion-date-separator">-</span>
+                                <span class="promotion-date-end">@p.FechaFin.ToLocalTime().ToString("dd MMM")</span>
+                            </div>
+                        </div>
+                        
+                        <div class="promotion-content">
+                            <h3 class="promotion-title">@p.Nombre</h3>
+                            <p class="promotion-description">@p.Descripcion</p>
+                            
+                            <div class="promotion-code">
+                                <label class="promotion-code-label">Código de descuento:</label>
+                                <div class="promotion-code-container">
+                                    <input type="text" value="@p.Codigo" class="promotion-code-input" readonly />
+                                    <button class="promotion-code-copy" @onclick="() => CopiarCodigo(p.Codigo)">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                        </svg>
+                                        Copiar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="promotion-footer">
+                            <a href="/reservas" class="promotion-button">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                Reservar Ahora
+                            </a>
                         </div>
                     </div>
-                </div>
+                }
             </div>
         }
     </div>
-}
+</section>
+
+<!-- Información Adicional -->
+<section class="promotions-info">
+    <div class="info-container">
+        <div class="info-content">
+            <h2 class="info-title">¿Cómo usar nuestras promociones?</h2>
+            <div class="info-steps">
+                <div class="info-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3 class="step-title">Selecciona tu promoción</h3>
+                        <p class="step-description">Elige la oferta que más te guste de nuestras promociones disponibles</p>
+                    </div>
+                </div>
+                <div class="info-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3 class="step-title">Copia el código</h3>
+                        <p class="step-description">Haz clic en "Copiar" para obtener el código de descuento</p>
+                    </div>
+                </div>
+                <div class="info-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3 class="step-title">Reserva tu mesa</h3>
+                        <p class="step-description">Usa el código al hacer tu reserva o al llegar al restaurante</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
 @code {
     private bool cargando = true;
@@ -56,6 +144,20 @@ else
         cargando = true;
         items = await Api.ObtenerAsync(true, "FechaCreacion", "desc");
         cargando = false;
+    }
+
+    private async Task CopiarCodigo(string codigo)
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", codigo);
+            // Aquí podrías agregar una notificación de éxito
+        }
+        catch
+        {
+            // Fallback para navegadores que no soportan clipboard API
+            await JS.InvokeVoidAsync("eval", $"prompt('Código de descuento:', '{codigo}')");
+        }
     }
 }
 

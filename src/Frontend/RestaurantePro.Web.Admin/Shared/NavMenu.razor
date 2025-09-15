@@ -129,9 +129,14 @@
 <div class="nav-bottom">
     @if (isAuthenticated)
     {
-        <button class="logout-btn" @onclick="Logout">
-            <span class="material-symbols-outlined">logout</span> Salir
-        </button>
+        <!-- Toggle de tema -->
+        <div class="theme-toggle-container">
+            <button class="theme-toggle @(isDarkMode ? "active" : "")" @onclick="ToggleTheme" title="@(isDarkMode ? "Cambiar a modo claro" : "Cambiar a modo oscuro")">
+                <span class="material-symbols-outlined light-icon">light_mode</span>
+                <span class="material-symbols-outlined dark-icon">dark_mode</span>
+            </button>
+            <span class="theme-toggle-text">@(isDarkMode ? "Modo Oscuro" : "Modo Claro")</span>
+        </div>
     }
     else
     {
@@ -143,6 +148,7 @@
 
 @code {
     private bool collapseNavMenu = true;
+    private bool isDarkMode = false;
 
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
@@ -155,10 +161,17 @@
     [Inject] private NavigationManager Nav { get; set; } = default!;
     [Inject] private RestaurantePro.Web.Admin.Auth.JwtAuthenticationStateProvider AuthState { get; set; } = default!;
     [Inject] private RestaurantePro.Web.Admin.Services.TokenStore TokenStore { get; set; } = default!;
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
 
     private bool isAuthenticated;
     private string userName = string.Empty;
     private bool IsAdminOrGerente = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Cargar preferencia de tema desde localStorage
+        await LoadThemePreference();
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -174,9 +187,37 @@
                           TokenStore.Roles.Contains("Gerente");
     }
 
-    private async Task Logout()
+    private async Task LoadThemePreference()
     {
-        await AuthState.LogoutAsync();
-        Nav.NavigateTo("/login", true);
+        try
+        {
+            var theme = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "theme");
+            isDarkMode = theme == "dark";
+            await ApplyTheme();
+        }
+        catch
+        {
+            isDarkMode = false;
+        }
     }
+
+    private async Task ToggleTheme()
+    {
+        isDarkMode = !isDarkMode;
+        await ApplyTheme();
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "theme", isDarkMode ? "dark" : "light");
+    }
+
+    private async Task ApplyTheme()
+    {
+        if (isDarkMode)
+        {
+            await JSRuntime.InvokeVoidAsync("document.body.setAttribute", "data-theme", "dark");
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("document.body.setAttribute", "data-theme", "light");
+        }
+    }
+
 }

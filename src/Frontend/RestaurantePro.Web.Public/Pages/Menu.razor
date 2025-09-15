@@ -3,109 +3,189 @@
 @using RestaurantePro.Web.Public.Models
 @using System.Globalization
 
+<PageTitle>Menú - RestaurantePro</PageTitle>
 <HeadContent>
     <link rel="canonical" href="/menu" />
     <meta property="og:title" content="Menú - RestaurantePro" />
-    <meta property="og:description" content="Explora nuestras categorías y platos destacados." />
+    <meta property="og:description" content="Explora nuestras categorías y platos destacados. Ingredientes frescos, sabores auténticos y experiencias culinarias únicas." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="/menu" />
-    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Menú - RestaurantePro" />
-    <meta name="twitter:description" content="Explora nuestras categorías y platos destacados." />
+    <meta name="twitter:description" content="Explora nuestras categorías y platos destacados. Ingredientes frescos, sabores auténticos y experiencias culinarias únicas." />
 </HeadContent>
-<h3>Menú</h3>
 
-<div class="row mb-3">
-    <div class="col-12 col-md-6 mb-2">
-        <input class="form-control" placeholder="Buscar categoría..." @bind-value="textoBusqueda" @bind-value:event="oninput" />
+<!-- Hero Section del Menú -->
+<section class="menu-hero">
+    <div class="menu-hero-content">
+        <h1 class="menu-hero-title">Nuestro Menú</h1>
+        <p class="menu-hero-subtitle">
+            Descubre una selección cuidadosamente curada de platos que celebran la tradición culinaria con un toque moderno.
+        </p>
     </div>
-    <div class="col-6 col-md-3 mb-2">
-        <select class="form-select" @bind="orden">
-            <option value="popularidad">Más populares</option>
-            <option value="precio_asc">Precio: menor a mayor</option>
-            <option value="precio_desc">Precio: mayor a menor</option>
-        </select>
-    </div>
-    <div class="col-6 col-md-3 mb-2">
-        <button class="btn btn-primary w-100" @onclick="AplicarBusqueda">Aplicar</button>
-    </div>
-</div>
+</section>
 
-<div class="row">
-    <div class="col-12 col-md-4">
-        <h5>Categorías</h5>
-        <ul class="list-group">
-            @foreach (var cat in categorias)
+<!-- Filtros y Búsqueda -->
+<section class="menu-filters">
+    <div class="filters-container">
+        <div class="search-section">
+            <div class="search-input-wrapper">
+                <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input class="search-input" placeholder="Buscar categoría o plato..." @bind-value="textoBusqueda" @bind-value:event="oninput" />
+            </div>
+            <button class="search-button" @onclick="AplicarBusqueda">
+                <svg class="search-button-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                Buscar
+            </button>
+        </div>
+        <div class="sort-section">
+            <label class="sort-label">Ordenar por:</label>
+            <select class="sort-select" @bind="orden">
+                <option value="popularidad">Más populares</option>
+                <option value="precio_asc">Precio: menor a mayor</option>
+                <option value="precio_desc">Precio: mayor a menor</option>
+            </select>
+        </div>
+    </div>
+</section>
+
+<!-- Contenido Principal del Menú -->
+<section class="menu-content">
+    <div class="menu-layout">
+        <!-- Sidebar de Categorías -->
+        <aside class="menu-sidebar">
+            <div class="sidebar-header">
+                <h3 class="sidebar-title">Categorías</h3>
+                <p class="sidebar-subtitle">Explora nuestras especialidades</p>
+            </div>
+            <div class="categories-list">
+                @foreach (var cat in categorias)
+                {
+                    <div class="category-item @(categoriaSeleccionada?.Id == cat.Id ? "active" : "")" @onclick="(() => SeleccionarCategoria(cat))">
+                        <div class="category-icon">@cat.Icono</div>
+                        <div class="category-info">
+                            <span class="category-name">@cat.Nombre</span>
+                            <span class="category-count">@cat.ProductosDisponibles platos</span>
+                        </div>
+                        <div class="category-arrow">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                }
+            </div>
+        </aside>
+
+        <!-- Área de Productos -->
+        <main class="menu-main">
+            <div class="products-header">
+                <h2 class="products-title">
+                    @if (categoriaSeleccionada != null)
+                    {
+                        <span>@categoriaSeleccionada.Nombre</span>
+                    }
+                    else
+                    {
+                        <span>Todos los Productos</span>
+                    }
+                </h2>
+                @if (categoriaSeleccionada != null)
+                {
+                    <p class="products-subtitle">@categoriaSeleccionada.ProductosDisponibles platos disponibles</p>
+                }
+            </div>
+            <!-- Estado de Carga -->
+            @if (cargando)
             {
-                <li class="list-group-item d-flex justify-content-between align-items-center" @onclick="(() => SeleccionarCategoria(cat))" style="cursor:pointer">
-                    <span>@cat.Icono @cat.Nombre</span>
-                    <span class="badge bg-primary rounded-pill">@cat.ProductosDisponibles</span>
-                </li>
-            }
-        </ul>
-    </div>
-    <div class="col-12 col-md-8">
-        <h5>Productos @if (categoriaSeleccionada != null) { <text> - @categoriaSeleccionada!.Nombre</text>; }</h5>
-        @if (cargando)
-        {
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3">
-                @foreach (var _ in Enumerable.Range(0, 6))
-                {
-                    <div class="col">
-                        <div class="card h-100 placeholder-glow">
-                            <div class="card-img-top bg-light" style="height: 200px;"></div>
-                            <div class="card-body">
-                                <h6 class="card-title"><span class="placeholder col-6"></span></h6>
-                                <p class="card-text"><span class="placeholder col-8"></span></p>
-                            </div>
-                            <div class="card-footer d-flex justify-content-between align-items-center">
-                                <span class="placeholder col-3"></span>
-                                <small class="placeholder col-4"></small>
+                <div class="products-grid">
+                    @foreach (var _ in Enumerable.Range(0, 6))
+                    {
+                        <div class="product-card loading">
+                            <div class="product-image loading-placeholder"></div>
+                            <div class="product-content">
+                                <div class="product-title loading-placeholder"></div>
+                                <div class="product-description loading-placeholder"></div>
+                                <div class="product-footer">
+                                    <div class="product-price loading-placeholder"></div>
+                                    <div class="product-category loading-placeholder"></div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                }
-            </div>
-        }
-        else if (productos.Count == 0)
-        {
-            <div class="text-muted">No hay productos para mostrar.</div>
-        }
-        else
-        {
-            <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-3">
-                @foreach (var p in productosPagina)
-                {
-                    <div class="col">
-                        <div class="card h-100 @(p.Activo ? string.Empty : "opacity-50")">
-                            <img src="@ObtenerImagenProducto(p)" class="card-img-top" alt="@p.Nombre" />
-                            <div class="card-body">
-                                <h6 class="card-title">@p.Nombre</h6>
-                                <p class="card-text text-muted">@p.Descripcion</p>
-                            </div>
-                            <div class="card-footer d-flex justify-content-between align-items-center">
-                                <span class="fw-bold">@FormatearPrecio(p.Precio)</span>
-                                <small class="text-muted">@p.CategoriaNombre</small>
-                            </div>
-                            @if (!p.Activo)
-                            {
-                                <span class="badge bg-secondary position-absolute m-2" style="right:0;">Sin stock</span>
-                            }
-                        </div>
-                    </div>
-                }
-            </div>
-            <div class="d-flex justify-content-between align-items-center mt-3">
-                <small class="text-muted">Página @paginaActual de @totalPaginas (@productos.Count ítems)</small>
-                <div class="btn-group">
-                    <button class="btn btn-outline-secondary" disabled="@(paginaActual <= 1)" @onclick="PaginaAnterior">Anterior</button>
-                    <button class="btn btn-outline-secondary" disabled="@(paginaActual >= totalPaginas)" @onclick="PaginaSiguiente">Siguiente</button>
+                    }
                 </div>
-            </div>
-        }
+            }
+            else if (productos.Count == 0)
+            {
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                        </svg>
+                    </div>
+                    <h3 class="empty-title">No hay productos disponibles</h3>
+                    <p class="empty-description">No se encontraron productos para esta categoría. Intenta con otra búsqueda.</p>
+                </div>
+            }
+            else
+            {
+                <div class="products-grid">
+                    @foreach (var p in productosPagina)
+                    {
+                        <div class="product-card @(p.Activo ? "" : "unavailable")">
+                            <div class="product-image-wrapper">
+                                <img src="@ObtenerImagenProducto(p)" class="product-image" alt="@p.Nombre" />
+                                @if (!p.Activo)
+                                {
+                                    <div class="unavailable-badge">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                        </svg>
+                                        Sin stock
+                                    </div>
+                                }
+                            </div>
+                            <div class="product-content">
+                                <h3 class="product-title">@p.Nombre</h3>
+                                <p class="product-description">@p.Descripcion</p>
+                                <div class="product-footer">
+                                    <div class="product-price">@FormatearPrecio(p.Precio)</div>
+                                    <div class="product-category">@p.CategoriaNombre</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Paginación -->
+                <div class="pagination-container">
+                    <div class="pagination-info">
+                        <span class="pagination-text">Página @paginaActual de @totalPaginas</span>
+                        <span class="pagination-count">(@productos.Count productos)</span>
+                    </div>
+                    <div class="pagination-controls">
+                        <button class="pagination-button" disabled="@(paginaActual <= 1)" @onclick="PaginaAnterior">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                            Anterior
+                        </button>
+                        <button class="pagination-button" disabled="@(paginaActual >= totalPaginas)" @onclick="PaginaSiguiente">
+                            Siguiente
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            }
+        </main>
     </div>
-    
-</div>
+</section>
 
 @code {
     private List<CategoriaProductoDto> categorias = new();
@@ -120,7 +200,6 @@
     private int tamanoPagina = 6;
     private int totalPaginas = 1;
     private bool usarPaginacionServidor = true;
-    private string? error;
 
     protected override async Task OnInitializedAsync()
     {
@@ -138,7 +217,6 @@
         StateHasChanged();
         try
         {
-            error = null;
             if (usarPaginacionServidor)
             {
                 var orderBy = orden == "precio_asc" ? "Precio" : orden == "precio_desc" ? "Precio" : "Popularidad";
@@ -156,7 +234,6 @@
         }
         catch
         {
-            error = "No fue posible cargar los productos. Intenta nuevamente.";
             productos = new List<ProductoDto>();
             totalPaginas = 1;
         }

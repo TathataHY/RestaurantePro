@@ -1,75 +1,226 @@
 @page "/acerca"
+<PageTitle>Acerca de Nosotros - RestaurantePro</PageTitle>
 <HeadContent>
     <link rel="canonical" href="/acerca" />
-    <meta property="og:title" content="Acerca - RestaurantePro" />
-    <meta property="og:description" content="Conoce nuestra historia, valores, horarios y ubicación." />
+    <meta property="og:title" content="Acerca de Nosotros - RestaurantePro" />
+    <meta property="og:description" content="Conoce nuestra historia, valores, misión y el equipo que hace posible cada experiencia culinaria memorable en RestaurantePro." />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="/acerca" />
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Acerca - RestaurantePro" />
-    <meta name="twitter:description" content="Conoce nuestra historia, valores, horarios y ubicación." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Acerca de Nosotros - RestaurantePro" />
+    <meta name="twitter:description" content="Conoce nuestra historia, valores, misión y el equipo que hace posible cada experiencia culinaria memorable en RestaurantePro." />
 </HeadContent>
 
-<h3>Acerca de RestaurantePro</h3>
-
-<div class="row g-3">
-    <div class="col-12 col-md-6">
-        <h5>Nuestra historia</h5>
-        <p>Desde 2020, combinamos ingredientes frescos con técnicas contemporáneas para crear experiencias memorables. Somos un equipo apasionado por la gastronomía y el servicio.</p>
-        <h5>Valores</h5>
-        <ul>
-            <li>Calidad y frescura</li>
-            <li>Respeto por las personas</li>
-            <li>Innovación y mejora continua</li>
-        </ul>
+<!-- Hero Section -->
+<section class="about-hero">
+    <div class="about-hero-content">
+        <h1 class="about-hero-title">Acerca de Nosotros</h1>
+        <p class="about-hero-subtitle">
+            Descubre la pasión, dedicación y valores que nos impulsan a crear experiencias culinarias excepcionales cada día.
+        </p>
     </div>
-    <div class="col-12 col-md-6">
-        <h5>Horarios</h5>
-        <ul>
-            <li>Lunes a Viernes: 12:00 - 22:00</li>
-            <li>Sábado: 12:00 - 23:00</li>
-            <li>Domingo: 12:00 - 21:00</li>
-        </ul>
-        <h5>Ubicación</h5>
-        <p>Av. Principal 123, Ciudad Gastronómica</p>
-        <div class="ratio ratio-16x9 rounded overflow-hidden border">
-            <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3152.168216184338!2d-122.419415!3d37.774929!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80858064d4ed6df9%3A0x9d9fb9b1a6a9b4a3!2sRestaurant!5e0!3m2!1ses!2s!4v1700000000000"
-                style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+</section>
+
+<!-- Nuestra Historia -->
+<section class="about-story">
+    <div class="story-container">
+        <div class="story-content">
+            <div class="story-text">
+                <h2 class="story-title">Nuestra Historia</h2>
+                <p class="story-description">
+                    Desde 2020, RestaurantePro ha sido el hogar de la excelencia culinaria en el corazón de la ciudad. 
+                    Fundado por la Chef Isabella Rossi, nuestro restaurante nació de un sueño simple pero poderoso: 
+                    crear un espacio donde la tradición culinaria se encuentre con la innovación moderna.
+                </p>
+                <p class="story-description">
+                    Cada plato que servimos cuenta una historia de pasión, dedicación y amor por los ingredientes 
+                    más frescos. Nuestro equipo de chefs talentosos y nuestro personal de servicio comprometido 
+                    trabajan incansablemente para brindarte una experiencia gastronómica que perdurará en tu memoria.
+                </p>
+            </div>
+            <div class="story-image">
+                <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?q=80&w=1470&auto=format&fit=crop" alt="Chef Isabella Rossi en la cocina" class="story-img" />
+            </div>
         </div>
-        <a class="btn btn-outline-primary" href="/contacto">Contáctanos</a>
     </div>
-</div>
+</section>
 
-<hr class="my-4" />
-
-<h4>Galería</h4>
-<div class="row row-cols-2 row-cols-md-3 g-3">
-    @foreach (var (url, idx) in fotos.Select((u, i) => (u, i)))
-    {
-        <div class="col">
-            <img src="@url" class="img-fluid rounded shadow-sm" style="cursor:pointer" @onclick="(() => Abrir(idx))" alt="Foto del restaurante @idx" />
+<!-- Valores y Misión -->
+<section class="about-values">
+    <div class="values-container">
+        <h2 class="values-title">Nuestros Valores</h2>
+        <p class="values-subtitle">Los principios que guían cada decisión y cada plato que servimos</p>
+        
+        <div class="values-grid">
+            <div class="value-card">
+                <div class="value-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="value-name">Calidad y Frescura</h3>
+                <p class="value-description">
+                    Utilizamos solo los ingredientes más frescos y de la más alta calidad, 
+                    seleccionados cuidadosamente de proveedores locales de confianza.
+                </p>
+            </div>
+            
+            <div class="value-card">
+                <div class="value-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+                <h3 class="value-name">Respeto por las Personas</h3>
+                <p class="value-description">
+                    Valoramos a cada miembro de nuestro equipo y a cada huésped, 
+                    creando un ambiente de respeto mutuo y colaboración.
+                </p>
+            </div>
+            
+            <div class="value-card">
+                <div class="value-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+                <h3 class="value-name">Innovación y Mejora</h3>
+                <p class="value-description">
+                    Constantemente buscamos nuevas formas de sorprender y deleitar, 
+                    manteniéndonos a la vanguardia de las tendencias culinarias.
+                </p>
+            </div>
         </div>
-    }
-    @if (fotos.Count == 0)
-    {
-        <div class="text-muted">Pronto agregaremos fotos de nuestro restaurante.</div>
-    }
-</div>
+    </div>
+</section>
+
+<!-- Información Práctica -->
+<section class="about-info">
+    <div class="info-container">
+        <div class="info-grid">
+            <!-- Horarios -->
+            <div class="info-card">
+                <div class="info-header">
+                    <div class="info-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="info-title">Horarios de Atención</h3>
+                </div>
+                <div class="info-content">
+                    <div class="schedule-item">
+                        <span class="schedule-days">Lunes - Viernes</span>
+                        <span class="schedule-time">12:00 - 22:00</span>
+                    </div>
+                    <div class="schedule-item">
+                        <span class="schedule-days">Sábado</span>
+                        <span class="schedule-time">12:00 - 23:00</span>
+                    </div>
+                    <div class="schedule-item">
+                        <span class="schedule-days">Domingo</span>
+                        <span class="schedule-time">12:00 - 21:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ubicación -->
+            <div class="info-card">
+                <div class="info-header">
+                    <div class="info-icon">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="info-title">Ubicación</h3>
+                </div>
+                <div class="info-content">
+                    <p class="address-text">123 Avenida Gastronómica<br>Ciudad Sabrosa, 12345</p>
+                    <div class="map-container">
+                        <iframe
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3152.168216184338!2d-122.419415!3d37.774929!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80858064d4ed6df9%3A0x9d9fb9b1a6a9b4a3!2sRestaurant!5e0!3m2!1ses!2s!4v1700000000000"
+                            class="map-iframe"
+                            allowfullscreen="" 
+                            loading="lazy" 
+                            referrerpolicy="no-referrer-when-downgrade">
+                        </iframe>
+                    </div>
+                    <a href="/contacto" class="contact-button">Contáctanos</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Galería -->
+<section class="about-gallery">
+    <div class="gallery-container">
+        <div class="gallery-header">
+            <h2 class="gallery-title">Galería del Restaurante</h2>
+            <p class="gallery-subtitle">Descubre los espacios y momentos que hacen especial tu visita</p>
+        </div>
+        
+        @if (fotos.Count > 0)
+        {
+            <div class="gallery-grid">
+                @foreach (var (url, idx) in fotos.Select((u, i) => (u, i)))
+                {
+                    <div class="gallery-item" @onclick="(() => Abrir(idx))">
+                        <img src="@url" class="gallery-image" alt="Foto del restaurante @(idx + 1)" />
+                        <div class="gallery-overlay">
+                            <svg class="gallery-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="gallery-empty">
+                <div class="gallery-empty-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <h3 class="gallery-empty-title">Galería en Construcción</h3>
+                <p class="gallery-empty-text">Pronto compartiremos fotos de nuestros espacios y momentos especiales.</p>
+            </div>
+        }
+    </div>
+</section>
 
 @if (mostrarModal)
 {
-    <div class="modal fade show" style="display:block; background: rgba(0,0,0,.5);" @onclick="Cerrar">
-        <div class="modal-dialog modal-dialog-centered modal-lg" @onclick:stopPropagation="true">
-            <div class="modal-content">
-                <div class="modal-body p-0">
-                    <img src="@fotos[indiceActual]" class="img-fluid w-100" alt="Foto ampliada" />
-                </div>
-                <div class="modal-footer d-flex justify-content-between">
-                    <button class="btn btn-outline-secondary" @onclick="Anterior">Anterior</button>
-                    <button class="btn btn-outline-secondary" @onclick="Siguiente">Siguiente</button>
-                    <button class="btn btn-primary" @onclick="Cerrar">Cerrar</button>
-                </div>
+    <div class="gallery-modal" @onclick="Cerrar">
+        <div class="gallery-modal-content" @onclick:stopPropagation="true">
+            <div class="gallery-modal-header">
+                <h3 class="gallery-modal-title">Galería del Restaurante</h3>
+                <button class="gallery-modal-close" @onclick="Cerrar">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="gallery-modal-body">
+                <img src="@fotos[indiceActual]" class="gallery-modal-image" alt="Foto ampliada @(indiceActual + 1)" />
+            </div>
+            <div class="gallery-modal-footer">
+                <button class="gallery-modal-button" @onclick="Anterior">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    Anterior
+                </button>
+                <span class="gallery-modal-counter">@(indiceActual + 1) de @fotos.Count</span>
+                <button class="gallery-modal-button" @onclick="Siguiente">
+                    Siguiente
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
             </div>
         </div>
     </div>

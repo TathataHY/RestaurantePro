@@ -128,14 +128,23 @@
       error = "Usuario o contraseña inválidos";
       return;
     }
+    
+    // Establecer autenticación
     await AuthState.SetAuthAsync(resp);
+    
+    // Forzar una actualización del estado de autenticación
+    await AuthState.InitializeAsync();
+    
+    // Pequeña pausa para asegurar que el estado se actualice
+    await Task.Delay(100);
+    
     if (!string.IsNullOrWhiteSpace(returnUrl))
     {
-      Nav.NavigateTo(returnUrl);
+      Nav.NavigateTo(returnUrl, forceLoad: true);
     }
     else
     {
-      Nav.NavigateTo("/");
+      Nav.NavigateTo("/", forceLoad: true);
     }
   }
 }
