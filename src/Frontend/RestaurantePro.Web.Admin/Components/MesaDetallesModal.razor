@@ -1,4 +1,6 @@
 @using RestaurantePro.Web.Admin.Models
+@using RestaurantePro.Web.Admin.Services
+@inject IHistorialComandasApiService HistorialComandasApi
 
 <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
     <div class="relative z-50 flex flex-col w-full max-w-2xl bg-white rounded-2xl shadow-lg overflow-hidden m-4">
@@ -83,45 +85,68 @@
                 </div>
             </section>
 
-            <!-- Historial Reciente -->
+            <!-- Historial Reciente de Comandas -->
             <section>
-                <h3 class="text-lg font-bold text-[var(--primary-text-color)] mb-4">Historial Reciente</h3>
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-[var(--primary-text-color)]">Historial Reciente de Comandas</h3>
+                    @if (cargandoHistorial)
+                    {
+                        <div class="flex items-center gap-2 text-sm text-[var(--secondary-text-color)]">
+                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                            Cargando...
+                        </div>
+                    }
+                </div>
                 <div class="overflow-x-auto rounded-lg border border-[var(--border-color)]">
                     <table class="w-full text-left">
                         <thead class="bg-[var(--container-background)]">
                             <tr>
+                                <th class="px-4 py-3 text-sm font-semibold text-[var(--primary-text-color)]">Comanda</th>
                                 <th class="px-4 py-3 text-sm font-semibold text-[var(--primary-text-color)]">Fecha</th>
-                                <th class="px-4 py-3 text-sm font-semibold text-[var(--primary-text-color)]">Hora de Inicio</th>
-                                <th class="px-4 py-3 text-sm font-semibold text-[var(--primary-text-color)]">Hora de Fin</th>
+                                <th class="px-4 py-3 text-sm font-semibold text-[var(--primary-text-color)]">Cliente</th>
+                                <th class="px-4 py-3 text-sm font-semibold text-[var(--primary-text-color)]">Total</th>
                                 <th class="px-4 py-3 text-sm font-semibold text-[var(--primary-text-color)] text-center">Estado</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-[var(--border-color)]">
-                            @if (historial?.Any() == true)
+                            @if (historialComandas?.Any() == true)
                             {
-                                @foreach (var item in historial)
+                                @foreach (var comanda in historialComandas)
                                 {
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-4 py-3 text-sm text-[var(--secondary-text-color)]">@item.Fecha.ToString("dd 'de' MMMM, yyyy")</td>
-                                        <td class="px-4 py-3 text-sm text-[var(--secondary-text-color)]">@item.HoraInicio.ToString(@"hh\:mm")</td>
-                                        <td class="px-4 py-3 text-sm text-[var(--secondary-text-color)]">@item.HoraFin?.ToString(@"hh\:mm")</td>
+                                    <tr class="hover:bg-gray-50 cursor-pointer" @onclick="() => VerDetalleComanda(comanda.Id)">
+                                        <td class="px-4 py-3 text-sm text-[var(--primary-text-color)] font-medium">#@comanda.NumeroComanda</td>
+                                        <td class="px-4 py-3 text-sm text-[var(--secondary-text-color)]">@comanda.FechaCreacion.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td class="px-4 py-3 text-sm text-[var(--secondary-text-color)]">@(string.IsNullOrEmpty(comanda.NombreCliente) ? "Consumo en sala" : comanda.NombreCliente)</td>
+                                        <td class="px-4 py-3 text-sm text-[var(--primary-text-color)] font-semibold">$@comanda.Total.ToString("N0")</td>
                                         <td class="px-4 py-3 text-center">
-                                            <span class="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full @GetHistorialEstadoClass(item.Estado)">@item.Estado</span>
+                                            <span class="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full @GetComandaEstadoClass(comanda.Estado)">
+                                                <span class="material-symbols-outlined text-xs mr-1">@GetComandaEstadoIcon(comanda.Estado)</span>
+                                                @comanda.Estado
+                                            </span>
                                         </td>
                                     </tr>
                                 }
                             }
-                            else
+                            else if (!cargandoHistorial)
                             {
                                 <tr>
-                                    <td colspan="4" class="px-4 py-8 text-center text-[var(--secondary-text-color)]">
-                                        No hay historial disponible
+                                    <td colspan="5" class="px-4 py-8 text-center text-[var(--secondary-text-color)]">
+                                        <div class="flex flex-col items-center gap-2">
+                                            <span class="material-symbols-outlined text-4xl">receipt_long</span>
+                                            <p>No hay comandas registradas para esta mesa</p>
+                                        </div>
                                     </td>
                                 </tr>
                             }
                         </tbody>
                     </table>
                 </div>
+                @if (historialComandas?.Any() == true)
+                {
+                    <div class="mt-4 text-sm text-[var(--secondary-text-color)] text-center">
+                        Mostrando las últimas @historialComandas.Count comandas
+                    </div>
+                }
             </section>
 
             <!-- Reservas Pendientes -->
@@ -183,28 +208,54 @@
 
     private string notasTemporales = string.Empty;
     private bool guardando = false;
+    private bool cargandoHistorial = false;
 
-    // Datos de ejemplo para el historial
-    private List<HistorialMesa> historial = new();
+    // Datos reales del historial de comandas
+    private List<ComandaSummaryDto> historialComandas = new();
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         if (Mesa != null)
         {
             notasTemporales = Mesa.Notas ?? string.Empty;
-            CargarHistorial();
+            await CargarHistorialComandas();
         }
     }
 
-    private void CargarHistorial()
+    private async Task CargarHistorialComandas()
     {
-        // Datos de ejemplo - en una implementación real, esto vendría de un servicio
-        historial = new List<HistorialMesa>
+        if (Mesa?.Id == null) return;
+
+        cargandoHistorial = true;
+        StateHasChanged();
+
+        try
         {
-            new() { Fecha = DateTime.Now.AddDays(-2), HoraInicio = new TimeSpan(18, 0, 0), HoraFin = new TimeSpan(20, 30, 0), Estado = "Completada" },
-            new() { Fecha = DateTime.Now.AddDays(-3), HoraInicio = new TimeSpan(19, 0, 0), HoraFin = new TimeSpan(21, 0, 0), Estado = "Completada" },
-            new() { Fecha = DateTime.Now.AddDays(-4), HoraInicio = new TimeSpan(17, 30, 0), HoraFin = new TimeSpan(19, 0, 0), Estado = "Completada" }
-        };
+            // Obtener historial de comandas de los últimos 7 días
+            var fechaDesde = DateTime.Now.AddDays(-7);
+            var resultado = await HistorialComandasApi.ObtenerHistorialPorMesaAsync(Mesa.Id, fechaDesde, 1);
+            
+            historialComandas = resultado?.Items ?? new List<ComandaSummaryDto>();
+        }
+        catch (Exception ex)
+        {
+            // En caso de error, mantener la lista vacía
+            historialComandas = new List<ComandaSummaryDto>();
+            Console.WriteLine($"Error al cargar historial de comandas: {ex.Message}");
+        }
+        finally
+        {
+            cargandoHistorial = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task VerDetalleComanda(Guid comandaId)
+    {
+        // Aquí podrías implementar la navegación al detalle de la comanda
+        // Por ahora, solo mostramos un mensaje
+        await Task.CompletedTask;
+        Console.WriteLine($"Ver detalle de comanda: {comandaId}");
     }
 
     private string GetEstadoClass()
@@ -267,14 +318,29 @@
         };
     }
 
-    private string GetHistorialEstadoClass(string estado)
+    private string GetComandaEstadoClass(string estado)
     {
         return estado switch
         {
-            "Completada" => "bg-green-100 text-green-800",
+            "Entregada" => "bg-green-100 text-green-800",
             "Cancelada" => "bg-red-100 text-red-800",
-            "En Proceso" => "bg-blue-100 text-blue-800",
+            "En Preparación" => "bg-blue-100 text-blue-800",
+            "Lista" => "bg-yellow-100 text-yellow-800",
+            "Pendiente" => "bg-gray-100 text-gray-800",
             _ => "bg-gray-100 text-gray-800"
+        };
+    }
+
+    private string GetComandaEstadoIcon(string estado)
+    {
+        return estado switch
+        {
+            "Entregada" => "check_circle",
+            "Cancelada" => "cancel",
+            "En Preparación" => "schedule",
+            "Lista" => "done",
+            "Pendiente" => "pending",
+            _ => "help"
         };
     }
 
@@ -300,11 +366,4 @@
         }
     }
 
-    public class HistorialMesa
-    {
-        public DateTime Fecha { get; set; }
-        public TimeSpan HoraInicio { get; set; }
-        public TimeSpan? HoraFin { get; set; }
-        public string Estado { get; set; } = string.Empty;
-    }
 }

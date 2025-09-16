@@ -44,34 +44,51 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Demo
                     Mesa.Crear(8, 8, "Interior"),
 
                     // === ÁREA TERRAZA - AMBIENTE EXTERIOR ===
+                    Mesa.Crear(9, 2, "Terraza"),
                     Mesa.Crear(10, 2, "Terraza"),
-                    Mesa.Crear(11, 2, "Terraza"),
+                    Mesa.Crear(11, 4, "Terraza"),
                     Mesa.Crear(12, 4, "Terraza"),
-                    Mesa.Crear(13, 4, "Terraza"),
+                    Mesa.Crear(13, 6, "Terraza"),
                     Mesa.Crear(14, 6, "Terraza"),
-                    Mesa.Crear(15, 6, "Terraza"),
 
                     // === ÁREA VIP - SECCIÓN EXCLUSIVA ===
-                    Mesa.Crear(20, 4, "VIP"),
-                    Mesa.Crear(21, 6, "VIP"),
-                    Mesa.Crear(22, 8, "VIP"),
+                    Mesa.Crear(15, 4, "VIP"),
+                    Mesa.Crear(16, 6, "VIP"),
+                    Mesa.Crear(17, 8, "VIP"),
 
                     // === ÁREA VENTANA - VISTA PRIVILEGIADA ===
-                    Mesa.Crear(30, 2, "Ventana"),
-                    Mesa.Crear(31, 4, "Ventana"),
-                    Mesa.Crear(32, 4, "Ventana"),
+                    Mesa.Crear(18, 2, "Ventana"),
+                    Mesa.Crear(19, 4, "Ventana"),
+                    Mesa.Crear(20, 4, "Ventana"),
 
                     // === ÁREA PRIVADA - RESERVACIONES ESPECIALES ===
-                    Mesa.Crear(40, 10, "Privada"),
-                    Mesa.Crear(41, 12, "Privada"),
+                    Mesa.Crear(21, 10, "Privada"),
+                    Mesa.Crear(22, 12, "Privada"),
 
                     // === BARRA - ÁREA CASUAL ===
-                    Mesa.Crear(50, 1, "Barra"),
-                    Mesa.Crear(51, 1, "Barra"),
-                    Mesa.Crear(52, 1, "Barra"),
-                    Mesa.Crear(53, 1, "Barra"),
-                    Mesa.Crear(54, 2, "Barra"),
-                    Mesa.Crear(55, 2, "Barra")
+                    Mesa.Crear(23, 1, "Barra"),
+                    Mesa.Crear(24, 1, "Barra"),
+                    Mesa.Crear(25, 1, "Barra"),
+                    Mesa.Crear(26, 1, "Barra"),
+                    Mesa.Crear(27, 2, "Barra"),
+                    Mesa.Crear(28, 2, "Barra"),
+
+                    // === MESAS ADICIONALES PARA COMPLETAR ===
+                    Mesa.Crear(29, 4, "Interior"),
+                    Mesa.Crear(30, 4, "Interior"),
+                    Mesa.Crear(31, 6, "Interior"),
+                    Mesa.Crear(32, 6, "Interior"),
+                    Mesa.Crear(33, 2, "Terraza"),
+                    Mesa.Crear(34, 2, "Terraza"),
+                    Mesa.Crear(35, 4, "Terraza"),
+                    Mesa.Crear(36, 4, "Terraza"),
+                    Mesa.Crear(37, 2, "Ventana"),
+                    Mesa.Crear(38, 4, "Ventana"),
+                    Mesa.Crear(39, 4, "Ventana"),
+                    Mesa.Crear(40, 8, "VIP"),
+                    Mesa.Crear(41, 8, "VIP"),
+                    Mesa.Crear(42, 10, "Privada"),
+                    Mesa.Crear(43, 12, "Privada")
                 };
 
                 // Configurar estados realistas de las mesas
@@ -116,7 +133,7 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Demo
             try
             {
                 // Simulamos horario de almuerzo - algunas mesas ocupadas
-                var mesasOcupadas = new[] { 3, 5, 12, 14, 20, 31, 50, 52 };
+                var mesasOcupadas = new[] { 3, 5, 12, 14, 20, 31, 25, 26 };
                 foreach (var numeroMesa in mesasOcupadas)
                 {
                     var mesa = mesas.FirstOrDefault(m => m.Numero == numeroMesa);
@@ -145,7 +162,7 @@ namespace RestaurantePro.Infrastructure.Persistence.SeedData.Demo
                 }
 
                 // Una mesa fuera de servicio (mantenimiento)
-                var mesaFueraServicio = mesas.FirstOrDefault(m => m.Numero == 55);
+                var mesaFueraServicio = mesas.FirstOrDefault(m => m.Numero == 28);
                 if (mesaFueraServicio != null)
                 {
                     mesaFueraServicio.MarcarComoFueraDeServicio("Mantenimiento silla");

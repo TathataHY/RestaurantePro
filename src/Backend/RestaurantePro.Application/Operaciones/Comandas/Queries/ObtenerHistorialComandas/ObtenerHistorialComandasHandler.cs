@@ -60,7 +60,10 @@ public class ObtenerHistorialComandasHandler : IRequestHandler<ObtenerHistorialC
             // 3. Aplicar filtros adicionales en memoria (filtros que no están en repository)
             comandas = AplicarFiltrosEnMemoria(comandas, request);
 
-            // 4. Si usamos filtros, recalcular paginación
+            // 4. Aplicar ordenamiento antes de paginación
+            comandas = AplicarOrdenamiento(comandas, request.OrdenarPor);
+
+            // 5. Si usamos filtros, recalcular paginación
             if (request.FechaDesde.HasValue && request.FechaHasta.HasValue)
             {
                 totalRegistros = comandas.Count();
@@ -128,6 +131,25 @@ public class ObtenerHistorialComandasHandler : IRequestHandler<ObtenerHistorialC
             TerminoBusqueda = request.TerminoBusqueda,
             IncluirCanceladas = request.IncluirCanceladas,
             SoloFinalizadas = request.SoloFinalizadas
+        };
+    }
+
+    /// <summary>
+    /// Aplica ordenamiento a las comandas según el criterio especificado
+    /// </summary>
+    private static IEnumerable<Comanda> AplicarOrdenamiento(IEnumerable<Comanda> comandas, OrdenHistorial ordenarPor)
+    {
+        return ordenarPor switch
+        {
+            OrdenHistorial.FechaMasReciente => comandas.OrderByDescending(c => c.FechaCreacion),
+            OrdenHistorial.FechaMasAntigua => comandas.OrderBy(c => c.FechaCreacion),
+            OrdenHistorial.MontoMayor => comandas.OrderByDescending(c => c.Total != null ? c.Total.Total : 0),
+            OrdenHistorial.MontoMenor => comandas.OrderBy(c => c.Total != null ? c.Total.Total : 0),
+            OrdenHistorial.MesaNombre => comandas.OrderBy(c => c.MesaId), // Ordenar por ID de mesa por simplicidad
+            OrdenHistorial.MeseroNombre => comandas.OrderBy(c => c.MeseroId), // Ordenar por ID de mesero por simplicidad
+            OrdenHistorial.ClienteNombre => comandas.OrderBy(c => c.ClienteId), // Ordenar por ID de cliente por simplicidad
+            OrdenHistorial.EstadoComanda => comandas.OrderBy(c => c.Estado.ToString()),
+            _ => comandas.OrderByDescending(c => c.FechaCreacion) // Default: más reciente primero
         };
     }
 

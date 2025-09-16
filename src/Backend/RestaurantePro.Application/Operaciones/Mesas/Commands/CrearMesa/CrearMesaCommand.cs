@@ -8,6 +8,12 @@ public class CrearMesaCommand : IRequest<Result<MesaDto>>
 {
     public int Numero { get; set; }
     public int Capacidad { get; set; }
-    public string Zona { get; set; } = string.Empty;
+    public string Ubicacion { get; set; } = string.Empty;
+    public string Estado { get; set; } = "Disponible";
     public string? Descripcion { get; set; }
+    public string? Notas { get; set; }
+    public bool TieneVentana { get; set; }
+    public bool TieneSofa { get; set; }
+    public bool EsAccesible { get; set; }
+    public bool TieneEnchufe { get; set; }
 } 

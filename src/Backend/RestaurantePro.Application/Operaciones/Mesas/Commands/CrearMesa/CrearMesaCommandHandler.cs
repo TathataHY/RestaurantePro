@@ -31,8 +31,10 @@ public class CrearMesaCommandHandler : IRequestHandler<CrearMesaCommand, Result<
             return Result.Failure<MesaDto>(["Ya existe una mesa con ese número."]);
         }
 
-        // Crear la entidad Mesa (usando Zona como Ubicacion)
-        var mesa = Mesa.Crear(request.Numero, request.Capacidad, request.Zona);
+        // Crear la entidad Mesa
+        var mesa = Mesa.Crear(request.Numero, request.Capacidad, request.Ubicacion, 
+            request.Descripcion, request.Notas, request.TieneVentana, request.TieneSofa, 
+            request.EsAccesible, request.TieneEnchufe);
         await _mesaRepository.AgregarAsync(mesa);
         await _mesaRepository.GuardarCambiosAsync();
         _logger.LogInformation("Mesa creada correctamente: {Numero}", request.Numero);

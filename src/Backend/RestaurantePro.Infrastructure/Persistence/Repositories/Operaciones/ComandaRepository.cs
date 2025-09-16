@@ -108,7 +108,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
                 query = query.Include(c => c.Items);
             }
             
-            return await query.ToListAsync(cancellationToken);
+            // Aplicar ordenamiento al final para evitar error con SplitQuery
+            return await query.OrderByDescending(c => c.FechaCreacion).ToListAsync(cancellationToken);
         }
 
         public async Task<ItemComanda?> ObtenerItemPorIdAsync(Guid itemId, CancellationToken cancellationToken = default)
@@ -136,7 +137,9 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             
             var total = await query.CountAsync(cancellationToken);
             
+            // Aplicar ordenamiento y paginación al final para evitar error con SplitQuery
             var comandas = await query
+                .OrderByDescending(c => c.FechaCreacion)
                 .Skip(pagina * elementosPorPagina)
                 .Take(elementosPorPagina)
                 .ToListAsync(cancellationToken);
@@ -151,6 +154,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         {
             var total = await _dbSet.CountAsync(cancellationToken);
             var items = await _dbSet
+                .OrderByDescending(c => c.FechaCreacion) // Agregar ordenamiento para evitar error con SplitQuery
                 .Skip(pagina * elementosPorPagina)
                 .Take(elementosPorPagina)
                 .ToListAsync(cancellationToken);
@@ -397,7 +401,7 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
             
             // Incluir Items y aplicar paginación
             query = query.Include(c => c.Items)
-                    .OrderByDescending(c => c.FechaCreacion)
+                    .OrderByDescending(c => c.FechaCreacion) // Ya tiene ordenamiento
                     .Skip(pagina * elementosPorPagina)
                     .Take(elementosPorPagina);
                     

@@ -53,6 +53,7 @@ builder.Services.AddScoped<IRecetasApiService, RecetasApiService>(); // Added fo
 builder.Services.AddScoped<IConfiguracionApiService, ConfiguracionApiService>(); // Added for Semana 12
 builder.Services.AddScoped<IReportesComercialesApiService, ReportesComercialesApiService>(); // Added for Semana 12
 builder.Services.AddScoped<IReportesInventarioApiService, ReportesInventarioApiService>(); // Added for Semana 12
+builder.Services.AddScoped<IHistorialComandasApiService, HistorialComandasApiService>(); // Added for Historial de Comandas
 builder.Services.AddScoped<JwtAuthenticationStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<JwtAuthenticationStateProvider>());
 

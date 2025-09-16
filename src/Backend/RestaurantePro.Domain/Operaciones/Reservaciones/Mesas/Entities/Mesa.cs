@@ -42,6 +42,36 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities
         public virtual EstadoMesa Estado { get; private set; }
 
         /// <summary>
+        /// Descripción adicional de la mesa
+        /// </summary>
+        public virtual string? Descripcion { get; private set; }
+
+        /// <summary>
+        /// Notas especiales sobre la mesa
+        /// </summary>
+        public virtual string? Notas { get; private set; }
+
+        /// <summary>
+        /// Indica si la mesa tiene ventana
+        /// </summary>
+        public virtual bool TieneVentana { get; private set; }
+
+        /// <summary>
+        /// Indica si la mesa tiene sofá
+        /// </summary>
+        public virtual bool TieneSofa { get; private set; }
+
+        /// <summary>
+        /// Indica si la mesa es accesible para personas con discapacidad
+        /// </summary>
+        public virtual bool EsAccesible { get; private set; }
+
+        /// <summary>
+        /// Indica si la mesa tiene enchufes disponibles
+        /// </summary>
+        public virtual bool TieneEnchufe { get; private set; }
+
+        /// <summary>
         /// Constructor privado para EF Core
         /// </summary>
         protected Mesa() { }
@@ -49,7 +79,9 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities
         /// <summary>
         /// Método de fábrica para crear una nueva mesa
         /// </summary>
-        public static Mesa Crear(int numero, int capacidad, string ubicacion)
+        public static Mesa Crear(int numero, int capacidad, string ubicacion, string? descripcion = null, 
+            string? notas = null, bool tieneVentana = false, bool tieneSofa = false, 
+            bool esAccesible = false, bool tieneEnchufe = false)
         {
             if (numero <= 0)
             {
@@ -73,6 +105,12 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities
                 Capacidad = capacidad,
                 Ubicacion = ubicacion,
                 Estado = EstadoMesa.Disponible,
+                Descripcion = descripcion,
+                Notas = notas,
+                TieneVentana = tieneVentana,
+                TieneSofa = tieneSofa,
+                EsAccesible = esAccesible,
+                TieneEnchufe = tieneEnchufe,
                 FechaCreacion = DateTime.Now
             };
 
@@ -165,6 +203,42 @@ namespace RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Entities
             Numero = numero;
             Capacidad = capacidad;
             Ubicacion = ubicacion;
+            FechaActualizacion = DateTime.Now;
+
+            ValidarInvariantes();
+
+            // Disparar evento de dominio
+            AddDomainEvent(new MesaActualizada(Id, numero, capacidad, ubicacion));
+        }
+
+        /// <summary>
+        /// Actualiza todos los datos administrativos de la mesa
+        /// </summary>
+        public void ActualizarDatosCompletos(int numero, int capacidad, string ubicacion, string estado, 
+            string? descripcion = null, string? notas = null, bool tieneVentana = false, 
+            bool tieneSofa = false, bool esAccesible = false, bool tieneEnchufe = false)
+        {
+            if (numero <= 0)
+                throw new ArgumentException("El número de mesa debe ser mayor que cero", nameof(numero));
+            if (capacidad <= 0)
+                throw new ArgumentException("La capacidad debe ser mayor que cero", nameof(capacidad));
+            if (string.IsNullOrWhiteSpace(ubicacion))
+                throw new ArgumentException("La ubicación no puede estar vacía", nameof(ubicacion));
+
+            // Validar estado
+            if (!Enum.TryParse<EstadoMesa>(estado, true, out var estadoEnum))
+                throw new ArgumentException($"El estado '{estado}' no es válido", nameof(estado));
+
+            Numero = numero;
+            Capacidad = capacidad;
+            Ubicacion = ubicacion;
+            Estado = estadoEnum;
+            Descripcion = descripcion;
+            Notas = notas;
+            TieneVentana = tieneVentana;
+            TieneSofa = tieneSofa;
+            EsAccesible = esAccesible;
+            TieneEnchufe = tieneEnchufe;
             FechaActualizacion = DateTime.Now;
 
             ValidarInvariantes();

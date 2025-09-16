@@ -2,6 +2,7 @@
 @page "/mesas"
 
 @using RestaurantePro.Web.Admin.Components
+@using RestaurantePro.Web.Admin.Models
 @inject RestaurantePro.Web.Admin.Services.IMesasApiService MesasApi
 
 <PageTitle>Mesas</PageTitle>
@@ -165,11 +166,8 @@ else
                                     <button class="p-1 text-gray-400 hover:text-green-600" @onclick="() => EditarMesa(m)" title="Editar">
                                         <span class="material-symbols-outlined">edit</span>
                                     </button>
-                                    <button class="p-1 text-gray-400 hover:text-orange-500" @onclick="() => CambiarEstado(m)" title="Cambiar estado">
-                                        <span class="material-symbols-outlined">refresh</span>
-                                    </button>
-                                    <button class="p-1 text-gray-400 hover:text-red-500" @onclick="() => EliminarMesaAsync(m)" title="Eliminar">
-                                        <span class="material-symbols-outlined">delete</span>
+                                    <button class="p-1 text-gray-400 hover:text-orange-500" @onclick="() => MostrarAccionesAdmin(m)" title="Acciones administrativas">
+                                        <span class="material-symbols-outlined">settings</span>
                                     </button>
                                 </td>
                             </tr>
@@ -202,7 +200,7 @@ else
                         </div>
                     </div>
                     
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-center">
                         <div class="flex space-x-1">
                             <button class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" @onclick="() => VerDetalles(m)" title="Ver detalles">
                                 <span class="material-symbols-outlined text-sm">visibility</span>
@@ -210,16 +208,94 @@ else
                             <button class="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" @onclick="() => EditarMesa(m)" title="Editar">
                                 <span class="material-symbols-outlined text-sm">edit</span>
                             </button>
-                            <button class="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-colors" @onclick="() => CambiarEstado(m)" title="Cambiar estado">
-                                <span class="material-symbols-outlined text-sm">refresh</span>
+                            <button class="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-colors" @onclick="() => MostrarAccionesAdmin(m)" title="Acciones administrativas">
+                                <span class="material-symbols-outlined text-sm">settings</span>
                             </button>
                         </div>
-                        <button class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" @onclick="() => EliminarMesaAsync(m)" title="Eliminar">
-                            <span class="material-symbols-outlined text-sm">delete</span>
-                        </button>
                     </div>
                 </div>
             }
+        </div>
+    }
+
+    <!-- Controles de Paginación -->
+    @if (mesas != null && mesas.Any() && totalPaginas > 1)
+    {
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mt-6">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <!-- Información de paginación -->
+                <div class="flex items-center gap-4 text-sm text-gray-600">
+                    <span>Mostrando @((paginaActual - 1) * tamanioPagina + 1) - @(Math.Min(paginaActual * tamanioPagina, mesasPaginadas?.TotalCount ?? 0)) de @(mesasPaginadas?.TotalCount ?? 0) mesas</span>
+                    
+                    <!-- Selector de tamaño de página -->
+                    <div class="flex items-center gap-2">
+                        <span>Mostrar:</span>
+                        <select class="form-select text-sm border-gray-300 rounded-md px-2 py-1" 
+                                value="@tamanioPagina"
+                                @onchange="OnTamanoPaginaChanged">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                        </select>
+                        <span>por página</span>
+                    </div>
+                </div>
+
+                <!-- Navegación de páginas -->
+                <div class="flex items-center gap-2">
+                    <!-- Botón Anterior -->
+                    <button class="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled="@(paginaActual == 1)"
+                            @onclick="async () => await CambiarPagina(paginaActual - 1)">
+                        <span class="material-symbols-outlined text-sm">chevron_left</span>
+                        Anterior
+                    </button>
+
+                    <!-- Números de página -->
+                    <div class="flex items-center gap-1">
+                        @{
+                            var inicio = Math.Max(1, paginaActual - 2);
+                            var fin = Math.Min(totalPaginas, paginaActual + 2);
+                        }
+                        
+                        @if (inicio > 1)
+                        {
+                            <button class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                                    @onclick="async () => await CambiarPagina(1)">1</button>
+                            @if (inicio > 2)
+                            {
+                                <span class="px-2 text-gray-500">...</span>
+                            }
+                        }
+                        
+                        @for (int i = inicio; i <= fin; i++)
+                        {
+                            var pagina = i;
+                            <button class="px-3 py-2 text-sm font-medium rounded-md border @(pagina == paginaActual ? "bg-blue-600 text-white border-blue-600" : "text-gray-500 bg-white border-gray-300 hover:bg-gray-50")"
+                                    @onclick="async () => await CambiarPagina(pagina)">@pagina</button>
+                        }
+                        
+                        @if (fin < totalPaginas)
+                        {
+                            @if (fin < totalPaginas - 1)
+                            {
+                                <span class="px-2 text-gray-500">...</span>
+                            }
+                            <button class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                                    @onclick="async () => await CambiarPagina(totalPaginas)">@totalPaginas</button>
+                        }
+                    </div>
+
+                    <!-- Botón Siguiente -->
+                    <button class="flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled="@(paginaActual == totalPaginas)"
+                            @onclick="async () => await CambiarPagina(paginaActual + 1)">
+                        Siguiente
+                        <span class="material-symbols-outlined text-sm">chevron_right</span>
+                    </button>
+                </div>
+            </div>
         </div>
     }
 }
@@ -244,7 +320,85 @@ else
                        OnGuardarNotas="GuardarNotas" />
 }
 
+<!-- Modal de Acciones Administrativas -->
+@if (mostrandoAccionesAdmin && mesaParaAccionAdmin != null)
+{
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Acciones Administrativas</h3>
+                <button @onclick="CerrarAccionesAdmin" class="text-gray-400 hover:text-gray-600">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            
+            <div class="p-6">
+                <div class="mb-4">
+                    <p class="text-sm text-gray-600 mb-2">Mesa seleccionada:</p>
+                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <span class="material-symbols-outlined text-gray-400">table_restaurant</span>
+                        <div>
+                            <p class="font-medium text-gray-900">Mesa @mesaParaAccionAdmin.Numero</p>
+                            <p class="text-sm text-gray-500">@mesaParaAccionAdmin.Capacidad personas • @mesaParaAccionAdmin.Zona</p>
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium @GetEstadoClass(mesaParaAccionAdmin.Estado)">@mesaParaAccionAdmin.Estado</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    @if (mesaParaAccionAdmin.Estado != "Disponible")
+                    {
+                        <button @onclick="() => ResetearMesaDisponible()" 
+                                disabled="@procesandoAccion"
+                                class="w-full flex items-center gap-3 p-3 text-left text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span class="material-symbols-outlined">refresh</span>
+                            <div>
+                                <p class="font-medium">Resetear a Disponible</p>
+                                <p class="text-sm">Marcar la mesa como disponible para uso</p>
+                            </div>
+                        </button>
+                    }
+
+                    @if (mesaParaAccionAdmin.Estado != "FueraDeServicio")
+                    {
+                        <button @onclick="() => PonerFueraDeServicio()" 
+                                disabled="@procesandoAccion"
+                                class="w-full flex items-center gap-3 p-3 text-left text-orange-700 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span class="material-symbols-outlined">block</span>
+                            <div>
+                                <p class="font-medium">Poner Fuera de Servicio</p>
+                                <p class="text-sm">Marcar la mesa como no disponible (mantenimiento)</p>
+                            </div>
+                        </button>
+                    }
+
+                    @if (mesaParaAccionAdmin.Estado == "FueraDeServicio")
+                    {
+                        <button @onclick="() => RestaurarMesa()" 
+                                disabled="@procesandoAccion"
+                                class="w-full flex items-center gap-3 p-3 text-left text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span class="material-symbols-outlined">restore</span>
+                            <div>
+                                <p class="font-medium">Restaurar Mesa</p>
+                                <p class="text-sm">Volver a poner la mesa en servicio</p>
+                            </div>
+                        </button>
+                    }
+                </div>
+
+                @if (!string.IsNullOrEmpty(error))
+                {
+                    <div class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <p class="text-sm text-red-700">@error</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
 @code {
+  private PaginatedList<MesaDto>? mesasPaginadas;
   private List<MesaDto>? mesas;
   private bool cargando = true;
   private string estado = string.Empty;
@@ -252,6 +406,11 @@ else
   private int? capacidadMinima;
   private string tipoFiltro = string.Empty;
   private bool vistaTabla = true;
+
+  // Paginación
+  private int paginaActual = 1;
+  private int tamanioPagina = 10;
+  private int totalPaginas = 1;
 
   // Estadísticas
   private int totalMesas = 0;
@@ -273,6 +432,11 @@ else
   private bool mostrandoDetalles = false;
   private MesaDto? mesaSeleccionada;
 
+  // Variables para acciones administrativas
+  private bool mostrandoAccionesAdmin = false;
+  private MesaDto? mesaParaAccionAdmin;
+  private bool procesandoAccion = false;
+
   protected override async Task OnInitializedAsync()
   {
     await CargarAsync();
@@ -281,11 +445,25 @@ else
   private async Task CargarAsync()
   {
     cargando = true;
-    mesas = await MesasApi.ObtenerAsync(
+    mesasPaginadas = await MesasApi.ObtenerAsync(
       string.IsNullOrWhiteSpace(estado) ? null : estado,
       string.IsNullOrWhiteSpace(ubicacion) ? null : ubicacion,
-      capacidadMinima
+      capacidadMinima,
+      paginaActual,
+      tamanioPagina
     );
+    
+    if (mesasPaginadas != null)
+    {
+      mesas = mesasPaginadas.Items;
+      totalPaginas = mesasPaginadas.TotalPages;
+    }
+    else
+    {
+      mesas = new List<MesaDto>();
+      totalPaginas = 1;
+    }
+    
     CalcularEstadisticas();
     cargando = false;
     StateHasChanged();
@@ -333,10 +511,112 @@ else
     mostrandoDetalles = true;
   }
 
-  private void CambiarEstado(MesaDto mesa)
+  private void MostrarAccionesAdmin(MesaDto mesa)
   {
-    // Implementar cambio rápido de estado
-    // Por ahora solo un placeholder
+    mesaParaAccionAdmin = mesa;
+    mostrandoAccionesAdmin = true;
+    error = string.Empty;
+  }
+
+  private void CerrarAccionesAdmin()
+  {
+    mostrandoAccionesAdmin = false;
+    mesaParaAccionAdmin = null;
+    error = string.Empty;
+    procesandoAccion = false;
+  }
+
+  private async Task ResetearMesaDisponible()
+  {
+    if (mesaParaAccionAdmin == null) return;
+
+    procesandoAccion = true;
+    error = string.Empty;
+
+    try
+    {
+      var success = await MesasApi.CambiarEstadoMesaAsync(mesaParaAccionAdmin.Id, "Disponible");
+      if (success)
+      {
+        await CargarAsync();
+        CerrarAccionesAdmin();
+      }
+      else
+      {
+        error = "No se pudo resetear la mesa a disponible.";
+      }
+    }
+    catch (Exception ex)
+    {
+      error = $"Error al resetear la mesa: {ex.Message}";
+    }
+    finally
+    {
+      procesandoAccion = false;
+      StateHasChanged();
+    }
+  }
+
+  private async Task PonerFueraDeServicio()
+  {
+    if (mesaParaAccionAdmin == null) return;
+
+    procesandoAccion = true;
+    error = string.Empty;
+
+    try
+    {
+      var success = await MesasApi.CambiarEstadoMesaAsync(mesaParaAccionAdmin.Id, "FueraDeServicio");
+      if (success)
+      {
+        await CargarAsync();
+        CerrarAccionesAdmin();
+      }
+      else
+      {
+        error = "No se pudo poner la mesa fuera de servicio.";
+      }
+    }
+    catch (Exception ex)
+    {
+      error = $"Error al poner la mesa fuera de servicio: {ex.Message}";
+    }
+    finally
+    {
+      procesandoAccion = false;
+      StateHasChanged();
+    }
+  }
+
+  private async Task RestaurarMesa()
+  {
+    if (mesaParaAccionAdmin == null) return;
+
+    procesandoAccion = true;
+    error = string.Empty;
+
+    try
+    {
+      var success = await MesasApi.CambiarEstadoMesaAsync(mesaParaAccionAdmin.Id, "Disponible");
+      if (success)
+      {
+        await CargarAsync();
+        CerrarAccionesAdmin();
+      }
+      else
+      {
+        error = "No se pudo restaurar la mesa.";
+      }
+    }
+    catch (Exception ex)
+    {
+      error = $"Error al restaurar la mesa: {ex.Message}";
+    }
+    finally
+    {
+      procesandoAccion = false;
+      StateHasChanged();
+    }
   }
 
   private void CerrarDetalles()
@@ -364,11 +644,38 @@ else
     }
   }
 
-  private Task BuscarAsync() => CargarAsync();
+  private Task BuscarAsync() 
+  {
+    paginaActual = 1; // Reset a la primera página al buscar
+    return CargarAsync();
+  }
+
+  private async Task CambiarPagina(int nuevaPagina)
+  {
+    if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas && nuevaPagina != paginaActual)
+    {
+      paginaActual = nuevaPagina;
+      await CargarAsync();
+    }
+  }
+
+  private async Task CambiarTamanoPagina(int nuevoTamano)
+  {
+    if (nuevoTamano > 0 && nuevoTamano != tamanioPagina)
+    {
+      tamanioPagina = nuevoTamano;
+      paginaActual = 1; // Reset a la primera página
+      await CargarAsync();
+    }
+  }
 
   private void NuevaMesa()
   {
-    crearDto = new();
+    crearDto = new()
+    {
+      Numero = "",
+      Estado = "Disponible" // Estado por defecto para nuevas mesas
+    };
     editando = false;
     error = string.Empty;
     mostrandoModal = true;
@@ -379,9 +686,9 @@ else
     mesaIdEditando = m.Id;
     editarDto = new ActualizarMesaRequest
     {
-      Numero = int.Parse(m.Numero),
+      Numero = m.Numero,
       Capacidad = m.Capacidad,
-      Zona = m.Zona,
+      Ubicacion = m.Zona, // m.Zona viene del DTO, pero se mapea a Ubicacion en el request
       Estado = m.Estado,
       Descripcion = m.Descripcion,
       Notas = m.Notas,
@@ -415,10 +722,10 @@ else
     else
     {
       // Validaciones de cliente
-      if (crearDto.Numero <= 0) { error = "El número de mesa debe ser mayor a 0."; return; }
+      if (string.IsNullOrWhiteSpace(crearDto.Numero)) { error = "El número de mesa es obligatorio."; return; }
       if (crearDto.Capacidad <= 0) { error = "La capacidad debe ser mayor a 0."; return; }
-      if (string.IsNullOrWhiteSpace(crearDto.Zona)) { error = "La zona es obligatoria."; return; }
-      if (crearDto.Zona.Length > 30) { error = "La zona no debe superar los 30 caracteres."; return; }
+      if (string.IsNullOrWhiteSpace(crearDto.Ubicacion)) { error = "La ubicación es obligatoria."; return; }
+      if (crearDto.Ubicacion.Length > 30) { error = "La ubicación no debe superar los 30 caracteres."; return; }
       if (!string.IsNullOrWhiteSpace(crearDto.Descripcion) && crearDto.Descripcion.Length > 200) { error = "La descripción no debe superar los 200 caracteres."; return; }
 
       try
@@ -446,14 +753,13 @@ else
     mostrandoModal = false;
   }
 
-  private async Task EliminarMesaAsync(MesaDto m)
+
+  private async Task OnTamanoPaginaChanged(ChangeEventArgs e)
   {
-    if (!await MesasApi.EliminarAsync(m.Id))
+    if (int.TryParse(e.Value?.ToString(), out int nuevoTamano))
     {
-      error = "No se pudo eliminar la mesa.";
-      return;
+      await CambiarTamanoPagina(nuevoTamano);
     }
-    await CargarAsync();
   }
 }
 

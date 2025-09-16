@@ -51,7 +51,18 @@ public class ActualizarMesaCommandHandler : IRequestHandler<ActualizarMesaComman
         }
 
         // Actualizar propiedades de la mesa usando el método de dominio
-        mesa.ActualizarDatos(numeroMesa, request.Capacidad, request.Ubicacion);
+        mesa.ActualizarDatosCompletos(
+            numeroMesa, 
+            request.Capacidad, 
+            request.Ubicacion, 
+            request.Estado,
+            request.Descripcion,
+            request.Notas,
+            request.TieneVentana,
+            request.TieneSofa,
+            request.EsAccesible,
+            request.TieneEnchufe
+        );
 
         await _mesaRepository.ActualizarAsync(mesa);
         await _mesaRepository.GuardarCambiosAsync();

@@ -42,10 +42,10 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1" for="table-number">Número de Mesa <span class="text-red-500">*</span></label>
                             <div class="relative">
                                 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">tag</span>
-                                <InputNumber class="w-full pl-10 pr-4 py-2.5 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" 
-                                            id="table-number" 
-                                            placeholder="Ej: 101" 
-                                            @bind-Value="Model.Numero" />
+                                <InputText class="w-full pl-10 pr-4 py-2.5 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" 
+                                           id="table-number" 
+                                           placeholder="Ej: 101" 
+                                           @bind-Value="Model.Numero" />
                             </div>
                             <ValidationMessage For="@(() => Model.Numero)" class="text-red-500 text-sm mt-1" />
                         </div>
@@ -68,7 +68,7 @@
                                 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">room_service</span>
                                 <InputSelect class="w-full appearance-none pl-10 pr-10 py-2.5 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" 
                                             id="location" 
-                                            @bind-Value="Model.Zona">
+                                            @bind-Value="Model.Ubicacion">
                                     <option value="">Selecciona una zona</option>
                                     <option value="Salón Principal">Salón Principal</option>
                                     <option value="Terraza">Terraza</option>
@@ -78,7 +78,7 @@
                                 </InputSelect>
                                 <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
                             </div>
-                            <ValidationMessage For="@(() => Model.Zona)" class="text-red-500 text-sm mt-1" />
+                            <ValidationMessage For="@(() => Model.Ubicacion)" class="text-red-500 text-sm mt-1" />
                         </div>
 
 
@@ -104,15 +104,27 @@
                                 <InputSelect class="w-full appearance-none pl-10 pr-10 py-2.5 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" 
                                             id="initial-status" 
                                             @bind-Value="Model.Estado">
-                                    <option value="">Selecciona un estado</option>
-                                    <option value="Disponible" class="text-green-600">🟢 Disponible</option>
-                                    <option value="Reservada" class="text-yellow-600">🟡 Reservada</option>
-                                    <option value="Ocupada" class="text-red-600">🔴 Ocupada</option>
-                                    <option value="Mantenimiento" class="text-gray-600">⚫ Mantenimiento</option>
+                                    @if (!Editando)
+                                    {
+                                        <!-- Solo para creación: solo estados administrativos -->
+                                        <option value="Disponible" class="text-green-600">🟢 Disponible (Recomendado)</option>
+                                        <option value="FueraDeServicio" class="text-gray-600">⚫ Fuera de Servicio</option>
+                                    }
+                                    else
+                                    {
+                                        <!-- Para edición: mostrar el estado actual -->
+                                        <option value="">Selecciona un estado</option>
+                                        <option value="Disponible" class="text-green-600">🟢 Disponible</option>
+                                        <option value="FueraDeServicio" class="text-gray-600">⚫ Fuera de Servicio</option>
+                                    }
                                 </InputSelect>
                                 <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
                             </div>
                             <ValidationMessage For="@(() => Model.Estado)" class="text-red-500 text-sm mt-1" />
+                            @if (!Editando)
+                            {
+                                <p class="text-xs text-gray-500 mt-1">💡 Las mesas se crean disponibles por defecto. Los estados operativos (Ocupada, Reservada) se gestionan desde la aplicación móvil.</p>
+                            }
                         </div>
 
                         <div>
@@ -214,7 +226,7 @@
         {
             Numero = editarModel.Numero,
             Capacidad = editarModel.Capacidad,
-            Zona = editarModel.Zona,
+            Ubicacion = editarModel.Ubicacion,
             Estado = editarModel.Estado,
             Descripcion = editarModel.Descripcion,
             Notas = editarModel.Notas,
@@ -237,7 +249,7 @@
             // Actualizar el modelo de edición con los valores del formulario
             EditarModel.Numero = Model.Numero;
             EditarModel.Capacidad = Model.Capacidad;
-            EditarModel.Zona = Model.Zona;
+            EditarModel.Ubicacion = Model.Ubicacion;
             EditarModel.Estado = Model.Estado;
             EditarModel.Descripcion = Model.Descripcion;
             EditarModel.Notas = Model.Notas;

@@ -13,9 +13,11 @@ using RestaurantePro.Application.Operaciones.Mesas.Commands.LiberarMesa;
 using RestaurantePro.Application.Operaciones.Mesas.Commands.ReservarMesa;
 using RestaurantePro.Application.Operaciones.Mesas.Commands.AsignarMesa;
 using RestaurantePro.Api.Common;
-using RestaurantePro.Application.Common.Models;
+using RestaurantePro.Application.Common.DTOs;
 using AutoMapper;
 using MediatR;
+using RestaurantePro.Domain.Operaciones.Reservaciones.Mesas.Enums;
+using RestaurantePro.Domain.Operaciones.Services;
 
 namespace RestaurantePro.Api.Controllers.Operaciones;
 
@@ -32,49 +34,57 @@ public class MesasController : ControllerBase
     private readonly ILogger<MesasController> _logger;
     private readonly IMediator _mediator;
     private readonly IMapper _mapper;
+    private readonly IOperacionesServiceFacade _operacionesService;
 
-    public MesasController(ILogger<MesasController> logger, IMediator mediator, IMapper mapper)
+    public MesasController(ILogger<MesasController> logger, IMediator mediator, IMapper mapper, IOperacionesServiceFacade operacionesService)
     {
         _logger = logger;
         _mediator = mediator;
         _mapper = mapper;
+        _operacionesService = operacionesService;
     }
 
     /// <summary>
-    /// Obtiene todas las mesas del restaurante
+    /// Obtiene todas las mesas del restaurante con paginación
     /// </summary>
     /// <param name="estado">Filtro opcional por estado de mesa</param>
     /// <param name="ubicacion">Filtro opcional por ubicación</param>
     /// <param name="capacidadMinima">Filtro opcional por capacidad mínima</param>
+    /// <param name="pageNumber">Número de página (base 1)</param>
+    /// <param name="pageSize">Tamaño de página</param>
     [HttpGet]
-    [ProducesResponseType(typeof(ApiResponse<List<MesaDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<PaginatedList<MesaDto>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
-    public async Task<ActionResult<ApiResponse<List<MesaDto>>>> ObtenerMesas(
+    public async Task<ActionResult<ApiResponse<PaginatedList<MesaDto>>>> ObtenerMesas(
         [FromQuery] string? estado = null,
         [FromQuery] string? ubicacion = null,
-        [FromQuery] int? capacidadMinima = null)
+        [FromQuery] int? capacidadMinima = null,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10)
     {
-        _logger.LogInformation("🍽️ GET /api/operaciones/mesas - Filtros: Estado={Estado}, Ubicacion={Ubicacion}, CapacidadMinima={CapacidadMinima}", 
-            estado, ubicacion, capacidadMinima);
+        _logger.LogInformation("🍽️ GET /api/operaciones/mesas - Filtros: Estado={Estado}, Ubicacion={Ubicacion}, CapacidadMinima={CapacidadMinima}, Page={PageNumber}, Size={PageSize}", 
+            estado, ubicacion, capacidadMinima, pageNumber, pageSize);
 
         var query = new ObtenerMesasQuery 
         { 
             Estado = estado, 
             Ubicacion = ubicacion, 
-            CapacidadMinima = capacidadMinima
+            CapacidadMinima = capacidadMinima,
+            PageNumber = pageNumber,
+            PageSize = pageSize
         };
         
         var result = await _mediator.Send(query);
         
         if (!result.Succeeded)
         {
-            var errorResponse = ApiResponse<List<MesaDto>>.ErrorResponse(
+            var errorResponse = ApiResponse<PaginatedList<MesaDto>>.ErrorResponse(
                 result.Errors, "Error al obtener mesas", StatusCodes.Status500InternalServerError);
             return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
         }
 
-        var response = ApiResponse<List<MesaDto>>.SuccessResponse(result.Value, "Mesas obtenidas exitosamente");
+        var response = ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(result.Value, "Mesas obtenidas exitosamente");
         return Ok(response);
     }
 
@@ -574,5 +584,62 @@ public class MesasController : ControllerBase
 
         var response = ApiResponse<PlanoMesasDto>.SuccessResponse(result.Value, "Plano de mesas obtenido exitosamente");
         return Ok(response);
+    }
+
+    /// <summary>
+    /// Cambia el estado de una mesa específica
+    /// </summary>
+    [HttpPost("{id:guid}/cambiar-estado")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<object>>> CambiarEstadoMesa(
+        Guid id, 
+        [FromQuery] string estado)
+    {
+        _logger.LogInformation("🔄 POST /api/operaciones/mesas/{Id}/cambiar-estado - Estado: {Estado}", id, estado);
+
+        try
+        {
+            // Validar que el estado sea válido
+            if (!Enum.TryParse<EstadoMesa>(estado, true, out var estadoEnum))
+            {
+                var errorResponse = ApiResponse<object>.ErrorResponse(
+                    new List<string> { $"El estado '{estado}' no es válido. Estados válidos: Disponible, Ocupada, Reservada, FueraDeServicio, EnLimpieza" }, 
+                    "Estado inválido", 
+                    StatusCodes.Status400BadRequest);
+                return BadRequest(errorResponse);
+            }
+
+            // Usar el servicio de operaciones para cambiar el estado
+            var result = await _operacionesService.CambiarEstadoMesaAsync(id, estadoEnum);
+            
+            if (!result.Succeeded)
+            {
+                var statusCode = (result.Errors ?? new List<string>()).Any(e => e.Contains("no encontrada")) 
+                    ? StatusCodes.Status404NotFound 
+                    : StatusCodes.Status400BadRequest;
+                    
+                var errorResponse = ApiResponse<object>.ErrorResponse(
+                    result.Errors ?? new List<string> { result.Error ?? "Error desconocido" }, 
+                    "Error al cambiar estado de mesa", 
+                    statusCode);
+                return StatusCode(statusCode, errorResponse);
+            }
+
+            var response = ApiResponse<object>.SuccessResponse(
+                new object(), 
+                $"Estado de mesa cambiado a '{estado}' exitosamente");
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error inesperado al cambiar estado de mesa {Id} a {Estado}", id, estado);
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { "Error interno del servidor" }, 
+                "Error inesperado al cambiar estado de mesa", 
+                StatusCodes.Status500InternalServerError);
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
     }
 } 

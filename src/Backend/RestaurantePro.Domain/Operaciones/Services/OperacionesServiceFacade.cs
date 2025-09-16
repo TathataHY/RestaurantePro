@@ -1,3 +1,5 @@
+using RestaurantePro.Domain.Operaciones.Comandas.Enums;
+
 namespace RestaurantePro.Domain.Operaciones.Services
 {
     /// <summary>
@@ -1128,6 +1130,23 @@ namespace RestaurantePro.Domain.Operaciones.Services
                 if (mesa == null)
                 {
                     _notificationManager.AddError($"No se encontró la mesa con ID {mesaId}", nameof(mesaId));
+                    return _notificationManager.ToResult<bool>(false);
+                }
+
+                // Validar que la mesa no tenga comandas activas antes de cambiar estado
+                var comandasActivas = await _comandaRepository.ObtenerComandasPorMesaAsync(mesaId, cancellationToken);
+                var comandasNoFinalizadas = comandasActivas.Where(c => 
+                    c.Estado != EstadoComanda.Finalizada && 
+                    c.Estado != EstadoComanda.Cancelada && 
+                    c.Estado != EstadoComanda.Dividida);
+
+                if (comandasNoFinalizadas.Any())
+                {
+                    var estadosComandas = string.Join(", ", comandasNoFinalizadas.Select(c => c.Estado.ToString()));
+                    _notificationManager.AddError(
+                        $"No se puede cambiar el estado de la mesa {mesa.Numero} porque tiene comandas activas en estados: {estadosComandas}. " +
+                        "Debe finalizar o cancelar las comandas primero.", 
+                        "ComandasActivas");
                     return _notificationManager.ToResult<bool>(false);
                 }
                 

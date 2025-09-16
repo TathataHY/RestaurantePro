@@ -12,4 +12,11 @@ public class ActualizarMesaCommand : IRequest<Result<MesaDto>>
     public string Numero { get; set; } = string.Empty;
     public int Capacidad { get; set; }
     public string Ubicacion { get; set; } = string.Empty;
+    public string Estado { get; set; } = string.Empty;
+    public string? Descripcion { get; set; }
+    public string? Notas { get; set; }
+    public bool TieneVentana { get; set; }
+    public bool TieneSofa { get; set; }
+    public bool EsAccesible { get; set; }
+    public bool TieneEnchufe { get; set; }
 } 

@@ -28,18 +28,20 @@ public class MesasApiService : IMesasApiService
         return http;
     }
 
-    public async Task<List<MesaDto>?> ObtenerAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null)
+    public async Task<PaginatedList<MesaDto>?> ObtenerAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, int pageNumber = 1, int pageSize = 10)
     {
         var http = CreateClient();
         var query = new List<string>();
         if (!string.IsNullOrWhiteSpace(estado)) query.Add($"estado={Uri.EscapeDataString(estado)}");
         if (!string.IsNullOrWhiteSpace(ubicacion)) query.Add($"ubicacion={Uri.EscapeDataString(ubicacion)}");
         if (capacidadMinima.HasValue) query.Add($"capacidadMinima={capacidadMinima.Value}");
+        query.Add($"pageNumber={pageNumber}");
+        query.Add($"pageSize={pageSize}");
         var qs = query.Count > 0 ? "?" + string.Join("&", query) : string.Empty;
 
         try
         {
-            var resp = await http.GetFromJsonAsync<ApiResponse<List<MesaDto>>>(
+            var resp = await http.GetFromJsonAsync<ApiResponse<PaginatedList<MesaDto>>>(
                 $"api/operaciones/mesas{qs}");
             return resp?.Data;
         }
@@ -102,7 +104,7 @@ public class MesasApiService : IMesasApiService
     public async Task<List<MesaDto>> ObtenerMesasAsync()
     {
         var result = await ObtenerAsync();
-        return result ?? new List<MesaDto>();
+        return result?.Items ?? new List<MesaDto>();
     }
 
     /// <summary>

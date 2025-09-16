@@ -72,6 +72,7 @@ namespace RestaurantePro.Domain.Core
             services.AddScoped<Operaciones.Preparaciones.Services.IServicioPreparaciones, Operaciones.Preparaciones.Services.ServicioPreparaciones>();
             services.AddScoped<Operaciones.Services.IGeneradorNumeroComandaService, Operaciones.Services.GeneradorNumeroComandaService>();
             services.AddScoped<Operaciones.Services.IOperacionesInventarioIntegrationService, Operaciones.Services.OperacionesInventarioIntegrationService>();
+            services.AddScoped<Operaciones.Services.IOperacionesServiceFacade, Operaciones.Services.OperacionesServiceFacade>();
             
             // Servicios de Inventario
             services.AddScoped<Inventario.Services.IInventarioServiceFacade, Inventario.Services.InventarioServiceFacade>();
@@ -257,6 +258,7 @@ namespace RestaurantePro.Domain.Core
             
             // 🍳 Registro del servicio de preparaciones diarias para pruebas
             services.AddScoped<Operaciones.Preparaciones.Services.IServicioPreparaciones, Operaciones.Preparaciones.Services.ServicioPreparaciones>();
+            services.AddScoped<Operaciones.Services.IOperacionesServiceFacade, Operaciones.Services.OperacionesServiceFacade>();
             
             // ✨ NUEVOS SERVICIOS DE INVENTARIO - Para pruebas
             // 11. Servicio de Validación de Inventario (Domain Service)

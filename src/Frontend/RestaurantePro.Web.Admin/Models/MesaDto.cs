@@ -20,9 +20,9 @@ public class MesaDto
 
 public class CrearMesaRequest
 {
-    public int Numero { get; set; }
+    public string Numero { get; set; } = string.Empty;
     public int Capacidad { get; set; }
-    public string Zona { get; set; } = string.Empty;
+    public string Ubicacion { get; set; } = string.Empty;
     public string Estado { get; set; } = "Disponible";
     public string? Descripcion { get; set; }
     public string? Notas { get; set; }
@@ -34,9 +34,9 @@ public class CrearMesaRequest
 
 public class ActualizarMesaRequest
 {
-    public int Numero { get; set; }
+    public string Numero { get; set; } = string.Empty;
     public int Capacidad { get; set; }
-    public string Zona { get; set; } = string.Empty;
+    public string Ubicacion { get; set; } = string.Empty;
     public string Estado { get; set; } = string.Empty;
     public string? Descripcion { get; set; }
     public string? Notas { get; set; }

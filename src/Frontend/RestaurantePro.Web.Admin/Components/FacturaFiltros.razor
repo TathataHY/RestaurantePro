@@ -295,7 +295,8 @@
     {
         try
         {
-            mesas = await MesasApi.ObtenerAsync() ?? new List<MesaDto>();
+            var mesasPaginadas = await MesasApi.ObtenerAsync();
+            mesas = mesasPaginadas?.Items ?? new List<MesaDto>();
         }
         catch (Exception ex)
         {

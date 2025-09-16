@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RestaurantePro.Infrastructure.Persistence.Contexts;
 
@@ -11,9 +12,11 @@ using RestaurantePro.Infrastructure.Persistence.Contexts;
 namespace RestaurantePro.Infrastructure.Migrations
 {
     [DbContext(typeof(RestauranteProDbContext))]
-    partial class RestauranteProDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250916013711_AddMesaExtendedFields")]
+    partial class AddMesaExtendedFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
