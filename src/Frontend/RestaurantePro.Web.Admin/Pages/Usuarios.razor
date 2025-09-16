@@ -9,14 +9,18 @@
 @inject RestaurantePro.Web.Admin.Services.IUsuariosApiService UsuariosApi
 @inject RestaurantePro.Web.Admin.Services.IAuthApiService Auth
 @inject RestaurantePro.Web.Admin.Services.TokenStore TokenStore
+@inject RestaurantePro.Web.Admin.Services.PermissionService PermissionService
 @inject IJSRuntime JSRuntime
 
 <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
     <h1 class="text-3xl font-bold text-gray-900">Gestión de Usuarios</h1>
-    <button class="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors" @onclick="AbrirCrear">
-        <span class="material-symbols-outlined">add</span>
-        <span class="truncate">Nuevo Usuario</span>
-    </button>
+    @if (canCreateUsers)
+    {
+        <button class="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors" @onclick="AbrirCrear">
+            <span class="material-symbols-outlined">add</span>
+            <span class="truncate">Nuevo Usuario</span>
+        </button>
+    }
 </div>
 
 <!-- Dashboard de estadísticas -->
@@ -187,7 +191,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end gap-2">
-                                    @if (u.Estado == "PendienteConfirmacion")
+                                    @if (u.Estado == "PendienteConfirmacion" && canActivateUsers)
                                     {
                                         <button class="text-green-600 hover:text-green-900 transition-colors" 
                                                 @onclick="(() => ConfirmarActivar(u))" 
@@ -195,7 +199,7 @@
                                             <span class="material-symbols-outlined text-lg">check_circle</span>
                                         </button>
                                     }
-                                    @if (u.Estado == "Inactivo")
+                                    @if (u.Estado == "Inactivo" && canActivateUsers)
                                     {
                                         <button class="text-green-600 hover:text-green-900 transition-colors" 
                                                 @onclick="(() => ConfirmarReactivar(u))" 
@@ -208,12 +212,15 @@
                                             title="Ver detalles">
                                         <span class="material-symbols-outlined text-lg">visibility</span>
                                     </button>
-                                    <button class="text-blue-600 hover:text-blue-900 transition-colors" 
-                                            @onclick="(() => AbrirEditar(u))" 
-                                            title="Editar usuario">
-                                        <span class="material-symbols-outlined text-lg">edit</span>
-                                    </button>
-                                    @if (u.Estado == "Activo")
+                                    @if (canEditUsers)
+                                    {
+                                        <button class="text-blue-600 hover:text-blue-900 transition-colors" 
+                                                @onclick="(() => AbrirEditar(u))" 
+                                                title="Editar usuario">
+                                            <span class="material-symbols-outlined text-lg">edit</span>
+                                        </button>
+                                    }
+                                    @if (u.Estado == "Activo" && canDeactivateUsers)
                                     {
                                         <button class="text-red-600 hover:text-red-900 transition-colors" 
                                                 @onclick="(() => ConfirmarDesactivar(u))" 
@@ -494,11 +501,11 @@
 
 @if (mostrandoConfirmarEliminar)
 {
-    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="z-index: 9999;">
         <div class="flex items-center justify-center min-h-screen px-4 py-8 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @onclick="CerrarConfirmarEliminar"></div>
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-20 transition-opacity" aria-hidden="true" @onclick="CerrarConfirmarEliminar" style="pointer-events: none;"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
+            <div class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full" style="z-index: 10003; position: relative;">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
                         <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
@@ -537,11 +544,11 @@
 
 @if (mostrandoConfirmarActivar)
 {
-    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="z-index: 9999;">
         <div class="flex items-center justify-center min-h-screen px-4 py-8 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @onclick="CerrarConfirmarActivar"></div>
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-20 transition-opacity" aria-hidden="true" @onclick="CerrarConfirmarActivar" style="pointer-events: none;"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
+            <div class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full" style="z-index: 10003; position: relative;">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
                         <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
@@ -580,11 +587,11 @@
 
 @if (mostrandoConfirmarReactivar)
 {
-    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="z-index: 9999;">
         <div class="flex items-center justify-center min-h-screen px-4 py-8 text-center sm:block sm:p-0">
-            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @onclick="CerrarConfirmarReactivar"></div>
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-20 transition-opacity" aria-hidden="true" @onclick="CerrarConfirmarReactivar" style="pointer-events: none;"></div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full">
+            <div class="inline-block align-middle bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg sm:w-full" style="z-index: 10003; position: relative;">
                 <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
                         <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
@@ -624,7 +631,7 @@
 @* Notificaciones de éxito/error *@
 @if (mostrandoNotificacion)
 {
-    <div class="fixed top-4 right-4 z-50">
+    <div class="fixed top-4 right-4" style="z-index: 10000;">
         <div class="bg-white rounded-lg shadow-lg border-l-4 @(notificacionExito ? "border-green-500" : "border-red-500") p-4 max-w-sm">
             <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -688,10 +695,27 @@
   private int tamañoPagina = 10;
   private int totalUsuariosPagina = 0;
   private int totalPaginas = 0;
+  
+  // Variables de permisos
+  private bool canCreateUsers = false;
+  private bool canEditUsers = false;
+  private bool canDeleteUsers = false;
+  private bool canDeactivateUsers = false;
+  private bool canActivateUsers = false;
 
   protected override async Task OnInitializedAsync()
   {
+    await CargarPermisosAsync();
     await CargarAsync();
+  }
+
+  private async Task CargarPermisosAsync()
+  {
+    canCreateUsers = await PermissionService.CanCreateUsersAsync();
+    canEditUsers = await PermissionService.CanEditUsersAsync();
+    canDeleteUsers = await PermissionService.CanDeleteUsersAsync();
+    canDeactivateUsers = await PermissionService.CanDeactivateUsersAsync();
+    canActivateUsers = await PermissionService.CanActivateUsersAsync();
   }
 
   private async Task CargarAsync()

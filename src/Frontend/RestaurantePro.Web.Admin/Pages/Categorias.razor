@@ -7,11 +7,29 @@
 <PageTitle>Categorías</PageTitle>
 
 <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
-    <h1 class="text-3xl font-bold text-gray-900">Gestión de Categorías</h1>
-    <button class="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors" @onclick="NuevaCategoria">
-        <span class="material-symbols-outlined">add</span>
-        <span class="truncate">Nueva Categoría</span>
-    </button>
+    <div>
+        <h1 class="text-3xl font-bold text-gray-900">Gestión de Categorías</h1>
+        <p class="text-gray-600 mt-2">Organiza y gestiona las categorías de productos del menú</p>
+    </div>
+    <div class="flex items-center gap-3">
+        <!-- Toggle de vista -->
+        <div class="flex items-center bg-gray-100 rounded-lg p-1">
+            <button class="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md @(vistaTabla ? "bg-white text-blue-600 shadow-sm" : "text-gray-600")" 
+                    @onclick="() => CambiarVista(true)">
+                <span class="material-symbols-outlined text-sm">table_rows</span>
+                Tabla
+            </button>
+            <button class="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md @(!vistaTabla ? "bg-white text-blue-600 shadow-sm" : "text-gray-600")" 
+                    @onclick="() => CambiarVista(false)">
+                <span class="material-symbols-outlined text-sm">grid_view</span>
+                Grid
+            </button>
+        </div>
+        <button class="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors" @onclick="NuevaCategoria">
+            <span class="material-symbols-outlined">add</span>
+            <span class="truncate">Nueva Categoría</span>
+        </button>
+    </div>
 </div>
 
         <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-8">
@@ -85,46 +103,131 @@
             }
             else
             {
-                <!-- Tabla principal -->
-                <div class="overflow-x-auto rounded-lg shadow-md">
-                    <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800">
-                        <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                            <tr>
-                                <th class="px-6 py-3" scope="col">Nombre</th>
-                                <th class="px-6 py-3" scope="col">Descripción</th>
-                                <th class="px-6 py-3 text-center" scope="col">Productos</th>
-                                <th class="px-6 py-3" scope="col">Estado</th>
-                                <th class="px-6 py-3" scope="col">Fecha de Creación</th>
-                                <th class="px-6 py-3 text-right" scope="col">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var c in categorias.OrderBy(x => x.Orden).ThenBy(x => x.Nombre))
-                            {
-                                <tr class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
-                                    <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">@c.Nombre</td>
-                                    <td class="px-6 py-4">@(string.IsNullOrEmpty(c.Descripcion) ? "Sin descripción" : c.Descripcion)</td>
-                                    <td class="px-6 py-4 text-center">@c.CantidadProductos</td>
-                                    <td class="px-6 py-4">
-                                        @if (c.Activa)
-                                        {
-                                            <span class="status-badge-active">Activo</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="status-badge-inactive">Inactivo</span>
-                                        }
-                                    </td>
-                                    <td class="px-6 py-4">@c.FechaCreacion.ToString("yyyy-MM-dd")</td>
-                                    <td class="px-6 py-4 text-right flex gap-2 justify-end">
-                                        <button class="text-blue-600 dark:text-blue-500 hover:underline" @onclick="() => EditarCategoria(c.Id)">Editar</button>
-                                        <button class="text-red-600 dark:text-red-500 hover:underline" @onclick="() => EliminarCategoria(c.Id)">Eliminar</button>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
+                @if (vistaTabla)
+                {
+                    <!-- Vista de Tabla -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left text-gray-500">
+                                <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                                    <tr>
+                                        <th class="px-6 py-3" scope="col">Icono</th>
+                                        <th class="px-6 py-3" scope="col">Nombre</th>
+                                        <th class="px-6 py-3" scope="col">Descripción</th>
+                                        <th class="px-6 py-3 text-center" scope="col">Productos</th>
+                                        <th class="px-6 py-3" scope="col">Estado</th>
+                                        <th class="px-6 py-3" scope="col">Orden</th>
+                                        <th class="px-6 py-3 text-right" scope="col">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var c in categorias.OrderBy(x => x.Orden).ThenBy(x => x.Nombre))
+                                    {
+                                        <tr class="bg-white border-b hover:bg-gray-50">
+                                            <td class="px-6 py-4">
+                                                <div class="flex items-center justify-center w-10 h-10 rounded-lg" style="background-color: @c.Color">
+                                                    <span class="material-symbols-outlined text-white text-lg">@c.Icono</span>
+                                                </div>
+                                            </td>
+                                            <th class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap" scope="row">@c.Nombre</th>
+                                            <td class="px-6 py-4 text-gray-500">@(string.IsNullOrEmpty(c.Descripcion) ? "Sin descripción" : c.Descripcion)</td>
+                                            <td class="px-6 py-4 text-center">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">@c.CantidadProductos productos</span>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                @if (c.Activa)
+                                                {
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                        <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5"></span>
+                                                        Activo
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                        <span class="w-1.5 h-1.5 bg-red-400 rounded-full mr-1.5"></span>
+                                                        Inactivo
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td class="px-6 py-4 text-gray-500">@c.Orden</td>
+                                            <td class="px-6 py-4 text-right space-x-2">
+                                                <button class="p-1 text-gray-400 hover:text-blue-600" @onclick="() => EditarCategoria(c.Id)" title="Editar">
+                                                    <span class="material-symbols-outlined">edit</span>
+                                                </button>
+                                                <button class="p-1 text-gray-400 hover:text-red-600" @onclick="() => EliminarCategoria(c.Id)" title="Eliminar">
+                                                    <span class="material-symbols-outlined">delete</span>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <!-- Vista de Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        @foreach (var c in categorias.OrderBy(x => x.Orden).ThenBy(x => x.Nombre))
+                        {
+                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="flex items-center justify-center w-12 h-12 rounded-lg" style="background-color: @c.Color">
+                                            <span class="material-symbols-outlined text-white text-xl">@c.Icono</span>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-lg font-semibold text-gray-900">@c.Nombre</h3>
+                                            <p class="text-sm text-gray-500">Orden: @c.Orden</p>
+                                        </div>
+                                    </div>
+                                    @if (c.Activa)
+                                    {
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5"></span>
+                                            Activo
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            <span class="w-1.5 h-1.5 bg-red-400 rounded-full mr-1.5"></span>
+                                            Inactivo
+                                        </span>
+                                    }
+                                </div>
+                                
+                                <div class="space-y-3 mb-6">
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-gray-400 text-sm">description</span>
+                                        <span class="text-sm text-gray-600">@(string.IsNullOrEmpty(c.Descripcion) ? "Sin descripción" : c.Descripcion)</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-gray-400 text-sm">inventory</span>
+                                        <span class="text-sm text-gray-600">@c.CantidadProductos productos</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-gray-400 text-sm">calendar_today</span>
+                                        <span class="text-sm text-gray-600">@c.FechaCreacion.ToString("dd/MM/yyyy")</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center justify-center">
+                                    <div class="flex space-x-1">
+                                        <button class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" @onclick="() => EditarCategoria(c.Id)" title="Editar">
+                                            <span class="material-symbols-outlined text-sm">edit</span>
+                                        </button>
+                                        <button class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" @onclick="() => EliminarCategoria(c.Id)" title="Eliminar">
+                                            <span class="material-symbols-outlined text-sm">delete</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
             }
         }
 
@@ -132,7 +235,7 @@
 @if (mostrandoModal)
 {
     <div aria-labelledby="modal-title" aria-modal="true" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" role="dialog">
-        <div class="relative flex flex-col bg-white rounded-xl shadow-2xl w-full max-w-4xl m-4 max-h-[90vh] overflow-hidden">
+        <div class="relative flex flex-col bg-white rounded-xl shadow-2xl w-full max-w-4xl m-4 max-h-[95vh] overflow-hidden">
             <!-- Header del Modal -->
             <div class="flex items-center justify-between p-6 border-b border-gray-200">
                 <div class="flex items-center gap-3">
@@ -153,12 +256,23 @@
                 <DataAnnotationsValidator />
                 
                 <!-- Body del Modal -->
-                <div class="flex-1 overflow-y-auto p-6">
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="flex-1 overflow-y-auto p-6" style="max-height: calc(95vh - 200px);">
+                    @if (!string.IsNullOrEmpty(errorValidacion))
+                    {
+                        <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-red-500">error</span>
+                                <span class="text-red-700 font-medium">Error de validación:</span>
+                            </div>
+                            <p class="text-red-600 text-sm mt-1">@errorValidacion</p>
+                        </div>
+                    }
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <!-- Columna Izquierda - Información Básica -->
-                        <div class="space-y-6">
+                        <div class="space-y-4">
                             <div>
-                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Información Básica</h3>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-3">Información Básica</h3>
                                 
                                 <!-- Nombre -->
                                 <div class="mb-4">
@@ -219,21 +333,21 @@
                         </div>
 
                         <!-- Columna Derecha - Configuración Visual -->
-                        <div class="space-y-6">
+                        <div class="space-y-4">
                             <div>
-                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Configuración Visual</h3>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-3">Configuración Visual</h3>
                                 
                                 <!-- Color -->
-                                <div class="mb-6">
+                                <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Color de la Categoría</label>
-                                    <div class="space-y-3">
+                                    <div class="space-y-2">
                                         <!-- Paleta de colores sugeridos -->
-                                        <div class="grid grid-cols-6 gap-2">
+                                        <div class="grid grid-cols-6 gap-1">
                                             @foreach (var color in new[] { "#1e71f6", "#22c55e", "#f97316", "#8b5cf6", "#ef4444", "#ec4899" })
                                             {
                                                 <button type="button" 
                                                         @onclick="() => categoriaForm.Color = color"
-                                                        class="w-8 h-8 rounded-full border-2 @(categoriaForm.Color == color ? "border-gray-900" : "border-gray-300") hover:scale-110 transition-transform"
+                                                        class="w-6 h-6 rounded-full border-2 @(categoriaForm.Color == color ? "border-gray-900" : "border-gray-300") hover:scale-110 transition-transform"
                                                         style="background-color: @color"></button>
                                             }
                                         </div>
@@ -241,46 +355,46 @@
                                         <div class="flex gap-2">
                                             <input type="text" 
                                                    @bind="categoriaForm.Color" 
-                                                   class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-color focus:border-primary-color transition-colors" 
+                                                   class="flex-1 px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-color focus:border-primary-color transition-colors text-sm" 
                                                    placeholder="#1e71f6" />
                                             <input type="color" 
-                                                   @bind="categoriaForm.Color" 
-                                                   class="w-12 h-10 border border-gray-300 rounded-lg cursor-pointer" />
+                                                   @bind="categoriaForm.Color"
+                                                   class="w-10 h-8 border border-gray-300 rounded-lg cursor-pointer" />
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Icono -->
-                                <div class="mb-6">
+                                <div class="mb-4">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Icono de la Categoría</label>
-                                    <div class="space-y-3">
+                                    <div class="space-y-2">
                                         <!-- Grid de iconos sugeridos -->
-                                        <div class="grid grid-cols-6 gap-2">
-                                            @foreach (var icono in new[] { "restaurant", "local_dining", "cake", "local_bar", "coffee", "ice_cream", "lunch_dining", "bakery_dining", "wine_bar", "fastfood", "ramen_dining", "set_meal" })
+                                        <div class="grid grid-cols-8 gap-1">
+                                            @foreach (var icono in new[] { "restaurant", "local_dining", "cake", "local_bar", "coffee", "icecream", "lunch_dining", "bakery_dining", "wine_bar", "fastfood", "ramen_dining", "set_meal" })
                                             {
                                                 <button type="button" 
                                                         @onclick="() => categoriaForm.Icono = icono"
-                                                        class="w-10 h-10 flex items-center justify-center border-2 @(categoriaForm.Icono == icono ? "border-primary-color bg-primary-color/10" : "border-gray-300") rounded-lg hover:border-primary-color/50 transition-colors">
-                                                    <span class="material-symbols-outlined text-lg" style="color: @categoriaForm.Color">@icono</span>
+                                                        class="w-8 h-8 flex items-center justify-center border-2 @(categoriaForm.Icono == icono ? "border-primary-color bg-primary-color/10" : "border-gray-300") rounded-lg hover:border-primary-color/50 transition-colors">
+                                                    <span class="material-symbols-outlined text-sm" style="color: @categoriaForm.Color">@icono</span>
                                                 </button>
                                             }
                                         </div>
                                         <!-- Input de icono personalizado -->
                                         <input type="text" 
-                                               @bind="categoriaForm.Icono" 
-                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-color focus:border-primary-color transition-colors" 
+                                               @bind="categoriaForm.Icono"
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-color focus:border-primary-color transition-colors text-sm" 
                                                placeholder="restaurant" />
                                     </div>
                                 </div>
 
                                 <!-- Vista Previa -->
-                                <div class="p-4 bg-gray-50 rounded-lg">
-                                    <h4 class="text-sm font-medium text-gray-700 mb-3">Vista Previa</h4>
-                                    <div class="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200">
-                                        <span class="material-symbols-outlined text-2xl" style="color: @categoriaForm.Color">@categoriaForm.Icono</span>
+                                <div class="p-3 bg-gray-50 rounded-lg">
+                                    <h4 class="text-sm font-medium text-gray-700 mb-2">Vista Previa</h4>
+                                    <div class="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200">
+                                        <span class="material-symbols-outlined text-lg" style="color: @categoriaForm.Color">@categoriaForm.Icono</span>
                                         <div>
-                                            <div class="font-medium text-gray-900">@(string.IsNullOrEmpty(categoriaForm.Nombre) ? "Nombre de la categoría" : categoriaForm.Nombre)</div>
-                                            <div class="text-sm text-gray-500">@(string.IsNullOrEmpty(categoriaForm.Descripcion) ? "Descripción de la categoría" : categoriaForm.Descripcion)</div>
+                                            <div class="font-medium text-gray-900 text-sm">@(string.IsNullOrEmpty(categoriaForm.Nombre) ? "Nombre de la categoría" : categoriaForm.Nombre)</div>
+                                            <div class="text-xs text-gray-500">@(string.IsNullOrEmpty(categoriaForm.Descripcion) ? "Descripción de la categoría" : categoriaForm.Descripcion)</div>
                                         </div>
                                     </div>
                                 </div>
@@ -298,7 +412,7 @@
                     </button>
                     <button type="submit" 
                             class="flex min-w-[120px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary-color text-white text-sm font-semibold leading-normal tracking-wide transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-color disabled:opacity-50 disabled:cursor-not-allowed" 
-                            disabled="@(guardando || !nombreDisponible)">
+                            disabled="@guardando">
                         @if (guardando)
                         {
                             <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -405,11 +519,15 @@
     // Validación de nombre
     private bool mostrandoValidacionNombre = false;
     private bool nombreDisponible = false;
+    private string? errorValidacion = null;
     private Timer? validacionTimer;
     
     // Modal de eliminación
     private bool mostrandoConfirmacionEliminar = false;
     private CategoriaProductoDto? categoriaAEliminar;
+    
+    // Vista
+    private bool vistaTabla = true;
 
     protected override async Task OnInitializedAsync()
     {
@@ -487,6 +605,12 @@
         await BuscarAsync();
     }
 
+    private void CambiarVista(bool esTabla)
+    {
+        vistaTabla = esTabla;
+        StateHasChanged();
+    }
+
     private void NuevaCategoria()
     {
         editando = false;
@@ -494,10 +618,11 @@
         { 
             Activa = true,
             Color = "#2196F3",
-            Icono = "🍽️",
+            Icono = "restaurant",
             Orden = categorias?.Count ?? 0
         };
-        nombreDisponible = false;
+        nombreDisponible = true; // Permitir crear sin validación previa
+        errorValidacion = null; // Limpiar errores previos
         mostrandoModal = true;
     }
 
@@ -533,6 +658,7 @@
                 Activa = categoria.Activa
             };
             nombreDisponible = true; // Al editar, el nombre ya existe
+            errorValidacion = null; // Limpiar errores previos
             mostrandoModal = true;
         }
         catch (Exception ex)
@@ -562,6 +688,7 @@
         categoriaForm = new();
         categoriaEdicion = new();
         nombreDisponible = false;
+        errorValidacion = null; // Limpiar errores al cerrar
         validacionTimer?.Dispose();
     }
 
@@ -574,6 +701,7 @@
     private async Task GuardarCategoria()
     {
         guardando = true;
+        errorValidacion = null; // Limpiar errores previos
         StateHasChanged();
 
         try
@@ -604,12 +732,19 @@
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", resultado?.Message ?? "Error al guardar la categoría");
+                // Mostrar error de validación en el modal
+                errorValidacion = resultado?.Message ?? "Error al guardar la categoría";
+                
+                // Si hay errores específicos, mostrarlos
+                if (resultado?.Errors != null && resultado.Errors.Any())
+                {
+                    errorValidacion = string.Join(", ", resultado.Errors);
+                }
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            errorValidacion = $"Error: {ex.Message}";
         }
         finally
         {
@@ -652,14 +787,14 @@
     }
 
     // Validación de nombre en tiempo real
-    private void OnNombreChanged()
+    private async void OnNombreChanged()
     {
         validacionTimer?.Dispose();
         
         if (string.IsNullOrEmpty(categoriaForm.Nombre))
         {
             nombreDisponible = false;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
             return;
         }
 
@@ -671,7 +806,7 @@
         if (string.IsNullOrEmpty(categoriaForm.Nombre)) return;
 
         mostrandoValidacionNombre = true;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
 
         try
         {
@@ -688,7 +823,7 @@
         finally
         {
             mostrandoValidacionNombre = false;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
 

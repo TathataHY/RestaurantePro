@@ -56,8 +56,12 @@ builder.Services.AddScoped<IReportesInventarioApiService, ReportesInventarioApiS
 builder.Services.AddScoped<IHistorialComandasApiService, HistorialComandasApiService>(); // Added for Historial de Comandas
 builder.Services.AddScoped<JwtAuthenticationStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<JwtAuthenticationStateProvider>());
+builder.Services.AddScoped<PermissionService>();
 
 var app = builder.Build();
+
+// Inicializar el servicio de logout
+LogoutService.Initialize(app.Services);
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

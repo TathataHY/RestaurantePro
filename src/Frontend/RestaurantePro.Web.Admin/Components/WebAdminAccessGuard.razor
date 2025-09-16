@@ -135,7 +135,8 @@ else
             
             if (!authState.User.Identity?.IsAuthenticated == true)
             {
-                IsAuthorizedForWebAdmin = false;
+                // Si no está autenticado, redirigir al login
+                Navigation.NavigateTo("/login", true);
                 return;
             }
 
@@ -151,9 +152,6 @@ else
             // Determinar el rol principal del usuario
             UserRole = allUserRoles.FirstOrDefault() ?? "Usuario";
 
-            // Debug: Log los roles encontrados
-            Console.WriteLine($"🔍 WebAdminAccessGuard - Roles del usuario: {string.Join(", ", allUserRoles)}");
-            Console.WriteLine($"🔍 WebAdminAccessGuard - Rol principal: {UserRole}");
 
             // Verificar si el usuario tiene un rol operativo (no permitido)
             var hasOperationalRole = allUserRoles.Any(role => OperationalRoles.Contains(role));
@@ -161,18 +159,14 @@ else
             // Verificar si el usuario tiene un rol administrativo (permitido)
             var hasAdminRole = allUserRoles.Any(role => AdminRoles.Contains(role));
 
-            Console.WriteLine($"🔍 WebAdminAccessGuard - Tiene rol operativo: {hasOperationalRole}");
-            Console.WriteLine($"🔍 WebAdminAccessGuard - Tiene rol admin: {hasAdminRole}");
 
             // Lógica corregida: Permitir acceso si tiene rol administrativo
             // Solo bloquear si NO tiene rol administrativo Y tiene rol operativo
             IsAuthorizedForWebAdmin = hasAdminRole || !hasOperationalRole;
 
-            Console.WriteLine($"🔍 WebAdminAccessGuard - Acceso autorizado: {IsAuthorizedForWebAdmin}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Error en CheckWebAdminAccess: {ex.Message}");
             IsAuthorizedForWebAdmin = false;
         }
         finally

@@ -56,13 +56,9 @@ public class AuthTokenHandler : DelegatingHandler
             !request.RequestUri!.AbsolutePath.Contains("/auth/") &&
             _authService != null)
         {
-            Console.WriteLine("🔑 Token expirado, intentando renovar...");
-            
             var refreshResult = await _authService.RefreshTokenAsync(_tokenStore.RefreshToken);
             if (refreshResult != null)
             {
-                Console.WriteLine("✅ Token renovado exitosamente");
-                
                 // Actualizar el token en el store
                 await _tokenStore.SetAuthAsync(
                     refreshResult.Token,
@@ -86,7 +82,6 @@ public class AuthTokenHandler : DelegatingHandler
             }
             else
             {
-                Console.WriteLine("❌ No se pudo renovar el token, limpiando autenticación");
                 await _tokenStore.ClearAsync();
             }
         }
@@ -126,8 +121,6 @@ public class TokenStore
 
         try
         {
-            Console.WriteLine("TokenStore: Iniciando carga de autenticación...");
-            
             // Si no hay jsRuntime (modo prueba), no hacer nada
             if (_jsRuntime == null)
             {
@@ -139,7 +132,6 @@ public class TokenStore
             await Task.Delay(100);
             
             var authData = await _jsRuntime.InvokeAsync<AuthData?>("authPersistence.loadAuth");
-            Console.WriteLine($"TokenStore: authData = {authData != null}");
             
             if (authData != null)
             {
@@ -153,22 +145,10 @@ public class TokenStore
                 UserId = authData.UserId ?? string.Empty;
                 DomainUserId = authData.DomainUserId;
                 Roles = authData.Roles?.ToList() ?? new List<string>();
-                
-                Console.WriteLine($"TokenStore: Token cargado - Token: {!string.IsNullOrWhiteSpace(Token)}");
-                Console.WriteLine($"TokenStore: UserId cargado: '{UserId}'");
-                Console.WriteLine($"TokenStore: Expiration: {Expiration:yyyy-MM-dd HH:mm:ss} UTC");
-                Console.WriteLine($"TokenStore: Now: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
-                Console.WriteLine($"TokenStore: IsAuthenticated: {IsAuthenticated}");
-            }
-            else
-            {
-                Console.WriteLine("TokenStore: No se encontraron datos de autenticación");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error loading auth from localStorage: {ex.Message}");
-            Console.WriteLine($"Stack trace: {ex.StackTrace}");
             // Si hay error al acceder a localStorage, continuar con valores por defecto
         }
 

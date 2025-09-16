@@ -19,7 +19,7 @@
                 </button>
             </div>
 
-            <EditForm Model="@Model" OnValidSubmit="GuardarAsync">
+            <EditForm Model="@_currentModel" OnValidSubmit="GuardarAsync">
                 <DataAnnotationsValidator />
                 
                 <!-- Body del Modal -->
@@ -45,9 +45,9 @@
                                 <InputText class="w-full pl-10 pr-4 py-2.5 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" 
                                            id="table-number" 
                                            placeholder="Ej: 101" 
-                                           @bind-Value="Model.Numero" />
+                                           @bind-Value="_currentModel.Numero" />
                             </div>
-                            <ValidationMessage For="@(() => Model.Numero)" class="text-red-500 text-sm mt-1" />
+                            <ValidationMessage For="@(() => _currentModel.Numero)" class="text-red-500 text-sm mt-1" />
                         </div>
 
                         <div>
@@ -57,9 +57,9 @@
                                 <InputNumber class="w-full pl-10 pr-4 py-2.5 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" 
                                             id="capacity" 
                                             placeholder="Ej: 4" 
-                                            @bind-Value="Model.Capacidad" />
+                                            @bind-Value="_currentModel.Capacidad" />
                             </div>
-                            <ValidationMessage For="@(() => Model.Capacidad)" class="text-red-500 text-sm mt-1" />
+                            <ValidationMessage For="@(() => _currentModel.Capacidad)" class="text-red-500 text-sm mt-1" />
                         </div>
 
                         <div>
@@ -68,17 +68,18 @@
                                 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">room_service</span>
                                 <InputSelect class="w-full appearance-none pl-10 pr-10 py-2.5 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" 
                                             id="location" 
-                                            @bind-Value="Model.Ubicacion">
+                                            @bind-Value="_currentModel.Ubicacion">
                                     <option value="">Selecciona una zona</option>
-                                    <option value="Salón Principal">Salón Principal</option>
-                                    <option value="Terraza">Terraza</option>
-                                    <option value="Barra">Barra</option>
-                                    <option value="Privado">Privado</option>
-                                    <option value="VIP">VIP</option>
+                                    <option value="Interior">🏠 Interior</option>
+                                    <option value="Terraza">🌿 Terraza</option>
+                                    <option value="VIP">⭐ VIP</option>
+                                    <option value="Ventana">🪟 Ventana</option>
+                                    <option value="Privada">🔒 Privada</option>
+                                    <option value="Barra">🍸 Barra</option>
                                 </InputSelect>
                                 <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
                             </div>
-                            <ValidationMessage For="@(() => Model.Ubicacion)" class="text-red-500 text-sm mt-1" />
+                            <ValidationMessage For="@(() => _currentModel.Ubicacion)" class="text-red-500 text-sm mt-1" />
                         </div>
 
 
@@ -88,8 +89,8 @@
                                           id="description" 
                                           placeholder="Ej: Mesa cerca de la ventana con buena iluminación." 
                                           rows="3" 
-                                          @bind-Value="Model.Descripcion" />
-                            <ValidationMessage For="@(() => Model.Descripcion)" class="text-red-500 text-sm mt-1" />
+                                          @bind-Value="_currentModel.Descripcion" />
+                            <ValidationMessage For="@(() => _currentModel.Descripcion)" class="text-red-500 text-sm mt-1" />
                         </div>
                     </div>
 
@@ -103,7 +104,7 @@
                                 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">toggle_on</span>
                                 <InputSelect class="w-full appearance-none pl-10 pr-10 py-2.5 rounded-lg bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-shadow" 
                                             id="initial-status" 
-                                            @bind-Value="Model.Estado">
+                                            @bind-Value="_currentModel.Estado">
                                     @if (!Editando)
                                     {
                                         <!-- Solo para creación: solo estados administrativos -->
@@ -120,7 +121,7 @@
                                 </InputSelect>
                                 <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">expand_more</span>
                             </div>
-                            <ValidationMessage For="@(() => Model.Estado)" class="text-red-500 text-sm mt-1" />
+                            <ValidationMessage For="@(() => _currentModel.Estado)" class="text-red-500 text-sm mt-1" />
                             @if (!Editando)
                             {
                                 <p class="text-xs text-gray-500 mt-1">💡 Las mesas se crean disponibles por defecto. Los estados operativos (Ocupada, Reservada) se gestionan desde la aplicación móvil.</p>
@@ -132,22 +133,22 @@
                             <div class="grid grid-cols-2 gap-2">
                                 <label class="flex items-center gap-2 p-3 rounded-lg hover:bg-gray-100 cursor-pointer">
                                     <InputCheckbox class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                                                   @bind-Value="Model.TieneVentana" />
+                                                   @bind-Value="_currentModel.TieneVentana" />
                                     <span class="text-sm text-gray-600">Ventana</span>
                                 </label>
                                 <label class="flex items-center gap-2 p-3 rounded-lg hover:bg-gray-100 cursor-pointer">
                                     <InputCheckbox class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                                                   @bind-Value="Model.TieneSofa" />
+                                                   @bind-Value="_currentModel.TieneSofa" />
                                     <span class="text-sm text-gray-600">Sofa</span>
                                 </label>
                                 <label class="flex items-center gap-2 p-3 rounded-lg hover:bg-gray-100 cursor-pointer">
                                     <InputCheckbox class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                                                   @bind-Value="Model.EsAccesible" />
+                                                   @bind-Value="_currentModel.EsAccesible" />
                                     <span class="text-sm text-gray-600">Accesible</span>
                                 </label>
                                 <label class="flex items-center gap-2 p-3 rounded-lg hover:bg-gray-100 cursor-pointer">
                                     <InputCheckbox class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-                                                   @bind-Value="Model.TieneEnchufe" />
+                                                   @bind-Value="_currentModel.TieneEnchufe" />
                                     <span class="text-sm text-gray-600">Enchufe</span>
                                 </label>
                             </div>
@@ -159,8 +160,8 @@
                                           id="internal-notes" 
                                           placeholder="Anotaciones solo para el personal." 
                                           rows="3" 
-                                          @bind-Value="Model.Notas" />
-                            <ValidationMessage For="@(() => Model.Notas)" class="text-red-500 text-sm mt-1" />
+                                          @bind-Value="_currentModel.Notas" />
+                            <ValidationMessage For="@(() => _currentModel.Notas)" class="text-red-500 text-sm mt-1" />
                         </div>
 
                         <div>
@@ -218,23 +219,36 @@
     [Parameter] public EventCallback OnCerrar { get; set; }
     [Parameter] public EventCallback OnGuardar { get; set; }
 
-    private CrearMesaRequest Model => Editando ? ConvertToCrearRequest(EditarModel!) : CrearModel!;
+    // Modelo actual para el formulario
+    private CrearMesaRequest _currentModel = new();
 
-    private CrearMesaRequest ConvertToCrearRequest(ActualizarMesaRequest editarModel)
+    protected override void OnParametersSet()
     {
-        return new CrearMesaRequest
+        _currentModel = GetFormModel();
+    }
+
+    /// <summary>
+    /// Obtiene el modelo correcto para el formulario, dependiendo si estamos editando o creando
+    /// </summary>
+    private CrearMesaRequest GetFormModel()
+    {
+        if (Editando && EditarModel != null)
         {
-            Numero = editarModel.Numero,
-            Capacidad = editarModel.Capacidad,
-            Ubicacion = editarModel.Ubicacion,
-            Estado = editarModel.Estado,
-            Descripcion = editarModel.Descripcion,
-            Notas = editarModel.Notas,
-            TieneVentana = editarModel.TieneVentana,
-            TieneSofa = editarModel.TieneSofa,
-            EsAccesible = editarModel.EsAccesible,
-            TieneEnchufe = editarModel.TieneEnchufe
-        };
+            return new CrearMesaRequest
+            {
+                Numero = EditarModel.Numero,
+                Capacidad = EditarModel.Capacidad,
+                Ubicacion = EditarModel.Ubicacion,
+                Estado = EditarModel.Estado,
+                Descripcion = EditarModel.Descripcion,
+                Notas = EditarModel.Notas,
+                TieneVentana = EditarModel.TieneVentana,
+                TieneSofa = EditarModel.TieneSofa,
+                EsAccesible = EditarModel.EsAccesible,
+                TieneEnchufe = EditarModel.TieneEnchufe
+            };
+        }
+        return CrearModel!;
     }
 
     private async Task CerrarModal()
@@ -244,19 +258,19 @@
 
     private async Task GuardarAsync()
     {
+        // Si estamos editando, sincronizar los cambios de vuelta al modelo de edición
         if (Editando && EditarModel != null)
         {
-            // Actualizar el modelo de edición con los valores del formulario
-            EditarModel.Numero = Model.Numero;
-            EditarModel.Capacidad = Model.Capacidad;
-            EditarModel.Ubicacion = Model.Ubicacion;
-            EditarModel.Estado = Model.Estado;
-            EditarModel.Descripcion = Model.Descripcion;
-            EditarModel.Notas = Model.Notas;
-            EditarModel.TieneVentana = Model.TieneVentana;
-            EditarModel.TieneSofa = Model.TieneSofa;
-            EditarModel.EsAccesible = Model.EsAccesible;
-            EditarModel.TieneEnchufe = Model.TieneEnchufe;
+            EditarModel.Numero = _currentModel.Numero;
+            EditarModel.Capacidad = _currentModel.Capacidad;
+            EditarModel.Ubicacion = _currentModel.Ubicacion;
+            EditarModel.Estado = _currentModel.Estado;
+            EditarModel.Descripcion = _currentModel.Descripcion;
+            EditarModel.Notas = _currentModel.Notas;
+            EditarModel.TieneVentana = _currentModel.TieneVentana;
+            EditarModel.TieneSofa = _currentModel.TieneSofa;
+            EditarModel.EsAccesible = _currentModel.EsAccesible;
+            EditarModel.TieneEnchufe = _currentModel.TieneEnchufe;
         }
         
         await OnGuardar.InvokeAsync();

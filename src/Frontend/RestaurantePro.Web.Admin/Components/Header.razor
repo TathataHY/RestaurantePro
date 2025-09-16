@@ -1,7 +1,9 @@
 @using RestaurantePro.Web.Admin.Auth
+@using RestaurantePro.Web.Admin.Services
 @inject IJSRuntime JSRuntime
 @inject JwtAuthenticationStateProvider AuthState
 @inject NavigationManager Nav
+@inject IServiceProvider ServiceProvider
 
 <header class="modern-header">
     <div class="header-container">
@@ -138,6 +140,13 @@
         }
     }
 
+    // Método estático que puede ser llamado desde JavaScript
+    [JSInvokable]
+    public static async Task LogoutFromHeader()
+    {
+        await LogoutService.LogoutAsync();
+    }
+
     // Cerrar menú al hacer clic fuera y cargar estado del sidebar
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -197,11 +206,47 @@
                             Configuración
                         </a>
                         <div style='height: 1px; background: #e5e7eb; margin: 0.5rem 0;'></div>
-                        <button class='user-menu-item logout-item' style='display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; color: #dc2626; text-decoration: none; font-size: 0.875rem; background: none; border: none; width: 100%; text-align: left; cursor: pointer;'>
+                        <button id='logout-button' class='user-menu-item logout-item' style='display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; color: #dc2626; text-decoration: none; font-size: 0.875rem; background: none; border: none; width: 100%; text-align: left; cursor: pointer;'>
                             <span class='material-symbols-outlined'>logout</span>
                             Cerrar Sesión
                         </button>
                     `;
+                    
+        // Agregar event listener para el botón de logout
+        const logoutButton = dropdown.querySelector('#logout-button');
+        if (logoutButton) {
+            logoutButton.addEventListener('click', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                try {
+                    // Limpiar localStorage inmediatamente
+                    if (window.authPersistence && window.authPersistence.clearAuth) {
+                        window.authPersistence.clearAuth();
+                        console.log('LocalStorage limpiado');
+                    }
+                    
+                    // Llamar al método Logout de Blazor usando DotNet
+                    await DotNet.invokeMethodAsync('RestaurantePro.Web.Admin', 'LogoutFromHeader');
+                    
+                    // Esperar un momento para que se complete el logout
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    
+                    // Redirigir a la página de login usando JavaScript
+                    window.location.href = '/login';
+                } catch (error) {
+                    console.error('Error durante el logout:', error);
+                    // En caso de error, limpiar localStorage y redirigir de todas formas
+                    if (window.authPersistence && window.authPersistence.clearAuth) {
+                        window.authPersistence.clearAuth();
+                    }
+                    window.location.href = '/login';
+                }
+                
+                // Cerrar el menú
+                window.removeUserMenuPortal();
+            });
+        }
                     
                     // Agregar hover effects
                     dropdown.querySelectorAll('.user-menu-item').forEach(item => {

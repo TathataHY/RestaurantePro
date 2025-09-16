@@ -19,23 +19,15 @@
                 
                 // Verificar si hay autenticación en localStorage desde JavaScript
                 var hasAuth = await JSRuntime.InvokeAsync<bool>("authPersistence.isAuthenticated");
-                Console.WriteLine($"AuthInitializer: hasAuth = {hasAuth}");
                 
                 if (hasAuth)
                 {
-                    Console.WriteLine("AuthInitializer: Inicializando autenticación...");
                     await AuthStateProvider.InitializeAsync();
-                    Console.WriteLine("AuthInitializer: Autenticación inicializada");
-                }
-                else
-                {
-                    Console.WriteLine("AuthInitializer: No hay autenticación válida");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error initializing auth: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                // Error silencioso - no mostrar logs de debug
             }
             _isInitialized = true;
         }

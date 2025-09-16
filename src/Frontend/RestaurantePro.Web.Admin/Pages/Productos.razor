@@ -1,6 +1,7 @@
 @attribute [Authorize]
 @page "/productos"
 @inject IProductosApiService Api
+@inject RestaurantePro.Web.Admin.Services.PermissionService PermissionService
 @using RestaurantePro.Web.Admin.Models
 @using RestaurantePro.Web.Admin.Services
 
@@ -55,10 +56,13 @@
             <span class="material-symbols-outlined">@(mostrandoDashboard ? "dashboard" : "analytics")</span>
             <span>@(mostrandoDashboard ? "Ocultar Dashboard" : "Ver Dashboard")</span>
         </button>
-    <button @onclick="Nuevo" class="flex items-center gap-2 bg-primary-color text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-color/90 transition-colors">
-        <span class="material-symbols-outlined">add</span>
-        <span>Crear Producto</span>
-    </button>
+    @if (canCreateProducts)
+    {
+        <button @onclick="Nuevo" class="flex items-center gap-2 bg-primary-color text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-primary-color/90 transition-colors">
+            <span class="material-symbols-outlined">add</span>
+            <span>Crear Producto</span>
+        </button>
+    }
 </div>
 </div>
 
@@ -431,12 +435,18 @@ else
                             }
                         </td>
                         <td class="p-4 text-right">
-                            <button class="text-primary-color hover:text-primary-color/80 transition-colors" @onclick="(() => Editar(p.Id))" title="Editar">
-                                <span class="material-symbols-outlined">edit</span>
-                            </button>
+                            @if (canEditProducts)
+                            {
+                                <button class="text-primary-color hover:text-primary-color/80 transition-colors" @onclick="(() => Editar(p.Id))" title="Editar">
+                                    <span class="material-symbols-outlined">edit</span>
+                                </button>
+                            }
+                            @if (canDeleteProducts)
+                            {
                                 <button class="text-red-500 hover:text-red-400 ml-2 transition-colors" @onclick="(() => ConfirmarEliminar(p.Id, p.Nombre))" title="Eliminar">
-                                <span class="material-symbols-outlined">delete</span>
-                            </button>
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            }
                         </td>
                     </tr>
                 }
@@ -509,15 +519,21 @@ else
                         
                         <!-- Botones de Acción -->
                         <div class="flex gap-2">
-                            <button @onclick="(() => Editar(p.Id))" 
-                                    class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary-color text-white rounded-lg hover:bg-primary-color/90 transition-colors text-sm font-medium">
-                                <span class="material-symbols-outlined text-base">edit</span>
-                                <span>Editar</span>
-                            </button>
-                            <button @onclick="(() => ConfirmarEliminar(p.Id, p.Nombre))" 
-                                    class="flex items-center justify-center px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
-                                <span class="material-symbols-outlined text-base">delete</span>
-                            </button>
+                            @if (canEditProducts)
+                            {
+                                <button @onclick="(() => Editar(p.Id))" 
+                                        class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary-color text-white rounded-lg hover:bg-primary-color/90 transition-colors text-sm font-medium">
+                                    <span class="material-symbols-outlined text-base">edit</span>
+                                    <span>Editar</span>
+                                </button>
+                            }
+                            @if (canDeleteProducts)
+                            {
+                                <button @onclick="(() => ConfirmarEliminar(p.Id, p.Nombre))" 
+                                        class="flex items-center justify-center px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
+                                    <span class="material-symbols-outlined text-base">delete</span>
+                                </button>
+                            }
                         </div>
                     </div>
                 </div>
@@ -834,6 +850,11 @@ else
     private bool notificacionExito = true;
     private string mensajeNotificacion = string.Empty;
     
+    // Variables de permisos
+    private bool canCreateProducts = false;
+    private bool canEditProducts = false;
+    private bool canDeleteProducts = false;
+    
     // Variables para estados de carga
     private bool guardando = false;
     private bool eliminando = false;
@@ -857,8 +878,16 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        await CargarPermisosAsync();
         categorias = await Api.ObtenerCategoriasAsync() ?? new List<CategoriaProductoDto>();
         await BuscarAsync();
+    }
+
+    private async Task CargarPermisosAsync()
+    {
+        canCreateProducts = await PermissionService.CanCreateProductsAsync();
+        canEditProducts = await PermissionService.CanEditProductsAsync();
+        canDeleteProducts = await PermissionService.CanDeleteProductsAsync();
     }
 
     private async Task BuscarAsync()

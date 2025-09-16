@@ -1,6 +1,7 @@
 ﻿@page "/"
 @attribute [Authorize]
 @inject RestaurantePro.Web.Admin.Services.IDashboardApiService DashboardApi
+@inject RestaurantePro.Web.Admin.Services.PermissionService PermissionService
 @using RestaurantePro.Web.Admin.Models
 @using RestaurantePro.Web.Admin.Components
 @inject IJSRuntime JSRuntime
@@ -95,14 +96,17 @@
             <section>
                 <h2 class="text-gray-800 text-xl font-bold leading-tight tracking-tight mb-4">Métricas Principales</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                        <p class="text-gray-600 text-sm font-medium">@GetVentasLabel()</p>
-                        <p class="text-gray-900 text-3xl font-bold">@resumen.Metricas.VentasHoy.ToString("C0")</p>
-                        <div class="flex items-center gap-1 text-green-600 text-sm font-medium">
-                            <span class="material-symbols-outlined text-base">arrow_upward</span>
-                            <span>+@resumen.Metricas.CrecimientoVentas.ToString("F1")%</span>
+                    @if (canViewFinancialData)
+                    {
+                        <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                            <p class="text-gray-600 text-sm font-medium">@GetVentasLabel()</p>
+                            <p class="text-gray-900 text-3xl font-bold">@resumen.Metricas.VentasHoy.ToString("C0")</p>
+                            <div class="flex items-center gap-1 text-green-600 text-sm font-medium">
+                                <span class="material-symbols-outlined text-base">arrow_upward</span>
+                                <span>+@resumen.Metricas.CrecimientoVentas.ToString("F1")%</span>
+                            </div>
                         </div>
-                    </div>
+                    }
                     
                     <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
                         <p class="text-gray-600 text-sm font-medium">Ocupación de Mesas</p>
@@ -122,14 +126,17 @@
                         </div>
                     </div>
                     
-                    <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                        <p class="text-gray-600 text-sm font-medium">@GetVentasTotalLabel()</p>
-                        <p class="text-gray-900 text-3xl font-bold">@resumen.Metricas.VentasTotalDia.ToString("C0")</p>
-                        <div class="flex items-center gap-1 text-blue-600 text-sm font-medium">
-                            <span class="material-symbols-outlined text-base">trending_up</span>
-                            <span>Todos los turnos</span>
+                    @if (canViewFinancialData)
+                    {
+                        <div class="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                            <p class="text-gray-600 text-sm font-medium">@GetVentasTotalLabel()</p>
+                            <p class="text-gray-900 text-3xl font-bold">@resumen.Metricas.VentasTotalDia.ToString("C0")</p>
+                            <div class="flex items-center gap-1 text-blue-600 text-sm font-medium">
+                                <span class="material-symbols-outlined text-base">trending_up</span>
+                                <span>Todos los turnos</span>
+                            </div>
                         </div>
-                    </div>
+                    }
                 </div>
             </section>
 
@@ -137,21 +144,24 @@
             <section class="mt-8">
                 <h2 class="text-gray-800 text-xl font-bold leading-tight tracking-tight mb-4">Gráficos Interactivos</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
-                    <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                        <p class="text-gray-800 text-base font-medium mb-4">Ventas por Hora</p>
-                        <div class="h-64">
-                            <canvas id="graficoVentasHora"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                        <p class="text-gray-800 text-base font-medium mb-4">Ingresos por Categoría</p>
-                        <div class="h-64 flex items-center justify-center">
-                            <div class="relative w-48 h-48">
-                                <canvas id="graficoIngresosCategoria"></canvas>
+                    @if (canViewFinancialData)
+                    {
+                        <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                            <p class="text-gray-800 text-base font-medium mb-4">Ventas por Hora</p>
+                            <div class="h-64">
+                                <canvas id="graficoVentasHora"></canvas>
                             </div>
                         </div>
-                    </div>
+                        
+                        <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                            <p class="text-gray-800 text-base font-medium mb-4">Ingresos por Categoría</p>
+                            <div class="h-64 flex items-center justify-center">
+                                <div class="relative w-48 h-48">
+                                    <canvas id="graficoIngresosCategoria"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    }
 
                     <div class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm lg:col-span-2 xl:col-span-1">
                         <p class="text-gray-800 text-base font-medium mb-4">Productos Más Vendidos</p>
@@ -170,8 +180,10 @@
             </section>
 
             <!-- Métricas en Tiempo Real -->
-            <section class="mt-8">
-                <h2 class="text-gray-800 text-xl font-bold leading-tight tracking-tight mb-4">Métricas en Tiempo Real</h2>
+            @if (canViewOperationalData)
+            {
+                <section class="mt-8">
+                    <h2 class="text-gray-800 text-xl font-bold leading-tight tracking-tight mb-4">Métricas en Tiempo Real</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
                         <div class="flex items-center gap-3">
@@ -221,7 +233,8 @@
                         </div>
                     </div>
                 </div>
-            </section>
+                </section>
+            }
 
             <!-- Vista Rápida de Operaciones -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
@@ -415,13 +428,26 @@
     private const string noche = "noche";
     private const string madrugada = "madrugada";
     private Timer? _timer;
+    
+    // Variables de permisos
+    private bool canViewFinancialData = false;
+    private bool canViewOperationalData = false;
+    private bool canViewDetailedReports = false;
 
     protected override async Task OnInitializedAsync()
     {
+        await CargarPermisosAsync();
         await CargarDatos();
         
         // Iniciar timer para actualización automática cada 30 segundos
         _timer = new Timer(async _ => await ActualizarMetricasTiempoReal(), null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+    }
+
+    private async Task CargarPermisosAsync()
+    {
+        canViewFinancialData = await PermissionService.CanViewFinancialDataAsync();
+        canViewOperationalData = await PermissionService.CanViewOperationalDataAsync();
+        canViewDetailedReports = await PermissionService.CanViewDetailedReportsAsync();
     }
 
     private async Task CargarDatos()
