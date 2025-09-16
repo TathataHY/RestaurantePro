@@ -94,8 +94,11 @@ public class CategoriasController : ControllerBase
             
             foreach (var categoria in categorias)
             {
-                var productosCategoria = await _productoRepository.ObtenerPorCategoriaAsync(
-                    categoria.Id, soloActivas);
+                // Obtener TODOS los productos de la categoría (activos + inactivos) para el conteo total
+                var todosProductos = await _productoRepository.ObtenerPorCategoriaAsync(categoria.Id, false);
+                
+                // Obtener solo productos activos para el filtro de visibilidad
+                var productosActivos = await _productoRepository.ObtenerPorCategoriaAsync(categoria.Id, true);
                 
                 var categoriaDto = new CategoriaProductoDto
                 {
@@ -106,8 +109,8 @@ public class CategoriasController : ControllerBase
                     Icono = "🍽️", // Icono por defecto
                     Orden = categoria.Orden,
                     Activa = categoria.EstaActivo,
-                    CantidadProductos = productosCategoria.Count,
-                    ProductosDisponibles = productosCategoria.Count(p => p.EstaActivo),
+                    CantidadProductos = todosProductos.Count, // Siempre contar TODOS los productos
+                    ProductosDisponibles = productosActivos.Count, // Solo productos activos
                     FechaCreacion = categoria.FechaCreacion
                 };
                 
@@ -156,9 +159,11 @@ public class CategoriasController : ControllerBase
                 return NotFound(errorResponse);
             }
 
-            // Obtener productos de la categoría
-            var productosCategoria = await _productoRepository.ObtenerPorCategoriaAsync(
-                categoria.Id, true);
+            // Obtener TODOS los productos de la categoría (activos + inactivos) para el conteo total
+            var todosProductos = await _productoRepository.ObtenerPorCategoriaAsync(categoria.Id, false);
+            
+            // Obtener solo productos activos para el filtro de visibilidad
+            var productosActivos = await _productoRepository.ObtenerPorCategoriaAsync(categoria.Id, true);
 
             var categoriaDto = new CategoriaProductoDto
             {
@@ -169,8 +174,8 @@ public class CategoriasController : ControllerBase
                 Icono = categoria.Icono,
                 Orden = categoria.Orden,
                 Activa = categoria.EstaActivo,
-                CantidadProductos = productosCategoria.Count,
-                ProductosDisponibles = productosCategoria.Count(p => p.EstaActivo),
+                CantidadProductos = todosProductos.Count, // Siempre contar TODOS los productos
+                ProductosDisponibles = productosActivos.Count, // Solo productos activos
                 FechaCreacion = categoria.FechaCreacion
             };
 
@@ -211,7 +216,11 @@ public class CategoriasController : ControllerBase
                 var categoriasVaciasDto = new List<CategoriaProductoDto>();
                 foreach (var categoria in todasCategorias)
                 {
-                    var productosCategoria = await _productoRepository.ObtenerPorCategoriaAsync(categoria.Id, true);
+                    // Obtener TODOS los productos de la categoría (activos + inactivos) para el conteo total
+                    var todosProductos = await _productoRepository.ObtenerPorCategoriaAsync(categoria.Id, false);
+                    
+                    // Obtener solo productos activos para el filtro de visibilidad
+                    var productosActivos = await _productoRepository.ObtenerPorCategoriaAsync(categoria.Id, true);
                     
                     var categoriaDto = new CategoriaProductoDto
                     {
@@ -222,8 +231,8 @@ public class CategoriasController : ControllerBase
                         Icono = categoria.Icono,
                         Orden = categoria.Orden,
                         Activa = categoria.EstaActivo,
-                        CantidadProductos = productosCategoria.Count,
-                        ProductosDisponibles = productosCategoria.Count(p => p.EstaActivo),
+                        CantidadProductos = todosProductos.Count, // Siempre contar TODOS los productos
+                        ProductosDisponibles = productosActivos.Count, // Solo productos activos
                         FechaCreacion = categoria.FechaCreacion
                     };
                     
@@ -246,8 +255,11 @@ public class CategoriasController : ControllerBase
             
             foreach (var categoria in categoriasFiltradas)
             {
-                var productosCategoria = await _productoRepository.ObtenerPorCategoriaAsync(
-                    categoria.Id, true);
+                // Obtener TODOS los productos de la categoría (activos + inactivos) para el conteo total
+                var todosProductos = await _productoRepository.ObtenerPorCategoriaAsync(categoria.Id, false);
+                
+                // Obtener solo productos activos para el filtro de visibilidad
+                var productosActivos = await _productoRepository.ObtenerPorCategoriaAsync(categoria.Id, true);
                 
                 var categoriaDto = new CategoriaProductoDto
                 {
@@ -258,8 +270,8 @@ public class CategoriasController : ControllerBase
                     Icono = "🍽️", // Icono por defecto
                     Orden = categoria.Orden,
                     Activa = categoria.EstaActivo,
-                    CantidadProductos = productosCategoria.Count,
-                    ProductosDisponibles = productosCategoria.Count(p => p.EstaActivo),
+                    CantidadProductos = todosProductos.Count, // Siempre contar TODOS los productos
+                    ProductosDisponibles = productosActivos.Count, // Solo productos activos
                     FechaCreacion = categoria.FechaCreacion
                 };
                 

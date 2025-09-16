@@ -169,60 +169,68 @@
                 else
                 {
                     <!-- Vista de Grid -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                         @foreach (var c in categorias.OrderBy(x => x.Orden).ThenBy(x => x.Nombre))
                         {
-                            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-                                <div class="flex items-center justify-between mb-4">
-                                    <div class="flex items-center gap-3">
-                                        <div class="flex items-center justify-center w-12 h-12 rounded-lg" style="background-color: @c.Color">
-                                            <span class="material-symbols-outlined text-white text-xl">@c.Icono</span>
-                                        </div>
-                                        <div>
-                                            <h3 class="text-lg font-semibold text-gray-900">@c.Nombre</h3>
-                                            <p class="text-sm text-gray-500">Orden: @c.Orden</p>
-                                        </div>
+                            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                <!-- Header con icono y estado -->
+                                <div class="flex flex-col items-center text-center mb-6">
+                                    <div class="flex items-center justify-center w-16 h-16 rounded-2xl mb-4 shadow-sm" style="background-color: @c.Color">
+                                        <span class="material-symbols-outlined text-white text-2xl">@c.Icono</span>
                                     </div>
+                                    <h3 class="text-xl font-bold text-gray-900 mb-2">@c.Nombre</h3>
+                                    <p class="text-sm text-gray-500 mb-3">Orden: @c.Orden</p>
                                     @if (c.Activa)
                                     {
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-1.5"></span>
+                                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <span class="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
                                             Activo
                                         </span>
                                     }
                                     else
                                     {
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                            <span class="w-1.5 h-1.5 bg-red-400 rounded-full mr-1.5"></span>
+                                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            <span class="w-2 h-2 bg-red-400 rounded-full mr-2"></span>
                                             Inactivo
                                         </span>
                                     }
                                 </div>
                                 
-                                <div class="space-y-3 mb-6">
-                                    <div class="flex items-center gap-2">
-                                        <span class="material-symbols-outlined text-gray-400 text-sm">description</span>
-                                        <span class="text-sm text-gray-600">@(string.IsNullOrEmpty(c.Descripcion) ? "Sin descripción" : c.Descripcion)</span>
+                                <!-- Información de la categoría -->
+                                <div class="space-y-4 mb-8">
+                                    <div class="flex items-start gap-3">
+                                        <span class="material-symbols-outlined text-gray-400 text-lg mt-0.5">description</span>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-700 mb-1">Descripción</p>
+                                            <p class="text-sm text-gray-600 leading-relaxed">@(string.IsNullOrEmpty(c.Descripcion) ? "Sin descripción" : c.Descripcion)</p>
+                                        </div>
                                     </div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="material-symbols-outlined text-gray-400 text-sm">inventory</span>
-                                        <span class="text-sm text-gray-600">@c.CantidadProductos productos</span>
+                                    <div class="flex items-center gap-3">
+                                        <span class="material-symbols-outlined text-gray-400 text-lg">inventory</span>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-700">Productos</p>
+                                            <p class="text-lg font-bold text-blue-600">@c.CantidadProductos</p>
+                                        </div>
                                     </div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="material-symbols-outlined text-gray-400 text-sm">calendar_today</span>
-                                        <span class="text-sm text-gray-600">@c.FechaCreacion.ToString("dd/MM/yyyy")</span>
+                                    <div class="flex items-center gap-3">
+                                        <span class="material-symbols-outlined text-gray-400 text-lg">calendar_today</span>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-700">Creado</p>
+                                            <p class="text-sm text-gray-600">@c.FechaCreacion.ToString("dd/MM/yyyy")</p>
+                                        </div>
                                     </div>
                                 </div>
                                 
-                                <div class="flex items-center justify-center">
-                                    <div class="flex space-x-1">
-                                        <button class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" @onclick="() => EditarCategoria(c.Id)" title="Editar">
-                                            <span class="material-symbols-outlined text-sm">edit</span>
-                                        </button>
-                                        <button class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" @onclick="() => EliminarCategoria(c.Id)" title="Eliminar">
-                                            <span class="material-symbols-outlined text-sm">delete</span>
-                                        </button>
-                                    </div>
+                                <!-- Botones de acción -->
+                                <div class="flex items-center justify-center gap-2">
+                                    <button class="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all duration-200 font-medium" @onclick="() => EditarCategoria(c.Id)" title="Editar">
+                                        <span class="material-symbols-outlined text-lg">edit</span>
+                                        <span class="text-sm">Editar</span>
+                                    </button>
+                                    <button class="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 font-medium" @onclick="() => EliminarCategoria(c.Id)" title="Eliminar">
+                                        <span class="material-symbols-outlined text-lg">delete</span>
+                                        <span class="text-sm">Eliminar</span>
+                                    </button>
                                 </div>
                             </div>
                         }
