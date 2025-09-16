@@ -526,6 +526,11 @@
     private bool mostrandoConfirmacionEliminar = false;
     private CategoriaProductoDto? categoriaAEliminar;
     
+    // Variables para notificaciones toast
+    private bool mostrandoNotificacion = false;
+    private bool notificacionExito = true;
+    private string mensajeNotificacion = string.Empty;
+    
     // Vista
     private bool vistaTabla = true;
 
@@ -726,7 +731,7 @@
 
             if (resultado?.Success == true)
             {
-                await JSRuntime.InvokeVoidAsync("alert", editando ? "Categoría actualizada correctamente" : "Categoría creada correctamente");
+                MostrarNotificacion(editando ? "Categoría actualizada correctamente" : "Categoría creada correctamente", true);
                 CerrarModal();
                 await CargarAsync();
             }
@@ -745,6 +750,7 @@
         catch (Exception ex)
         {
             errorValidacion = $"Error: {ex.Message}";
+            MostrarNotificacion($"Error: {ex.Message}", false);
         }
         finally
         {
@@ -766,18 +772,18 @@
             
             if (resultado)
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Categoría eliminada correctamente");
+                MostrarNotificacion("Categoría eliminada correctamente", true);
                 CancelarEliminacion();
                 await CargarAsync();
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "Error al eliminar la categoría");
+                MostrarNotificacion("Error al eliminar la categoría", false);
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"Error: {ex.Message}");
+            MostrarNotificacion($"Error: {ex.Message}", false);
         }
         finally
         {
@@ -827,8 +833,63 @@
         }
     }
 
+    private void MostrarNotificacion(string mensaje, bool esExito = true)
+    {
+        mensajeNotificacion = mensaje;
+        notificacionExito = esExito;
+        mostrandoNotificacion = true;
+        
+        // Auto-cerrar después de 5 segundos
+        Task.Delay(5000).ContinueWith(_ => {
+            InvokeAsync(() => {
+                mostrandoNotificacion = false;
+                StateHasChanged();
+            });
+        });
+        
+        StateHasChanged();
+    }
+
+    private void CerrarNotificacion()
+    {
+        mostrandoNotificacion = false;
+        StateHasChanged();
+    }
+
     public void Dispose()
     {
         validacionTimer?.Dispose();
     }
+}
+
+<!-- Toast de notificaciones -->
+@if (mostrandoNotificacion)
+{
+    <div class="fixed top-4 right-4 z-50">
+        <div class="bg-white rounded-lg shadow-lg border-l-4 @(notificacionExito ? "border-green-500" : "border-red-500") p-4 max-w-sm">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    @if (notificacionExito)
+                    {
+                        <span class="material-symbols-outlined text-green-500">check_circle</span>
+                    }
+                    else
+                    {
+                        <span class="material-symbols-outlined text-red-500">error</span>
+                    }
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-900">@mensajeNotificacion</p>
+                </div>
+                <div class="ml-auto pl-3">
+                    <div class="-mx-1.5 -my-1.5">
+                        <button type="button" class="inline-flex rounded-md p-1.5 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-50 focus:ring-indigo-600" @onclick="CerrarNotificacion">
+                            <span class="sr-only">Cerrar</span>
+                            <span class="material-symbols-outlined text-sm">close</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 }
