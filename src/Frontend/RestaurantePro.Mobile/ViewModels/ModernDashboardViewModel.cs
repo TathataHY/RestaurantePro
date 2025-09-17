@@ -25,7 +25,11 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
     public bool IsLoading
     {
         get => _isLoading;
-        set => SetProperty(ref _isLoading, value);
+        set 
+        { 
+            SetProperty(ref _isLoading, value);
+            OnPropertyChanged(nameof(IsNotLoading));
+        }
     }
 
     public bool IsNotLoading => !IsLoading;
@@ -63,7 +67,36 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
     public EstadoMesasDto TableStatus
     {
         get => _tableStatus;
-        set => SetProperty(ref _tableStatus, value);
+        set 
+        { 
+            SetProperty(ref _tableStatus, value);
+            OnPropertyChanged(nameof(MesasOcupadasDisplay));
+            OnPropertyChanged(nameof(PorcentajeOcupacionDisplay));
+        }
+    }
+
+    public string MesasOcupadasDisplay
+    {
+        get
+        {
+            if (TableStatus?.Estadisticas != null)
+            {
+                return $"{TableStatus.Estadisticas.MesasOcupadas}/{TableStatus.TotalMesas}";
+            }
+            return "0/0";
+        }
+    }
+
+    public string PorcentajeOcupacionDisplay
+    {
+        get
+        {
+            if (TableStatus?.Estadisticas != null)
+            {
+                return $"{TableStatus.Estadisticas.PorcentajeOcupacion:F0}% ocupación";
+            }
+            return "0% ocupación";
+        }
     }
 
     public ICommand CreateOrderCommand { get; }
@@ -85,7 +118,16 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
         LoadData();
     }
 
-    private async void LoadData()
+    /// <summary>
+    /// Método público para refrescar datos del dashboard
+    /// </summary>
+    public void RefreshData()
+    {
+        System.Diagnostics.Debug.WriteLine("🔄 [ModernDashboardViewModel] RefreshData solicitado");
+        LoadData();
+    }
+
+    public async void LoadData()
     {
         IsLoading = true;
 
@@ -110,7 +152,9 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
             TableStatus = await tableStatusTask;
             
             var recentOrders = await recentOrdersTask;
+            System.Diagnostics.Debug.WriteLine($"🔍 [ModernDashboardViewModel] Comandas recientes obtenidas: {recentOrders?.Count ?? 0}");
             RecentOrders = new ObservableCollection<RestaurantePro.Mobile.Core.Models.DTOs.OrderItem>(recentOrders);
+            System.Diagnostics.Debug.WriteLine($"🔍 [ModernDashboardViewModel] RecentOrders.Count: {RecentOrders.Count}");
         }
         catch (Exception ex)
         {
@@ -127,6 +171,36 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
         }
 
         IsLoading = false;
+    }
+
+    /// <summary>
+    /// Filtra las comandas por estado seleccionado en el tab
+    /// </summary>
+    public async Task FilterOrdersByStatusAsync(string status)
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"🔍 [ModernDashboardViewModel] Filtrando comandas por estado: {status}");
+            
+            if (status == "Todas")
+            {
+                // Mostrar todas las comandas recientes (sin filtro)
+                var allOrders = await _dashboardService.GetRecentOrdersAsync();
+                RecentOrders = new ObservableCollection<RestaurantePro.Mobile.Core.Models.DTOs.OrderItem>(allOrders);
+                System.Diagnostics.Debug.WriteLine($"🔍 [ModernDashboardViewModel] Mostrando todas las comandas: {RecentOrders.Count}");
+            }
+            else
+            {
+                // Filtrar por estado específico
+                var filteredOrders = await _dashboardService.GetOrdersByStatusAsync(status);
+                RecentOrders = new ObservableCollection<RestaurantePro.Mobile.Core.Models.DTOs.OrderItem>(filteredOrders);
+                System.Diagnostics.Debug.WriteLine($"🔍 [ModernDashboardViewModel] Comandas filtradas por '{status}': {RecentOrders.Count}");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ [ModernDashboardViewModel] Error filtrando comandas: {ex.Message}");
+        }
     }
 
     private async Task CreateOrder()

@@ -160,9 +160,24 @@ public class MesasService : IMesasService
     {
         if (cancellationToken.IsCancellationRequested)
             return ApiResponse<EstadoMesasDto>.ErrorResponse("Operación cancelada por el usuario");
+        
+        System.Diagnostics.Debug.WriteLine($"🔍 [MesasService] ObtenerEstadoOcupacionAsync - Iniciando");
+        
         var endpoint = $"{BasePath}/estado-ocupacion";
+        System.Diagnostics.Debug.WriteLine($"🔍 [MesasService] Endpoint: {endpoint}");
+        
         var token = await _authService.GetTokenAsync();
-        return await _apiService.GetAsync<EstadoMesasDto>(endpoint, token);
+        System.Diagnostics.Debug.WriteLine($"🔍 [MesasService] Token obtenido: {!string.IsNullOrEmpty(token)}");
+        
+        var response = await _apiService.GetAsync<EstadoMesasDto>(endpoint, token);
+        System.Diagnostics.Debug.WriteLine($"🔍 [MesasService] Response - Success: {response.Success}, Data: {response.Data != null}");
+        
+        if (!response.Success)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ [MesasService] Error: {response.Message}");
+        }
+        
+        return response;
     }
 
     /// <summary>

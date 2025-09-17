@@ -9,6 +9,7 @@
             <Setter Property="TextColor" Value="{StaticResource TextSecondary}" />
             <Setter Property="FontAttributes" Value="None" />
             <Setter Property="HeightRequest" Value="44" />
+            <Setter Property="MinimumWidthRequest" Value="80" />
             <Setter Property="Padding" Value="16,8" />
             <Setter Property="CornerRadius" Value="0" />
             <Setter Property="BorderWidth" Value="0" />

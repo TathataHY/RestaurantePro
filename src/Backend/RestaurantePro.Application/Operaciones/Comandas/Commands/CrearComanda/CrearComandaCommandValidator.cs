@@ -43,7 +43,6 @@ public class CrearComandaCommandValidator : AbstractValidator<CrearComandaComman
                 .MaximumLength(200).WithMessage("La dirección de entrega no puede exceder 200 caracteres");
 
             RuleFor(x => x.TelefonoEntrega)
-                .NotEmpty().WithMessage("El teléfono de contacto es obligatorio para comandas Delivery")
                 .MaximumLength(20).WithMessage("El teléfono de entrega no puede exceder 20 caracteres");
         });
 

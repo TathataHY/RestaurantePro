@@ -100,10 +100,13 @@ public partial class ModernDashboardPage : ContentPage
         // Filtrar comandas según el tab seleccionado
         var tabName = OrdersTabNavigation.Tabs[tabIndex];
         
-        // Simular filtrado
-        await Application.Current.MainPage.DisplayAlert("Filtro", $"Mostrando: {tabName}", "OK");
+        System.Diagnostics.Debug.WriteLine($"🔍 [ModernDashboardPage] Tab seleccionado: {tabName}");
         
-        // Aquí implementarías el filtrado real de comandas
+        // Implementar filtrado real de comandas
+        if (_viewModel != null)
+        {
+            await _viewModel.FilterOrdersByStatusAsync(tabName);
+        }
     }
 
     protected override void OnAppearing()
@@ -113,7 +116,8 @@ public partial class ModernDashboardPage : ContentPage
         // Refrescar datos cuando la página aparece
         if (_viewModel != null)
         {
-            // _viewModel.RefreshData();
+            System.Diagnostics.Debug.WriteLine("🔄 [ModernDashboardPage] OnAppearing - Refrescando datos");
+            _viewModel.RefreshData();
         }
     }
 

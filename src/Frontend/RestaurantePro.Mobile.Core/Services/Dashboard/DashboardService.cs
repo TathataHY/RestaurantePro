@@ -212,25 +212,37 @@ public class DashboardService : IDashboardService
         try
         {
             _logger.LogInformation("Obteniendo comandas recientes desde la API");
+            System.Diagnostics.Debug.WriteLine("🔍 [DashboardService] GetRecentOrdersAsync - Iniciando");
             
             // Obtener las últimas comandas (las más recientes)
             var token = await _authService.GetTokenAsync();
+            System.Diagnostics.Debug.WriteLine($"🔍 [DashboardService] Token obtenido: {!string.IsNullOrEmpty(token)}");
+            
             var response = await _apiService.GetAsync<PaginatedList<ComandaDto>>(
                 "api/operaciones/comandas?PageSize=10&OrdenarPor=fechaCreacion&DireccionOrdenamiento=desc", token);
             
+            System.Diagnostics.Debug.WriteLine($"🔍 [DashboardService] Response - Success: {response.Success}, Data: {response.Data != null}");
+            
             if (response.Success && response.Data != null)
             {
+                System.Diagnostics.Debug.WriteLine($"🔍 [DashboardService] Items recibidos: {response.Data.Items?.Count ?? 0}");
                 var recentOrders = response.Data.Items.Select(comanda => new OrderItem
                 {
                     Id = comanda.Id.GetHashCode(),
                     OrderNumber = comanda.Numero,
                     TableNumber = string.IsNullOrWhiteSpace(comanda.MesaNumero) ? (comanda.NumeroMesa > 0 ? $"Mesa {comanda.NumeroMesa}" : "") : comanda.MesaNumero,
-                    CustomerName = !string.IsNullOrWhiteSpace(comanda.ClienteNombre) ? comanda.ClienteNombre : (comanda.NombreCliente ?? "Cliente General"),
+                    CustomerName = GetFormattedOrderInfo(comanda),
                     Total = comanda.Total,
                     Status = !string.IsNullOrWhiteSpace(comanda.EstadoTexto) ? comanda.EstadoTexto : GetStatusDisplayName(comanda.Estado),
                     OrderTime = comanda.FechaCreacion,
                     Items = (comanda.Productos?.Select(item => item.Nombre ?? "Producto").ToList() ?? new List<string>())
                 }).ToList();
+                
+                // Logging detallado de cada comanda para debug
+                foreach (var order in recentOrders)
+                {
+                    System.Diagnostics.Debug.WriteLine($"🔍 [DashboardService] Comanda: {order.OrderNumber}, Estado: '{order.Status}', Cliente: {order.CustomerName}");
+                }
                 
                 _logger.LogInformation("Comandas recientes obtenidas: {Count}", recentOrders.Count);
                 return recentOrders;
@@ -250,15 +262,35 @@ public class DashboardService : IDashboardService
     {
         return status?.ToLower() switch
         {
-            "pendiente" => "Pendiente",
+            "nueva" => "Nueva",
+            "creada" => "Creada",
+            "pendiente" => "Pendiente", 
+            "enproceso" => "EnProceso",
             "en_progreso" => "En Progreso",
             "preparando" => "Preparando",
             "lista" => "Lista",
             "servida" => "Servida",
             "completada" => "Completada",
             "cancelada" => "Cancelada",
+            "finalizada" => "Finalizada",
             _ => status ?? "Desconocido"
         };
+    }
+
+    private string GetFormattedOrderInfo(RestaurantePro.Mobile.Core.Models.DTOs.ComandaDto comanda)
+    {
+        // Obtener el código de la comanda (número completo o abreviado)
+        var codigoComanda = !string.IsNullOrWhiteSpace(comanda.NumeroComanda) 
+            ? comanda.NumeroComanda 
+            : $"COM-{comanda.Numero}";
+
+        // Obtener el nombre del cliente
+        var nombreCliente = !string.IsNullOrWhiteSpace(comanda.ClienteNombre) 
+            ? comanda.ClienteNombre 
+            : (comanda.NombreCliente ?? "Cliente General");
+
+        // Formato: Código de comanda en la primera línea, cliente en la segunda
+        return $"{codigoComanda}\n{nombreCliente}";
     }
 
     private async Task<List<OrderItem>> GetSimulatedRecentOrdersAsync()
@@ -308,14 +340,51 @@ public class DashboardService : IDashboardService
         try
         {
             _logger.LogInformation("Obteniendo comandas por estado: {Status}", status);
+            System.Diagnostics.Debug.WriteLine($"🔍 [DashboardService] GetOrdersByStatusAsync - Estado: {status}");
+            
+            if (status == "Todas")
+            {
+                return await GetRecentOrdersAsync();
+            }
+            
+            // Mapear nombres de filtros a estados de la API
+            var apiStatus = status switch
+            {
+                "Pendientes" => "Nueva",
+                "En Progreso" => "EnProceso", 
+                "Listas" => "Lista",
+                _ => status
+            };
+            
+            System.Diagnostics.Debug.WriteLine($"🔍 [DashboardService] Estado mapeado: {status} -> {apiStatus}");
             
             var allOrders = await GetRecentOrdersAsync();
             
-            return allOrders.Where(o => o.Status.Equals(status, StringComparison.OrdinalIgnoreCase)).ToList();
+            // Logging detallado de todos los estados disponibles
+            System.Diagnostics.Debug.WriteLine($"🔍 [DashboardService] Estados disponibles:");
+            foreach (var order in allOrders)
+            {
+                System.Diagnostics.Debug.WriteLine($"   - {order.OrderNumber}: '{order.Status}'");
+            }
+            
+            var filteredOrders = allOrders.Where(o => 
+                o.Status.Equals(apiStatus, StringComparison.OrdinalIgnoreCase) ||
+                o.Status.Equals(status, StringComparison.OrdinalIgnoreCase)).ToList();
+                
+            System.Diagnostics.Debug.WriteLine($"🔍 [DashboardService] Comandas filtradas: {filteredOrders.Count} de {allOrders.Count}");
+            
+            // Logging de comandas filtradas
+            foreach (var order in filteredOrders)
+            {
+                System.Diagnostics.Debug.WriteLine($"   ✅ Filtrada: {order.OrderNumber} - '{order.Status}'");
+            }
+            
+            return filteredOrders;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al obtener comandas por estado: {Status}", status);
+            System.Diagnostics.Debug.WriteLine($"❌ [DashboardService] Error filtrando por estado: {ex.Message}");
             return new List<OrderItem>();
         }
     }
@@ -324,23 +393,30 @@ public class DashboardService : IDashboardService
     {
         try
         {
-            _logger.LogInformation("Obteniendo estado de mesas desde la API");
+            _logger.LogInformation("🔍 [DashboardService] Obteniendo estado de mesas desde la API");
+            System.Diagnostics.Debug.WriteLine("🔍 [DashboardService] GetTableStatusAsync - Iniciando");
+            
             // Usar el servicio de mesas que ya centraliza token y endpoints
             var response = await _mesasService.ObtenerEstadoOcupacionAsync();
+            System.Diagnostics.Debug.WriteLine($"🔍 [DashboardService] Response recibida - Success: {response.Success}");
 
             if (response.Success && response.Data != null)
             {
-                _logger.LogInformation("Estado de mesas obtenido exitosamente: {TotalMesas} mesas", response.Data.TotalMesas);
-                _logger.LogInformation("Mesas recibidas: {Mesas}", string.Join(", ", response.Data.Mesas?.Select(m => $"{m.Numero}({m.Estado})") ?? new List<string>()));
+                _logger.LogInformation("✅ [DashboardService] Estado de mesas obtenido exitosamente: {TotalMesas} mesas", response.Data.TotalMesas);
+                _logger.LogInformation("✅ [DashboardService] Estadísticas - Ocupadas: {Ocupadas}, Disponibles: {Disponibles}, Total: {Total}", 
+                    response.Data.Estadisticas?.MesasOcupadas, response.Data.Estadisticas?.MesasDisponibles, response.Data.TotalMesas);
+                System.Diagnostics.Debug.WriteLine($"✅ [DashboardService] Datos reales obtenidos - Ocupadas: {response.Data.Estadisticas?.MesasOcupadas}, Total: {response.Data.TotalMesas}");
                 return response.Data;
             }
             
-            _logger.LogWarning("No se pudo obtener el estado de mesas, usando datos simulados");
+            _logger.LogWarning("⚠️ [DashboardService] No se pudo obtener el estado de mesas, usando datos simulados. Error: {Error}", response.Message);
+            System.Diagnostics.Debug.WriteLine($"⚠️ [DashboardService] Fallback a datos simulados. Error: {response.Message}");
             return await GetSimulatedTableStatusAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error al obtener estado de mesas, usando datos simulados");
+            _logger.LogError(ex, "❌ [DashboardService] Error al obtener estado de mesas, usando datos simulados");
+            System.Diagnostics.Debug.WriteLine($"❌ [DashboardService] Exception: {ex.Message}");
             return await GetSimulatedTableStatusAsync();
         }
     }

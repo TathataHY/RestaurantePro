@@ -497,8 +497,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 if (string.IsNullOrWhiteSpace(DireccionEntrega))
                     throw new InvalidOperationException("Las comandas Delivery requieren una dirección de entrega");
                     
-                if (string.IsNullOrWhiteSpace(TelefonoEntrega))
-                    throw new InvalidOperationException("Las comandas Delivery requieren un teléfono de contacto");
+                // Nota: TelefonoEntrega es opcional para comandas Delivery
             }
                 
             if (MeseroId == Guid.Empty)

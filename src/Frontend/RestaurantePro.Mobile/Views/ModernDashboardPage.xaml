@@ -78,11 +78,11 @@
                         <Label Text="Mesas Ocupadas" 
                                Style="{StaticResource CaptionStyle}" 
                                HorizontalOptions="Center" />
-                        <Label Text="12/20" 
+                        <Label Text="{Binding MesasOcupadasDisplay}" 
                                Style="{StaticResource H2Style}" 
                                TextColor="{StaticResource PrimaryColor}"
                                HorizontalOptions="Center" />
-                        <Label Text="60% ocupación" 
+                        <Label Text="{Binding PorcentajeOcupacionDisplay}" 
                                Style="{StaticResource CaptionStyle}" 
                                TextColor="{StaticResource TextSecondary}"
                                HorizontalOptions="Center" />

@@ -49,10 +49,11 @@ public partial class CrearComandaViewModel : BaseViewModel
     {
         System.Diagnostics.Debug.WriteLine($"🔍 [CrearComandaViewModel] TipoSeleccionado cambió a: {value}");
         OnPropertyChanged(nameof(PuedeGuardar));
+        OnPropertyChanged(nameof(TipoComandaInfo));
     }
     partial void OnNombreEntregaChanged(string value) => OnPropertyChanged(nameof(PuedeGuardar));
     partial void OnDireccionEntregaChanged(string value) => OnPropertyChanged(nameof(PuedeGuardar));
-    partial void OnTelefonoEntregaChanged(string value) => OnPropertyChanged(nameof(PuedeGuardar));
+    // TelefonoEntrega es opcional, no afecta PuedeGuardar
 
 
     [ObservableProperty]
@@ -104,6 +105,20 @@ public partial class CrearComandaViewModel : BaseViewModel
 
     public string MesaInfo => Mesa != null ? $"Mesa {Mesa.Numero} - {Mesa.Ubicacion} (Capacidad: {Mesa.Capacidad})" : string.Empty;
 
+    public string TipoComandaInfo
+    {
+        get
+        {
+            return TipoSeleccionado switch
+            {
+                "Mesa" => !string.IsNullOrEmpty(MesaInfo) ? MesaInfo : "Mesa - Sin asignar",
+                "Delivery" => "🚚 Comanda para Delivery",
+                "TakeAway" => "🥡 Comanda para Llevar",
+                _ => "Comanda"
+            };
+        }
+    }
+
     public string TituloPagina => EsEdicion ? "Editando Comanda" : "Nueva Comanda";
     public string TextoBotonPrimario => EsEdicion ? "Guardar Cambios" : "Crear";
 
@@ -112,12 +127,11 @@ public partial class CrearComandaViewModel : BaseViewModel
 
     private bool ValidarCamposRequeridos()
     {
-        // Para comandas Delivery, validar que se hayan llenado los campos de entrega
+        // Para comandas Delivery, validar que se hayan llenado los campos obligatorios (nombre y dirección)
         if (TipoSeleccionado == "Delivery")
         {
             return !string.IsNullOrWhiteSpace(NombreEntrega) && 
-                   !string.IsNullOrWhiteSpace(DireccionEntrega) && 
-                   !string.IsNullOrWhiteSpace(TelefonoEntrega);
+                   !string.IsNullOrWhiteSpace(DireccionEntrega);
         }
         
         return true; // Para Mesa y TakeAway no hay campos adicionales requeridos
@@ -684,7 +698,7 @@ public partial class CrearComandaViewModel : BaseViewModel
                     Tipo = tipoEnviar,
                     NombreEntrega = TipoSeleccionado == "Delivery" ? NombreEntrega : null,
                     DireccionEntrega = TipoSeleccionado == "Delivery" ? DireccionEntrega : null,
-                    TelefonoEntrega = TipoSeleccionado == "Delivery" ? TelefonoEntrega : null
+                    TelefonoEntrega = TipoSeleccionado == "Delivery" && !string.IsNullOrWhiteSpace(TelefonoEntrega) ? TelefonoEntrega : null
                 };
 
                 var result = await _comandasService.CrearComandaAsync(comandaRequest);
@@ -748,6 +762,7 @@ public partial class CrearComandaViewModel : BaseViewModel
                 Mesa = new MesaDto();
                 OnPropertyChanged(nameof(Mesa));
                 OnPropertyChanged(nameof(MesaInfo));
+                OnPropertyChanged(nameof(TipoComandaInfo));
                 await BuscarProductosAsync();
             }
         }
@@ -797,6 +812,7 @@ public partial class CrearComandaViewModel : BaseViewModel
                 }
                 OnPropertyChanged(nameof(Mesa));
                 OnPropertyChanged(nameof(MesaInfo));
+                OnPropertyChanged(nameof(TipoComandaInfo));
                 OnPropertyChanged(nameof(TotalCarrito));
                 OnPropertyChanged(nameof(PuedeCrearComanda));
                 OnPropertyChanged(nameof(TituloPagina));
@@ -843,6 +859,7 @@ public partial class CrearComandaViewModel : BaseViewModel
                 // Notificar a la UI que la propiedad Mesa cambió
                 OnPropertyChanged(nameof(Mesa));
                 OnPropertyChanged(nameof(MesaInfo));
+                OnPropertyChanged(nameof(TipoComandaInfo));
             }
             else
             {

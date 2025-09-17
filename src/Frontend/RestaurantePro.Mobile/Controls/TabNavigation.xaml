@@ -5,12 +5,17 @@
              x:Class="RestaurantePro.Mobile.Controls.TabNavigation">
     
     <Grid RowDefinitions="Auto,Auto">
-        <HorizontalStackLayout x:Name="TabContainer" 
-                               Grid.Row="0" 
-                               Spacing="0" 
-                               HorizontalOptions="FillAndExpand">
-            <!-- Tabs dinámicos se agregarán aquí -->
-        </HorizontalStackLayout>
+        <!-- ScrollView horizontal para los tabs -->
+        <ScrollView Grid.Row="0" 
+                    Orientation="Horizontal"
+                    HorizontalScrollBarVisibility="Never">
+            <HorizontalStackLayout x:Name="TabContainer" 
+                                   Spacing="0" 
+                                   HorizontalOptions="Start"
+                                   Padding="16,0">
+                <!-- Tabs dinámicos se agregarán aquí -->
+            </HorizontalStackLayout>
+        </ScrollView>
         <BoxView Grid.Row="1" 
                  BackgroundColor="{StaticResource BorderColor}" 
                  HeightRequest="1" />

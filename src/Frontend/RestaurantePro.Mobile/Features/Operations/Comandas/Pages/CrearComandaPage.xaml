@@ -28,7 +28,7 @@
                            TextColor="{AppThemeBinding Light=#1976D2, Dark=#64B5F6}"
                            HorizontalOptions="Center"/>
                     
-                    <Label Text="{Binding MesaInfo}" 
+                    <Label Text="{Binding TipoComandaInfo}" 
                            FontSize="16" 
                            TextColor="{AppThemeBinding Light=#424242, Dark=#E0E0E0}"
                            HorizontalOptions="Center"
@@ -37,36 +37,47 @@
             </Frame>
 
             <!-- Información de Entrega (solo para Delivery) -->
-            <Frame BackgroundColor="{AppThemeBinding Light=#FFF3E0, Dark=#2D2D2D}" 
+            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark=#2D2D2D}" 
                    CornerRadius="12" 
                    Padding="16"
                    HasShadow="True"
+                   BorderColor="{AppThemeBinding Light=#E0E0E0, Dark=#424242}"
                    x:Name="DeliveryInfoFrame"
                    IsVisible="False">
-                <StackLayout Spacing="12">
+                <StackLayout Spacing="16">
                     <Label Text="🚚 Información de Entrega" 
-                           FontSize="16" 
+                           FontSize="18" 
                            FontAttributes="Bold" 
-                           TextColor="{AppThemeBinding Light=#F57C00, Dark=#FFB74D}"/>
+                           TextColor="{AppThemeBinding Light=#1976D2, Dark=#64B5F6}"
+                           HorizontalOptions="Center"/>
                     
                     <Entry Text="{Binding NombreEntrega}" 
                            Placeholder="Nombre de quien recibe"
-                           FontSize="14"
-                           BackgroundColor="{AppThemeBinding Light=White, Dark=#424242}"
-                           TextColor="{AppThemeBinding Light=#424242, Dark=#E0E0E0}"/>
+                           FontSize="16"
+                           BackgroundColor="{AppThemeBinding Light=#F8F9FA, Dark=#424242}"
+                           TextColor="{AppThemeBinding Light=#212529, Dark=#E0E0E0}"
+                           PlaceholderColor="{AppThemeBinding Light=#6C757D, Dark=#ADB5BD}"
+                           HeightRequest="50"
+                           VerticalOptions="Center"/>
                     
                     <Entry Text="{Binding DireccionEntrega}" 
                            Placeholder="Dirección de entrega completa"
-                           FontSize="14"
-                           BackgroundColor="{AppThemeBinding Light=White, Dark=#424242}"
-                           TextColor="{AppThemeBinding Light=#424242, Dark=#E0E0E0}"/>
+                           FontSize="16"
+                           BackgroundColor="{AppThemeBinding Light=#F8F9FA, Dark=#424242}"
+                           TextColor="{AppThemeBinding Light=#212529, Dark=#E0E0E0}"
+                           PlaceholderColor="{AppThemeBinding Light=#6C757D, Dark=#ADB5BD}"
+                           HeightRequest="50"
+                           VerticalOptions="Center"/>
                     
                     <Entry Text="{Binding TelefonoEntrega}" 
-                           Placeholder="Teléfono de contacto"
+                           Placeholder="Teléfono de contacto (opcional)"
                            Keyboard="Telephone"
-                           FontSize="14"
-                           BackgroundColor="{AppThemeBinding Light=White, Dark=#424242}"
-                           TextColor="{AppThemeBinding Light=#424242, Dark=#E0E0E0}"/>
+                           FontSize="16"
+                           BackgroundColor="{AppThemeBinding Light=#F8F9FA, Dark=#424242}"
+                           TextColor="{AppThemeBinding Light=#212529, Dark=#E0E0E0}"
+                           PlaceholderColor="{AppThemeBinding Light=#6C757D, Dark=#ADB5BD}"
+                           HeightRequest="50"
+                           VerticalOptions="Center"/>
                 </StackLayout>
             </Frame>
 
