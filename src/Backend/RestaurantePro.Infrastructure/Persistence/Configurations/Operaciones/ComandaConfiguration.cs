@@ -29,8 +29,7 @@ public class ComandaConfiguration : IEntityTypeConfiguration<Comanda>
             .IsRequired()
             .HasConversion<string>();
             
-        builder.Property(p => p.MesaId)
-            .IsRequired();
+        builder.Property(p => p.MesaId);
             
         builder.Property(p => p.ClienteId);
             
@@ -83,7 +82,7 @@ public class ComandaConfiguration : IEntityTypeConfiguration<Comanda>
         builder.HasOne(c => c.Mesa)
             .WithMany()
             .HasForeignKey(c => c.MesaId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasOne(c => c.Mesero)
             .WithMany()

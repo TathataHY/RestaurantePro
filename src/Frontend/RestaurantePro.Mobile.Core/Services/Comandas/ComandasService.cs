@@ -99,7 +99,7 @@ public class ComandasService : IComandasService
 			// Validar mesa sólo si el tipo es Mesa (por defecto si no se envía)
 			var tipo = (request.Tipo ?? "Mesa").Trim();
 			var requiereMesa = string.Equals(tipo, "Mesa", StringComparison.OrdinalIgnoreCase);
-			if (requiereMesa && string.IsNullOrEmpty(request.MesaId))
+			if (requiereMesa && string.IsNullOrWhiteSpace(request.MesaId))
 			{
 				return ApiResponse<ComandaDto>.ErrorResponse("La mesa es requerida para comandas de tipo Mesa", "La mesa es requerida");
 			}

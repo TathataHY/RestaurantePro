@@ -567,7 +567,7 @@ public class ProcesarPedidoCompletoHandler : IRequestHandler<ProcesarPedidoCompl
             
             // Liberar la mesa
             var resultadoLiberarMesa = await _mesaService.LiberarMesaAsync(
-                comanda.MesaId,
+                comanda.MesaId.Value, // Ya validamos que no es null
                 request.UsuarioId,
                 cancellationToken);
             

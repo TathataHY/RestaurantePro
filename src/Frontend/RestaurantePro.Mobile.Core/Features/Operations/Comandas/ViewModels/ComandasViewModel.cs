@@ -319,7 +319,14 @@ public partial class ComandasViewModel : BaseViewModel
             else
             {
                 // 2) Para llevar / Delivery → navegar sin mesa; el ViewModel ya soporta iniciar sin mesa
-                await _navigationService.NavigateToAsync("crear-comanda", new Dictionary<string, object>());
+                var tipoParam = tipoSeleccion.Equals("Para llevar", StringComparison.OrdinalIgnoreCase)
+                    ? "TakeAway"
+                    : "Delivery";
+
+                await _navigationService.NavigateToAsync("crear-comanda", new Dictionary<string, object>
+                {
+                    ["tipo"] = tipoParam
+                });
             }
         }
         catch (Exception ex)

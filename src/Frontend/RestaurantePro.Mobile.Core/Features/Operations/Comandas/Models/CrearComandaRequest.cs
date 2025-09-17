@@ -3,7 +3,7 @@ namespace RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models;
 public class CrearComandaRequest
 {
     public string MeseroId { get; set; } = string.Empty;
-    public string MesaId { get; set; } = string.Empty;
+    public string? MesaId { get; set; }
     public string? ClienteId { get; set; }
     public string? Observaciones { get; set; }
     public List<ProductoComandaRequest> ProductosIniciales { get; set; } = new();

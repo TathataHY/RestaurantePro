@@ -93,7 +93,7 @@ public class ComandaCreadaSignalRHandler : IDomainEventHandler<ComandaCreadaEven
             var nuevaComandaDto = new NuevaComandaNotificationDto
             {
                 ComandaId = comanda.Id,
-                MesaId = comanda.MesaId,
+                MesaId = comanda.MesaId ?? Guid.Empty,
                 Estado = comanda.Estado.ToString(),
                 Items = comanda.Items.Select(i => new ComandaItemNotificationDto
                 {

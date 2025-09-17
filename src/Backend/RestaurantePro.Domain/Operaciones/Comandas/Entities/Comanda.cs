@@ -38,9 +38,9 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         private DateTime _fechaCreacion;
 
         /// <summary>
-        /// ID de la mesa asociada a la comandaA
+        /// ID de la mesa asociada a la comanda (puede ser null para Delivery/TakeAway)
         /// </summary>
-        public Guid MesaId { get; private set; }
+        public Guid? MesaId { get; private set; }
 
         /// <summary>
         /// ID del usuario (mesero) que creó la comanda
@@ -204,7 +204,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             var comanda = new Comanda
             {
                 Id = Guid.NewGuid(),
-                MesaId = mesaId ?? Guid.Empty,
+                MesaId = mesaId,
                 MeseroId = meseroId,
                 ClienteId = clienteId,
                 FechaCreacion = fechaCreacion,
@@ -212,10 +212,10 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 Observaciones = observaciones ?? string.Empty,
                 Total = TotalComanda.Crear(0, 0),
                 Tipo = tipo,
-                NumeroComanda = numeroComanda ?? $"COM-{fechaCreacion:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}"
+                NumeroComanda = numeroComanda ?? GenerarNumeroComanda(tipo, fechaCreacion)
             };
 
-            comanda.AddDomainEvent(new ComandaCreada(comanda.Id, comanda.MesaId, meseroId ?? Guid.Empty));
+            comanda.AddDomainEvent(new ComandaCreada(comanda.Id, comanda.MesaId ?? Guid.Empty, meseroId ?? Guid.Empty));
 
             return comanda;
         }
@@ -979,6 +979,25 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             
             Observaciones = observaciones;
             ActualizarFecha();
+        }
+
+        /// <summary>
+        /// Genera el número de comanda según el tipo
+        /// </summary>
+        /// <param name="tipo">Tipo de comanda</param>
+        /// <param name="fechaCreacion">Fecha de creación</param>
+        /// <returns>Número de comanda formateado</returns>
+        private static string GenerarNumeroComanda(RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda tipo, DateTime fechaCreacion)
+        {
+            var prefijo = tipo switch
+            {
+                RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda.Mesa => "COM",
+                RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda.Delivery => "DEL",
+                RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda.TakeAway => "TKW",
+                _ => "COM" // Default fallback
+            };
+
+            return $"{prefijo}-{fechaCreacion:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
         }
     }
 }

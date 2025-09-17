@@ -32,6 +32,9 @@ public partial class CrearComandaViewModel : BaseViewModel
     private readonly HashSet<Guid> _productosEliminados = new();
     private readonly HashSet<Guid> _itemsEliminados = new();
     private const int MaxAPrepararPorItem = 10; // Regla de negocio: tope de preparación por ítem
+    // "Mesa" (por defecto), "Delivery" o "Para llevar"
+    public string TipoSeleccionado { get; set; } = "Mesa";
+
 
     [ObservableProperty]
     private MesaDto _mesa = new();
@@ -635,15 +638,18 @@ public partial class CrearComandaViewModel : BaseViewModel
             }
             else
             {
+                var esMesa = string.Equals(TipoSeleccionado, "Mesa", StringComparison.OrdinalIgnoreCase);
+                var tipoEnviar = esMesa ? "Mesa" : (string.Equals(TipoSeleccionado, "Delivery", StringComparison.OrdinalIgnoreCase) ? "Delivery" : "TakeAway");
+
                 var comandaRequest = new ComandaModels.CrearComandaRequest
                 {
                     MeseroId = string.Empty, // Se completará con el UserId del JWT en el servicio
-                    MesaId = Mesa.Id.ToString(),
+                    MesaId = esMesa ? Mesa.Id.ToString() : null,
                     ClienteId = null,
                     Observaciones = Observaciones,
                     ProductosIniciales = productosComanda,
                     Items = productosComanda,
-                    Tipo = "Mesa"
+                    Tipo = tipoEnviar
                 };
 
                 var result = await _comandasService.CrearComandaAsync(comandaRequest);

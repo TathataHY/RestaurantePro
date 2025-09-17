@@ -29,13 +29,18 @@ public partial class CrearComandaPage : ContentPage, IQueryAttributable
             return;
         }
 
+        if (query.TryGetValue("tipo", out var tipoObj) && !string.IsNullOrWhiteSpace(tipoObj?.ToString()))
+        {
+            _viewModel.TipoSeleccionado = tipoObj!.ToString()!;
+        }
+
         if (query.TryGetValue("mesaId", out var mesaIdObj) && !string.IsNullOrEmpty(mesaIdObj?.ToString()))
         {
             await _viewModel.InitializeAsync(mesaIdObj.ToString()!);
         }
         else
         {
-            // Si no recibimos mesaId, iniciar el flujo pidiendo seleccionar mesa
+            // Si no recibimos mesaId, iniciar flujo según tipo (Delivery/Para llevar no requiere mesa)
             await _viewModel.InitializeAsync(string.Empty);
         }
     }

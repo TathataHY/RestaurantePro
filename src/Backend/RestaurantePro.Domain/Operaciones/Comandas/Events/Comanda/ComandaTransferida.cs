@@ -11,22 +11,22 @@ public class ComandaTransferida : DomainEvent
     public Guid ComandaId { get; }
     
     /// <summary>
-    /// ID de la mesa de origen
+    /// ID de la mesa de origen (puede ser null para comandas Delivery/TakeAway)
     /// </summary>
-    public Guid MesaOrigenId { get; }
+    public Guid? MesaOrigenId { get; }
     
     /// <summary>
-    /// ID de la mesa de destino
+    /// ID de la mesa de destino (puede ser null para comandas Delivery/TakeAway)
     /// </summary>
-    public Guid MesaDestinoId { get; }
+    public Guid? MesaDestinoId { get; }
     
     /// <summary>
     /// Constructor para el evento de comanda transferida
     /// </summary>
     /// <param name="comandaId">ID de la comanda transferida</param>
-    /// <param name="mesaOrigenId">ID de la mesa de origen</param>
-    /// <param name="mesaDestinoId">ID de la mesa de destino</param>
-    public ComandaTransferida(Guid comandaId, Guid mesaOrigenId, Guid mesaDestinoId)
+    /// <param name="mesaOrigenId">ID de la mesa de origen (puede ser null)</param>
+    /// <param name="mesaDestinoId">ID de la mesa de destino (puede ser null)</param>
+    public ComandaTransferida(Guid comandaId, Guid? mesaOrigenId, Guid? mesaDestinoId)
     {
         ComandaId = comandaId;
         MesaOrigenId = mesaOrigenId;

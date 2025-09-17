@@ -48,7 +48,7 @@ public class ComandaFinalizadaMesaHandler : Domain.Core.Base.Events.Handlers.IDo
             }
 
             // Obtener la mesa asociada
-            var mesaId = comanda.MesaId;
+            var mesaId = comanda.MesaId.Value; // Ya validamos que no es null arriba
             var mesa = await _mesaRepository.ObtenerPorIdAsync(mesaId, cancellationToken);
 
             if (mesa == null)

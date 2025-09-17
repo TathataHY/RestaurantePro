@@ -155,7 +155,7 @@ public class ObtenerReporteVentasDiariaHandler : IRequestHandler<ObtenerReporteV
         // Aplicar filtros adicionales si es necesario
         if (request.MesesEspecificos != null && request.MesesEspecificos.Any())
         {
-            query = query.Where(c => request.MesesEspecificos.Contains(c.MesaId));
+            query = query.Where(c => c.MesaId.HasValue && request.MesesEspecificos.Contains(c.MesaId.Value));
         }
         
         if (request.MeserosEspecificos != null && request.MeserosEspecificos.Any())
@@ -225,7 +225,7 @@ public class ObtenerReporteVentasDiariaHandler : IRequestHandler<ObtenerReporteV
             .GroupBy(c => new { c.MesaId, c.Mesa?.Numero })
             .Select(g => new AnalisisMesaDto
             {
-                MesaId = g.Key.MesaId,
+                MesaId = g.Key.MesaId ?? Guid.Empty,
                 NumeroMesa = g.Key.Numero ?? 0,
                 TotalComandas = g.Count(),
                 MontoTotal = g.Sum(c => c.Total.Total),

@@ -501,8 +501,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
         {
             return await _dbSet
                 .CountAsync(c => c.Estado == EstadoComanda.Finalizada && 
-                                c.MesaId != Guid.Empty && 
-                                mesaIds.Contains(c.MesaId) &&
+                                c.MesaId.HasValue && 
+                                mesaIds.Contains(c.MesaId.Value) &&
                                 c.FechaCreacion >= fechaInicio && 
                                 c.FechaCreacion <= fechaFin, 
                             cancellationToken);
