@@ -32,6 +32,7 @@ public partial class MesasViewModel : BaseViewModel
     private int _totalPages = 1;
     private bool _hasMorePages = true;
     private bool _isLoadingMore = false;
+    private bool _isRefreshInProgress = false;
 
     #region Propiedades Observables
 
@@ -128,8 +129,15 @@ public partial class MesasViewModel : BaseViewModel
 
     private async Task LoadMesasAsync(string? estado, string? ubicacion, int? capacidadMinima)
     {
+        // Verificar si ya hay una operación en curso
+        if (IsBusy)
+        {
+            System.Diagnostics.Debug.WriteLine("⚠️ [MesasViewModel] LoadMesasAsync - Ya hay una operación en curso, cancelando");
+            return;
+        }
+        
         // Esperar a que termine cualquier petición en curso (con timeout para evitar bloqueos)
-        var semaphoreAcquired = await _loadingSemaphore.WaitAsync(TimeSpan.FromSeconds(10));
+        var semaphoreAcquired = await _loadingSemaphore.WaitAsync(TimeSpan.FromSeconds(5));
         
         if (!semaphoreAcquired)
         {
@@ -319,6 +327,15 @@ public partial class MesasViewModel : BaseViewModel
     [RelayCommand]
     private async Task RefreshMesasAsync()
     {
+        // Evitar múltiples refreshes simultáneos
+        if (_isRefreshInProgress)
+        {
+            System.Diagnostics.Debug.WriteLine("⚠️ [MesasViewModel] RefreshMesasAsync - Ya hay un refresh en progreso, ignorando");
+            return;
+        }
+        
+        _isRefreshInProgress = true;
+        
         try
         {
             System.Diagnostics.Debug.WriteLine("🔄 [MesasViewModel] RefreshMesasAsync - Iniciando refresh manual");
@@ -332,8 +349,8 @@ public partial class MesasViewModel : BaseViewModel
             _currentPage = 1;
             _hasMorePages = true;
             
-            // Pequeño delay para evitar conflictos con operaciones en curso
-            await Task.Delay(100);
+            // Delay más largo para asegurar que operaciones anteriores terminen
+            await Task.Delay(200);
             
             await LoadMesasAsync();
             
@@ -347,6 +364,7 @@ public partial class MesasViewModel : BaseViewModel
         finally
         {
             IsRefreshing = false;
+            _isRefreshInProgress = false;
         }
     }
 
