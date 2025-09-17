@@ -62,16 +62,16 @@ public class ApiService : IApiService
                 try { request.Headers.AcceptEncoding.Clear(); request.Headers.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("identity")); } catch { }
                 
                 System.Diagnostics.Debug.WriteLine($"🔍 [ApiService] Enviando request a: {endpoint}");
-                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken);
                 System.Diagnostics.Debug.WriteLine($"🔍 [ApiService] Respuesta recibida - StatusCode: {response.StatusCode}");
 
                 if (response.IsSuccessStatusCode)
                 {
-                    System.Diagnostics.Debug.WriteLine($"🔍 [ApiService] StatusCode exitoso, leyendo stream...");
-                    await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                    System.Diagnostics.Debug.WriteLine($"🔍 [ApiService] StatusCode exitoso, leyendo contenido...");
+                    var content = await response.Content.ReadAsStringAsync(cancellationToken);
                     
-                    System.Diagnostics.Debug.WriteLine($"🔍 [ApiService] Iniciando deserialización JSON...");
-                    var result = await JsonSerializer.DeserializeAsync<ApiResponse<T>>(stream, GetJsonOptions(), cancellationToken);
+                    System.Diagnostics.Debug.WriteLine($"🔍 [ApiService] Iniciando deserialización JSON... (Content length: {content?.Length ?? 0})");
+                    var result = JsonSerializer.Deserialize<ApiResponse<T>>(content, GetJsonOptions());
                     System.Diagnostics.Debug.WriteLine($"🔍 [ApiService] Deserialización completada - result: {result != null}");
                     
                     // Verificar si el resultado es válido (no null y tiene datos o es un error válido)
@@ -152,7 +152,7 @@ public class ApiService : IApiService
                 };
                 request.Headers.ConnectionClose = true;
                 try { request.Headers.AcceptEncoding.Clear(); request.Headers.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("identity")); } catch { }
-                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -216,7 +216,7 @@ public class ApiService : IApiService
                 };
                 request.Headers.ConnectionClose = true;
                 try { request.Headers.AcceptEncoding.Clear(); request.Headers.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("identity")); } catch { }
-                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -265,7 +265,7 @@ public class ApiService : IApiService
                 };
                 request.Headers.ConnectionClose = true;
                 try { request.Headers.AcceptEncoding.Clear(); request.Headers.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("identity")); } catch { }
-                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -310,7 +310,7 @@ public class ApiService : IApiService
                 using var request = new HttpRequestMessage(HttpMethod.Delete, endpoint);
                 request.Headers.ConnectionClose = true;
                 try { request.Headers.AcceptEncoding.Clear(); request.Headers.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("identity")); } catch { }
-                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken);
 
                 if (response.IsSuccessStatusCode)
                 {

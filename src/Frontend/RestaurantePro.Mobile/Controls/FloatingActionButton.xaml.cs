@@ -12,7 +12,7 @@ public partial class FloatingActionButton : ContentView, INotifyPropertyChanged
         BindableProperty.Create(nameof(Icon), typeof(string), typeof(FloatingActionButton), null, propertyChanged: OnIconChanged);
 
     public static readonly BindableProperty CommandProperty =
-        BindableProperty.Create(nameof(Command), typeof(Command), typeof(FloatingActionButton), null);
+        BindableProperty.Create(nameof(Command), typeof(System.Windows.Input.ICommand), typeof(FloatingActionButton), null);
 
     public static readonly BindableProperty CommandParameterProperty =
         BindableProperty.Create(nameof(CommandParameter), typeof(object), typeof(FloatingActionButton), null);
@@ -29,9 +29,9 @@ public partial class FloatingActionButton : ContentView, INotifyPropertyChanged
         set => SetValue(IconProperty, value);
     }
 
-    public Command Command
+    public System.Windows.Input.ICommand Command
     {
-        get => (Command)GetValue(CommandProperty);
+        get => (System.Windows.Input.ICommand)GetValue(CommandProperty);
         set => SetValue(CommandProperty, value);
     }
 
@@ -67,11 +67,27 @@ public partial class FloatingActionButton : ContentView, INotifyPropertyChanged
 
     private void OnButtonClicked(object sender, EventArgs e)
     {
+        System.Diagnostics.Debug.WriteLine("🔍 [FloatingActionButton] OnButtonClicked - FAB tocado");
+        
         Clicked?.Invoke(this, e);
         
-        if (Command?.CanExecute(CommandParameter) == true)
+        if (Command != null)
         {
-            Command.Execute(CommandParameter);
+            System.Diagnostics.Debug.WriteLine($"🔍 [FloatingActionButton] Command disponible: {Command.GetType().Name}");
+            if (Command.CanExecute(CommandParameter))
+            {
+                System.Diagnostics.Debug.WriteLine("🔍 [FloatingActionButton] Ejecutando comando...");
+                Command.Execute(CommandParameter);
+                System.Diagnostics.Debug.WriteLine("✅ [FloatingActionButton] Comando ejecutado");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("❌ [FloatingActionButton] Comando no puede ejecutarse (CanExecute = false)");
+            }
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine("❌ [FloatingActionButton] No hay comando configurado");
         }
     }
 } 

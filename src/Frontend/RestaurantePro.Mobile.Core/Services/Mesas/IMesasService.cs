@@ -18,6 +18,8 @@ public interface IMesasService
         string? estado = null, 
         string? ubicacion = null, 
         int? capacidadMinima = null,
+        int page = 1,
+        int pageSize = 10,
         CancellationToken cancellationToken = default);
 
     /// <summary>

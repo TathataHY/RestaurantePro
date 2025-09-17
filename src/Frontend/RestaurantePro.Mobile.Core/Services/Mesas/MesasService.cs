@@ -31,11 +31,13 @@ public class MesasService : IMesasService
         string? estado = null, 
         string? ubicacion = null, 
         int? capacidadMinima = null,
+        int page = 1,
+        int pageSize = 10,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            System.Diagnostics.Debug.WriteLine($"🔍 [MesasService] Iniciando ObtenerMesasAsync - estado: {estado}, ubicacion: {ubicacion}, capacidadMinima: {capacidadMinima}");
+            System.Diagnostics.Debug.WriteLine($"🔍 [MesasService] Iniciando ObtenerMesasAsync - estado: {estado}, ubicacion: {ubicacion}, capacidadMinima: {capacidadMinima}, page: {page}, pageSize: {pageSize}");
             
             if (cancellationToken.IsCancellationRequested)
                 return ApiResponse<PaginatedList<MesaDto>>.ErrorResponse("Operación cancelada por el usuario");
@@ -49,6 +51,10 @@ public class MesasService : IMesasService
             
             if (capacidadMinima.HasValue)
                 queryParams.Add($"capacidadMinima={capacidadMinima.Value}");
+                
+            // Agregar parámetros de paginación
+            queryParams.Add($"pageNumber={page}");
+            queryParams.Add($"pageSize={pageSize}");
 
             var query = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
             var endpoint = $"{BasePath}{query}";

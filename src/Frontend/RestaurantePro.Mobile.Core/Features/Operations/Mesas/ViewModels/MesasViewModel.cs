@@ -26,6 +26,12 @@ public partial class MesasViewModel : BaseViewModel
     private int _currentBufferIndex = 0;
     private const int DefaultPageSize = 12; // Tamaño de página por defecto (12-20 sugerido)
     private int _pageSize = DefaultPageSize;
+    
+    // Paginación del servidor
+    private int _currentPage = 1;
+    private int _totalPages = 1;
+    private bool _hasMorePages = true;
+    private bool _isLoadingMore = false;
 
     #region Propiedades Observables
 
@@ -102,20 +108,47 @@ public partial class MesasViewModel : BaseViewModel
     [RelayCommand]
     public async Task LoadMesasAsync()
     {
+        // Verificar que los servicios estén disponibles
+        if (_mesasService == null || _authService == null)
+        {
+            System.Diagnostics.Debug.WriteLine("⚠️ [MesasViewModel] Servicios no inicializados, esperando...");
+            await Task.Delay(500);
+            
+            if (_mesasService == null || _authService == null)
+            {
+                System.Diagnostics.Debug.WriteLine("❌ [MesasViewModel] Servicios aún no disponibles");
+                return;
+            }
+        }
+        
+        // Resetear a la primera página para nueva búsqueda
+        _currentPage = 1;
         await LoadMesasAsync(FiltroEstado, FiltroUbicacion, FiltroCapacidadMinima);
     }
 
     private async Task LoadMesasAsync(string? estado, string? ubicacion, int? capacidadMinima)
     {
-        // Esperar a que termine cualquier petición en curso
-        await _loadingSemaphore.WaitAsync();
+        // Esperar a que termine cualquier petición en curso (con timeout para evitar bloqueos)
+        var semaphoreAcquired = await _loadingSemaphore.WaitAsync(TimeSpan.FromSeconds(10));
+        
+        if (!semaphoreAcquired)
+        {
+            System.Diagnostics.Debug.WriteLine("⚠️ [MesasViewModel] Timeout esperando semáforo, cancelando operación");
+            return;
+        }
         
         try
         {
             IsBusy = true;
             ErrorMessage = string.Empty;
+            
+            // Resetear paginación para nueva búsqueda (solo si es la primera página)
+            if (_currentPage == 1)
+            {
+                _hasMorePages = true;
+            }
 
-            System.Diagnostics.Debug.WriteLine($"🔍 MesasViewModel.LoadMesasAsync - Iniciando carga de mesas");
+            System.Diagnostics.Debug.WriteLine($"🔍 MesasViewModel.LoadMesasAsync - Iniciando carga de mesas (Página {_currentPage})");
             System.Diagnostics.Debug.WriteLine($"🔍 Filtros: Estado={estado}, Ubicacion={ubicacion}, CapacidadMinima={capacidadMinima}");
             
             // Verificar autenticación
@@ -125,22 +158,33 @@ public partial class MesasViewModel : BaseViewModel
             var response = await _mesasService.ObtenerMesasAsync(
                 string.IsNullOrWhiteSpace(estado) ? null : NormalizeEstado(estado),
                 string.IsNullOrWhiteSpace(ubicacion) ? null : ubicacion,
-                capacidadMinima);
+                capacidadMinima,
+                _currentPage,
+                _pageSize);
 
             if (response.Success)
             {
                 var data = response.Data?.Items ?? new List<MesaDto>();
+                
+                // Actualizar información de paginación
+                _totalPages = response.Data?.TotalPages ?? 1;
+                _hasMorePages = _currentPage < _totalPages;
+                
+                System.Diagnostics.Debug.WriteLine($"🔍 [MesasViewModel] Paginación - Página actual: {_currentPage}, Total páginas: {_totalPages}, Más páginas: {_hasMorePages}");
 
-                // Actualizar ubicaciones disponibles (distintas, no vacías)
-                var ubicaciones = data
-                    .Select(m => m.Ubicacion)
-                    .Where(u => !string.IsNullOrWhiteSpace(u))
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .OrderBy(u => u)
-                    .ToList();
-                UbicacionesDisponibles.Clear();
-                UbicacionesDisponibles.Add("Todas");
-                foreach (var u in ubicaciones) UbicacionesDisponibles.Add(u);
+                // Actualizar ubicaciones disponibles (solo en la primera página)
+                if (_currentPage == 1)
+                {
+                    var ubicaciones = data
+                        .Select(m => m.Ubicacion)
+                        .Where(u => !string.IsNullOrWhiteSpace(u))
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .OrderBy(u => u)
+                        .ToList();
+                    UbicacionesDisponibles.Clear();
+                    UbicacionesDisponibles.Add("Todas");
+                    foreach (var u in ubicaciones) UbicacionesDisponibles.Add(u);
+                }
 
                 // Filtro de búsqueda local por número/ubicación/zona
                 if (!string.IsNullOrWhiteSpace(SearchText))
@@ -163,25 +207,103 @@ public partial class MesasViewModel : BaseViewModel
                     return int.MaxValue;
                 }).ThenBy(m => m.Numero).ToList();
 
-                // Configurar buffer de paginado local y pintar primera página
-                _allMesasBuffer = data;
-                _currentBufferIndex = 0;
-                Mesas.Clear();
-                AppendNextPage();
-                System.Diagnostics.Debug.WriteLine($"✅ Se cargaron {_allMesasBuffer.Count} mesas (mostrando {Mesas.Count}) - Total en servidor: {response.Data?.TotalCount ?? 0}");
+                // Para la primera página, limpiar la colección; para páginas adicionales, agregar
+                var mesasAntes = Mesas.Count;
+                if (_currentPage == 1)
+                {
+                    Mesas.Clear();
+                    System.Diagnostics.Debug.WriteLine($"🔍 [MesasViewModel] Página 1 - Lista limpiada");
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"🔍 [MesasViewModel] Antes de agregar - Mesas en lista: {Mesas.Count}, Datos a agregar: {data.Count}");
+                
+                // Agregar solo las mesas que no están ya en la colección (evitar duplicados)
+                var agregadas = 0;
+                foreach (var mesa in data)
+                {
+                    if (!Mesas.Any(m => m.Id == mesa.Id))
+                    {
+                        Mesas.Add(mesa);
+                        agregadas++;
+                        System.Diagnostics.Debug.WriteLine($"🔍 [MesasViewModel] Agregada mesa {mesa.Numero} (ID: {mesa.Id})");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"⚠️ [MesasViewModel] Mesa duplicada ignorada: {mesa.Numero} (ID: {mesa.Id})");
+                    }
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"🔍 [MesasViewModel] Después de agregar - Mesas agregadas: {agregadas}, Total en lista: {Mesas.Count}");
+                
+                // Si no hay datos en esta página, marcar como sin más páginas
+                if (data.Count == 0)
+                {
+                    _hasMorePages = false;
+                    System.Diagnostics.Debug.WriteLine($"⚠️ [MesasViewModel] Página {_currentPage} sin datos - Marcando como última página");
+                }
+                
+                System.Diagnostics.Debug.WriteLine($"✅ Se cargaron {data.Count} mesas (Página {_currentPage}/{_totalPages}) - Total: {Mesas.Count} - Más páginas: {_hasMorePages}");
             }
             else
             {
-                await ShowErrorAsync(response.Message ?? "Error al cargar las mesas");
-                await _dialogService.ShowAlertAsync("Error", ErrorMessage);
+                // Si es la primera página, mostrar error completo
+                if (_currentPage == 1)
+                {
+                    await ShowErrorAsync(response.Message ?? "Error al cargar las mesas");
+                    await _dialogService.ShowAlertAsync("Error", ErrorMessage);
+                }
+                else
+                {
+                    // Si es una página adicional, solo log el error pero mantener la paginación activa
+                    System.Diagnostics.Debug.WriteLine($"⚠️ [MesasViewModel] Error cargando página {_currentPage}: {response.Message}");
+                    
+                    // Solo detener si es un error de autenticación o si hemos intentado varias veces
+                    if (response.Message?.Contains("401") == true || response.Message?.Contains("Unauthorized") == true)
+                    {
+                        _hasMorePages = false; // Error de auth, detener
+                        System.Diagnostics.Debug.WriteLine($"❌ [MesasViewModel] Error de autenticación, deteniendo paginación");
+                    }
+                    else
+                    {
+                        // Para errores de red temporales, mantener la paginación activa
+                        System.Diagnostics.Debug.WriteLine($"⚠️ [MesasViewModel] Error temporal, manteniendo paginación activa");
+                        // No cambiar _hasMorePages, permitir que el usuario intente de nuevo
+                    }
+                    
+                    _currentPage--; // Revertir el incremento de página para reintentar
+                }
             }
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"❌ ERROR en LoadMesasAsync: {ex.GetType().Name}: {ex.Message}");
             System.Diagnostics.Debug.WriteLine($"❌ StackTrace: {ex.StackTrace}");
-            await ShowErrorAsync($"Error inesperado: {ex.Message}");
-            await _dialogService.ShowAlertAsync("Error", ErrorMessage);
+            
+            // Si es la primera página, mostrar error completo
+            if (_currentPage == 1)
+            {
+                await ShowErrorAsync($"Error inesperado: {ex.Message}");
+                await _dialogService.ShowAlertAsync("Error", ErrorMessage);
+            }
+            else
+            {
+                // Si es una página adicional, solo log el error pero mantener paginación para errores temporales
+                System.Diagnostics.Debug.WriteLine($"⚠️ [MesasViewModel] Error en página {_currentPage}: {ex.Message}");
+                
+                // Solo detener para errores críticos, no para errores de red temporales
+                if (ex is UnauthorizedAccessException || ex.Message.Contains("401") || ex.Message.Contains("Unauthorized"))
+                {
+                    _hasMorePages = false; // Error de auth, detener
+                    System.Diagnostics.Debug.WriteLine($"❌ [MesasViewModel] Error de autenticación en catch, deteniendo paginación");
+                }
+                else
+                {
+                    // Para errores de red/IO temporales, mantener la paginación activa
+                    System.Diagnostics.Debug.WriteLine($"⚠️ [MesasViewModel] Error temporal en catch, manteniendo paginación activa");
+                }
+                
+                _currentPage--; // Revertir el incremento de página para reintentar
+            }
         }
         finally
         {
@@ -197,19 +319,70 @@ public partial class MesasViewModel : BaseViewModel
     [RelayCommand]
     private async Task RefreshMesasAsync()
     {
-        IsRefreshing = true;
-        await LoadMesasAsync();
+        try
+        {
+            System.Diagnostics.Debug.WriteLine("🔄 [MesasViewModel] RefreshMesasAsync - Iniciando refresh manual");
+            
+            IsRefreshing = true;
+            
+            // Cancelar cualquier operación de LoadMore en progreso
+            _isLoadingMore = false;
+            
+            // Resetear estado de paginación completamente
+            _currentPage = 1;
+            _hasMorePages = true;
+            
+            // Pequeño delay para evitar conflictos con operaciones en curso
+            await Task.Delay(100);
+            
+            await LoadMesasAsync();
+            
+            System.Diagnostics.Debug.WriteLine("✅ [MesasViewModel] RefreshMesasAsync - Completado exitosamente");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ [MesasViewModel] RefreshMesasAsync - Error: {ex.Message}");
+            await ShowErrorAsync($"Error al refrescar: {ex.Message}");
+        }
+        finally
+        {
+            IsRefreshing = false;
+        }
     }
 
     /// <summary>
-    /// Cargar siguiente página del buffer (scroll infinito)
+    /// Cargar siguiente página del servidor (scroll infinito)
     /// </summary>
     [RelayCommand]
-    private Task LoadMoreMesasAsync()
+    private async Task LoadMoreMesasAsync()
     {
-        if (IsBusy) return Task.CompletedTask;
-        AppendNextPage();
-        return Task.CompletedTask;
+        if (IsBusy || !_hasMorePages || _isLoadingMore || IsRefreshing) 
+        {
+            System.Diagnostics.Debug.WriteLine($"🔍 [MesasViewModel] LoadMoreMesasAsync - Saltando: IsBusy={IsBusy}, HasMorePages={_hasMorePages}, IsLoadingMore={_isLoadingMore}, IsRefreshing={IsRefreshing}");
+            return;
+        }
+        
+        _isLoadingMore = true;
+        
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"🔍 [MesasViewModel] LoadMoreMesasAsync - Cargando página {_currentPage + 1}");
+            
+            // Verificar nuevamente que no se inició un refresh mientras esperábamos
+            if (IsRefreshing)
+            {
+                System.Diagnostics.Debug.WriteLine($"⚠️ [MesasViewModel] LoadMoreMesasAsync - Refresh detectado, cancelando LoadMore");
+                return;
+            }
+            
+            // Incrementar página y cargar
+            _currentPage++;
+            await LoadMesasAsync(FiltroEstado, FiltroUbicacion, FiltroCapacidadMinima);
+        }
+        finally
+        {
+            _isLoadingMore = false;
+        }
     }
 
     /// <summary>

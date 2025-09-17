@@ -257,14 +257,18 @@ public partial class ComandasViewModel : BaseViewModel
     [RelayCommand]
     private async Task CrearComandaAsync()
     {
+        System.Diagnostics.Debug.WriteLine("🔍 [ComandasViewModel] CrearComandaAsync - Iniciando");
         try
         {
             // 1) Elegir tipo de comanda
+            System.Diagnostics.Debug.WriteLine("🔍 [ComandasViewModel] Mostrando selector de tipo de comanda");
             var tipoSeleccion = await _dialogService.ShowActionSheetAsync(
                 "Nueva comanda",
                 "Seleccione el tipo de comanda",
                 "Cancelar",
                 new[] { "Mesa", "Para llevar", "Delivery" });
+            
+            System.Diagnostics.Debug.WriteLine($"🔍 [ComandasViewModel] Tipo seleccionado: '{tipoSeleccion}'");
 
             if (string.IsNullOrWhiteSpace(tipoSeleccion) || tipoSeleccion == "Cancelar")
                 return;
@@ -328,9 +332,11 @@ public partial class ComandasViewModel : BaseViewModel
                     ["tipo"] = tipoParam
                 });
             }
+            System.Diagnostics.Debug.WriteLine("✅ [ComandasViewModel] CrearComandaAsync - Completado exitosamente");
         }
         catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"❌ [ComandasViewModel] CrearComandaAsync - Error: {ex.Message}");
             await _dialogService.ShowAlertAsync("Error", $"Error al iniciar nueva comanda: {ex.Message}");
         }
     }

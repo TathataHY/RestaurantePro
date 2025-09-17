@@ -29,16 +29,19 @@ public partial class ModernMesasPage : ContentPage
         await this.FadeTo(1, 500);
     }
 
-    protected override void OnAppearing()
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
         
         System.Diagnostics.Debug.WriteLine("🔍 ModernMesasPage.OnAppearing - Iniciando");
         
+        // Pequeño delay para asegurar que todos los servicios estén inicializados
+        await Task.Delay(300);
+        
         // Refrescar datos cuando la página aparece
         if (_viewModel != null)
         {
-            System.Diagnostics.Debug.WriteLine("🔍 Ejecutando LoadMesasCommand");
+            System.Diagnostics.Debug.WriteLine("🔍 Ejecutando LoadMesasCommand después del delay");
             _viewModel.LoadMesasCommand?.Execute(null);
             
             // Solo cargar estadísticas en background, sin mostrar diálogo
