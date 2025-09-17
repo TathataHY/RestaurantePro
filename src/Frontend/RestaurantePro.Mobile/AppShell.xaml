@@ -85,7 +85,7 @@
             ContentTemplate="{DataTemplate cocina:ModernCocinaPage}"
             Route="cocina" />
 
-        <!-- Prep. Diarias Tab -->
+        <!-- Prep. Diarias Tab - Operativo para Cocineros -->
         <ShellContent
             Title="Prep. Diarias"
             Icon="preparacionesdiarias.svg"
@@ -120,26 +120,26 @@
             ContentTemplate="{DataTemplate tarjetas:TarjetasFidelizacionPage}"
             Route="tarjetasfidelizacion" />
 
-        <!-- Ingredientes Tab -->
+        <!-- Ingredientes Tab - Consulta operativa para cocineros -->
         <ShellContent
             Title="Ingredientes"
             Icon="ingredientes.png"
             ContentTemplate="{DataTemplate ingredientes:ModernIngredientesPage}"
             Route="ingredientes" />
 
-        <!-- Categorías Tab -->
+        <!-- Categorías Tab - Navegación de menú para meseros -->
         <ShellContent
             Title="Categorías"
             Icon="categorias.png"
             ContentTemplate="{DataTemplate categorias:CategoriasPage}"
             Route="categorias" />
 
-        <!-- Analytics Tab -->
-        <ShellContent
+        <!-- Analytics Tab - Movido a Web Admin -->
+        <!--<ShellContent
             Title="Analytics"
             Icon="analytics.png"
             ContentTemplate="{DataTemplate analytics:AnalyticsPage}"
-            Route="analytics" />
+            Route="analytics" />-->
 
         <!-- Configuración Tab -->
         <ShellContent

@@ -48,10 +48,12 @@ public class CrearComandaHandler : IRequestHandler<CrearComandaCommand, Result<C
 
             // 2. Crear la comanda usando el factory method del dominio
             var comanda = Comanda.Crear(
-                request.MeseroId, 
-                request.ClienteId, 
-                request.MesaId, 
-                request.Observaciones);
+                request.MeseroId,
+                request.ClienteId,
+                request.MesaId,
+                request.Observaciones,
+                null,
+                RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda.Mesa);
 
             _logger.LogInformation("✅ Comanda creada: {ComandaId}", comanda.Id);
 

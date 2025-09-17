@@ -48,7 +48,7 @@ public class CrearComandaCommandHandler : IRequestHandler<CrearComandaCommand, R
 
     public async Task<Result<ComandaDto>> Handle(CrearComandaCommand request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("🍽️ Iniciando creación de comanda - Mesero: {MeseroId}, Mesa: {MesaId}", request.MeseroId, request.MesaId);
+        _logger.LogInformation("🍽️ Iniciando creación de comanda - Mesero: {MeseroId}, Mesa: {MesaId}, Tipo: {Tipo}", request.MeseroId, request.MesaId, request.Tipo);
 
         // Resolver SIEMPRE MeseroId desde el usuario autenticado; ignorar el valor provisto por el cliente
         var identityId = _currentUser.UserId;
@@ -133,8 +133,11 @@ public class CrearComandaCommandHandler : IRequestHandler<CrearComandaCommand, R
         // Validación básica (más validaciones profundas en el Validator)
         if (request.MeseroId == Guid.Empty)
             return Result.Failure<ComandaDto>("El mesero es obligatorio");
-        if (request.MesaId == null || request.MesaId == Guid.Empty)
-            return Result.Failure<ComandaDto>("La mesa es obligatoria");
+        if (request.Tipo == RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda.Mesa)
+        {
+            if (request.MesaId == null || request.MesaId == Guid.Empty)
+                return Result.Failure<ComandaDto>("La mesa es obligatoria para comandas de tipo Mesa");
+        }
         if (request.ProductosIniciales == null || !request.ProductosIniciales.Any())
             return Result.Failure<ComandaDto>("Debe agregar al menos un producto a la comanda");
 
@@ -154,7 +157,9 @@ public class CrearComandaCommandHandler : IRequestHandler<CrearComandaCommand, R
             request.MeseroId,
             request.ClienteId,
             request.MesaId,
-            request.Observaciones
+            request.Observaciones,
+            null,
+            request.Tipo
         );
 
         // 2. Agregar productos iniciales

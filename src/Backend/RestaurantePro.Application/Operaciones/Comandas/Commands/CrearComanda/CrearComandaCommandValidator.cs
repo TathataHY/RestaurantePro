@@ -13,17 +13,23 @@ public class CrearComandaCommandValidator : AbstractValidator<CrearComandaComman
         IProductoRepository productoRepository,
         IApplicationDbContext dbContext)
     {
+        RuleFor(x => x.Tipo)
+            .IsInEnum().WithMessage("Tipo de comanda inválido");
+
         RuleFor(x => x.MeseroId)
             .NotEmpty().WithMessage("El mesero es obligatorio");
 
-        RuleFor(x => x.MesaId)
-            .NotNull().WithMessage("La mesa es obligatoria")
-            .NotEqual(Guid.Empty).WithMessage("La mesa es obligatoria")
-            .MustAsync(async (mesaId, ct) =>
-            {
-                if (mesaId == null || mesaId == Guid.Empty) return false;
-                return await dbContext.Mesas.FindAsync(new object[] { mesaId }, ct) != null;
-            }).WithMessage("La mesa especificada no existe");
+        When(x => x.Tipo == RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda.Mesa, () =>
+        {
+            RuleFor(x => x.MesaId)
+                .NotNull().WithMessage("La mesa es obligatoria para comandas de tipo Mesa")
+                .NotEqual(Guid.Empty).WithMessage("La mesa es obligatoria para comandas de tipo Mesa")
+                .MustAsync(async (mesaId, ct) =>
+                {
+                    if (mesaId == null || mesaId == Guid.Empty) return false;
+                    return await dbContext.Mesas.FindAsync(new object[] { mesaId }, ct) != null;
+                }).WithMessage("La mesa especificada no existe");
+        });
 
         RuleFor(x => x.ClienteId)
             .MustAsync(async (clienteId, ct) =>

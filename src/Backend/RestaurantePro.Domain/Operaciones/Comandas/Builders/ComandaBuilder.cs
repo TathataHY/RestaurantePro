@@ -204,7 +204,13 @@ public class ComandaBuilder
             }
 
             // Crear la comanda base - la mesa ahora es obligatoria
-            var comanda = Comanda.Crear(_meseroId!.Value, _clienteId, _mesaId!.Value, _observaciones);
+            var comanda = Comanda.Crear(
+                _meseroId!.Value,
+                _clienteId,
+                _mesaId!.Value,
+                _observaciones,
+                null,
+                RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda.Mesa);
             
             // Agregar productos
             foreach (var producto in _productos)

@@ -7,6 +7,11 @@ namespace RestaurantePro.Application.Operaciones.Comandas.DTOs;
 public class ComandaDto : BaseDto
 {
     /// <summary>
+    /// Tipo de comanda (Mesa, Delivery, TakeAway)
+    /// </summary>
+    public string Tipo { get; set; } = string.Empty;
+
+    /// <summary>
     /// ID de la mesa asociada a la comanda
     /// </summary>
     public Guid MesaId { get; set; }

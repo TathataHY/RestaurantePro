@@ -642,7 +642,8 @@ public partial class CrearComandaViewModel : BaseViewModel
                     ClienteId = null,
                     Observaciones = Observaciones,
                     ProductosIniciales = productosComanda,
-                    Items = productosComanda
+                    Items = productosComanda,
+                    Tipo = "Mesa"
                 };
 
                 var result = await _comandasService.CrearComandaAsync(comandaRequest);
@@ -701,8 +702,11 @@ public partial class CrearComandaViewModel : BaseViewModel
             }
             else
             {
-                // No llegó mesaId válido: pedir seleccionar mesa primero
-                await SolicitarSeleccionMesaAsync();
+                // No llegó mesaId válido: habilitar flujo sin mesa (Para llevar / Delivery)
+                Mesa = new MesaDto();
+                OnPropertyChanged(nameof(Mesa));
+                OnPropertyChanged(nameof(MesaInfo));
+                await BuscarProductosAsync();
             }
         }
         catch (Exception ex)

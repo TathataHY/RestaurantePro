@@ -182,7 +182,9 @@ public class UnificarComandasHandler : IRequestHandler<UnificarComandasCommand, 
                 meseroId: request.MeseroId,
                 clienteId: clienteId,
                 mesaId: request.MesaDestinoId,
-                observaciones: request.ObservacionesUnificada ?? $"Unificación de comandas: {string.Join(", ", comandasOriginales.Select(c => c.Id))}"
+                observaciones: request.ObservacionesUnificada ?? $"Unificación de comandas: {string.Join(", ", comandasOriginales.Select(c => c.Id))}",
+                numeroComanda: null,
+                tipo: RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda.Mesa
             );
 
             await _context.Comandas.AddAsync(comandaUnificada, cancellationToken);

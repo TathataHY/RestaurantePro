@@ -30,11 +30,15 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
     /// </summary>
     public class Comanda : EntityBase, IAggregateRoot
     {
+        /// <summary>
+        /// Tipo de comanda (Mesa, Delivery, TakeAway)
+        /// </summary>
+        public RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda Tipo { get; private set; } = RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda.Mesa;
         private readonly List<ItemComanda> _items = new List<ItemComanda>();
         private DateTime _fechaCreacion;
 
         /// <summary>
-        /// ID de la mesa asociada a la comanda
+        /// ID de la mesa asociada a la comandaA
         /// </summary>
         public Guid MesaId { get; private set; }
 
@@ -176,7 +180,21 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             return Crear(meseroId, DateTime.Now, clienteId, mesaId, observaciones, numeroComanda);
         }
 
-        public static Comanda Crear(Guid? meseroId, DateTime fechaCreacion, Guid? clienteId = null, Guid? mesaId = null, string? observaciones = null, string? numeroComanda = null)
+        /// <summary>
+        /// Factory method para crear una nueva comanda indicando el tipo (sin fecha explícita)
+        /// </summary>
+        public static Comanda Crear(
+            Guid? meseroId,
+            Guid? clienteId = null,
+            Guid? mesaId = null,
+            string? observaciones = null,
+            string? numeroComanda = null,
+            RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda tipo = RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda.Mesa)
+        {
+            return Crear(meseroId, DateTime.Now, clienteId, mesaId, observaciones, numeroComanda, tipo);
+        }
+
+        public static Comanda Crear(Guid? meseroId, DateTime fechaCreacion, Guid? clienteId = null, Guid? mesaId = null, string? observaciones = null, string? numeroComanda = null, RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda tipo = RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda.Mesa)
         {
             if (fechaCreacion > DateTime.Now.AddMinutes(1))
             {
@@ -193,6 +211,7 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 Estado = EstadoComanda.Creada,
                 Observaciones = observaciones ?? string.Empty,
                 Total = TotalComanda.Crear(0, 0),
+                Tipo = tipo,
                 NumeroComanda = numeroComanda ?? $"COM-{fechaCreacion:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}"
             };
 
@@ -441,8 +460,12 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             }
             
             // Validar IDs obligatorios
-            if (MesaId == Guid.Empty)
-                throw new InvalidOperationException("La comanda debe tener una mesa asignada");
+            // Para comanda de tipo Mesa, MesaId es obligatorio. Para Delivery/TakeAway, puede ser vacío.
+            if (Tipo == RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda.Mesa)
+            {
+                if (MesaId == Guid.Empty)
+                    throw new InvalidOperationException("La comanda de tipo Mesa debe tener una mesa asignada");
+            }
                 
             if (MeseroId == Guid.Empty)
                 throw new InvalidOperationException("La comanda debe tener un mesero asignado");

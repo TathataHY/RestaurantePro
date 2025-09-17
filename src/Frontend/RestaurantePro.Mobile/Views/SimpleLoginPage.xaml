@@ -1,22 +1,28 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
              x:Class="RestaurantePro.Mobile.Views.SimpleLoginPage"
              Title="Iniciar Sesión"
-             BackgroundColor="White">
+             BackgroundColor="{StaticResource SurfacePrimary}">
 
     <ScrollView>
         <VerticalStackLayout Spacing="20" 
                             Padding="24"
                             VerticalOptions="Center">
             
-            <!-- Logo -->
+            <!-- Logo Moderno -->
             <Border x:Name="LogoBorder"
-                    BackgroundColor="#007ACC"
+                    BackgroundColor="{StaticResource PrimaryColor}"
                     StrokeShape="Ellipse"
                     WidthRequest="100"
                     HeightRequest="100"
                     HorizontalOptions="Center">
+                
+                <Border.Shadow>
+                    <Shadow Brush="{StaticResource ShadowColor}" 
+                            Offset="0,8" Radius="16" Opacity="0.3" />
+                </Border.Shadow>
                 
                 <Label Text="🍽️"
                        FontSize="50"
@@ -24,96 +30,118 @@
                        VerticalOptions="Center" />
             </Border>
             
-            <!-- Título -->
+            <!-- Título Moderno -->
             <Label Text="RestaurantePro"
-                   FontSize="32"
-                   FontAttributes="Bold"
-                   HorizontalOptions="Center"
-                   TextColor="#007ACC" />
+                   Style="{StaticResource H1Style}"
+                   HorizontalOptions="Center" />
             
-            <!-- Subtítulo -->
+            <!-- Subtítulo Moderno -->
             <Label Text="Sistema de Gestión Restaurante"
-                   FontSize="16"
+                   Style="{StaticResource BodyStyle}"
                    HorizontalOptions="Center"
-                   TextColor="Gray" />
+                   TextColor="{StaticResource TextSecondary}" />
             
-            <!-- Formulario -->
-            <Frame BackgroundColor="LightGray"
-                   Padding="20"
-                   CornerRadius="10">
-                
-                <VerticalStackLayout Spacing="16">
+            <!-- Formulario Moderno -->
+            <controls:ModernCard Padding="24">
+                <VerticalStackLayout Spacing="20">
                     
-                    <!-- Email -->
+                    <!-- Email Moderno -->
                     <VerticalStackLayout Spacing="8">
                         <Label Text="Correo Electrónico"
+                               Style="{StaticResource BodyStyle}"
                                FontAttributes="Bold" />
                         
-                        <Entry Text="{Binding Email}"
-                               Placeholder="ejemplo@restaurantepro.com"
-                               Keyboard="Email"
-                               x:Name="EmailEntry"
-                               AutomationProperties.Name="EmailEntry" />
+                        <controls:ModernEntry Text="{Binding Email}"
+                                             Placeholder="ejemplo@restaurantepro.com"
+                                             Icon="📧"
+                                             Keyboard="Email"
+                                             x:Name="EmailEntry"
+                                             AutomationProperties.Name="EmailEntry" />
                     </VerticalStackLayout>
                     
-                    <!-- Contraseña -->
+                    <!-- Contraseña Moderna -->
                     <VerticalStackLayout Spacing="8">
                         <Label Text="Contraseña"
+                               Style="{StaticResource BodyStyle}"
                                FontAttributes="Bold" />
                         
-                        <Entry Text="{Binding Password}"
-                               Placeholder="Ingrese su contraseña"
-                               IsPassword="True"
-                               x:Name="PasswordEntry"
-                               AutomationProperties.Name="PasswordEntry" />
+                        <controls:ModernEntry Text="{Binding Password}"
+                                             Placeholder="Ingrese su contraseña"
+                                             Icon="🔒"
+                                             IsPassword="True"
+                                             x:Name="PasswordEntry"
+                                             AutomationProperties.Name="PasswordEntry" />
                     </VerticalStackLayout>
                     
-                    <!-- Recordar sesión -->
+                    <!-- Recordar sesión Moderno -->
                     <HorizontalStackLayout Spacing="8">
                         <CheckBox IsChecked="{Binding Recordarme}"
                                  x:Name="RememberMeCheckBox"
                                  AutomationProperties.Name="RememberMeCheckBox" />
                         <Label Text="Recordar sesión" 
+                               Style="{StaticResource BodyStyle}"
                                VerticalOptions="Center" />
                     </HorizontalStackLayout>
                     
-                    <!-- Botón de Login -->
-                    <Button Text="Iniciar Sesión"
-                            Command="{Binding LoginCommand}"
-                            IsEnabled="{Binding IsNotBusy}"
-                            BackgroundColor="#007ACC"
-                            TextColor="White"
-                            x:Name="LoginButton"
-                            AutomationProperties.Name="LoginButton" />
-                    
-                    <!-- Indicador de carga -->
-                    <ActivityIndicator IsRunning="{Binding IsBusy}"
-                                      IsVisible="{Binding IsBusy}"
-                                      Color="#007ACC" />
-                    
-                    <!-- Mensaje de error -->
-                    <Label Text="{Binding ErrorMessage}"
-                           IsVisible="{Binding HasError}"
-                           TextColor="Red"
-                           HorizontalOptions="Center"
-                           x:Name="ErrorMessageLabel"
-                           AutomationProperties.Name="ErrorMessageLabel" />
+                    <!-- Mensaje de Error Moderno -->
+                    <Border BackgroundColor="{StaticResource ErrorColor}"
+                            StrokeShape="RoundRectangle 8"
+                            Padding="16"
+                            IsVisible="{Binding HasError}">
+                        
+                        <HorizontalStackLayout Spacing="12">
+                            <Label Text="⚠️"
+                                   FontSize="20"
+                                   VerticalOptions="Center" />
+                            
+                            <Label Text="{Binding ErrorMessage}"
+                                   TextColor="White"
+                                   FontSize="14"
+                                   VerticalOptions="Center"
+                                   LineBreakMode="WordWrap" />
+                        </HorizontalStackLayout>
+                    </Border>
                 </VerticalStackLayout>
-            </Frame>
+            </controls:ModernCard>
             
-            <!-- Información adicional -->
+            <!-- Botón de Login Moderno -->
+            <Button Text="Iniciar Sesión"
+                    Command="{Binding LoginCommand}"
+                    IsEnabled="{Binding IsNotBusy}"
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    HeightRequest="56"
+                    Margin="0,16,0,0"
+                    x:Name="LoginButton"
+                    AutomationProperties.Name="LoginButton" />
+                    
+            <!-- Indicador de Carga Moderno -->
+            <VerticalStackLayout Spacing="12"
+                                IsVisible="{Binding IsBusy}"
+                                HorizontalOptions="Center">
+                
+                <ActivityIndicator IsRunning="True"
+                                  Color="{StaticResource PrimaryColor}"
+                                  WidthRequest="32"
+                                  HeightRequest="32" />
+                
+                <Label Text="Iniciando sesión..."
+                       Style="{StaticResource CaptionStyle}"
+                       TextColor="{StaticResource TextSecondary}"
+                       HorizontalOptions="Center" />
+            </VerticalStackLayout>
+            
+            <!-- Información adicional Moderna -->
             <Label Text="Versión 4.0 - Pruebas UI"
-                   FontSize="12"
+                   Style="{StaticResource CaptionStyle}"
                    HorizontalOptions="Center"
-                   TextColor="Gray" />
+                   TextColor="{StaticResource TextSecondary}" />
             
-            <!-- Botón de Debug - Solo visible en modo DEBUG -->
+            <!-- Botón de Debug Moderno - Solo visible en modo DEBUG -->
             <Button x:Name="DebugButton"
                     Text="🔧 Debug"
                     Clicked="OnDebugClicked"
-                    BackgroundColor="Orange"
-                    TextColor="White"
-                    FontSize="14"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    HeightRequest="44"
                     IsVisible="False" />
         </VerticalStackLayout>
     </ScrollView>

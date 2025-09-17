@@ -259,48 +259,68 @@ public partial class ComandasViewModel : BaseViewModel
     {
         try
         {
-            // 1) Traer mesas disponibles
-            var mesasResult = await _mesasService.ObtenerMesasDisponiblesAsync();
-            if (!mesasResult.Success)
-            {
-                await _dialogService.ShowAlertAsync("Error", mesasResult.Message ?? "No se pudieron cargar las mesas disponibles");
-                return;
-            }
-
-            var mesas = mesasResult.Data ?? new List<MesaDto>();
-            if (!mesas.Any())
-            {
-                await _dialogService.ShowAlertAsync("Sin Mesas", "No hay mesas disponibles en este momento");
-                return;
-            }
-
-            // 2) Mostrar selector de mesa
-            var opciones = mesas
-                .Select(m => ($"Mesa {m.Numero} — {m.Ubicacion} (Cap: {m.Capacidad})", m.Id))
-                .ToList();
-
-            var labels = opciones.Select(o => o.Item1).ToArray();
-            var seleccion = await _dialogService.ShowActionSheetAsync(
-                "Seleccionar Mesa",
-                "Elija la mesa para la nueva comanda:",
+            // 1) Elegir tipo de comanda
+            var tipoSeleccion = await _dialogService.ShowActionSheetAsync(
+                "Nueva comanda",
+                "Seleccione el tipo de comanda",
                 "Cancelar",
-                labels);
+                new[] { "Mesa", "Para llevar", "Delivery" });
 
-            if (string.IsNullOrWhiteSpace(seleccion) || seleccion == "Cancelar")
+            if (string.IsNullOrWhiteSpace(tipoSeleccion) || tipoSeleccion == "Cancelar")
                 return;
 
-            var mesaSeleccionada = opciones.FirstOrDefault(o => o.Item1 == seleccion);
-            if (mesaSeleccionada == default)
+            var esMesa = tipoSeleccion.Equals("Mesa", StringComparison.OrdinalIgnoreCase);
+
+            if (esMesa)
             {
-                await _dialogService.ShowAlertAsync("Error", "No se pudo identificar la mesa seleccionada");
-                return;
+                // 2) Traer mesas disponibles
+                var mesasResult = await _mesasService.ObtenerMesasDisponiblesAsync();
+                if (!mesasResult.Success)
+                {
+                    await _dialogService.ShowAlertAsync("Error", mesasResult.Message ?? "No se pudieron cargar las mesas disponibles");
+                    return;
+                }
+
+                var mesas = mesasResult.Data ?? new List<MesaDto>();
+                if (!mesas.Any())
+                {
+                    await _dialogService.ShowAlertAsync("Sin Mesas", "No hay mesas disponibles en este momento");
+                    return;
+                }
+
+                // 3) Mostrar selector de mesa
+                var opciones = mesas
+                    .Select(m => ($"Mesa {m.Numero} — {m.Ubicacion} (Cap: {m.Capacidad})", m.Id))
+                    .ToList();
+
+                var labels = opciones.Select(o => o.Item1).ToArray();
+                var seleccion = await _dialogService.ShowActionSheetAsync(
+                    "Seleccionar Mesa",
+                    "Elija la mesa para la nueva comanda:",
+                    "Cancelar",
+                    labels);
+
+                if (string.IsNullOrWhiteSpace(seleccion) || seleccion == "Cancelar")
+                    return;
+
+                var mesaSeleccionada = opciones.FirstOrDefault(o => o.Item1 == seleccion);
+                if (mesaSeleccionada == default)
+                {
+                    await _dialogService.ShowAlertAsync("Error", "No se pudo identificar la mesa seleccionada");
+                    return;
+                }
+
+                // 4) Navegar con mesa y tipo
+                await _navigationService.NavigateToAsync("crear-comanda", new Dictionary<string, object>
+                {
+                    ["mesaId"] = mesaSeleccionada.Item2.ToString()
+                });
             }
-
-            // 3) Navegar al formulario de crear comanda con la mesa elegida
-            await _navigationService.NavigateToAsync("crear-comanda", new Dictionary<string, object>
+            else
             {
-                ["mesaId"] = mesaSeleccionada.Item2.ToString()
-            });
+                // 2) Para llevar / Delivery → navegar sin mesa; el ViewModel ya soporta iniciar sin mesa
+                await _navigationService.NavigateToAsync("crear-comanda", new Dictionary<string, object>());
+            }
         }
         catch (Exception ex)
         {

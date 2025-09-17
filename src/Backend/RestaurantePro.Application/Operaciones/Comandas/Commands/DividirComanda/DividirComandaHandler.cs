@@ -237,7 +237,9 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
                 meseroId: division.MeseroId ?? comandaOriginal.MeseroId,
                 clienteId: comandaOriginal.ClienteId,
                 mesaId: division.MesaDestinoId ?? comandaOriginal.MesaId,
-                observaciones: division.Observaciones ?? $"División de comanda #{comandaOriginal.Id}"
+                observaciones: division.Observaciones ?? $"División de comanda #{comandaOriginal.Id}",
+                numeroComanda: null,
+                tipo: RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda.Mesa
             );
 
             nuevasComandas.Add(nuevaComanda);

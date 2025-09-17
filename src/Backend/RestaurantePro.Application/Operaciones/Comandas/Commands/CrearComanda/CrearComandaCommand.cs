@@ -42,6 +42,11 @@ public class CrearComandaCommand : IRequest<Result<ComandaDto>>
     }
 
     /// <summary>
+    /// Tipo de comanda (Mesa, Delivery, TakeAway)
+    /// </summary>
+    public RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda Tipo { get; set; } = RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda.Mesa;
+
+    /// <summary>
     /// Constructor para facilitar la creación desde controladores
     /// </summary>
     public CrearComandaCommand(Guid meseroId, Guid? mesaId = null, Guid? clienteId = null)

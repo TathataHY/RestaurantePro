@@ -8,6 +8,11 @@ public class CrearComandaRequest
     public string? Observaciones { get; set; }
     public List<ProductoComandaRequest> ProductosIniciales { get; set; } = new();
     public List<ProductoComandaRequest> Items { get; set; } = new();
+
+    /// <summary>
+    /// Tipo de comanda (Mesa, Delivery, TakeAway). Valor por defecto: Mesa
+    /// </summary>
+    public string Tipo { get; set; } = "Mesa";
 }
 
 public class ProductoComandaRequest

@@ -96,9 +96,12 @@ public class ComandasService : IComandasService
 		{
 			if (cancellationToken.IsCancellationRequested)
 				return ApiResponse<ComandaDto>.ErrorResponse("Operación cancelada por el usuario");
-			if (string.IsNullOrEmpty(request.MesaId))
+			// Validar mesa sólo si el tipo es Mesa (por defecto si no se envía)
+			var tipo = (request.Tipo ?? "Mesa").Trim();
+			var requiereMesa = string.Equals(tipo, "Mesa", StringComparison.OrdinalIgnoreCase);
+			if (requiereMesa && string.IsNullOrEmpty(request.MesaId))
 			{
-				return ApiResponse<ComandaDto>.ErrorResponse("La mesa es requerida", "La mesa es requerida");
+				return ApiResponse<ComandaDto>.ErrorResponse("La mesa es requerida para comandas de tipo Mesa", "La mesa es requerida");
 			}
 			if (request.ProductosIniciales == null || request.ProductosIniciales.Count == 0)
 			{
