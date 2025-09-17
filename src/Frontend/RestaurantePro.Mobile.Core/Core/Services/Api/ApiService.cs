@@ -40,12 +40,16 @@ public class ApiService : IApiService
 
     public async Task<ApiResponse<T>> GetAsync<T>(string endpoint, string? token = null, CancellationToken cancellationToken = default)
     {
+        System.Diagnostics.Debug.WriteLine($"🔍 [ApiService] Iniciando GetAsync - endpoint: {endpoint}, token: {!string.IsNullOrEmpty(token)}");
+        
         // Lectura por stream + reintentos para evitar EOF en Android/OkHttp con respuestas chunked
         const int maxAttempts = 3;
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine($"🔍 [ApiService] Intento {attempt}/{maxAttempts}");
+                
                 AddAuthHeader(token);
                 if (!_httpClient.DefaultRequestHeaders.Accept.Any(h => h.MediaType == "application/json"))
                 {
@@ -56,19 +60,28 @@ public class ApiService : IApiService
                 using var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
                 request.Headers.ConnectionClose = true; // Evita mantener viva la conexión (mitiga EOF en Android)
                 try { request.Headers.AcceptEncoding.Clear(); request.Headers.AcceptEncoding.Add(new System.Net.Http.Headers.StringWithQualityHeaderValue("identity")); } catch { }
+                
+                System.Diagnostics.Debug.WriteLine($"🔍 [ApiService] Enviando request a: {endpoint}");
                 var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                System.Diagnostics.Debug.WriteLine($"🔍 [ApiService] Respuesta recibida - StatusCode: {response.StatusCode}");
 
                 if (response.IsSuccessStatusCode)
                 {
+                    System.Diagnostics.Debug.WriteLine($"🔍 [ApiService] StatusCode exitoso, leyendo stream...");
                     await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                    
+                    System.Diagnostics.Debug.WriteLine($"🔍 [ApiService] Iniciando deserialización JSON...");
                     var result = await JsonSerializer.DeserializeAsync<ApiResponse<T>>(stream, GetJsonOptions(), cancellationToken);
+                    System.Diagnostics.Debug.WriteLine($"🔍 [ApiService] Deserialización completada - result: {result != null}");
                     
                     // Verificar si el resultado es válido (no null y tiene datos o es un error válido)
                     if (result == null || (result.Data == null && string.IsNullOrEmpty(result.Message) && string.IsNullOrEmpty(result.Error)))
                     {
+                        System.Diagnostics.Debug.WriteLine($"❌ [ApiService] Respuesta vacía del servidor");
                         return ApiResponse<T>.ErrorResponse("Respuesta vacía del servidor");
                     }
                     
+                    System.Diagnostics.Debug.WriteLine($"✅ [ApiService] Respuesta válida - Success: {result.Success}");
                     return result;
                 }
 

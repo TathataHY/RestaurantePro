@@ -21,15 +21,23 @@ public partial class ProductoDetallePage : ContentPage, IQueryAttributable
     /// </summary>
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
+        System.Diagnostics.Debug.WriteLine("🔍 [ProductoDetallePage] ApplyQueryAttributes llamado");
+        
         if (query.TryGetValue("productoId", out var productoIdObj) && 
             productoIdObj is string productoIdStr &&
             Guid.TryParse(productoIdStr, out var productoId))
         {
+            System.Diagnostics.Debug.WriteLine($"🔍 [ProductoDetallePage] Cargando producto con ID: {productoId}");
+            
             // Cargar el producto cuando aparece la página
             Task.Run(async () =>
             {
                 await _viewModel.LoadProductoCommand.ExecuteAsync(productoId);
             });
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine("❌ [ProductoDetallePage] No se pudo obtener productoId de los parámetros");
         }
     }
 

@@ -27,7 +27,7 @@ public class MesasService : IMesasService
     /// <summary>
     /// Obtiene todas las mesas con filtros opcionales
     /// </summary>
-    public async Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(
+    public async Task<ApiResponse<PaginatedList<MesaDto>>> ObtenerMesasAsync(
         string? estado = null, 
         string? ubicacion = null, 
         int? capacidadMinima = null,
@@ -35,8 +35,10 @@ public class MesasService : IMesasService
     {
         try
         {
+            System.Diagnostics.Debug.WriteLine($"🔍 [MesasService] Iniciando ObtenerMesasAsync - estado: {estado}, ubicacion: {ubicacion}, capacidadMinima: {capacidadMinima}");
+            
             if (cancellationToken.IsCancellationRequested)
-                return ApiResponse<List<MesaDto>>.ErrorResponse("Operación cancelada por el usuario");
+                return ApiResponse<PaginatedList<MesaDto>>.ErrorResponse("Operación cancelada por el usuario");
             var queryParams = new List<string>();
             
             if (!string.IsNullOrWhiteSpace(estado))
@@ -50,32 +52,44 @@ public class MesasService : IMesasService
 
             var query = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
             var endpoint = $"{BasePath}{query}";
+            
+            System.Diagnostics.Debug.WriteLine($"🔍 [MesasService] Endpoint: {endpoint}");
+            
             var token = await _authService.GetTokenAsync();
-            return await _apiService.GetAsync<List<MesaDto>>(endpoint, token);
+            System.Diagnostics.Debug.WriteLine($"🔍 [MesasService] Token obtenido: {!string.IsNullOrEmpty(token)}");
+            if (!string.IsNullOrEmpty(token))
+            {
+                System.Diagnostics.Debug.WriteLine($"🔍 [MesasService] Token: {token.Substring(0, Math.Min(50, token.Length))}...");
+            }
+            
+            var result = await _apiService.GetAsync<PaginatedList<MesaDto>>(endpoint, token);
+            System.Diagnostics.Debug.WriteLine($"🔍 [MesasService] Respuesta recibida - Success: {result.Success}, Data count: {result.Data?.Items?.Count ?? 0}, Total: {result.Data?.TotalCount ?? 0}");
+            
+            return result;
         }
         catch (HttpRequestException ex)
         {
-            return ApiResponse<List<MesaDto>>.ErrorResponse(ex.Message, "Error de comunicación con el servidor", 500);
+            return ApiResponse<PaginatedList<MesaDto>>.ErrorResponse(ex.Message, "Error de comunicación con el servidor", 500);
         }
         catch (TaskCanceledException ex)
         {
-            return ApiResponse<List<MesaDto>>.ErrorResponse(ex.Message, "Timeout de la operación", 408);
+            return ApiResponse<PaginatedList<MesaDto>>.ErrorResponse(ex.Message, "Timeout de la operación", 408);
         }
         catch (IOException ex)
         {
-            return ApiResponse<List<MesaDto>>.ErrorResponse(ex.Message, "Error de entrada/salida", 500);
+            return ApiResponse<PaginatedList<MesaDto>>.ErrorResponse(ex.Message, "Error de entrada/salida", 500);
         }
         catch (SocketException ex)
         {
-            return ApiResponse<List<MesaDto>>.ErrorResponse(ex.Message, "Error de conexión de red", 500);
+            return ApiResponse<PaginatedList<MesaDto>>.ErrorResponse(ex.Message, "Error de conexión de red", 500);
         }
         catch (AggregateException ex)
         {
-            return ApiResponse<List<MesaDto>>.ErrorResponse(ex.Message, "Error de red", 500);
+            return ApiResponse<PaginatedList<MesaDto>>.ErrorResponse(ex.Message, "Error de red", 500);
         }
         catch (Exception ex)
         {
-            return ApiResponse<List<MesaDto>>.ErrorResponse(ex.Message, "Error inesperado", 500);
+            return ApiResponse<PaginatedList<MesaDto>>.ErrorResponse(ex.Message, "Error inesperado", 500);
         }
     }
 

@@ -166,9 +166,24 @@ public class OperacionesMappingProfile : Profile
         CreateMap<Mesa, MesaDto>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
             .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado.ToString()))
+            .ForMember(dest => dest.Ubicacion, opt => opt.MapFrom(src => src.Ubicacion))
             .ForMember(dest => dest.Zona, opt => opt.MapFrom(src => src.Ubicacion))
             .ForMember(dest => dest.UltimaActualizacion, opt => opt.MapFrom(src => src.FechaActualizacion))
-            .ForMember(dest => dest.Numero, opt => opt.MapFrom(src => src.Numero.ToString()));
+            .ForMember(dest => dest.Numero, opt => opt.MapFrom(src => src.Numero.ToString()))
+            .ForMember(dest => dest.Descripcion, opt => opt.MapFrom(src => src.Descripcion))
+            .ForMember(dest => dest.Notas, opt => opt.MapFrom(src => src.Notas))
+            .ForMember(dest => dest.TieneVentana, opt => opt.MapFrom(src => src.TieneVentana))
+            .ForMember(dest => dest.TieneSofa, opt => opt.MapFrom(src => src.TieneSofa))
+            .ForMember(dest => dest.EsAccesible, opt => opt.MapFrom(src => src.EsAccesible))
+            .ForMember(dest => dest.TieneEnchufe, opt => opt.MapFrom(src => src.TieneEnchufe))
+            .ForMember(dest => dest.Tipo, opt => opt.Ignore()) // Se puede asignar en el handler si es necesario
+            .ForMember(dest => dest.Observaciones, opt => opt.Ignore()) // Se puede asignar en el handler si es necesario
+            .ForMember(dest => dest.ClienteId, opt => opt.Ignore()) // Se asigna en el handler si hay cliente asignado
+            .ForMember(dest => dest.NombreCliente, opt => opt.Ignore()) // Se asigna en el handler si hay cliente asignado
+            // Propiedades de BaseDto
+            .ForMember(dest => dest.FechaCreacion, opt => opt.MapFrom(src => src.FechaCreacion))
+            .ForMember(dest => dest.FechaModificacion, opt => opt.MapFrom(src => src.FechaActualizacion))
+            .ForMember(dest => dest.Activo, opt => opt.MapFrom(src => src.Estado != EstadoMesa.FueraDeServicio));
 
         // Mesa → MesaDisponibleDto
         CreateMap<Mesa, MesaDisponibleDto>()

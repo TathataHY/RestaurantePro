@@ -14,7 +14,7 @@ public interface IMesasService
     /// <param name="ubicacion">Filtro opcional por ubicación</param>
     /// <param name="capacidadMinima">Filtro opcional por capacidad mínima</param>
     /// <returns>Lista de mesas</returns>
-    Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(
+    Task<ApiResponse<PaginatedList<MesaDto>>> ObtenerMesasAsync(
         string? estado = null, 
         string? ubicacion = null, 
         int? capacidadMinima = null,

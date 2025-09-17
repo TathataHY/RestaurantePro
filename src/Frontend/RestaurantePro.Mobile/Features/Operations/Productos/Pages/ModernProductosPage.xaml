@@ -161,7 +161,8 @@
                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.VerProductoCommand}"
                                                     CommandParameter="{Binding .}"
                                                     Style="{StaticResource SecondaryButtonStyle}"
-                                                    HorizontalOptions="Start" />
+                                                    HorizontalOptions="Start"
+                                                    Clicked="OnVerProductoClicked" />
                                             <!-- Editar y Eliminar ocultados en mobile operativo -->
                                             <!--<Button Text="✏️ Editar" ... />-->
                                             <!--<Button Text="🗑️ Eliminar" ... />-->

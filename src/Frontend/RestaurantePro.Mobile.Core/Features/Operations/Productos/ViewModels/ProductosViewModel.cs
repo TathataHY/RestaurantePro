@@ -442,17 +442,26 @@ public partial class ProductosViewModel : BaseViewModel
     [RelayCommand]
     private async Task VerProductoAsync(ProductoDto? producto)
     {
-        if (producto == null) return;
+        if (producto == null) 
+        {
+            System.Diagnostics.Debug.WriteLine("🔍 [ProductosViewModel] VerProductoAsync - producto es null");
+            return;
+        }
 
         try
         {
+            System.Diagnostics.Debug.WriteLine($"🔍 [ProductosViewModel] Navegando a detalle del producto: {producto.Nombre} (ID: {producto.Id})");
+            
             await _navigationService.NavigateToAsync("producto-detalle", new Dictionary<string, object>
             {
                 ["productoId"] = producto.Id.ToString()
             });
+            
+            System.Diagnostics.Debug.WriteLine("🔍 [ProductosViewModel] Navegación completada exitosamente");
         }
         catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"❌ [ProductosViewModel] Error en navegación: {ex.Message}");
             await _dialogService.ShowErrorAsync($"Error al ver producto: {ex.Message}");
         }
     }

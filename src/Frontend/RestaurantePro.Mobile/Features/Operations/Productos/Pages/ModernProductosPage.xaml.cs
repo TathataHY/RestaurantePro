@@ -1,5 +1,6 @@
 using RestaurantePro.Mobile.Controls;
 using RestaurantePro.Mobile.Core.Features.Operations.Productos.ViewModels;
+using RestaurantePro.Mobile.Core.Models.DTOs;
 using System.Collections.ObjectModel;
 
 namespace RestaurantePro.Mobile.Features.Operations.Productos.Pages;
@@ -90,6 +91,31 @@ public partial class ModernProductosPage : ContentPage
         await Application.Current.MainPage.DisplayAlert("Navegación", $"Navegando a tab {tabIndex}", "OK");
         
         await this.FadeTo(1, 150);
+    }
+
+    private async void OnVerProductoClicked(object sender, EventArgs e)
+    {
+        System.Diagnostics.Debug.WriteLine("🔍 [ModernProductosPage] OnVerProductoClicked - botón presionado");
+        
+        if (sender is Button button && button.CommandParameter is ProductoDto producto)
+        {
+            System.Diagnostics.Debug.WriteLine($"🔍 [ModernProductosPage] Producto obtenido: {producto.Nombre} (ID: {producto.Id})");
+            
+            // Llamar al comando del ViewModel
+            if (_viewModel.VerProductoCommand.CanExecute(producto))
+            {
+                System.Diagnostics.Debug.WriteLine("🔍 [ModernProductosPage] Ejecutando comando...");
+                await _viewModel.VerProductoCommand.ExecuteAsync(producto);
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("❌ [ModernProductosPage] El comando no se puede ejecutar");
+            }
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine("❌ [ModernProductosPage] No se pudo obtener el producto del CommandParameter");
+        }
     }
 
     private async void OnFilterTabSelected(int tabIndex)

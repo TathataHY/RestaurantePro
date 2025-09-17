@@ -15,6 +15,31 @@ public class MesaDto : INotifyPropertyChanged
     public Guid Id { get; set; }
 
     /// <summary>
+    /// Fecha y hora de creación de la entidad
+    /// </summary>
+    public DateTime FechaCreacion { get; set; }
+
+    /// <summary>
+    /// Fecha y hora de la última modificación
+    /// </summary>
+    public DateTime? FechaModificacion { get; set; }
+
+    /// <summary>
+    /// Usuario que creó la entidad
+    /// </summary>
+    public string CreadoPor { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Usuario que realizó la última modificación
+    /// </summary>
+    public string? ModificadoPor { get; set; }
+
+    /// <summary>
+    /// Indica si la entidad está activa
+    /// </summary>
+    public bool Activo { get; set; } = true;
+
+    /// <summary>
     /// Número de la mesa
     /// </summary>
     public string Numero { get; set; } = string.Empty;
@@ -59,14 +84,14 @@ public class MesaDto : INotifyPropertyChanged
     public string NombreCliente { get; set; } = string.Empty;
     
     /// <summary>
-    /// Zona o área donde se encuentra la mesa
-    /// </summary>
-    public string Zona { get; set; } = string.Empty;
-    
-    /// <summary>
     /// Ubicación de la mesa
     /// </summary>
     public string Ubicacion { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Zona o área donde se encuentra la mesa
+    /// </summary>
+    public string Zona { get; set; } = string.Empty;
     
     /// <summary>
     /// Tipo de mesa
@@ -82,6 +107,36 @@ public class MesaDto : INotifyPropertyChanged
     /// Hora de la última actualización
     /// </summary>
     public DateTime UltimaActualizacion { get; set; }
+
+    /// <summary>
+    /// Descripción adicional de la mesa
+    /// </summary>
+    public string? Descripcion { get; set; }
+    
+    /// <summary>
+    /// Notas especiales sobre la mesa
+    /// </summary>
+    public string? Notas { get; set; }
+    
+    /// <summary>
+    /// Indica si la mesa tiene ventana
+    /// </summary>
+    public bool TieneVentana { get; set; }
+    
+    /// <summary>
+    /// Indica si la mesa tiene sofá
+    /// </summary>
+    public bool TieneSofa { get; set; }
+    
+    /// <summary>
+    /// Indica si la mesa es accesible para personas con discapacidad
+    /// </summary>
+    public bool EsAccesible { get; set; }
+    
+    /// <summary>
+    /// Indica si la mesa tiene enchufes disponibles
+    /// </summary>
+    public bool TieneEnchufe { get; set; }
 
     /// <summary>
     /// Color para mostrar en la UI según el estado

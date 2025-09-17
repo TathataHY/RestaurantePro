@@ -5,6 +5,7 @@ using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Services.Mesas;
 using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Navigation;
+using RestaurantePro.Mobile.Core.Services.Authentication;
 using RestaurantePro.Mobile.Core.Models.ViewModels;
 
 namespace RestaurantePro.Mobile.Core.Features.Operations.Mesas.ViewModels;
@@ -17,6 +18,7 @@ public partial class MesasViewModel : BaseViewModel
     private readonly IMesasService _mesasService;
     private readonly IDialogService _dialogService;
     private readonly INavigationService _navigationService;
+    private readonly IAuthService _authService;
     private readonly SemaphoreSlim _loadingSemaphore = new(1, 1);
 
     // Buffer para paginado en cliente
@@ -79,11 +81,13 @@ public partial class MesasViewModel : BaseViewModel
     public MesasViewModel(
         IMesasService mesasService,
         IDialogService dialogService,
-        INavigationService navigationService)
+        INavigationService navigationService,
+        IAuthService authService)
     {
         _mesasService = mesasService;
         _dialogService = dialogService;
         _navigationService = navigationService;
+        _authService = authService;
         
         Title = "Gestión de Mesas";
     }
@@ -113,6 +117,10 @@ public partial class MesasViewModel : BaseViewModel
 
             System.Diagnostics.Debug.WriteLine($"🔍 MesasViewModel.LoadMesasAsync - Iniciando carga de mesas");
             System.Diagnostics.Debug.WriteLine($"🔍 Filtros: Estado={estado}, Ubicacion={ubicacion}, CapacidadMinima={capacidadMinima}");
+            
+            // Verificar autenticación
+            var isAuthenticated = await _authService.IsAuthenticatedAsync();
+            System.Diagnostics.Debug.WriteLine($"🔍 [MesasViewModel] Usuario autenticado: {isAuthenticated}");
 
             var response = await _mesasService.ObtenerMesasAsync(
                 string.IsNullOrWhiteSpace(estado) ? null : NormalizeEstado(estado),
@@ -121,7 +129,7 @@ public partial class MesasViewModel : BaseViewModel
 
             if (response.Success)
             {
-                var data = response.Data ?? new List<MesaDto>();
+                var data = response.Data?.Items ?? new List<MesaDto>();
 
                 // Actualizar ubicaciones disponibles (distintas, no vacías)
                 var ubicaciones = data
@@ -160,7 +168,7 @@ public partial class MesasViewModel : BaseViewModel
                 _currentBufferIndex = 0;
                 Mesas.Clear();
                 AppendNextPage();
-                System.Diagnostics.Debug.WriteLine($"✅ Se cargaron {_allMesasBuffer.Count} mesas (mostrando {Mesas.Count})");
+                System.Diagnostics.Debug.WriteLine($"✅ Se cargaron {_allMesasBuffer.Count} mesas (mostrando {Mesas.Count}) - Total en servidor: {response.Data?.TotalCount ?? 0}");
             }
             else
             {
@@ -170,6 +178,8 @@ public partial class MesasViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"❌ ERROR en LoadMesasAsync: {ex.GetType().Name}: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"❌ StackTrace: {ex.StackTrace}");
             await ShowErrorAsync($"Error inesperado: {ex.Message}");
             await _dialogService.ShowAlertAsync("Error", ErrorMessage);
         }

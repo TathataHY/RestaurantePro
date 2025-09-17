@@ -91,15 +91,23 @@ public partial class ProductoDetalleViewModel : BaseViewModel
     [RelayCommand]
     private async Task LoadProductoAsync(Guid productoId)
     {
-        if (IsBusy) return;
+        System.Diagnostics.Debug.WriteLine($"🔍 [ProductoDetalleViewModel] LoadProductoAsync iniciado con ID: {productoId}");
+        
+        if (IsBusy) 
+        {
+            System.Diagnostics.Debug.WriteLine("⚠️ [ProductoDetalleViewModel] Ya está ocupado, saliendo...");
+            return;
+        }
 
         IsBusy = true;
         try
         {
+            System.Diagnostics.Debug.WriteLine("🔍 [ProductoDetalleViewModel] Llamando al servicio de productos...");
             var result = await _productosService.ObtenerProductoPorIdAsync(productoId);
 
             if (result.Success && result.Data != null)
             {
+                System.Diagnostics.Debug.WriteLine($"✅ [ProductoDetalleViewModel] Producto cargado exitosamente: {result.Data.Nombre}");
                 Producto = result.Data;
                 
                 // Actualizar título con información del producto
@@ -113,6 +121,7 @@ public partial class ProductoDetalleViewModel : BaseViewModel
             }
             else
             {
+                System.Diagnostics.Debug.WriteLine($"❌ [ProductoDetalleViewModel] Error al cargar producto: {result.Message}");
                 await _dialogService.ShowAlertAsync("Error", 
                     result.Message ?? "No se pudo cargar el producto");
             }
