@@ -36,6 +36,40 @@
                 </StackLayout>
             </Frame>
 
+            <!-- Información de Entrega (solo para Delivery) -->
+            <Frame BackgroundColor="{AppThemeBinding Light=#FFF3E0, Dark=#2D2D2D}" 
+                   CornerRadius="12" 
+                   Padding="16"
+                   HasShadow="True"
+                   x:Name="DeliveryInfoFrame"
+                   IsVisible="False">
+                <StackLayout Spacing="12">
+                    <Label Text="🚚 Información de Entrega" 
+                           FontSize="16" 
+                           FontAttributes="Bold" 
+                           TextColor="{AppThemeBinding Light=#F57C00, Dark=#FFB74D}"/>
+                    
+                    <Entry Text="{Binding NombreEntrega}" 
+                           Placeholder="Nombre de quien recibe"
+                           FontSize="14"
+                           BackgroundColor="{AppThemeBinding Light=White, Dark=#424242}"
+                           TextColor="{AppThemeBinding Light=#424242, Dark=#E0E0E0}"/>
+                    
+                    <Entry Text="{Binding DireccionEntrega}" 
+                           Placeholder="Dirección de entrega completa"
+                           FontSize="14"
+                           BackgroundColor="{AppThemeBinding Light=White, Dark=#424242}"
+                           TextColor="{AppThemeBinding Light=#424242, Dark=#E0E0E0}"/>
+                    
+                    <Entry Text="{Binding TelefonoEntrega}" 
+                           Placeholder="Teléfono de contacto"
+                           Keyboard="Telephone"
+                           FontSize="14"
+                           BackgroundColor="{AppThemeBinding Light=White, Dark=#424242}"
+                           TextColor="{AppThemeBinding Light=#424242, Dark=#E0E0E0}"/>
+                </StackLayout>
+            </Frame>
+
             <!-- Búsqueda de productos -->
             <Frame BackgroundColor="{AppThemeBinding Light=White, Dark=#2D2D2D}" 
                    CornerRadius="12" 

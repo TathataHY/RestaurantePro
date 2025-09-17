@@ -99,6 +99,21 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         public string? Observaciones { get; private set; }
 
         /// <summary>
+        /// Nombre de la persona que recibe la entrega (solo para Delivery)
+        /// </summary>
+        public string? NombreEntrega { get; private set; }
+
+        /// <summary>
+        /// Dirección de entrega (solo para Delivery)
+        /// </summary>
+        public string? DireccionEntrega { get; private set; }
+
+        /// <summary>
+        /// Teléfono de contacto para la entrega (solo para Delivery)
+        /// </summary>
+        public string? TelefonoEntrega { get; private set; }
+
+        /// <summary>
         /// Total de la comanda.
         /// Objeto de valor que encapsula el cálculo de subtotal, impuestos y total.
         /// </summary>
@@ -189,12 +204,15 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             Guid? mesaId = null,
             string? observaciones = null,
             string? numeroComanda = null,
-            RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda tipo = RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda.Mesa)
+            RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda tipo = RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda.Mesa,
+            string? nombreEntrega = null,
+            string? direccionEntrega = null,
+            string? telefonoEntrega = null)
         {
-            return Crear(meseroId, DateTime.Now, clienteId, mesaId, observaciones, numeroComanda, tipo);
+            return Crear(meseroId, DateTime.Now, clienteId, mesaId, observaciones, numeroComanda, tipo, nombreEntrega, direccionEntrega, telefonoEntrega);
         }
 
-        public static Comanda Crear(Guid? meseroId, DateTime fechaCreacion, Guid? clienteId = null, Guid? mesaId = null, string? observaciones = null, string? numeroComanda = null, RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda tipo = RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda.Mesa)
+        public static Comanda Crear(Guid? meseroId, DateTime fechaCreacion, Guid? clienteId = null, Guid? mesaId = null, string? observaciones = null, string? numeroComanda = null, RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda tipo = RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda.Mesa, string? nombreEntrega = null, string? direccionEntrega = null, string? telefonoEntrega = null)
         {
             if (fechaCreacion > DateTime.Now.AddMinutes(1))
             {
@@ -212,7 +230,10 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
                 Observaciones = observaciones ?? string.Empty,
                 Total = TotalComanda.Crear(0, 0),
                 Tipo = tipo,
-                NumeroComanda = numeroComanda ?? GenerarNumeroComanda(tipo, fechaCreacion)
+                NumeroComanda = numeroComanda ?? GenerarNumeroComanda(tipo, fechaCreacion),
+                NombreEntrega = nombreEntrega,
+                DireccionEntrega = direccionEntrega,
+                TelefonoEntrega = telefonoEntrega
             };
 
             comanda.AddDomainEvent(new ComandaCreada(comanda.Id, comanda.MesaId ?? Guid.Empty, meseroId ?? Guid.Empty));
@@ -465,6 +486,19 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             {
                 if (MesaId == Guid.Empty)
                     throw new InvalidOperationException("La comanda de tipo Mesa debe tener una mesa asignada");
+            }
+
+            // Verificar información de entrega para comandas Delivery
+            if (Tipo == RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda.Delivery)
+            {
+                if (string.IsNullOrWhiteSpace(NombreEntrega))
+                    throw new InvalidOperationException("Las comandas Delivery requieren un nombre de entrega");
+                    
+                if (string.IsNullOrWhiteSpace(DireccionEntrega))
+                    throw new InvalidOperationException("Las comandas Delivery requieren una dirección de entrega");
+                    
+                if (string.IsNullOrWhiteSpace(TelefonoEntrega))
+                    throw new InvalidOperationException("Las comandas Delivery requieren un teléfono de contacto");
             }
                 
             if (MeseroId == Guid.Empty)

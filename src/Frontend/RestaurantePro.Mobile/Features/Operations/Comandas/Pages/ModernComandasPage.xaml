@@ -102,6 +102,20 @@
                                                  VerticalOptions="Center">
                                         <Label Text="{Binding NumeroDisplay, StringFormat='Comanda {0}'}" 
                                                Style="{StaticResource H3Style}" />
+                                        
+                                        <!-- Indicador de Tipo -->
+                                        <Border BackgroundColor="{AppThemeBinding Light=#FFF3E0, Dark=#2D2D2D}"
+                                                StrokeShape="RoundRectangle 8"
+                                                Padding="6,2"
+                                                Margin="8,0,0,0"
+                                                IsVisible="{Binding Tipo, Converter={StaticResource IsNotNullConverter}}">
+                                            <Label Text="{Binding TipoIcon}" 
+                                                   FontSize="12" 
+                                                   TextColor="{AppThemeBinding Light=#F57C00, Dark=#FFB74D}"
+                                                   FontAttributes="Bold"
+                                                   HorizontalOptions="Center" />
+                                        </Border>
+                                        
                                         <Label Text="{Binding Estado, Converter={StaticResource EstadoIconConverter}}" 
                                                FontSize="16" 
                                                Margin="8,0,0,0" />

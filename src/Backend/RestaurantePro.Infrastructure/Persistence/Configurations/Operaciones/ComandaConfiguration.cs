@@ -37,6 +37,15 @@ public class ComandaConfiguration : IEntityTypeConfiguration<Comanda>
             
         builder.Property(p => p.Observaciones)
             .HasMaxLength(500);
+
+        builder.Property(p => p.NombreEntrega)
+            .HasMaxLength(100);
+
+        builder.Property(p => p.DireccionEntrega)
+            .HasMaxLength(200);
+
+        builder.Property(p => p.TelefonoEntrega)
+            .HasMaxLength(20);
             
         builder.Property(p => p.EstaEliminado)
             .IsRequired()

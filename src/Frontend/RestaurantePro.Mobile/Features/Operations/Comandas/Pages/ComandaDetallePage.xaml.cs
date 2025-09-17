@@ -1,4 +1,5 @@
 using RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;
+using System.ComponentModel;
 
 namespace RestaurantePro.Mobile.Features.Operations.Comandas.Pages;
 
@@ -14,6 +15,9 @@ public partial class ComandaDetallePage : ContentPage, IQueryAttributable
         InitializeComponent();
         _viewModel = viewModel;
         BindingContext = _viewModel;
+        
+        // Suscribirse a cambios en el ViewModel para controlar visibilidad
+        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
     }
 
     /// <summary>
@@ -34,11 +38,33 @@ public partial class ComandaDetallePage : ContentPage, IQueryAttributable
     }
 
     /// <summary>
+    /// Controlar visibilidad de información de entrega cuando cambian las propiedades del ViewModel
+    /// </summary>
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(_viewModel.Comanda))
+        {
+            UpdateDeliveryInfoVisibility();
+        }
+    }
+
+    /// <summary>
+    /// Actualizar visibilidad del frame de información de entrega
+    /// </summary>
+    private void UpdateDeliveryInfoVisibility()
+    {
+        var esDelivery = _viewModel.Comanda?.Tipo == "Delivery" || _viewModel.Comanda?.Tipo == "2";
+        DeliveryInfoFrame.IsVisible = esDelivery;
+        System.Diagnostics.Debug.WriteLine($"🔍 [ComandaDetallePage] UpdateDeliveryInfoVisibility - Tipo: {_viewModel.Comanda?.Tipo}, EsDelivery: {esDelivery}");
+    }
+
+    /// <summary>
     /// Limpiar datos cuando la página desaparece
     /// </summary>
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
+        _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         _viewModel.Cleanup();
     }
 } 

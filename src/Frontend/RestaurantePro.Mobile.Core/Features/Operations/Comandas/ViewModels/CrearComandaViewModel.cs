@@ -33,7 +33,26 @@ public partial class CrearComandaViewModel : BaseViewModel
     private readonly HashSet<Guid> _itemsEliminados = new();
     private const int MaxAPrepararPorItem = 10; // Regla de negocio: tope de preparación por ítem
     // "Mesa" (por defecto), "Delivery" o "Para llevar"
-    public string TipoSeleccionado { get; set; } = "Mesa";
+    [ObservableProperty]
+    private string _tipoSeleccionado = "Mesa";
+
+    [ObservableProperty]
+    private string _nombreEntrega = string.Empty;
+
+    [ObservableProperty]
+    private string _direccionEntrega = string.Empty;
+
+    [ObservableProperty]
+    private string _telefonoEntrega = string.Empty;
+
+    partial void OnTipoSeleccionadoChanged(string value) 
+    {
+        System.Diagnostics.Debug.WriteLine($"🔍 [CrearComandaViewModel] TipoSeleccionado cambió a: {value}");
+        OnPropertyChanged(nameof(PuedeGuardar));
+    }
+    partial void OnNombreEntregaChanged(string value) => OnPropertyChanged(nameof(PuedeGuardar));
+    partial void OnDireccionEntregaChanged(string value) => OnPropertyChanged(nameof(PuedeGuardar));
+    partial void OnTelefonoEntregaChanged(string value) => OnPropertyChanged(nameof(PuedeGuardar));
 
 
     [ObservableProperty]
@@ -89,7 +108,20 @@ public partial class CrearComandaViewModel : BaseViewModel
     public string TextoBotonPrimario => EsEdicion ? "Guardar Cambios" : "Crear";
 
     public bool PuedeCrearComanda => ProductosCarrito.Any() && !IsLoading;
-    public bool PuedeGuardar => (EsEdicion ? true : ProductosCarrito.Any()) && !IsLoading;
+    public bool PuedeGuardar => (EsEdicion ? true : ProductosCarrito.Any()) && !IsLoading && ValidarCamposRequeridos();
+
+    private bool ValidarCamposRequeridos()
+    {
+        // Para comandas Delivery, validar que se hayan llenado los campos de entrega
+        if (TipoSeleccionado == "Delivery")
+        {
+            return !string.IsNullOrWhiteSpace(NombreEntrega) && 
+                   !string.IsNullOrWhiteSpace(DireccionEntrega) && 
+                   !string.IsNullOrWhiteSpace(TelefonoEntrega);
+        }
+        
+        return true; // Para Mesa y TakeAway no hay campos adicionales requeridos
+    }
 
     public decimal TotalCarrito => ProductosCarrito.Sum(p => p.Subtotal);
 
@@ -649,7 +681,10 @@ public partial class CrearComandaViewModel : BaseViewModel
                     Observaciones = Observaciones,
                     ProductosIniciales = productosComanda,
                     Items = productosComanda,
-                    Tipo = tipoEnviar
+                    Tipo = tipoEnviar,
+                    NombreEntrega = TipoSeleccionado == "Delivery" ? NombreEntrega : null,
+                    DireccionEntrega = TipoSeleccionado == "Delivery" ? DireccionEntrega : null,
+                    TelefonoEntrega = TipoSeleccionado == "Delivery" ? TelefonoEntrega : null
                 };
 
                 var result = await _comandasService.CrearComandaAsync(comandaRequest);
@@ -700,6 +735,7 @@ public partial class CrearComandaViewModel : BaseViewModel
         try
         {
             IsLoading = true;
+            System.Diagnostics.Debug.WriteLine($"🔍 [CrearComandaViewModel] InitializeAsync - MesaId: {mesaId}, TipoSeleccionado: {TipoSeleccionado}");
             
             if (!string.IsNullOrWhiteSpace(mesaId) && Guid.TryParse(mesaId, out var _))
             {

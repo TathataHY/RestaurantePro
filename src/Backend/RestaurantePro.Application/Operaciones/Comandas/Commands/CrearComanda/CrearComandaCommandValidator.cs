@@ -31,6 +31,22 @@ public class CrearComandaCommandValidator : AbstractValidator<CrearComandaComman
                 }).WithMessage("La mesa especificada no existe");
         });
 
+        // Validaciones para comandas Delivery
+        When(x => x.Tipo == RestaurantePro.Domain.Operaciones.Comandas.Enums.TipoComanda.Delivery, () =>
+        {
+            RuleFor(x => x.NombreEntrega)
+                .NotEmpty().WithMessage("El nombre de entrega es obligatorio para comandas Delivery")
+                .MaximumLength(100).WithMessage("El nombre de entrega no puede exceder 100 caracteres");
+
+            RuleFor(x => x.DireccionEntrega)
+                .NotEmpty().WithMessage("La dirección de entrega es obligatoria para comandas Delivery")
+                .MaximumLength(200).WithMessage("La dirección de entrega no puede exceder 200 caracteres");
+
+            RuleFor(x => x.TelefonoEntrega)
+                .NotEmpty().WithMessage("El teléfono de contacto es obligatorio para comandas Delivery")
+                .MaximumLength(20).WithMessage("El teléfono de entrega no puede exceder 20 caracteres");
+        });
+
         RuleFor(x => x.ClienteId)
             .MustAsync(async (clienteId, ct) =>
             {

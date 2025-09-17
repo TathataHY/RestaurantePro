@@ -324,10 +324,46 @@ public class ComandaDto
             var estado = Estado.ToLowerInvariant();
             var estadoTexto = EstadoTexto.ToLowerInvariant();
             var estadoNormalizado = !string.IsNullOrWhiteSpace(estado) ? estado : estadoTexto;
-            
-            return (estadoNormalizado == "creada" || estadoNormalizado == "pendiente" || estadoNormalizado == "enproceso") 
-                   && estadoNormalizado != "finalizada" 
+
+            return (estadoNormalizado == "creada" || estadoNormalizado == "pendiente" || estadoNormalizado == "enproceso")
+                   && estadoNormalizado != "finalizada"
                    && estadoNormalizado != "cancelada";
+        }
+    }
+
+    /// <summary>
+    /// Nombre de la persona que recibe la entrega (solo para Delivery)
+    /// </summary>
+    public string? NombreEntrega { get; set; }
+
+    /// <summary>
+    /// Dirección de entrega (solo para Delivery)
+    /// </summary>
+    public string? DireccionEntrega { get; set; }
+
+    /// <summary>
+    /// Teléfono de contacto para la entrega (solo para Delivery)
+    /// </summary>
+    public string? TelefonoEntrega { get; set; }
+
+    /// <summary>
+    /// Tipo de comanda (Mesa, Delivery, TakeAway)
+    /// </summary>
+    public string? Tipo { get; set; }
+
+    /// <summary>
+    /// Ícono que representa el tipo de comanda
+    /// </summary>
+    public string TipoIcon
+    {
+        get
+        {
+            return Tipo?.ToLower() switch
+            {
+                "delivery" or "2" => "🚚 DEL",
+                "takeaway" or "3" => "🥡 TKW", 
+                "mesa" or "1" or _ => "🪑 COM"
+            };
         }
     }
 } 

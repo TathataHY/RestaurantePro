@@ -37,6 +37,10 @@ public class OperacionesMappingProfile : Profile
             .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado))
             .ForMember(dest => dest.EstadoTexto, opt => opt.MapFrom(src => MapearEstadoTexto(src.Estado)))
             .ForMember(dest => dest.Tipo, opt => opt.MapFrom(src => src.Tipo.ToString()))
+            .ForMember(dest => dest.NumeroComanda, opt => opt.MapFrom(src => src.NumeroComanda))
+            .ForMember(dest => dest.NombreEntrega, opt => opt.MapFrom(src => src.NombreEntrega))
+            .ForMember(dest => dest.DireccionEntrega, opt => opt.MapFrom(src => src.DireccionEntrega))
+            .ForMember(dest => dest.TelefonoEntrega, opt => opt.MapFrom(src => src.TelefonoEntrega))
             .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items))
             .ForMember(dest => dest.Subtotal, opt => opt.MapFrom(src => src.Total != null ? src.Total.Subtotal : 0))
             .ForMember(dest => dest.Impuestos, opt => opt.MapFrom(src => src.Total != null ? src.Total.Impuestos : 0))
@@ -71,7 +75,7 @@ public class OperacionesMappingProfile : Profile
 
         // Comanda → ComandaSummaryDto (mapeo resumido para listas)
         CreateMap<Comanda, ComandaSummaryDto>()
-            .ForMember(dest => dest.NumeroComanda, opt => opt.MapFrom(src => $"C-{src.Id.ToString().Substring(0, 8)}"))
+            .ForMember(dest => dest.NumeroComanda, opt => opt.MapFrom(src => src.NumeroComanda))
             .ForMember(dest => dest.Estado, opt => opt.MapFrom(src => src.Estado.ToString()))
             // TODO: Reactivar cuando existan estas propiedades en ComandaSummaryDto
             //.ForMember(dest => dest.EstadoDisplay, opt => opt.MapFrom(src => MapearEstadoTexto(src.Estado)))

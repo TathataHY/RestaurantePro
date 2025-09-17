@@ -159,7 +159,10 @@ public class CrearComandaCommandHandler : IRequestHandler<CrearComandaCommand, R
             request.MesaId,
             request.Observaciones,
             null,
-            request.Tipo
+            request.Tipo,
+            request.NombreEntrega,
+            request.DireccionEntrega,
+            request.TelefonoEntrega
         );
 
         // 2. Agregar productos iniciales

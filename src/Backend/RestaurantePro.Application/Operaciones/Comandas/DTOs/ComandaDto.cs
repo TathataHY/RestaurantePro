@@ -132,7 +132,22 @@ public class ComandaDto : BaseDto
     /// <summary>
     /// Número de comanda formateado
     /// </summary>
-    public string NumeroComanda => $"C-{Id.ToString().Substring(0, 8).ToUpper()}";
+    public string NumeroComanda { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Nombre de la persona que recibe la entrega (solo para Delivery)
+    /// </summary>
+    public string? NombreEntrega { get; set; }
+
+    /// <summary>
+    /// Dirección de entrega (solo para Delivery)
+    /// </summary>
+    public string? DireccionEntrega { get; set; }
+
+    /// <summary>
+    /// Teléfono de contacto para la entrega (solo para Delivery)
+    /// </summary>
+    public string? TelefonoEntrega { get; set; }
 
     /// <summary>
     /// Mesa formateada para mostrar

@@ -66,6 +66,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
@@ -121,8 +122,50 @@
             </Grid>
         </Frame>
 
+        <!-- Información de Entrega (solo para Delivery) -->
+        <Frame Grid.Row="1" 
+               BackgroundColor="{AppThemeBinding Light=#FFF3E0, Dark=#2D2D2D}" 
+               Padding="12" 
+               Margin="8,0"
+               x:Name="DeliveryInfoFrame"
+               IsVisible="False">
+            <StackLayout>
+                <Label Text="🚚 Información de Entrega" 
+                       FontSize="16" FontAttributes="Bold" 
+                       TextColor="{AppThemeBinding Light=#F57C00, Dark=#FFB74D}" />
+                
+                <Grid Margin="0,8,0,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    
+                    <Label Grid.Row="0" Grid.Column="0" Text="👤" FontSize="16" VerticalOptions="Center" />
+                    <Label Grid.Row="0" Grid.Column="1" 
+                           Text="{Binding Comanda.NombreEntrega, StringFormat='Nombre: {0}', TargetNullValue='Nombre: —'}" 
+                           FontSize="14" TextColor="#333" VerticalOptions="Center" Margin="8,0,0,0" />
+                    
+                    <Label Grid.Row="1" Grid.Column="0" Text="📍" FontSize="16" VerticalOptions="Center" />
+                    <Label Grid.Row="1" Grid.Column="1" 
+                           Text="{Binding Comanda.DireccionEntrega, StringFormat='Dirección: {0}', TargetNullValue='Dirección: —'}" 
+                           FontSize="14" TextColor="#333" VerticalOptions="Center" Margin="8,0,0,0" />
+                    
+                    <Label Grid.Row="2" Grid.Column="0" Text="📞" FontSize="16" VerticalOptions="Center" />
+                    <Label Grid.Row="2" Grid.Column="1" 
+                           Text="{Binding Comanda.TelefonoEntrega, StringFormat='Teléfono: {0}', TargetNullValue='Teléfono: —'}" 
+                           FontSize="14" TextColor="#333" VerticalOptions="Center" Margin="8,0,0,0" />
+                </Grid>
+            </StackLayout>
+        </Frame>
+
         <!-- Resumen de Totales -->
-        <Frame Grid.Row="1" BackgroundColor="#E8F5E8" Padding="12" Margin="8,0">
+        <Frame Grid.Row="2" BackgroundColor="#E8F5E8" Padding="12" Margin="8,0">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -151,7 +194,7 @@
         </Frame>
 
         <!-- Lista de Items -->
-        <RefreshView Grid.Row="2"
+        <RefreshView Grid.Row="3"
                      IsRefreshing="{Binding IsBusy}"
                      Command="{Binding RefreshCommand}">
             <CollectionView ItemsSource="{Binding Items}"
@@ -233,7 +276,7 @@
         </RefreshView>
 
         <!-- Botones de Acción Principal -->
-        <ScrollView Grid.Row="3" Orientation="Horizontal">
+        <ScrollView Grid.Row="4" Orientation="Horizontal">
             <StackLayout Orientation="Horizontal" 
                          HorizontalOptions="Center" 
                          Padding="16"

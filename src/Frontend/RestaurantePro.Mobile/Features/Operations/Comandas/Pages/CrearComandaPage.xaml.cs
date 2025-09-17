@@ -1,5 +1,6 @@
 using RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;
 using RestaurantePro.Mobile.Core.Features.Operations.Comandas.Models;
+using System.ComponentModel;
 
 namespace RestaurantePro.Mobile.Features.Operations.Comandas.Pages;
 
@@ -15,6 +16,27 @@ public partial class CrearComandaPage : ContentPage, IQueryAttributable
         InitializeComponent();
         _viewModel = viewModel;
         BindingContext = _viewModel;
+        
+        // Suscribirse a cambios de TipoSeleccionado para controlar visibilidad
+        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        
+        // Configurar visibilidad inicial
+        UpdateDeliveryInfoVisibility();
+    }
+
+    private void OnViewModelPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(_viewModel.TipoSeleccionado))
+        {
+            UpdateDeliveryInfoVisibility();
+        }
+    }
+
+    private void UpdateDeliveryInfoVisibility()
+    {
+        var esDelivery = _viewModel.TipoSeleccionado == "Delivery";
+        DeliveryInfoFrame.IsVisible = esDelivery;
+        System.Diagnostics.Debug.WriteLine($"🔍 [CrearComandaPage] UpdateDeliveryInfoVisibility - Tipo: {_viewModel.TipoSeleccionado}, EsDelivery: {esDelivery}, Frame.IsVisible: {DeliveryInfoFrame.IsVisible}");
     }
 
     /// <summary>
@@ -32,6 +54,8 @@ public partial class CrearComandaPage : ContentPage, IQueryAttributable
         if (query.TryGetValue("tipo", out var tipoObj) && !string.IsNullOrWhiteSpace(tipoObj?.ToString()))
         {
             _viewModel.TipoSeleccionado = tipoObj!.ToString()!;
+            System.Diagnostics.Debug.WriteLine($"🔍 [CrearComandaPage] TipoSeleccionado establecido: {_viewModel.TipoSeleccionado}");
+            UpdateDeliveryInfoVisibility();
         }
 
         if (query.TryGetValue("mesaId", out var mesaIdObj) && !string.IsNullOrEmpty(mesaIdObj?.ToString()))

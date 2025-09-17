@@ -13,6 +13,21 @@ public class CrearComandaRequest
     /// Tipo de comanda (Mesa, Delivery, TakeAway). Valor por defecto: Mesa
     /// </summary>
     public string Tipo { get; set; } = "Mesa";
+
+    /// <summary>
+    /// Nombre de la persona que recibe la entrega (requerido para Delivery)
+    /// </summary>
+    public string? NombreEntrega { get; set; }
+
+    /// <summary>
+    /// Dirección de entrega (requerido para Delivery)
+    /// </summary>
+    public string? DireccionEntrega { get; set; }
+
+    /// <summary>
+    /// Teléfono de contacto para la entrega (requerido para Delivery)
+    /// </summary>
+    public string? TelefonoEntrega { get; set; }
 }
 
 public class ProductoComandaRequest
