@@ -462,4 +462,67 @@ public class ProductosController : ControllerBase
 
         return true;
     }
+
+    /// <summary>
+    /// Busca productos por texto
+    /// </summary>
+    [HttpGet("buscar")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<List<ProductoDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<List<ProductoDto>>>> BuscarProductos(
+        [FromQuery] string? texto = null,
+        [FromQuery] bool soloActivos = true,
+        [FromQuery] Guid? categoriaId = null,
+        [FromQuery] int limite = 100)
+    {
+        _logger.LogInformation("🔍 GET /api/core/productos/buscar - Texto: '{Texto}', SoloActivos: {SoloActivos}, CategoriaId: {CategoriaId}, Limite: {Limite}", 
+            texto, soloActivos, categoriaId, limite);
+
+        try
+        {
+            var query = new ObtenerProductosPaginadosQuery
+            {
+                Filtro = texto,
+                SoloActivos = soloActivos,
+                CategoriaId = categoriaId,
+                PageNumber = 1,
+                PageSize = limite,
+                OrderBy = "Nombre",
+                OrderDirection = "asc"
+            };
+
+            var result = await _mediator.Send(query);
+
+            if (!result.Succeeded)
+            {
+                _logger.LogWarning("❌ Error al buscar productos: {Error}", result.Error);
+                var errorResponse = ApiResponse<List<ProductoDto>>.ErrorResponse(
+                    result.Errors ?? new List<string> { result.Error ?? "Error desconocido" },
+                    "Error al buscar productos",
+                    StatusCodes.Status400BadRequest);
+                return BadRequest(errorResponse);
+            }
+
+            _logger.LogInformation("✅ Búsqueda exitosa: {Count} productos encontrados", result.Value?.Items?.Count ?? 0);
+            
+            // Convertir PaginatedList<ProductoDto> a List<ProductoDto> para la respuesta
+            var productos = result.Value?.Items?.ToList() ?? new List<ProductoDto>();
+            
+            var response = ApiResponse<List<ProductoDto>>.SuccessResponse(
+                productos, 
+                $"Búsqueda completada: {productos.Count} productos encontrados");
+            
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error interno al buscar productos");
+            var errorResponse = ApiResponse<List<ProductoDto>>.ErrorResponse(
+                new List<string> { "Error interno del servidor" },
+                "Error de servidor",
+                StatusCodes.Status500InternalServerError);
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
+    }
 } 

@@ -62,6 +62,29 @@ public partial class CrearComandaViewModel : BaseViewModel
     [ObservableProperty]
     private string _textoBusqueda = string.Empty;
 
+    partial void OnTextoBusquedaChanged(string value)
+    {
+        // Ejecutar búsqueda automáticamente cuando cambie el texto
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                // Pequeño delay para evitar búsquedas excesivas mientras el usuario escribe
+                await Task.Delay(300);
+                
+                // Verificar que el texto no haya cambiado durante el delay
+                if (TextoBusqueda == value)
+                {
+                    await BuscarProductosAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ Error en búsqueda automática: {ex.Message}");
+            }
+        });
+    }
+
     [ObservableProperty]
     private string _observaciones = string.Empty;
 
@@ -153,6 +176,7 @@ public partial class CrearComandaViewModel : BaseViewModel
     {
         try
         {
+            System.Diagnostics.Debug.WriteLine($"🔍 [CrearComandaViewModel] Iniciando búsqueda de productos - Texto: '{TextoBusqueda}'");
             IsLoading = true;
             
             ApiResponse<List<ProductoDto>> result;
@@ -170,6 +194,7 @@ public partial class CrearComandaViewModel : BaseViewModel
             
             if (result.Success && result.Data != null)
             {
+                System.Diagnostics.Debug.WriteLine($"✅ [CrearComandaViewModel] Búsqueda exitosa - {result.Data.Count} productos encontrados");
                 ProductosDisponibles.Clear();
                 
                 foreach (var producto in result.Data)
@@ -186,9 +211,14 @@ public partial class CrearComandaViewModel : BaseViewModel
                     ProductosDisponibles.Add(productoCarrito);
                 }
             }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ [CrearComandaViewModel] Error en búsqueda - Success: {result.Success}, Message: {result.Message}");
+            }
         }
         catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"❌ [CrearComandaViewModel] Excepción en búsqueda: {ex.Message}");
             await _dialogService.ShowAlertAsync("Error", $"Error al buscar productos: {ex.Message}");
         }
         finally
