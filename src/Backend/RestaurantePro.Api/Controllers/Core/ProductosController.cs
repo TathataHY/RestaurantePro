@@ -44,6 +44,7 @@ public class ProductosController : ControllerBase
     /// Obtiene todos los productos con paginación
     /// </summary>
     [HttpGet]
+    [AllowAnonymous]
     [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
     [ProducesResponseType(typeof(ApiResponse<PaginatedList<ProductoDto>>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<PaginatedList<ProductoDto>>>> GetProductos(
@@ -297,6 +298,58 @@ public class ProductosController : ControllerBase
         var response = ApiResponse<bool>.SuccessResponse(
             result.Value, "Producto eliminado exitosamente");
         return Ok(response);
+    }
+
+    /// <summary>
+    /// Cambia el estado activo/inactivo de un producto
+    /// </summary>
+    [HttpPost("{id:guid}/cambiar-estado")]
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<ApiResponse<bool>>> CambiarEstadoProducto(Guid id, [FromQuery] bool activo)
+    {
+        _logger.LogInformation("🔄 POST /api/core/productos/{Id}/cambiar-estado - Activo: {Activo}", id, activo);
+
+        try
+        {
+            var producto = await _productoRepository.ObtenerPorIdAsync(id);
+            if (producto == null)
+            {
+                var errorResponse = ApiResponse<object>.ErrorResponse(
+                    "Producto no encontrado", "No se encontró el producto especificado", StatusCodes.Status404NotFound);
+                return NotFound(errorResponse);
+            }
+
+            // Cambiar el estado del producto
+            if (activo)
+            {
+                producto.Activar();
+                _logger.LogInformation("✅ Producto {Id} activado", id);
+            }
+            else
+            {
+                producto.Desactivar();
+                _logger.LogInformation("❌ Producto {Id} desactivado", id);
+            }
+
+            await _productoRepository.ActualizarAsync(producto);
+
+            // Limpiar cache relacionado
+            await _cache.RemoveAsync($"productos_paginados_*");
+            await _cache.RemoveAsync($"producto_{id}");
+            await _cache.RemoveAsync("estadisticas_productos");
+
+            var response = ApiResponse<bool>.SuccessResponse(
+                true, $"Producto {(activo ? "activado" : "desactivado")} exitosamente");
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error al cambiar estado del producto {Id}", id);
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                "Error interno del servidor", "Error al cambiar el estado del producto", StatusCodes.Status500InternalServerError);
+            return StatusCode(500, errorResponse);
+        }
     }
 
     /// <summary>

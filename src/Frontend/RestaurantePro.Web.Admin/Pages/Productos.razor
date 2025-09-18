@@ -443,9 +443,18 @@ else
                             }
                             @if (canDeleteProducts)
                             {
-                                <button class="text-red-500 hover:text-red-400 ml-2 transition-colors" @onclick="(() => ConfirmarEliminar(p.Id, p.Nombre))" title="Eliminar">
-                                    <span class="material-symbols-outlined">delete</span>
-                                </button>
+                                @if (p.Activo)
+                                {
+                                    <button class="text-red-500 hover:text-red-400 ml-2 transition-colors" @onclick="(() => ConfirmarCambiarEstado(p.Id, p.Nombre, false))" title="Desactivar producto">
+                                        <span class="material-symbols-outlined">delete</span>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="text-green-500 hover:text-green-400 ml-2 transition-colors" @onclick="(() => ConfirmarCambiarEstado(p.Id, p.Nombre, true))" title="Activar producto">
+                                        <span class="material-symbols-outlined">check_circle</span>
+                                    </button>
+                                }
                             }
                         </td>
                     </tr>
@@ -529,10 +538,22 @@ else
                             }
                             @if (canDeleteProducts)
                             {
-                                <button @onclick="(() => ConfirmarEliminar(p.Id, p.Nombre))" 
-                                        class="flex items-center justify-center px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
-                                    <span class="material-symbols-outlined text-base">delete</span>
-                                </button>
+                                @if (p.Activo)
+                                {
+                                    <button @onclick="(() => ConfirmarCambiarEstado(p.Id, p.Nombre, false))" 
+                                            class="flex items-center justify-center px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors" 
+                                            title="Desactivar producto">
+                                        <span class="material-symbols-outlined text-base">delete</span>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button @onclick="(() => ConfirmarCambiarEstado(p.Id, p.Nombre, true))" 
+                                            class="flex items-center justify-center px-3 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors" 
+                                            title="Activar producto">
+                                        <span class="material-symbols-outlined text-base">check_circle</span>
+                                    </button>
+                                }
                             }
                         </div>
                     </div>
@@ -748,40 +769,51 @@ else
     </div>
 }
 
-@* Modal de confirmación para eliminación *@
-@if (mostrandoConfirmacionEliminar)
+@* Modal de confirmación para cambiar estado *@
+@if (mostrandoConfirmacionCambioEstado)
 {
-    <div class="fixed inset-0 z-30 bg-black/50" @onclick="CerrarConfirmacionEliminar">
+    <div class="fixed inset-0 z-30 bg-black/50" @onclick="CerrarConfirmacionCambioEstado">
         <div class="fixed inset-0 z-40 flex items-center justify-center p-4">
             <div class="bg-background-light rounded-lg shadow-xl p-6 w-full max-w-md" @onclick:stopPropagation="true">
                 <div class="flex items-center mb-4">
-                    <div class="flex-shrink-0 w-10 h-10 mx-auto flex items-center justify-center rounded-full bg-red-100">
-                        <span class="material-symbols-outlined text-red-600">warning</span>
+                    <div class="flex-shrink-0 w-10 h-10 mx-auto flex items-center justify-center rounded-full @(nuevoEstadoProducto ? "bg-green-100" : "bg-red-100")">
+                        <span class="material-symbols-outlined @(nuevoEstadoProducto ? "text-green-600" : "text-red-600")">
+                            @(nuevoEstadoProducto ? "check_circle" : "warning")
+                        </span>
                     </div>
                 </div>
                 <div class="text-center">
-                    <h3 class="text-lg font-medium text-text-light mb-2">¿Eliminar producto?</h3>
+                    <h3 class="text-lg font-medium text-text-light mb-2">
+                        @(nuevoEstadoProducto ? "¿Activar producto?" : "¿Desactivar producto?")
+                    </h3>
                     <p class="text-sm text-gray-500 mb-6">
-                        ¿Estás seguro de que quieres eliminar el producto <strong>"@productoAEliminar?.Nombre"</strong>? 
-                        Esta acción no se puede deshacer.
-                    </p>
-                </div>
-                <div class="flex gap-3">
-                    <button @onclick="CerrarConfirmacionEliminar" 
-                            class="flex-1 py-2 px-4 rounded-lg border border-border-light text-text-light hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-                        Cancelar
-                    </button>
-                    <button @onclick="EliminarConfirmado" 
-                            disabled="@eliminando"
-                            class="flex-1 py-2 px-4 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                        @if (eliminando)
+                        ¿Estás seguro de que quieres @(nuevoEstadoProducto ? "activar" : "desactivar") el producto <strong>"@productoACambiarEstado?.Nombre"</strong>?
+                        @if (!nuevoEstadoProducto)
                         {
-                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            <span>Eliminando...</span>
+                            <span>El producto dejará de estar disponible para nuevos pedidos.</span>
                         }
                         else
                         {
-                            <span>Eliminar</span>
+                            <span>El producto volverá a estar disponible para pedidos.</span>
+                        }
+                    </p>
+                </div>
+                <div class="flex gap-3">
+                    <button @onclick="CerrarConfirmacionCambioEstado" 
+                            class="flex-1 py-2 px-4 rounded-lg border border-border-light text-text-light hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                        Cancelar
+                    </button>
+                    <button @onclick="CambiarEstadoConfirmado" 
+                            disabled="@cambiandoEstado"
+                            class="flex-1 py-2 px-4 rounded-lg @(nuevoEstadoProducto ? "bg-green-600 hover:bg-green-700" : "bg-red-600 hover:bg-red-700") text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                        @if (cambiandoEstado)
+                        {
+                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <span>@(nuevoEstadoProducto ? "Activando..." : "Desactivando...")</span>
+                        }
+                        else
+                        {
+                            <span>@(nuevoEstadoProducto ? "Activar" : "Desactivar")</span>
                         }
                     </button>
                 </div>
@@ -841,9 +873,10 @@ else
     private UpdateProductoRequest edicion = new();
     private string? imagenTemporal = null; // Para almacenar la imagen en base64 antes de crear el producto
     
-    // Variables para confirmación de eliminación
-    private bool mostrandoConfirmacionEliminar = false;
-    private ProductoDto? productoAEliminar = null;
+    // Variables para confirmación de cambio de estado
+    private bool mostrandoConfirmacionCambioEstado = false;
+    private ProductoDto? productoACambiarEstado = null;
+    private bool nuevoEstadoProducto = false;
     
     // Variables para notificaciones
     private bool mostrandoNotificacion = false;
@@ -857,7 +890,7 @@ else
     
     // Variables para estados de carga
     private bool guardando = false;
-    private bool eliminando = false;
+    private bool cambiandoEstado = false;
     
     // Variables para vista
     private string vistaActual = "tabla"; // "tabla" o "tarjetas"
@@ -1228,46 +1261,52 @@ else
     }
 
 
-    private void ConfirmarEliminar(Guid id, string nombre)
+    private void ConfirmarCambiarEstado(Guid id, string nombre, bool nuevoEstado)
     {
-        productoAEliminar = new ProductoDto { Id = id, Nombre = nombre };
-        mostrandoConfirmacionEliminar = true;
+        productoACambiarEstado = new ProductoDto { Id = id, Nombre = nombre };
+        nuevoEstadoProducto = nuevoEstado;
+        mostrandoConfirmacionCambioEstado = true;
     }
 
-    private void CerrarConfirmacionEliminar()
+    private void CerrarConfirmacionCambioEstado()
     {
-        mostrandoConfirmacionEliminar = false;
-        productoAEliminar = null;
+        mostrandoConfirmacionCambioEstado = false;
+        productoACambiarEstado = null;
+        nuevoEstadoProducto = false;
     }
 
-    private async Task EliminarConfirmado()
+    private async Task CambiarEstadoConfirmado()
     {
-        if (productoAEliminar == null) return;
+        if (productoACambiarEstado == null) return;
         
-        eliminando = true;
-        mostrandoConfirmacionEliminar = false;
+        cambiandoEstado = true;
+        mostrandoConfirmacionCambioEstado = false;
         
         try
         {
-            var resultado = await Api.EliminarAsync(productoAEliminar.Id);
+            var resultado = await Api.CambiarEstadoProductoAsync(productoACambiarEstado.Id, nuevoEstadoProducto);
             if (resultado)
             {
-                MostrarNotificacion($"Producto '{productoAEliminar.Nombre}' eliminado exitosamente", true);
-        await BuscarAsync();
+                var accion = nuevoEstadoProducto ? "activado" : "desactivado";
+                MostrarNotificacion($"Producto '{productoACambiarEstado.Nombre}' {accion} exitosamente", true);
+                await BuscarAsync();
             }
             else
             {
-                MostrarNotificacion("Error al eliminar el producto", false);
+                var accion = nuevoEstadoProducto ? "activar" : "desactivar";
+                MostrarNotificacion($"Error al {accion} el producto", false);
             }
         }
         catch (Exception ex)
         {
-            MostrarNotificacion($"Error al eliminar el producto: {ex.Message}", false);
+            var accion = nuevoEstadoProducto ? "activar" : "desactivar";
+            MostrarNotificacion($"Error al {accion} el producto: {ex.Message}", false);
         }
         finally
         {
-            eliminando = false;
-            productoAEliminar = null;
+            cambiandoEstado = false;
+            productoACambiarEstado = null;
+            nuevoEstadoProducto = false;
         }
     }
 

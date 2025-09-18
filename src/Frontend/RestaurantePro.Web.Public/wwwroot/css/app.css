@@ -657,6 +657,31 @@ code {
     color: var(--rp-primary);
 }
 
+.logo-icon .material-symbols-outlined {
+    font-size: 1.5rem; /* 24px para que coincida con el contenedor */
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Placeholder para imágenes de productos */
+.product-image-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+}
+
+.product-image-placeholder .material-symbols-outlined {
+    font-size: 4rem; /* 64px */
+    color: #9ca3af; /* gray-400 */
+    font-weight: 300;
+}
+
 .logo-text {
     font-size: 1.25rem; /* 20px */
     font-weight: 700;
@@ -1755,19 +1780,88 @@ code {
     }
     
     .menu-layout {
+        grid-template-columns: 1fr; /* Una sola columna en móvil */
         padding: 1rem;
         gap: 1.5rem;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden; /* Evitar scroll horizontal de la página */
     }
     
     .menu-sidebar {
         order: 1;
-        position: sticky;
-        top: 120px;
+        position: static; /* No sticky en móvil */
         z-index: 99;
         background-color: var(--rp-bg);
         border-radius: var(--rp-radius-lg);
         box-shadow: var(--rp-shadow);
         margin-bottom: 1rem;
+        padding: 1rem; /* Menos padding en móvil */
+        width: 100%; /* Ancho fijo del contenedor */
+        max-width: 100%;
+        overflow: hidden; /* Evitar que se estire */
+    }
+    
+    /* Categorías en carrusel horizontal para móvil */
+    .categories-list {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+        gap: 0.75rem;
+        padding: 0.5rem 0;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling en iOS */
+        width: 100%;
+        max-width: 100%;
+    }
+    
+    /* Ocultar scrollbar pero mantener funcionalidad */
+    .categories-list::-webkit-scrollbar {
+        height: 4px;
+    }
+    
+    .categories-list::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    .categories-list::-webkit-scrollbar-thumb {
+        background: var(--rp-primary);
+        border-radius: 2px;
+    }
+    
+    .category-item {
+        flex: 0 0 auto; /* No se encoge, tamaño fijo */
+        min-width: 120px;
+        max-width: 140px;
+        padding: 0.75rem 0.5rem;
+        font-size: 0.875rem;
+        text-align: center;
+        flex-direction: column;
+        gap: 0.25rem;
+        white-space: nowrap;
+    }
+    
+    .category-icon {
+        font-size: 1.5rem;
+    }
+    
+    .category-info {
+        align-items: center;
+        text-align: center;
+    }
+    
+    .category-name {
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .category-count {
+        font-size: 0.625rem;
+        white-space: nowrap;
     }
     
     .category-list {
@@ -1934,19 +2028,82 @@ code {
     }
     
     .menu-layout {
+        grid-template-columns: 1fr; /* Una sola columna en móvil pequeño */
         padding: 0.75rem;
         gap: 1rem;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden; /* Evitar scroll horizontal de la página */
     }
     
     .menu-sidebar {
         order: 1;
-        position: sticky;
-        top: 120px;
+        position: static; /* No sticky en móvil pequeño */
         z-index: 99;
         background-color: var(--rp-bg);
         border-radius: var(--rp-radius-lg);
         box-shadow: var(--rp-shadow);
         margin-bottom: 1rem;
+        padding: 0.75rem; /* Menos padding en móvil pequeño */
+        width: 100%;
+        max-width: 100%;
+        overflow: hidden; /* Evitar que se estire */
+    }
+    
+    /* Categorías en carrusel horizontal para móviles pequeños */
+    .categories-list {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        overflow-y: hidden;
+        gap: 0.5rem;
+        padding: 0.25rem 0;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Scrollbar más delgada para móviles pequeños */
+    .categories-list::-webkit-scrollbar {
+        height: 3px;
+    }
+    
+    .categories-list::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    .categories-list::-webkit-scrollbar-thumb {
+        background: var(--rp-primary);
+        border-radius: 2px;
+    }
+    
+    .category-item {
+        flex: 0 0 auto; /* No se encoge, tamaño fijo */
+        min-width: 100px;
+        max-width: 120px;
+        padding: 0.5rem 0.25rem;
+        font-size: 0.75rem;
+        text-align: center;
+        flex-direction: column;
+        gap: 0.25rem;
+        white-space: nowrap;
+    }
+    
+    .category-icon {
+        font-size: 1.25rem;
+    }
+    
+    .category-name {
+        font-size: 0.625rem;
+        font-weight: 600;
+        line-height: 1.2;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .category-count {
+        font-size: 0.5rem;
+        white-space: nowrap;
     }
     
     .category-list {
@@ -3222,6 +3379,11 @@ code {
 
 /* Mobile (768px and below) */
 @media (max-width: 768px) {
+    /* Evitar overflow horizontal en toda la página */
+    body, html {
+        overflow-x: hidden;
+        max-width: 100vw;
+    }
     .contact-hero {
         padding: 2rem 1rem;
     }

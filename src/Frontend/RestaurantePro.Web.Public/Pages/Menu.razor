@@ -44,7 +44,7 @@
         </div>
         <div class="sort-section">
             <label class="sort-label">Ordenar por:</label>
-            <select class="sort-select" @bind="orden">
+            <select class="sort-select" @bind="orden" @bind:after="OnOrdenChanged">
                 <option value="popularidad">Más populares</option>
                 <option value="precio_asc">Precio: menor a mayor</option>
                 <option value="precio_desc">Precio: mayor a menor</option>
@@ -89,6 +89,10 @@
                     {
                         <span>@categoriaSeleccionada.Nombre</span>
                     }
+                    else if (!string.IsNullOrWhiteSpace(textoBusqueda))
+                    {
+                        <span>Resultados para "@textoBusqueda"</span>
+                    }
                     else
                     {
                         <span>Todos los Productos</span>
@@ -97,6 +101,10 @@
                 @if (categoriaSeleccionada != null)
                 {
                     <p class="products-subtitle">@categoriaSeleccionada.ProductosDisponibles platos disponibles</p>
+                }
+                else if (!string.IsNullOrWhiteSpace(textoBusqueda))
+                {
+                    <p class="products-subtitle">@productos.Count productos encontrados</p>
                 }
             </div>
             <!-- Estado de Carga -->
@@ -124,11 +132,24 @@
                 <div class="empty-state">
                     <div class="empty-icon">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
                     </div>
-                    <h3 class="empty-title">No hay productos disponibles</h3>
-                    <p class="empty-description">No se encontraron productos para esta categoría. Intenta con otra búsqueda.</p>
+                    @if (!string.IsNullOrWhiteSpace(textoBusqueda))
+                    {
+                        <h3 class="empty-title">No se encontraron resultados</h3>
+                        <p class="empty-description">No hay productos que coincidan con "<strong>@textoBusqueda</strong>". Intenta con otra búsqueda o explora nuestras categorías.</p>
+                    }
+                    else if (categoriaSeleccionada != null)
+                    {
+                        <h3 class="empty-title">No hay productos disponibles</h3>
+                        <p class="empty-description">No se encontraron productos para la categoría @categoriaSeleccionada.Nombre. Intenta con otra categoría.</p>
+                    }
+                    else
+                    {
+                        <h3 class="empty-title">No hay productos disponibles</h3>
+                        <p class="empty-description">No se encontraron productos. Intenta con otra búsqueda.</p>
+                    }
                 </div>
             }
             else
@@ -138,7 +159,16 @@
                     {
                         <div class="product-card @(p.Activo ? "" : "unavailable")">
                             <div class="product-image-wrapper">
-                                <img src="@ObtenerImagenProducto(p)" class="product-image" alt="@p.Nombre" />
+                                @if (!string.IsNullOrEmpty(p.ImagenUrl))
+                                {
+                                    <img src="@ObtenerImagenProducto(p)" class="product-image" alt="@p.Nombre" />
+                                }
+                                else
+                                {
+                                    <div class="product-image-placeholder">
+                                        <span class="material-symbols-outlined">restaurant_menu</span>
+                                    </div>
+                                }
                                 @if (!p.Activo)
                                 {
                                     <div class="unavailable-badge">
@@ -191,7 +221,7 @@
     private List<CategoriaProductoDto> categorias = new();
     private List<ProductoDto> productos = new();
     private IEnumerable<ProductoDto> productosOrdenados => OrdenarProductos(productos, orden);
-    private IEnumerable<ProductoDto> productosPagina => productos; // si el servidor ya recorta, esta es la página actual
+    private IEnumerable<ProductoDto> productosPagina => usarPaginacionServidor ? productos : productosOrdenados.Skip((paginaActual - 1) * tamanoPagina).Take(tamanoPagina);
     private CategoriaProductoDto? categoriaSeleccionada;
     private string textoBusqueda = string.Empty;
     private string orden = "popularidad";
@@ -213,6 +243,7 @@
     private async Task SeleccionarCategoria(CategoriaProductoDto cat)
     {
         categoriaSeleccionada = cat;
+        usarPaginacionServidor = true; // Restaurar paginación del servidor para categorías
         cargando = true;
         StateHasChanged();
         try
@@ -250,22 +281,80 @@
         var query = textoBusqueda?.Trim() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(query))
         {
+            // Si no hay búsqueda, mostrar todas las categorías
             categorias = await Api.ObtenerCategoriasAsync(true, true);
+            if (categorias.Count > 0)
+            {
+                await SeleccionarCategoria(categorias.First());
+            }
         }
         else
         {
-            categorias = await Api.BuscarCategoriasAsync(query.ToLowerInvariant());
+            // Buscar tanto en categorías como en productos
+            cargando = true;
+            StateHasChanged();
+            
+            try
+            {
+                // Buscar productos directamente
+                var productosEncontrados = await Api.BuscarProductosAsync(query.ToLowerInvariant(), true, 50);
+                
+                if (productosEncontrados.Count > 0)
+                {
+                    // Si se encontraron productos, mostrarlos directamente
+                    productos = productosEncontrados;
+                    categoriaSeleccionada = null; // Indicar que es una búsqueda
+                    usarPaginacionServidor = false; // Usar paginación cliente para búsquedas
+                    
+                    // También buscar categorías para el sidebar
+                    categorias = await Api.BuscarCategoriasAsync(query.ToLowerInvariant());
+                    if (categorias.Count == 0)
+                    {
+                        // Si no hay categorías que coincidan, mostrar todas
+                        categorias = await Api.ObtenerCategoriasAsync(true, true);
+                    }
+                }
+                else
+                {
+                    // Si no se encontraron productos, buscar por categorías
+                    categorias = await Api.BuscarCategoriasAsync(query.ToLowerInvariant());
+                    if (categorias.Count > 0)
+                    {
+                        await SeleccionarCategoria(categorias.First());
+                    }
+                    else
+                    {
+                        // No se encontró nada
+                        categoriaSeleccionada = null;
+                        productos = new List<ProductoDto>();
+                        categorias = await Api.ObtenerCategoriasAsync(true, true);
+                    }
+                }
+                
+                paginaActual = 1;
+                CalcularTotalPaginas();
+            }
+            finally
+            {
+                cargando = false;
+                StateHasChanged();
+            }
         }
-        if (categorias.Count > 0)
+    }
+
+    private async Task OnOrdenChanged()
+    {
+        if (usarPaginacionServidor && categoriaSeleccionada != null)
         {
-            await SeleccionarCategoria(categorias.First());
+            // Si usa paginación del servidor, recargar con nuevo orden
+            await SeleccionarCategoria(categoriaSeleccionada);
         }
         else
         {
-            categoriaSeleccionada = null;
-            productos = new List<ProductoDto>();
+            // Si usa paginación del cliente, solo actualizar la vista
             paginaActual = 1;
             CalcularTotalPaginas();
+            StateHasChanged();
         }
     }
 
@@ -288,7 +377,19 @@
 
     private static string ObtenerImagenProducto(ProductoDto p)
     {
-        // Si en el futuro hay URL de imagen real en el DTO, usarla. Por ahora seed por Id.
+        // Si el producto tiene una imagen real, usarla
+        if (!string.IsNullOrEmpty(p.ImagenUrl))
+        {
+            // Si ya es una URL completa, devolverla tal como está
+            if (p.ImagenUrl.StartsWith("http"))
+                return p.ImagenUrl;
+                
+            // Si es una ruta relativa de la API, construir la URL completa
+            if (p.ImagenUrl.StartsWith("/uploads/"))
+                return $"http://localhost:8080{p.ImagenUrl}";
+        }
+        
+        // Fallback: usar imagen placeholder de Picsum solo si no hay imagen real
         return $"https://picsum.photos/seed/{p.Id}/600/400";
     }
 

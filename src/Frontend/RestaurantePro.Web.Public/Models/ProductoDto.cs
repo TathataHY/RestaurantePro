@@ -13,6 +13,7 @@ public class ProductoDto
     public string CategoriaNombre { get; set; } = string.Empty;
     public bool Activo { get; set; }
     public int Popularidad { get; set; }
+    public string? ImagenUrl { get; set; }
     public DateTime FechaCreacion { get; set; }
     public DateTime? FechaModificacion { get; set; }
 }
