@@ -45,9 +45,12 @@ namespace RestaurantePro.Domain.Core.Base.Services
                 var utcNow = DateTime.UtcNow;
                 var chileNow = TimeZoneInfo.ConvertTimeFromUtc(utcNow, _chileTimeZone);
                 
+                // 🔧 IMPORTANTE: Especificar que es hora local (no UTC ni Unspecified)
+                chileNow = DateTime.SpecifyKind(chileNow, DateTimeKind.Local);
+                
                 // Log temporal para debug
-                Console.WriteLine($"🌍 [ChileDateTimeService] UTC: {utcNow:yyyy-MM-dd HH:mm:ss}");
-                Console.WriteLine($"🌍 [ChileDateTimeService] Chile: {chileNow:yyyy-MM-dd HH:mm:ss}");
+                Console.WriteLine($"🌍 [ChileDateTimeService] UTC: {utcNow:yyyy-MM-dd HH:mm:ss} (Kind: {utcNow.Kind})");
+                Console.WriteLine($"🌍 [ChileDateTimeService] Chile: {chileNow:yyyy-MM-dd HH:mm:ss} (Kind: {chileNow.Kind})");
                 Console.WriteLine($"🌍 [ChileDateTimeService] TimeZone: {_chileTimeZone.DisplayName}");
                 
                 return chileNow;

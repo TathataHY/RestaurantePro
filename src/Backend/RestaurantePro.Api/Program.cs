@@ -24,35 +24,8 @@ namespace RestaurantePro.Api
     {
         public static async Task Main(string[] args)
         {
-            // 🌍 CONFIGURAR ZONA HORARIA DE CHILE
-            TimeZoneInfo chileTimeZone;
-            try
-            {
-                // Intentar obtener la zona horaria de Chile
-                chileTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Santiago");
-            }
-            catch
-            {
-                // En Windows, el ID puede ser diferente
-                try
-                {
-                    chileTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Pacific SA Standard Time");
-                }
-                catch
-                {
-                    // Fallback: crear manualmente la zona horaria de Chile
-                    chileTimeZone = TimeZoneInfo.CreateCustomTimeZone(
-                        "Chile Standard Time", 
-                        TimeSpan.FromHours(-3), 
-                        "Chile Standard Time", 
-                        "Chile Standard Time");
-                }
-            }
-            
-            // Establecer la zona horaria por defecto para la aplicación
-            Environment.SetEnvironmentVariable("TZ", "America/Santiago");
-            Console.WriteLine($"🌍 Zona horaria configurada: {chileTimeZone.DisplayName}");
-            Console.WriteLine($"🕐 Hora actual en Chile: {TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, chileTimeZone)}");
+            // 🌍 CONFIGURAR ZONA HORARIA DE CHILE GLOBALMENTE
+            ConfigurarZonaHorariaChile();
             
             var builder = WebApplication.CreateBuilder(args);
 
@@ -167,6 +140,56 @@ namespace RestaurantePro.Api
             app.MapHub<InventarioHub>("/hubs/inventario");
             
             await app.RunAsync();
+        }
+
+        /// <summary>
+        /// Configura la zona horaria de Chile para toda la aplicación
+        /// </summary>
+        private static void ConfigurarZonaHorariaChile()
+        {
+            try
+            {
+                TimeZoneInfo chileTimeZone;
+                try
+                {
+                    // Intentar obtener la zona horaria de Chile
+                    chileTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Santiago");
+                }
+                catch
+                {
+                    // En Windows, el ID puede ser diferente
+                    try
+                    {
+                        chileTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Pacific SA Standard Time");
+                    }
+                    catch
+                    {
+                        // Fallback: crear manualmente la zona horaria de Chile
+                        chileTimeZone = TimeZoneInfo.CreateCustomTimeZone(
+                            "Chile Standard Time", 
+                            TimeSpan.FromHours(-3), 
+                            "Chile Standard Time", 
+                            "Chile Standard Time");
+                    }
+                }
+                
+                // Configurar variables de entorno para zona horaria
+                Environment.SetEnvironmentVariable("TZ", "America/Santiago");
+                
+                // Log de configuración
+                var utcNow = DateTime.UtcNow;
+                var chileNow = TimeZoneInfo.ConvertTimeFromUtc(utcNow, chileTimeZone);
+                
+                Console.WriteLine($"🌍 Zona horaria configurada: {chileTimeZone.DisplayName}");
+                Console.WriteLine($"🕐 Hora UTC: {utcNow:yyyy-MM-dd HH:mm:ss}");
+                Console.WriteLine($"🕐 Hora Chile: {chileNow:yyyy-MM-dd HH:mm:ss}");
+                Console.WriteLine($"🌍 Diferencia: {chileTimeZone.GetUtcOffset(utcNow)} horas");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error configurando zona horaria de Chile: {ex.Message}");
+                Console.WriteLine($"⚠️ Usando zona horaria del sistema por defecto");
+            }
         }
     }
 }

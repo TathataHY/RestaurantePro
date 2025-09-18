@@ -13,6 +13,7 @@ using RestaurantePro.Infrastructure.Identity.Models;
 using RestaurantePro.Domain.Core.Productos;
 using System.Collections.Generic;
 using System;
+using RestaurantePro.Infrastructure.Persistence.Converters;
 using RestaurantePro.Domain.Core.Base.Events;
 using RestaurantePro.Domain.Core.Base.Events.Dispatcher;
 
@@ -73,6 +74,9 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
             
             modelBuilder.Ignore<RestaurantePro.Domain.Core.Base.Events.DomainEvent>();
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+            
+            // 🌍 CONFIGURAR CONVERTIDORES DE ZONA HORARIA DE CHILE
+            ConfigurarConvertidoresZonaHoraria(modelBuilder);
 
             // CONFIGURACIÓN ESPECIAL PARA TESTS CON SQLITE: Control de concurrencia optimista DESACTIVADO
             // Eliminar cualquier configuración de concurrencia residual para TarjetaFidelizacion
@@ -119,6 +123,33 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
             // await _dispatcher.DispatchAndClearEvents(entitiesWithEvents);
 
             return result;
+        }
+
+        /// <summary>
+        /// Configura convertidores automáticos para que todas las fechas se manejen en zona horaria de Chile
+        /// </summary>
+        private static void ConfigurarConvertidoresZonaHoraria(ModelBuilder modelBuilder)
+        {
+            // Obtener todos los tipos de entidad
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                // Buscar todas las propiedades DateTime
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(DateTime))
+                    {
+                        // Aplicar convertidor para DateTime
+                        property.SetValueConverter(new ChileDateTimeConverter());
+                    }
+                    else if (property.ClrType == typeof(DateTime?))
+                    {
+                        // Aplicar convertidor para DateTime nullable
+                        property.SetValueConverter(new ChileDateTimeNullableConverter());
+                    }
+                }
+            }
+            
+            Console.WriteLine("🌍 [RestauranteProDbContext] Convertidores de zona horaria de Chile configurados para todas las entidades");
         }
 
         public async Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
