@@ -6,28 +6,42 @@
 
 <PageTitle>Categorías</PageTitle>
 
-<div class="flex flex-wrap items-center justify-between gap-4 mb-8">
-    <div>
-        <h1 class="text-3xl font-bold text-gray-900">Gestión de Categorías</h1>
-        <p class="text-gray-600 mt-2">Organiza y gestiona las categorías de productos del menú</p>
+<!-- Header Responsive -->
+<div class="mb-6 space-y-4">
+    <!-- Título -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Gestión de Categorías</h1>
+            <p class="text-gray-600 mt-2">Organiza y gestiona las categorías de productos del menú</p>
+        </div>
+        
+        <!-- Botón Nueva Categoría (Solo móvil) -->
+        <button class="sm:hidden flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-blue-700 transition-colors w-full" @onclick="NuevaCategoria">
+            <span class="material-symbols-outlined">add</span>
+            <span>Nueva Categoría</span>
+        </button>
     </div>
-    <div class="flex items-center gap-3">
+    
+    <!-- Controles -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <!-- Toggle de vista -->
-        <div class="flex items-center bg-gray-100 rounded-lg p-1">
-            <button class="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md @(vistaTabla ? "bg-white text-blue-600 shadow-sm" : "text-gray-600")" 
+        <div class="flex items-center bg-gray-100 rounded-lg p-1 w-full sm:w-auto">
+            <button class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md @(vistaTabla ? "bg-white text-blue-600 shadow-sm" : "text-gray-600")" 
                     @onclick="() => CambiarVista(true)">
                 <span class="material-symbols-outlined text-sm">table_rows</span>
-                Tabla
+                <span class="hidden sm:inline">Tabla</span>
             </button>
-            <button class="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md @(!vistaTabla ? "bg-white text-blue-600 shadow-sm" : "text-gray-600")" 
+            <button class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md @(!vistaTabla ? "bg-white text-blue-600 shadow-sm" : "text-gray-600")" 
                     @onclick="() => CambiarVista(false)">
                 <span class="material-symbols-outlined text-sm">grid_view</span>
-                Grid
+                <span class="hidden sm:inline">Grid</span>
             </button>
         </div>
-        <button class="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors" @onclick="NuevaCategoria">
+        
+        <!-- Botón Nueva Categoría (Desktop) -->
+        <button class="hidden sm:flex items-center gap-2 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition-colors" @onclick="NuevaCategoria">
             <span class="material-symbols-outlined">add</span>
-            <span class="truncate">Nueva Categoría</span>
+            <span>Nueva Categoría</span>
         </button>
     </div>
 </div>
@@ -105,9 +119,10 @@
             {
                 @if (vistaTabla)
                 {
-                    <!-- Vista de Tabla -->
+                    <!-- Vista de Tabla Responsive -->
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                        <div class="overflow-x-auto">
+                        <!-- Vista Desktop -->
+                        <div class="hidden md:block overflow-x-auto">
                             <table class="w-full text-sm text-left text-gray-500">
                                 <thead class="text-xs text-gray-700 uppercase bg-gray-100">
                                     <tr>
@@ -116,7 +131,7 @@
                                         <th class="px-6 py-3" scope="col">Descripción</th>
                                         <th class="px-6 py-3 text-center" scope="col">Productos</th>
                                         <th class="px-6 py-3" scope="col">Estado</th>
-                                        <th class="px-6 py-3" scope="col">Orden</th>
+                                        <th class="px-6 py-3" scope="col">Posición</th>
                                         <th class="px-6 py-3 text-right" scope="col">Acciones</th>
                                     </tr>
                                 </thead>
@@ -150,7 +165,11 @@
                                                     </span>
                                                 }
                                             </td>
-                                            <td class="px-6 py-4 text-gray-500">@c.Orden</td>
+                                            <td class="px-6 py-4 text-gray-500">
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                    #@c.Orden
+                                                </span>
+                                            </td>
                                             <td class="px-6 py-4 text-right space-x-2">
                                                 <button class="p-1 text-gray-400 hover:text-blue-600" @onclick="() => EditarCategoria(c.Id)" title="Editar">
                                                     <span class="material-symbols-outlined">edit</span>
@@ -164,12 +183,74 @@
                                 </tbody>
                             </table>
                         </div>
+                        
+                        <!-- Vista Mobile (Lista de Cards) -->
+                        <div class="md:hidden space-y-3 p-4">
+                            @foreach (var c in categorias.OrderBy(x => x.Orden).ThenBy(x => x.Nombre))
+                            {
+                                <div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+                                    <div class="flex items-start gap-3">
+                                        <!-- Icono -->
+                                        <div class="flex-shrink-0">
+                                            <div class="flex items-center justify-center w-12 h-12 rounded-lg" style="background-color: @c.Color">
+                                                <span class="material-symbols-outlined text-white text-lg">@c.Icono</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Contenido -->
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-start justify-between gap-2">
+                                                <div class="flex-1 min-w-0">
+                                                    <h3 class="font-semibold text-gray-900 truncate">@c.Nombre</h3>
+                                                    <p class="text-sm text-gray-500 truncate">@(string.IsNullOrEmpty(c.Descripcion) ? "Sin descripción" : c.Descripcion)</p>
+                                                    <div class="flex items-center gap-3 mt-2">
+                                                        <span class="text-sm font-medium text-blue-600">@c.CantidadProductos productos</span>
+                                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                            Posición #@c.Orden
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Estado -->
+                                                <div class="flex-shrink-0">
+                                                    @if (c.Activa)
+                                                    {
+                                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                            <span class="w-1.5 h-1.5 bg-green-400 rounded-full mr-1"></span>
+                                                            Activo
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                            <span class="w-1.5 h-1.5 bg-red-400 rounded-full mr-1"></span>
+                                                            Inactivo
+                                                        </span>
+                                                    }
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Acciones -->
+                                            <div class="flex items-center gap-2 mt-3">
+                                                <button @onclick="() => EditarCategoria(c.Id)" class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                                                    <span class="material-symbols-outlined text-base">edit</span>
+                                                    <span>Editar</span>
+                                                </button>
+                                                <button @onclick="() => EliminarCategoria(c.Id)" class="flex items-center justify-center px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors" title="Eliminar">
+                                                    <span class="material-symbols-outlined text-base">delete</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
                     </div>
                 }
                 else
                 {
-                    <!-- Vista de Grid -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                    <!-- Vista de Grid Responsive -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
                         @foreach (var c in categorias.OrderBy(x => x.Orden).ThenBy(x => x.Nombre))
                         {
                             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 hover:shadow-lg transition-all duration-300 hover:scale-105">
@@ -179,7 +260,11 @@
                                         <span class="material-symbols-outlined text-white text-2xl">@c.Icono</span>
                                     </div>
                                     <h3 class="text-xl font-bold text-gray-900 mb-2">@c.Nombre</h3>
-                                    <p class="text-sm text-gray-500 mb-3">Orden: @c.Orden</p>
+                                    <div class="flex items-center justify-center gap-2 mb-3">
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                            Posición #@c.Orden en el menú
+                                        </span>
+                                    </div>
                                     @if (c.Activa)
                                     {
                                         <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -242,20 +327,20 @@
 <!-- Modal para Crear/Editar Categoría -->
 @if (mostrandoModal)
 {
-    <div aria-labelledby="modal-title" aria-modal="true" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" role="dialog">
-        <div class="relative flex flex-col bg-white rounded-xl shadow-2xl w-full max-w-4xl m-4 max-h-[95vh] overflow-hidden">
+    <div aria-labelledby="modal-title" aria-modal="true" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6 sm:p-8" role="dialog">
+        <div class="relative flex flex-col bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[80vh] sm:max-h-[75vh] overflow-hidden">
             <!-- Header del Modal -->
-            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
                 <div class="flex items-center gap-3">
-                    <div class="flex items-center justify-center rounded-full bg-primary-color/10 shrink-0 size-10">
-                        <span class="material-symbols-outlined text-primary-color">@(editando ? "edit" : "add")</span>
+                    <div class="flex items-center justify-center rounded-full bg-primary-color/10 shrink-0 size-8 sm:size-10">
+                        <span class="material-symbols-outlined text-primary-color text-lg sm:text-xl">@(editando ? "edit" : "add")</span>
                     </div>
                     <div>
-                        <h2 class="text-xl font-bold text-gray-900" id="modal-title">@(editando ? "Editar Categoría" : "Nueva Categoría")</h2>
-                        <p class="text-sm text-gray-500">@(editando ? "Modifica los datos de la categoría" : "Crea una nueva categoría para organizar tus productos")</p>
+                        <h2 class="text-lg sm:text-xl font-bold text-gray-900" id="modal-title">@(editando ? "Editar Categoría" : "Nueva Categoría")</h2>
+                        <p class="text-xs sm:text-sm text-gray-500 hidden sm:block">@(editando ? "Modifica los datos de la categoría" : "Crea una nueva categoría para organizar tus productos")</p>
                     </div>
                 </div>
-                <button type="button" class="text-gray-400 hover:text-gray-600 transition-colors" @onclick="CerrarModal">
+                <button type="button" class="text-gray-400 hover:text-gray-600 transition-colors p-1" @onclick="CerrarModal">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
@@ -264,19 +349,19 @@
                 <DataAnnotationsValidator />
                 
                 <!-- Body del Modal -->
-                <div class="flex-1 overflow-y-auto p-6" style="max-height: calc(95vh - 200px);">
+                <div class="flex-1 overflow-y-auto p-4 sm:p-6" style="max-height: calc(75vh - 180px);">
                     @if (!string.IsNullOrEmpty(errorValidacion))
                     {
-                        <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <div class="mb-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg">
                             <div class="flex items-center gap-2">
-                                <span class="material-symbols-outlined text-red-500">error</span>
-                                <span class="text-red-700 font-medium">Error de validación:</span>
+                                <span class="material-symbols-outlined text-red-500 text-lg">error</span>
+                                <span class="text-red-700 font-medium text-sm sm:text-base">Error de validación:</span>
                             </div>
                             <p class="text-red-600 text-sm mt-1">@errorValidacion</p>
                         </div>
                     }
                     
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                         <!-- Columna Izquierda - Información Básica -->
                         <div class="space-y-4">
                             <div>
@@ -321,11 +406,23 @@
                                 <!-- Orden y Estado -->
                                 <div class="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Orden</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            Posición en el Menú
+                                            <span class="text-xs text-gray-500 font-normal block">¿En qué orden aparece en el menú?</span>
+                                        </label>
                                         <input type="number" 
                                                @bind="categoriaForm.Orden" 
                                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-color focus:border-primary-color transition-colors" 
-                                               min="0" max="1000" />
+                                               min="1" max="100" 
+                                               placeholder="Ej: 1 (primera), 2 (segunda)..." />
+                                        <p class="text-xs text-gray-500 mt-1">
+                                            💡 <strong>1</strong> = Primera categoría, <strong>2</strong> = Segunda, etc.
+                                        </p>
+                                        <!-- Ejemplo visual del orden -->
+                                        <div class="mt-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                                            <p class="text-xs text-blue-700 font-medium mb-1">📋 Ejemplo:</p>
+                                            <div class="text-xs text-blue-600">1️⃣ Entradas → 2️⃣ Sopas → 3️⃣ Principales → 4️⃣ Postres</div>
+                                        </div>
                                     </div>
                                     <div class="flex items-center justify-center">
                                         <div class="flex items-center gap-3">
@@ -377,8 +474,8 @@
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Icono de la Categoría</label>
                                     <div class="space-y-2">
                                         <!-- Grid de iconos sugeridos -->
-                                        <div class="grid grid-cols-8 gap-1">
-                                            @foreach (var icono in new[] { "restaurant", "local_dining", "cake", "local_bar", "coffee", "icecream", "lunch_dining", "bakery_dining", "wine_bar", "fastfood", "ramen_dining", "set_meal" })
+                                        <div class="grid grid-cols-6 gap-1">
+                                            @foreach (var icono in new[] { "restaurant", "local_dining", "cake", "local_bar", "coffee", "wine_bar" })
                                             {
                                                 <button type="button" 
                                                         @onclick="() => categoriaForm.Icono = icono"
@@ -399,10 +496,10 @@
                                 <div class="p-3 bg-gray-50 rounded-lg">
                                     <h4 class="text-sm font-medium text-gray-700 mb-2">Vista Previa</h4>
                                     <div class="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-200">
-                                        <span class="material-symbols-outlined text-lg" style="color: @categoriaForm.Color">@categoriaForm.Icono</span>
-                                        <div>
-                                            <div class="font-medium text-gray-900 text-sm">@(string.IsNullOrEmpty(categoriaForm.Nombre) ? "Nombre de la categoría" : categoriaForm.Nombre)</div>
-                                            <div class="text-xs text-gray-500">@(string.IsNullOrEmpty(categoriaForm.Descripcion) ? "Descripción de la categoría" : categoriaForm.Descripcion)</div>
+                                        <span class="material-symbols-outlined text-base" style="color: @categoriaForm.Color">@categoriaForm.Icono</span>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="font-medium text-gray-900 text-sm truncate">@(string.IsNullOrEmpty(categoriaForm.Nombre) ? "Nombre de la categoría" : categoriaForm.Nombre)</div>
+                                            <div class="text-xs text-gray-500 truncate">@(string.IsNullOrEmpty(categoriaForm.Descripcion) ? "Descripción" : categoriaForm.Descripcion)</div>
                                         </div>
                                     </div>
                                 </div>
@@ -411,26 +508,30 @@
                     </div>
                 </div>
 
-                <!-- Footer del Modal -->
-                <div class="flex justify-end gap-4 bg-gray-50 px-6 py-4 border-t border-gray-200">
-                    <button type="button" 
-                            class="flex min-w-[120px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-white border border-gray-300 text-gray-700 text-sm font-semibold leading-normal tracking-wide transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400" 
-                            @onclick="CerrarModal">
-                        <span class="truncate">Cancelar</span>
-                    </button>
-                    <button type="submit" 
-                            class="flex min-w-[120px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary-color text-white text-sm font-semibold leading-normal tracking-wide transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-color disabled:opacity-50 disabled:cursor-not-allowed" 
-                            disabled="@guardando">
-                        @if (guardando)
-                        {
-                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        }
-                        else
-                        {
-                            <span class="material-symbols-outlined text-sm mr-2">@(editando ? "save" : "add")</span>
-                        }
-                        <span class="truncate">@(editando ? "Actualizar" : "Crear")</span>
-                    </button>
+                <!-- Footer del Modal Responsive -->
+                <div class="border-t border-gray-200 p-4 sm:p-8 sm:pt-4">
+                    <div class="flex flex-col sm:flex-row sm:justify-end gap-3 sm:gap-4">
+                        <button type="button" 
+                                class="order-2 sm:order-1 py-3 sm:py-2 px-4 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto" 
+                                disabled="@guardando"
+                                @onclick="CerrarModal">
+                            Cancelar
+                        </button>
+                        <button type="submit" 
+                                class="order-1 sm:order-2 py-3 sm:py-2 px-4 rounded-lg bg-primary-color text-white font-bold shadow-md hover:bg-primary-color/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 w-full sm:w-auto" 
+                                disabled="@guardando">
+                            @if (guardando)
+                            {
+                                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                <span>Guardando...</span>
+                            }
+                            else
+                            {
+                                <span class="material-symbols-outlined text-sm">@(editando ? "save" : "add")</span>
+                                <span>@(editando ? "Actualizar" : "Crear")</span>
+                            }
+                        </button>
+                    </div>
                 </div>
             </EditForm>
         </div>
@@ -492,20 +593,26 @@
                     </div>
                 }
             </div>
-            <div class="flex justify-end gap-4 bg-gray-50 px-6 sm:px-8 py-4 rounded-b-xl border-t border-gray-200">
-                <button class="flex min-w-[120px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-white border border-gray-300 text-gray-700 text-sm font-semibold leading-normal tracking-wide transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400" 
-                        type="button" @onclick="CancelarEliminacion">
-                    <span class="truncate">Cancelar</span>
-                </button>
-                <button class="flex min-w-[120px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-red-600 text-white text-sm font-semibold leading-normal tracking-wide transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed" 
-                        type="button" @onclick="ConfirmarEliminacion" 
-                        disabled="@(categoriaAEliminar?.CantidadProductos > 0 || guardando)">
-                    @if (guardando)
-                    {
-                        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    }
-                    <span class="truncate">Eliminar</span>
-                </button>
+            <div class="bg-gray-50 px-4 sm:px-6 py-4 rounded-b-xl border-t border-gray-200">
+                <div class="flex flex-col sm:flex-row sm:justify-end gap-3 sm:gap-4">
+                    <button class="order-2 sm:order-1 flex items-center justify-center rounded-lg h-12 sm:h-10 px-4 bg-white border border-gray-300 text-gray-700 text-sm font-semibold transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 w-full sm:w-auto sm:min-w-[120px]" 
+                            type="button" @onclick="CancelarEliminacion">
+                        <span class="truncate">Cancelar</span>
+                    </button>
+                    <button class="order-1 sm:order-2 flex items-center justify-center rounded-lg h-12 sm:h-10 px-4 bg-red-600 text-white text-sm font-semibold transition-colors hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto sm:min-w-[120px]" 
+                            type="button" @onclick="ConfirmarEliminacion" 
+                            disabled="@(categoriaAEliminar?.CantidadProductos > 0 || guardando)">
+                        @if (guardando)
+                        {
+                            <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            <span class="truncate">Eliminando...</span>
+                        }
+                        else
+                        {
+                            <span class="truncate">Eliminar</span>
+                        }
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -627,13 +734,16 @@
     private void NuevaCategoria()
     {
         editando = false;
+        var siguientePosicion = (categorias?.Count ?? 0) + 1;
+        
         categoriaForm = new CreateCategoriaRequest 
         { 
             Activa = true,
             Color = "#2196F3",
             Icono = "restaurant",
-            Orden = categorias?.Count ?? 0
+            Orden = siguientePosicion
         };
+        
         nombreDisponible = true; // Permitir crear sin validación previa
         errorValidacion = null; // Limpiar errores previos
         mostrandoModal = true;

@@ -2,13 +2,13 @@
 @using RestaurantePro.Web.Admin.Services
 @inject IHistorialComandasApiService HistorialComandasApi
 
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-    <div class="relative z-50 flex flex-col w-full max-w-2xl bg-white rounded-2xl shadow-lg overflow-hidden m-4">
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-2 sm:p-4">
+    <div class="relative z-50 flex flex-col w-full max-w-2xl max-h-[98vh] sm:max-h-[95vh] bg-white rounded-2xl shadow-lg overflow-hidden">
         <!-- Header del Modal -->
-        <div class="flex items-center justify-between p-6 border-b border-[var(--border-color)]">
+        <div class="flex items-center justify-between p-4 sm:p-6 border-b border-[var(--border-color)]">
             <div>
-                <h2 class="text-2xl font-bold text-[var(--primary-text-color)]">Detalles de la Mesa #@Mesa?.Numero</h2>
-                <p class="text-sm text-[var(--secondary-text-color)]">Información completa sobre la mesa y su historial.</p>
+                <h2 class="text-lg sm:text-2xl font-bold text-[var(--primary-text-color)]">Detalles de la Mesa #@Mesa?.Numero</h2>
+                <p class="text-xs sm:text-sm text-[var(--secondary-text-color)] hidden sm:block">Información completa sobre la mesa y su historial.</p>
             </div>
             <button class="p-2 rounded-full hover:bg-gray-100 transition-colors" @onclick="CerrarModal">
                 <span class="material-symbols-outlined text-[var(--secondary-text-color)]">close</span>
@@ -16,7 +16,7 @@
         </div>
 
         <!-- Body del Modal -->
-        <div class="p-6 space-y-8 overflow-y-auto max-h-[70vh]">
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 sm:space-y-8" style="max-height: calc(98vh - 120px);">
             <!-- Estado Actual -->
             <section>
                 <h3 class="text-lg font-bold text-[var(--primary-text-color)] mb-4">Estado Actual</h3>
@@ -34,7 +34,7 @@
             <!-- Información de la Mesa -->
             <section>
                 <h3 class="text-lg font-bold text-[var(--primary-text-color)] mb-4">Información de la Mesa</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div class="bg-[var(--container-background)] rounded-lg p-4">
                         <p class="text-sm font-medium text-[var(--secondary-text-color)]">Capacidad</p>
                         <p class="text-lg font-semibold text-[var(--primary-text-color)]">@Mesa?.Capacidad personas</p>

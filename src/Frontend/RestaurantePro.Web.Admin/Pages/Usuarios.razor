@@ -12,14 +12,31 @@
 @inject RestaurantePro.Web.Admin.Services.PermissionService PermissionService
 @inject IJSRuntime JSRuntime
 
-<div class="flex flex-wrap items-center justify-between gap-4 mb-8">
-    <h1 class="text-3xl font-bold text-gray-900">Gestión de Usuarios</h1>
+<!-- Header Responsive -->
+<div class="mb-6 space-y-4">
+    <!-- Título -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Gestión de Usuarios</h1>
+        
+        <!-- Botón Nuevo Usuario (Solo móvil) -->
+        @if (canCreateUsers)
+        {
+            <button class="sm:hidden flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-blue-700 transition-colors w-full" @onclick="AbrirCrear">
+                <span class="material-symbols-outlined">add</span>
+                <span>Nuevo Usuario</span>
+            </button>
+        }
+    </div>
+    
+    <!-- Botón Nuevo Usuario (Desktop) -->
     @if (canCreateUsers)
     {
-        <button class="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors" @onclick="AbrirCrear">
-            <span class="material-symbols-outlined">add</span>
-            <span class="truncate">Nuevo Usuario</span>
-        </button>
+        <div class="hidden sm:flex justify-end">
+            <button class="flex items-center gap-2 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition-colors" @onclick="AbrirCrear">
+                <span class="material-symbols-outlined">add</span>
+                <span>Nuevo Usuario</span>
+            </button>
+        </div>
     }
 </div>
 
@@ -105,9 +122,10 @@
     }
 </div>
 
-<!-- Tabla de usuarios -->
+<!-- Tabla de usuarios responsive -->
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-    <div class="overflow-x-auto">
+    <!-- Vista Desktop -->
+    <div class="hidden md:block overflow-x-auto">
         <table class="w-full">
             <thead class="bg-gray-50 border-b border-gray-200">
                 <tr>
@@ -236,13 +254,97 @@
             </tbody>
         </table>
     </div>
+    
+    <!-- Vista Mobile (Lista de Cards) -->
+    <div class="md:hidden space-y-3 p-4">
+        @if (usuarios is null)
+        {
+            <div class="flex flex-col items-center gap-4 py-12">
+                <span class="material-symbols-outlined text-4xl text-gray-300">hourglass_empty</span>
+                <span class="text-gray-500">Cargando usuarios...</span>
+            </div>
+        }
+        else if (!usuarios.Any())
+        {
+            <div class="flex flex-col items-center gap-4 py-12">
+                <span class="material-symbols-outlined text-4xl text-gray-300">person_off</span>
+                <span class="text-gray-500">No se encontraron usuarios</span>
+            </div>
+        }
+        else
+        {
+            @foreach (var u in usuarios)
+            {
+                <div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+                    <div class="flex items-start gap-3">
+                        <!-- Avatar -->
+                        <div class="flex-shrink-0">
+                            <div class="h-12 w-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                                <span class="text-white font-semibold text-sm">@GetInitials(u.NombreCompleto)</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Contenido -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="font-semibold text-gray-900 truncate">@u.NombreCompleto</h3>
+                                    <p class="text-sm text-gray-500 truncate">@u.Email</p>
+                                    <div class="flex items-center gap-3 mt-2">
+                                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium @GetRolBadgeClass(u.Rol)">
+                                            @u.Rol
+                                        </span>
+                                        <span class="text-xs text-gray-400">Nivel @u.NivelAcceso</span>
+                                    </div>
+                                </div>
+                                
+                                <!-- Estado -->
+                                <div class="flex-shrink-0">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium @(u.Estado == "Activo" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")">
+                                        <span class="w-1.5 h-1.5 @(u.Estado == "Activo" ? "bg-green-400" : "bg-red-400") rounded-full mr-1"></span>
+                                        @u.Estado
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Acciones -->
+                            <div class="flex items-center gap-2 mt-3">
+                                <button @onclick="(() => VerDetalles(u))" class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium">
+                                    <span class="material-symbols-outlined text-base">visibility</span>
+                                    <span>Ver</span>
+                                </button>
+                                @if (canEditUsers)
+                                {
+                                    <button @onclick="(() => AbrirEditar(u))" class="flex items-center justify-center px-3 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors" title="Editar">
+                                        <span class="material-symbols-outlined text-base">edit</span>
+                                    </button>
+                                }
+                                @if (u.Estado == "Activo" && canDeactivateUsers)
+                                {
+                                    <button @onclick="(() => ConfirmarDesactivar(u))" class="flex items-center justify-center px-3 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors" title="Desactivar">
+                                        <span class="material-symbols-outlined text-base">person_off</span>
+                                    </button>
+                                }
+                                @if (u.Estado == "Inactivo" && canActivateUsers)
+                                {
+                                    <button @onclick="(() => ConfirmarReactivar(u))" class="flex items-center justify-center px-3 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors" title="Reactivar">
+                                        <span class="material-symbols-outlined text-base">person_add</span>
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
 
     <!-- Controles de Paginación -->
     @if (usuarios != null && usuarios.Any())
     {
-        <div class="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-4 sm:px-6 py-4 border-t border-gray-200 bg-gray-50">
             <div class="flex items-center gap-4">
-                <span class="text-sm text-gray-700">
+                <span class="text-xs sm:text-sm text-gray-700 text-center sm:text-left">
                     Mostrando <span class="font-medium">@((paginaActual - 1) * tamañoPagina + 1)</span> 
                     a <span class="font-medium">@Math.Min(paginaActual * tamañoPagina, totalUsuariosPagina)</span> 
                     de <span class="font-medium">@totalUsuariosPagina</span> usuarios
@@ -259,37 +361,46 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 justify-center sm:justify-end">
                 <!-- Botón Anterior -->
-                <button class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                <button class="flex-1 sm:flex-none px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
                         @onclick="PaginaAnteriorAsync" 
                         disabled="@(paginaActual == 1)">
                     <span class="material-symbols-outlined text-sm">chevron_left</span>
+                    <span class="hidden sm:inline">Anterior</span>
                 </button>
 
-                <!-- Números de página -->
-                @{
-                    var paginasVisibles = ObtenerPaginasVisibles();
-                }
-                @foreach (var pagina in paginasVisibles)
-                {
-                    if (pagina == -1)
-                    {
-                        <span class="px-3 py-2 text-sm text-gray-500">...</span>
+                <!-- Números de página (Solo desktop) -->
+                <div class="hidden sm:flex items-center gap-2">
+                    @{
+                        var paginasVisibles = ObtenerPaginasVisibles();
                     }
-                    else
+                    @foreach (var pagina in paginasVisibles)
                     {
-                        <button class="px-3 py-2 text-sm font-medium rounded-md @(pagina == paginaActual ? "bg-blue-600 text-white" : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50")"
-                                @onclick="@(async () => await IrAPaginaAsync(pagina))">
-                            @pagina
-                        </button>
+                        if (pagina == -1)
+                        {
+                            <span class="px-3 py-2 text-sm text-gray-500">...</span>
+                        }
+                        else
+                        {
+                            <button class="px-3 py-2 text-sm font-medium rounded-md @(pagina == paginaActual ? "bg-blue-600 text-white" : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50")"
+                                    @onclick="@(async () => await IrAPaginaAsync(pagina))">
+                                @pagina
+                            </button>
+                        }
                     }
-                }
+                </div>
+                
+                <!-- Indicador de página (Solo móvil) -->
+                <div class="sm:hidden px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md">
+                    @paginaActual / @totalPaginas
+                </div>
 
                 <!-- Botón Siguiente -->
-                <button class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                <button class="flex-1 sm:flex-none px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
                         @onclick="PaginaSiguienteAsync" 
                         disabled="@(paginaActual == totalPaginas)">
+                    <span class="hidden sm:inline">Siguiente</span>
                     <span class="material-symbols-outlined text-sm">chevron_right</span>
                 </button>
             </div>
@@ -309,17 +420,17 @@
         <!-- Modal para crear/editar usuario -->
         @if (mostrandoModal)
         {
-            <div aria-labelledby="modal-title" aria-modal="true" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60" role="dialog">
-                <div class="relative flex flex-col bg-white rounded-xl shadow-2xl w-full max-w-2xl m-4 max-h-[85vh] overflow-hidden">
+            <div aria-labelledby="modal-title" aria-modal="true" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4" role="dialog">
+                <div class="relative flex flex-col bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[98vh] sm:max-h-[85vh] overflow-hidden">
             <!-- Header del Modal -->
-            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
                 <div class="flex items-center gap-3">
                     <div class="flex items-center justify-center rounded-full bg-blue-100 shrink-0 size-10">
                         <span class="material-symbols-outlined text-blue-600">@(modalTitulo.Contains("Nuevo") ? "person_add" : "edit")</span>
                     </div>
                     <div>
-                        <h2 class="text-xl font-bold text-gray-900" id="modal-title">@modalTitulo</h2>
-                        <p class="text-sm text-gray-500">@(modalTitulo.Contains("Nuevo") ? "Crea un nuevo usuario para el sistema" : "Modifica los datos del usuario")</p>
+                        <h2 class="text-lg sm:text-xl font-bold text-gray-900" id="modal-title">@modalTitulo</h2>
+                        <p class="text-xs sm:text-sm text-gray-500 hidden sm:block">@(modalTitulo.Contains("Nuevo") ? "Crea un nuevo usuario para el sistema" : "Modifica los datos del usuario")</p>
                     </div>
                 </div>
                 <button type="button" class="text-gray-400 hover:text-gray-600 transition-colors" @onclick="CerrarModal">
@@ -331,8 +442,8 @@
                         <DataAnnotationsValidator />
 
                         <!-- Body del Modal -->
-                        <div class="flex-1 overflow-y-auto p-6 max-h-[60vh]">
-                            <div class="space-y-6">
+                        <div class="flex-1 overflow-y-auto p-4 sm:p-6" style="max-height: calc(98vh - 200px);">
+                            <div class="space-y-4 sm:space-y-6">
                         <!-- Información Personal -->
                         <div>
                             <h3 class="text-lg font-semibold text-gray-900 mb-4">Información Personal</h3>
@@ -481,19 +592,21 @@
                     </div>
                 </div>
 
-                        <!-- Footer del Modal -->
-                        <div class="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
-                    <button type="button" 
-                            class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium" 
-                            @onclick="CerrarModal">
-                        Cancelar
-                    </button>
-                    <button type="submit" 
-                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                        <span class="material-symbols-outlined text-sm mr-2">save</span>
-                        Guardar Usuario
-                    </button>
-                </div>
+                        <!-- Footer del Modal Responsive -->
+                        <div class="bg-gray-50 p-4 sm:p-6 border-t border-gray-200 flex-shrink-0">
+                            <div class="flex flex-col sm:flex-row sm:justify-end gap-3 sm:gap-4">
+                                <button type="button" 
+                                        class="order-2 sm:order-1 px-4 py-3 sm:py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium w-full sm:w-auto" 
+                                        @onclick="CerrarModal">
+                                    Cancelar
+                                </button>
+                                <button type="submit" 
+                                        class="order-1 sm:order-2 px-4 py-3 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center justify-center gap-2 w-full sm:w-auto">
+                                    <span class="material-symbols-outlined text-sm">save</span>
+                                    <span>Guardar Usuario</span>
+                                </button>
+                            </div>
+                        </div>
             </EditForm>
         </div>
     </div>
@@ -1354,6 +1467,32 @@
   {
     incluirInactivos = Convert.ToBoolean(e.Value);
     await CargarAsync();
+  }
+
+  // Métodos auxiliares para la vista mobile
+  private string GetInitials(string nombreCompleto)
+  {
+    if (string.IsNullOrWhiteSpace(nombreCompleto))
+      return "??";
+    
+    var partes = nombreCompleto.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    if (partes.Length == 1)
+      return partes[0].Substring(0, Math.Min(2, partes[0].Length)).ToUpper();
+    
+    return (partes[0].Substring(0, 1) + partes[^1].Substring(0, 1)).ToUpper();
+  }
+
+  private string GetRolBadgeClass(string rol)
+  {
+    return rol switch
+    {
+      "Administrador" => "bg-red-100 text-red-800",
+      "Gerente" => "bg-purple-100 text-purple-800", 
+      "Mesero" => "bg-blue-100 text-blue-800",
+      "Cocinero" => "bg-orange-100 text-orange-800",
+      "Cajero" => "bg-green-100 text-green-800",
+      _ => "bg-gray-100 text-gray-800"
+    };
   }
 }
 </AuthorizeRole>

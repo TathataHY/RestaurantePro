@@ -7,28 +7,42 @@
 
 <PageTitle>Mesas</PageTitle>
 
-<div class="flex flex-wrap items-center justify-between gap-4 mb-8">
-    <div>
-        <h1 class="text-3xl font-bold text-gray-900">Gestión de Mesas</h1>
-        <p class="text-gray-600 mt-2">Control de mesas, estados y disponibilidad del restaurante</p>
+<!-- Header Responsive -->
+<div class="mb-6 space-y-4">
+    <!-- Título -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Gestión de Mesas</h1>
+            <p class="text-gray-600 mt-2">Control de mesas, estados y disponibilidad del restaurante</p>
+        </div>
+        
+        <!-- Botón Nueva Mesa (Solo móvil) -->
+        <button class="sm:hidden flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:bg-blue-700 transition-colors w-full" @onclick="NuevaMesa">
+            <span class="material-symbols-outlined">add</span>
+            <span>Nueva Mesa</span>
+        </button>
     </div>
-    <div class="flex items-center gap-3">
+    
+    <!-- Controles -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <!-- Toggle de vista -->
-        <div class="flex items-center bg-gray-100 rounded-lg p-1">
-            <button class="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md @(vistaTabla ? "bg-white text-blue-600 shadow-sm" : "text-gray-600")" 
+        <div class="flex items-center bg-gray-100 rounded-lg p-1 w-full sm:w-auto">
+            <button class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md @(vistaTabla ? "bg-white text-blue-600 shadow-sm" : "text-gray-600")" 
                     @onclick="() => CambiarVista(true)">
                 <span class="material-symbols-outlined text-sm">table_rows</span>
-                Tabla
+                <span class="hidden sm:inline">Tabla</span>
             </button>
-            <button class="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-md @(!vistaTabla ? "bg-white text-blue-600 shadow-sm" : "text-gray-600")" 
+            <button class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-md @(!vistaTabla ? "bg-white text-blue-600 shadow-sm" : "text-gray-600")" 
                     @onclick="() => CambiarVista(false)">
                 <span class="material-symbols-outlined text-sm">grid_view</span>
-                Grid
+                <span class="hidden sm:inline">Grid</span>
             </button>
         </div>
-        <button class="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-blue-700 transition-colors" @onclick="NuevaMesa">
+        
+        <!-- Botón Nueva Mesa (Desktop) -->
+        <button class="hidden sm:flex items-center gap-2 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-blue-700 transition-colors" @onclick="NuevaMesa">
             <span class="material-symbols-outlined">add</span>
-            <span class="truncate">Nueva Mesa</span>
+            <span>Nueva Mesa</span>
         </button>
     </div>
 </div>
@@ -134,9 +148,10 @@ else
 {
     @if (vistaTabla)
     {
-        <!-- Vista de Tabla -->
+        <!-- Vista de Tabla Responsive -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div class="overflow-x-auto">
+            <!-- Vista Desktop -->
+            <div class="hidden md:block overflow-x-auto">
                 <table class="w-full text-sm text-left text-gray-500">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-100">
                         <tr>
@@ -175,12 +190,56 @@ else
                     </tbody>
                 </table>
             </div>
+            
+            <!-- Vista Mobile (Lista de Cards) -->
+            <div class="md:hidden space-y-3 p-4">
+                @foreach (var m in mesas)
+                {
+                    <div class="bg-white rounded-lg border border-gray-200 p-4 shadow-sm">
+                        <div class="flex items-start justify-between gap-3 mb-3">
+                            <!-- Información Principal -->
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900 text-lg">Mesa @m.Numero</h3>
+                                <div class="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                                    <div class="flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-sm">group</span>
+                                        <span>@m.Capacidad personas</span>
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-sm">location_on</span>
+                                        <span>@m.Zona</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Estado -->
+                            <div class="flex-shrink-0">
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium @GetEstadoClass(m.Estado)">@m.Estado</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Acciones -->
+                        <div class="flex items-center gap-2">
+                            <button @onclick="() => VerDetalles(m)" class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                                <span class="material-symbols-outlined text-base">visibility</span>
+                                <span>Ver</span>
+                            </button>
+                            <button @onclick="() => EditarMesa(m)" class="flex items-center justify-center px-3 py-2 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors" title="Editar">
+                                <span class="material-symbols-outlined text-base">edit</span>
+                            </button>
+                            <button @onclick="() => MostrarAccionesAdmin(m)" class="flex items-center justify-center px-3 py-2 bg-orange-50 text-orange-600 rounded-lg hover:bg-orange-100 transition-colors" title="Acciones">
+                                <span class="material-symbols-outlined text-base">settings</span>
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
         </div>
     }
     else
     {
-        <!-- Vista de Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <!-- Vista de Grid Responsive -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             @foreach (var m in mesas)
             {
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
