@@ -24,6 +24,35 @@ namespace RestaurantePro.Api
     {
         public static async Task Main(string[] args)
         {
+            // 🌍 CONFIGURAR ZONA HORARIA DE CHILE
+            TimeZoneInfo chileTimeZone;
+            try
+            {
+                // Intentar obtener la zona horaria de Chile
+                chileTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Santiago");
+            }
+            catch
+            {
+                // En Windows, el ID puede ser diferente
+                try
+                {
+                    chileTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Pacific SA Standard Time");
+                }
+                catch
+                {
+                    // Fallback: crear manualmente la zona horaria de Chile
+                    chileTimeZone = TimeZoneInfo.CreateCustomTimeZone(
+                        "Chile Standard Time", 
+                        TimeSpan.FromHours(-3), 
+                        "Chile Standard Time", 
+                        "Chile Standard Time");
+                }
+            }
+            
+            // Establecer la zona horaria por defecto para la aplicación
+            Environment.SetEnvironmentVariable("TZ", "America/Santiago");
+            Console.WriteLine($"🌍 Zona horaria configurada: {chileTimeZone.DisplayName}");
+            Console.WriteLine($"🕐 Hora actual en Chile: {TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, chileTimeZone)}");
             
             var builder = WebApplication.CreateBuilder(args);
 
@@ -83,10 +112,18 @@ namespace RestaurantePro.Api
             
             // 🔧 CONFIGURAR BASE DE DATOS Y SEED DATA
             // Ejecutar solo seed data SIN migraciones (las tablas ya existen)
-            // ⚠️ NO ejecutar en modo testing para evitar conflictos con tests de integración
-            if ((app.Environment.IsDevelopment() || app.Environment.IsStaging()) && !isTestingMode)
+            // 🚀 FORZAR ejecución de seed data en TODOS los entornos excepto testing
+            if (!isTestingMode)
             {
-                await app.UseSeedDataAsync(shouldMigrate: false); // Solo datos, NO migraciones
+                if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
+                {
+                    await app.UseSeedDataAsync(shouldMigrate: false); // Solo datos, NO migraciones
+                }
+                else
+                {
+                    // En Beta/Production: Solo seed data (las tablas ya existen)
+                    await app.UseSeedDataAsync(shouldMigrate: false); // Solo datos, NO migraciones
+                }
             }
             
             // Configurar el pipeline de solicitudes HTTP

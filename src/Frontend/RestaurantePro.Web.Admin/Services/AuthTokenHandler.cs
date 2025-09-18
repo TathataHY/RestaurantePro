@@ -113,7 +113,7 @@ public class TokenStore
     public string UserId { get; set; } = string.Empty;
     public string? DomainUserId { get; set; }
     public List<string> Roles { get; set; } = new();
-    public bool IsAuthenticated => !string.IsNullOrWhiteSpace(Token) && Expiration > DateTime.UtcNow;
+    public bool IsAuthenticated => !string.IsNullOrWhiteSpace(Token) && Expiration > DateTime.Now;
 
     public async Task InitializeAsync()
     {

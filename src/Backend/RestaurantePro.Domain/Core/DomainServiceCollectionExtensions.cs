@@ -120,8 +120,8 @@ namespace RestaurantePro.Domain.Core
             // Registrar manejador de eventos para invalidación automática de caché en pruebas
             services.AddScoped<IDomainEventHandler<DomainEvent>, CacheInvalidationEventHandler>();
             
-            // Usar MockDateTimeService para tests con fecha fija
-            services.AddSingleton<IDateTimeService>(new Base.Services.MockDateTimeService(new System.DateTime(2024, 1, 15, 10, 0, 0)));
+            // Usar ChileDateTimeService para producción con hora real de Chile
+            services.AddSingleton<IDateTimeService, Base.Services.ChileDateTimeService>();
             services.AddScoped<IEventBasedNotificationService, EventBasedNotificationService>();
             
             // Registrar servicios de caché con telemetría y TTL dinámico para pruebas

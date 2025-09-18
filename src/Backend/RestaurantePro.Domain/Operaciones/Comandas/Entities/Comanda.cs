@@ -419,31 +419,57 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         /// <exception cref="InvalidOperationException">Si alguna invariante se viola</exception>
         private void ValidarInvariantes()
         {
+            // 🔍 Log temporal para debug
+            Console.WriteLine($"🔍 [ValidarInvariantes] Estado: {Estado}, Items count: {Items.Count()}");
+            
             // Verificar que el estado sea válido
             if (!Enum.IsDefined(typeof(EstadoComanda), Estado))
+            {
+                Console.WriteLine($"❌ [ValidarInvariantes] Estado no válido: {Estado}");
                 throw new InvalidOperationException($"Estado de comanda no válido: {Estado}");
+            }
             
             // Verificar que la comanda finalizada tiene productos
             if (Estado == EstadoComanda.Finalizada && !Items.Any())
+            {
+                Console.WriteLine($"❌ [ValidarInvariantes] Comanda finalizada sin productos");
                 throw new InvalidOperationException("Una comanda finalizada debe tener al menos un producto");
+            }
             
             // Verificar que la comanda entregada tenga todos los productos necesarios
             if (Estado == EstadoComanda.Entregada && !Items.Any())
+            {
+                Console.WriteLine($"❌ [ValidarInvariantes] Comanda entregada sin productos");
                 throw new InvalidOperationException("Una comanda entregada debe tener al menos un producto");
+            }
             
             // Verificar que la comanda lista tenga todos los productos necesarios
             if (Estado == EstadoComanda.Lista && !Items.Any())
+            {
+                Console.WriteLine($"❌ [ValidarInvariantes] Comanda lista sin productos - Items: {Items.Count()}");
                 throw new InvalidOperationException("Una comanda lista debe tener al menos un producto");
+            }
                 
             // Verificar que el total sea consistente con los items
             decimal subtotalCalculado = _items.Sum(i => i.Subtotal);
             decimal descuento = DescuentoFidelizacion ?? 0;
             
+            Console.WriteLine($"🔍 [ValidarInvariantes] SubtotalCalculado: {subtotalCalculado}, Descuento: {descuento}");
+            Console.WriteLine($"🔍 [ValidarInvariantes] Total es null: {Total == null}");
+            
             if (Total == null)
+            {
+                Console.WriteLine($"❌ [ValidarInvariantes] Total es null");
                 throw new InvalidOperationException("El total de la comanda no puede ser nulo");
+            }
+                
+            Console.WriteLine($"🔍 [ValidarInvariantes] Total.Subtotal: {Total.Subtotal}, Diferencia: {Math.Abs(Total.Subtotal - subtotalCalculado)}");
                 
             if (Math.Abs(Total.Subtotal - subtotalCalculado) > 0.01m)
+            {
+                Console.WriteLine($"❌ [ValidarInvariantes] Inconsistencia en subtotal - Calculado: {subtotalCalculado}, Actual: {Total.Subtotal}");
                 throw new InvalidOperationException($"Inconsistencia en el subtotal de la comanda. Calculado: {subtotalCalculado}, Actual: {Total.Subtotal}");
+            }
             
             // Verificar que el descuento sea válido
             if (DescuentoFidelizacion.HasValue)
@@ -626,9 +652,39 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
             Total = TotalComanda.Crear(subtotal, impuesto, DescuentoFidelizacion);
         }
 
+        /// <summary>
+        /// Obtiene la hora actual de Chile
+        /// </summary>
+        private static DateTime ObtenerHoraChile()
+        {
+            TimeZoneInfo chileTimeZone;
+            try
+            {
+                chileTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Santiago");
+            }
+            catch
+            {
+                try
+                {
+                    chileTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Pacific SA Standard Time");
+                }
+                catch
+                {
+                    chileTimeZone = TimeZoneInfo.CreateCustomTimeZone(
+                        "Chile Standard Time",
+                        TimeSpan.FromHours(-3),
+                        "Chile Standard Time",
+                        "Chile Standard Time");
+                }
+            }
+            
+            var utcNow = DateTime.UtcNow;
+            return TimeZoneInfo.ConvertTimeFromUtc(utcNow, chileTimeZone);
+        }
+
         private void ActualizarFecha(DateTime? fecha = null)
         {
-            FechaActualizacion = fecha ?? DateTime.Now;
+            FechaActualizacion = fecha ?? ObtenerHoraChile();
         }
 
         /// <summary>
@@ -787,17 +843,40 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Entities
         /// <returns>True si se cambió el estado correctamente, false en caso contrario</returns>
         public bool MarcarLista()
         {
-            if (Estado != EstadoComanda.EnProceso)
-                return false;
+            Console.WriteLine($"🔍 [MarcarLista] Iniciando - Estado actual: {Estado}");
             
+            if (Estado != EstadoComanda.EnProceso)
+            {
+                Console.WriteLine($"❌ [MarcarLista] Estado incorrecto - Esperado: EnProceso, Actual: {Estado}");
+                return false;
+            }
+            
+            Console.WriteLine($"🔍 [MarcarLista] Cambiando estado a Lista");
             Estado = EstadoComanda.Lista;
+            
+            Console.WriteLine($"🔍 [MarcarLista] Recalculando total - Items: {Items.Count()}");
             // Alinear totales con items antes de validar
             RecalcularTotal();
-            ActualizarFecha();
-            ValidarInvariantes();
             
+            Console.WriteLine($"🔍 [MarcarLista] Actualizando fecha");
+            ActualizarFecha();
+            
+            Console.WriteLine($"🔍 [MarcarLista] Validando invariantes");
+            try
+            {
+                ValidarInvariantes();
+                Console.WriteLine($"✅ [MarcarLista] Invariantes validadas correctamente");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ [MarcarLista] Error en ValidarInvariantes: {ex.Message}");
+                throw;
+            }
+            
+            Console.WriteLine($"🔍 [MarcarLista] Agregando evento de dominio");
             AddDomainEvent(new EstadoComandaActualizado(Id, EstadoComanda.EnProceso, EstadoComanda.Lista));
             
+            Console.WriteLine($"✅ [MarcarLista] Completado exitosamente");
             return true;
         }
         

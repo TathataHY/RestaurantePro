@@ -61,7 +61,8 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
         {
             if (context == null) return;
 
-            var fechaActual = _dateTimeService.Now;
+            // 🌍 Obtener hora de Chile directamente
+            var fechaActual = ObtenerHoraChile();
             string? usuarioActual = _currentUserService.UserId;
             
             var cambios = 0;
@@ -100,6 +101,46 @@ namespace RestaurantePro.Infrastructure.Persistence.Interceptors
             {
                 _logger.LogInformation("Se aplicó auditoría a {Count} entidades", cambios);
             }
+        }
+
+        /// <summary>
+        /// Obtiene la hora actual de Chile
+        /// </summary>
+        private DateTime ObtenerHoraChile()
+        {
+            TimeZoneInfo chileTimeZone;
+            try
+            {
+                // Intentar obtener la zona horaria de Chile
+                chileTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Santiago");
+            }
+            catch
+            {
+                try
+                {
+                    // En Windows, el ID puede ser diferente
+                    chileTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Pacific SA Standard Time");
+                }
+                catch
+                {
+                    // Fallback: crear manualmente la zona horaria de Chile (UTC-3/-4 según DST)
+                    chileTimeZone = TimeZoneInfo.CreateCustomTimeZone(
+                        "Chile Standard Time",
+                        TimeSpan.FromHours(-3),
+                        "Chile Standard Time",
+                        "Chile Standard Time");
+                }
+            }
+
+            var utcNow = DateTime.UtcNow;
+            var chileNow = TimeZoneInfo.ConvertTimeFromUtc(utcNow, chileTimeZone);
+            
+            // Log temporal para debug
+            _logger.LogInformation("🌍 [AuditableEntityInterceptor] UTC: {UtcTime:yyyy-MM-dd HH:mm:ss}", utcNow);
+            _logger.LogInformation("🌍 [AuditableEntityInterceptor] Chile: {ChileTime:yyyy-MM-dd HH:mm:ss}", chileNow);
+            _logger.LogInformation("🌍 [AuditableEntityInterceptor] TimeZone: {TimeZone}", chileTimeZone.DisplayName);
+            
+            return chileNow;
         }
     }
 

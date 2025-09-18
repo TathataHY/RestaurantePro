@@ -207,6 +207,32 @@ namespace RestaurantePro.Infrastructure.Identity.Services
                 await _userManager.UpdateAsync(user);
             }
             
+            // 🌍 Calcular la hora de Chile para la expiración del token
+            TimeZoneInfo chileTimeZone;
+            try
+            {
+                chileTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Pacific SA Standard Time"); // Windows
+            }
+            catch
+            {
+                try
+                {
+                    chileTimeZone = TimeZoneInfo.FindSystemTimeZoneById("America/Santiago"); // Linux
+                }
+                catch
+                {
+                    chileTimeZone = TimeZoneInfo.Utc; // Fallback
+                }
+            }
+            
+            var utcNow = DateTime.UtcNow;
+            var chileNow = TimeZoneInfo.ConvertTimeFromUtc(utcNow, chileTimeZone);
+            var tokenExpiration = chileNow.AddSeconds(tokenResponse.ExpiresIn);
+            
+            _logger.LogInformation("🕐 Hora UTC: {UtcTime}", utcNow);
+            _logger.LogInformation("🕐 Hora Chile: {ChileTime}", chileNow);
+            _logger.LogInformation("🕐 Token expira (Chile): {ExpirationTime}", tokenExpiration);
+            
             return Result.Success(new AuthResponse
             {
                 Success = true,
@@ -215,7 +241,7 @@ namespace RestaurantePro.Infrastructure.Identity.Services
                 UserName = user.UserName,
                 Token = tokenResponse.AccessToken,
                 RefreshToken = recordarme ? user.RefreshToken : null,
-                Expiration = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn),
+                Expiration = tokenExpiration,
                 Roles = roles.ToList(),
                 Message = "Autenticación exitosa"
             });

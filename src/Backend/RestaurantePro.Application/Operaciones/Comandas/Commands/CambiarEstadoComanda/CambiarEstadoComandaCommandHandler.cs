@@ -39,6 +39,16 @@ public class CambiarEstadoComandaCommandHandler : IRequestHandler<CambiarEstadoC
         if (comanda == null)
             return Result.Failure<ComandaDto>($"No se encontró la comanda con ID {request.ComandaId}");
 
+        // 🔍 Log temporal para debug
+        _logger.LogInformation("🔍 [CambiarEstado] Comanda encontrada - Estado actual: {EstadoActual}, Items: {ItemsCount}", 
+            comanda.Estado, comanda.Items.Count());
+        
+        foreach (var item in comanda.Items)
+        {
+            _logger.LogInformation("🔍 [CambiarEstado] Item ID: {ProductoId}, Cantidad: {Cantidad}, Subtotal: {Subtotal}", 
+                item.ProductoId, item.Cantidad, item.Subtotal);
+        }
+
         // 2. Validar que no esté cancelada o finalizada
         if (comanda.Estado == EstadoComanda.Cancelada)
             return Result.Failure<ComandaDto>("No se puede cambiar el estado de una comanda cancelada");

@@ -133,7 +133,7 @@ else
             // Obtener el estado de autenticación
             var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             
-            if (!authState.User.Identity?.IsAuthenticated == true)
+            if (authState.User.Identity?.IsAuthenticated != true)
             {
                 // Si no está autenticado, redirigir al login
                 Navigation.NavigateTo("/login", true);
@@ -152,13 +152,11 @@ else
             // Determinar el rol principal del usuario
             UserRole = allUserRoles.FirstOrDefault() ?? "Usuario";
 
-
             // Verificar si el usuario tiene un rol operativo (no permitido)
             var hasOperationalRole = allUserRoles.Any(role => OperationalRoles.Contains(role));
             
             // Verificar si el usuario tiene un rol administrativo (permitido)
             var hasAdminRole = allUserRoles.Any(role => AdminRoles.Contains(role));
-
 
             // Lógica corregida: Permitir acceso si tiene rol administrativo
             // Solo bloquear si NO tiene rol administrativo Y tiene rol operativo

@@ -36,6 +36,14 @@
 		
 		<!-- Fast Deployment - Deshabilitado para tests -->
 		<AndroidUseAapt2>true</AndroidUseAapt2>
+		
+		<!-- Android Release Configuration -->
+		<AndroidPackageFormat>apk</AndroidPackageFormat>
+		<AndroidKeyStore Condition="'$(Configuration)' == 'Release'">true</AndroidKeyStore>
+		<AndroidSigningKeyStore Condition="'$(Configuration)' == 'Release'">restaurantepro.keystore</AndroidSigningKeyStore>
+		<AndroidSigningKeyAlias Condition="'$(Configuration)' == 'Release'">restaurantepro</AndroidSigningKeyAlias>
+		<AndroidSigningKeyPass Condition="'$(Configuration)' == 'Release'">restaurantepro123</AndroidSigningKeyPass>
+		<AndroidSigningStorePass Condition="'$(Configuration)' == 'Release'">restaurantepro123</AndroidSigningStorePass>
 
 		<!-- Display name -->
 		<ApplicationTitle>RestaurantePro.Mobile</ApplicationTitle>
