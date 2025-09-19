@@ -57,7 +57,7 @@ public partial class CreateDailyPreparationViewModel : ObservableObject
     private int _cantidad = 1;
 
     [ObservableProperty]
-    private DateTime _fechaVencimiento = DateTime.Today.AddHours(8);
+    private DateTime _fechaVencimiento = DateTime.Today.AddDays(1).AddHours(20); // Mañana a las 8:00 PM por defecto
 
     [ObservableProperty]
     private string _observaciones = string.Empty;
@@ -103,7 +103,7 @@ public partial class CreateDailyPreparationViewModel : ObservableObject
         }
         if (FechaVencimiento.Date <= DateTime.Today)
         {
-            await _dialogService.ShowErrorAsync("La fecha de vencimiento debe ser futura (desde mañana).");
+            await _dialogService.ShowErrorAsync($"La fecha de vencimiento debe ser futura. Mínimo: {DateTime.Today.AddDays(1):dd/MM/yyyy}");
             return;
         }
 

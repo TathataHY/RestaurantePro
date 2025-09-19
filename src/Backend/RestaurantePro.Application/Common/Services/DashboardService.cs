@@ -150,7 +150,7 @@ public class DashboardService : IDashboardService
 
     public async Task<List<DashboardProductoMasVendidoDto>> ObtenerProductosMasVendidosAsync(int cantidad = 5, string? periodo = "hoy", string? turno = "todos")
     {
-        _logger.LogInformation("🍽️ Obteniendo productos más vendidos - Cantidad: {Cantidad}, Período: {Periodo}, Turno: {Turno}", cantidad, periodo, turno);
+        _logger.LogInformation("🍽️ Obteniendo productos más vendidos - Cantidad: {Cantidad}, Período: {Periodo}, Turno: {Turno} - BASADO EN COMANDAS", cantidad, periodo, turno);
 
         try
         {
@@ -164,22 +164,39 @@ public class DashboardService : IDashboardService
                 fechaFin = fechaFin.Date.AddHours(horaFin);
             }
 
-            var facturas = await _facturaRepository.ObtenerPorRangoFechasAsync(fechaInicio, fechaFin);
-            var facturasFiltradas = facturas.Where(f => f.Estado == EstadoFactura.Pagada).ToList();
+            var comandas = await _comandaRepository.ObtenerPorRangoFechasAsync(fechaInicio, fechaFin);
+            var comandasFinalizadas = comandas.Where(c => c.Estado == EstadoComanda.Entregada).ToList();
 
-            var productosVendidos = facturasFiltradas
-                .SelectMany(f => f.Detalles)
-                .GroupBy(d => new { d.ProductoId, d.Descripcion })
+            var productosVendidos = comandasFinalizadas
+                .SelectMany(c => c.Items)
+                .GroupBy(i => i.ProductoId)
                 .Select(g => new DashboardProductoMasVendidoDto
                 {
-                    ProductoId = g.Key.ProductoId,
-                    Nombre = g.Key.Descripcion,
-                    CantidadVendida = (int)g.Sum(d => d.Cantidad),
-                    Ingresos = g.Sum(d => d.Subtotal)
+                    ProductoId = g.Key,
+                    Nombre = $"Producto {g.Key.ToString()[..8]}...", // Temporal hasta obtener nombre real
+                    CantidadVendida = (int)g.Sum(i => i.Cantidad),
+                    Ingresos = g.Sum(i => i.Subtotal)
                 })
                 .OrderByDescending(p => p.CantidadVendida)
                 .Take(cantidad)
                 .ToList();
+
+            // Obtener nombres reales de productos desde el repositorio
+            foreach (var producto in productosVendidos)
+            {
+                try
+                {
+                    var productoEntity = await _productoRepository.ObtenerPorIdAsync(producto.ProductoId);
+                    if (productoEntity != null)
+                    {
+                        producto.Nombre = productoEntity.Nombre;
+                    }
+                }
+                catch
+                {
+                    // Si no se puede obtener el nombre, mantener el temporal
+                }
+            }
 
             return productosVendidos;
         }
@@ -192,7 +209,7 @@ public class DashboardService : IDashboardService
 
     public async Task<List<DashboardVentaPorPeriodoDto>> ObtenerVentasPorPeriodoAsync(int dias = 7, string? periodo = "hoy", string? turno = "todos")
     {
-        _logger.LogInformation("📊 Obteniendo ventas por período - Días: {Dias}, Período: {Periodo}, Turno: {Turno}", dias, periodo, turno);
+        _logger.LogInformation("📊 Obteniendo ventas por período - Días: {Dias}, Período: {Periodo}, Turno: {Turno} - BASADO EN COMANDAS", dias, periodo, turno);
 
         try
         {
@@ -253,9 +270,9 @@ public class DashboardService : IDashboardService
                 var fechaInicioDia = fecha.Date.AddHours(horaInicio);
                 var fechaFinDia = fecha.Date.AddHours(horaFin);
 
-                var facturas = await _facturaRepository.ObtenerPorRangoFechasAsync(fechaInicioDia, fechaFinDia);
-                var facturasPagadas = facturas.Where(f => f.Estado == EstadoFactura.Pagada).ToList();
-                var ventasDia = facturasPagadas.Sum(f => f.Total);
+                var comandas = await _comandaRepository.ObtenerPorRangoFechasAsync(fechaInicioDia, fechaFinDia);
+                var comandasFinalizadas = comandas.Where(c => c.Estado == EstadoComanda.Entregada).ToList();
+                var ventasDia = comandasFinalizadas.Sum(c => c.Total?.Total ?? 0);
 
 
                 ventasPorDia.Add(new DashboardVentaPorPeriodoDto
@@ -367,7 +384,7 @@ public class DashboardService : IDashboardService
 
     public async Task<List<DashboardIngresosPorHoraDto>> ObtenerIngresosPorHoraAsync(string? periodo = "hoy", string? turno = "todos")
     {
-        _logger.LogInformation("💰 Obteniendo ingresos por hora - Período: {Periodo}, Turno: {Turno}", periodo, turno);
+        _logger.LogInformation("💰 Obteniendo ingresos por hora - Período: {Periodo}, Turno: {Turno} - BASADO EN COMANDAS", periodo, turno);
 
         try
         {
@@ -379,12 +396,12 @@ public class DashboardService : IDashboardService
             // Para períodos de "semana" y "mes", obtener todas las facturas y agrupar por hora
             if (periodo == "semana" || periodo == "mes")
             {
-                // Obtener todas las facturas del período
-                var todasLasFacturas = await _facturaRepository.ObtenerPorRangoFechasAsync(fechaInicio, fechaFin);
-                var facturasPagadas = todasLasFacturas.Where(f => f.Estado == EstadoFactura.Pagada).ToList();
+                // Obtener todas las comandas del período
+                var todasLasComandas = await _comandaRepository.ObtenerPorRangoFechasAsync(fechaInicio, fechaFin);
+                var comandasFinalizadas = todasLasComandas.Where(c => c.Estado == EstadoComanda.Entregada).ToList();
 
-                _logger.LogInformation("💰 DEBUG: Período {Periodo} - Total facturas: {TotalFacturas}, Facturas pagadas: {FacturasPagadas}", 
-                    periodo, todasLasFacturas.Count(), facturasPagadas.Count());
+                _logger.LogInformation("💰 DEBUG: Período {Periodo} - Total comandas: {TotalComandas}, Comandas finalizadas: {ComandasFinalizadas}", 
+                    periodo, todasLasComandas.Count(), comandasFinalizadas.Count());
 
                 // Inicializar todas las horas con 0
                 for (int hora = horaInicio; hora < horaFin; hora++)
@@ -396,13 +413,13 @@ public class DashboardService : IDashboardService
                     });
                 }
 
-                // Agrupar facturas por hora y sumar ingresos
-                var facturasPorHora = facturasPagadas.GroupBy(f => f.FechaEmision.Hour).ToList();
+                // Agrupar comandas por hora y sumar ingresos
+                var comandasPorHora = comandasFinalizadas.GroupBy(c => c.FechaCreacion.Hour).ToList();
                 
-                foreach (var grupo in facturasPorHora)
+                foreach (var grupo in comandasPorHora)
                 {
                     var hora = grupo.Key;
-                    var ingresosHora = grupo.Sum(f => f.Total);
+                    var ingresosHora = grupo.Sum(c => c.Total?.Total ?? 0);
                     
                     // Buscar la entrada correspondiente a esta hora
                     var entrada = ingresosPorHora.FirstOrDefault(i => i.Hora == hora);
@@ -411,7 +428,7 @@ public class DashboardService : IDashboardService
                         entrada.Monto = ingresosHora;
                     }
                     
-                    _logger.LogInformation("💰 DEBUG: Hora {Hora}: {Facturas} facturas, Total: {Ingresos}", 
+                    _logger.LogInformation("💰 DEBUG: Hora {Hora}: {Comandas} comandas, Total: {Ingresos}", 
                         hora, grupo.Count(), ingresosHora);
                 }
             }
@@ -423,8 +440,8 @@ public class DashboardService : IDashboardService
                 var horaInicioActual = fechaInicio.Date.AddHours(hora);
                     var horaFinActual = fechaInicio.Date.AddHours(hora + 1).AddTicks(-1);
 
-                var facturas = await _facturaRepository.ObtenerPorRangoFechasAsync(horaInicioActual, horaFinActual);
-                var ingresos = facturas.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
+                var comandas = await _comandaRepository.ObtenerPorRangoFechasAsync(horaInicioActual, horaFinActual);
+                var ingresos = comandas.Where(c => c.Estado == EstadoComanda.Entregada).Sum(c => c.Total?.Total ?? 0);
 
                 ingresosPorHora.Add(new DashboardIngresosPorHoraDto
                 {
@@ -491,32 +508,33 @@ public class DashboardService : IDashboardService
         
         // IMPORTANTE: Las métricas principales deben reflejar el período seleccionado
         // "VentasHoy" en realidad representa "Ventas del período seleccionado"
+        // CAMBIO: Ahora basamos las ventas en comandas finalizadas en lugar de facturas
         
         var (fechaInicioPeriodo, fechaFinPeriodo) = CalcularRangoFechas(periodo);
-        var facturasPeriodo = await _facturaRepository.ObtenerPorRangoFechasAsync(fechaInicioPeriodo, fechaFinPeriodo);
-        var facturasPagadas = facturasPeriodo.Where(f => f.Estado == EstadoFactura.Pagada).ToList();
-        var ventasPeriodo = facturasPagadas.Sum(f => f.Total);
+        var comandasPeriodo = await _comandaRepository.ObtenerPorRangoFechasAsync(fechaInicioPeriodo, fechaFinPeriodo);
+        var comandasFinalizadas = comandasPeriodo.Where(c => c.Estado == EstadoComanda.Entregada).ToList();
+        var ventasPeriodo = comandasFinalizadas.Sum(c => c.Total?.Total ?? 0);
         
         
 
-        // Calcular ventas de ayer (siempre del día anterior)
+        // Calcular ventas de ayer (siempre del día anterior) - BASADO EN COMANDAS
         var (fechaInicioAyer, fechaFinAyer) = CalcularRangoFechas("ayer");
-        var facturasAyer = await _facturaRepository.ObtenerPorRangoFechasAsync(fechaInicioAyer, fechaFinAyer);
-        var ventasAyer = facturasAyer.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
+        var comandasAyer = await _comandaRepository.ObtenerPorRangoFechasAsync(fechaInicioAyer, fechaFinAyer);
+        var ventasAyer = comandasAyer.Where(c => c.Estado == EstadoComanda.Entregada).Sum(c => c.Total?.Total ?? 0);
 
-        // Calcular ventas de la semana (últimos 7 días)
+        // Calcular ventas de la semana (últimos 7 días) - BASADO EN COMANDAS
         var (fechaInicioSemana, fechaFinSemana) = CalcularRangoFechas("hoy");
         fechaInicioSemana = fechaInicioSemana.AddDays(-7); // Últimos 7 días
-        var facturasSemana = await _facturaRepository.ObtenerPorRangoFechasAsync(fechaInicioSemana, fechaFinSemana);
-        var ventasSemana = facturasSemana.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
+        var comandasSemana = await _comandaRepository.ObtenerPorRangoFechasAsync(fechaInicioSemana, fechaFinSemana);
+        var ventasSemana = comandasSemana.Where(c => c.Estado == EstadoComanda.Entregada).Sum(c => c.Total?.Total ?? 0);
 
-        // Calcular ventas del mes (últimos 30 días)
+        // Calcular ventas del mes (últimos 30 días) - BASADO EN COMANDAS
         var (fechaInicioMes, fechaFinMes) = CalcularRangoFechas("hoy");
         fechaInicioMes = fechaInicioMes.AddDays(-29); // Últimos 30 días
-        var facturasMes = await _facturaRepository.ObtenerPorRangoFechasAsync(fechaInicioMes, fechaFinMes);
-        var ventasMes = facturasMes.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
+        var comandasMes = await _comandaRepository.ObtenerPorRangoFechasAsync(fechaInicioMes, fechaFinMes);
+        var ventasMes = comandasMes.Where(c => c.Estado == EstadoComanda.Entregada).Sum(c => c.Total?.Total ?? 0);
 
-        // Aplicar filtro de turno solo a la métrica específica del período solicitado
+        // Aplicar filtro de turno solo a la métrica específica del período solicitado - BASADO EN COMANDAS
         if (turno != "todos")
         {
             var (horaInicio, horaFin) = CalcularRangoHoras(turno);
@@ -524,23 +542,23 @@ public class DashboardService : IDashboardService
             // Solo aplicar filtro de turno a la métrica del período solicitado
             if (periodo == "hoy")
             {
-                var facturasHoyFiltradas = facturasPeriodo.Where(f => f.FechaEmision.Hour >= horaInicio && f.FechaEmision.Hour < horaFin);
-                ventasPeriodo = facturasHoyFiltradas.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
+                var comandasHoyFiltradas = comandasPeriodo.Where(c => c.FechaCreacion.Hour >= horaInicio && c.FechaCreacion.Hour < horaFin);
+                ventasPeriodo = comandasHoyFiltradas.Where(c => c.Estado == EstadoComanda.Entregada).Sum(c => c.Total?.Total ?? 0);
             }
             else if (periodo == "ayer")
             {
-                var facturasAyerFiltradas = facturasPeriodo.Where(f => f.FechaEmision.Hour >= horaInicio && f.FechaEmision.Hour < horaFin);
-                ventasPeriodo = facturasAyerFiltradas.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
+                var comandasAyerFiltradas = comandasPeriodo.Where(c => c.FechaCreacion.Hour >= horaInicio && c.FechaCreacion.Hour < horaFin);
+                ventasPeriodo = comandasAyerFiltradas.Where(c => c.Estado == EstadoComanda.Entregada).Sum(c => c.Total?.Total ?? 0);
             }
             else if (periodo == "semana")
             {
-                var facturasSemanaFiltradas = facturasPeriodo.Where(f => f.FechaEmision.Hour >= horaInicio && f.FechaEmision.Hour < horaFin);
-                ventasPeriodo = facturasSemanaFiltradas.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
+                var comandasSemanaFiltradas = comandasPeriodo.Where(c => c.FechaCreacion.Hour >= horaInicio && c.FechaCreacion.Hour < horaFin);
+                ventasPeriodo = comandasSemanaFiltradas.Where(c => c.Estado == EstadoComanda.Entregada).Sum(c => c.Total?.Total ?? 0);
             }
             else if (periodo == "mes")
             {
-                var facturasMesFiltradas = facturasPeriodo.Where(f => f.FechaEmision.Hour >= horaInicio && f.FechaEmision.Hour < horaFin);
-                ventasPeriodo = facturasMesFiltradas.Where(f => f.Estado == EstadoFactura.Pagada).Sum(f => f.Total);
+                var comandasMesFiltradas = comandasPeriodo.Where(c => c.FechaCreacion.Hour >= horaInicio && c.FechaCreacion.Hour < horaFin);
+                ventasPeriodo = comandasMesFiltradas.Where(c => c.Estado == EstadoComanda.Entregada).Sum(c => c.Total?.Total ?? 0);
             }
         }
 
@@ -549,7 +567,7 @@ public class DashboardService : IDashboardService
     }
 
     /// <summary>
-    /// Calcula las ventas totales del día completo (todos los turnos)
+    /// Calcula las ventas totales del día completo (todos los turnos) - BASADO EN COMANDAS
     /// </summary>
     private async Task<decimal> CalcularVentasTotalPeriodo(string? periodo)
     {
@@ -557,10 +575,10 @@ public class DashboardService : IDashboardService
         {
             var (fechaInicio, fechaFin) = CalcularRangoFechas(periodo);
             
-            var facturas = await _facturaRepository.ObtenerPorRangoFechasAsync(fechaInicio, fechaFin);
-            var facturasFiltradas = facturas.Where(f => f.Estado == EstadoFactura.Pagada).ToList();
+            var comandas = await _comandaRepository.ObtenerPorRangoFechasAsync(fechaInicio, fechaFin);
+            var comandasFinalizadas = comandas.Where(c => c.Estado == EstadoComanda.Entregada).ToList();
             
-            var total = facturasFiltradas.Sum(f => f.Total);
+            var total = comandasFinalizadas.Sum(c => c.Total?.Total ?? 0);
             
             
             return total;
@@ -579,10 +597,10 @@ public class DashboardService : IDashboardService
             var hoy = DateTime.Today;
             var mañana = hoy.AddDays(1);
             
-            var facturas = await _facturaRepository.ObtenerPorRangoFechasAsync(hoy, mañana);
-            var facturasFiltradas = facturas.Where(f => f.Estado == EstadoFactura.Pagada).ToList();
+            var comandas = await _comandaRepository.ObtenerPorRangoFechasAsync(hoy, mañana);
+            var comandasFinalizadas = comandas.Where(c => c.Estado == EstadoComanda.Entregada).ToList();
             
-            return facturasFiltradas.Sum(f => f.Total);
+            return comandasFinalizadas.Sum(c => c.Total?.Total ?? 0);
         }
         catch (Exception ex)
         {
@@ -592,23 +610,23 @@ public class DashboardService : IDashboardService
     }
 
     /// <summary>
-    /// Calcula métricas adicionales del dashboard
+    /// Calcula métricas adicionales del dashboard - BASADO EN COMANDAS
     /// </summary>
     private async Task<(int productosVendidosHoy, int clientesAtendidosHoy, decimal promedioTicket)> CalcularMetricasAdicionales(IEnumerable<Factura> facturas, string? turno, string? periodo)
     {
         try
         {
             
-            // IMPORTANTE: Usar las facturas del período seleccionado, no las pasadas como parámetro
+            // IMPORTANTE: Usar las comandas del período seleccionado en lugar de facturas
             var (fechaInicio, fechaFin) = CalcularRangoFechas(periodo);
-            var facturasPeriodo = await _facturaRepository.ObtenerPorRangoFechasAsync(fechaInicio, fechaFin);
+            var comandasPeriodo = await _comandaRepository.ObtenerPorRangoFechasAsync(fechaInicio, fechaFin);
             
             // Aplicar filtro de turno si es necesario
-            var facturasFiltradas = facturasPeriodo.ToList();
+            var comandasFiltradas = comandasPeriodo.ToList();
             if (turno != "todos")
             {
                 var (horaInicio, horaFin) = CalcularRangoHoras(turno);
-                facturasFiltradas = facturasPeriodo.Where(f => f.FechaEmision.Hour >= horaInicio && f.FechaEmision.Hour < horaFin).ToList();
+                comandasFiltradas = comandasPeriodo.Where(c => c.FechaCreacion.Hour >= horaInicio && c.FechaCreacion.Hour < horaFin).ToList();
             }
 
 
@@ -616,32 +634,32 @@ public class DashboardService : IDashboardService
             var productosVendidosHoy = 0;
             var clientesUnicos = new HashSet<Guid>();
             var totalVentas = 0m;
-            var cantidadFacturas = 0;
+            var cantidadComandas = 0;
 
-            foreach (var factura in facturasFiltradas)
+            foreach (var comanda in comandasFiltradas)
             {
-                if (factura.Estado == EstadoFactura.Pagada)
+                if (comanda.Estado == EstadoComanda.Entregada)
                 {
                     // Contar productos vendidos
-                    if (factura.Detalles != null)
+                    if (comanda.Items != null)
                     {
-                        productosVendidosHoy += (int)factura.Detalles.Sum(d => d.Cantidad);
+                        productosVendidosHoy += (int)comanda.Items.Sum(i => i.Cantidad);
                     }
 
-                    // Contar clientes únicos
-                    if (factura.ClienteId.HasValue)
+                    // Contar clientes únicos (basado en la mesa asignada)
+                    if (comanda.MesaId.HasValue)
                     {
-                        clientesUnicos.Add(factura.ClienteId.Value);
+                        clientesUnicos.Add(comanda.MesaId.Value); // Usamos mesa como proxy de cliente
                     }
 
                     // Acumular para promedio ticket
-                    totalVentas += factura.Total;
-                    cantidadFacturas++;
+                    totalVentas += comanda.Total?.Total ?? 0;
+                    cantidadComandas++;
                 }
             }
 
             var clientesAtendidosHoy = clientesUnicos.Count;
-            var promedioTicket = cantidadFacturas > 0 ? totalVentas / cantidadFacturas : 0;
+            var promedioTicket = cantidadComandas > 0 ? totalVentas / cantidadComandas : 0;
 
 
             return (productosVendidosHoy, clientesAtendidosHoy, promedioTicket);
@@ -700,40 +718,55 @@ public class DashboardService : IDashboardService
 
     private async Task<List<DashboardIngresosPorCategoriaDto>> ObtenerIngresosPorCategoriaAsync(string periodo, string turno)
     {
-        _logger.LogInformation("🏷️ Obteniendo ingresos por categoría - Período: {Periodo}, Turno: {Turno}", periodo, turno);
+        _logger.LogInformation("🏷️ Obteniendo ingresos por categoría - Período: {Periodo}, Turno: {Turno} - BASADO EN COMANDAS", periodo, turno);
         
         var (fechaInicio, fechaFin) = CalcularRangoFechas(periodo);
-        var facturas = await _facturaRepository.ObtenerPorRangoFechasAsync(fechaInicio, fechaFin);
+        var comandas = await _comandaRepository.ObtenerPorRangoFechasAsync(fechaInicio, fechaFin);
         
         // Filtrar por turno si no es "todos"
         if (turno != "todos")
         {
             var (horaInicio, horaFin) = CalcularRangoHoras(turno);
-            facturas = facturas.Where(f => 
-                f.FechaEmision.Hour >= horaInicio && 
-                f.FechaEmision.Hour < horaFin).ToList();
+            comandas = comandas.Where(c => 
+                c.FechaCreacion.Hour >= horaInicio && 
+                c.FechaCreacion.Hour < horaFin).ToList();
         }
         
-        // Filtrar solo facturas pagadas
-        var facturasPagadas = facturas.Where(f => f.Estado == EstadoFactura.Pagada).ToList();
+        // Filtrar solo comandas finalizadas
+        var comandasFinalizadas = comandas.Where(c => c.Estado == EstadoComanda.Entregada).ToList();
         
         // Agrupar por categoría de productos
         var ingresosPorCategoria = new Dictionary<string, decimal>();
         
-        foreach (var factura in facturasPagadas)
+        foreach (var comanda in comandasFinalizadas)
         {
-            // Obtener detalles de la factura con productos
-            var detalles = await _facturaRepository.ObtenerDetallesConProductosAsync(factura.Id);
-            
-            foreach (var detalle in detalles)
+            // Obtener items de la comanda con productos
+            if (comanda.Items != null)
             {
-                var categoria = detalle.Producto?.CategoriaNombre ?? "Sin Categoría";
-                var monto = detalle.PrecioUnitario * detalle.Cantidad;
-                
-                if (ingresosPorCategoria.ContainsKey(categoria))
-                    ingresosPorCategoria[categoria] += monto;
-                else
-                    ingresosPorCategoria[categoria] = monto;
+                foreach (var item in comanda.Items)
+                {
+                    // Obtener categoría del producto desde el repositorio
+                    var categoria = "Sin Categoría";
+                    try
+                    {
+                        var productoEntity = await _productoRepository.ObtenerPorIdAsync(item.ProductoId);
+                        if (productoEntity != null && !string.IsNullOrEmpty(productoEntity.CategoriaNombre))
+                        {
+                            categoria = productoEntity.CategoriaNombre;
+                        }
+                    }
+                    catch
+                    {
+                        // Si no se puede obtener la categoría, usar "Sin Categoría"
+                    }
+                    
+                    var monto = item.PrecioUnitario * item.Cantidad;
+                    
+                    if (ingresosPorCategoria.ContainsKey(categoria))
+                        ingresosPorCategoria[categoria] += monto;
+                    else
+                        ingresosPorCategoria[categoria] = monto;
+                }
             }
         }
         
@@ -742,8 +775,8 @@ public class DashboardService : IDashboardService
                     {
                         Categoria = kvp.Key,
                         Monto = kvp.Value,
-                        Porcentaje = facturasPagadas.Sum(f => f.Total) > 0 ? 
-                            Math.Round((kvp.Value / facturasPagadas.Sum(f => f.Total)) * 100, 1) : 0
+                        Porcentaje = comandasFinalizadas.Sum(c => c.Total?.Total ?? 0) > 0 ? 
+                            Math.Round((kvp.Value / comandasFinalizadas.Sum(c => c.Total?.Total ?? 0)) * 100, 1) : 0
                     }).OrderByDescending(x => x.Monto).ToList();
         
         _logger.LogInformation("🏷️ Ingresos por categoría completados - Total categorías: {Count}", resultado.Count);
