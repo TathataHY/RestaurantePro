@@ -10,6 +10,8 @@ using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Navigation;
 using RestaurantePro.Mobile.Core.Services.Realtime;
 using RestaurantePro.Mobile.Core.Services.Notifications;
+using RestaurantePro.Mobile.Core.Core.Attributes;
+using RestaurantePro.Mobile.Core.Models.Enums;
 using System.Collections.ObjectModel;
 using System.Linq;
 
@@ -548,8 +550,9 @@ public partial class MesaDetalleViewModel : BaseViewModel
     public IAsyncRelayCommand<ComandaDto> EntregarComandaCommand { get; }
 
     /// <summary>
-    /// Entregar una comanda lista al cliente
+    /// Entregar una comanda lista al cliente - Administradores y Meseros
     /// </summary>
+    [RequirePermission(AppPermission.EntregarComandas)]
     private async Task EntregarComandaAsync(ComandaDto comanda)
     {
         System.Diagnostics.Debug.WriteLine($"[DEBUG] EntregarComandaAsync llamado con comanda: {comanda?.Id}");

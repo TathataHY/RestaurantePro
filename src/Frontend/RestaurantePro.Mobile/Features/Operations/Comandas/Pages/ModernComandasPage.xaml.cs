@@ -152,6 +152,9 @@ public partial class ModernComandasPage : ContentPage
     {
         base.OnAppearing();
         
+        // 🔐 IMPORTANTE: Inicializar autorización ANTES de cargar datos
+        await _viewModel.InitializeWithAuthorizationAsync();
+        
         // Cargar datos al aparecer la página
         if (_viewModel.LoadComandasCommand.CanExecute(null))
         {

@@ -190,8 +190,14 @@
                                                 TextColor="White"
                                                 FontSize="12"
                                                 Padding="12,8"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding PuedeTomar}"/>
+                                                CornerRadius="8">
+                                            <Button.IsVisible>
+                                                <MultiBinding Converter="{StaticResource AllTrueConverter}">
+                                                    <Binding Path="PuedeTomar" />
+                                                    <Binding Path="BindingContext.CanTomarComandas" Source="{RelativeSource AncestorType={x:Type ContentPage}}" />
+                                                </MultiBinding>
+                                            </Button.IsVisible>
+                                        </Button>
                                         
                                         <!-- Botón para marcar como lista (solo si está EnProceso) -->
                                         <Button Text="✅ Lista"
@@ -201,8 +207,14 @@
                                                 TextColor="White"
                                                 FontSize="12"
                                                 Padding="12,8"
-                                                CornerRadius="8"
-                                                IsVisible="{Binding PuedeMarcarLista}"/>
+                                                CornerRadius="8">
+                                            <Button.IsVisible>
+                                                <MultiBinding Converter="{StaticResource AllTrueConverter}">
+                                                    <Binding Path="PuedeMarcarLista" />
+                                                    <Binding Path="BindingContext.CanMarcarLista" Source="{RelativeSource AncestorType={x:Type ContentPage}}" />
+                                                </MultiBinding>
+                                            </Button.IsVisible>
+                                        </Button>
                                         
                                         <!-- Botón para ver detalle -->
                                         <Button Text="👁️ Ver"

@@ -4,6 +4,13 @@ using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Models.Common;
 using RestaurantePro.Mobile.Core.Services;
 using RestaurantePro.Mobile.Core.Services.Navigation;
+using RestaurantePro.Mobile.Core.Models.ViewModels;
+using RestaurantePro.Mobile.Core.Services.Authorization;
+using RestaurantePro.Mobile.Core.Core.Helpers;
+using RestaurantePro.Mobile.Core.Models.Enums;
+using RestaurantePro.Mobile.Core.Core.Attributes;
+using RestaurantePro.Mobile.Core.Services.Dialog;
+using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 
 namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
@@ -11,7 +18,7 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
     /// <summary>
     /// ViewModel para la gestión de preparaciones diarias
     /// </summary>
-    public partial class DailyPreparationsViewModel : ObservableObject
+    public partial class DailyPreparationsViewModel : AuthorizedBaseViewModel
     {
         private readonly IDailyPreparationsService _dailyPreparationsService;
         private readonly IDialogService _dialogService;
@@ -44,15 +51,75 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
         [ObservableProperty]
         private bool _isRefreshing;
 
+        // ===== 🔐 PROPIEDADES DE AUTORIZACIÓN =====
+        [ObservableProperty]
+        private bool canMarcarDisponible;
+
+        [ObservableProperty]
+        private bool canEliminarPreparacion;
+
+        [ObservableProperty]
+        private bool canEditarPreparacion;
+
+        [ObservableProperty]
+        private bool canCrearPreparacion;
+
         public DailyPreparationsViewModel(
             IDailyPreparationsService dailyPreparationsService,
             IDialogService dialogService,
-            INavigationService navigationService)
+            INavigationService navigationService,
+            IAuthorizationService authorizationService,
+            IAuthorizationValidator authorizationValidator,
+            AuthorizationUIHelper authorizationUIHelper,
+            ILogger<DailyPreparationsViewModel> logger) 
+            : base(authorizationService, authorizationValidator, authorizationUIHelper, dialogService, logger)
         {
             _dailyPreparationsService = dailyPreparationsService;
             _dialogService = dialogService;
             _navigationService = navigationService;
         }
+
+        #region 🔐 Autorización
+
+        /// <summary>
+        /// Inicialización con autorización - configurar permisos y cargar datos
+        /// </summary>
+        protected override async Task OnAuthorizedInitializeAsync()
+        {
+            await ConfigurarPermisosUIAsync();
+            
+            // Cargar datos iniciales después de configurar permisos
+            await LoadPreparacionesDiariasCommand.ExecuteAsync(null);
+            await LoadEstadisticasCommand.ExecuteAsync(null);
+        }
+
+        /// <summary>
+        /// Configurar permisos de UI según el rol del usuario
+        /// </summary>
+        private async Task ConfigurarPermisosUIAsync()
+        {
+            try
+            {
+                // 🔐 Verificar permisos para preparaciones diarias
+                CanMarcarDisponible = await HasPermissionAsync(AppPermission.CompletarPreparaciones);
+                CanEliminarPreparacion = await HasPermissionAsync(AppPermission.ActualizarEstadoPreparaciones);
+                CanEditarPreparacion = await HasPermissionAsync(AppPermission.ActualizarEstadoPreparaciones);
+                CanCrearPreparacion = await HasPermissionAsync(AppPermission.ActualizarEstadoPreparaciones);
+
+                System.Diagnostics.Debug.WriteLine("🔐 [DailyPrepVM] === PERMISOS PREPARACIONES ===");
+                System.Diagnostics.Debug.WriteLine($"🔐 [DailyPrepVM] CanMarcarDisponible: {CanMarcarDisponible}");
+                System.Diagnostics.Debug.WriteLine($"🔐 [DailyPrepVM] CanEliminarPreparacion: {CanEliminarPreparacion}");
+                System.Diagnostics.Debug.WriteLine($"🔐 [DailyPrepVM] CanEditarPreparacion: {CanEditarPreparacion}");
+                System.Diagnostics.Debug.WriteLine($"🔐 [DailyPrepVM] CanCrearPreparacion: {CanCrearPreparacion}");
+                System.Diagnostics.Debug.WriteLine("🔐 [DailyPrepVM] === FIN PERMISOS ===");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error al configurar permisos UI en DailyPreparationsViewModel");
+            }
+        }
+
+        #endregion
 
         #region Commands
 
@@ -179,6 +246,7 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
         private bool CanNeverExecute => false;
 
         [RelayCommand]
+        [RequirePermission(AppPermission.CompletarPreparaciones)]
         private async Task MarcarComoDisponibleAsync(PreparacionDiariaDto preparacion)
         {
             if (preparacion == null) return;
@@ -211,6 +279,7 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
         }
 
         [RelayCommand]
+        [RequirePermission(AppPermission.ActualizarEstadoPreparaciones)]
         private async Task EliminarPreparacionAsync(PreparacionDiariaDto preparacion)
         {
             if (preparacion == null) return;
@@ -243,6 +312,7 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
         }
 
         [RelayCommand]
+        [RequirePermission(AppPermission.ActualizarEstadoPreparaciones)]
         private async Task EditarPreparacionAsync(PreparacionDiariaDto preparacion)
         {
             if (preparacion == null) return;
@@ -262,6 +332,7 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
         }
 
         [RelayCommand]
+        [RequirePermission(AppPermission.ActualizarEstadoPreparaciones)]
         private async Task CrearNuevaPreparacionAsync()
         {
             await _navigationService.NavigateToAsync("crear-preparacion-diaria");

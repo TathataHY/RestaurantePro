@@ -17,9 +17,13 @@ public partial class ModernDailyPreparationsPage : ContentPage
         SetupFilterTabs();
     }
 
-    protected override void OnAppearing()
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
+        
+        // 🔐 IMPORTANTE: Inicializar autorización ANTES de cargar datos
+        await _viewModel.InitializeWithAuthorizationAsync();
+        
         _ = InitializeOnAppearAsync();
     }
 
@@ -44,8 +48,7 @@ public partial class ModernDailyPreparationsPage : ContentPage
         {
             await MainFab.ScaleTo(1, 400, Easing.BounceOut);
         }
-        await _viewModel.LoadPreparacionesDiariasCommand.ExecuteAsync(null);
-        await _viewModel.LoadEstadisticasCommand.ExecuteAsync(null);
+        // Los datos ya se cargan en InitializeWithAuthorizationAsync
     }
 
     // Sin manejador de tabs inferior en esta vista
@@ -56,21 +59,8 @@ public partial class ModernDailyPreparationsPage : ContentPage
         await _viewModel.FiltrarPorEstadoCommand.ExecuteAsync(tabName);
     }
 
-    private async void OnEditarClicked(object sender, EventArgs e)
-    {
-        if (sender is Button btn && btn.BindingContext is RestaurantePro.Mobile.Core.Models.DTOs.PreparacionDiariaDto prep)
-        {
-            await _viewModel.EditarPreparacionCommand.ExecuteAsync(prep);
-        }
-    }
-
-    private async void OnEliminarClicked(object sender, EventArgs e)
-    {
-        if (sender is Button btn && btn.BindingContext is RestaurantePro.Mobile.Core.Models.DTOs.PreparacionDiariaDto prep)
-        {
-            await _viewModel.EliminarPreparacionCommand.ExecuteAsync(prep);
-        }
-    }
+    // Los eventos OnEditarClicked y OnEliminarClicked ya no se usan
+    // Los botones ahora usan comandos directamente con autorización
 
     private async void OnRefreshing(object sender, EventArgs e)
     {

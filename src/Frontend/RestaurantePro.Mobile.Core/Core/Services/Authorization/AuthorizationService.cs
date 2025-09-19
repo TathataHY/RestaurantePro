@@ -25,6 +25,8 @@ public class AuthorizationService : IAuthorizationService
             AppPermission.VerComandas,
             AppPermission.ModificarComandas,
             AppPermission.CerrarComandas,
+            AppPermission.EntregarComandas,
+            AppPermission.FinalizarComandas,
             
             // Mesas (funcionalidad principal)
             AppPermission.VerEstadoMesas,

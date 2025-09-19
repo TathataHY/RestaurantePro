@@ -15,6 +15,9 @@ public partial class EditDailyPreparationPage : ContentPage, IQueryAttributable
 
     public async void ApplyQueryAttributes(IDictionary<string, object> query)
     {
+        // 🔐 IMPORTANTE: Inicializar autorización ANTES de cargar datos
+        await _vm.InitializeWithAuthorizationAsync();
+        
         if (query.TryGetValue("id", out var value))
         {
             if (value is string s && Guid.TryParse(s, out var id))

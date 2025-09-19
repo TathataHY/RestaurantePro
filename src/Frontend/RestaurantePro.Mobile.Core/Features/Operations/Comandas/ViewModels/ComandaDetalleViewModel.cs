@@ -5,6 +5,11 @@ using RestaurantePro.Mobile.Core.Services.Comandas;
 using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Navigation;
 using RestaurantePro.Mobile.Core.Models.ViewModels;
+using RestaurantePro.Mobile.Core.Core.Attributes;
+using RestaurantePro.Mobile.Core.Models.Enums;
+using RestaurantePro.Mobile.Core.Services.Authorization;
+using RestaurantePro.Mobile.Core.Core.Helpers;
+using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 
 namespace RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;
@@ -13,7 +18,7 @@ namespace RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;
 /// ViewModel para la página de detalle de comanda
 /// Maneja la visualización y edición de una comanda específica
 /// </summary>
-public partial class ComandaDetalleViewModel : BaseViewModel
+public partial class ComandaDetalleViewModel : AuthorizedBaseViewModel
 {
     private readonly IComandasService _comandasService;
     private readonly INavigationService _navigationService;
@@ -22,7 +27,12 @@ public partial class ComandaDetalleViewModel : BaseViewModel
     public ComandaDetalleViewModel(
         IComandasService comandasService,
         INavigationService navigationService,
-        IDialogService dialogService)
+        IDialogService dialogService,
+        IAuthorizationService authorizationService,
+        IAuthorizationValidator authorizationValidator,
+        AuthorizationUIHelper uiHelper,
+        ILogger<ComandaDetalleViewModel> logger)
+        : base(authorizationService, authorizationValidator, uiHelper, dialogService, logger)
     {
         _comandasService = comandasService;
         _navigationService = navigationService;
@@ -33,6 +43,31 @@ public partial class ComandaDetalleViewModel : BaseViewModel
         
         // Inicializar con comanda vacía para evitar nulls
         Comanda = new ComandaDto();
+    }
+
+    /// <summary>
+    /// Configurar permisos UI según el rol del usuario actual
+    /// </summary>
+    private async Task ConfigurarPermisosUIAsync()
+    {
+        try
+        {
+            // Configurar permisos específicos
+            CanEditComanda = await HasPermissionAsync(AppPermission.ModificarComandas);
+            CanChangeEstado = await HasPermissionAsync(AppPermission.ModificarComandas);
+            CanFinalizeComanda = await HasPermissionAsync(AppPermission.FinalizarComandas);
+            CanCancelComanda = await HasPermissionAsync(AppPermission.CancelarComandas);
+
+            // Log para debug
+            var userRoles = await AuthorizationService.GetUserRolesAsync();
+            System.Diagnostics.Debug.WriteLine($"🔐 [ComandaDetalleVM] Usuario: {string.Join(", ", userRoles)}");
+            System.Diagnostics.Debug.WriteLine($"🔐 [ComandaDetalleVM] Editar: {CanEditComanda}, Cambiar Estado: {CanChangeEstado}");
+            System.Diagnostics.Debug.WriteLine($"🔐 [ComandaDetalleVM] Finalizar: {CanFinalizeComanda}, Cancelar: {CanCancelComanda}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error configurando permisos UI en ComandaDetalleViewModel");
+        }
     }
 
     #region Properties
@@ -69,6 +104,19 @@ public partial class ComandaDetalleViewModel : BaseViewModel
 
     [ObservableProperty]
     private bool showCambiarEstado = true;
+
+    // Propiedades de Autorización UI
+    [ObservableProperty]
+    private bool canEditComanda = false;
+
+    [ObservableProperty]
+    private bool canChangeEstado = false;
+
+    [ObservableProperty]
+    private bool canFinalizeComanda = false;
+
+    [ObservableProperty]
+    private bool canCancelComanda = false;
 
     /// <summary>
     /// Indica si la comanda es nueva (estado Creada)
@@ -107,6 +155,9 @@ public partial class ComandaDetalleViewModel : BaseViewModel
                 }
                 ActualizarEstados();
                 CalcularTotales();
+                
+                // Configurar permisos de autorización
+                await ConfigurarPermisosUIAsync();
             }
             else
             {
@@ -177,6 +228,7 @@ public partial class ComandaDetalleViewModel : BaseViewModel
     /// Agregar nuevo producto a la comanda
     /// </summary>
     [RelayCommand]
+    [RequirePermission(AppPermission.ModificarComandas)]
     private async Task AgregarProductoAsync()
     {
         if (!IsEditable) return;
@@ -188,6 +240,7 @@ public partial class ComandaDetalleViewModel : BaseViewModel
     /// Cambiar el estado de la comanda
     /// </summary>
     [RelayCommand]
+    [RequirePermission(AppPermission.ModificarComandas)]
     private async Task CambiarEstadoAsync()
     {
         if (Comanda?.Id == null) return;
@@ -239,9 +292,10 @@ public partial class ComandaDetalleViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Finalizar la comanda
+    /// Finalizar la comanda - Administradores y Meseros
     /// </summary>
     [RelayCommand]
+    [RequirePermission(AppPermission.FinalizarComandas)]
     private async Task FinalizarComandaAsync()
     {
         if (!CanFinalize) return;
@@ -284,9 +338,10 @@ public partial class ComandaDetalleViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Cancelar la comanda
+    /// Cancelar la comanda - Solo Administradores
     /// </summary>
     [RelayCommand]
+    [RequirePermission(AppPermission.CancelarComandas)]
     private async Task CancelarComandaAsync()
     {
         if (!CanCancel) return;
@@ -338,6 +393,7 @@ public partial class ComandaDetalleViewModel : BaseViewModel
     /// Actualizar observaciones de la comanda
     /// </summary>
     [RelayCommand]
+    [RequirePermission(AppPermission.ModificarComandas)]
     private async Task ActualizarObservacionesAsync()
     {
         if (!IsEditable) return;
@@ -372,6 +428,7 @@ public partial class ComandaDetalleViewModel : BaseViewModel
     /// Editar comanda (navegar a página de edición)
     /// </summary>
     [RelayCommand]
+    [RequirePermission(AppPermission.ModificarComandas)]
     private async Task EditarComandaAsync()
     {
         if (Comanda?.Id == null) return;

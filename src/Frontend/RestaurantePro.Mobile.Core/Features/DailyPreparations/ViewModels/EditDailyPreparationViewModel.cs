@@ -5,12 +5,19 @@ using RestaurantePro.Mobile.Core.Services;
 using RestaurantePro.Mobile.Core.Services.Authentication;
 using RestaurantePro.Mobile.Core.Services.Navigation;
 using RestaurantePro.Mobile.Core.Services.Productos;
+using RestaurantePro.Mobile.Core.Models.ViewModels;
+using RestaurantePro.Mobile.Core.Services.Authorization;
+using RestaurantePro.Mobile.Core.Core.Helpers;
+using RestaurantePro.Mobile.Core.Models.Enums;
+using RestaurantePro.Mobile.Core.Core.Attributes;
+using RestaurantePro.Mobile.Core.Services.Dialog;
+using Microsoft.Extensions.Logging;
 using RestaurantePro.Mobile.Core.Services.Categorias;
 using System.Collections.ObjectModel;
 
 namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels;
 
-public partial class EditDailyPreparationViewModel : ObservableObject
+public partial class EditDailyPreparationViewModel : AuthorizedBaseViewModel
 {
     private readonly IDailyPreparationsService _dailyPreparationsService;
     private readonly IAuthService _authService;
@@ -61,7 +68,12 @@ public partial class EditDailyPreparationViewModel : ObservableObject
         IDialogService dialogService,
         INavigationService navigationService,
         IProductosService productosService,
-        ICategoriasService categoriasService)
+        ICategoriasService categoriasService,
+        IAuthorizationService authorizationService,
+        IAuthorizationValidator authorizationValidator,
+        AuthorizationUIHelper authorizationUIHelper,
+        ILogger<EditDailyPreparationViewModel> logger) 
+        : base(authorizationService, authorizationValidator, authorizationUIHelper, dialogService, logger)
     {
         _dailyPreparationsService = dailyPreparationsService;
         _authService = authService;
@@ -155,6 +167,7 @@ public partial class EditDailyPreparationViewModel : ObservableObject
     }
 
     [RelayCommand]
+    [RequirePermission(AppPermission.ActualizarEstadoPreparaciones)]
     private async Task GuardarCambiosAsync()
     {
         if (IsBusy) return;

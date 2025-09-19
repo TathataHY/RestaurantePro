@@ -199,23 +199,41 @@
                                             <Button Text="🚚 Entregar"
                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EntregarComandaCommand}"
                                                     CommandParameter="{Binding .}"
-                                                    IsVisible="{Binding PuedeEntregar}"
                                                     Style="{StaticResource PrimaryButtonStyle}"
-                                                    HorizontalOptions="Start" />
+                                                    HorizontalOptions="Start">
+                                                <Button.IsVisible>
+                                                    <MultiBinding Converter="{StaticResource AllTrueConverter}">
+                                                        <Binding Path="PuedeEntregar" />
+                                                        <Binding Source="{RelativeSource AncestorType={x:Type ContentPage}}" Path="BindingContext.CanEntregarComandas" />
+                                                    </MultiBinding>
+                                                </Button.IsVisible>
+                                            </Button>
 
                                             <Button Text="✅ Finalizar"
                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.FinalizarComandaCommand}"
                                                     CommandParameter="{Binding .}"
-                                                    IsVisible="{Binding PuedeCobrar}"
                                                     Style="{StaticResource SuccessButtonStyle}"
-                                                    HorizontalOptions="Start" />
+                                                    HorizontalOptions="Start">
+                                                <Button.IsVisible>
+                                                    <MultiBinding Converter="{StaticResource AllTrueConverter}">
+                                                        <Binding Path="PuedeCobrar" />
+                                                        <Binding Source="{RelativeSource AncestorType={x:Type ContentPage}}" Path="BindingContext.CanFinalizarComandas" />
+                                                    </MultiBinding>
+                                                </Button.IsVisible>
+                                            </Button>
 
                                             <Button Text="❌ Cancelar"
                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CancelarComandaCommand}"
                                                     CommandParameter="{Binding .}"
-                                                    IsVisible="{Binding PuedeCancelar}"
                                                     Style="{StaticResource SecondaryButtonStyle}"
-                                                    HorizontalOptions="Start" />
+                                                    HorizontalOptions="Start">
+                                                <Button.IsVisible>
+                                                    <MultiBinding Converter="{StaticResource AllTrueConverter}">
+                                                        <Binding Path="PuedeCancelar" />
+                                                        <Binding Source="{RelativeSource AncestorType={x:Type ContentPage}}" Path="BindingContext.CanCancelComandas" />
+                                                    </MultiBinding>
+                                                </Button.IsVisible>
+                                            </Button>
 
                                             <Button Text="⋮ Más"
                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MostrarOpcionesComandaCommand}"

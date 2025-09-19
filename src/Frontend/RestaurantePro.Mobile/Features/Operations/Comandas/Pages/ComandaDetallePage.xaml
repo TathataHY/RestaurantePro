@@ -282,41 +282,41 @@
                          Padding="16"
                          Spacing="8">
 
-                <!-- Editar Comanda (Solo para comandas nuevas) -->
+                <!-- Editar Comanda - Solo Administradores y Meseros -->
                 <Button Text="✏️ Editar" 
                         Command="{Binding EditarComandaCommand}" 
                         Style="{StaticResource ActionButtonStyle}"
-                        IsVisible="{Binding EsNueva}" />
+                        IsVisible="{Binding CanEditComanda}" />
 
-                <!-- Agregar Producto -->
+                <!-- Agregar Producto - Solo Administradores y Meseros -->
                 <Button Text="➕ Agregar Producto" 
                         Command="{Binding AgregarProductoCommand}" 
                         Style="{StaticResource ActionButtonStyle}"
-                        IsVisible="{Binding IsEditable}" />
+                        IsVisible="{Binding CanEditComanda}" />
 
-                <!-- Actualizar Observaciones -->
+                <!-- Actualizar Observaciones - Solo Administradores y Meseros -->
                 <Button Text="📝 Observaciones" 
                         Command="{Binding ActualizarObservacionesCommand}" 
                         Style="{StaticResource SecondaryButtonStyle}"
-                        IsVisible="{Binding IsEditable}" />
+                        IsVisible="{Binding CanEditComanda}" />
 
-                <!-- Cambiar Estado -->
+                <!-- Cambiar Estado - Solo Administradores y Meseros -->
                 <Button Text="🔄 Cambiar Estado" 
                         Command="{Binding CambiarEstadoCommand}" 
                         Style="{StaticResource SecondaryButtonStyle}"
-                        IsVisible="{Binding ShowCambiarEstado}" />
+                        IsVisible="{Binding CanChangeEstado}" />
 
-                <!-- Finalizar/Cobrar -->
+                <!-- Finalizar/Cobrar - Solo Administradores y Meseros -->
                 <Button Text="{Binding FinalizarButtonText, StringFormat='✅ {0}'}" 
                         Command="{Binding FinalizarComandaCommand}" 
                         Style="{StaticResource ActionButtonStyle}"
-                        IsVisible="{Binding CanFinalize}" />
+                        IsVisible="{Binding CanFinalizeComanda}" />
 
-                <!-- Cancelar -->
+                <!-- Cancelar - Solo Administradores -->
                 <Button Text="❌ Cancelar" 
                         Command="{Binding CancelarComandaCommand}" 
                         Style="{StaticResource DangerButtonStyle}"
-                        IsVisible="{Binding CanCancel}" />
+                        IsVisible="{Binding CanCancelComanda}" />
 
                 <!-- Refrescar -->
                 <Button Text="🔄 Refrescar" 

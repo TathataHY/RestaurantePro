@@ -76,6 +76,15 @@ public partial class ComandasViewModel : AuthorizedBaseViewModel
     private bool canCloseComandas = false;
 
     [ObservableProperty]
+    private bool canCancelComandas = false;
+
+    [ObservableProperty]
+    private bool canEntregarComandas = false;
+
+    [ObservableProperty]
+    private bool canFinalizarComandas = false;
+
+    [ObservableProperty]
     private bool canViewPreparaciones = false;
 
     [ObservableProperty]
@@ -125,6 +134,8 @@ public partial class ComandasViewModel : AuthorizedBaseViewModel
 
         // Restaurar preferencias de filtros antes de cargar datos
         RestaurarPreferencias();
+        
+        // La configuración de permisos se hará en OnAuthorizedInitializeAsync()
 
         // Suscribir a eventos realtime y arrancar
         _realtimeService.OnNuevaComanda += async () =>
@@ -180,12 +191,23 @@ public partial class ComandasViewModel : AuthorizedBaseViewModel
             CanCreateComandas = await HasPermissionAsync(AppPermission.CrearComandas);
             CanModifyComandas = await HasPermissionAsync(AppPermission.ModificarComandas);
             CanCloseComandas = await HasPermissionAsync(AppPermission.CerrarComandas);
+            CanCancelComandas = await HasPermissionAsync(AppPermission.CancelarComandas);
+            CanEntregarComandas = await HasPermissionAsync(AppPermission.EntregarComandas);
+            CanFinalizarComandas = await HasPermissionAsync(AppPermission.FinalizarComandas);
             CanViewPreparaciones = await HasPermissionAsync(AppPermission.VerPreparacionesPendientes);
 
             // Log para debug - ver qué permisos tiene el usuario
             System.Diagnostics.Debug.WriteLine($"🔐 [ComandasVM] Usuario: {RolUsuario}");
             System.Diagnostics.Debug.WriteLine($"🔐 [ComandasVM] Crear: {CanCreateComandas}, Modificar: {CanModifyComandas}");
-            System.Diagnostics.Debug.WriteLine($"🔐 [ComandasVM] Cerrar: {CanCloseComandas}, Ver Prep: {CanViewPreparaciones}");
+            System.Diagnostics.Debug.WriteLine($"🔐 [ComandasVM] Cerrar: {CanCloseComandas}, Cancelar: {CanCancelComandas}");
+            System.Diagnostics.Debug.WriteLine($"🔐 [ComandasVM] Entregar: {CanEntregarComandas}, Finalizar: {CanFinalizarComandas}, Ver Prep: {CanViewPreparaciones}");
+            
+            // 🔍 DEBUG ADICIONAL: Verificar si los permisos están funcionando
+            System.Diagnostics.Debug.WriteLine($"🔍🔐 [ComandasVM] === DEBUG PERMISOS DETALLADO ===");
+            System.Diagnostics.Debug.WriteLine($"🔍🔐 [ComandasVM] CanEntregarComandas: {CanEntregarComandas}");
+            System.Diagnostics.Debug.WriteLine($"🔍🔐 [ComandasVM] CanFinalizarComandas: {CanFinalizarComandas}");
+            System.Diagnostics.Debug.WriteLine($"🔍🔐 [ComandasVM] CanCancelComandas: {CanCancelComandas}");
+            System.Diagnostics.Debug.WriteLine($"🔍🔐 [ComandasVM] === FIN DEBUG PERMISOS ===");
         }
         catch (Exception ex)
         {
@@ -258,6 +280,15 @@ public partial class ComandasViewModel : AuthorizedBaseViewModel
                 }
                 
                 System.Diagnostics.Debug.WriteLine($"✅ [ComandasViewModel] Comandas actualizadas: {Comandas.Count} comandas en total");
+                
+                // 🔍 DEBUG: Verificar estado de comandas individuales
+                foreach (var comanda in Comandas.Take(3)) // Solo las primeras 3 para no saturar logs
+                {
+                    System.Diagnostics.Debug.WriteLine($"🔍📋 [Comanda {comanda.Numero}] Estado: {comanda.Estado}");
+                    System.Diagnostics.Debug.WriteLine($"🔍📋 [Comanda {comanda.Numero}] PuedeEntregar: {comanda.PuedeEntregar}");
+                    System.Diagnostics.Debug.WriteLine($"🔍📋 [Comanda {comanda.Numero}] PuedeCobrar: {comanda.PuedeCobrar}");
+                    System.Diagnostics.Debug.WriteLine($"🔍📋 [Comanda {comanda.Numero}] PuedeCancelar: {comanda.PuedeCancelar}");
+                }
             }
             else
             {
@@ -548,9 +579,10 @@ public partial class ComandasViewModel : AuthorizedBaseViewModel
     }
 
     /// <summary>
-    /// Entregar comanda (cambiar estado a "Entregada")
+    /// Entregar comanda (cambiar estado a "Entregada") - Administradores y Meseros
     /// </summary>
     [RelayCommand]
+    [RequirePermission(AppPermission.EntregarComandas)]
     private async Task EntregarComandaAsync(ComandaDto comanda)
     {
         if (comanda == null) return;
@@ -640,9 +672,10 @@ public partial class ComandasViewModel : AuthorizedBaseViewModel
     }
 
     /// <summary>
-    /// Finalizar una comanda
+    /// Finalizar una comanda - Administradores y Meseros
     /// </summary>
     [RelayCommand]
+    [RequirePermission(AppPermission.FinalizarComandas)]
     private async Task FinalizarComandaAsync(ComandaDto comanda)
     {
         if (comanda == null) return;
@@ -740,9 +773,10 @@ public partial class ComandasViewModel : AuthorizedBaseViewModel
     }
 
     /// <summary>
-    /// Cancelar una comanda
+    /// Cancelar una comanda - Solo Administradores
     /// </summary>
     [RelayCommand]
+    [RequirePermission(AppPermission.CancelarComandas)]
     private async Task CancelarComandaAsync(ComandaDto comanda)
     {
         if (comanda == null) return;

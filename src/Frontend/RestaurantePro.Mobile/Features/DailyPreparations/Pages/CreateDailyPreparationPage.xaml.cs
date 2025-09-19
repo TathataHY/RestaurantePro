@@ -15,6 +15,9 @@ public partial class CreateDailyPreparationPage : ContentPage
         base.OnAppearing();
         if (BindingContext is CreateDailyPreparationViewModel vm)
         {
+            // 🔐 IMPORTANTE: Inicializar autorización ANTES de cargar datos
+            await vm.InitializeWithAuthorizationAsync();
+            
             if (vm.Categorias.Count == 0)
             {
                 await vm.CargarCategoriasCommand.ExecuteAsync(null);

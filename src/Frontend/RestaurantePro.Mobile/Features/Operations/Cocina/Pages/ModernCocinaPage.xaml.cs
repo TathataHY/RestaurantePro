@@ -16,7 +16,8 @@ public partial class ModernCocinaPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        await _viewModel.LoadComandasCommand.ExecuteAsync(null);
-        await _viewModel.LoadEstadisticasCommand.ExecuteAsync(null);
+        
+        // 🔐 IMPORTANTE: Inicializar autorización ANTES de cargar datos
+        await _viewModel.InitializeWithAuthorizationAsync();
     }
 }

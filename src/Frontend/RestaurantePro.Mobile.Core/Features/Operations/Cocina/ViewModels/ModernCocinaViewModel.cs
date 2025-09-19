@@ -5,13 +5,18 @@ using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Services.Comandas;
 using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Models.ViewModels;
+using RestaurantePro.Mobile.Core.Services.Authorization;
+using RestaurantePro.Mobile.Core.Core.Helpers;
+using RestaurantePro.Mobile.Core.Models.Enums;
+using RestaurantePro.Mobile.Core.Core.Attributes;
+using Microsoft.Extensions.Logging;
 
 namespace RestaurantePro.Mobile.Core.Features.Operations.Cocina.ViewModels;
 
 /// <summary>
 /// ViewModel para la pantalla de cocina - Gestión de comandas desde cocina
 /// </summary>
-public partial class ModernCocinaViewModel : BaseViewModel
+public partial class ModernCocinaViewModel : AuthorizedBaseViewModel
 {
     private readonly IComandasService _comandasService;
     private readonly IDialogService _dialogService;
@@ -38,6 +43,13 @@ public partial class ModernCocinaViewModel : BaseViewModel
     [ObservableProperty]
     private bool isRefreshing;
 
+    // ===== 🔐 PROPIEDADES DE AUTORIZACIÓN =====
+    [ObservableProperty]
+    private bool canTomarComandas;
+
+    [ObservableProperty]
+    private bool canMarcarLista;
+
     #endregion
 
     #region Estados Disponibles
@@ -58,7 +70,12 @@ public partial class ModernCocinaViewModel : BaseViewModel
         IComandasService comandasService,
         IDialogService dialogService,
         RestaurantePro.Mobile.Core.Services.Notifications.INotificationService notificationService,
-        RestaurantePro.Mobile.Core.Services.Realtime.IComandaRealtimeService realtimeService)
+        RestaurantePro.Mobile.Core.Services.Realtime.IComandaRealtimeService realtimeService,
+        IAuthorizationService authorizationService,
+        IAuthorizationValidator authorizationValidator,
+        AuthorizationUIHelper authorizationUIHelper,
+        ILogger<ModernCocinaViewModel> logger) 
+        : base(authorizationService, authorizationValidator, authorizationUIHelper, dialogService, logger)
     {
         _comandasService = comandasService;
         _dialogService = dialogService;
@@ -67,9 +84,7 @@ public partial class ModernCocinaViewModel : BaseViewModel
         
         Title = "Cocina";
         
-        // Cargar datos iniciales
-        _ = LoadComandasAsync();
-        _ = LoadEstadisticasAsync();
+        // NO cargar datos aquí - se hace en OnAuthorizedInitializeAsync
 
         // Suscribir a eventos realtime
         _realtimeService.OnNuevaComanda += async () =>
@@ -83,6 +98,44 @@ public partial class ModernCocinaViewModel : BaseViewModel
             await RefreshComandasCommand.ExecuteAsync(null);
         };
         _ = _realtimeService.StartAsync();
+    }
+
+    #endregion
+
+    #region 🔐 Autorización
+
+    /// <summary>
+    /// Inicialización con autorización - configurar permisos y cargar datos
+    /// </summary>
+    protected override async Task OnAuthorizedInitializeAsync()
+    {
+        await ConfigurarPermisosUIAsync();
+        
+        // Cargar datos iniciales después de configurar permisos
+        await LoadComandasAsync();
+        await LoadEstadisticasAsync();
+    }
+
+    /// <summary>
+    /// Configurar permisos de UI según el rol del usuario
+    /// </summary>
+    private async Task ConfigurarPermisosUIAsync()
+    {
+        try
+        {
+            // 🔐 Verificar permisos para cocina
+            CanTomarComandas = await HasPermissionAsync(AppPermission.ActualizarEstadoPreparaciones);
+            CanMarcarLista = await HasPermissionAsync(AppPermission.CompletarPreparaciones);
+
+            System.Diagnostics.Debug.WriteLine("🔐 [CocinaVM] === PERMISOS COCINA ===");
+            System.Diagnostics.Debug.WriteLine($"🔐 [CocinaVM] CanTomarComandas: {CanTomarComandas}");
+            System.Diagnostics.Debug.WriteLine($"🔐 [CocinaVM] CanMarcarLista: {CanMarcarLista}");
+            System.Diagnostics.Debug.WriteLine("🔐 [CocinaVM] === FIN PERMISOS ===");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error al configurar permisos UI en CocinaViewModel");
+        }
     }
 
     #endregion
@@ -180,6 +233,7 @@ public partial class ModernCocinaViewModel : BaseViewModel
     /// Tomar comanda para preparar (Creada → EnProceso)
     /// </summary>
     [RelayCommand]
+    [RequirePermission(AppPermission.ActualizarEstadoPreparaciones)]
     private async Task TomarComandaAsync(ComandaDto comanda)
     {
         if (comanda == null) return;
@@ -230,6 +284,7 @@ public partial class ModernCocinaViewModel : BaseViewModel
     /// Marcar comanda como lista (EnProceso → Lista)
     /// </summary>
     [RelayCommand]
+    [RequirePermission(AppPermission.CompletarPreparaciones)]
     private async Task MarcarListaAsync(ComandaDto comanda)
     {
         if (comanda == null) return;

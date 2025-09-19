@@ -251,14 +251,26 @@
                                     <Button Text="🚚 Entregar" 
                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ComandasViewModel}}, Path=EntregarComandaCommand}"
                                             CommandParameter="{Binding .}"
-                                            Style="{StaticResource PrimaryButtonStyle}"
-                                            IsVisible="{Binding PuedeEntregar}" />
+                                            Style="{StaticResource PrimaryButtonStyle}">
+                                        <Button.IsVisible>
+                                            <MultiBinding Converter="{StaticResource AllTrueConverter}">
+                                                <Binding Path="PuedeEntregar" />
+                                                <Binding Source="{RelativeSource AncestorType={x:Type vm:ComandasViewModel}}" Path="CanEntregarComandas" />
+                                            </MultiBinding>
+                                        </Button.IsVisible>
+                                    </Button>
 
                                     <Button Text="✅ Finalizar" 
                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ComandasViewModel}}, Path=FinalizarComandaCommand}"
                                             CommandParameter="{Binding .}"
-                                            Style="{StaticResource ActionButtonStyle}"
-                                            IsVisible="{Binding EstaActiva}" />
+                                            Style="{StaticResource ActionButtonStyle}">
+                                        <Button.IsVisible>
+                                            <MultiBinding Converter="{StaticResource AllTrueConverter}">
+                                                <Binding Path="PuedeCobrar" />
+                                                <Binding Source="{RelativeSource AncestorType={x:Type vm:ComandasViewModel}}" Path="CanFinalizarComandas" />
+                                            </MultiBinding>
+                                        </Button.IsVisible>
+                                    </Button>
 
                                     <Button Text="❌ Cancelar" 
                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ComandasViewModel}}, Path=CancelarComandaCommand}"
@@ -268,8 +280,14 @@
                                             CornerRadius="6"
                                             Padding="12,6"
                                             FontSize="12"
-                                            Margin="2"
-                                            IsVisible="{Binding EstaActiva}" />
+                                            Margin="2">
+                                        <Button.IsVisible>
+                                            <MultiBinding Converter="{StaticResource AllTrueConverter}">
+                                                <Binding Path="PuedeCancelar" />
+                                                <Binding Source="{RelativeSource AncestorType={x:Type vm:ComandasViewModel}}" Path="CanCancelComandas" />
+                                            </MultiBinding>
+                                        </Button.IsVisible>
+                                    </Button>
                                 </StackLayout>
                             </Grid>
                         </Frame>

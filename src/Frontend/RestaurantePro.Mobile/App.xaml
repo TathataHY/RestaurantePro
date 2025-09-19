@@ -18,6 +18,7 @@
             <converters:BoolToColorConverter x:Key="BoolToColorConverter" />
             <converters:BoolToTextConverter x:Key="BoolToTextConverter" />
             <converters:StringToColorConverter x:Key="StringToColorConverter" />
+            <converters:AllTrueConverter x:Key="AllTrueConverter" />
 
             <!-- Estilos Globales V4 -->
             <ResourceDictionary.MergedDictionaries>

@@ -27,6 +27,21 @@ public enum AppPermission
     /// </summary>
     CerrarComandas = 4,
     
+    /// <summary>
+    /// Cancelar comandas - Solo Administradores
+    /// </summary>
+    CancelarComandas = 5,
+    
+    /// <summary>
+    /// Entregar comandas - Administradores y Meseros
+    /// </summary>
+    EntregarComandas = 6,
+    
+    /// <summary>
+    /// Finalizar comandas - Administradores y Meseros
+    /// </summary>
+    FinalizarComandas = 7,
+    
     // ===== MESAS (CORE PARA MESEROS) =====
     /// <summary>
     /// Ver estado de todas las mesas
