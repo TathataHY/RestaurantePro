@@ -7,7 +7,7 @@
              x:Class="RestaurantePro.Mobile.Features.DailyPreparations.Pages.ModernDailyPreparationsPage"
              x:Name="DailyPrepsPage"
              x:DataType="vm:DailyPreparationsViewModel"
-             Title="Preparaciones Diarias"
+             Title="Menú del Día"
              BackgroundColor="{StaticResource SurfacePrimary}">
 
     <Grid RowDefinitions="Auto,*,Auto">
@@ -53,12 +53,12 @@
         <Grid Grid.Row="1" RowDefinitions="Auto,*">
             <controls:ModernCard Grid.Row="0" Margin="16,8">
                 <VerticalStackLayout Spacing="12">
-                    <controls:ModernEntry Placeholder="Buscar preparaciones..." Text="{Binding TextoBusqueda}" Icon="🔍" />
+                    <controls:ModernEntry Placeholder="Buscar en el menú del día..." Text="{Binding TextoBusqueda}" Icon="🔍" />
                     <controls:TabNavigation x:Name="FilterTabNavigation" />
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
                         <Button Text="🔄 Refrescar" Command="{Binding RefreshCommand}" Style="{StaticResource SecondaryButtonStyle}" />
                         <Button Grid.Column="1" Text="📊 Estadísticas" Command="{Binding LoadEstadisticasCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-                        <Button Grid.Column="2" Text="➕ Nueva" Command="{Binding CrearNuevaPreparacionCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                        <Button Grid.Column="2" Text="➕ Agregar" Command="{Binding CrearNuevaPreparacionCommand}" Style="{StaticResource PrimaryButtonStyle}" />
                     </Grid>
                 </VerticalStackLayout>
             </controls:ModernCard>
@@ -115,9 +115,9 @@
                     <CollectionView.EmptyView>
                         <VerticalStackLayout Spacing="16" VerticalOptions="Center" HorizontalOptions="Center" Padding="32">
                             <Label Text="🍽️" FontSize="64" HorizontalOptions="Center" />
-                            <Label Text="No hay preparaciones registradas" Style="{StaticResource H2Style}" HorizontalOptions="Center" />
-                            <Label Text="Crea la primera preparación para comenzar" Style="{StaticResource BodyStyle}" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
-                            <Button Text="Crear preparación" Command="{Binding CrearNuevaPreparacionCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                            <Label Text="No hay elementos en el menú del día" Style="{StaticResource H2Style}" HorizontalOptions="Center" />
+                            <Label Text="Agrega el primer elemento al menú para comenzar" Style="{StaticResource BodyStyle}" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
+                            <Button Text="Agregar al menú" Command="{Binding CrearNuevaPreparacionCommand}" Style="{StaticResource PrimaryButtonStyle}" />
                         </VerticalStackLayout>
                     </CollectionView.EmptyView>
                 </CollectionView>

@@ -16,4 +16,14 @@ public interface IAuthService
     Task<string?> GetUserIdAsync();
     Task<bool> IsAuthenticatedAsync();
     Task LogoutAsync();
+    
+    /// <summary>
+    /// Obtiene la preferencia de "Recordarme"
+    /// </summary>
+    Task<bool> GetRecordarmeAsync();
+    
+    /// <summary>
+    /// Obtiene las credenciales guardadas si "Recordarme" está activado
+    /// </summary>
+    Task<(string? email, string? password, bool recordarme)> GetSavedCredentialsAsync();
 } 

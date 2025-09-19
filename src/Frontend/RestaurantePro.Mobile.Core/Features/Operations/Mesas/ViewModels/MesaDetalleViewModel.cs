@@ -281,46 +281,62 @@ public partial class MesaDetalleViewModel : BaseViewModel
     {
         try
         {
+            // Pedir nombre del cliente (con Cliente General como valor por defecto)
             var nombreCliente = await _dialogService.ShowPromptAsync(
                 "Asignar Mesa", 
-                "Ingrese el nombre del cliente:", 
+                "Ingrese el nombre del cliente (por defecto: Cliente General):", 
                 "Confirmar", 
                 "Cancelar",
-                "Nombre del cliente");
+                "Cliente General");
 
-            if (string.IsNullOrWhiteSpace(nombreCliente))
+            // Si cancela, salir
+            if (nombreCliente == null)
                 return;
 
+            // Si está vacío, usar "Cliente General" por defecto
+            if (string.IsNullOrWhiteSpace(nombreCliente))
+                nombreCliente = "Cliente General";
+
+            // Pedir número de personas
             var numeroPersonasStr = await _dialogService.ShowPromptAsync(
                 "Número de Personas", 
-                "¿Cuántas personas?:", 
-                "Confirmar", 
+                "¿Cuántas personas? (por defecto: 2)", 
+                "Asignar", 
                 "Cancelar",
                 "2");
 
-            if (!int.TryParse(numeroPersonasStr, out var numeroPersonas) || numeroPersonas <= 0)
-                numeroPersonas = 2; // Valor por defecto
+            // Si cancela, salir
+            if (numeroPersonasStr == null)
+                return;
+
+            // Si está vacío o no es válido, usar 2 por defecto
+            if (string.IsNullOrWhiteSpace(numeroPersonasStr) || !int.TryParse(numeroPersonasStr, out var numeroPersonas) || numeroPersonas <= 0)
+                numeroPersonas = 2;
 
             IsBusy = true;
+            
+            System.Diagnostics.Debug.WriteLine($"🏠 [MesaDetalleViewModel] Asignando Mesa {Mesa?.Numero} a {nombreCliente} ({numeroPersonas} personas)");
+            
             var result = await _mesasService.AsignarMesaAsync(
                 MesaId, 
-                clienteId: null, // No tenemos clienteId específico
+                clienteId: null, 
                 numeroPersonas: numeroPersonas, 
                 observaciones: $"Mesa asignada a {nombreCliente}");
 
             if (result.Success)
             {
-                await _dialogService.ShowAlertAsync("Éxito", "Mesa asignada correctamente");
+                await _dialogService.ShowSuccessAsync($"Mesa {Mesa?.Numero} asignada a {nombreCliente}");
                 await LoadMesaAsync();
+                await LoadComandasActivasAsync();
             }
             else
             {
-                await _dialogService.ShowAlertAsync("Error", result.Message);
+                await _dialogService.ShowErrorAsync(result.Message ?? "Error al asignar la mesa");
             }
         }
         catch (Exception ex)
         {
-            await _dialogService.ShowAlertAsync("Error", $"Error al asignar mesa: {ex.Message}");
+            await _dialogService.ShowErrorAsync($"Error inesperado: {ex.Message}");
         }
         finally
         {

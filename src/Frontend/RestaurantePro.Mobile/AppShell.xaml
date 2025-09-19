@@ -85,9 +85,9 @@
             ContentTemplate="{DataTemplate cocina:ModernCocinaPage}"
             Route="cocina" />
 
-        <!-- Prep. Diarias Tab - Operativo para Cocineros -->
+        <!-- Menú del Día Tab - Operativo para Cocineros -->
         <ShellContent
-            Title="Prep. Diarias"
+            Title="Menú del Día"
             Icon="preparacionesdiarias.svg"
             ContentTemplate="{DataTemplate dailypreps:ModernDailyPreparationsPage}"
             Route="dailypreparations" />

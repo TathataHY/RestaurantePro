@@ -35,18 +35,29 @@ public partial class ModernMesasPage : ContentPage
         
         System.Diagnostics.Debug.WriteLine("🔍 ModernMesasPage.OnAppearing - Iniciando");
         
-        // Pequeño delay para asegurar que todos los servicios estén inicializados
-        await Task.Delay(300);
-        
-        // Refrescar datos cuando la página aparece
+        // Verificar si ya hay mesas cargadas
         if (_viewModel != null)
         {
-            System.Diagnostics.Debug.WriteLine("🔍 Ejecutando LoadMesasCommand después del delay");
-            _viewModel.LoadMesasCommand?.Execute(null);
+            System.Diagnostics.Debug.WriteLine($"🔍 Mesas actuales en ViewModel: {_viewModel.Mesas.Count}");
             
-            // Solo cargar estadísticas en background, sin mostrar diálogo
-            System.Diagnostics.Debug.WriteLine("🔍 Cargando estadísticas en background");
-            _ = _viewModel.LoadEstadisticasAsync();
+            // Solo recargar si no hay mesas o si es necesario refrescar
+            if (_viewModel.Mesas.Count == 0)
+            {
+                System.Diagnostics.Debug.WriteLine("🔍 No hay mesas cargadas, ejecutando LoadMesasCommand");
+                
+                // Pequeño delay para asegurar que todos los servicios estén inicializados
+                await Task.Delay(200);
+                
+                _viewModel.LoadMesasCommand?.Execute(null);
+                
+                // Solo cargar estadísticas en background, sin mostrar diálogo
+                System.Diagnostics.Debug.WriteLine("🔍 Cargando estadísticas en background");
+                _ = _viewModel.LoadEstadisticasAsync();
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("✅ Mesas ya cargadas, no es necesario recargar");
+            }
         }
         else
         {

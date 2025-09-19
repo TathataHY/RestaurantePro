@@ -3,6 +3,8 @@ using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Hosting;
 using Microsoft.Maui.Hosting;
 using RestaurantePro.Mobile.Config;
+using RestaurantePro.Mobile.Core.Services;
+using RestaurantePro.Mobile.Core.Services.Authentication;
 using RestaurantePro.Mobile.Core.Features.Authentication.ViewModels;
 using RestaurantePro.Mobile.Features.Authentication.Pages;
 using RestaurantePro.Mobile.Views;
@@ -222,7 +224,7 @@ public static class MauiProgram
 				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>(),
 				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Authentication.IAuthService>()));
 		
-		// Servicio de Preparaciones Diarias V1
+		// Servicio de Menú del Día V1
 		services.AddSingleton<RestaurantePro.Mobile.Core.Services.IDailyPreparationsService>(sp =>
 			new RestaurantePro.Mobile.Core.Services.DailyPreparationsService(
 				sp.GetRequiredService<RestaurantePro.Mobile.Core.Services.Api.IApiService>(),
@@ -281,7 +283,11 @@ public static class MauiProgram
 		services.AddTransient<DashboardPage>();
 		
 		// Modern Dashboard - V4 Modernización Visual
-		services.AddTransient<ModernDashboardViewModel>();
+		services.AddTransient<ModernDashboardViewModel>(sp =>
+			new ModernDashboardViewModel(
+				sp.GetRequiredService<IAuthService>(),
+				sp.GetRequiredService<IDashboardService>(),
+				sp.GetRequiredService<IDailyPreparationsService>()));
 		services.AddTransient<ModernDashboardPage>();
 		
 		// Dashboard Service
@@ -310,7 +316,7 @@ public static class MauiProgram
 		services.AddTransient<ReservacionesViewModel>();
 		services.AddTransient<IngredientesViewModel>();
 		
-		// ViewModel de Preparaciones Diarias V1
+		// ViewModel de Menú del Día V1
 		services.AddTransient<DailyPreparationsViewModel>();
 		services.AddTransient<RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels.CreateDailyPreparationViewModel>();
 		services.AddTransient<RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels.EditDailyPreparationViewModel>();
@@ -339,7 +345,7 @@ public static class MauiProgram
 		services.AddTransient<ReservacionesPage>();
 		services.AddTransient<IngredientesPage>();
 		
-		// Página de Preparaciones Diarias V1
+		// Página de Menú del Día V1
 		services.AddTransient<DailyPreparationsPage>();
 		services.AddTransient<RestaurantePro.Mobile.Features.DailyPreparations.Pages.CreateDailyPreparationPage>();
 		services.AddTransient<RestaurantePro.Mobile.Features.DailyPreparations.Pages.EditDailyPreparationPage>();
@@ -399,7 +405,7 @@ public static class MauiProgram
 		Routing.RegisterRoute("reservaciones", typeof(ReservacionesPage));
 		Routing.RegisterRoute("ingredientes", typeof(IngredientesPage));
 		
-		// Ruta de Preparaciones Diarias V1
+		// Ruta de Menú del Día V1
 		Routing.RegisterRoute("dailypreparations", typeof(DailyPreparationsPage));
 		
 		// Rutas comerciales

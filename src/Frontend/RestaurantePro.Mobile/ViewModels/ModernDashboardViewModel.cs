@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using RestaurantePro.Mobile.Core.Services.Authentication;
 using RestaurantePro.Mobile.Core.Services.Dashboard;
+using RestaurantePro.Mobile.Core.Services;
 using RestaurantePro.Mobile.Core.Models.DTOs;
 
 namespace RestaurantePro.Mobile.ViewModels;
@@ -12,8 +13,10 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
 {
     private readonly IAuthService _authService;
     private readonly IDashboardService _dashboardService;
+    private readonly IDailyPreparationsService _dailyPreparationsService;
     private bool _isLoading;
     private ObservableCollection<RestaurantePro.Mobile.Core.Models.DTOs.OrderItem> _recentOrders;
+    private ObservableCollection<PreparacionDiariaDto> _menuDelDia;
     
     // Propiedades para datos reales
     private decimal _todaySales;
@@ -38,6 +41,12 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
     {
         get => _recentOrders;
         set => SetProperty(ref _recentOrders, value);
+    }
+
+    public ObservableCollection<PreparacionDiariaDto> MenuDelDia
+    {
+        get => _menuDelDia;
+        set => SetProperty(ref _menuDelDia, value);
     }
     
     public decimal TodaySales
@@ -103,16 +112,19 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
     public ICommand AssignTableCommand { get; }
     public ICommand ViewInventoryCommand { get; }
     public ICommand ViewReportsCommand { get; }
+    public ICommand ViewMenuDelDiaCommand { get; }
     public ICommand LogoutCommand { get; }
 
-    public ModernDashboardViewModel(IAuthService authService, IDashboardService dashboardService)
+    public ModernDashboardViewModel(IAuthService authService, IDashboardService dashboardService, IDailyPreparationsService dailyPreparationsService)
     {
         _authService = authService;
         _dashboardService = dashboardService;
+        _dailyPreparationsService = dailyPreparationsService;
         CreateOrderCommand = new Command(async () => await CreateOrder());
         AssignTableCommand = new Command(async () => await AssignTable());
         ViewInventoryCommand = new Command(async () => await ViewInventory());
         ViewReportsCommand = new Command(async () => await ViewReports());
+        ViewMenuDelDiaCommand = new Command(async () => await ViewMenuDelDia());
         LogoutCommand = new Command(async () => await Logout());
 
         LoadData();
@@ -140,9 +152,10 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
             var pendingOrdersTask = _dashboardService.GetPendingOrdersCountAsync();
             var recentOrdersTask = _dashboardService.GetRecentOrdersAsync();
             var tableStatusTask = _dashboardService.GetTableStatusAsync();
+            var menuDelDiaTask = _dailyPreparationsService.GetPreparacionesDiariasAsync();
 
             // Esperar a que todas las tareas se completen
-            await Task.WhenAll(todaySalesTask, salesChangeTask, activeOrdersTask, pendingOrdersTask, recentOrdersTask, tableStatusTask);
+            await Task.WhenAll(todaySalesTask, salesChangeTask, activeOrdersTask, pendingOrdersTask, recentOrdersTask, tableStatusTask, menuDelDiaTask);
 
             // Asignar los datos obtenidos
             TodaySales = await todaySalesTask;
@@ -155,6 +168,20 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
             System.Diagnostics.Debug.WriteLine($"🔍 [ModernDashboardViewModel] Comandas recientes obtenidas: {recentOrders?.Count ?? 0}");
             RecentOrders = new ObservableCollection<RestaurantePro.Mobile.Core.Models.DTOs.OrderItem>(recentOrders);
             System.Diagnostics.Debug.WriteLine($"🔍 [ModernDashboardViewModel] RecentOrders.Count: {RecentOrders.Count}");
+
+            // Cargar menú del día (solo los primeros 3 elementos para el dashboard)
+            var menuDelDiaResult = await menuDelDiaTask;
+            if (menuDelDiaResult.Succeeded && menuDelDiaResult.Data != null)
+            {
+                var menuItems = menuDelDiaResult.Data.Take(3).ToList();
+                MenuDelDia = new ObservableCollection<PreparacionDiariaDto>(menuItems);
+                System.Diagnostics.Debug.WriteLine($"🍽️ [ModernDashboardViewModel] Menú del día cargado: {MenuDelDia.Count} elementos");
+            }
+            else
+            {
+                MenuDelDia = new ObservableCollection<PreparacionDiariaDto>();
+                System.Diagnostics.Debug.WriteLine("⚠️ [ModernDashboardViewModel] No se pudo cargar el menú del día");
+            }
         }
         catch (Exception ex)
         {
@@ -165,6 +192,7 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
             PendingOrdersCount = 0;
             TableStatus = new EstadoMesasDto();
             RecentOrders = new ObservableCollection<RestaurantePro.Mobile.Core.Models.DTOs.OrderItem>();
+            MenuDelDia = new ObservableCollection<PreparacionDiariaDto>();
             
             // Log del error (en una app real, usarías un logger)
             System.Diagnostics.Debug.WriteLine($"Error cargando datos del dashboard: {ex.Message}");
@@ -252,6 +280,19 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             await Application.Current.MainPage.DisplayAlert("Error", $"Error al navegar a analytics: {ex.Message}", "OK");
+        }
+    }
+
+    private async Task ViewMenuDelDia()
+    {
+        try
+        {
+            // Navegar a la página de Menú del Día (preparaciones diarias)
+            await Shell.Current.GoToAsync("//dailypreparations");
+        }
+        catch (Exception ex)
+        {
+            await Application.Current.MainPage.DisplayAlert("Error", $"Error al navegar al menú del día: {ex.Message}", "OK");
         }
     }
 

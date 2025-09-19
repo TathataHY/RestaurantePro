@@ -11,7 +11,7 @@
         <!-- Contenido Principal -->
         <ScrollView Grid.Row="0" 
                     VerticalScrollBarVisibility="Never"
-                    Padding="24">
+                    Padding="12">
             
             <VerticalStackLayout Spacing="32" 
                                 VerticalOptions="Center">
@@ -47,47 +47,51 @@
                 </VerticalStackLayout>
 
                 <!-- Formulario de Login -->
-                <VerticalStackLayout Spacing="24">
-                    
-                    <!-- Campo Email -->
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="Correo Electrónico"
-                               Style="{StaticResource BodyStyle}"
-                               FontAttributes="Bold" />
+                <controls:ModernCard Padding="16,24">
+                    <VerticalStackLayout Spacing="24">
                         
-                        <controls:ModernEntry Text="{Binding Email}"
-                                             Placeholder="ejemplo@restaurantepro.com"
-                                             Icon="📧"
-                                             Keyboard="Email" />
-                    </VerticalStackLayout>
+                        <!-- Campo Email -->
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Correo Electrónico"
+                                   Style="{StaticResource BodyStyle}"
+                                   FontAttributes="Bold" />
+                            
+                            <controls:ModernEntry Text="{Binding Email}"
+                                                 Placeholder="ejemplo@restaurantepro.com"
+                                                 Icon="📧"
+                                                 Keyboard="Email"
+                                                 HorizontalOptions="FillAndExpand" />
+                        </VerticalStackLayout>
 
-                    <!-- Campo Contraseña -->
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="Contraseña"
-                               Style="{StaticResource BodyStyle}"
-                               FontAttributes="Bold" />
-                        
-                        <controls:ModernEntry Text="{Binding Password}"
-                                             Placeholder="Ingrese su contraseña"
-                                             Icon="🔒"
-                                             IsPassword="True" />
-                    </VerticalStackLayout>
+                        <!-- Campo Contraseña -->
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Contraseña"
+                                   Style="{StaticResource BodyStyle}"
+                                   FontAttributes="Bold" />
+                            
+                            <controls:ModernEntry Text="{Binding Password}"
+                                                 Placeholder="Ingrese su contraseña"
+                                                 Icon="🔒"
+                                                 IsPassword="True"
+                                                 HorizontalOptions="FillAndExpand" />
+                        </VerticalStackLayout>
 
-                    <!-- Checkbox Recordarme -->
-                    <HorizontalStackLayout Spacing="12" 
-                                           VerticalOptions="Center">
-                        <CheckBox IsChecked="{Binding Recordarme}"
-                                  Color="{StaticResource PrimaryColor}" />
-                        
-                        <Label Text="Recordarme"
-                               Style="{StaticResource BodyStyle}"
-                               VerticalOptions="Center"
-                               TextColor="{StaticResource TextPrimary}">
-                            <Label.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding ToggleRecordarmeCommand}" />
-                            </Label.GestureRecognizers>
-                        </Label>
-                    </HorizontalStackLayout>
+                        <!-- Checkbox Recordarme -->
+                        <HorizontalStackLayout Spacing="12" 
+                                               HorizontalOptions="Start"
+                                               VerticalOptions="Center">
+                            <CheckBox IsChecked="{Binding Recordarme}"
+                                      Color="{StaticResource PrimaryColor}" />
+                            
+                            <Label Text="Recordarme"
+                                   Style="{StaticResource BodyStyle}"
+                                   VerticalOptions="Center"
+                                   TextColor="{StaticResource TextPrimary}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ToggleRecordarmeCommand}" />
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </HorizontalStackLayout>
 
                     <!-- Mensaje de Error -->
                     <Border BackgroundColor="{StaticResource ErrorColor}"
@@ -100,7 +104,8 @@
                                FontSize="14"
                                HorizontalOptions="Center" />
                     </Border>
-                </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </controls:ModernCard>
 
                 <!-- Botón de Login -->
                 <Button Text="Iniciar Sesión"
@@ -108,7 +113,8 @@
                         IsEnabled="{Binding IsNotBusy}"
                         Style="{StaticResource PrimaryButtonStyle}"
                         HeightRequest="56"
-                        Margin="0,16,0,0" />
+                        HorizontalOptions="FillAndExpand"
+                        Margin="0,20,0,0" />
 
                 <!-- Indicador de Carga -->
                 <VerticalStackLayout Spacing="12"

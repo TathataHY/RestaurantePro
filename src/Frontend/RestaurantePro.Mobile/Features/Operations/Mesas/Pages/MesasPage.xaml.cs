@@ -127,22 +127,30 @@ public partial class MesasPage : ContentPage
     {
         base.OnAppearing();
         
-        System.Diagnostics.Debug.WriteLine("🔄 MesasPage.OnAppearing() - Recargando datos al regresar a la página");
+        System.Diagnostics.Debug.WriteLine("🔄 MesasPage.OnAppearing() - Verificando estado de datos");
         
-        // Cargar datos al aparecer
-        if (_viewModel.LoadMesasCommand.CanExecute(null))
+        // Solo cargar datos si no hay mesas cargadas
+        if (_viewModel.Mesas.Count == 0)
         {
-            System.Diagnostics.Debug.WriteLine("🔄 Ejecutando LoadMesasCommand");
-            await _viewModel.LoadMesasCommand.ExecuteAsync(null);
+            System.Diagnostics.Debug.WriteLine("🔄 No hay mesas cargadas, ejecutando LoadMesasCommand");
+            
+            if (_viewModel.LoadMesasCommand.CanExecute(null))
+            {
+                await _viewModel.LoadMesasCommand.ExecuteAsync(null);
+            }
+            
+            if (_viewModel.LoadEstadisticasCommand.CanExecute(null))
+            {
+                System.Diagnostics.Debug.WriteLine("🔄 Ejecutando LoadEstadisticasCommand");
+                await _viewModel.LoadEstadisticasCommand.ExecuteAsync(null);
+            }
+        }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine($"✅ Mesas ya cargadas ({_viewModel.Mesas.Count} mesas), no es necesario recargar");
         }
         
-        if (_viewModel.LoadEstadisticasCommand.CanExecute(null))
-        {
-            System.Diagnostics.Debug.WriteLine("🔄 Ejecutando LoadEstadisticasCommand");
-            await _viewModel.LoadEstadisticasCommand.ExecuteAsync(null);
-        }
-        
-        System.Diagnostics.Debug.WriteLine("✅ MesasPage.OnAppearing() - Datos recargados");
+        System.Diagnostics.Debug.WriteLine("✅ MesasPage.OnAppearing() - Proceso completado");
     }
 
     /// <summary>

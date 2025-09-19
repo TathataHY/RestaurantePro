@@ -96,6 +96,83 @@
         <ScrollView Grid.Row="2" Padding="16">
             <VerticalStackLayout Spacing="24">
 
+                <!-- Sección de Menú del Día -->
+                <VerticalStackLayout Spacing="16">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0"
+                               Text="🍽️ Menú del Día" 
+                               Style="{StaticResource H2Style}" />
+                        <Button Grid.Column="1"
+                                Text="Ver Todo"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Command="{Binding ViewMenuDelDiaCommand}"
+                                Padding="12,6" />
+                    </Grid>
+                    
+                    <controls:SkeletonLoader x:Name="MenuSkeleton" 
+                                            SkeletonType="List"
+                                            IsVisible="{Binding IsLoading}" />
+                    
+                    <CollectionView x:Name="MenuDelDiaCollectionView"
+                                   ItemsSource="{Binding MenuDelDia}"
+                                   IsVisible="{Binding IsNotLoading}">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout Orientation="Horizontal" ItemSpacing="12" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <controls:ModernCard Padding="12" WidthRequest="200">
+                                    <VerticalStackLayout Spacing="8">
+                                        <HorizontalStackLayout Spacing="8">
+                                            <Label Text="{Binding NombreProducto}" 
+                                                   Style="{StaticResource H3Style}"
+                                                   MaxLines="1" />
+                                            <Label Text="{Binding IconoEstado}" 
+                                                   FontSize="14" />
+                                        </HorizontalStackLayout>
+                                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                                            <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                                <Label Text="{Binding CantidadDisponible}" 
+                                                       Style="{StaticResource H2Style}" 
+                                                       TextColor="{StaticResource SuccessColor}"
+                                                       HorizontalOptions="Center" />
+                                                <Label Text="Disponible" 
+                                                       Style="{StaticResource CaptionStyle}"
+                                                       HorizontalOptions="Center" />
+                                            </VerticalStackLayout>
+                                            <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                                <Label Text="{Binding CantidadPreparada}" 
+                                                       Style="{StaticResource H2Style}" 
+                                                       TextColor="{StaticResource PrimaryColor}"
+                                                       HorizontalOptions="Center" />
+                                                <Label Text="Preparada" 
+                                                       Style="{StaticResource CaptionStyle}"
+                                                       HorizontalOptions="Center" />
+                                            </VerticalStackLayout>
+                                        </Grid>
+                                        <Label Text="{Binding NombreChef, StringFormat='Chef: {0}'}" 
+                                               Style="{StaticResource CaptionStyle}" 
+                                               TextColor="{StaticResource TextSecondary}"
+                                               MaxLines="1" />
+                                    </VerticalStackLayout>
+                                </controls:ModernCard>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                        <CollectionView.EmptyView>
+                            <VerticalStackLayout Spacing="8" HorizontalOptions="Center" Padding="20">
+                                <Label Text="🍽️" FontSize="32" HorizontalOptions="Center" />
+                                <Label Text="No hay elementos en el menú del día" 
+                                       Style="{StaticResource BodyStyle}" 
+                                       TextColor="{StaticResource TextSecondary}"
+                                       HorizontalOptions="Center" />
+                                <Button Text="Agregar al menú"
+                                        Command="{Binding ViewMenuDelDiaCommand}"
+                                        Style="{StaticResource PrimaryButtonStyle}" />
+                            </VerticalStackLayout>
+                        </CollectionView.EmptyView>
+                    </CollectionView>
+                </VerticalStackLayout>
+
                 <!-- Sección de Acciones Rápidas -->
                 <VerticalStackLayout Spacing="16">
                     <Label Text="⚡ Acciones Rápidas" 

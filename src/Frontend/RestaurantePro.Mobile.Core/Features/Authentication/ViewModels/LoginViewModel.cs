@@ -31,6 +31,9 @@ public partial class LoginViewModel : BaseViewModel
         _authService = authService;
         _navigationService = navigationService;
         Title = "Iniciar Sesión";
+        
+        // Cargar credenciales guardadas al inicializar
+        _ = LoadSavedCredentialsAsync();
     }
 
     /// <summary>
@@ -113,5 +116,38 @@ public partial class LoginViewModel : BaseViewModel
     private void ToggleRecordarme()
     {
         Recordarme = !Recordarme;
+    }
+
+    /// <summary>
+    /// Carga las credenciales guardadas si "Recordarme" está activado
+    /// </summary>
+    private async Task LoadSavedCredentialsAsync()
+    {
+        try
+        {
+            var (savedEmail, savedPassword, recordarme) = await _authService.GetSavedCredentialsAsync();
+            
+            if (recordarme && !string.IsNullOrWhiteSpace(savedEmail))
+            {
+                Email = savedEmail;
+                Recordarme = recordarme;
+                
+                // Log para debug
+                System.Diagnostics.Debug.WriteLine($"🔐 [LoginViewModel] Credenciales cargadas: Email={savedEmail}, Recordarme={recordarme}");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ [LoginViewModel] Error cargando credenciales: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Comando público para recargar credenciales guardadas
+    /// </summary>
+    [RelayCommand]
+    private async Task LoadSavedCredentialsCommand()
+    {
+        await LoadSavedCredentialsAsync();
     }
 } 

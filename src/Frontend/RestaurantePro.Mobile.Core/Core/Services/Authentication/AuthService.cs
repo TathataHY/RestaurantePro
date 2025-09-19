@@ -474,4 +474,50 @@ public class AuthService : IAuthService
             _logger.LogError(ex, "Error al guardar refresh token");
         }
     }
+
+    /// <summary>
+    /// Obtiene la preferencia de "Recordarme"
+    /// </summary>
+    public async Task<bool> GetRecordarmeAsync()
+    {
+        try
+        {
+            var recordarmeStr = await _secureStorage.GetAsync(RecordarmeKey);
+            return bool.TryParse(recordarmeStr, out var result) && result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener preferencia de Recordarme");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Obtiene las credenciales guardadas si "Recordarme" está activado
+    /// </summary>
+    public async Task<(string? email, string? password, bool recordarme)> GetSavedCredentialsAsync()
+    {
+        try
+        {
+            var recordarme = await GetRecordarmeAsync();
+            
+            if (!recordarme)
+            {
+                return (null, null, false);
+            }
+
+            // Solo devolver email si "Recordarme" está activado
+            var user = await GetCurrentUserAsync();
+            var email = user?.Email;
+
+            // Por seguridad, no guardamos la contraseña en texto plano
+            // Solo devolvemos el email para pre-llenar el formulario
+            return (email, null, recordarme);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener credenciales guardadas");
+            return (null, null, false);
+        }
+    }
 } 

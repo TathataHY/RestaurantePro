@@ -11,7 +11,7 @@
         <!-- Contenido Principal -->
         <ScrollView Grid.Row="0" 
                     VerticalScrollBarVisibility="Never"
-                    Padding="24">
+                    Padding="12">
             
             <VerticalStackLayout Spacing="40" 
                                 VerticalOptions="Center">
@@ -68,14 +68,14 @@
                 </VerticalStackLayout>
 
                 <!-- Formulario de Login Moderno -->
-                <controls:ModernCard Padding="24">
+                <controls:ModernCard Padding="16,24">
                     <VerticalStackLayout Spacing="24">
                         
                         <!-- Título del Formulario -->
                         <Label Text="Iniciar Sesión"
                                Style="{StaticResource H2Style}"
                                HorizontalOptions="Center"
-                               Margin="0,0,0,8"
+                               Margin="0,0,0,12"
                                AutomationProperties.Name="Título del formulario de login"
                                AutomationProperties.HelpText="Formulario para iniciar sesión en el sistema" />
                         
@@ -90,6 +90,7 @@
                                                  Placeholder="ejemplo@restaurantepro.com"
                                                  Icon="📧"
                                                  Keyboard="Email"
+                                                 HorizontalOptions="FillAndExpand"
                                                  AccessibilityName="Campo de correo electrónico"
                                                  AccessibilityHelpText="Ingrese su dirección de correo electrónico para iniciar sesión" />
                         </VerticalStackLayout>
@@ -105,16 +106,18 @@
                                                  Placeholder="Ingrese su contraseña"
                                                  Icon="🔒"
                                                  IsPassword="True"
+                                                 HorizontalOptions="FillAndExpand"
                                                  AccessibilityName="Campo de contraseña"
                                                  AccessibilityHelpText="Ingrese su contraseña de forma segura" />
                         </VerticalStackLayout>
 
                         <!-- Opciones Adicionales -->
-                        <HorizontalStackLayout Spacing="16" 
-                                               HorizontalOptions="FillAndExpand">
-                            
-                            <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
-                                <CheckBox IsChecked="{Binding RememberMe}"
+                        <VerticalStackLayout Spacing="16">
+                            <!-- Recordar Sesión -->
+                            <HorizontalStackLayout Spacing="12" 
+                                                  HorizontalOptions="Start"
+                                                  VerticalOptions="Center">
+                                <CheckBox IsChecked="{Binding Recordarme}"
                                          AutomationProperties.Name="Recordar sesión"
                                          AutomationProperties.HelpText="Marcar para recordar la sesión en este dispositivo" />
                                 <Label Text="Recordar sesión" 
@@ -123,13 +126,15 @@
                                        AutomationProperties.Name="Texto de recordar sesión" />
                             </HorizontalStackLayout>
                             
+                            <!-- Enlace de Contraseña Olvidada -->
                             <controls:ModernButton Text="¿Olvidaste tu contraseña?"
                                                   Style="{StaticResource SecondaryButtonStyle}"
-                                                  HeightRequest="36"
-                                                  Padding="12,8"
+                                                  HeightRequest="40"
+                                                  HorizontalOptions="Start"
+                                                  Padding="16,8"
                                                   AccessibilityName="Enlace de contraseña olvidada"
                                                   AccessibilityHelpText="Toque para recuperar su contraseña si la ha olvidado" />
-                        </HorizontalStackLayout>
+                        </VerticalStackLayout>
 
                         <!-- Mensaje de Error -->
                         <Border BackgroundColor="{StaticResource ErrorColor}"
@@ -162,7 +167,8 @@
                                        IsEnabled="{Binding IsNotBusy}"
                                        Style="{StaticResource PrimaryButtonStyle}"
                                        HeightRequest="56"
-                                       Margin="0,16,0,0"
+                                       HorizontalOptions="FillAndExpand"
+                                       Margin="0,20,0,0"
                                        AccessibilityName="Botón de iniciar sesión"
                                        AccessibilityHelpText="Toque para iniciar sesión con las credenciales ingresadas" />
 

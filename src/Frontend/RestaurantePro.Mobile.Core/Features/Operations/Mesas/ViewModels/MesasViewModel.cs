@@ -97,6 +97,10 @@ public partial class MesasViewModel : BaseViewModel
         _authService = authService;
         
         Title = "Gestión de Mesas";
+        
+        // Cargar datos iniciales automáticamente (igual que ComandasViewModel)
+        _ = LoadMesasAsync();
+        _ = LoadEstadisticasAsync();
     }
 
     #endregion
@@ -124,6 +128,7 @@ public partial class MesasViewModel : BaseViewModel
         
         // Resetear a la primera página para nueva búsqueda
         _currentPage = 1;
+        System.Diagnostics.Debug.WriteLine($"🔍 [MesasViewModel] LoadMesasAsync - Reseteando a página 1");
         await LoadMesasAsync(FiltroEstado, FiltroUbicacion, FiltroCapacidadMinima);
     }
 

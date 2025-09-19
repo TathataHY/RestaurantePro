@@ -36,6 +36,13 @@ public partial class SimpleLoginPage : ContentPage
                 await _viewModel.CheckAuthStatusCommand.ExecuteAsync(null);
             }
             
+            // Cargar credenciales guardadas
+            if (_viewModel.LoadSavedCredentialsCommandCommand.CanExecute(null))
+            {
+                System.Diagnostics.Debug.WriteLine("[SimpleLoginPage] Cargando credenciales guardadas");
+                await _viewModel.LoadSavedCredentialsCommandCommand.ExecuteAsync(null);
+            }
+            
             System.Diagnostics.Debug.WriteLine("[SimpleLoginPage] OnAppearing completado");
         }
         catch (Exception ex)

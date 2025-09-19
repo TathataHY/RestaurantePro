@@ -38,6 +38,12 @@ public partial class ModernLoginPage : ContentPage
             await _viewModel.CheckAuthStatusCommand.ExecuteAsync(null);
         }
         
+        // Cargar credenciales guardadas
+        if (_viewModel.LoadSavedCredentialsCommandCommand.CanExecute(null))
+        {
+            await _viewModel.LoadSavedCredentialsCommandCommand.ExecuteAsync(null);
+        }
+        
         // Aplicar animaciones de entrada
         await ApplyEntryAnimations();
     }

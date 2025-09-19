@@ -3,7 +3,7 @@ using RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels;
 namespace RestaurantePro.Mobile.Views
 {
     /// <summary>
-    /// Página para la gestión de preparaciones diarias
+    /// Página para la gestión del menú del día
     /// </summary>
     public partial class DailyPreparationsPage : ContentPage
     {
