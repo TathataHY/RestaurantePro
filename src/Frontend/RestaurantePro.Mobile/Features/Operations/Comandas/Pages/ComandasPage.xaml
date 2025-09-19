@@ -248,6 +248,12 @@
                                             Style="{StaticResource SecondaryButtonStyle}"
                                             IsVisible="{Binding PuedeSerEditada}" />
 
+                                    <Button Text="🚚 Entregar" 
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ComandasViewModel}}, Path=EntregarComandaCommand}"
+                                            CommandParameter="{Binding .}"
+                                            Style="{StaticResource PrimaryButtonStyle}"
+                                            IsVisible="{Binding PuedeEntregar}" />
+
                                     <Button Text="✅ Finalizar" 
                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ComandasViewModel}}, Path=FinalizarComandaCommand}"
                                             CommandParameter="{Binding .}"

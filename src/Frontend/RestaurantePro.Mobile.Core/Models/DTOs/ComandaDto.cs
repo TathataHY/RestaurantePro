@@ -308,6 +308,7 @@ public class ComandaDto
         }
     }
 
+
     /// <summary>
     /// Indica si la comanda tiene observaciones
     /// </summary>

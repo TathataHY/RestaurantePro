@@ -195,6 +195,13 @@
                                                 HorizontalScrollBarVisibility="Never"
                                                 Margin="0,12,0,0">
                                         <HorizontalStackLayout Spacing="8">
+                                            <Button Text="🚚 Entregar"
+                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EntregarComandaCommand}"
+                                                    CommandParameter="{Binding .}"
+                                                    IsVisible="{Binding PuedeEntregar}"
+                                                    Style="{StaticResource PrimaryButtonStyle}"
+                                                    HorizontalOptions="Start" />
+
                                             <Button Text="✅ Finalizar"
                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.FinalizarComandaCommand}"
                                                     CommandParameter="{Binding .}"

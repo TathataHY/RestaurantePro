@@ -179,11 +179,19 @@ public partial class ComandasViewModel : BaseViewModel
                     }
                 }
 
+                // Limpiar y recargar la colección existente para forzar actualización
+                System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Limpiando {Comandas.Count} comandas existentes...");
+                
                 Comandas.Clear();
+                
+                System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Agregando {comandasFiltradas.Count} nuevas comandas...");
+                
                 foreach (var comanda in comandasFiltradas)
                 {
                     Comandas.Add(comanda);
                 }
+                
+                System.Diagnostics.Debug.WriteLine($"✅ [ComandasViewModel] Comandas actualizadas: {Comandas.Count} comandas en total");
             }
             else
             {
@@ -209,8 +217,18 @@ public partial class ComandasViewModel : BaseViewModel
     [RelayCommand]
     private async Task RefreshComandasAsync()
     {
-        IsRefreshing = true;
-        await LoadComandasAsync();
+        try
+        {
+            IsRefreshing = true;
+            System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] RefreshComandasAsync iniciado - Recargando desde servidor...");
+            await LoadComandasAsync();
+            System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] RefreshComandasAsync completado - Total comandas: {Comandas.Count}");
+        }
+        finally
+        {
+            IsRefreshing = false;
+            System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] RefreshComandasAsync - IsRefreshing establecido a false");
+        }
     }
 
     /// <summary>
@@ -416,8 +434,39 @@ public partial class ComandasViewModel : BaseViewModel
 
             if (response.Success)
             {
+                System.Diagnostics.Debug.WriteLine($"✅ [ComandasViewModel] Estado cambiado a {nuevoEstado} - Recargando datos...");
+                
+                // Mostrar indicador de refresh
+                IsRefreshing = true;
+                
+                try
+                {
+                    // Pequeño delay para que el backend procese el cambio
+                    await Task.Delay(200);
+                    
+                    // Ejecutar el mismo comando que el refresh manual
+                    if (RefreshComandasCommand.CanExecute(null))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Ejecutando RefreshComandasCommand (igual que refresh manual)");
+                        await RefreshComandasCommand.ExecuteAsync(null);
+                    }
+                    else
+                    {
+                        // Fallback: refresh directo
+                        await LoadComandasAsync();
+                    }
+                    
+                    System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Refresh completado después de cambiar estado - Total comandas: {Comandas.Count}");
+                }
+                finally
+                {
+                    // IMPORTANTE: Asegurar que IsRefreshing SIEMPRE se establezca a false
+                    IsRefreshing = false;
+                    System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] IsRefreshing establecido a false");
+                }
+                
+                // Mostrar mensaje de éxito DESPUÉS del refresh
                 await _dialogService.ShowAlertAsync("Éxito", $"Estado cambiado a {nuevoEstado}");
-                await LoadComandasAsync();
             }
             else
             {
@@ -431,6 +480,98 @@ public partial class ComandasViewModel : BaseViewModel
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Entregar comanda (cambiar estado a "Entregada")
+    /// </summary>
+    [RelayCommand]
+    private async Task EntregarComandaAsync(ComandaDto comanda)
+    {
+        if (comanda == null) return;
+
+        try
+        {
+            // Confirmar entrega
+            var confirmar = await _dialogService.ShowConfirmAsync(
+                "Entregar Comanda", 
+                $"¿Confirmar entrega de la comanda #{comanda.Numero}?\n\nCliente: {comanda.ClienteNombre ?? "Cliente General"}",
+                "Entregar",
+                "Cancelar");
+
+            if (!confirmar) return;
+
+            IsBusy = true;
+
+            // Cambiar estado a "Entregada"
+            var response = await _comandasService.CambiarEstadoComandaAsync(comanda.Id, "Entregada", "Comanda entregada al cliente");
+
+            if (response.Success)
+            {
+                System.Diagnostics.Debug.WriteLine($"✅ [ComandasViewModel] Comanda #{comanda.Numero} entregada exitosamente - Recargando datos...");
+                
+                // Mostrar indicador de refresh
+                IsRefreshing = true;
+                
+                try
+                {
+                    // Pequeño delay para que el backend procese el cambio
+                    await Task.Delay(200);
+                    
+                    // Forzar recarga DIRECTA desde el servidor (sin caché ni filtros)
+                    System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Forzando recarga DIRECTA desde servidor (sin filtros)...");
+                    
+                    // Usar ObtenerComandasActivasAsync que es más directo y sin filtros complejos
+                    var freshResponse = await _comandasService.ObtenerComandasActivasAsync();
+                    
+                    if (freshResponse.Success && freshResponse.Data != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Datos frescos obtenidos del servidor: {freshResponse.Data.Count} comandas");
+                        
+                        // Actualizar la colección directamente con datos frescos
+                        Comandas.Clear();
+                        foreach (var comandaFresca in freshResponse.Data)
+                        {
+                            Comandas.Add(comandaFresca);
+                        }
+                        
+                        System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Colección actualizada con datos frescos: {Comandas.Count} comandas");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"❌ [ComandasViewModel] Error al obtener datos frescos: {freshResponse.Message}");
+                        // Fallback: usar el método normal
+                        await LoadComandasAsync();
+                    }
+                    
+                    System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Refresh completado después de entregar comanda #{comanda.Numero} - Total comandas: {Comandas.Count}");
+                }
+                finally
+                {
+                    // IMPORTANTE: Asegurar que IsRefreshing SIEMPRE se establezca a false
+                    IsRefreshing = false;
+                    System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] IsRefreshing establecido a false");
+                }
+                
+                // Mostrar mensaje de éxito DESPUÉS del refresh
+                await _dialogService.ShowAlertAsync("Éxito", 
+                    $"Comanda #{comanda.Numero} entregada exitosamente");
+            }
+            else
+            {
+                await _dialogService.ShowAlertAsync("Error", response.Message ?? "Error al entregar la comanda");
+            }
+        }
+        catch (Exception ex)
+        {
+            await _dialogService.ShowAlertAsync("Error", $"Error al entregar: {ex.Message}");
+        }
+        finally
+        {
+            IsBusy = false;
+            // Asegurar que IsRefreshing esté en false en caso de error
+            IsRefreshing = false;
         }
     }
 
@@ -468,9 +609,54 @@ public partial class ComandasViewModel : BaseViewModel
 
             if (response.Success)
             {
+                System.Diagnostics.Debug.WriteLine($"✅ [ComandasViewModel] Comanda #{comanda.Numero} finalizada exitosamente - Recargando datos...");
+                
+                // Mostrar indicador de refresh
+                IsRefreshing = true;
+                
+                try
+                {
+                    // Pequeño delay para que el backend procese el cambio
+                    await Task.Delay(200);
+                    
+                    // Forzar recarga DIRECTA desde el servidor (sin caché ni filtros)
+                    System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Forzando recarga DIRECTA desde servidor (sin filtros)...");
+                    
+                    // Usar ObtenerComandasActivasAsync que es más directo y sin filtros complejos
+                    var freshResponse = await _comandasService.ObtenerComandasActivasAsync();
+                    
+                    if (freshResponse.Success && freshResponse.Data != null)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Datos frescos obtenidos del servidor: {freshResponse.Data.Count} comandas");
+                        
+                        // Actualizar la colección directamente con datos frescos
+                        Comandas.Clear();
+                        foreach (var comandaFresca in freshResponse.Data)
+                        {
+                            Comandas.Add(comandaFresca);
+                        }
+                        
+                        System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Colección actualizada con datos frescos: {Comandas.Count} comandas");
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"❌ [ComandasViewModel] Error al obtener datos frescos: {freshResponse.Message}");
+                        // Fallback: usar el método normal
+                        await LoadComandasAsync();
+                    }
+                    
+                    System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Refresh completado después de finalizar comanda #{comanda.Numero} - Total comandas: {Comandas.Count}");
+                }
+                finally
+                {
+                    // IMPORTANTE: Asegurar que IsRefreshing SIEMPRE se establezca a false
+                    IsRefreshing = false;
+                    System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] IsRefreshing establecido a false");
+                }
+                
+                // Mostrar mensaje de éxito DESPUÉS del refresh
                 await _dialogService.ShowAlertAsync("Éxito", 
                     $"Comanda #{comanda.Numero} finalizada correctamente");
-                await LoadComandasAsync();
             }
             else
             {
@@ -484,6 +670,8 @@ public partial class ComandasViewModel : BaseViewModel
         finally
         {
             IsBusy = false;
+            // Asegurar que IsRefreshing esté en false en caso de error
+            IsRefreshing = false;
         }
     }
 
@@ -516,9 +704,40 @@ public partial class ComandasViewModel : BaseViewModel
 
             if (response.Success)
             {
+                System.Diagnostics.Debug.WriteLine($"✅ [ComandasViewModel] Comanda #{comanda.Numero} cancelada exitosamente - Recargando datos...");
+                
+                // Mostrar indicador de refresh
+                IsRefreshing = true;
+                
+                try
+                {
+                    // Pequeño delay para que el backend procese el cambio
+                    await Task.Delay(200);
+                    
+                    // Ejecutar el mismo comando que el refresh manual
+                    if (RefreshComandasCommand.CanExecute(null))
+                    {
+                        System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Ejecutando RefreshComandasCommand (igual que refresh manual)");
+                        await RefreshComandasCommand.ExecuteAsync(null);
+                    }
+                    else
+                    {
+                        // Fallback: refresh directo
+                        await LoadComandasAsync();
+                    }
+                    
+                    System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Refresh completado después de cancelar comanda #{comanda.Numero} - Total comandas: {Comandas.Count}");
+                }
+                finally
+                {
+                    // IMPORTANTE: Asegurar que IsRefreshing SIEMPRE se establezca a false
+                    IsRefreshing = false;
+                    System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] IsRefreshing establecido a false");
+                }
+                
+                // Mostrar mensaje de éxito DESPUÉS del refresh
                 await _dialogService.ShowAlertAsync("Éxito", 
                     $"Comanda #{comanda.Numero} cancelada correctamente");
-                await LoadComandasAsync();
             }
             else
             {
@@ -532,6 +751,8 @@ public partial class ComandasViewModel : BaseViewModel
         finally
         {
             IsBusy = false;
+            // Asegurar que IsRefreshing esté en false en caso de error
+            IsRefreshing = false;
         }
     }
 
