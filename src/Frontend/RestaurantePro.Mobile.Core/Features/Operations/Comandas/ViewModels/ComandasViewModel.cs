@@ -951,7 +951,99 @@ public partial class ComandasViewModel : BaseViewModel
     // Guardar cambios de filtros en preferencias
     partial void OnFiltroEstadoChanged(string value)
     {
+        System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] OnFiltroEstadoChanged - Nuevo valor: '{value}'");
+        
+        // Guardar preferencia
         _ = _preferencesService.SetAsync("Comandas.FiltroEstado", value ?? string.Empty);
+        
+        // Ejecutar recarga de datos automáticamente cuando cambie el filtro de estado
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Recargando datos automáticamente por cambio en FiltroEstado...");
+                
+                IsRefreshing = true;
+                
+                try
+                {
+                    // Determinar qué tipo de consulta hacer según el filtro
+                    if (string.IsNullOrWhiteSpace(value) || value == "Todos")
+                    {
+                        // Sin filtro de estado específico
+                        if (SoloActivas)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Filtro: 'Todos' + Solo Activas = ObtenerComandasActivasAsync");
+                            var response = await _comandasService.ObtenerComandasActivasAsync();
+                            
+                            if (response.Success && response.Data != null)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Comandas activas obtenidas: {response.Data.Count} comandas");
+                                
+                                Comandas.Clear();
+                                foreach (var comanda in response.Data)
+                                {
+                                    Comandas.Add(comanda);
+                                }
+                                
+                                System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Colección actualizada: {Comandas.Count} comandas");
+                            }
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Filtro: 'Todos' + Todas = BuscarComandasAsync sin filtros");
+                            var response = await _comandasService.BuscarComandasAsync(estado: null);
+                            
+                            if (response.Success && response.Data != null)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Todas las comandas obtenidas: {response.Data.Count} comandas");
+                                
+                                Comandas.Clear();
+                                foreach (var comanda in response.Data)
+                                {
+                                    Comandas.Add(comanda);
+                                }
+                                
+                                System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Colección actualizada: {Comandas.Count} comandas");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Con filtro de estado específico
+                        System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Filtro: Estado específico '{value}' = BuscarComandasAsync con filtro");
+                        var response = await _comandasService.BuscarComandasAsync(estado: value);
+                        
+                        if (response.Success && response.Data != null)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Comandas con estado '{value}' obtenidas: {response.Data.Count} comandas");
+                            
+                            Comandas.Clear();
+                            foreach (var comanda in response.Data)
+                            {
+                                Comandas.Add(comanda);
+                            }
+                            
+                            System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Colección actualizada: {Comandas.Count} comandas");
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"❌ [ComandasViewModel] Error al obtener comandas con estado '{value}': {response.Message}");
+                        }
+                    }
+                }
+                finally
+                {
+                    IsRefreshing = false;
+                    System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Recarga automática por filtro estado completada - IsRefreshing establecido a false");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ [ComandasViewModel] Error en recarga automática por filtro estado: {ex.Message}");
+                IsRefreshing = false;
+            }
+        });
     }
 
     partial void OnSoloActivasChanged(bool value)

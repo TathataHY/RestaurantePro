@@ -116,8 +116,18 @@ public class ComandasService : IComandasService
 				}
 				request.MeseroId = userIdStr;
 			}
+			System.Diagnostics.Debug.WriteLine($"🔍 [ComandasService] CrearComandaAsync - Observaciones recibidas: '{request.Observaciones}'");
+			
 			var token = await _authService.GetTokenAsync();
-			return await _apiService.PostAsync<ComandaDto>(BaseEndpoint, request, token);
+			var result = await _apiService.PostAsync<ComandaDto>(BaseEndpoint, request, token);
+			
+			System.Diagnostics.Debug.WriteLine($"🔍 [ComandasService] CrearComandaAsync - Resultado: Success={result.Success}, Message='{result.Message}'");
+			if (result.Success && result.Data != null)
+			{
+				System.Diagnostics.Debug.WriteLine($"🔍 [ComandasService] Comanda creada - ID: {result.Data.Id}, Observaciones guardadas: '{result.Data.Observaciones}'");
+			}
+			
+			return result;
 		}
 		catch (Exception ex)
 		{

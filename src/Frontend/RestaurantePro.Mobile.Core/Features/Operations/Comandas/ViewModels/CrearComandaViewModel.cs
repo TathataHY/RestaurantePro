@@ -717,6 +717,8 @@ public partial class CrearComandaViewModel : BaseViewModel
                 var esMesa = string.Equals(TipoSeleccionado, "Mesa", StringComparison.OrdinalIgnoreCase);
                 var tipoEnviar = esMesa ? "Mesa" : (string.Equals(TipoSeleccionado, "Delivery", StringComparison.OrdinalIgnoreCase) ? "Delivery" : "TakeAway");
 
+                System.Diagnostics.Debug.WriteLine($"🔍 [CrearComandaViewModel] Preparando request - Observaciones: '{Observaciones}'");
+                
                 var comandaRequest = new ComandaModels.CrearComandaRequest
                 {
                     MeseroId = string.Empty, // Se completará con el UserId del JWT en el servicio
@@ -730,6 +732,8 @@ public partial class CrearComandaViewModel : BaseViewModel
                     DireccionEntrega = TipoSeleccionado == "Delivery" ? DireccionEntrega : null,
                     TelefonoEntrega = TipoSeleccionado == "Delivery" && !string.IsNullOrWhiteSpace(TelefonoEntrega) ? TelefonoEntrega : null
                 };
+                
+                System.Diagnostics.Debug.WriteLine($"🔍 [CrearComandaViewModel] Request creado - Observaciones en request: '{comandaRequest.Observaciones}'");
 
                 var result = await _comandasService.CrearComandaAsync(comandaRequest);
             

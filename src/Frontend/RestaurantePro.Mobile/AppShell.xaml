@@ -92,40 +92,40 @@
             ContentTemplate="{DataTemplate dailypreps:ModernDailyPreparationsPage}"
             Route="dailypreparations" />
 
-        <!-- Reservaciones Tab -->
-        <ShellContent
+        <!-- Reservaciones Tab - TEMPORALMENTE OCULTO -->
+        <!--<ShellContent
             Title="Reservas"
             Icon="reservas.png"
             ContentTemplate="{DataTemplate reservaciones:ModernReservacionesPage}"
-            Route="reservaciones" />
+            Route="reservaciones" />-->
 
-        <!-- Facturas Tab -->
-        <ShellContent
+        <!-- Facturas Tab - TEMPORALMENTE OCULTO -->
+        <!--<ShellContent
             Title="Facturar"
             Icon="facturar.png"
             ContentTemplate="{DataTemplate facturas:ModernFacturasPage}"
-            Route="facturas" />
+            Route="facturas" />-->
 
-        <!-- Clientes Tab -->
-        <ShellContent
+        <!-- Clientes Tab - TEMPORALMENTE OCULTO -->
+        <!--<ShellContent
             Title="Clientes"
             Icon="clientes.png"
             ContentTemplate="{DataTemplate clientes:ClientesPage}"
-            Route="clientes" />
+            Route="clientes" />-->
 
-        <!-- Tarjetas Fidelización Tab -->
-        <ShellContent
+        <!-- Tarjetas Fidelización Tab - TEMPORALMENTE OCULTO -->
+        <!--<ShellContent
             Title="Fidelización"
             Icon="fidelizacion.png"
             ContentTemplate="{DataTemplate tarjetas:TarjetasFidelizacionPage}"
-            Route="tarjetasfidelizacion" />
+            Route="tarjetasfidelizacion" />-->
 
-        <!-- Ingredientes Tab - Consulta operativa para cocineros -->
-        <ShellContent
+        <!-- Ingredientes Tab - TEMPORALMENTE OCULTO -->
+        <!--<ShellContent
             Title="Ingredientes"
             Icon="ingredientes.png"
             ContentTemplate="{DataTemplate ingredientes:ModernIngredientesPage}"
-            Route="ingredientes" />
+            Route="ingredientes" />-->
 
         <!-- Categorías Tab - Navegación de menú para meseros -->
         <ShellContent
