@@ -43,6 +43,7 @@ public partial class ModernComandasPage : ContentPage
         SetupFloatingActionButton();
     }
 
+
     /// <summary>
     /// Configurar tabs de filtro
     /// </summary>

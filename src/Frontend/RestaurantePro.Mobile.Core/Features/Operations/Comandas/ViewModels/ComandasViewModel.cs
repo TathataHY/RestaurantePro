@@ -833,13 +833,13 @@ public partial class ComandasViewModel : BaseViewModel
     }
 
     /// <summary>
-    /// Toggle entre solo activas y todas
+    /// Toggle entre solo activas y todas (para uso manual desde botones)
     /// </summary>
     [RelayCommand]
     private async Task ToggleActivasAsync()
     {
         SoloActivas = !SoloActivas;
-        await LoadComandasAsync();
+        // La recarga se maneja automáticamente en OnSoloActivasChanged
     }
 
     #endregion
@@ -956,7 +956,73 @@ public partial class ComandasViewModel : BaseViewModel
 
     partial void OnSoloActivasChanged(bool value)
     {
+        System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] OnSoloActivasChanged - Nuevo valor: {value}");
+        
+        // Guardar preferencia
         _ = _preferencesService.SetAsync("Comandas.SoloActivas", value);
+        
+        // Ejecutar recarga de datos automáticamente (sin cambiar SoloActivas otra vez)
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Recargando datos automáticamente por cambio en SoloActivas...");
+                
+                IsRefreshing = true;
+                
+                try
+                {
+                    if (value) // Solo activas
+                    {
+                        System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Cargando SOLO comandas activas desde servidor...");
+                        var response = await _comandasService.ObtenerComandasActivasAsync();
+                        
+                        if (response.Success && response.Data != null)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Comandas activas obtenidas: {response.Data.Count} comandas");
+                            
+                            // Actualizar la colección directamente
+                            Comandas.Clear();
+                            foreach (var comanda in response.Data)
+                            {
+                                Comandas.Add(comanda);
+                            }
+                            
+                            System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Colección actualizada con comandas activas: {Comandas.Count} comandas");
+                        }
+                    }
+                    else // Todas las comandas
+                    {
+                        System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Cargando TODAS las comandas desde servidor...");
+                        var response = await _comandasService.BuscarComandasAsync(estado: null);
+                        
+                        if (response.Success && response.Data != null)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Todas las comandas obtenidas: {response.Data.Count} comandas");
+                            
+                            // Actualizar la colección directamente
+                            Comandas.Clear();
+                            foreach (var comanda in response.Data)
+                            {
+                                Comandas.Add(comanda);
+                            }
+                            
+                            System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Colección actualizada con todas las comandas: {Comandas.Count} comandas");
+                        }
+                    }
+                }
+                finally
+                {
+                    IsRefreshing = false;
+                    System.Diagnostics.Debug.WriteLine($"🔄 [ComandasViewModel] Recarga automática completada - IsRefreshing establecido a false");
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ [ComandasViewModel] Error en recarga automática: {ex.Message}");
+                IsRefreshing = false;
+            }
+        });
     }
 
     partial void OnSearchTextChanged(string value)
