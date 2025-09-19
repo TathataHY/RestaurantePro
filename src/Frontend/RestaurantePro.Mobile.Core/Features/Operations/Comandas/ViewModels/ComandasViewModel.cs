@@ -14,13 +14,19 @@ using ComandaModels = RestaurantePro.Mobile.Core.Features.Operations.Comandas.Mo
 using RestaurantePro.Mobile.Core.Services.Realtime;
 using RestaurantePro.Mobile.Core.Services.Notifications;
 using RestaurantePro.Mobile.Core.Services.Preferences;
+using RestaurantePro.Mobile.Core.Services.Authorization;
+using RestaurantePro.Mobile.Core.Core.Helpers;
+using RestaurantePro.Mobile.Core.Core.Attributes;
+using RestaurantePro.Mobile.Core.Models.Enums;
 
 namespace RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;
 
 /// <summary>
 /// ViewModel para gestión de comandas - Funcionalidad operativa principal
+/// Requiere acceso a la funcionalidad de gestión de comandas
 /// </summary>
-public partial class ComandasViewModel : BaseViewModel
+[RequireFeature(AppFeature.GestionComandas)]
+public partial class ComandasViewModel : AuthorizedBaseViewModel
 {
     private readonly IComandasService _comandasService;
     private readonly IDialogService _dialogService;
@@ -59,6 +65,22 @@ public partial class ComandasViewModel : BaseViewModel
     [ObservableProperty]
     private bool soloActivas = true;
 
+    // Propiedades de Autorización UI
+    [ObservableProperty]
+    private bool canCreateComandas = false;
+
+    [ObservableProperty]
+    private bool canModifyComandas = false;
+
+    [ObservableProperty]
+    private bool canCloseComandas = false;
+
+    [ObservableProperty]
+    private bool canViewPreparaciones = false;
+
+    [ObservableProperty]
+    private string rolUsuario = string.Empty;
+
     #endregion
 
     #region Estados Disponibles
@@ -85,7 +107,11 @@ public partial class ComandasViewModel : BaseViewModel
         IMesasService mesasService,
         INotificationService notificationService,
         IComandaRealtimeService realtimeService,
-        IPreferencesService preferencesService)
+        IPreferencesService preferencesService,
+        IAuthorizationService authorizationService,
+        IAuthorizationValidator authorizationValidator,
+        AuthorizationUIHelper uiHelper) 
+        : base(authorizationService, authorizationValidator, uiHelper, dialogService, Microsoft.Extensions.Logging.Abstractions.NullLogger<ComandasViewModel>.Instance)
     {
         _comandasService = comandasService;
         _dialogService = dialogService;
@@ -99,10 +125,6 @@ public partial class ComandasViewModel : BaseViewModel
 
         // Restaurar preferencias de filtros antes de cargar datos
         RestaurarPreferencias();
-
-        // Cargar datos iniciales
-        _ = LoadComandasAsync();
-        _ = LoadEstadisticasAsync();
 
         // Suscribir a eventos realtime y arrancar
         _realtimeService.OnNuevaComanda += async () =>
@@ -125,6 +147,50 @@ public partial class ComandasViewModel : BaseViewModel
                 _ = LoadComandasAsync();
             }
         });
+    }
+
+    #endregion
+
+    #region Autorización
+
+    /// <summary>
+    /// Inicialización después de validar autorización exitosamente
+    /// </summary>
+    protected override async Task OnAuthorizedInitializeAsync()
+    {
+        await ConfigurarPermisosUIAsync();
+        
+        // Cargar datos iniciales después de configurar permisos
+        _ = LoadComandasAsync();
+        _ = LoadEstadisticasAsync();
+    }
+
+    /// <summary>
+    /// Configurar permisos UI según el rol del usuario actual
+    /// </summary>
+    private async Task ConfigurarPermisosUIAsync()
+    {
+        try
+        {
+            // Obtener información del usuario actual
+            var userRoles = await AuthorizationService.GetUserRolesAsync();
+            RolUsuario = string.Join(", ", userRoles);
+
+            // Configurar permisos específicos
+            CanCreateComandas = await HasPermissionAsync(AppPermission.CrearComandas);
+            CanModifyComandas = await HasPermissionAsync(AppPermission.ModificarComandas);
+            CanCloseComandas = await HasPermissionAsync(AppPermission.CerrarComandas);
+            CanViewPreparaciones = await HasPermissionAsync(AppPermission.VerPreparacionesPendientes);
+
+            // Log para debug - ver qué permisos tiene el usuario
+            System.Diagnostics.Debug.WriteLine($"🔐 [ComandasVM] Usuario: {RolUsuario}");
+            System.Diagnostics.Debug.WriteLine($"🔐 [ComandasVM] Crear: {CanCreateComandas}, Modificar: {CanModifyComandas}");
+            System.Diagnostics.Debug.WriteLine($"🔐 [ComandasVM] Cerrar: {CanCloseComandas}, Ver Prep: {CanViewPreparaciones}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error configurando permisos UI");
+        }
     }
 
     #endregion
@@ -273,10 +339,13 @@ public partial class ComandasViewModel : BaseViewModel
     /// Crear una nueva comanda
     /// </summary>
     [RelayCommand]
+    [RequirePermission(AppPermission.CrearComandas, ErrorMessage = "Solo los meseros pueden crear nuevas comandas")]
     private async Task CrearComandaAsync()
     {
         System.Diagnostics.Debug.WriteLine("🔍 [ComandasViewModel] CrearComandaAsync - Iniciando");
-        try
+        
+        // Verificar autorización antes de proceder
+        await ExecuteIfAuthorizedAsync(AppPermission.CrearComandas, async () =>
         {
             // 1) Elegir tipo de comanda
             System.Diagnostics.Debug.WriteLine("🔍 [ComandasViewModel] Mostrando selector de tipo de comanda");
@@ -351,12 +420,7 @@ public partial class ComandasViewModel : BaseViewModel
                 });
             }
             System.Diagnostics.Debug.WriteLine("✅ [ComandasViewModel] CrearComandaAsync - Completado exitosamente");
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"❌ [ComandasViewModel] CrearComandaAsync - Error: {ex.Message}");
-            await _dialogService.ShowAlertAsync("Error", $"Error al iniciar nueva comanda: {ex.Message}");
-        }
+        });
     }
 
     /// <summary>

@@ -15,8 +15,11 @@ using RestaurantePro.Mobile.Core.Services.Analytics;
 using RestaurantePro.Mobile.Core.Services.Notifications;
 using RestaurantePro.Mobile.Core.Services.Realtime;
 using RestaurantePro.Mobile.Core.Services.Preferences;
+using RestaurantePro.Mobile.Core.Services.Authorization;
+using RestaurantePro.Mobile.Core.Core.Helpers;
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Models.Common;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace RestaurantePro.Mobile.UnitTests.Integration;
 
@@ -36,6 +39,9 @@ public class FlujosCompletosIntegrationTests
     private readonly Mock<INotificationService> _notificationServiceMock;
     private readonly Mock<IComandaRealtimeService> _realtimeServiceMock;
     private readonly Mock<IPreferencesService> _preferencesServiceMock;
+    private readonly Mock<IAuthorizationService> _authorizationServiceMock;
+    private readonly Mock<IAuthorizationValidator> _authorizationValidatorMock;
+    private readonly AuthorizationUIHelper _authorizationUIHelper;
 
     public FlujosCompletosIntegrationTests()
     {
@@ -50,6 +56,9 @@ public class FlujosCompletosIntegrationTests
         _notificationServiceMock = new Mock<INotificationService>();
         _realtimeServiceMock = new Mock<IComandaRealtimeService>();
         _preferencesServiceMock = new Mock<IPreferencesService>();
+        _authorizationServiceMock = new Mock<IAuthorizationService>();
+        _authorizationValidatorMock = new Mock<IAuthorizationValidator>();
+        _authorizationUIHelper = new AuthorizationUIHelper(_authorizationServiceMock.Object, NullLogger<AuthorizationUIHelper>.Instance);
     }
 
     #region Flujo 1: Autenticación Completa
@@ -126,8 +135,8 @@ public class FlujosCompletosIntegrationTests
             }
         };
 
-        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ApiResponse<List<MesaDto>>.SuccessResponse(mesas));
+        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = mesas, TotalCount = mesas.Count, PageNumber = 1, PageSize = 10 }));
 
         _mesasServiceMock.Setup(m => m.AsignarMesaAsync(It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<object>.SuccessResponse(new object()));
@@ -139,7 +148,8 @@ public class FlujosCompletosIntegrationTests
         var mesasViewModel = new MesasViewModel(
             _mesasServiceMock.Object,
             _dialogServiceMock.Object,
-            _navigationServiceMock.Object);
+            _navigationServiceMock.Object,
+            _authServiceMock.Object);
 
         // 1. Cargar mesas
         await mesasViewModel.LoadMesasCommand.ExecuteAsync(null);
@@ -206,7 +216,10 @@ public class FlujosCompletosIntegrationTests
             _mesasServiceMock.Object,
             _notificationServiceMock.Object,
             _realtimeServiceMock.Object,
-            _preferencesServiceMock.Object);
+            _preferencesServiceMock.Object,
+            _authorizationServiceMock.Object,
+            _authorizationValidatorMock.Object,
+            _authorizationUIHelper);
 
         // 1. Cargar comandas activas
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null);
@@ -377,7 +390,10 @@ public class FlujosCompletosIntegrationTests
             _mesasServiceMock.Object,
             _notificationServiceMock.Object,
             _realtimeServiceMock.Object,
-            _preferencesServiceMock.Object);
+            _preferencesServiceMock.Object,
+            _authorizationServiceMock.Object,
+            _authorizationValidatorMock.Object,
+            _authorizationUIHelper);
 
         // 1. Primer intento - falla
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null);
@@ -404,8 +420,8 @@ public class FlujosCompletosIntegrationTests
             new MesaDto { Id = Guid.NewGuid(), Numero = "Mesa 2", Estado = "Disponible" }
         };
 
-        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ApiResponse<List<MesaDto>>.SuccessResponse(mesas));
+        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = mesas, TotalCount = mesas.Count, PageNumber = 1, PageSize = 10 }));
 
         _mesasServiceMock.Setup(m => m.AsignarMesaAsync(It.IsAny<Guid>(), It.IsAny<Guid?>(), It.IsAny<int?>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponse<object>.SuccessResponse(new object()));
@@ -414,7 +430,8 @@ public class FlujosCompletosIntegrationTests
         var mesasViewModel = new MesasViewModel(
             _mesasServiceMock.Object,
             _dialogServiceMock.Object,
-            _navigationServiceMock.Object);
+            _navigationServiceMock.Object,
+            _authServiceMock.Object);
 
         // Ejecutar múltiples operaciones simultáneamente
         var tasks = new List<Task>
@@ -427,7 +444,7 @@ public class FlujosCompletosIntegrationTests
         await Task.WhenAll(tasks);
 
         // Assert - Verificar que todas las operaciones se completaron
-        _mesasServiceMock.Verify(m => m.ObtenerMesasAsync(null, null, null, It.IsAny<CancellationToken>()), Times.Exactly(3));
+        _mesasServiceMock.Verify(m => m.ObtenerMesasAsync(null, null, null, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(3));
     }
 
     #endregion

@@ -432,19 +432,26 @@ public class IdentityUsersSeeder : ISeedData
 
     private static string MapearRolDominioAIdentity(string rolDominio)
     {
+        // 🔍 DEBUG: Ver exactamente qué rol llega del dominio
+        Console.WriteLine($"🔍🏷️ [MapearRol] Rol del dominio recibido: '{rolDominio}'");
+        
         // Hacer el mapeo insensible a mayúsculas/minúsculas
         var rolNormalizado = rolDominio?.ToLower();
+        Console.WriteLine($"🔍🏷️ [MapearRol] Rol normalizado: '{rolNormalizado}'");
         
-        return rolNormalizado switch
+        var rolMapeado = rolNormalizado switch
         {
             "administrador" => "Administrador",
-            "gerente" => "Gerente",
+            "gerente" => "Gerente", 
             "cajero" => "Cajero",
             "mesero" => "Mesero",
             "cocinero" => "Cocinero",
             "encargadoinventario" => "EncargadoInventario",
-            _ => "Mesero" // Rol por defecto
+            _ => "Empleado" // 🔍 CAMBIÉ: Empleado como fallback para debug
         };
+        
+        Console.WriteLine($"🔍🏷️ [MapearRol] Rol final mapeado: '{rolMapeado}'");
+        return rolMapeado;
     }
 
     private enum SyncResult

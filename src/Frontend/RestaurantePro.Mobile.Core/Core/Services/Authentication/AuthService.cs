@@ -3,6 +3,7 @@ using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Services.Api;
 using RestaurantePro.Mobile.Core.Services.Platform;
 using RestaurantePro.Mobile.Core.Services.Navigation;
+using AuthResponse = RestaurantePro.Mobile.Core.Models.DTOs.AuthResponse; // Forzar el uso de la clase correcta
 
 namespace RestaurantePro.Mobile.Core.Services.Authentication;
 
@@ -67,21 +68,48 @@ public class AuthService : IAuthService
 
             var apiResponse = await _apiService.PostAsync<AuthResponse>("api/auth/login", loginRequest);
 
-            // DEBUG: Comentado para flujo normal - descomentar solo si hay problemas
-            // if (apiResponse != null)
-            // {
-            //     ShowDebugPopup("📥 Respuesta API", $"Success: {apiResponse.Success}\nMessage: {apiResponse.Message}\nErrors: {string.Join(", ", apiResponse.Errors ?? new List<string>())}");
-            // }
+            // 🔍 DEBUG: Descomentando para ver el problema
+            System.Diagnostics.Debug.WriteLine($"🔍📡 [AuthService] === RESPUESTA API ===");
+            System.Diagnostics.Debug.WriteLine($"🔍📡 [AuthService] apiResponse: {(apiResponse != null ? "✅ NO NULL" : "❌ NULL")}");
+            
+            if (apiResponse != null)
+            {
+                System.Diagnostics.Debug.WriteLine($"🔍📡 [AuthService] Success: {apiResponse.Success}");
+                System.Diagnostics.Debug.WriteLine($"🔍📡 [AuthService] Message: {apiResponse.Message}");
+                System.Diagnostics.Debug.WriteLine($"🔍📡 [AuthService] Errors: [{string.Join(", ", apiResponse.Errors ?? new List<string>())}]");
+                System.Diagnostics.Debug.WriteLine($"🔍📡 [AuthService] Data: {(apiResponse.Data != null ? "✅ NO NULL" : "❌ NULL")}");
+                
+                // Si hay Data, mostrar detalles
+                if (apiResponse.Data != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"🔍📡 [AuthService] Data.Token: {(!string.IsNullOrEmpty(apiResponse.Data.Token) ? "✅ SÍ" : "❌ NO/EMPTY")}");
+                    System.Diagnostics.Debug.WriteLine($"🔍📡 [AuthService] Data.User: {(apiResponse.Data.User != null ? "✅ NO NULL" : "❌ NULL")}");
+                }
+            }
+            System.Diagnostics.Debug.WriteLine($"🔍📡 [AuthService] === FIN RESPUESTA ===");
 
             if (apiResponse != null && apiResponse.Success && apiResponse.Data != null)
             {
+                // DEBUG DEL LOGIN
+                System.Diagnostics.Debug.WriteLine($"🔍🚀 [AuthService] Login exitoso!");
+                System.Diagnostics.Debug.WriteLine($"🔍🚀 [AuthService] Token recibido: {(!string.IsNullOrEmpty(apiResponse.Data.Token) ? "SÍ" : "NO")}");
+                System.Diagnostics.Debug.WriteLine($"🔍🚀 [AuthService] Usuario recibido: {(apiResponse.Data.User != null ? apiResponse.Data.User.Email : "NULL")}");
+                System.Diagnostics.Debug.WriteLine($"🔍🚀 [AuthService] Roles del usuario: [{string.Join(", ", apiResponse.Data.User?.Roles ?? new List<string>())}]");
+                
                 // Guardar token y usuario
                 _currentToken = apiResponse.Data.Token;
                 _currentUser = apiResponse.Data.User;
                 
+                System.Diagnostics.Debug.WriteLine($"🔍💾 [AuthService] Guardando en memoria: Token={!string.IsNullOrEmpty(_currentToken)}, User={_currentUser?.Email}");
+                
                 // Guardar en preferencias
+                System.Diagnostics.Debug.WriteLine($"🔍💾 [AuthService] Guardando token en SecureStorage...");
                 await SaveTokenAsync(apiResponse.Data.Token);
+                
+                System.Diagnostics.Debug.WriteLine($"🔍💾 [AuthService] Guardando usuario en SecureStorage...");
                 await SaveUserAsync(apiResponse.Data.User);
+                
+                System.Diagnostics.Debug.WriteLine($"🔍💾 [AuthService] Guardando recordarme...");
                 await SaveRecordarmeAsync(recordarme);
                 
                 // Guardar refresh token si está disponible
@@ -197,20 +225,40 @@ public class AuthService : IAuthService
     {
         try
         {
+            // DEBUG DETALLADO
+            System.Diagnostics.Debug.WriteLine($"🔍👤 [AuthService] GetCurrentUserAsync iniciando...");
+            System.Diagnostics.Debug.WriteLine($"🔍👤 [AuthService] _currentUser en memoria: {(_currentUser == null ? "NULL" : _currentUser.Email)}");
+            
             if (_currentUser != null)
             {
+                System.Diagnostics.Debug.WriteLine($"🔍✅ [AuthService] Devolviendo usuario de memoria: {_currentUser.Email}, Roles: [{string.Join(", ", _currentUser.Roles ?? new List<string>())}]");
                 return _currentUser;
             }
 
             // Intentar obtener de las preferencias
+            System.Diagnostics.Debug.WriteLine($"🔍💾 [AuthService] Buscando en SecureStorage con clave: {UserKey}");
             var userJson = await _secureStorage.GetAsync(UserKey);
+            
+            System.Diagnostics.Debug.WriteLine($"🔍💾 [AuthService] JSON obtenido: {(string.IsNullOrEmpty(userJson) ? "VACÍO/NULL" : $"[{userJson.Length} chars] {userJson.Substring(0, Math.Min(100, userJson.Length))}...")}");
             
             if (!string.IsNullOrEmpty(userJson))
             {
+                System.Diagnostics.Debug.WriteLine($"🔍🔧 [AuthService] Deserializando JSON...");
                 _currentUser = System.Text.Json.JsonSerializer.Deserialize<AuthUser>(userJson);
+                
+                if (_currentUser != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"🔍✅ [AuthService] Usuario deserializado: {_currentUser.Email}, Roles: [{string.Join(", ", _currentUser.Roles ?? new List<string>())}]");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"🔍❌ [AuthService] Deserialización resultó en NULL");
+                }
+                
                 return _currentUser;
             }
 
+            System.Diagnostics.Debug.WriteLine($"🔍❌ [AuthService] NO hay usuario en SecureStorage - devolviendo NULL");
             return null;
         }
         catch (Exception ex)
@@ -293,12 +341,20 @@ public class AuthService : IAuthService
     {
         try
         {
+            System.Diagnostics.Debug.WriteLine($"🔍💾✏️ [SaveUser] Iniciando guardado...");
+            System.Diagnostics.Debug.WriteLine($"🔍💾✏️ [SaveUser] Usuario: {user?.Email ?? "NULL"}");
+            System.Diagnostics.Debug.WriteLine($"🔍💾✏️ [SaveUser] Roles: [{string.Join(", ", user?.Roles ?? new List<string>())}]");
+            
             var userJson = System.Text.Json.JsonSerializer.Serialize(user);
+            System.Diagnostics.Debug.WriteLine($"🔍💾✏️ [SaveUser] JSON serializado: [{userJson.Length} chars] {userJson.Substring(0, Math.Min(200, userJson.Length))}...");
+            
             await _secureStorage.SetAsync(UserKey, userJson);
+            System.Diagnostics.Debug.WriteLine($"🔍💾✅ [SaveUser] Guardado exitoso en SecureStorage con clave: {UserKey}");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al guardar usuario");
+            System.Diagnostics.Debug.WriteLine($"🔍💾❌ [SaveUser] ERROR: {ex.Message}");
         }
     }
 

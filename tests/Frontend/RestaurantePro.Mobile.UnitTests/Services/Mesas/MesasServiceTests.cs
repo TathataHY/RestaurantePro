@@ -708,9 +708,9 @@ public class MesasServiceTests
     public async Task ObtenerMesasAsync_CuandoApiServiceRetornaListaVacia_DebeRetornarSuccessResponse()
     {
         // Arrange
-        var emptyList = new List<MesaDto>();
-        var apiResponse = ApiResponse<List<MesaDto>>.SuccessResponse(emptyList);
-        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+        var emptyList = new PaginatedList<MesaDto> { Items = new List<MesaDto>(), TotalCount = 0, PageNumber = 1, PageSize = 10 };
+        var apiResponse = ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(emptyList);
+        _mockApiService.Setup(x => x.GetAsync<PaginatedList<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
                        .ReturnsAsync(apiResponse);
 
         // Act
@@ -719,7 +719,8 @@ public class MesasServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
-        result.Data.Should().BeEmpty();
+        result.Data.Should().NotBeNull();
+        result.Data!.Items.Should().BeEmpty();
     }
 
     [Fact]
@@ -727,8 +728,9 @@ public class MesasServiceTests
     {
         // Arrange
         var largeList = _fixture.CreateMany<MesaDto>(1000).ToList();
-        var apiResponse = ApiResponse<List<MesaDto>>.SuccessResponse(largeList);
-        _mockApiService.Setup(x => x.GetAsync<List<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+        var paginatedList = new PaginatedList<MesaDto> { Items = largeList, TotalCount = largeList.Count, PageNumber = 1, PageSize = 10 };
+        var apiResponse = ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(paginatedList);
+        _mockApiService.Setup(x => x.GetAsync<PaginatedList<MesaDto>>(It.IsAny<string>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
                        .ReturnsAsync(apiResponse);
 
         // Act
@@ -737,7 +739,8 @@ public class MesasServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
-        result.Data.Should().HaveCount(1000);
+        result.Data.Should().NotBeNull();
+        result.Data!.Items.Should().HaveCount(1000);
     }
 
     #endregion

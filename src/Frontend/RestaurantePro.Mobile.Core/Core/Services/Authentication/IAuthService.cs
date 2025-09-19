@@ -1,4 +1,5 @@
 using RestaurantePro.Mobile.Core.Models.DTOs;
+using AuthResponse = RestaurantePro.Mobile.Core.Models.DTOs.AuthResponse; // Forzar el uso de la clase correcta
 
 namespace RestaurantePro.Mobile.Core.Services.Authentication;
 

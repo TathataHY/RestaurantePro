@@ -15,6 +15,9 @@ using RestaurantePro.Mobile.Core.Services.Mesas;
 using RestaurantePro.Mobile.Core.Services.Notifications;
 using RestaurantePro.Mobile.Core.Services.Realtime;
 using RestaurantePro.Mobile.Core.Services.Preferences;
+using RestaurantePro.Mobile.Core.Services.Authorization;
+using RestaurantePro.Mobile.Core.Core.Helpers;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace RestaurantePro.Mobile.UnitTests.Features.Operations.Comandas.ViewModels;
 
@@ -27,9 +30,12 @@ public class ComandasViewModelTests
     private readonly Mock<INotificationService> _mockNotif = new();
     private readonly Mock<IComandaRealtimeService> _mockRealtime = new();
     private readonly Mock<IPreferencesService> _mockPrefs = new();
+    private readonly Mock<IAuthorizationService> _mockAuthService = new();
+    private readonly Mock<IAuthorizationValidator> _mockAuthValidator = new();
+    private readonly AuthorizationUIHelper _mockUIHelper = new(new Mock<IAuthorizationService>().Object, NullLogger<AuthorizationUIHelper>.Instance);
 
     private ComandasViewModel CreateVm(IComandasService service, IDialogService dialog)
-        => new ComandasViewModel(service, dialog, _mockNav.Object, _mockMesas.Object, _mockNotif.Object, _mockRealtime.Object, _mockPrefs.Object);
+        => new ComandasViewModel(service, dialog, _mockNav.Object, _mockMesas.Object, _mockNotif.Object, _mockRealtime.Object, _mockPrefs.Object, _mockAuthService.Object, _mockAuthValidator.Object, _mockUIHelper);
 
     [Fact]
     public void Constructor_InitializesProperties()

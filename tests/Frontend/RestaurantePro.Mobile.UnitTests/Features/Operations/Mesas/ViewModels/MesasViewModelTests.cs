@@ -8,6 +8,7 @@ using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Mesas;
 using RestaurantePro.Mobile.Core.Services.Navigation;
+using RestaurantePro.Mobile.Core.Services.Authentication;
 using Xunit;
 
 namespace RestaurantePro.Mobile.UnitTests.Features.Operations.Mesas.ViewModels;
@@ -20,6 +21,7 @@ public class MesasViewModelTests
     private readonly Mock<IMesasService> _mockMesasService;
     private readonly Mock<INavigationService> _mockNavigationService;
     private readonly Mock<IDialogService> _mockDialogService;
+    private readonly Mock<IAuthService> _mockAuthService;
     private readonly Fixture _fixture;
     private MesasViewModel _viewModel;
 
@@ -28,6 +30,7 @@ public class MesasViewModelTests
         _mockMesasService = new Mock<IMesasService>();
         _mockNavigationService = new Mock<INavigationService>();
         _mockDialogService = new Mock<IDialogService>();
+        _mockAuthService = new Mock<IAuthService>();
         _fixture = new Fixture();
         
         // Configurar mocks básicos para evitar errores de null reference
@@ -38,10 +41,15 @@ public class MesasViewModelTests
         _mockDialogService.Setup(x => x.ShowPromptAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()))
                          .ReturnsAsync("test_response");
         
+        // Configurar mock de AuthService
+        _mockAuthService.Setup(x => x.IsAuthenticatedAsync())
+                       .ReturnsAsync(true);
+        
         _viewModel = new MesasViewModel(
             _mockMesasService.Object,
             _mockDialogService.Object,
-            _mockNavigationService.Object);
+            _mockNavigationService.Object,
+            _mockAuthService.Object);
     }
 
     #region Constructor Tests
@@ -50,12 +58,13 @@ public class MesasViewModelTests
     public void Constructor_ShouldInitializeProperties()
     {
         // Arrange
-        var fakeService = new FakeMesasService(ApiResponse<List<MesaDto>>.SuccessResponse(new List<MesaDto>()));
+        var fakeService = new FakeMesasService(ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = new List<MesaDto>(), TotalCount = 0, PageNumber = 1, PageSize = 10 }));
         var fakeDialog = new FakeDialogService();
         var fakeNavigation = new Mock<INavigationService>().Object;
+        var fakeAuth = new Mock<IAuthService>().Object;
 
         // Act
-        var viewModel = new MesasViewModel(fakeService, fakeDialog, fakeNavigation);
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, fakeNavigation, fakeAuth);
 
         // Assert
         viewModel.Should().NotBeNull();
@@ -78,10 +87,10 @@ public class MesasViewModelTests
     {
         // Arrange
         var mesas = _fixture.CreateMany<MesaDto>(3).ToList();
-        var response = ApiResponse<List<MesaDto>>.SuccessResponse(mesas, "Mesas cargadas exitosamente");
+        var response = ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = mesas, TotalCount = mesas.Count, PageNumber = 1, PageSize = 10 }, "Mesas cargadas exitosamente");
         var fakeService = new FakeMesasService(response);
         var fakeDialog = new FakeDialogService();
-        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object);
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object, _mockAuthService.Object);
 
         // Act
         await viewModel.LoadMesasCommand.ExecuteAsync(null);
@@ -97,13 +106,13 @@ public class MesasViewModelTests
     public async Task LoadMesasAsync_WhenServiceFails_ShouldShowError()
     {
         // Arrange
-        var errorResponse = ApiResponse<List<MesaDto>>.ErrorResponse(
+        var errorResponse = ApiResponse<PaginatedList<MesaDto>>.ErrorResponse(
             new List<string> { "Error al cargar mesas" }, 
             "Error al cargar las mesas", 
             500);
         var fakeService = new FakeMesasService(errorResponse);
         var fakeDialog = new FakeDialogService();
-        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object);
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object, _mockAuthService.Object);
 
         // Act
         await viewModel.LoadMesasCommand.ExecuteAsync(null);
@@ -120,7 +129,7 @@ public class MesasViewModelTests
         var exception = new Exception("Error de conexión");
         var fakeService = new FakeMesasServiceThrows(exception);
         var fakeDialog = new FakeDialogService();
-        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object);
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object, _mockAuthService.Object);
 
         // Act
         await viewModel.LoadMesasCommand.ExecuteAsync(null);
@@ -138,7 +147,8 @@ public class MesasViewModelTests
         var viewModel = new MesasViewModel(
             fakeService,
             _mockDialogService.Object,
-            _mockNavigationService.Object);
+            _mockNavigationService.Object,
+            _mockAuthService.Object);
         
         // Reset WasCalled después del constructor y establecer IsBusy
         fakeService.WasCalled = false;
@@ -166,7 +176,8 @@ public class MesasViewModelTests
         var viewModel = new MesasViewModel(
             fakeService,
             fakeDialog,
-            _mockNavigationService.Object);
+            _mockNavigationService.Object,
+            _mockAuthService.Object);
 
         // Act
         await viewModel.AsignarMesaCommand.ExecuteAsync(mesa);
@@ -189,7 +200,8 @@ public class MesasViewModelTests
         var viewModel = new MesasViewModel(
             fakeService,
             fakeDialog,
-            _mockNavigationService.Object);
+            _mockNavigationService.Object,
+            _mockAuthService.Object);
 
         // Act
         await viewModel.AsignarMesaCommand.ExecuteAsync(mesa);
@@ -209,7 +221,8 @@ public class MesasViewModelTests
         var viewModel = new MesasViewModel(
             fakeService,
             _mockDialogService.Object,
-            _mockNavigationService.Object);
+            _mockNavigationService.Object,
+            _mockAuthService.Object);
 
         // Reset WasCalled después del constructor
         fakeService.WasCalled = false;
@@ -231,7 +244,8 @@ public class MesasViewModelTests
         var viewModel = new MesasViewModel(
             fakeService,
             fakeDialog,
-            _mockNavigationService.Object);
+            _mockNavigationService.Object,
+            _mockAuthService.Object);
 
         // Reset WasCalled después del constructor
         fakeService.WasCalled = false;
@@ -257,7 +271,8 @@ public class MesasViewModelTests
         var viewModel = new MesasViewModel(
             fakeService,
             fakeDialog,
-            _mockNavigationService.Object);
+            _mockNavigationService.Object,
+            _mockAuthService.Object);
 
         // Act
         await viewModel.LiberarMesaCommand.ExecuteAsync(mesa);
@@ -279,7 +294,8 @@ public class MesasViewModelTests
         var viewModel = new MesasViewModel(
             fakeService,
             fakeDialog,
-            _mockNavigationService.Object);
+            _mockNavigationService.Object,
+            _mockAuthService.Object);
 
         // Act
         await viewModel.LiberarMesaCommand.ExecuteAsync(mesa);
@@ -328,10 +344,10 @@ public class MesasViewModelTests
     {
         // Arrange
         var mesas = _fixture.CreateMany<MesaDto>(2).ToList();
-        var response = ApiResponse<List<MesaDto>>.SuccessResponse(mesas, "Mesas cargadas");
+        var response = ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = mesas, TotalCount = mesas.Count, PageNumber = 1, PageSize = 10 }, "Mesas cargadas");
         var fakeService = new FakeMesasService(response);
         var fakeDialog = new FakeDialogService();
-        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object);
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object, _mockAuthService.Object);
 
         // Act
         await viewModel.RefreshMesasCommand.ExecuteAsync(null);
@@ -350,10 +366,10 @@ public class MesasViewModelTests
     {
         // Arrange: 25 mesas simuladas, pageSize=12 => 12 + 12 + 1
         var mesas = _fixture.CreateMany<MesaDto>(25).ToList();
-        var response = ApiResponse<List<MesaDto>>.SuccessResponse(mesas);
+        var response = ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = mesas, TotalCount = mesas.Count, PageNumber = 1, PageSize = 10 });
         var fakeService = new FakeMesasService(response);
         var fakeDialog = new FakeDialogService();
-        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object);
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object, _mockAuthService.Object);
 
         // Act: cargar primera página
         await viewModel.LoadMesasCommand.ExecuteAsync(null);
@@ -373,10 +389,10 @@ public class MesasViewModelTests
     public async Task LoadMoreMesasAsync_WhenIsBusy_ShouldNotAppend()
     {
         var mesas = _fixture.CreateMany<MesaDto>(10).ToList();
-        var response = ApiResponse<List<MesaDto>>.SuccessResponse(mesas);
+        var response = ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = mesas, TotalCount = mesas.Count, PageNumber = 1, PageSize = 10 });
         var fakeService = new FakeMesasService(response);
         var fakeDialog = new FakeDialogService();
-        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object);
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object, _mockAuthService.Object);
 
         await viewModel.LoadMesasCommand.ExecuteAsync(null);
         var before = viewModel.Mesas.Count;
@@ -393,10 +409,10 @@ public class MesasViewModelTests
     public async Task ApplyFiltersAsync_ShouldMapUiEstadoToBackend()
     {
         var mesas = _fixture.CreateMany<MesaDto>(3).ToList();
-        var response = ApiResponse<List<MesaDto>>.SuccessResponse(mesas);
+        var response = ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = mesas, TotalCount = mesas.Count, PageNumber = 1, PageSize = 10 });
         var fakeService = new FakeMesasService(response);
         var fakeDialog = new FakeDialogService();
-        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object)
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object, _mockAuthService.Object)
         {
             FiltroEstado = "Disponibles",
             FiltroCapacidad = "4 personas"
@@ -413,10 +429,10 @@ public class MesasViewModelTests
     public async Task ClearFiltersAsync_ShouldResetFiltersAndReload()
     {
         var mesas = _fixture.CreateMany<MesaDto>(2).ToList();
-        var response = ApiResponse<List<MesaDto>>.SuccessResponse(mesas);
+        var response = ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = mesas, TotalCount = mesas.Count, PageNumber = 1, PageSize = 10 });
         var fakeService = new FakeMesasService(response);
         var fakeDialog = new FakeDialogService();
-        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object)
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object, _mockAuthService.Object)
         {
             FiltroEstado = "Ocupadas",
             FiltroUbicacion = "Terraza",
@@ -446,7 +462,7 @@ public class MesasViewModelTests
         var mesa = _fixture.Create<MesaDto>();
         var fakeService = new FakeMesasServiceCambiarEstado(success: true, message: "ok");
         var fakeDialog = new FakeDialogService { ActionSheetResponse = "Cancelar" };
-        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object);
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object, _mockAuthService.Object);
 
         // Act
         await viewModel.CambiarEstadoMesaCommand.ExecuteAsync(mesa);
@@ -463,7 +479,7 @@ public class MesasViewModelTests
         var errorMessage = "Error al cambiar";
         var fakeService = new FakeMesasServiceCambiarEstado(success: false, message: errorMessage);
         var fakeDialog = new FakeDialogService { ActionSheetResponse = "Ocupada" };
-        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object);
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object, _mockAuthService.Object);
 
         // Act
         await viewModel.CambiarEstadoMesaCommand.ExecuteAsync(mesa);
@@ -481,7 +497,7 @@ public class MesasViewModelTests
         var mesa = _fixture.Create<MesaDto>();
         var fakeService = new FakeMesasServiceCambiarEstado(success: true, message: "Cambiado");
         var fakeDialog = new FakeDialogService { ActionSheetResponse = "Disponible" };
-        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object);
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object, _mockAuthService.Object);
 
         // Act
         await viewModel.CambiarEstadoMesaCommand.ExecuteAsync(mesa);
@@ -506,10 +522,10 @@ public class MesasViewModelTests
             new MesaDto { Id = Guid.NewGuid(), Numero = "B2", Ubicacion = "Salon", Zona = "Sur", Capacidad = 2 },
             new MesaDto { Id = Guid.NewGuid(), Numero = "A10", Ubicacion = "Terraza", Zona = "Oeste", Capacidad = 6 },
         };
-        var response = ApiResponse<List<MesaDto>>.SuccessResponse(all);
+        var response = ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = all, TotalCount = all.Count, PageNumber = 1, PageSize = 10 });
         var fakeService = new FakeMesasService(response);
         var fakeDialog = new FakeDialogService();
-        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object)
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object, _mockAuthService.Object)
         {
             SearchText = "A1"
         };
@@ -532,7 +548,7 @@ public class MesasViewModelTests
         // Arrange
         var captureService = new FakeMesasServiceCaptureParams();
         var fakeDialog = new FakeDialogService();
-        var viewModel = new MesasViewModel(captureService, fakeDialog, _mockNavigationService.Object)
+        var viewModel = new MesasViewModel(captureService, fakeDialog, _mockNavigationService.Object, _mockAuthService.Object)
         {
             FiltroEstado = "Disponibles",
             FiltroCapacidad = "4 personas",
@@ -559,7 +575,7 @@ public class MesasViewModelTests
         var estado = _fixture.Create<EstadoMesasDto>();
         var fakeService = new FakeMesasServiceEstadisticas(true, estado, "Estadísticas cargadas");
         var fakeDialog = new FakeDialogService();
-        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object);
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object, _mockAuthService.Object);
 
         // Asegurar que el ViewModel no esté ocupado (evitar conflictos con carga automática del constructor)
         viewModel.IsBusy = false;
@@ -587,7 +603,7 @@ public class MesasViewModelTests
         // Arrange
         var fakeService = new FakeMesasServiceEstadisticas(false, null, "No se pudieron cargar las estadísticas");
         var fakeDialog = new FakeDialogService();
-        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object);
+        var viewModel = new MesasViewModel(fakeService, fakeDialog, _mockNavigationService.Object, _mockAuthService.Object);
 
         // Act
         await viewModel.LoadEstadisticasCommand.ExecuteAsync(null);
@@ -730,9 +746,9 @@ public class MesasViewModelTests
 
     private class FakeMesasService : IMesasService
     {
-        private readonly ApiResponse<List<MesaDto>> _response;
-        public FakeMesasService(ApiResponse<List<MesaDto>> response) { _response = response; }
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, CancellationToken cancellationToken = default)
+        private readonly ApiResponse<PaginatedList<MesaDto>> _response;
+        public FakeMesasService(ApiResponse<PaginatedList<MesaDto>> response) { _response = response; }
+        public Task<ApiResponse<PaginatedList<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
             => Task.FromResult(_response);
         public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
@@ -747,7 +763,7 @@ public class MesasViewModelTests
     {
         private readonly Exception _exception;
         public FakeMesasServiceThrows(Exception exception) { _exception = exception; }
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, CancellationToken cancellationToken = default)
+        public Task<ApiResponse<PaginatedList<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
             => throw _exception;
         public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
@@ -762,9 +778,9 @@ public class MesasViewModelTests
     {
         public bool WasCalled { get; set; }
 
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, CancellationToken cancellationToken = default)
+        public Task<ApiResponse<PaginatedList<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(ApiResponse<List<MesaDto>>.SuccessResponse(new List<MesaDto>()));
+            return Task.FromResult(ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = new List<MesaDto>(), TotalCount = 0, PageNumber = 1, PageSize = 10 }));
         }
 
         public Task<ApiResponse<object>> AsignarMesaAsync(Guid mesaId, Guid? clienteId = null, int? numeroPersonas = null, string? observaciones = null, CancellationToken cancellationToken = default)
@@ -867,8 +883,8 @@ public class MesasViewModelTests
                 : ApiResponse<object>.ErrorResponse(new List<string> { _message }, _message, 500));
         }
 
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, CancellationToken cancellationToken = default)
-            => Task.FromResult(ApiResponse<List<MesaDto>>.SuccessResponse(new List<MesaDto>()));
+        public Task<ApiResponse<PaginatedList<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
+            => Task.FromResult(ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = new List<MesaDto>(), TotalCount = 0, PageNumber = 1, PageSize = 10 }));
         public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
@@ -899,8 +915,8 @@ public class MesasViewModelTests
                 : ApiResponse<MesaDto>.ErrorResponse(new List<string> { _message }, _message, 500));
         }
 
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, CancellationToken cancellationToken = default)
-            => Task.FromResult(ApiResponse<List<MesaDto>>.SuccessResponse(new List<MesaDto>()));
+        public Task<ApiResponse<PaginatedList<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
+            => Task.FromResult(ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = new List<MesaDto>(), TotalCount = 0, PageNumber = 1, PageSize = 10 }));
         public Task<ApiResponse<MesaDto>> ObtenerMesaAsync(Guid id, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<ApiResponse<List<MesaDto>>> ObtenerMesasDisponiblesAsync(int? capacidadMinima = null, string? ubicacion = null, CancellationToken cancellationToken = default) => throw new NotImplementedException();
         public Task<ApiResponse<EstadoMesasDto>> ObtenerEstadoOcupacionAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
@@ -936,9 +952,9 @@ public class MesasViewModelTests
         }
 
         // Implementar ObtenerMesasAsync para evitar excepción en constructor
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, CancellationToken cancellationToken = default)
+        public Task<ApiResponse<PaginatedList<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(ApiResponse<List<MesaDto>>.SuccessResponse(new List<MesaDto>()));
+            return Task.FromResult(ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = new List<MesaDto>(), TotalCount = 0, PageNumber = 1, PageSize = 10 }));
         }
 
         // Métodos no usados en este test
@@ -957,12 +973,12 @@ public class MesasViewModelTests
         public string? LastUbicacion { get; private set; }
         public int? LastCapacidadMinima { get; private set; }
 
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, CancellationToken cancellationToken = default)
+        public Task<ApiResponse<PaginatedList<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
         {
             LastEstado = estado;
             LastUbicacion = ubicacion;
             LastCapacidadMinima = capacidadMinima;
-            return Task.FromResult(ApiResponse<List<MesaDto>>.SuccessResponse(new List<MesaDto>()));
+            return Task.FromResult(ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = new List<MesaDto>(), TotalCount = 0, PageNumber = 1, PageSize = 10 }));
         }
 
         // Métodos no utilizados en estas pruebas
@@ -997,10 +1013,10 @@ public class MesasViewModelTests
                 : ApiResponse<MesaDto>.ErrorResponse(new List<string> { _message }, _message, 500));
         }
 
-        public Task<ApiResponse<List<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, CancellationToken cancellationToken = default)
+        public Task<ApiResponse<PaginatedList<MesaDto>>> ObtenerMesasAsync(string? estado = null, string? ubicacion = null, int? capacidadMinima = null, int page = 1, int pageSize = 10, CancellationToken cancellationToken = default)
         {
             ObtenerMesasCalledCount++;
-            return Task.FromResult(ApiResponse<List<MesaDto>>.SuccessResponse(new List<MesaDto>()));
+            return Task.FromResult(ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = new List<MesaDto>(), TotalCount = 0, PageNumber = 1, PageSize = 10 }));
         }
 
         // Métodos no usados

@@ -192,6 +192,12 @@ namespace RestaurantePro.Infrastructure.Identity.Services
             }
 
             var roles = await _userManager.GetRolesAsync(user);
+            
+            // 🔍 DEBUG: Ver exactamente qué roles se obtienen
+            _logger.LogInformation("🔍🏷️ [AuthenticateAsync] Usuario: {Email}", user.Email);
+            _logger.LogInformation("🔍🏷️ [AuthenticateAsync] Roles obtenidos: [{Roles}]", string.Join(", ", roles));
+            _logger.LogInformation("🔍🏷️ [AuthenticateAsync] Total roles: {Count}", roles.Count);
+            
             var tokenResponse = _jwtTokenService.GenerateToken(user.Id.ToString(), user.UserName, user.Email, roles);
             
             // Buscar el ID del dominio del usuario
@@ -236,14 +242,29 @@ namespace RestaurantePro.Infrastructure.Identity.Services
             return Result.Success(new AuthResponse
             {
                 Success = true,
-                UserId = user.Id.ToString(),
-                DomainUserId = domainUserId,
-                UserName = user.UserName,
                 Token = tokenResponse.AccessToken,
                 RefreshToken = recordarme ? user.RefreshToken : null,
                 Expiration = tokenExpiration,
-                Roles = roles.ToList(),
-                Message = "Autenticación exitosa"
+                Message = "Autenticación exitosa",
+                
+                // 🎯 Objeto User completo para el frontend
+                User = new UserDto
+                {
+                    Id = user.Id.ToString(),
+                    Email = user.Email,
+                    UserName = user.UserName,
+                    Nombre = user.Nombre ?? string.Empty,
+                    Apellido = user.Apellidos ?? string.Empty,
+                    Activo = user.Activo,
+                    EmailConfirmed = user.EmailConfirmed,
+                    Roles = roles.ToList()
+                },
+                
+                // 🔄 Campos legacy para compatibilidad
+                UserId = user.Id.ToString(),
+                DomainUserId = domainUserId,
+                UserName = user.UserName,
+                Roles = roles.ToList()
             });
         }
         
@@ -273,13 +294,28 @@ namespace RestaurantePro.Infrastructure.Identity.Services
                 return Result.Success(new AuthResponse
                 {
                     Success = true,
-                    UserId = user.Id.ToString(),
-                    UserName = user.UserName,
                     Token = tokenResponse.AccessToken,
                     RefreshToken = newRefreshToken,
                     Expiration = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn),
-                    Roles = roles.ToList(),
-                    Message = "Token renovado exitosamente"
+                    Message = "Token renovado exitosamente",
+                    
+                    // 🎯 Objeto User completo para el frontend
+                    User = new UserDto
+                    {
+                        Id = user.Id.ToString(),
+                        Email = user.Email,
+                        UserName = user.UserName,
+                        Nombre = user.Nombre ?? string.Empty,
+                        Apellido = user.Apellidos ?? string.Empty,
+                        Activo = user.Activo,
+                        EmailConfirmed = user.EmailConfirmed,
+                        Roles = roles.ToList()
+                    },
+                    
+                    // 🔄 Campos legacy para compatibilidad
+                    UserId = user.Id.ToString(),
+                    UserName = user.UserName,
+                    Roles = roles.ToList()
                 });
             }
             catch (Exception ex)
@@ -361,6 +397,10 @@ namespace RestaurantePro.Infrastructure.Identity.Services
                 Id = user.Id.ToString(),
                 UserName = user.UserName,
                 Email = user.Email,
+                Nombre = user.Nombre ?? string.Empty,
+                Apellido = user.Apellidos ?? string.Empty,
+                Activo = user.Activo,
+                EmailConfirmed = user.EmailConfirmed,
                 Roles = user.UserRoles.Select(ur => ur.Role.Name).ToList()
             };
         }
@@ -373,6 +413,10 @@ namespace RestaurantePro.Infrastructure.Identity.Services
                     Id = user.Id.ToString(),
                     UserName = user.UserName,
                     Email = user.Email,
+                    Nombre = user.Nombre ?? string.Empty,
+                    Apellido = user.Apellidos ?? string.Empty,
+                    Activo = user.Activo,
+                    EmailConfirmed = user.EmailConfirmed,
                     Roles = user.UserRoles.Select(ur => ur.Role.Name).ToList()
                 }).ToListAsync();
         }

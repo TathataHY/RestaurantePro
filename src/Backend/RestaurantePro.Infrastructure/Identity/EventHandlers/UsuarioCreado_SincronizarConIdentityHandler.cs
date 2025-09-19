@@ -109,11 +109,19 @@ namespace RestaurantePro.Infrastructure.Identity.EventHandlers
         {
             try
             {
+                // 🔍 DEBUG: Ver exactamente qué rol llega del evento
+                _logger.LogInformation("🔍🏷️ [AsignarRol] Usuario: {Email}", user.Email);
+                _logger.LogInformation("🔍🏷️ [AsignarRol] Rol del evento recibido: '{RolEvento}'", rolDelEvento ?? "NULL");
+                _logger.LogInformation("🔍🏷️ [AsignarRol] ¿Es null o empty? {IsEmpty}", string.IsNullOrEmpty(rolDelEvento));
+                
                 if (string.IsNullOrEmpty(rolDelEvento))
                 {
-                    _logger.LogWarning("⚠️ No se especificó rol para usuario {Email}, asignando rol por defecto", user.Email);
-                    rolDelEvento = "Empleado";
+                    _logger.LogError("❌ PROBLEMA: No se especificó rol para usuario {Email} - El evento UsuarioCreado no incluye el rol", user.Email);
+                    _logger.LogError("❌ ESTO ES UN BUG: Todos los usuarios necesitan un rol específico, no 'Empleado' por defecto");
+                    rolDelEvento = "Mesero"; // 🔧 Cambio temporal para debug - debería ser el rol correcto del evento
                 }
+
+                _logger.LogInformation("🔍🏷️ [AsignarRol] Rol final a asignar: '{RolFinal}'", rolDelEvento);
 
                 var result = await _userManager.AddToRoleAsync(user, rolDelEvento);
                 

@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 
 namespace RestaurantePro.Mobile.Core.Models.ViewModels;
 
@@ -8,6 +9,7 @@ namespace RestaurantePro.Mobile.Core.Models.ViewModels;
 /// </summary>
 public partial class BaseViewModel : ObservableObject
 {
+    protected readonly ILogger Logger;
     [ObservableProperty]
     private bool isBusy;
 
@@ -22,6 +24,22 @@ public partial class BaseViewModel : ObservableObject
 
     [ObservableProperty]
     private string errorMessage = string.Empty;
+
+    /// <summary>
+    /// Constructor base que acepta un logger
+    /// </summary>
+    public BaseViewModel(ILogger logger)
+    {
+        Logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    /// <summary>
+    /// Constructor por defecto para compatibilidad con ViewModels existentes
+    /// </summary>
+    public BaseViewModel()
+    {
+        Logger = Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
+    }
 
     /// <summary>
     /// Indica si el ViewModel no está ocupado

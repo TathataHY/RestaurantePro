@@ -72,11 +72,11 @@ public class PermissionService
 
     /// <summary>
     /// Verifica si el usuario puede crear usuarios
-    /// Solo Administradores y Propietarios pueden crear usuarios
+    /// Administradores, Gerentes y Propietarios pueden crear usuarios
     /// </summary>
     public async Task<bool> CanCreateUsersAsync()
     {
-        return await HasAnyRoleAsync("Administrador", "Propietario");
+        return await HasAnyRoleAsync("Administrador", "Gerente", "Propietario");
     }
 
     /// <summary>

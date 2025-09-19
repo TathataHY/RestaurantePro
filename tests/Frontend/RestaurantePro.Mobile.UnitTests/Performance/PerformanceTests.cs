@@ -11,8 +11,12 @@ using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Notifications;
 using RestaurantePro.Mobile.Core.Services.Realtime;
 using RestaurantePro.Mobile.Core.Services.Preferences;
+using RestaurantePro.Mobile.Core.Services.Authorization;
+using RestaurantePro.Mobile.Core.Services.Authentication;
+using RestaurantePro.Mobile.Core.Core.Helpers;
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Models.Common;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Diagnostics;
 
 namespace RestaurantePro.Mobile.UnitTests.Performance;
@@ -30,6 +34,10 @@ public class PerformanceTests
     private readonly Mock<INotificationService> _notificationServiceMock;
     private readonly Mock<IComandaRealtimeService> _realtimeServiceMock;
     private readonly Mock<IPreferencesService> _preferencesServiceMock;
+    private readonly Mock<IAuthorizationService> _authorizationServiceMock;
+    private readonly Mock<IAuthorizationValidator> _authorizationValidatorMock;
+    private readonly Mock<IAuthService> _authServiceMock;
+    private readonly AuthorizationUIHelper _authorizationUIHelper;
 
     public PerformanceTests()
     {
@@ -41,6 +49,10 @@ public class PerformanceTests
         _notificationServiceMock = new Mock<INotificationService>();
         _realtimeServiceMock = new Mock<IComandaRealtimeService>();
         _preferencesServiceMock = new Mock<IPreferencesService>();
+        _authorizationServiceMock = new Mock<IAuthorizationService>();
+        _authorizationValidatorMock = new Mock<IAuthorizationValidator>();
+        _authServiceMock = new Mock<IAuthService>();
+        _authorizationUIHelper = new AuthorizationUIHelper(_authorizationServiceMock.Object, NullLogger<AuthorizationUIHelper>.Instance);
     }
 
     #region Pruebas de Carga - Grandes Volúmenes de Datos
@@ -60,7 +72,10 @@ public class PerformanceTests
             _mesasServiceMock.Object,
             _notificationServiceMock.Object,
             _realtimeServiceMock.Object,
-            _preferencesServiceMock.Object);
+            _preferencesServiceMock.Object,
+            _authorizationServiceMock.Object,
+            _authorizationValidatorMock.Object,
+            _authorizationUIHelper);
 
         // Act - Medir tiempo de carga
         var stopwatch = Stopwatch.StartNew();
@@ -78,13 +93,14 @@ public class PerformanceTests
     {
         // Arrange - Generar 200 mesas para prueba de carga
         var mesas = GenerateLargeMesasList(200);
-        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(null, null, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ApiResponse<List<MesaDto>>.SuccessResponse(mesas));
+        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(null, null, null, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = mesas, TotalCount = mesas.Count, PageNumber = 1, PageSize = 10 }));
 
         var mesasViewModel = new MesasViewModel(
             _mesasServiceMock.Object,
             _dialogServiceMock.Object,
-            _navigationServiceMock.Object);
+            _navigationServiceMock.Object,
+            _authServiceMock.Object);
 
         // Act - Medir tiempo de carga
         var stopwatch = Stopwatch.StartNew();
@@ -148,7 +164,10 @@ public class PerformanceTests
             _mesasServiceMock.Object,
             _notificationServiceMock.Object,
             _realtimeServiceMock.Object,
-            _preferencesServiceMock.Object);
+            _preferencesServiceMock.Object,
+            _authorizationServiceMock.Object,
+            _authorizationValidatorMock.Object,
+            _authorizationUIHelper);
 
         // Act - Cargar comandas múltiples veces
         for (int i = 0; i < 10; i++)
@@ -172,13 +191,14 @@ public class PerformanceTests
     {
         // Arrange
         var mesas = GenerateLargeMesasList(50);
-        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(null, null, null, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ApiResponse<List<MesaDto>>.SuccessResponse(mesas));
+        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(null, null, null, It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = mesas, TotalCount = mesas.Count, PageNumber = 1, PageSize = 10 }));
 
         var mesasViewModel = new MesasViewModel(
             _mesasServiceMock.Object,
             _dialogServiceMock.Object,
-            _navigationServiceMock.Object);
+            _navigationServiceMock.Object,
+            _authServiceMock.Object);
 
         // Act - Cargar mesas múltiples veces
         for (int i = 0; i < 20; i++)
@@ -222,7 +242,10 @@ public class PerformanceTests
             _mesasServiceMock.Object,
             _notificationServiceMock.Object,
             _realtimeServiceMock.Object,
-            _preferencesServiceMock.Object);
+            _preferencesServiceMock.Object,
+            _authorizationServiceMock.Object,
+            _authorizationValidatorMock.Object,
+            _authorizationUIHelper);
 
         // Act - Medir tiempo de cambio de estado
         var stopwatch = Stopwatch.StartNew();
@@ -250,7 +273,8 @@ public class PerformanceTests
         var mesasViewModel = new MesasViewModel(
             _mesasServiceMock.Object,
             _dialogServiceMock.Object,
-            _navigationServiceMock.Object);
+            _navigationServiceMock.Object,
+            _authServiceMock.Object);
 
         // Act - Medir tiempo de asignación
         var stopwatch = Stopwatch.StartNew();
@@ -286,7 +310,10 @@ public class PerformanceTests
                 _mesasServiceMock.Object,
                 _notificationServiceMock.Object,
                 _realtimeServiceMock.Object,
-                _preferencesServiceMock.Object);
+                _preferencesServiceMock.Object,
+                _authorizationServiceMock.Object,
+                _authorizationValidatorMock.Object,
+                _authorizationUIHelper);
             
             viewModels.Add(viewModel);
             tasks.Add(viewModel.LoadComandasCommand.ExecuteAsync(null));

@@ -6,14 +6,24 @@ namespace RestaurantePro.Mobile.Core.Models.DTOs;
 public class AuthUser
 {
     /// <summary>
-    /// ID único del usuario
+    /// ID único del usuario (GUID)
     /// </summary>
-    public int Id { get; set; }
+    public string Id { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Nombre de usuario
+    /// </summary>
+    public string UserName { get; set; } = string.Empty;
     
     /// <summary>
     /// Email del usuario
     /// </summary>
     public string Email { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Indica si el email está confirmado
+    /// </summary>
+    public bool EmailConfirmed { get; set; } = false;
     
     /// <summary>
     /// Nombre del usuario

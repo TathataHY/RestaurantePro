@@ -127,22 +127,29 @@ public class AuthResponse
     public DateTime Expiration { get; set; }
     
     /// <summary>
-    /// ID del usuario autenticado (Identity)
+    /// Información completa del usuario autenticado
+    /// </summary>
+    public UserDto User { get; set; } = new();
+    
+    // ⚠️ CAMPOS LEGACY - Mantenidos para compatibilidad
+    
+    /// <summary>
+    /// ID del usuario autenticado (Identity) - LEGACY: usar User.Id
     /// </summary>
     public string UserId { get; set; }
     
     /// <summary>
-    /// ID del usuario en el dominio (Core.Usuarios)
+    /// ID del usuario en el dominio (Core.Usuarios) - LEGACY
     /// </summary>
     public string? DomainUserId { get; set; }
     
     /// <summary>
-    /// Nombre del usuario autenticado
+    /// Nombre del usuario autenticado - LEGACY: usar User.UserName
     /// </summary>
     public string UserName { get; set; }
     
     /// <summary>
-    /// Roles del usuario autenticado
+    /// Roles del usuario autenticado - LEGACY: usar User.Roles
     /// </summary>
     public List<string> Roles { get; set; }
 }
@@ -166,6 +173,26 @@ public class UserDto
     /// Email del usuario
     /// </summary>
     public string Email { get; set; }
+    
+    /// <summary>
+    /// Nombre real del usuario
+    /// </summary>
+    public string Nombre { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Apellido del usuario
+    /// </summary>
+    public string Apellido { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Nombre completo del usuario
+    /// </summary>
+    public string NombreCompleto => $"{Nombre} {Apellido}".Trim();
+    
+    /// <summary>
+    /// Indica si el usuario está activo
+    /// </summary>
+    public bool Activo { get; set; } = true;
     
     /// <summary>
     /// Indica si el email está confirmado

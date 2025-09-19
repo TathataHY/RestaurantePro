@@ -11,8 +11,12 @@ using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Notifications;
 using RestaurantePro.Mobile.Core.Services.Realtime;
 using RestaurantePro.Mobile.Core.Services.Preferences;
+using RestaurantePro.Mobile.Core.Services.Authorization;
+using RestaurantePro.Mobile.Core.Services.Authentication;
+using RestaurantePro.Mobile.Core.Core.Helpers;
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Models.Common;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Net;
 
 namespace RestaurantePro.Mobile.UnitTests.Resilience;
@@ -30,6 +34,10 @@ public class ResilienceTests
     private readonly Mock<INotificationService> _notificationServiceMock;
     private readonly Mock<IComandaRealtimeService> _realtimeServiceMock;
     private readonly Mock<IPreferencesService> _preferencesServiceMock;
+    private readonly Mock<IAuthorizationService> _authorizationServiceMock;
+    private readonly Mock<IAuthorizationValidator> _authorizationValidatorMock;
+    private readonly Mock<IAuthService> _authServiceMock;
+    private readonly AuthorizationUIHelper _authorizationUIHelper;
 
     public ResilienceTests()
     {
@@ -41,6 +49,10 @@ public class ResilienceTests
         _notificationServiceMock = new Mock<INotificationService>();
         _realtimeServiceMock = new Mock<IComandaRealtimeService>();
         _preferencesServiceMock = new Mock<IPreferencesService>();
+        _authorizationServiceMock = new Mock<IAuthorizationService>();
+        _authorizationValidatorMock = new Mock<IAuthorizationValidator>();
+        _authServiceMock = new Mock<IAuthService>();
+        _authorizationUIHelper = new AuthorizationUIHelper(_authorizationServiceMock.Object, NullLogger<AuthorizationUIHelper>.Instance);
     }
 
     #region Pruebas de Fallos de Red
@@ -60,7 +72,10 @@ public class ResilienceTests
             _mesasServiceMock.Object,
             _notificationServiceMock.Object,
             _realtimeServiceMock.Object,
-            _preferencesServiceMock.Object);
+            _preferencesServiceMock.Object,
+            _authorizationServiceMock.Object,
+            _authorizationValidatorMock.Object,
+            _authorizationUIHelper);
 
         // Act - Intentar cargar comandas (falla y luego recupera)
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null); // Primer intento - falla
@@ -75,14 +90,15 @@ public class ResilienceTests
     public async Task Resilience_FalloRed_MesasService_RecuperacionAutomatica()
     {
         // Arrange - Configurar fallo de red seguido de éxito
-        _mesasServiceMock.SetupSequence(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
+        _mesasServiceMock.SetupSequence(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("Error de red"))
-            .ReturnsAsync(ApiResponse<List<MesaDto>>.SuccessResponse(new List<MesaDto>()));
+            .ReturnsAsync(ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = new List<MesaDto>(), TotalCount = 0, PageNumber = 1, PageSize = 10 }));
 
         var mesasViewModel = new MesasViewModel(
             _mesasServiceMock.Object,
             _dialogServiceMock.Object,
-            _navigationServiceMock.Object);
+            _navigationServiceMock.Object,
+            _authServiceMock.Object);
 
         // Act - Intentar cargar mesas (falla y luego recupera)
         await mesasViewModel.LoadMesasCommand.ExecuteAsync(null); // Primer intento - falla
@@ -137,7 +153,10 @@ public class ResilienceTests
             _mesasServiceMock.Object,
             _notificationServiceMock.Object,
             _realtimeServiceMock.Object,
-            _preferencesServiceMock.Object);
+            _preferencesServiceMock.Object,
+            _authorizationServiceMock.Object,
+            _authorizationValidatorMock.Object,
+            _authorizationUIHelper);
 
         // Act - Intentar cargar comandas
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null);
@@ -151,13 +170,14 @@ public class ResilienceTests
     public async Task Resilience_FalloServicio_MesasService_Error503()
     {
         // Arrange - Configurar error 503 del servidor
-        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ApiResponse<List<MesaDto>>.ErrorResponse(new List<string> { "Servicio no disponible" }, "Servicio no disponible"));
+        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<PaginatedList<MesaDto>>.ErrorResponse(new List<string> { "Servicio no disponible" }, "Servicio no disponible"));
 
         var mesasViewModel = new MesasViewModel(
             _mesasServiceMock.Object,
             _dialogServiceMock.Object,
-            _navigationServiceMock.Object);
+            _navigationServiceMock.Object,
+            _authServiceMock.Object);
 
         // Act - Intentar cargar mesas
         await mesasViewModel.LoadMesasCommand.ExecuteAsync(null);
@@ -199,7 +219,10 @@ public class ResilienceTests
             _mesasServiceMock.Object,
             _notificationServiceMock.Object,
             _realtimeServiceMock.Object,
-            _preferencesServiceMock.Object);
+            _preferencesServiceMock.Object,
+            _authorizationServiceMock.Object,
+            _authorizationValidatorMock.Object,
+            _authorizationUIHelper);
 
         // Act - Cargar comandas con datos incompletos
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null);
@@ -225,13 +248,14 @@ public class ResilienceTests
             }
         };
 
-        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ApiResponse<List<MesaDto>>.SuccessResponse(mesasInconsistentes));
+        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = mesasInconsistentes, TotalCount = mesasInconsistentes.Count, PageNumber = 1, PageSize = 10 }));
 
         var mesasViewModel = new MesasViewModel(
             _mesasServiceMock.Object,
             _dialogServiceMock.Object,
-            _navigationServiceMock.Object);
+            _navigationServiceMock.Object,
+            _authServiceMock.Object);
 
         // Act - Cargar mesas con datos inconsistentes
         await mesasViewModel.LoadMesasCommand.ExecuteAsync(null);
@@ -264,7 +288,10 @@ public class ResilienceTests
             _mesasServiceMock.Object,
             _notificationServiceMock.Object,
             _realtimeServiceMock.Object,
-            _preferencesServiceMock.Object);
+            _preferencesServiceMock.Object,
+            _authorizationServiceMock.Object,
+            _authorizationValidatorMock.Object,
+            _authorizationUIHelper);
 
         // Act - Intentar cargar comandas múltiples veces
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null); // Fallo
@@ -279,15 +306,16 @@ public class ResilienceTests
     public async Task Resilience_RecuperacionAutomatica_MesasService_ReintentoExitoso()
     {
         // Arrange - Configurar fallo seguido de éxito
-        _mesasServiceMock.SetupSequence(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
+        _mesasServiceMock.SetupSequence(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new HttpRequestException("Error de red"))
             .ThrowsAsync(new HttpRequestException("Error de red"))
-            .ReturnsAsync(ApiResponse<List<MesaDto>>.SuccessResponse(new List<MesaDto>()));
+            .ReturnsAsync(ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = new List<MesaDto>(), TotalCount = 0, PageNumber = 1, PageSize = 10 }));
 
         var mesasViewModel = new MesasViewModel(
             _mesasServiceMock.Object,
             _dialogServiceMock.Object,
-            _navigationServiceMock.Object);
+            _navigationServiceMock.Object,
+            _authServiceMock.Object);
 
         // Act - Intentar cargar mesas múltiples veces
         await mesasViewModel.LoadMesasCommand.ExecuteAsync(null); // Fallo
@@ -295,7 +323,7 @@ public class ResilienceTests
         await mesasViewModel.LoadMesasCommand.ExecuteAsync(null); // Éxito
 
         // Assert - Verificar que se recuperó después de múltiples fallos
-        _mesasServiceMock.Verify(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()), Times.Exactly(3));
+        _mesasServiceMock.Verify(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Exactly(3));
     }
 
     #endregion
@@ -316,7 +344,10 @@ public class ResilienceTests
             _mesasServiceMock.Object,
             _notificationServiceMock.Object,
             _realtimeServiceMock.Object,
-            _preferencesServiceMock.Object);
+            _preferencesServiceMock.Object,
+            _authorizationServiceMock.Object,
+            _authorizationValidatorMock.Object,
+            _authorizationUIHelper);
 
         // Act - Intentar cargar comandas con datos corruptos
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null);
@@ -330,13 +361,14 @@ public class ResilienceTests
     public async Task Resilience_DatosCorruptos_MesasService_RespuestaInvalida()
     {
         // Arrange - Configurar respuesta con datos corruptos
-        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
+        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Datos corruptos"));
 
         var mesasViewModel = new MesasViewModel(
             _mesasServiceMock.Object,
             _dialogServiceMock.Object,
-            _navigationServiceMock.Object);
+            _navigationServiceMock.Object,
+            _authServiceMock.Object);
 
         // Act - Intentar cargar mesas con datos corruptos
         await mesasViewModel.LoadMesasCommand.ExecuteAsync(null);
@@ -379,7 +411,10 @@ public class ResilienceTests
             _mesasServiceMock.Object,
             _notificationServiceMock.Object,
             _realtimeServiceMock.Object,
-            _preferencesServiceMock.Object);
+            _preferencesServiceMock.Object,
+            _authorizationServiceMock.Object,
+            _authorizationValidatorMock.Object,
+            _authorizationUIHelper);
 
         // Act - Ejecutar múltiples operaciones simultáneamente
         var tasks = new List<Task>();
@@ -415,7 +450,10 @@ public class ResilienceTests
             _mesasServiceMock.Object,
             _notificationServiceMock.Object,
             _realtimeServiceMock.Object,
-            _preferencesServiceMock.Object);
+            _preferencesServiceMock.Object,
+            _authorizationServiceMock.Object,
+            _authorizationValidatorMock.Object,
+            _authorizationUIHelper);
 
         // Act - Intentar cargar comandas con timeout
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null);
@@ -430,13 +468,14 @@ public class ResilienceTests
     public async Task Resilience_Timeout_MesasService_OperacionLenta()
     {
         // Arrange - Configurar timeout
-        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
+        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new TaskCanceledException("Operación cancelada por timeout"));
 
         var mesasViewModel = new MesasViewModel(
             _mesasServiceMock.Object,
             _dialogServiceMock.Object,
-            _navigationServiceMock.Object);
+            _navigationServiceMock.Object,
+            _authServiceMock.Object);
 
         // Act - Intentar cargar mesas con timeout
         await mesasViewModel.LoadMesasCommand.ExecuteAsync(null);

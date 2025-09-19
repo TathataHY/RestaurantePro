@@ -11,8 +11,12 @@ using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Notifications;
 using RestaurantePro.Mobile.Core.Services.Realtime;
 using RestaurantePro.Mobile.Core.Services.Preferences;
+using RestaurantePro.Mobile.Core.Services.Authorization;
+using RestaurantePro.Mobile.Core.Services.Authentication;
+using RestaurantePro.Mobile.Core.Core.Helpers;
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Models.Common;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Diagnostics;
 
 namespace RestaurantePro.Mobile.UnitTests.Load;
@@ -30,6 +34,10 @@ public class LoadTests
     private readonly Mock<INotificationService> _notificationServiceMock;
     private readonly Mock<IComandaRealtimeService> _realtimeServiceMock;
     private readonly Mock<IPreferencesService> _preferencesServiceMock;
+    private readonly Mock<IAuthorizationService> _authorizationServiceMock;
+    private readonly Mock<IAuthorizationValidator> _authorizationValidatorMock;
+    private readonly Mock<IAuthService> _authServiceMock;
+    private readonly AuthorizationUIHelper _authorizationUIHelper;
 
     public LoadTests()
     {
@@ -41,6 +49,10 @@ public class LoadTests
         _notificationServiceMock = new Mock<INotificationService>();
         _realtimeServiceMock = new Mock<IComandaRealtimeService>();
         _preferencesServiceMock = new Mock<IPreferencesService>();
+        _authorizationServiceMock = new Mock<IAuthorizationService>();
+        _authorizationValidatorMock = new Mock<IAuthorizationValidator>();
+        _authServiceMock = new Mock<IAuthService>();
+        _authorizationUIHelper = new AuthorizationUIHelper(_authorizationServiceMock.Object, NullLogger<AuthorizationUIHelper>.Instance);
     }
 
     #region Pruebas de Carga - Múltiples Usuarios Concurrentes
@@ -66,7 +78,10 @@ public class LoadTests
                 _mesasServiceMock.Object,
                 _notificationServiceMock.Object,
                 _realtimeServiceMock.Object,
-                _preferencesServiceMock.Object);
+                _preferencesServiceMock.Object,
+                _authorizationServiceMock.Object,
+                _authorizationValidatorMock.Object,
+                _authorizationUIHelper);
             
             viewModels.Add(viewModel);
             tasks.Add(viewModel.LoadComandasCommand.ExecuteAsync(null));
@@ -87,8 +102,8 @@ public class LoadTests
     {
         // Arrange - Simular 15 usuarios concurrentes
         var mesas = GenerateMesasList(50);
-        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ApiResponse<List<MesaDto>>.SuccessResponse(mesas));
+        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = mesas, TotalCount = mesas.Count, PageNumber = 1, PageSize = 10 }));
 
         // Act - Simular múltiples usuarios cargando mesas simultáneamente
         var tasks = new List<Task>();
@@ -99,7 +114,8 @@ public class LoadTests
             var viewModel = new MesasViewModel(
                 _mesasServiceMock.Object,
                 _dialogServiceMock.Object,
-                _navigationServiceMock.Object);
+                _navigationServiceMock.Object,
+                _authServiceMock.Object);
             
             viewModels.Add(viewModel);
             tasks.Add(viewModel.LoadMesasCommand.ExecuteAsync(null));
@@ -180,7 +196,10 @@ public class LoadTests
                 _mesasServiceMock.Object,
                 _notificationServiceMock.Object,
                 _realtimeServiceMock.Object,
-                _preferencesServiceMock.Object);
+                _preferencesServiceMock.Object,
+                _authorizationServiceMock.Object,
+                _authorizationValidatorMock.Object,
+                _authorizationUIHelper);
             
             viewModels.Add(viewModel);
             tasks.Add(viewModel.LoadComandasCommand.ExecuteAsync(null));
@@ -200,8 +219,8 @@ public class LoadTests
     {
         // Arrange - Simular pico de tráfico con 30 operaciones en 3 segundos
         var mesas = GenerateMesasList(30);
-        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ApiResponse<List<MesaDto>>.SuccessResponse(mesas));
+        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = mesas, TotalCount = mesas.Count, PageNumber = 1, PageSize = 10 }));
 
         // Act - Simular pico de tráfico
         var tasks = new List<Task>();
@@ -212,7 +231,8 @@ public class LoadTests
             var viewModel = new MesasViewModel(
                 _mesasServiceMock.Object,
                 _dialogServiceMock.Object,
-                _navigationServiceMock.Object);
+                _navigationServiceMock.Object,
+                _authServiceMock.Object);
             
             viewModels.Add(viewModel);
             tasks.Add(viewModel.LoadMesasCommand.ExecuteAsync(null));
@@ -252,7 +272,10 @@ public class LoadTests
                 _mesasServiceMock.Object,
                 _notificationServiceMock.Object,
                 _realtimeServiceMock.Object,
-                _preferencesServiceMock.Object);
+                _preferencesServiceMock.Object,
+                _authorizationServiceMock.Object,
+                _authorizationValidatorMock.Object,
+                _authorizationUIHelper);
             
             viewModels.Add(viewModel);
             tasks.Add(viewModel.LoadComandasCommand.ExecuteAsync(null));
@@ -282,7 +305,10 @@ public class LoadTests
             _mesasServiceMock.Object,
             _notificationServiceMock.Object,
             _realtimeServiceMock.Object,
-            _preferencesServiceMock.Object);
+            _preferencesServiceMock.Object,
+            _authorizationServiceMock.Object,
+            _authorizationValidatorMock.Object,
+            _authorizationUIHelper);
 
         // Act - Cargar máximo de datos
         var stopwatch = Stopwatch.StartNew();
@@ -323,7 +349,10 @@ public class LoadTests
                     _mesasServiceMock.Object,
                     _notificationServiceMock.Object,
                     _realtimeServiceMock.Object,
-                    _preferencesServiceMock.Object);
+                    _preferencesServiceMock.Object,
+                    _authorizationServiceMock.Object,
+                    _authorizationValidatorMock.Object,
+                    _authorizationUIHelper);
                 
                 viewModels.Add(viewModel);
                 tasks.Add(viewModel.LoadComandasCommand.ExecuteAsync(null));
@@ -366,7 +395,10 @@ public class LoadTests
                 _mesasServiceMock.Object,
                 _notificationServiceMock.Object,
                 _realtimeServiceMock.Object,
-                _preferencesServiceMock.Object);
+                _preferencesServiceMock.Object,
+                _authorizationServiceMock.Object,
+                _authorizationValidatorMock.Object,
+                _authorizationUIHelper);
             
             viewModels.Add(viewModel);
             tasks.Add(viewModel.LoadComandasCommand.ExecuteAsync(null));
@@ -409,7 +441,10 @@ public class LoadTests
                 _mesasServiceMock.Object,
                 _notificationServiceMock.Object,
                 _realtimeServiceMock.Object,
-                _preferencesServiceMock.Object);
+                _preferencesServiceMock.Object,
+                _authorizationServiceMock.Object,
+                _authorizationValidatorMock.Object,
+                _authorizationUIHelper);
             
             viewModels.Add(viewModel);
             tasks.Add(viewModel.LoadComandasCommand.ExecuteAsync(null));

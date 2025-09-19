@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using RestaurantePro.Mobile.Core.Services.Api;
 using RestaurantePro.Mobile.Core.Services.Authentication;
+using RestaurantePro.Mobile.Core.Services.Authorization;
 using RestaurantePro.Mobile.Core.Services.Navigation;
 using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Mesas;
@@ -12,6 +13,7 @@ using RestaurantePro.Mobile.Core.Services.Commercial;
 using RestaurantePro.Mobile.Core.Services.Analytics;
 using RestaurantePro.Mobile.Core.Services.Inventory;
 using RestaurantePro.Mobile.Core.Features.Operations.Comandas.ViewModels;
+using RestaurantePro.Mobile.Core.Core.Helpers;
 
 namespace RestaurantePro.Mobile.Core.Config.DependencyInjection;
 
@@ -28,9 +30,13 @@ public static class MobileCoreServiceCollectionExtensions
     public static IServiceCollection AddMobileCoreServices(this IServiceCollection services)
     {
         // Servicios de infraestructura
-        services.AddScoped<IApiService, ApiService>();
+        // services.AddScoped<IApiService, ApiService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IAuthorizationService, AuthorizationService>();
+        services.AddScoped<IAuthorizationValidator, AuthorizationValidator>();
+        services.AddScoped<AuthorizationUIHelper>();
         services.AddScoped<INavigationService, NavigationService>();
+        services.AddScoped<IAuthorizedNavigationService, AuthorizedNavigationService>();
         services.AddScoped<IDialogService, DialogService>();
 
         // Servicios de operaciones

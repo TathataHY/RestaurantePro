@@ -11,8 +11,12 @@ using RestaurantePro.Mobile.Core.Services.Dialog;
 using RestaurantePro.Mobile.Core.Services.Notifications;
 using RestaurantePro.Mobile.Core.Services.Realtime;
 using RestaurantePro.Mobile.Core.Services.Preferences;
+using RestaurantePro.Mobile.Core.Services.Authorization;
+using RestaurantePro.Mobile.Core.Services.Authentication;
+using RestaurantePro.Mobile.Core.Core.Helpers;
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Models.Common;
+using Microsoft.Extensions.Logging.Abstractions;
 using System.Diagnostics;
 
 namespace RestaurantePro.Mobile.UnitTests.Memory;
@@ -30,6 +34,10 @@ public class MemoryTests
     private readonly Mock<INotificationService> _notificationServiceMock;
     private readonly Mock<IComandaRealtimeService> _realtimeServiceMock;
     private readonly Mock<IPreferencesService> _preferencesServiceMock;
+    private readonly Mock<IAuthorizationService> _authorizationServiceMock;
+    private readonly Mock<IAuthorizationValidator> _authorizationValidatorMock;
+    private readonly Mock<IAuthService> _authServiceMock;
+    private readonly AuthorizationUIHelper _authorizationUIHelper;
 
     public MemoryTests()
     {
@@ -41,6 +49,10 @@ public class MemoryTests
         _notificationServiceMock = new Mock<INotificationService>();
         _realtimeServiceMock = new Mock<IComandaRealtimeService>();
         _preferencesServiceMock = new Mock<IPreferencesService>();
+        _authorizationServiceMock = new Mock<IAuthorizationService>();
+        _authorizationValidatorMock = new Mock<IAuthorizationValidator>();
+        _authServiceMock = new Mock<IAuthService>();
+        _authorizationUIHelper = new AuthorizationUIHelper(_authorizationServiceMock.Object, NullLogger<AuthorizationUIHelper>.Instance);
     }
 
     #region Pruebas de Memory Leaks - ViewModels
@@ -64,7 +76,10 @@ public class MemoryTests
                 _mesasServiceMock.Object,
                 _notificationServiceMock.Object,
                 _realtimeServiceMock.Object,
-                _preferencesServiceMock.Object);
+                _preferencesServiceMock.Object,
+                _authorizationServiceMock.Object,
+                _authorizationValidatorMock.Object,
+                _authorizationUIHelper);
             
             viewModels.Add(viewModel);
             await viewModel.LoadComandasCommand.ExecuteAsync(null);
@@ -88,8 +103,8 @@ public class MemoryTests
     {
         // Arrange - Configurar datos para múltiples instancias
         var mesas = GenerateMesasList(50);
-        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ApiResponse<List<MesaDto>>.SuccessResponse(mesas));
+        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = mesas, TotalCount = mesas.Count, PageNumber = 1, PageSize = 10 }));
 
         // Act - Crear múltiples instancias y cargar datos
         var viewModels = new List<MesasViewModel>();
@@ -98,7 +113,8 @@ public class MemoryTests
             var viewModel = new MesasViewModel(
                 _mesasServiceMock.Object,
                 _dialogServiceMock.Object,
-                _navigationServiceMock.Object);
+                _navigationServiceMock.Object,
+                _authServiceMock.Object);
             
             viewModels.Add(viewModel);
             await viewModel.LoadMesasCommand.ExecuteAsync(null);
@@ -169,7 +185,10 @@ public class MemoryTests
             _mesasServiceMock.Object,
             _notificationServiceMock.Object,
             _realtimeServiceMock.Object,
-            _preferencesServiceMock.Object);
+            _preferencesServiceMock.Object,
+            _authorizationServiceMock.Object,
+            _authorizationValidatorMock.Object,
+            _authorizationUIHelper);
 
         // Act - Cargar comandas múltiples veces
         for (int i = 0; i < 20; i++)
@@ -193,13 +212,14 @@ public class MemoryTests
     {
         // Arrange - Configurar datos para cargas repetidas
         var mesas = GenerateMesasList(30);
-        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(ApiResponse<List<MesaDto>>.SuccessResponse(mesas));
+        _mesasServiceMock.Setup(m => m.ObtenerMesasAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int?>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponse<PaginatedList<MesaDto>>.SuccessResponse(new PaginatedList<MesaDto> { Items = mesas, TotalCount = mesas.Count, PageNumber = 1, PageSize = 10 }));
 
         var mesasViewModel = new MesasViewModel(
             _mesasServiceMock.Object,
             _dialogServiceMock.Object,
-            _navigationServiceMock.Object);
+            _navigationServiceMock.Object,
+            _authServiceMock.Object);
 
         // Act - Cargar mesas múltiples veces
         for (int i = 0; i < 25; i++)
@@ -240,7 +260,10 @@ public class MemoryTests
                 _mesasServiceMock.Object,
                 _notificationServiceMock.Object,
                 _realtimeServiceMock.Object,
-                _preferencesServiceMock.Object);
+                _preferencesServiceMock.Object,
+                _authorizationServiceMock.Object,
+                _authorizationValidatorMock.Object,
+                _authorizationUIHelper);
             
             await viewModel.LoadComandasCommand.ExecuteAsync(null);
             // El viewModel se destruye automáticamente al salir del scope
@@ -271,7 +294,10 @@ public class MemoryTests
             _mesasServiceMock.Object,
             _notificationServiceMock.Object,
             _realtimeServiceMock.Object,
-            _preferencesServiceMock.Object);
+            _preferencesServiceMock.Object,
+            _authorizationServiceMock.Object,
+            _authorizationValidatorMock.Object,
+            _authorizationUIHelper);
 
         // Act - Cargar lista grande y luego limpiar
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null);
@@ -308,7 +334,10 @@ public class MemoryTests
             _mesasServiceMock.Object,
             _notificationServiceMock.Object,
             _realtimeServiceMock.Object,
-            _preferencesServiceMock.Object);
+            _preferencesServiceMock.Object,
+            _authorizationServiceMock.Object,
+            _authorizationValidatorMock.Object,
+            _authorizationUIHelper);
 
         // Act - Cargar comandas (esto suscribe a eventos de tiempo real)
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null);
@@ -371,7 +400,10 @@ public class MemoryTests
             _mesasServiceMock.Object,
             _notificationServiceMock.Object,
             _realtimeServiceMock.Object,
-            _preferencesServiceMock.Object);
+            _preferencesServiceMock.Object,
+            _authorizationServiceMock.Object,
+            _authorizationValidatorMock.Object,
+            _authorizationUIHelper);
 
         // Act - Cargar datos masivos
         await comandasViewModel.LoadComandasCommand.ExecuteAsync(null);
