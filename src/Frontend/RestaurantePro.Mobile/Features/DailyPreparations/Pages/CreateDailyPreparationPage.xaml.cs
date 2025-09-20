@@ -10,24 +10,24 @@ public partial class CreateDailyPreparationPage : ContentPage
         BindingContext = vm;
     }
 
-    protected override async void OnAppearing()
-    {
-        base.OnAppearing();
-        if (BindingContext is CreateDailyPreparationViewModel vm)
+        protected override async void OnAppearing()
         {
-            // 🔐 IMPORTANTE: Inicializar autorización ANTES de cargar datos
-            await vm.InitializeWithAuthorizationAsync();
-            
-            if (vm.Categorias.Count == 0)
+            base.OnAppearing();
+            if (BindingContext is CreateDailyPreparationViewModel vm)
             {
-                await vm.CargarCategoriasCommand.ExecuteAsync(null);
-            }
-            if (vm.Productos.Count == 0)
-            {
-                await vm.BuscarProductosCommand.ExecuteAsync(null);
+                // 🔐 IMPORTANTE: Inicializar autorización ANTES de cargar datos
+                await vm.InitializeWithAuthorizationAsync();
+                
+                // 🚀 OPTIMIZACIÓN: Cargar categorías y productos en paralelo
+                var categoriasTask = vm.Categorias.Count == 0 ? vm.CargarCategoriasCommand.ExecuteAsync(null) : Task.CompletedTask;
+                var productosTask = vm.Productos.Count == 0 ? vm.BuscarProductosCommand.ExecuteAsync(null) : Task.CompletedTask;
+                
+                // Esperar ambas tareas en paralelo
+                await Task.WhenAll(categoriasTask, productosTask);
+                
+                System.Diagnostics.Debug.WriteLine($"⚡ [CreateDailyPreparationPage] Carga paralela completada");
             }
         }
-    }
 }
 
 

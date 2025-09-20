@@ -9,9 +9,14 @@ namespace RestaurantePro.Mobile.Core.Services
     public interface IDailyPreparationsService
     {
         /// <summary>
-        /// Obtiene todas las preparaciones diarias
+        /// Obtiene todas las preparaciones diarias (para gestión)
         /// </summary>
         Task<Result<List<PreparacionDiariaDto>>> GetPreparacionesDiariasAsync();
+
+        /// <summary>
+        /// Obtiene el menú del día (solo preparaciones disponibles, de hoy, no vencidas)
+        /// </summary>
+        Task<Result<List<PreparacionDiariaDto>>> GetMenuDelDiaAsync(DateTime? fecha = null, int limite = 10);
 
         /// <summary>
         /// Obtiene una preparación diaria específica por ID

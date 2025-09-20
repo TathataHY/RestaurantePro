@@ -58,7 +58,7 @@
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
                         <Button Text="🔄 Refrescar" Command="{Binding RefreshCommand}" Style="{StaticResource SecondaryButtonStyle}" />
                         <Button Grid.Column="1" Text="📊 Estadísticas" Command="{Binding LoadEstadisticasCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-                        <Button Grid.Column="2" Text="➕ Agregar" Command="{Binding CrearNuevaPreparacionCommand}" Style="{StaticResource PrimaryButtonStyle}" IsVisible="{Binding CanCrearPreparacion}" />
+                <Button Grid.Column="2" Text="➕ Agregar" Command="{Binding CrearNuevaPreparacionCommand}" Style="{StaticResource PrimaryButtonStyle}" IsVisible="{Binding CanCrearPreparacion}" />
                     </Grid>
                 </VerticalStackLayout>
             </controls:ModernCard>
@@ -103,18 +103,18 @@
                                             <Label Text="{Binding Observaciones}" Style="{StaticResource CaptionStyle}" />
                                         </VerticalStackLayout>
                                         <HorizontalStackLayout Grid.Column="1" Spacing="6">
-                                            <Button Text="✏️" 
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditarPreparacionCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    Style="{StaticResource SecondaryButtonStyle}"
-                                                    IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CanEditarPreparacion}"
-                                                    Clicked="OnEditarClicked" />
-                                            <Button Text="🗑️" 
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EliminarPreparacionCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    Style="{StaticResource DangerButtonStyle}"
-                                                    IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CanEliminarPreparacion}"
-                                                    Clicked="OnEliminarClicked" />
+                <Button Text="✏️"
+                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditarPreparacionCommand}"
+                        CommandParameter="{Binding .}"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Clicked="OnEditarClicked"
+                        IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CanEditarPreparacion}" />
+                <Button Text="🗑️" 
+                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EliminarPreparacionCommand}"
+                        CommandParameter="{Binding .}"
+                        Style="{StaticResource DangerButtonStyle}"
+                        Clicked="OnEliminarClicked"
+                        IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CanEliminarPreparacion}" />
                                         </HorizontalStackLayout>
                                     </Grid>
                                 </Grid>
@@ -127,7 +127,7 @@
                             <Label Text="🍽️" FontSize="64" HorizontalOptions="Center" />
                             <Label Text="No hay elementos en el menú del día" Style="{StaticResource H2Style}" HorizontalOptions="Center" />
                             <Label Text="Agrega el primer elemento al menú para comenzar" Style="{StaticResource BodyStyle}" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
-                            <Button Text="Agregar al menú" Command="{Binding CrearNuevaPreparacionCommand}" Style="{StaticResource PrimaryButtonStyle}" IsVisible="{Binding CanCrearPreparacion}" />
+                <Button Text="Agregar al menú" Command="{Binding CrearNuevaPreparacionCommand}" Style="{StaticResource PrimaryButtonStyle}" IsVisible="{Binding CanCrearPreparacion}" />
                         </VerticalStackLayout>
                     </CollectionView.EmptyView>
                 </CollectionView>

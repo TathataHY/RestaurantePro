@@ -43,6 +43,8 @@ public partial class ModernProductosPage : ContentPage
 
     private void SetupFilterTabs()
     {
+        // TEMPORALMENTE COMENTADO PARA PRUEBAS
+        /*
         FilterTabNavigation.Tabs = new ObservableCollection<string>
         {
             "Todos",
@@ -52,6 +54,7 @@ public partial class ModernProductosPage : ContentPage
         };
 
         FilterTabNavigation.TabSelectedCommand = new Command<int>(OnFilterTabSelected);
+        */
     }
 
     private async void OnPageLoaded(object sender, EventArgs e)
@@ -120,6 +123,8 @@ public partial class ModernProductosPage : ContentPage
 
     private async void OnFilterTabSelected(int tabIndex)
     {
+        // TEMPORALMENTE COMENTADO PARA PRUEBAS
+        /*
         // Filtrar productos según el tab seleccionado
         var tabName = FilterTabNavigation.Tabs[tabIndex];
         
@@ -139,6 +144,15 @@ public partial class ModernProductosPage : ContentPage
                 _viewModel.LoadProductosPopularesCommand.Execute(null);
                 break;
         }
+        */
+    }
+
+    // Paginación incremental del CollectionView (igual que mesas)
+    private void OnRemainingItemsThresholdReached(object sender, EventArgs e)
+    {
+        if (_viewModel == null) return;
+        // Scroll infinito: cargar siguiente página
+        _viewModel.LoadMoreProductosCommand?.Execute(null);
     }
 
     protected override void OnAppearing()

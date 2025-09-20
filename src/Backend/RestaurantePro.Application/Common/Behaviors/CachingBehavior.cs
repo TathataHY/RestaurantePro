@@ -120,7 +120,7 @@ public class CachingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
         }
 
         // Regla específica: todas las consultas de Preparaciones Diarias SIN caché (cambian frecuentemente)
-        if (requestName.Contains("preparacion") || requestName.Contains("preparaciones"))
+        if (requestName.Contains("preparacion") || requestName.Contains("preparaciones") || requestName.Contains("menudeldia"))
         {
             return TimeSpan.Zero;
         }

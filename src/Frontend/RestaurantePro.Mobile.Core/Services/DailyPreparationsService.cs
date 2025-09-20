@@ -22,13 +22,13 @@ namespace RestaurantePro.Mobile.Core.Services
         }
 
         /// <summary>
-        /// Obtiene todas las preparaciones diarias
+        /// Obtiene todas las preparaciones diarias (para gestión)
         /// </summary>
         public async Task<Result<List<PreparacionDiariaDto>>> GetPreparacionesDiariasAsync()
         {
             try
             {
-                _logger.LogInformation("📋 Obteniendo preparaciones diarias");
+                _logger.LogInformation("📋 Obteniendo preparaciones diarias (todas para gestión)");
                 
                 var token = await _authService.GetTokenAsync();
                 var response = await _apiService.GetAsync<List<PreparacionDiariaDto>>("api/operaciones/preparaciones-diarias", token);
@@ -45,6 +45,42 @@ namespace RestaurantePro.Mobile.Core.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "❌ Error al obtener preparaciones diarias");
+                return Result<List<PreparacionDiariaDto>>.Failure($"Error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Obtiene el menú del día (solo preparaciones disponibles, de hoy, no vencidas)
+        /// </summary>
+        public async Task<Result<List<PreparacionDiariaDto>>> GetMenuDelDiaAsync(DateTime? fecha = null, int limite = 10)
+        {
+            try
+            {
+                _logger.LogInformation("🍽️ Obteniendo menú del día - Fecha: {Fecha}, Límite: {Limite}", 
+                    fecha?.ToString("yyyy-MM-dd") ?? "HOY", limite);
+                
+                var token = await _authService.GetTokenAsync();
+                var url = $"api/operaciones/preparaciones-diarias/menu-del-dia?limite={limite}";
+                
+                if (fecha.HasValue)
+                {
+                    url += $"&fecha={fecha.Value:yyyy-MM-dd}";
+                }
+                
+                var response = await _apiService.GetAsync<List<PreparacionDiariaDto>>(url, token);
+                
+                if (response.Succeeded)
+                {
+                    _logger.LogInformation("✅ Menú del día obtenido: {Count} preparaciones disponibles", response.Data?.Count ?? 0);
+                    return Result<List<PreparacionDiariaDto>>.Success(response.Data ?? new List<PreparacionDiariaDto>());
+                }
+                
+                _logger.LogWarning("⚠️ Error al obtener menú del día: {Error}", response.Error);
+                return Result<List<PreparacionDiariaDto>>.Failure(response.Error ?? "Error desconocido");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error al obtener menú del día");
                 return Result<List<PreparacionDiariaDto>>.Failure($"Error: {ex.Message}");
             }
         }

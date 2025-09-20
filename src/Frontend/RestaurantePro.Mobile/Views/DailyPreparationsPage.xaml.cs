@@ -20,11 +20,9 @@ namespace RestaurantePro.Mobile.Views
         {
             base.OnAppearing();
             
-            // Cargar datos cuando la página aparece
-            if (_viewModel != null)
-            {
-                await _viewModel.LoadPreparacionesDiariasCommand.ExecuteAsync(null);
-            }
+            // 🚀 OPTIMIZACIÓN: No cargar datos aquí (ya se cargan en OnAuthorizedInitializeAsync)
+            // Solo refrescar si es necesario (ej: después de crear/editar)
+            System.Diagnostics.Debug.WriteLine($"⚡ [DailyPreparationsPage] OnAppearing - Datos ya cargados en Initialize");
         }
 
         protected override void OnDisappearing()

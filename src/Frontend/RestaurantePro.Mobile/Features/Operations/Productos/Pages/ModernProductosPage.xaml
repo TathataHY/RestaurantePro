@@ -10,162 +10,146 @@
              Title="{Binding Title}"
              BackgroundColor="{StaticResource SurfacePrimary}">
 
-    <Grid RowDefinitions="*">
+    <Grid RowDefinitions="Auto,*">
         
-        
-
-        <!-- Contenido Principal -->
-        <Grid Grid.Row="0">
-            
-            
-
-            <!-- Grid de Productos -->
-            <RefreshView Grid.Row="1"
-                         IsRefreshing="{Binding IsRefreshing}"
-                         Command="{Binding RefreshProductosCommand}">
-                
-                <CollectionView ItemsSource="{Binding Productos}"
-                               SelectionMode="None">
-                    
-                    <CollectionView.Header>
-                        <VerticalStackLayout Spacing="12" Padding="16,8,16,0">
-                            <!-- Estadísticas -->
-                            <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
-                                <HorizontalStackLayout Spacing="12">
-                                    <controls:ModernCard Padding="16" WidthRequest="120">
-                                        <VerticalStackLayout Spacing="8">
-                                            <Label Text="📦" FontSize="24" HorizontalOptions="Center" />
-                                            <Label Text="Total" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
-                                            <Label Text="{Binding Estadisticas.TotalProductos}" Style="{StaticResource H2Style}" TextColor="{StaticResource TextPrimary}" HorizontalOptions="Center" />
-                                        </VerticalStackLayout>
-                                    </controls:ModernCard>
-                                    <controls:ModernCard Padding="16" WidthRequest="120">
-                                        <VerticalStackLayout Spacing="8">
-                                            <Label Text="✅" FontSize="24" HorizontalOptions="Center" />
-                                            <Label Text="Disponibles" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
-                                            <Label Text="{Binding Estadisticas.ProductosDisponibles}" Style="{StaticResource H2Style}" TextColor="{StaticResource SuccessColor}" HorizontalOptions="Center" />
-                                        </VerticalStackLayout>
-                                    </controls:ModernCard>
-                                    <controls:ModernCard Padding="16" WidthRequest="120">
-                                        <VerticalStackLayout Spacing="8">
-                                            <Label Text="❌" FontSize="24" HorizontalOptions="Center" />
-                                            <Label Text="Agotados" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
-                                            <Label Text="{Binding Estadisticas.ProductosAgotados}" Style="{StaticResource H2Style}" TextColor="{StaticResource ErrorColor}" HorizontalOptions="Center" />
-                                        </VerticalStackLayout>
-                                    </controls:ModernCard>
-                                    <controls:ModernCard Padding="16" WidthRequest="120">
-                                        <VerticalStackLayout Spacing="8">
-                                            <Label Text="🏷️" FontSize="24" HorizontalOptions="Center" />
-                                            <Label Text="Categorías" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
-                                            <Label Text="{Binding Estadisticas.TotalCategorias}" Style="{StaticResource H2Style}" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
-                                        </VerticalStackLayout>
-                                    </controls:ModernCard>
-                                </HorizontalStackLayout>
-                            </ScrollView>
-
-                            <!-- Búsqueda, filtros y acciones -->
-                            <controls:ModernCard>
-                                <VerticalStackLayout Spacing="16">
-                                    <controls:ModernEntry Placeholder="Buscar productos por nombre o categoría..." Text="{Binding TextoBusqueda}" Icon="🔍" />
-                                    <controls:TabNavigation x:Name="FilterTabNavigation" />
-                                    <Grid ColumnDefinitions="*,*,*" RowDefinitions="*,*" ColumnSpacing="8" RowSpacing="8">
-                                        <Button Grid.Column="0" Grid.Row="0" Text="🔄 Refrescar" Command="{Binding RefreshProductosCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-                                        <Button Grid.Column="1" Grid.Row="0" Text="🔥 Populares" Command="{Binding LoadProductosPopularesCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-                                        <Button Grid.Column="2" Grid.Row="0" Text="✅ Disponibles" Command="{Binding LoadProductosDisponiblesCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-                                        <!-- Botón de nuevo producto ocultado en mobile operativo -->
-                                        <!--<Button Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="3" Text="➕ Nuevo Producto" Command="{Binding CrearProductoCommand}" Style="{StaticResource PrimaryButtonStyle}" />-->
-                                    </Grid>
+        <!-- Banda de estadísticas (igual que mesas) -->
+        <ScrollView Grid.Row="0" Orientation="Horizontal" HorizontalScrollBarVisibility="Never" Padding="12,8">
+                        <HorizontalStackLayout Spacing="12">
+                            <controls:ModernCard Padding="16" WidthRequest="160">
+                                <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
+                                    <Label Text="📦" FontSize="24" HorizontalOptions="Center" />
+                                    <Label Text="Total Productos" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                                    <Label Text="{Binding Estadisticas.TotalProductos}" Style="{StaticResource H2Style}" TextColor="{StaticResource TextPrimary}" HorizontalOptions="Center" />
                                 </VerticalStackLayout>
                             </controls:ModernCard>
-                        </VerticalStackLayout>
-                    </CollectionView.Header>
-                    
-                    <CollectionView.ItemsLayout>
-                        <GridItemsLayout Orientation="Vertical" 
-                                         Span="{OnIdiom Phone=2, Tablet=3, Desktop=4}" />
-                    </CollectionView.ItemsLayout>
+                            <controls:ModernCard Padding="16" WidthRequest="160">
+                                <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
+                                    <Label Text="✅" FontSize="24" HorizontalOptions="Center" />
+                                    <Label Text="Disponibles" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                                    <Label Text="{Binding Estadisticas.ProductosDisponibles}" Style="{StaticResource H2Style}" TextColor="{StaticResource SuccessColor}" HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </controls:ModernCard>
+                            <controls:ModernCard Padding="16" WidthRequest="160">
+                                <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
+                                    <Label Text="❌" FontSize="24" HorizontalOptions="Center" />
+                                    <Label Text="Agotados" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                                    <Label Text="{Binding Estadisticas.ProductosAgotados}" Style="{StaticResource H2Style}" TextColor="{StaticResource ErrorColor}" HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </controls:ModernCard>
+                            <controls:ModernCard Padding="16" WidthRequest="160">
+                                <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
+                                    <Label Text="🏷️" FontSize="24" HorizontalOptions="Center" />
+                                    <Label Text="Categorías" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                                    <Label Text="{Binding Estadisticas.TotalCategorias}" Style="{StaticResource H2Style}" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </controls:ModernCard>
+                        </HorizontalStackLayout>
+        </ScrollView>
 
+        <!-- Contenido Principal (igual que mesas) -->
+        <RefreshView Grid.Row="1" Command="{Binding RefreshProductosCommand}" IsRefreshing="{Binding IsRefreshing}">
+            <Grid RowDefinitions="Auto,*">
+                <!-- Filtros fuera del CollectionView (igual que mesas) -->
+                <VerticalStackLayout Grid.Row="0" Spacing="12" Margin="16,0,16,8">
+                    <controls:ModernCard HorizontalOptions="FillAndExpand">
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto" ColumnSpacing="8">
+                            <controls:ModernEntry Grid.Column="0"
+                                                 HorizontalOptions="FillAndExpand"
+                                                 Margin="0,0,8,0"
+                                                 Placeholder="Buscar productos por nombre o categoría"
+                                                 Text="{Binding TextoBusqueda}"
+                                                 Icon="🔍" />
+                            <Button Grid.Column="1"
+                                    Text="Más filtros"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Command="{Binding RefreshProductosCommand}" />
+                        </Grid>
+                    </controls:ModernCard>
+                </VerticalStackLayout>
+
+                <!-- CollectionView con paginación (igual que mesas) -->
+                <CollectionView Grid.Row="1" 
+                               ItemsSource="{Binding Productos}"
+                               ItemsLayout="VerticalGrid, 2"
+                               ItemSizingStrategy="MeasureFirstItem"
+                               SelectionMode="None"
+                               RemainingItemsThreshold="3"
+                               RemainingItemsThresholdReached="OnRemainingItemsThresholdReached">
+
+                    <!-- Template de producto con imagen (mejorado) -->
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:ProductoDto">
                             <controls:ModernCard Margin="8">
-                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" 
-                                      ColumnDefinitions="*,Auto">
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,Auto">
                                     
                                     <!-- Imagen del Producto -->
                                     <Border Grid.Row="0" Grid.ColumnSpan="2"
                                             BackgroundColor="{StaticResource SurfaceSecondary}"
-                                            StrokeShape="RoundRectangle 8"
-                                            HeightRequest="120"
-                                            Margin="0,0,0,8">
+                                            StrokeShape="RoundRectangle 12"
+                                            HeightRequest="110"
+                                            Margin="0,0,0,12">
                                         <Border.Shadow>
                                             <Shadow Brush="{StaticResource ShadowColor}" 
-                                                    Offset="0,2" Radius="4" Opacity="0.1" />
+                                                    Offset="0,3" Radius="6" Opacity="0.15" />
                                         </Border.Shadow>
                                         
-                                        <Image Source="{Binding ImagenUrl}"
-                                               Aspect="AspectFill"
-                                               IsVisible="{Binding ImagenUrl, Converter={StaticResource IsNotNullConverter}}" />
-                                        
-                                        <!-- Placeholder si no hay imagen -->
-                                        <VerticalStackLayout IsVisible="{Binding ImagenUrl, Converter={StaticResource StringToVisibilityConverter}}"
-                                                             VerticalOptions="Center"
+                                        <!-- Siempre mostrar placeholder por ahora -->
+                                        <VerticalStackLayout VerticalOptions="Center" 
                                                              HorizontalOptions="Center">
                                             <Label Text="📦" 
                                                    FontSize="32" 
-                                                   HorizontalOptions="Center" />
+                                                   HorizontalOptions="Center"
+                                                   TextColor="{StaticResource TextSecondary}" />
                                             <Label Text="Sin imagen" 
                                                    Style="{StaticResource CaptionStyle}" 
+                                                   TextColor="{StaticResource TextSecondary}"
                                                    HorizontalOptions="Center" />
                                         </VerticalStackLayout>
                                     </Border>
-
-                                    <!-- Header de Producto -->
-                                    <StackLayout Grid.Row="1" Grid.Column="0" 
-                                                 Orientation="Horizontal" 
-                                                 VerticalOptions="Center">
-                                        <Label Text="{Binding Nombre}" 
-                                               Style="{StaticResource H3Style}"
-                                               LineBreakMode="TailTruncation" />
-                                    </StackLayout>
-
+                                    
+                                    <!-- Nombre del producto -->
+                                    <Label Grid.Row="1" Grid.Column="0" 
+                                           Text="{Binding Nombre}" 
+                                           Style="{StaticResource H3Style}"
+                                           LineBreakMode="TailTruncation" 
+                                           VerticalOptions="Center" />
+                                    
                                     <!-- Estado Badge -->
-                                    <Border Grid.Row="1" Grid.Column="1"
-                                            BackgroundColor="{Binding Estado, Converter={StaticResource EstadoColorConverter}}"
-                                            StrokeShape="RoundRectangle 12"
-                                            Padding="8,4">
+                                    <Border Grid.Row="1" Grid.Column="1" 
+                                            BackgroundColor="{StaticResource SuccessColor}" 
+                                            StrokeShape="RoundRectangle 12" 
+                                            Padding="8,4" 
+                                            HorizontalOptions="End">
                                         <Label Text="{Binding Estado}" 
-                                               Style="{StaticResource CaptionStyle}"
-                                               TextColor="White"
+                                               Style="{StaticResource CaptionStyle}" 
+                                               TextColor="White" 
                                                HorizontalOptions="Center" />
                                     </Border>
-
-                                    <!-- Información de Producto -->
+                                    
+                                    <!-- Información del producto -->
                                     <VerticalStackLayout Grid.Row="2" Grid.ColumnSpan="2" 
-                                                         Spacing="4" Margin="0,8,0,0">
+                                                         Spacing="6" Margin="0,4,0,0">
                                         <Label Text="{Binding CategoriaNombre, StringFormat='🏷️ {0}'}" 
-                                               Style="{StaticResource BodyStyle}" />
+                                               Style="{StaticResource BodyStyle}" 
+                                               TextColor="{StaticResource TextSecondary}" />
                                         <Label Text="{Binding Precio, StringFormat='💰 {0:C}'}" 
-                                               Style="{StaticResource BodyStyle}"
-                                               FontAttributes="Bold" />
+                                               Style="{StaticResource H3Style}" 
+                                               FontAttributes="Bold" 
+                                               TextColor="{StaticResource SuccessColor}" />
                                         <Label Text="{Binding Stock, StringFormat='📦 Stock: {0}'}" 
-                                               Style="{StaticResource CaptionStyle}" />
+                                               Style="{StaticResource CaptionStyle}"
+                                               TextColor="{StaticResource TextSecondary}" />
                                     </VerticalStackLayout>
-
-                                    <!-- Botones de Acción (solo Ver) -->
-                                    <ScrollView Grid.Row="3" Grid.ColumnSpan="2"
-                                                Orientation="Horizontal"
-                                                HorizontalScrollBarVisibility="Never"
+                                    
+                                    <!-- Botones de acción -->
+                                    <ScrollView Grid.Row="3" Grid.ColumnSpan="2" 
+                                                Orientation="Horizontal" 
+                                                HorizontalScrollBarVisibility="Never" 
                                                 Margin="0,12,0,0">
                                         <HorizontalStackLayout Spacing="8" Padding="0,0,8,0">
-                                            <Button Text="👁️ Ver"
-                                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.VerProductoCommand}"
-                                                    CommandParameter="{Binding .}"
-                                                    Style="{StaticResource SecondaryButtonStyle}"
-                                                    HorizontalOptions="Start"
-                                                    Clicked="OnVerProductoClicked" />
-                                            <!-- Editar y Eliminar ocultados en mobile operativo -->
-                                            <!--<Button Text="✏️ Editar" ... />-->
-                                            <!--<Button Text="🗑️ Eliminar" ... />-->
+                                            <Button Text="👁️ Ver detalle" 
+                                                    Style="{StaticResource SecondaryButtonStyle}" 
+                                                    HorizontalOptions="Start" />
                                         </HorizontalStackLayout>
                                     </ScrollView>
                                 </Grid>
@@ -173,26 +157,17 @@
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
 
-                    <!-- Estado Vacío -->
+                    <!-- EmptyView que SABEMOS que funciona -->
                     <CollectionView.EmptyView>
-                        <VerticalStackLayout Spacing="16" 
-                                             VerticalOptions="Center"
-                                             HorizontalOptions="Center"
-                                             Padding="32">
-                            <Label Text="📦" 
-                                   FontSize="64" 
-                                   HorizontalOptions="Center" />
-                            <Label Text="No hay productos disponibles" 
-                                   Style="{StaticResource H2Style}" 
-                                   HorizontalOptions="Center" />
-                            <!-- Llamado a crear primer producto ocultado -->
-                            <!--<Label Text="Crea un nuevo producto para comenzar" Style="{StaticResource BodyStyle}" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
-                            <Button Text="Crear Primer Producto" Command="{Binding CrearProductoCommand}" Style="{StaticResource PrimaryButtonStyle}" HorizontalOptions="Center" />-->
-                        </VerticalStackLayout>
+                        <StackLayout Padding="50" HorizontalOptions="Center" VerticalOptions="Center">
+                            <Label Text="📦" FontSize="48" HorizontalOptions="Center" />
+                            <Label Text="No hay productos disponibles" HorizontalOptions="Center" FontSize="16" />
+                            <Button Text="🔄 Actualizar" Command="{Binding RefreshProductosCommand}" HorizontalOptions="Center" />
+                        </StackLayout>
                     </CollectionView.EmptyView>
                 </CollectionView>
-            </RefreshView>
-        </Grid>
+            </Grid>
+        </RefreshView>
 
         <!-- Floating Action Button ocultado -->
         <!--

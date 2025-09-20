@@ -164,26 +164,19 @@ public partial class CreateDailyPreparationViewModel : AuthorizedBaseViewModel
         try
         {
             var page = 1;
-            var size = 10;
+            var size = 10; // ⚡ Solo 10 productos para carga ultra-rápida
             var term = string.IsNullOrWhiteSpace(ProductoBusqueda) ? null : ProductoBusqueda;
-            ApiResponse<List<ProductoDto>> result;
-            if (CategoriaSeleccionada != null && string.IsNullOrWhiteSpace(term))
-            {
-                result = await _productosService.ObtenerProductosPorCategoriaAsync(CategoriaSeleccionada.Id, true);
-            }
-            else if (!string.IsNullOrWhiteSpace(term))
-            {
-                result = await _productosService.BuscarProductosAsync(term!, true);
-            }
-            else
-            {
-                result = await _productosService.ObtenerProductosPaginadosAsync(page, size, term, true);
-            }
+            
+            // 🚀 OPTIMIZACIÓN: Usar SOLO paginación para evitar carga masiva
+            var result = await _productosService.ObtenerProductosPaginadosAsync(page, size, term, true);
+            
             Productos.Clear();
             if (result.Success && result.Data != null)
             {
                 foreach (var p in result.Data)
                     Productos.Add(p);
+                
+                System.Diagnostics.Debug.WriteLine($"⚡ [CreateDailyPreparation] Productos cargados: {result.Data.Count}/10 - Término: '{term}'");
             }
         }
         catch (Exception ex)

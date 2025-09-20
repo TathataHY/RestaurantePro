@@ -123,14 +123,26 @@
                             <DataTemplate>
                                 <controls:ModernCard Padding="12" WidthRequest="220">
                                     <VerticalStackLayout Spacing="8">
-                                        <HorizontalStackLayout Spacing="8">
+                                        <VerticalStackLayout Spacing="4">
                                             <Label Text="{Binding NombreProducto}" 
                                                    Style="{StaticResource H3Style}"
                                                    MaxLines="2"
                                                    LineBreakMode="TailTruncation" />
-                                            <Label Text="{Binding IconoEstado}" 
-                                                   FontSize="14" />
-                                        </HorizontalStackLayout>
+                                            <!-- Estado con color -->
+                                            <Border BackgroundColor="{Binding Estado, Converter={StaticResource EstadoColorConverter}}"
+                                                    StrokeShape="RoundRectangle 12"
+                                                    Padding="8,4"
+                                                    HorizontalOptions="Start">
+                                                <HorizontalStackLayout Spacing="4">
+                                                    <Label Text="{Binding Estado, Converter={StaticResource EstadoIconConverter}}" 
+                                                           FontSize="12"
+                                                           TextColor="White" />
+                                                    <Label Text="{Binding Estado}" 
+                                                           Style="{StaticResource CaptionStyle}"
+                                                           TextColor="White" />
+                                                </HorizontalStackLayout>
+                                            </Border>
+                                        </VerticalStackLayout>
                                         <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                                             <VerticalStackLayout Grid.Column="0" Spacing="2">
                                                 <Label Text="{Binding CantidadDisponible}" 
@@ -161,13 +173,19 @@
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
                         <CollectionView.EmptyView>
-                            <VerticalStackLayout Spacing="8" HorizontalOptions="Center" Padding="20">
+                            <VerticalStackLayout Spacing="12" HorizontalOptions="Center" Padding="20">
                                 <Label Text="🍽️" FontSize="32" HorizontalOptions="Center" />
-                                <Label Text="No hay elementos en el menú del día" 
+                                <Label Text="No hay preparaciones disponibles para hoy" 
                                        Style="{StaticResource BodyStyle}" 
                                        TextColor="{StaticResource TextSecondary}"
                                        HorizontalOptions="Center" />
-                                <Button Text="Agregar al menú"
+                                <Label Text="💡 Solo se muestran preparaciones del día actual, no vencidas y con estado 'Disponible'" 
+                                       Style="{StaticResource CaptionStyle}" 
+                                       TextColor="{StaticResource TextSecondary}"
+                                       HorizontalOptions="Center"
+                                       MaxLines="3"
+                                       LineBreakMode="WordWrap" />
+                                <Button Text="Gestionar Preparaciones"
                                         Command="{Binding ViewMenuDelDiaCommand}"
                                         Style="{StaticResource PrimaryButtonStyle}" />
                             </VerticalStackLayout>

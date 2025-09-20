@@ -37,8 +37,14 @@
 		<!-- Fast Deployment - Deshabilitado para tests -->
 		<AndroidUseAapt2>true</AndroidUseAapt2>
 		
-		<!-- Android Release Configuration -->
+		<!-- Android Configuration -->
 		<AndroidPackageFormat>apk</AndroidPackageFormat>
+		
+		<!-- Debug: Usar keystore de debug automático -->
+		<AndroidKeyStore Condition="'$(Configuration)' == 'Debug'">false</AndroidKeyStore>
+		<AndroidUseSharedRuntime Condition="'$(Configuration)' == 'Debug'">true</AndroidUseSharedRuntime>
+		
+		<!-- Release: Usar keystore personalizado -->
 		<AndroidKeyStore Condition="'$(Configuration)' == 'Release'">true</AndroidKeyStore>
 		<AndroidSigningKeyStore Condition="'$(Configuration)' == 'Release'">restaurantepro.keystore</AndroidSigningKeyStore>
 		<AndroidSigningKeyAlias Condition="'$(Configuration)' == 'Release'">restaurantepro</AndroidSigningKeyAlias>

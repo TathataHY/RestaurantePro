@@ -18,6 +18,13 @@ public partial class ProductosViewModel : BaseViewModel
     private readonly IDialogService _dialogService;
     private readonly INavigationService _navigationService;
     private CancellationTokenSource? _searchCts;
+    
+    // Paginación del servidor (igual que mesas)
+    private int _currentPage = 1;
+    private int _totalPages = 1;
+    private bool _hasMorePages = true;
+    private bool _isLoadingMore = false;
+    private const int DefaultPageSize = 10; // Optimizado para carga ultra-rápida
 
     [ObservableProperty]
     private ObservableCollection<ProductoDto> productos = new();
@@ -135,17 +142,20 @@ public partial class ProductosViewModel : BaseViewModel
     {
         if (IsBusy) return;
 
+        // Resetear paginación para nueva búsqueda
+        _currentPage = 1;
+        _hasMorePages = true;
+
+        // 🚀 OPTIMIZACIÓN: Cargar categorías en paralelo (no bloquear productos)
+        var categoriasTask = !TieneCategorias ? LoadCategoriasAsync() : Task.CompletedTask;
+        
         try
         {
             IsBusy = true;
             HasError = false;
             ErrorMessage = string.Empty;
 
-            // Cargar categorías si no están cargadas
-            if (!TieneCategorias)
-            {
-                await LoadCategoriasAsync();
-            }
+            System.Diagnostics.Debug.WriteLine($"⚡ [ProductosViewModel] Iniciando carga paralela - Productos: SÍ, Categorías: {(!TieneCategorias ? "SÍ" : "NO (ya cargadas)")}");
 
             RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<ProductoDto>> result;
 
@@ -162,40 +172,133 @@ public partial class ProductosViewModel : BaseViewModel
             }
             else
             {
-                // Obtener todos los productos
+                // Obtener productos paginados (reducido de 100 a 20)
                 result = await _productosService.ObtenerProductosPaginadosAsync(
-                    pageNumber: 1, 
-                    pageSize: 100, 
+                    pageNumber: _currentPage, 
+                    pageSize: DefaultPageSize, 
                     filtro: null, 
                     soloActivos: MostrarSoloDisponibles);
             }
 
             if (result.Success && result.Data != null)
             {
-                Productos.Clear();
+                // Si es la primera página, limpiar colección
+                if (_currentPage == 1)
+                {
+                    Productos.Clear();
+                }
+
+                // Agregar nuevos productos
                 foreach (var producto in result.Data)
                 {
                     Productos.Add(producto);
                 }
 
-
+                // Actualizar información de paginación
+                _hasMorePages = result.Data.Count == DefaultPageSize;
+                
+                System.Diagnostics.Debug.WriteLine($"✅ [ProductosViewModel] Productos cargados: {result.Data.Count}, Total en colección: {Productos.Count}, Más páginas: {_hasMorePages}");
 
                 ActualizarEstadisticas();
+                
+                // ⚡ Esperar que terminen las categorías (sin bloquear productos)
+                await categoriasTask;
             }
             else
             {
                 SetError("Error al cargar productos", result.Message);
                 await _dialogService.ShowErrorAsync(result.Message ?? "Error al cargar productos");
+                
+                // ⚡ Esperar que terminen las categorías incluso si hay error
+                await categoriasTask;
             }
         }
         catch (Exception _)
         {
             SetError("Error inesperado", "Error inesperado al cargar productos");
             await _dialogService.ShowErrorAsync("Error inesperado al cargar productos");
+            
+            // ⚡ Esperar que terminen las categorías incluso si hay excepción
+            try { await categoriasTask; } catch { /* Ignorar errores de categorías */ }
         }
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    /// <summary>
+    /// Cargar siguiente página de productos (scroll infinito - igual que mesas)
+    /// </summary>
+    [RelayCommand]
+    private async Task LoadMoreProductosAsync()
+    {
+        if (IsBusy || !_hasMorePages || _isLoadingMore || IsRefreshing) 
+        {
+            System.Diagnostics.Debug.WriteLine($"🔍 [ProductosViewModel] LoadMoreProductosAsync - Saltando: IsBusy={IsBusy}, HasMorePages={_hasMorePages}, IsLoadingMore={_isLoadingMore}, IsRefreshing={IsRefreshing}");
+            return;
+        }
+        
+        _isLoadingMore = true;
+        
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"🔍 [ProductosViewModel] LoadMoreProductosAsync - Cargando página {_currentPage + 1}");
+            
+            // Verificar nuevamente que no se inició un refresh mientras esperábamos
+            if (IsRefreshing)
+            {
+                System.Diagnostics.Debug.WriteLine($"⚠️ [ProductosViewModel] LoadMoreProductosAsync - Refresh detectado, cancelando LoadMore");
+                return;
+            }
+            
+            // Incrementar página y cargar más productos
+            _currentPage++;
+            await LoadMoreProductosInternalAsync();
+        }
+        finally
+        {
+            _isLoadingMore = false;
+        }
+    }
+
+    /// <summary>
+    /// Método interno para cargar más productos (solo para paginación)
+    /// </summary>
+    private async Task LoadMoreProductosInternalAsync()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"🔍 [ProductosViewModel] LoadMoreProductosInternalAsync - Página {_currentPage}");
+
+            // Obtener productos de la página actual
+            var result = await _productosService.ObtenerProductosPaginadosAsync(
+                pageNumber: _currentPage, 
+                pageSize: DefaultPageSize, 
+                filtro: TextoBusqueda, 
+                soloActivos: MostrarSoloDisponibles);
+
+            if (result.Success && result.Data != null)
+            {
+                // Agregar nuevos productos SIN limpiar la colección
+                foreach (var producto in result.Data)
+                {
+                    Productos.Add(producto);
+                }
+
+                // Actualizar información de paginación (si devuelve 10 = página completa, hay más)
+                _hasMorePages = result.Data.Count == DefaultPageSize;
+                
+                System.Diagnostics.Debug.WriteLine($"✅ [ProductosViewModel] Más productos cargados: {result.Data.Count}/10, Total: {Productos.Count}, Más páginas: {_hasMorePages}");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ [ProductosViewModel] Error cargando más productos: {result.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ [ProductosViewModel] Excepción cargando más productos: {ex.Message}");
         }
     }
 
@@ -207,6 +310,7 @@ public partial class ProductosViewModel : BaseViewModel
     {
         try
         {
+            System.Diagnostics.Debug.WriteLine($"⚡ [ProductosViewModel] Cargando categorías...");
             var result = await _productosService.ObtenerCategoriasAsync();
 
             if (result.Success && result.Data != null)
@@ -216,11 +320,18 @@ public partial class ProductosViewModel : BaseViewModel
                 {
                     Categorias.Add(categoria);
                 }
+                TotalCategorias = Categorias.Count;
+                System.Diagnostics.Debug.WriteLine($"✅ [ProductosViewModel] Categorías cargadas: {TotalCategorias}");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ [ProductosViewModel] Error cargando categorías: {result.Message}");
             }
         }
-        catch (Exception _)
+        catch (Exception ex)
         {
-            await _dialogService.ShowErrorAsync("Error al cargar categorías");
+            System.Diagnostics.Debug.WriteLine($"❌ [ProductosViewModel] Excepción cargando categorías: {ex.Message}");
+            // No mostrar error de categorías al usuario (no es crítico)
         }
     }
 

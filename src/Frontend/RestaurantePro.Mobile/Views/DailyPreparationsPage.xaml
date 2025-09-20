@@ -123,7 +123,7 @@
                                             BackgroundColor="Transparent"
                                             TextColor="{StaticResource OnSurface}"
                                             Command="{Binding LimpiarBusquedaCommand}"
-                                            IsVisible="{Binding TextoBusqueda, Converter={StaticResource StringToBoolConverter}}"/>
+                                            IsVisible="{Binding TextoBusqueda, Converter={StaticResource StringToBoolConveY rter}}"/>
                                 </Grid>
                                 
                                 <!-- Botón de filtro -->

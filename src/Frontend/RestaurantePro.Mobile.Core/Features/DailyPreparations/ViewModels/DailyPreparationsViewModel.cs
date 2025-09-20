@@ -55,16 +55,40 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
 
         // ===== 🔐 PROPIEDADES DE AUTORIZACIÓN =====
         [ObservableProperty]
-        private bool canMarcarDisponible;
+        private bool _canMarcarDisponible;
 
         [ObservableProperty]
-        private bool canEliminarPreparacion;
+        private bool _canEliminarPreparacion;
 
         [ObservableProperty]
-        private bool canEditarPreparacion;
+        private bool _canEditarPreparacion;
 
         [ObservableProperty]
-        private bool canCrearPreparacion;
+        private bool _canCrearPreparacion;
+
+        // 🔧 PROPIEDADES DIRECTAS PARA XAML (sin RelativeSource)
+        public bool CanEditarPreparacionDirect => CanEditarPreparacion;
+        public bool CanEliminarPreparacionDirect => CanEliminarPreparacion;
+        public bool CanCrearPreparacionDirect => CanCrearPreparacion;
+
+        // 🔧 LOGS ESPECÍFICOS PARA DEBUGGING
+    public void LogCurrentPermissions()
+    {
+        var currentUser = _authService.GetCurrentUserAsync().Result;
+        System.Diagnostics.Debug.WriteLine("🔧 [DailyPrepVM] === LOGS DE PERMISOS ACTUALES ===");
+        System.Diagnostics.Debug.WriteLine($"🔧 [DailyPrepVM] Usuario actual: {currentUser?.Email}");
+        System.Diagnostics.Debug.WriteLine($"🔧 [DailyPrepVM] Roles: [{string.Join(", ", currentUser?.Roles ?? new List<string>())}]");
+        System.Diagnostics.Debug.WriteLine($"🔧 [DailyPrepVM] CanCrearPreparacion: {CanCrearPreparacion}");
+        System.Diagnostics.Debug.WriteLine($"🔧 [DailyPrepVM] CanEditarPreparacion: {CanEditarPreparacion}");
+        System.Diagnostics.Debug.WriteLine($"🔧 [DailyPrepVM] CanEliminarPreparacion: {CanEliminarPreparacion}");
+        System.Diagnostics.Debug.WriteLine($"🔧 [DailyPrepVM] CanMarcarDisponible: {CanMarcarDisponible}");
+        System.Diagnostics.Debug.WriteLine("🔧 [DailyPrepVM] === FIN LOGS DE PERMISOS ===");
+    }
+    
+    public async Task<AuthUser?> GetCurrentUserAsync()
+    {
+        return await _authService.GetCurrentUserAsync();
+    }
 
         public DailyPreparationsViewModel(
             IDailyPreparationsService dailyPreparationsService,
@@ -92,9 +116,14 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
         {
             await ConfigurarPermisosUIAsync();
             
-            // Cargar datos iniciales después de configurar permisos
-            await LoadPreparacionesDiariasCommand.ExecuteAsync(null);
-            await LoadEstadisticasCommand.ExecuteAsync(null);
+            // 🚀 OPTIMIZACIÓN: Cargar datos en paralelo para velocidad máxima
+            var preparacionesTask = LoadPreparacionesDiariasCommand.ExecuteAsync(null);
+            var estadisticasTask = LoadEstadisticasCommand.ExecuteAsync(null);
+            
+            // Esperar ambas tareas en paralelo
+            await Task.WhenAll(preparacionesTask, estadisticasTask);
+            
+            System.Diagnostics.Debug.WriteLine($"⚡ [DailyPreparationsViewModel] Carga paralela completada - Preparaciones y estadísticas");
         }
 
         /// <summary>
@@ -142,7 +171,22 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
                 System.Diagnostics.Debug.WriteLine($"🔐 [DailyPrepVM] CanCrearPreparacion: {CanCrearPreparacion}");
                 System.Diagnostics.Debug.WriteLine("🔐 [DailyPrepVM] === FIN PERMISOS ===");
                 
-                // 🔧 FORZAR ACTUALIZACIÓN DE UI
+                // 🔧 DEBUGGING ADICIONAL: Verificar si los permisos están siendo aplicados correctamente
+                System.Diagnostics.Debug.WriteLine($"🔧 [DailyPrepVM] === DEBUGGING PERMISOS UI ===");
+                System.Diagnostics.Debug.WriteLine($"🔧 [DailyPrepVM] ¿Es Mesero? {userRoles.Contains("Mesero")}");
+                System.Diagnostics.Debug.WriteLine($"🔧 [DailyPrepVM] ¿Es Cocinero? {userRoles.Contains("Cocinero")}");
+                System.Diagnostics.Debug.WriteLine($"🔧 [DailyPrepVM] ¿Es Administrador? {userRoles.Contains("Administrador")}");
+                System.Diagnostics.Debug.WriteLine($"🔧 [DailyPrepVM] Los botones de editar/eliminar deberían estar visibles: {CanEditarPreparacion && CanEliminarPreparacion}");
+                System.Diagnostics.Debug.WriteLine($"🔧 [DailyPrepVM] === FIN DEBUGGING ===");
+                
+                // 🔧 FORZAR ACTUALIZACIÓN DE UI - MÚLTIPLES FORMAS
+                OnPropertyChanged(nameof(CanMarcarDisponible));
+                OnPropertyChanged(nameof(CanEliminarPreparacion));
+                OnPropertyChanged(nameof(CanEditarPreparacion));
+                OnPropertyChanged(nameof(CanCrearPreparacion));
+                
+                // 🔧 FORZAR ACTUALIZACIÓN ADICIONAL
+                await Task.Delay(100); // Pequeña pausa para asegurar que se procese
                 OnPropertyChanged(nameof(CanMarcarDisponible));
                 OnPropertyChanged(nameof(CanEliminarPreparacion));
                 OnPropertyChanged(nameof(CanEditarPreparacion));
@@ -197,11 +241,18 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
                 
                 if (result.Succeeded)
                 {
+                    System.Diagnostics.Debug.WriteLine($"🔄 [DailyPrepVM] Recargando preparaciones - Antes: {PreparacionesDiarias.Count} items");
+                    
                     PreparacionesDiarias.Clear();
                     foreach (var preparacion in result.Data)
                     {
                         PreparacionesDiarias.Add(preparacion);
                     }
+                    
+                    System.Diagnostics.Debug.WriteLine($"✅ [DailyPrepVM] Preparaciones recargadas - Después: {PreparacionesDiarias.Count} items");
+                    
+                    // 🔧 Forzar actualización de UI
+                    OnPropertyChanged(nameof(PreparacionesDiarias));
                 }
                 else
                 {
@@ -330,6 +381,14 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
             System.Diagnostics.Debug.WriteLine($"🔧 [DailyPrepVM] EliminarPreparacionAsync - INICIANDO");
             System.Diagnostics.Debug.WriteLine($"🔧 [DailyPrepVM] Preparación: {preparacion?.NombreProducto}");
             
+            // 🔐 VALIDACIÓN MANUAL DE PERMISOS
+            if (!await HasPermissionAsync(AppPermission.ActualizarEstadoPreparaciones))
+            {
+                System.Diagnostics.Debug.WriteLine($"🔐❌ [DailyPrepVM] ACCESO DENEGADO - Usuario no tiene permisos para eliminar preparaciones");
+                await _dialogService.ShowErrorAsync("No tiene permisos para eliminar preparaciones");
+                return;
+            }
+            
             if (preparacion == null) 
             {
                 System.Diagnostics.Debug.WriteLine($"🔧 [DailyPrepVM] Preparación es NULL - SALIENDO");
@@ -353,8 +412,25 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
                 
                 if (result.Succeeded)
                 {
+                    System.Diagnostics.Debug.WriteLine($"✅ [DailyPrepVM] Preparación eliminada exitosamente, actualizando UI...");
+                    
+                    // 🚀 OPTIMIZACIÓN: Remover de la colección inmediatamente (UI responsiva)
+                    var preparacionAEliminar = PreparacionesDiarias.FirstOrDefault(p => p.Id == preparacion.Id);
+                    if (preparacionAEliminar != null)
+                    {
+                        PreparacionesDiarias.Remove(preparacionAEliminar);
+                        System.Diagnostics.Debug.WriteLine($"✅ [DailyPrepVM] Preparación removida de la colección UI");
+                    }
+                    
                     await _dialogService.ShowSuccessAsync("Preparación eliminada exitosamente");
-                    await LoadPreparacionesDiariasCommand.ExecuteAsync(null);
+                    
+                    // 🔄 Recargar lista y estadísticas para asegurar sincronización
+                    var recargarTask = LoadPreparacionesDiariasCommand.ExecuteAsync(null);
+                    var estadisticasTask = LoadEstadisticasCommand.ExecuteAsync(null);
+                    
+                    await Task.WhenAll(recargarTask, estadisticasTask);
+                    
+                    System.Diagnostics.Debug.WriteLine($"✅ [DailyPrepVM] Lista y estadísticas recargadas después de eliminar");
                 }
                 else
                 {
@@ -373,6 +449,14 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
         {
             System.Diagnostics.Debug.WriteLine($"🔧 [DailyPrepVM] EditarPreparacionAsync - INICIANDO");
             System.Diagnostics.Debug.WriteLine($"🔧 [DailyPrepVM] Preparación: {preparacion?.NombreProducto}");
+            
+            // 🔐 VALIDACIÓN MANUAL DE PERMISOS
+            if (!await HasPermissionAsync(AppPermission.ActualizarEstadoPreparaciones))
+            {
+                System.Diagnostics.Debug.WriteLine($"🔐❌ [DailyPrepVM] ACCESO DENEGADO - Usuario no tiene permisos para editar preparaciones");
+                await _dialogService.ShowErrorAsync("No tiene permisos para editar preparaciones");
+                return;
+            }
             
             if (preparacion == null) 
             {
@@ -411,6 +495,14 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
         [RequirePermission(AppPermission.ActualizarEstadoPreparaciones)]
         private async Task CrearNuevaPreparacionAsync()
         {
+            // 🔐 VALIDACIÓN MANUAL DE PERMISOS
+            if (!await HasPermissionAsync(AppPermission.ActualizarEstadoPreparaciones))
+            {
+                System.Diagnostics.Debug.WriteLine($"🔐❌ [DailyPrepVM] ACCESO DENEGADO - Usuario no tiene permisos para crear preparaciones");
+                await _dialogService.ShowErrorAsync("No tiene permisos para crear preparaciones");
+                return;
+            }
+            
             await _navigationService.NavigateToAsync("crear-preparacion-diaria");
         }
 

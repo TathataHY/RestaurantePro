@@ -9,24 +9,24 @@ using RestaurantePro.Application.Operaciones.Preparaciones.DTOs;
 using RestaurantePro.Domain.Operaciones.Preparaciones.Enums;
 using Microsoft.Extensions.Logging;
 
-namespace RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerPreparacionesDiarias
+namespace RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerMenuDelDia
 {
     /// <summary>
-    /// Manejador para la query de obtener preparaciones diarias
+    /// Manejador para la query de obtener el menú del día (solo preparaciones disponibles)
     /// </summary>
-    public class ObtenerPreparacionesDiariasQueryHandler : IRequestHandler<ObtenerPreparacionesDiariasQuery, Result<List<PreparacionDiariaDto>>>
+    public class ObtenerMenuDelDiaQueryHandler : IRequestHandler<ObtenerMenuDelDiaQuery, Result<List<PreparacionDiariaDto>>>
     {
         private readonly IApplicationDbContext _context;
         private readonly IMapper _mapper;
-        private readonly ILogger<ObtenerPreparacionesDiariasQueryHandler> _logger;
+        private readonly ILogger<ObtenerMenuDelDiaQueryHandler> _logger;
 
         /// <summary>
         /// Constructor
         /// </summary>
-        public ObtenerPreparacionesDiariasQueryHandler(
+        public ObtenerMenuDelDiaQueryHandler(
             IApplicationDbContext context,
             IMapper mapper,
-            ILogger<ObtenerPreparacionesDiariasQueryHandler> logger)
+            ILogger<ObtenerMenuDelDiaQueryHandler> logger)
         {
             _context = context;
             _mapper = mapper;
@@ -34,20 +34,31 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerPr
         }
 
         /// <summary>
-        /// Maneja la query para obtener todas las preparaciones diarias
+        /// Maneja la query para obtener el menú del día
         /// </summary>
         public async Task<Result<List<PreparacionDiariaDto>>> Handle(
-            ObtenerPreparacionesDiariasQuery request,
+            ObtenerMenuDelDiaQuery request,
             CancellationToken cancellationToken)
         {
-            _logger.LogInformation("📋 Obteniendo todas las preparaciones diarias (para gestión)");
+            var fechaObjetivo = request.Fecha?.Date ?? DateTime.Today;
+            var fechaLimiteInferior = fechaObjetivo.AddDays(-1); // Incluir preparaciones de ayer que aún sirven
+            var ahora = DateTime.Now;
+            var limite = request.Limite ?? 10;
+            
+            _logger.LogInformation("🍽️ Obteniendo menú del día - Rango: {FechaDesde} a {FechaHasta}, Estados: Disponible/Preparando, No vencidas", 
+                fechaLimiteInferior.ToString("yyyy-MM-dd"), fechaObjetivo.ToString("yyyy-MM-dd"));
 
             try
             {
-                // Proyección con joins para incluir nombres de producto y chef
-                var preparacionesDto = await _context.PreparacionesDiarias
-                    .Where(p => !p.EstaEliminado) // 🔧 FILTRAR preparaciones eliminadas
-                    .OrderByDescending(p => p.FechaPreparacion)
+                // Query específico para menú del día con filtros inteligentes
+                
+                var menuDelDia = await _context.PreparacionesDiarias
+                    .Where(p => !p.EstaEliminado) // 🚫 No eliminadas
+                    .Where(p => p.FechaVencimiento > ahora) // ⏰ PRIMERO: Solo NO vencidas
+                    .Where(p => p.Estado == EstadoPreparacion.Disponible || p.Estado == EstadoPreparacion.Preparando) // ✅ SEGUNDO: Estados servibles
+                    .Where(p => p.FechaPreparacion.Date >= fechaLimiteInferior && p.FechaPreparacion.Date <= fechaObjetivo) // 📅 TERCERO: Rango de fechas
+                    .OrderByDescending(p => p.FechaPreparacion) // 🔄 Ordenar las VÁLIDAS
+                    .Take(limite) // 🔢 ÚLTIMO: Tomar las primeras N válidas
                     .Select(p => new PreparacionDiariaDto
                     {
                         Id = p.Id,
@@ -77,15 +88,16 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerPr
                     })
                     .ToListAsync(cancellationToken);
 
-                _logger.LogInformation("✅ Preparaciones diarias obtenidas exitosamente: {Cantidad} preparaciones", preparacionesDto.Count);
+                _logger.LogInformation("✅ Menú del día obtenido exitosamente: {Cantidad} preparaciones disponibles para servir (Rango: {FechaDesde}-{FechaHasta}, Hora: {Hora})", 
+                    menuDelDia.Count, fechaLimiteInferior.ToString("dd/MM"), fechaObjetivo.ToString("dd/MM"), ahora.ToString("HH:mm:ss"));
 
-                return Result.Success(preparacionesDto);
+                return Result.Success(menuDelDia);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error al obtener preparaciones diarias");
-                return Result.Failure<List<PreparacionDiariaDto>>($"Error al obtener preparaciones diarias: {ex.Message}");
+                _logger.LogError(ex, "❌ Error al obtener menú del día");
+                return Result.Failure<List<PreparacionDiariaDto>>($"Error al obtener menú del día: {ex.Message}");
             }
         }
     }
-} 
+}

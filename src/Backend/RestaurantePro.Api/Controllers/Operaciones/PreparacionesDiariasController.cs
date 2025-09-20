@@ -7,6 +7,7 @@ using RestaurantePro.Application.Operaciones.Preparaciones.Commands.ActualizarPr
 using RestaurantePro.Application.Operaciones.Preparaciones.Commands.EliminarPreparacionDiaria;
 using RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerPreparacionesDiarias;
 using RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerPreparacionDiariaPorId;
+using RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerMenuDelDia;
 using RestaurantePro.Application.Operaciones.Preparaciones.Commands.ConsumirPreparacionDiaria;
 using RestaurantePro.Application.Operaciones.Preparaciones.Commands.MarcarPreparacionDiariaDisponible;
 using RestaurantePro.Api.Common;
@@ -80,6 +81,39 @@ public class PreparacionesDiariasController : ControllerBase
 
         var response = ApiResponse<PreparacionDiariaDto>.SuccessResponse(
             result.Value, "Preparación diaria obtenida exitosamente");
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Obtiene el menú del día (solo preparaciones disponibles, de hoy, no vencidas)
+    /// </summary>
+    [HttpGet("menu-del-dia")]
+    [ProducesResponseType(typeof(ApiResponse<List<PreparacionDiariaDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status500InternalServerError)]
+    public async Task<ActionResult<ApiResponse<List<PreparacionDiariaDto>>>> ObtenerMenuDelDia(
+        [FromQuery] DateTime? fecha = null,
+        [FromQuery] int? limite = 10)
+    {
+        _logger.LogInformation("🍽️ GET /api/operaciones/preparaciones-diarias/menu-del-dia - Fecha: {Fecha}, Límite: {Limite}", 
+            fecha?.ToString("yyyy-MM-dd") ?? "HOY", limite);
+
+        var query = new ObtenerMenuDelDiaQuery 
+        { 
+            Fecha = fecha,
+            Limite = limite
+        };
+        
+        var result = await _mediator.Send(query);
+        
+        if (!result.Succeeded)
+        {
+            var errorResponse = ApiResponse<object>.ErrorResponse(
+                new List<string> { result.Error ?? "Error desconocido" }, "Error al obtener menú del día", StatusCodes.Status500InternalServerError);
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResponse);
+        }
+
+        var response = ApiResponse<List<PreparacionDiariaDto>>.SuccessResponse(
+            result.Value, "Menú del día obtenido exitosamente");
         return Ok(response);
     }
 

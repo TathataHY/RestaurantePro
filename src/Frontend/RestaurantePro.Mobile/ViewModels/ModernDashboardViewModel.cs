@@ -48,6 +48,24 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
         get => _menuDelDia;
         set => SetProperty(ref _menuDelDia, value);
     }
+
+    /// <summary>
+    /// Título del menú del día con fecha actual
+    /// </summary>
+    public string TituloMenuDelDia
+    {
+        get
+        {
+            var fechaHoy = DateTime.Today;
+            var nombreDia = fechaHoy.ToString("dddd", new System.Globalization.CultureInfo("es-ES"));
+            var fechaFormateada = fechaHoy.ToString("dd 'de' MMMM", new System.Globalization.CultureInfo("es-ES"));
+            
+            // Capitalizar primera letra del día
+            nombreDia = char.ToUpper(nombreDia[0]) + nombreDia.Substring(1);
+            
+            return $"🍽️ Menú del Día - {nombreDia} {fechaFormateada}";
+        }
+    }
     
     public decimal TodaySales
     {
@@ -152,7 +170,7 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
             var pendingOrdersTask = _dashboardService.GetPendingOrdersCountAsync();
             var recentOrdersTask = _dashboardService.GetRecentOrdersAsync();
             var tableStatusTask = _dashboardService.GetTableStatusAsync();
-            var menuDelDiaTask = _dailyPreparationsService.GetPreparacionesDiariasAsync();
+            var menuDelDiaTask = _dailyPreparationsService.GetMenuDelDiaAsync(limite: 10);
 
             // Esperar a que todas las tareas se completen
             await Task.WhenAll(todaySalesTask, salesChangeTask, activeOrdersTask, pendingOrdersTask, recentOrdersTask, tableStatusTask, menuDelDiaTask);
@@ -169,18 +187,17 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
             RecentOrders = new ObservableCollection<RestaurantePro.Mobile.Core.Models.DTOs.OrderItem>(recentOrders);
             System.Diagnostics.Debug.WriteLine($"🔍 [ModernDashboardViewModel] RecentOrders.Count: {RecentOrders.Count}");
 
-            // Cargar menú del día (mostrar hasta 10 elementos para dar más opciones)
+            // Cargar menú del día (solo preparaciones disponibles para servir)
             var menuDelDiaResult = await menuDelDiaTask;
             if (menuDelDiaResult.Succeeded && menuDelDiaResult.Data != null)
             {
-                var menuItems = menuDelDiaResult.Data.Take(10).ToList();
-                MenuDelDia = new ObservableCollection<PreparacionDiariaDto>(menuItems);
-                System.Diagnostics.Debug.WriteLine($"🍽️ [ModernDashboardViewModel] Menú del día cargado: {MenuDelDia.Count} elementos");
+                MenuDelDia = new ObservableCollection<PreparacionDiariaDto>(menuDelDiaResult.Data);
+                System.Diagnostics.Debug.WriteLine($"🍽️ [ModernDashboardViewModel] Menú del día cargado: {MenuDelDia.Count} preparaciones disponibles");
             }
             else
             {
                 MenuDelDia = new ObservableCollection<PreparacionDiariaDto>();
-                System.Diagnostics.Debug.WriteLine("⚠️ [ModernDashboardViewModel] No se pudo cargar el menú del día");
+                System.Diagnostics.Debug.WriteLine($"⚠️ [ModernDashboardViewModel] No se pudo cargar el menú del día: {menuDelDiaResult.Error}");
             }
         }
         catch (Exception ex)
