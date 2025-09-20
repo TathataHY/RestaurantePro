@@ -70,6 +70,7 @@ public class DashboardComandasPorEstadoDto
     public int EnProceso { get; set; }
     public int Listas { get; set; }
     public int Entregadas { get; set; }
+    public int Completadas { get; set; }
     public int Canceladas { get; set; }
     public int Total { get; set; }
 }

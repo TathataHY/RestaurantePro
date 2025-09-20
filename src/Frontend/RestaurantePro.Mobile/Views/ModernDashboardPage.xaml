@@ -121,12 +121,13 @@
                         </CollectionView.ItemsLayout>
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
-                                <controls:ModernCard Padding="12" WidthRequest="200">
+                                <controls:ModernCard Padding="12" WidthRequest="220">
                                     <VerticalStackLayout Spacing="8">
                                         <HorizontalStackLayout Spacing="8">
                                             <Label Text="{Binding NombreProducto}" 
                                                    Style="{StaticResource H3Style}"
-                                                   MaxLines="1" />
+                                                   MaxLines="2"
+                                                   LineBreakMode="TailTruncation" />
                                             <Label Text="{Binding IconoEstado}" 
                                                    FontSize="14" />
                                         </HorizontalStackLayout>
@@ -153,7 +154,8 @@
                                         <Label Text="{Binding NombreChef, StringFormat='Chef: {0}'}" 
                                                Style="{StaticResource CaptionStyle}" 
                                                TextColor="{StaticResource TextSecondary}"
-                                               MaxLines="1" />
+                                               MaxLines="1"
+                                               LineBreakMode="TailTruncation" />
                                     </VerticalStackLayout>
                                 </controls:ModernCard>
                             </DataTemplate>

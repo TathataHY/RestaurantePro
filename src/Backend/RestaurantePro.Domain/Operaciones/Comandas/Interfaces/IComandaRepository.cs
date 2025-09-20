@@ -154,5 +154,14 @@ namespace RestaurantePro.Domain.Operaciones.Comandas.Interfaces
         /// <param name="cancellationToken">Token de cancelación</param>
         /// <returns>Task que representa la operación asíncrona</returns>
         Task EliminarItemAsync(Guid itemId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtiene el total de ventas de comandas finalizadas en un rango de fechas
+        /// </summary>
+        /// <param name="fechaInicio">Fecha de inicio del rango</param>
+        /// <param name="fechaFin">Fecha de fin del rango</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Total de ventas en el período</returns>
+        Task<decimal> ObtenerVentasTotalesAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken = default);
     }
 }

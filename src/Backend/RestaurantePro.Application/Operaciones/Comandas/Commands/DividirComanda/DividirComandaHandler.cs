@@ -66,7 +66,7 @@ public class DividirComandaHandler : IRequestHandler<DividirComandaCommand, Resu
             if (!validacionResult.Succeeded)
             {
                 _logger.LogInformation("❌ Validación de distribución de items falló: {Error}", validacionResult.Error);
-                return Result.Failure<DividirComandaDto>(validacionResult.Error);
+                return Result.Failure<DividirComandaDto>(validacionResult.Error ?? "Error en validación de distribución");
             }
             _logger.LogInformation("✅ Distribución de items validada");
 

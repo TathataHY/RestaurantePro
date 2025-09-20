@@ -556,5 +556,45 @@ namespace RestaurantePro.Infrastructure.Persistence.Repositories.Operaciones
                 _logger.LogWarning("⚠️ No se encontró el item de comanda {ItemId} para eliminar", itemId);
             }
         }
+
+        /// <summary>
+        /// Obtiene el total de ventas de comandas finalizadas en un rango de fechas usando consulta SQL directa
+        /// </summary>
+        /// <param name="fechaInicio">Fecha de inicio del rango</param>
+        /// <param name="fechaFin">Fecha de fin del rango</param>
+        /// <param name="cancellationToken">Token de cancelación</param>
+        /// <returns>Total de ventas en el período</returns>
+        public async Task<decimal> ObtenerVentasTotalesAsync(DateTime fechaInicio, DateTime fechaFin, CancellationToken cancellationToken = default)
+        {
+            _logger.LogInformation("💰 Calculando ventas totales desde {FechaInicio} hasta {FechaFin} - CONSULTA DIRECTA EF", fechaInicio, fechaFin);
+            
+            // Usar Entity Framework para sumar directamente el campo Total de la BD
+            // Esto evita el problema del Value Object y accede al campo directo
+            var comandasFinalizadas = await _dbSet
+                .Where(c => c.Estado == EstadoComanda.Finalizada && 
+                           c.FechaCreacion >= fechaInicio && 
+                           c.FechaCreacion <= fechaFin)
+                .ToListAsync(cancellationToken);
+            
+            // Calcular total usando reflection para acceder al campo directo de la BD
+            decimal total = 0;
+            foreach (var comanda in comandasFinalizadas)
+            {
+                // Usar reflection para acceder al campo Total privado de la BD
+                var totalField = typeof(Comanda).GetField("_total", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (totalField?.GetValue(comanda) is decimal totalValue)
+                {
+                    total += totalValue;
+                }
+                else
+                {
+                    // Si no hay field privado, usar el getter público
+                    total += comanda.Total?.Total ?? 0;
+                }
+            }
+                
+            _logger.LogInformation("💰 Total de ventas calculado: S/. {Total} de {Comandas} comandas", total, comandasFinalizadas.Count);
+            return total;
+        }
     }
 } 

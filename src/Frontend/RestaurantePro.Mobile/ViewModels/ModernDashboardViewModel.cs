@@ -169,11 +169,11 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
             RecentOrders = new ObservableCollection<RestaurantePro.Mobile.Core.Models.DTOs.OrderItem>(recentOrders);
             System.Diagnostics.Debug.WriteLine($"🔍 [ModernDashboardViewModel] RecentOrders.Count: {RecentOrders.Count}");
 
-            // Cargar menú del día (solo los primeros 3 elementos para el dashboard)
+            // Cargar menú del día (mostrar hasta 10 elementos para dar más opciones)
             var menuDelDiaResult = await menuDelDiaTask;
             if (menuDelDiaResult.Succeeded && menuDelDiaResult.Data != null)
             {
-                var menuItems = menuDelDiaResult.Data.Take(3).ToList();
+                var menuItems = menuDelDiaResult.Data.Take(10).ToList();
                 MenuDelDia = new ObservableCollection<PreparacionDiariaDto>(menuItems);
                 System.Diagnostics.Debug.WriteLine($"🍽️ [ModernDashboardViewModel] Menú del día cargado: {MenuDelDia.Count} elementos");
             }

@@ -151,7 +151,7 @@ public class CrearComandaHandler : IRequestHandler<CrearComandaCommand, Result<C
                 }
 
                 // Obtener el precio del producto desde el repositorio
-                var precioUnitario = producto.Precio.Valor;
+                var precioUnitario = producto.Precio?.Valor ?? 0;
 
                 // Agregar el producto a la comanda usando el método del dominio
                 comanda.AgregarProducto(

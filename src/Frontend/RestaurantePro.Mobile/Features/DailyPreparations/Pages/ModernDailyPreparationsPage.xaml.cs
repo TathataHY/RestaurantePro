@@ -59,8 +59,23 @@ public partial class ModernDailyPreparationsPage : ContentPage
         await _viewModel.FiltrarPorEstadoCommand.ExecuteAsync(tabName);
     }
 
-    // Los eventos OnEditarClicked y OnEliminarClicked ya no se usan
-    // Los botones ahora usan comandos directamente con autorización
+    private async void OnEditarClicked(object sender, EventArgs e)
+    {
+        if (sender is Button button && button.CommandParameter is RestaurantePro.Mobile.Core.Models.DTOs.PreparacionDiariaDto preparacion)
+        {
+            System.Diagnostics.Debug.WriteLine($"🔧 [ModernDailyPrepPage] OnEditarClicked - Preparación: {preparacion?.NombreProducto}");
+            await _viewModel.EditarPreparacionCommand.ExecuteAsync(preparacion);
+        }
+    }
+
+    private async void OnEliminarClicked(object sender, EventArgs e)
+    {
+        if (sender is Button button && button.CommandParameter is RestaurantePro.Mobile.Core.Models.DTOs.PreparacionDiariaDto preparacion)
+        {
+            System.Diagnostics.Debug.WriteLine($"🔧 [ModernDailyPrepPage] OnEliminarClicked - Preparación: {preparacion?.NombreProducto}");
+            await _viewModel.EliminarPreparacionCommand.ExecuteAsync(preparacion);
+        }
+    }
 
     private async void OnRefreshing(object sender, EventArgs e)
     {

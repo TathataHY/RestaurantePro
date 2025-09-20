@@ -2,146 +2,148 @@
 <ContentPage x:Class="RestaurantePro.Mobile.Views.DailyPreparationsPage"
              xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:RestaurantePro.Mobile.Controls"
              xmlns:viewmodels="clr-namespace:RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels;assembly=RestaurantePro.Mobile.Core"
              xmlns:models="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
              Title="Menú del Día"
              x:DataType="viewmodels:DailyPreparationsViewModel">
 
-    <Grid RowDefinitions="Auto,*,Auto">
-        
-        <!-- Header con estadísticas -->
-        <Grid Grid.Row="0" 
-              BackgroundColor="{StaticResource Primary}"
-              Padding="16"
-              IsVisible="{Binding MostrarEstadisticas}">
-            
-            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
-                
-                <!-- Título -->
-                <Label Grid.Row="0" Grid.Column="0"
-                       Text="📊 Estadísticas del Día"
-                       TextColor="White"
-                       FontSize="18"
-                       FontAttributes="Bold"
-                       VerticalOptions="Center"/>
-                
-                <!-- Botón para ocultar/mostrar estadísticas -->
-                <Button Grid.Row="0" Grid.Column="1"
-                        Text="👁️"
-                        BackgroundColor="Transparent"
-                        TextColor="White"
-                        FontSize="16"
-                        Command="{Binding ToggleEstadisticasCommand}"/>
-                
-                <!-- Estadísticas -->
-                <Grid Grid.Row="1" Grid.ColumnSpan="2" 
-                      ColumnDefinitions="*,*,*,*"
-                      Margin="0,8,0,0">
-                    
-                    <!-- Total Preparaciones -->
-                    <StackLayout Grid.Column="0" HorizontalOptions="Center">
-                        <Label Text="{Binding Estadisticas.TotalPreparaciones}"
-                               TextColor="White"
-                               FontSize="20"
-                               FontAttributes="Bold"
-                               HorizontalOptions="Center"/>
-                        <Label Text="Total"
-                               TextColor="White"
-                               FontSize="12"
-                               HorizontalOptions="Center"/>
-                    </StackLayout>
-                    
-                    <!-- Disponibles -->
-                    <StackLayout Grid.Column="1" HorizontalOptions="Center">
-                        <Label Text="{Binding Estadisticas.PreparacionesDisponibles}"
-                               TextColor="White"
-                               FontSize="20"
-                               FontAttributes="Bold"
-                               HorizontalOptions="Center"/>
-                        <Label Text="Disponibles"
-                               TextColor="White"
-                               FontSize="12"
-                               HorizontalOptions="Center"/>
-                    </StackLayout>
-                    
-                    <!-- Por Vencer -->
-                    <StackLayout Grid.Column="2" HorizontalOptions="Center">
-                        <Label Text="{Binding Estadisticas.PreparacionesPorVencer}"
-                               TextColor="White"
-                               FontSize="20"
-                               FontAttributes="Bold"
-                               HorizontalOptions="Center"/>
-                        <Label Text="Por Vencer"
-                               TextColor="White"
-                               FontSize="12"
-                               HorizontalOptions="Center"/>
-                    </StackLayout>
-                    
-                    <!-- Eficiencia -->
-                    <StackLayout Grid.Column="3" HorizontalOptions="Center">
-                        <Label Text="{Binding Estadisticas.EficienciaFormateada}"
-                               TextColor="White"
-                               FontSize="20"
-                               FontAttributes="Bold"
-                               HorizontalOptions="Center"/>
-                        <Label Text="Eficiencia"
-                               TextColor="White"
-                               FontSize="12"
-                               HorizontalOptions="Center"/>
-                    </StackLayout>
-                </Grid>
-            </Grid>
-        </Grid>
-        
-        <!-- Contenido principal -->
-        <Grid Grid.Row="1" RowDefinitions="Auto,*">
-            
-            <!-- Barra de herramientas -->
-            <Grid Grid.Row="0" 
-                  BackgroundColor="{StaticResource Surface}"
-                  Padding="16"
-                  ColumnDefinitions="*,Auto,Auto">
-                
-                <!-- Barra de búsqueda -->
-                <Grid Grid.Column="0" ColumnDefinitions="*,Auto">
-                    <Entry Grid.Column="0"
-                           Placeholder="🔍 Buscar preparaciones..."
-                           Text="{Binding TextoBusqueda}"
-                           ReturnCommand="{Binding BuscarPreparacionesCommand}"/>
-                    
-                    <Button Grid.Column="1"
-                            Text="❌"
-                            BackgroundColor="Transparent"
-                            TextColor="{StaticResource OnSurface}"
-                            Command="{Binding LimpiarBusquedaCommand}"
-                            IsVisible="{Binding TextoBusqueda, Converter={StaticResource StringToBoolConverter}}"/>
-                </Grid>
-                
-                <!-- Botón de filtro -->
-                <Button Grid.Column="1"
-                        Text="🔽"
-                        BackgroundColor="Transparent"
-                        TextColor="{StaticResource OnSurface}"
-                        Command="{Binding ShowFiltrosCommand}"
-                        Margin="8,0,0,0"/>
-                
-                <!-- Botón de refresh -->
-                <Button Grid.Column="2"
-                        Text="🔄"
-                        BackgroundColor="Transparent"
-                        TextColor="{StaticResource OnSurface}"
-                        Command="{Binding RefreshCommand}"
-                        Margin="8,0,0,0"/>
-            </Grid>
-            
-            <!-- Lista de preparaciones -->
-            <RefreshView Grid.Row="1"
-                         IsRefreshing="{Binding IsBusy}"
-                         Command="{Binding RefreshCommand}">
+    <Grid RowDefinitions="*">
+
+        <!-- Contenido Principal en un solo scroll (Header + Items) -->
+        <RefreshView Grid.Row="0"
+                     IsRefreshing="{Binding IsBusy}"
+                     Command="{Binding RefreshCommand}">
                 
                 <CollectionView ItemsSource="{Binding PreparacionesDiarias}"
                                SelectionMode="Single"
                                SelectedItem="{Binding SelectedPreparacion}">
+
+                    <!-- Header: estadísticas + búsqueda + filtros -->
+                    <CollectionView.Header>
+                        <VerticalStackLayout Spacing="12" Padding="16,8,16,0">
+                            
+                            <!-- Estadísticas del Día -->
+                            <Grid BackgroundColor="{StaticResource Primary}"
+                                  Padding="16"
+                                  IsVisible="{Binding MostrarEstadisticas}">
+                                
+                                <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                                    
+                                    <!-- Título -->
+                                    <Label Grid.Row="0" Grid.Column="0"
+                                           Text="📊 Estadísticas del Día"
+                                           TextColor="White"
+                                           FontSize="18"
+                                           FontAttributes="Bold"
+                                           VerticalOptions="Center"/>
+                                    
+                                    <!-- Botón para ocultar/mostrar estadísticas -->
+                                    <Button Grid.Row="0" Grid.Column="1"
+                                            Text="👁️"
+                                            BackgroundColor="Transparent"
+                                            TextColor="White"
+                                            FontSize="16"
+                                            Command="{Binding ToggleEstadisticasCommand}"/>
+                                    
+                                    <!-- Estadísticas -->
+                                    <Grid Grid.Row="1" Grid.ColumnSpan="2" 
+                                          ColumnDefinitions="*,*,*,*"
+                                          Margin="0,8,0,0">
+                                        
+                                        <!-- Total Preparaciones -->
+                                        <StackLayout Grid.Column="0" HorizontalOptions="Center">
+                                            <Label Text="{Binding Estadisticas.TotalPreparaciones}"
+                                                   TextColor="White"
+                                                   FontSize="20"
+                                                   FontAttributes="Bold"
+                                                   HorizontalOptions="Center"/>
+                                            <Label Text="Total"
+                                                   TextColor="White"
+                                                   FontSize="12"
+                                                   HorizontalOptions="Center"/>
+                                        </StackLayout>
+                                        
+                                        <!-- Disponibles -->
+                                        <StackLayout Grid.Column="1" HorizontalOptions="Center">
+                                            <Label Text="{Binding Estadisticas.PreparacionesDisponibles}"
+                                                   TextColor="White"
+                                                   FontSize="20"
+                                                   FontAttributes="Bold"
+                                                   HorizontalOptions="Center"/>
+                                            <Label Text="Disponibles"
+                                                   TextColor="White"
+                                                   FontSize="12"
+                                                   HorizontalOptions="Center"/>
+                                        </StackLayout>
+                                        
+                                        <!-- Por Vencer -->
+                                        <StackLayout Grid.Column="2" HorizontalOptions="Center">
+                                            <Label Text="{Binding Estadisticas.PreparacionesPorVencer}"
+                                                   TextColor="White"
+                                                   FontSize="20"
+                                                   FontAttributes="Bold"
+                                                   HorizontalOptions="Center"/>
+                                            <Label Text="Por Vencer"
+                                                   TextColor="White"
+                                                   FontSize="12"
+                                                   HorizontalOptions="Center"/>
+                                        </StackLayout>
+                                        
+                                        <!-- Eficiencia -->
+                                        <StackLayout Grid.Column="3" HorizontalOptions="Center">
+                                            <Label Text="{Binding Estadisticas.EficienciaFormateada}"
+                                                   TextColor="White"
+                                                   FontSize="20"
+                                                   FontAttributes="Bold"
+                                                   HorizontalOptions="Center"/>
+                                            <Label Text="Eficiencia"
+                                                   TextColor="White"
+                                                   FontSize="12"
+                                                   HorizontalOptions="Center"/>
+                                        </StackLayout>
+                                    </Grid>
+                                </Grid>
+                            </Grid>
+
+                            <!-- Barra de herramientas -->
+                            <Grid BackgroundColor="{StaticResource Surface}"
+                                  Padding="16"
+                                  ColumnDefinitions="*,Auto,Auto">
+                                
+                                <!-- Barra de búsqueda -->
+                                <Grid Grid.Column="0" ColumnDefinitions="*,Auto">
+                                    <Entry Grid.Column="0"
+                                           Placeholder="🔍 Buscar preparaciones..."
+                                           Text="{Binding TextoBusqueda}"
+                                           ReturnCommand="{Binding BuscarPreparacionesCommand}"/>
+                                    
+                                    <Button Grid.Column="1"
+                                            Text="❌"
+                                            BackgroundColor="Transparent"
+                                            TextColor="{StaticResource OnSurface}"
+                                            Command="{Binding LimpiarBusquedaCommand}"
+                                            IsVisible="{Binding TextoBusqueda, Converter={StaticResource StringToBoolConverter}}"/>
+                                </Grid>
+                                
+                                <!-- Botón de filtro -->
+                                <Button Grid.Column="1"
+                                        Text="🔽"
+                                        BackgroundColor="Transparent"
+                                        TextColor="{StaticResource OnSurface}"
+                                        Command="{Binding ShowFiltrosCommand}"
+                                        Margin="8,0,0,0"/>
+                                
+                                <!-- Botón de refresh -->
+                                <Button Grid.Column="2"
+                                        Text="🔄"
+                                        BackgroundColor="Transparent"
+                                        TextColor="{StaticResource OnSurface}"
+                                        Command="{Binding RefreshCommand}"
+                                        Margin="8,0,0,0"/>
+                            </Grid>
+                        </VerticalStackLayout>
+                    </CollectionView.Header>
                     
                     <CollectionView.EmptyView>
                         <StackLayout HorizontalOptions="Center" 
@@ -172,28 +174,35 @@
                                   ColumnDefinitions="*,Auto">
                                 
                                 <!-- Header con nombre y estado -->
-                                <Grid Grid.Row="0" Grid.ColumnSpan="2" 
-                                      ColumnDefinitions="*,Auto,Auto">
+                                <Frame Grid.Row="0" Grid.ColumnSpan="2" 
+                                       HasShadow="False" 
+                                       BackgroundColor="Transparent"
+                                       Padding="0">
                                     
-                                    <Label Grid.Column="0"
-                                           Text="{Binding NombreProducto}"
-                                           FontSize="16"
-                                           FontAttributes="Bold"
-                                           TextColor="{StaticResource OnSurface}"
-                                           VerticalOptions="Center"/>
-                                    
-                                    <Label Grid.Column="1"
-                                           Text="{Binding IconoEstado}"
-                                           FontSize="16"
-                                           Margin="8,0,0,0"
-                                           VerticalOptions="Center"/>
-                                    
-                                    <Label Grid.Column="2"
-                                           Text="{Binding TextoEstado}"
-                                           FontSize="12"
-                                           TextColor="{Binding ColorEstado}"
-                                           VerticalOptions="Center"/>
-                                </Grid>
+                                    <VerticalStackLayout Spacing="4">
+                                        
+                                        <!-- Nombre del producto con scroll horizontal -->
+                                        <ScrollView Orientation="Horizontal" 
+                                                   HorizontalScrollBarVisibility="Never"
+                                                   VerticalScrollBarVisibility="Never">
+                                            <Label Text="{Binding NombreProducto}"
+                                                   FontSize="16"
+                                                   FontAttributes="Bold"
+                                                   TextColor="{StaticResource OnSurface}"
+                                                   HorizontalOptions="Start"/>
+                                        </ScrollView>
+                                        
+                                        <!-- Estado del producto -->
+                                        <HorizontalStackLayout Spacing="8" HorizontalOptions="End">
+                                            <Label Text="{Binding IconoEstado}"
+                                                   FontSize="16"/>
+                                            
+                                            <Label Text="{Binding TextoEstado}"
+                                                   FontSize="12"
+                                                   TextColor="{Binding ColorEstado}"/>
+                                        </HorizontalStackLayout>
+                                    </VerticalStackLayout>
+                                </Frame>
                                 
                                 <!-- Información de cantidades -->
                                 <Grid Grid.Row="1" Grid.ColumnSpan="2" 
@@ -281,7 +290,19 @@
                                                 Margin="4,0,0,0"
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:DailyPreparationsViewModel}}, Path=MarcarComoDisponibleCommand}"
                                                 CommandParameter="{Binding}"
-                                                IsVisible="{Binding Estado, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter=Preparando}"/>
+                                                IsVisible="{Binding Estado, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter=Preparando}"
+                                                IsEnabled="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:DailyPreparationsViewModel}}, Path=CanMarcarDisponible}"/>
+                                        
+                                        <!-- Botón editar -->
+                                        <Button Text="✏️"
+                                                BackgroundColor="{StaticResource Tertiary}"
+                                                TextColor="White"
+                                                FontSize="12"
+                                                Padding="8,4"
+                                                Margin="4,0,0,0"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:DailyPreparationsViewModel}}, Path=EditarPreparacionCommand}"
+                                                CommandParameter="{Binding}"
+                                                IsEnabled="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:DailyPreparationsViewModel}}, Path=CanEditarPreparacion}"/>
                                         
                                         <!-- Botón eliminar -->
                                         <Button Text="🗑️"
@@ -291,7 +312,8 @@
                                                 Padding="8,4"
                                                 Margin="4,0,0,0"
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:DailyPreparationsViewModel}}, Path=EliminarPreparacionCommand}"
-                                                CommandParameter="{Binding}"/>
+                                                CommandParameter="{Binding}"
+                                                IsEnabled="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:DailyPreparationsViewModel}}, Path=CanEliminarPreparacion}"/>
                                     </StackLayout>
                                 </Grid>
                             </Grid>
@@ -299,21 +321,15 @@
                     </CollectionView.ItemTemplate>
                 </CollectionView>
             </RefreshView>
-        </Grid>
-        
-        <!-- Botón flotante para crear nueva preparación -->
-        <Button Grid.Row="2"
-                Text="+"
-                FontSize="24"
-                FontAttributes="Bold"
-                BackgroundColor="{StaticResource Primary}"
-                TextColor="White"
-                WidthRequest="56"
-                HeightRequest="56"
-                CornerRadius="28"
-                HorizontalOptions="End"
-                VerticalOptions="End"
-                Margin="16"
-                Command="{Binding CrearNuevaPreparacionCommand}"/>
+
+        <!-- Floating Action Button -->
+        <controls:FloatingActionButton Grid.Row="0"
+                                       x:Name="MainFab"
+                                       Text="➕"
+                                       Command="{Binding CrearNuevaPreparacionCommand}"
+                                       HorizontalOptions="End"
+                                       VerticalOptions="End"
+                                       Margin="16,0,16,80"
+                                       IsEnabled="{Binding CanCrearPreparacion}" />
     </Grid>
 </ContentPage> 

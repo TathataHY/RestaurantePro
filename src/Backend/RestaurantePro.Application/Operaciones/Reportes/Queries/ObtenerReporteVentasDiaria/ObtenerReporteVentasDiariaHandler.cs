@@ -300,7 +300,7 @@ public class ObtenerReporteVentasDiariaHandler : IRequestHandler<ObtenerReporteV
 
             // Obtener totales reales
             var totalComandas = comandasHora.Count;
-            var montoTotal = comandasHora.Sum(c => c.Total.Total);
+            var montoTotal = comandasHora.Sum(c => c.Total?.Total ?? 0);
 
             // Si no hay comandas para esta hora pero hay comandas en general,
             // y no tenemos ninguna entrada en la distribución todavía,
@@ -492,7 +492,7 @@ public class ObtenerReporteVentasDiariaHandler : IRequestHandler<ObtenerReporteV
         {
             // Para pruebas, calculamos un valor entre 0.7 y 1.0
             var totalComandas = comandasMesero.Count;
-            var totalVentas = comandasMesero.Sum(c => c.Total.Total);
+            var totalVentas = comandasMesero.Sum(c => c.Total?.Total ?? 0);
             
             // Si no hay datos, retornamos 0.85 como valor por defecto
             if (totalComandas == 0 || totalVentas == 0)

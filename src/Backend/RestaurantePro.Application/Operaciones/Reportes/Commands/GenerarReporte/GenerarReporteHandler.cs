@@ -40,21 +40,21 @@ public class GenerarReporteHandler : IRequestHandler<GenerarReporteCommand, Resu
             var datosReporte = await ObtenerDatosReporte(request, cancellationToken);
             if (!datosReporte.Succeeded)
             {
-                return Result.Failure<ReporteGeneradoResult>(datosReporte.Error);
+                return Result.Failure<ReporteGeneradoResult>(datosReporte.Error ?? "Error al obtener datos del reporte");
             }
 
             // 2. Generar el contenido del reporte
             var contenidoReporte = await GenerarContenidoReporte(request, datosReporte.Value, cancellationToken);
             if (!contenidoReporte.Succeeded)
             {
-                return Result.Failure<ReporteGeneradoResult>(contenidoReporte.Error);
+                return Result.Failure<ReporteGeneradoResult>(contenidoReporte.Error ?? "Error al generar contenido del reporte");
             }
 
             // 3. Crear el archivo según el formato
             var archivoReporte = await CrearArchivoReporte(request, contenidoReporte.Value, reporteId, cancellationToken);
             if (!archivoReporte.Succeeded)
             {
-                return Result.Failure<ReporteGeneradoResult>(archivoReporte.Error);
+                return Result.Failure<ReporteGeneradoResult>(archivoReporte.Error ?? "Error al crear archivo del reporte");
             }
 
             // 4. Guardar metadatos del reporte

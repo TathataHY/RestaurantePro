@@ -107,12 +107,14 @@
                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditarPreparacionCommand}"
                                                     CommandParameter="{Binding .}"
                                                     Style="{StaticResource SecondaryButtonStyle}"
-                                                    IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CanEditarPreparacion}" />
+                                                    IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CanEditarPreparacion}"
+                                                    Clicked="OnEditarClicked" />
                                             <Button Text="🗑️" 
                                                     Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EliminarPreparacionCommand}"
                                                     CommandParameter="{Binding .}"
                                                     Style="{StaticResource DangerButtonStyle}"
-                                                    IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CanEliminarPreparacion}" />
+                                                    IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CanEliminarPreparacion}"
+                                                    Clicked="OnEliminarClicked" />
                                         </HorizontalStackLayout>
                                     </Grid>
                                 </Grid>

@@ -182,9 +182,9 @@ public class CrearComandaCommandHandler : IRequestHandler<CrearComandaCommand, R
             {
                 comanda.AgregarItem(
                     producto.Id,
-                    producto.Nombre,
+                    producto.Nombre ?? "Producto sin nombre",
                     prod.Cantidad,
-                    producto.Precio.Valor,
+                    producto.Precio?.Valor ?? 0,
                     prod.Observaciones
                 );
             }
