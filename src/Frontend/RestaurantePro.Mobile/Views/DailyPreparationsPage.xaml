@@ -8,12 +8,13 @@
              Title="Menú del Día"
              x:DataType="viewmodels:DailyPreparationsViewModel">
 
-    <Grid RowDefinitions="*">
+    <Grid RowDefinitions="*,Auto" BackgroundColor="LightBlue">
 
         <!-- Contenido Principal en un solo scroll (Header + Items) -->
         <RefreshView Grid.Row="0"
                      IsRefreshing="{Binding IsBusy}"
-                     Command="{Binding RefreshCommand}">
+                     Command="{Binding RefreshCommand}"
+                     BackgroundColor="LightGreen">
                 
                 <CollectionView ItemsSource="{Binding PreparacionesDiarias}"
                                SelectionMode="Single"
@@ -322,14 +323,27 @@
                 </CollectionView>
             </RefreshView>
 
+        <!-- DEBUG: Fila del FAB -->
+        <Frame Grid.Row="1" 
+               BackgroundColor="Red" 
+               HeightRequest="100"
+               HorizontalOptions="Fill"
+               VerticalOptions="End">
+            <Label Text="FILA FAB" 
+                   TextColor="White" 
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"/>
+        </Frame>
+
         <!-- Floating Action Button -->
-        <controls:FloatingActionButton Grid.Row="0"
+        <controls:FloatingActionButton Grid.Row="1"
                                        x:Name="MainFab"
                                        Text="➕"
                                        Command="{Binding CrearNuevaPreparacionCommand}"
                                        HorizontalOptions="End"
                                        VerticalOptions="End"
-                                       Margin="16,0,16,80"
+                                       Margin="16,0,16,16"
                                        IsEnabled="{Binding CanCrearPreparacion}" />
     </Grid>
 </ContentPage> 

@@ -119,7 +119,7 @@
                                 Style="{StaticResource SecondaryButtonStyle}" />
                         
                         <Button Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="3"
-                                Text="➕ Nueva Preparación"
+                                Text="➕ Nuevo Menú"
                                 Command="{Binding CrearPreparacionCommand}"
                                 Style="{StaticResource PrimaryButtonStyle}" />
                     </Grid>

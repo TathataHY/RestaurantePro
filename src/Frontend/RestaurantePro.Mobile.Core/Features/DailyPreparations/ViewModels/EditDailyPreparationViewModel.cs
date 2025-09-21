@@ -29,7 +29,7 @@ public partial class EditDailyPreparationViewModel : AuthorizedBaseViewModel
     private Guid _preparacionId;
 
     [ObservableProperty]
-    private string _titulo = "Editar Preparación";
+    private string _titulo = "Editar Menú";
 
     // Categorías y productos
     [ObservableProperty]
@@ -270,7 +270,7 @@ public partial class EditDailyPreparationViewModel : AuthorizedBaseViewModel
             var result = await _dailyPreparationsService.ActualizarPreparacionDiariaAsync(_preparacionId, cmd);
             if (result.Succeeded)
             {
-                await _dialogService.ShowSuccessAsync("Preparación actualizada correctamente");
+                await _dialogService.ShowSuccessAsync("Menú actualizado correctamente");
                 await _navigationService.GoBackAsync();
             }
             else

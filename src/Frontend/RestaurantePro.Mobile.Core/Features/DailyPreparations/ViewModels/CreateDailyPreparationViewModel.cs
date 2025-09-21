@@ -138,7 +138,7 @@ public partial class CreateDailyPreparationViewModel : AuthorizedBaseViewModel
             var result = await _dailyPreparationsService.CrearPreparacionDiariaAsync(cmd);
             if (result.Succeeded)
             {
-                await _dialogService.ShowSuccessAsync("Preparación creada correctamente.");
+                await _dialogService.ShowSuccessAsync("Menú creado correctamente.");
                 await _navigationService.GoBackAsync();
             }
             else

@@ -8,7 +8,7 @@
              Title="{Binding Title}"
              BackgroundColor="{StaticResource SurfacePrimary}">
 
-    <Grid RowDefinitions="*">
+    <Grid RowDefinitions="*,Auto">
 
         <!-- Contenido Principal en un solo scroll (Header + Items) -->
         <RefreshView Grid.Row="0"
@@ -278,7 +278,7 @@
         -->
 
         <!-- Floating Action Button -->
-        <controls:FloatingActionButton Grid.Row="0"
+        <controls:FloatingActionButton Grid.Row="1"
                                        x:Name="MainFab"
                                        Text="➕"
                                        Command="{Binding CrearComandaCommand}"

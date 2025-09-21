@@ -360,7 +360,7 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
                 
                 if (result.Succeeded)
                 {
-                    await _dialogService.ShowSuccessAsync("Preparación marcada como disponible");
+                    await _dialogService.ShowSuccessAsync("Menú marcado como disponible");
                     await LoadPreparacionesDiariasCommand.ExecuteAsync(null);
                 }
                 else
@@ -400,7 +400,7 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
                 System.Diagnostics.Debug.WriteLine($"🔧 [DailyPrepVM] Mostrando confirmación para eliminar: {preparacion.NombreProducto}");
                 
                 var confirmacion = await _dialogService.ShowConfirmationAsync(
-                    "Eliminar Preparación",
+                    "Eliminar Menú",
                     $"¿Está seguro de eliminar '{preparacion.NombreProducto}'?");
 
                 System.Diagnostics.Debug.WriteLine($"🔧 [DailyPrepVM] Confirmación: {confirmacion}");
@@ -422,7 +422,7 @@ namespace RestaurantePro.Mobile.Core.Features.DailyPreparations.ViewModels
                         System.Diagnostics.Debug.WriteLine($"✅ [DailyPrepVM] Preparación removida de la colección UI");
                     }
                     
-                    await _dialogService.ShowSuccessAsync("Preparación eliminada exitosamente");
+                    await _dialogService.ShowSuccessAsync("Menú eliminado exitosamente");
                     
                     // 🔄 Recargar lista y estadísticas para asegurar sincronización
                     var recargarTask = LoadPreparacionesDiariasCommand.ExecuteAsync(null);

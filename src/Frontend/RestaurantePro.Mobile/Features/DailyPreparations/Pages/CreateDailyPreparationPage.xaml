@@ -6,7 +6,7 @@
              xmlns:dto="clr-namespace:RestaurantePro.Mobile.Core.Models.DTOs;assembly=RestaurantePro.Mobile.Core"
              x:Class="RestaurantePro.Mobile.Features.DailyPreparations.Pages.CreateDailyPreparationPage"
              x:DataType="vm:CreateDailyPreparationViewModel"
-             Title="Nueva Preparación"
+             Title="Nuevo Menú"
              BackgroundColor="{StaticResource SurfacePrimary}">
 
     <ScrollView>
@@ -48,7 +48,7 @@
 
             <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
                 <Button Grid.Column="0" Text="Cancelar" Command="{Binding CancelarCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-                <Button Grid.Column="1" Text="Crear" Command="{Binding CrearPreparacionCommand}" Style="{StaticResource PrimaryButtonStyle}" />
+                <Button Grid.Column="1" Text="Crear Menú" Command="{Binding CrearPreparacionCommand}" Style="{StaticResource PrimaryButtonStyle}" />
             </Grid>
         </VerticalStackLayout>
     </ScrollView>

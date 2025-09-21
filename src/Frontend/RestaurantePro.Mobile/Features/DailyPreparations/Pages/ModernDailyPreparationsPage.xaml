@@ -137,15 +137,15 @@
         <!-- Bottom Navigation - COMENTADO PARA USAR TABS NATIVOS -->
         <!-- <controls:ModernTabBar Grid.Row="2" x:Name="BottomTabBar" /> -->
         
-        <!-- Floating Action Button dentro del Grid para evitar superposición -->
-        <controls:FloatingActionButton Grid.RowSpan="3"
+        <!-- Floating Action Button -->
+        <controls:FloatingActionButton Grid.Row="2"
                                        x:Name="MainFab"
-                                       Text="+"
+                                       Text="➕"
                                        Command="{Binding CrearNuevaPreparacionCommand}"
                                        IsVisible="{Binding CanCrearPreparacion}"
                                        HorizontalOptions="End"
                                        VerticalOptions="End"
-                                       Margin="16,0,16,80" />
+                                       Margin="16,0,16,16" />
     </Grid>
 
 </ContentPage>

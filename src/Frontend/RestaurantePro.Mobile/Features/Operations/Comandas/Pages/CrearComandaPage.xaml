@@ -81,6 +81,54 @@
                 </StackLayout>
             </Frame>
 
+            <!-- Preparaciones del Día -->
+            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark=#2D2D2D}" 
+                   CornerRadius="12" 
+                   Padding="16"
+                   HasShadow="True">
+                <StackLayout>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <Label Text="🍳 Menú del Día" 
+                               FontSize="16" 
+                               FontAttributes="Bold" 
+                               TextColor="{AppThemeBinding Light=#424242, Dark=#E0E0E0}"/>
+                        <Button Grid.Column="1" Text="Refrescar" Command="{Binding LoadPreparacionesDiaCommand}" Style="{StaticResource SecondaryButtonStyle}"/>
+                    </Grid>
+
+                    <CollectionView ItemsSource="{Binding PreparacionesDelDia}"
+                                    SelectionMode="None"
+                                    HeightRequest="200">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="dto:PreparacionDiariaDto">
+                                <Frame BackgroundColor="{AppThemeBinding Light=#F9FAFB, Dark=#1F2937}"
+                                       CornerRadius="12"
+                                       Padding="12"
+                                       Margin="0,6"
+                                       HasShadow="True">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackLayout>
+                                            <Label Text="{Binding NombreProducto}" FontAttributes="Bold"/>
+                                            <Label Text="{Binding CantidadDisponible, StringFormat='Disp.: {0}'}" FontSize="12"/>
+                                            <Label Text="{Binding NombreChef, StringFormat='Chef: {0}'}" FontSize="12"/>
+                                        </StackLayout>
+                                        <Button Grid.Column="1" Text="Usar +1"
+                                                Clicked="OnUsarDesdePreparacionClicked"/>
+                                    </Grid>
+                                </Frame>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </StackLayout>
+            </Frame>
+
             <!-- Búsqueda de productos -->
             <Frame BackgroundColor="{AppThemeBinding Light=White, Dark=#2D2D2D}" 
                    CornerRadius="12" 
@@ -233,54 +281,6 @@
                                                 CornerRadius="25"
                                                 HeightRequest="48"
                                                 Clicked="OnAgregarAlCarritoClicked"/>
-                                    </Grid>
-                                </Frame>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-                </StackLayout>
-            </Frame>
-
-            <!-- Preparaciones del Día -->
-            <Frame BackgroundColor="{AppThemeBinding Light=White, Dark=#2D2D2D}" 
-                   CornerRadius="12" 
-                   Padding="16"
-                   HasShadow="True">
-                <StackLayout>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Label Text="🍳 Preparaciones del Día" 
-                               FontSize="16" 
-                               FontAttributes="Bold" 
-                               TextColor="{AppThemeBinding Light=#424242, Dark=#E0E0E0}"/>
-                        <Button Grid.Column="1" Text="Refrescar" Command="{Binding LoadPreparacionesDiaCommand}" Style="{StaticResource SecondaryButtonStyle}"/>
-                    </Grid>
-
-                    <CollectionView ItemsSource="{Binding PreparacionesDelDia}"
-                                    SelectionMode="None"
-                                    HeightRequest="200">
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate x:DataType="dto:PreparacionDiariaDto">
-                                <Frame BackgroundColor="{AppThemeBinding Light=#F9FAFB, Dark=#1F2937}"
-                                       CornerRadius="12"
-                                       Padding="12"
-                                       Margin="0,6"
-                                       HasShadow="True">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackLayout>
-                                            <Label Text="{Binding NombreProducto}" FontAttributes="Bold"/>
-                                            <Label Text="{Binding CantidadDisponible, StringFormat='Disp.: {0}'}" FontSize="12"/>
-                                            <Label Text="{Binding NombreChef, StringFormat='Chef: {0}'}" FontSize="12"/>
-                                        </StackLayout>
-                                        <Button Grid.Column="1" Text="Usar +1"
-                                                Clicked="OnUsarDesdePreparacionClicked"/>
                                     </Grid>
                                 </Frame>
                             </DataTemplate>
@@ -482,6 +482,7 @@
                             Placeholder="Agregar observaciones especiales para la comanda..."
                             BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#404040}"
                             TextColor="{AppThemeBinding Light=#424242, Dark=#E0E0E0}"
+                            PlaceholderColor="{AppThemeBinding Light=#757575, Dark=#9E9E9E}"
                             HeightRequest="80"/>
                 </StackLayout>
             </Frame>
