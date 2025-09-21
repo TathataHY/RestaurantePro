@@ -1,0 +1,772 @@
+@page "/demos/admin"
+
+<PageTitle>Demo Panel Administrativo - RestaurantePro</PageTitle>
+
+<div class="demo-page">
+    <div class="container">
+        <!-- Header -->
+        <div class="row">
+            <div class="col-12 text-center mb-5">
+                <h1 class="demo-title">
+                    <i class="bi bi-speedometer2 me-3"></i>
+                    Demo Panel Administrativo
+                </h1>
+                <p class="demo-subtitle">
+                    Descubre el centro de control completo para gestionar tu restaurante
+                </p>
+            </div>
+        </div>
+
+        <!-- Demo Content -->
+        <div class="row g-4">
+            <!-- Demo Frame -->
+            <div class="col-lg-8">
+                <div class="demo-frame">
+                    <div class="demo-header">
+                        <div class="demo-browser-controls">
+                            <span class="control red"></span>
+                            <span class="control yellow"></span>
+                            <span class="control green"></span>
+                        </div>
+                        <div class="demo-url">
+                            <i class="bi bi-lock-fill me-2"></i>
+                            https://admin.restaurantepro.com/demo
+                        </div>
+                    </div>
+                    <div class="demo-content">
+                        <div class="admin-preview">
+                            <!-- Sidebar -->
+                            <div class="admin-sidebar">
+                                <div class="sidebar-header">
+                                    <h5><i class="bi bi-restaurant me-2"></i>RestaurantePro</h5>
+                                </div>
+                                <div class="sidebar-menu">
+                                    <div class="menu-item active">
+                                        <i class="bi bi-house-door"></i>
+                                        <span>Dashboard</span>
+                                    </div>
+                                    <div class="menu-item">
+                                        <i class="bi bi-receipt"></i>
+                                        <span>Comandas</span>
+                                    </div>
+                                    <div class="menu-item">
+                                        <i class="bi bi-people"></i>
+                                        <span>Usuarios</span>
+                                    </div>
+                                    <div class="menu-item">
+                                        <i class="bi bi-box"></i>
+                                        <span>Inventario</span>
+                                    </div>
+                                    <div class="menu-item">
+                                        <i class="bi bi-graph-up"></i>
+                                        <span>Reportes</span>
+                                    </div>
+                                    <div class="menu-item">
+                                        <i class="bi bi-gear"></i>
+                                        <span>Configuración</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Main Content -->
+                            <div class="admin-main">
+                                <div class="admin-header">
+                                    <h4>Dashboard Ejecutivo</h4>
+                                    <div class="header-actions">
+                                        <button class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-download"></i> Exportar
+                                        </button>
+                                        <button class="btn btn-sm btn-primary">
+                                            <i class="bi bi-plus"></i> Nuevo
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Dashboard Cards -->
+                                <div class="dashboard-cards">
+                                    <div class="dashboard-card">
+                                        <div class="card-icon">
+                                            <i class="bi bi-currency-dollar"></i>
+                                        </div>
+                                        <div class="card-content">
+                                            <h3>$12,450</h3>
+                                            <p>Ventas Hoy</p>
+                                            <small class="text-success">+12% vs ayer</small>
+                                        </div>
+                                    </div>
+                                    <div class="dashboard-card">
+                                        <div class="card-icon">
+                                            <i class="bi bi-receipt"></i>
+                                        </div>
+                                        <div class="card-content">
+                                            <h3>45</h3>
+                                            <p>Comandas</p>
+                                            <small class="text-info">+8 nuevas</small>
+                                        </div>
+                                    </div>
+                                    <div class="dashboard-card">
+                                        <div class="card-icon">
+                                            <i class="bi bi-table"></i>
+                                        </div>
+                                        <div class="card-content">
+                                            <h3>12/20</h3>
+                                            <p>Mesas Ocupadas</p>
+                                            <small class="text-warning">60% ocupación</small>
+                                        </div>
+                                    </div>
+                                    <div class="dashboard-card">
+                                        <div class="card-icon">
+                                            <i class="bi bi-people"></i>
+                                        </div>
+                                        <div class="card-content">
+                                            <h3>156</h3>
+                                            <p>Clientes Atendidos</p>
+                                            <small class="text-success">+23% vs ayer</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Charts Section -->
+                                <div class="charts-section">
+                                    <div class="chart-container">
+                                        <h5>Ventas por Hora</h5>
+                                        <div class="chart-placeholder">
+                                            <div class="chart-bars">
+                                                <div class="bar" style="height: 60%"></div>
+                                                <div class="bar" style="height: 80%"></div>
+                                                <div class="bar" style="height: 45%"></div>
+                                                <div class="bar" style="height: 90%"></div>
+                                                <div class="bar" style="height: 75%"></div>
+                                                <div class="bar" style="height: 95%"></div>
+                                                <div class="bar" style="height: 70%"></div>
+                                                <div class="bar" style="height: 85%"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="chart-container">
+                                        <h5>Productos Más Vendidos</h5>
+                                        <div class="top-products">
+                                            <div class="product-item">
+                                                <span>Pollo a la Plancha</span>
+                                                <span class="badge bg-primary">23</span>
+                                            </div>
+                                            <div class="product-item">
+                                                <span>Pasta Carbonara</span>
+                                                <span class="badge bg-primary">18</span>
+                                            </div>
+                                            <div class="product-item">
+                                                <span>Ensalada César</span>
+                                                <span class="badge bg-primary">15</span>
+                                            </div>
+                                            <div class="product-item">
+                                                <span>Pizza Margherita</span>
+                                                <span class="badge bg-primary">12</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Recent Activity -->
+                                <div class="recent-activity">
+                                    <h5>Actividad Reciente</h5>
+                                    <div class="activity-list">
+                                        <div class="activity-item">
+                                            <div class="activity-icon">
+                                                <i class="bi bi-receipt"></i>
+                                            </div>
+                                            <div class="activity-content">
+                                                <strong>Nueva comanda creada</strong>
+                                                <p>Mesa 5 - Mesa 5 por María González</p>
+                                                <small class="text-muted">Hace 2 minutos</small>
+                                            </div>
+                                        </div>
+                                        <div class="activity-item">
+                                            <div class="activity-icon">
+                                                <i class="bi bi-check-circle"></i>
+                                            </div>
+                                            <div class="activity-content">
+                                                <strong>Comanda completada</strong>
+                                                <p>Mesa 8 - Orden #1234</p>
+                                                <small class="text-muted">Hace 5 minutos</small>
+                                            </div>
+                                        </div>
+                                        <div class="activity-item">
+                                            <div class="activity-icon">
+                                                <i class="bi bi-cash-stack"></i>
+                                            </div>
+                                            <div class="activity-content">
+                                                <strong>Pago procesado</strong>
+                                                <p>Mesa 3 - $45.50</p>
+                                                <small class="text-muted">Hace 8 minutos</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo Info -->
+            <div class="col-lg-4">
+                <div class="demo-info-card">
+                    <h3>Características del Demo</h3>
+                    <ul class="demo-features">
+                        <li><i class="bi bi-check-circle-fill text-success"></i> Dashboard ejecutivo completo</li>
+                        <li><i class="bi bi-check-circle-fill text-success"></i> Reportes y analytics avanzados</li>
+                        <li><i class="bi bi-check-circle-fill text-success"></i> Gestión de personal y usuarios</li>
+                        <li><i class="bi bi-check-circle-fill text-success"></i> Control de inventario</li>
+                        <li><i class="bi bi-check-circle-fill text-success"></i> Configuración del sistema</li>
+                        <li><i class="bi bi-check-circle-fill text-success"></i> Análisis de ventas y tendencias</li>
+                    </ul>
+
+                    <div class="demo-credentials">
+                        <h5>Credenciales de Acceso</h5>
+                        <div class="credential-item">
+                            <label>Usuario:</label>
+                            <code>admin</code>
+                        </div>
+                        <div class="credential-item">
+                            <label>Contraseña:</label>
+                            <code>admin123</code>
+                        </div>
+                    </div>
+
+                    <div class="demo-actions">
+                        <a href="#" class="btn btn-success btn-lg w-100 mb-2">
+                            <i class="bi bi-play-circle me-2"></i>Acceder al Demo
+                        </a>
+                        <a href="#" class="btn btn-outline-success w-100">
+                            <i class="bi bi-download me-2"></i>Descargar Reporte
+                        </a>
+                    </div>
+
+                    <div class="demo-note">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <small>
+                            Acceso completo a todas las funcionalidades administrativas. 
+                            Los datos se resetean cada 24 horas.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Funcionalidades -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <h3 class="text-center mb-4">Funcionalidades Administrativas</h3>
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="bi bi-graph-up-arrow"></i>
+                            </div>
+                            <h5>Analytics Avanzados</h5>
+                            <p>Reportes detallados y análisis de tendencias para optimizar tu negocio.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="bi bi-people"></i>
+                            </div>
+                            <h5>Gestión de Personal</h5>
+                            <p>Administra usuarios, roles y permisos de todo tu equipo de trabajo.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="bi bi-box-seam"></i>
+                            </div>
+                            <h5>Control de Inventario</h5>
+                            <p>Gestiona stock, alertas de inventario bajo y órdenes de compra.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="bi bi-gear"></i>
+                            </div>
+                            <h5>Configuración</h5>
+                            <p>Personaliza el sistema según las necesidades de tu restaurante.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+                            <h5>Seguridad</h5>
+                            <p>Control de acceso, auditoría de acciones y respaldo de datos.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="bi bi-headset"></i>
+                            </div>
+                            <h5>Soporte</h5>
+                            <p>Asistencia técnica 24/7 y actualizaciones automáticas del sistema.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="row mt-5">
+            <div class="col-12 text-center">
+                <div class="cta-section">
+                    <h3>¿Listo para Tomar el Control Total?</h3>
+                    <p>Descubre cómo el panel administrativo puede transformar la gestión de tu restaurante.</p>
+                    <a href="/#contacto" class="btn btn-success btn-lg">
+                        <i class="bi bi-calendar-check me-2"></i>Solicitar Demo Personalizada
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .demo-page {
+        padding: 2rem 0;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+    }
+
+    .demo-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+
+    .demo-subtitle {
+        font-size: 1.2rem;
+        color: #6c757d;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .demo-frame {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .demo-header {
+        background: #f8f9fa;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .demo-browser-controls {
+        display: flex;
+        gap: 0.5rem;
+        margin-right: 1rem;
+    }
+
+    .control {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+
+    .control.red { background-color: #ff5f57; }
+    .control.yellow { background-color: #ffbd2e; }
+    .control.green { background-color: #28ca42; }
+
+    .demo-url {
+        color: #6c757d;
+        font-size: 0.9rem;
+        flex: 1;
+    }
+
+    .demo-content {
+        padding: 0;
+        min-height: 600px;
+    }
+
+    .admin-preview {
+        display: flex;
+        height: 600px;
+    }
+
+    .admin-sidebar {
+        width: 250px;
+        background: #2c3e50;
+        color: white;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sidebar-header {
+        padding: 1.5rem 1rem;
+        border-bottom: 1px solid #34495e;
+        font-weight: 600;
+    }
+
+    .sidebar-menu {
+        flex: 1;
+        padding: 1rem 0;
+    }
+
+    .menu-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .menu-item:hover {
+        background: #34495e;
+    }
+
+    .menu-item.active {
+        background: #3498db;
+    }
+
+    .menu-item i {
+        margin-right: 0.75rem;
+        width: 20px;
+    }
+
+    .admin-main {
+        flex: 1;
+        background: #f8f9fa;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .admin-header {
+        background: white;
+        padding: 1.5rem;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .admin-header h4 {
+        margin: 0;
+        color: #2c3e50;
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .dashboard-cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        padding: 1.5rem;
+    }
+
+    .dashboard-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+    }
+
+    .card-icon {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.2rem;
+        margin-right: 1rem;
+    }
+
+    .card-content h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0 0 0.25rem 0;
+    }
+
+    .card-content p {
+        color: #6c757d;
+        margin: 0 0 0.25rem 0;
+        font-size: 0.9rem;
+    }
+
+    .card-content small {
+        font-size: 0.8rem;
+    }
+
+    .charts-section {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1.5rem;
+        padding: 0 1.5rem 1.5rem;
+    }
+
+    .chart-container {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .chart-container h5 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+
+    .chart-placeholder {
+        height: 200px;
+        display: flex;
+        align-items: end;
+        justify-content: space-around;
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .chart-bars {
+        display: flex;
+        align-items: end;
+        gap: 0.5rem;
+        width: 100%;
+    }
+
+    .bar {
+        flex: 1;
+        background: linear-gradient(to top, #3498db, #5dade2);
+        border-radius: 4px 4px 0 0;
+        min-height: 20px;
+    }
+
+    .top-products {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .product-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        background: #f8f9fa;
+        border-radius: 6px;
+    }
+
+    .recent-activity {
+        flex: 1;
+        background: white;
+        margin: 0 1.5rem 1.5rem;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .recent-activity h5 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+
+    .activity-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 0.75rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .activity-icon {
+        width: 35px;
+        height: 35px;
+        background: #3498db;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.9rem;
+    }
+
+    .activity-content strong {
+        color: #2c3e50;
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .activity-content p {
+        color: #6c757d;
+        margin: 0 0 0.25rem 0;
+        font-size: 0.9rem;
+    }
+
+    .demo-info-card {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        height: fit-content;
+    }
+
+    .demo-info-card h3 {
+        color: #2c3e50;
+        margin-bottom: 1.5rem;
+    }
+
+    .demo-features {
+        list-style: none;
+        padding: 0;
+        margin-bottom: 2rem;
+    }
+
+    .demo-features li {
+        padding: 0.5rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .demo-credentials {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .demo-credentials h5 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+
+    .credential-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .credential-item code {
+        background: #e9ecef;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-family: monospace;
+    }
+
+    .demo-actions {
+        margin-bottom: 1rem;
+    }
+
+    .demo-note {
+        background: #d1ecf1;
+        border: 1px solid #bee5eb;
+        border-radius: 8px;
+        padding: 0.75rem;
+        color: #0c5460;
+    }
+
+    .feature-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        height: 100%;
+    }
+
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    .feature-card h5 {
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .feature-card p {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 0;
+    }
+
+    .cta-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .cta-section h3 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+
+    .cta-section p {
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+    }
+
+    @@media (max-width: 768px) {
+        .demo-title {
+            font-size: 2rem;
+        }
+        
+        .admin-preview {
+            flex-direction: column;
+            height: auto;
+        }
+        
+        .admin-sidebar {
+            width: 100%;
+            height: auto;
+        }
+        
+        .sidebar-menu {
+            display: flex;
+            overflow-x: auto;
+        }
+        
+        .menu-item {
+            white-space: nowrap;
+            min-width: 120px;
+        }
+        
+        .dashboard-cards {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .charts-section {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

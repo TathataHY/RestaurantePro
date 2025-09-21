@@ -50,6 +50,42 @@ namespace RestaurantePro.Mobile.Core.Services
         }
 
         /// <summary>
+        /// Obtiene preparaciones diarias para la página móvil (rango operativo de 5 días)
+        /// </summary>
+        public async Task<Result<List<PreparacionDiariaDto>>> GetPreparacionesDiariasOperativasAsync(DateTime? fecha = null, int limite = 50)
+        {
+            try
+            {
+                _logger.LogInformation("📱 Obteniendo preparaciones diarias operativas - Fecha: {Fecha}, Límite: {Limite}", 
+                    fecha?.ToString("yyyy-MM-dd") ?? "HOY", limite);
+                
+                var token = await _authService.GetTokenAsync();
+                var url = $"api/operaciones/preparaciones-diarias/menu-del-dia?limite={limite}";
+                
+                if (fecha.HasValue)
+                {
+                    url += $"&fecha={fecha.Value:yyyy-MM-dd}";
+                }
+                
+                var response = await _apiService.GetAsync<List<PreparacionDiariaDto>>(url, token);
+                
+                if (response.Succeeded)
+                {
+                    _logger.LogInformation("✅ Preparaciones diarias operativas obtenidas: {Count} preparaciones", response.Data?.Count ?? 0);
+                    return Result<List<PreparacionDiariaDto>>.Success(response.Data ?? new List<PreparacionDiariaDto>());
+                }
+                
+                _logger.LogWarning("⚠️ Error al obtener preparaciones diarias operativas: {Error}", response.Error);
+                return Result<List<PreparacionDiariaDto>>.Failure(response.Error ?? "Error desconocido");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error al obtener preparaciones diarias operativas");
+                return Result<List<PreparacionDiariaDto>>.Failure($"Error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Obtiene el menú del día (solo preparaciones disponibles, de hoy, no vencidas)
         /// </summary>
         public async Task<Result<List<PreparacionDiariaDto>>> GetMenuDelDiaAsync(DateTime? fecha = null, int limite = 10)

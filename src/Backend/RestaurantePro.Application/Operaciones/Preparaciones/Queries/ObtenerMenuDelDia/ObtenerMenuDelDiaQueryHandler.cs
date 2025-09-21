@@ -41,12 +41,13 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerMe
             CancellationToken cancellationToken)
         {
             var fechaObjetivo = request.Fecha?.Date ?? DateTime.Today;
-            var fechaLimiteInferior = fechaObjetivo.AddDays(-1); // Incluir preparaciones de ayer que aún sirven
+            var fechaLimiteInferior = fechaObjetivo.AddDays(-2); // Solo últimas 3 días operativos (ayer, hoy, mañana)
+            var fechaLimiteSuperior = fechaObjetivo.AddDays(2); // Incluir preparaciones de mañana y pasado mañana
             var ahora = DateTime.Now;
             var limite = request.Limite ?? 10;
             
-            _logger.LogInformation("🍽️ Obteniendo menú del día - Rango: {FechaDesde} a {FechaHasta}, Estados: Disponible/Preparando, No vencidas", 
-                fechaLimiteInferior.ToString("yyyy-MM-dd"), fechaObjetivo.ToString("yyyy-MM-dd"));
+            _logger.LogInformation("🍽️ Obteniendo menú del día - Rango operativo: {FechaDesde} a {FechaHasta}, Solo preparaciones vigentes", 
+                fechaLimiteInferior.ToString("yyyy-MM-dd"), fechaLimiteSuperior.ToString("yyyy-MM-dd"));
 
             try
             {
@@ -56,8 +57,8 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerMe
                     .Where(p => !p.EstaEliminado) // 🚫 No eliminadas
                     .Where(p => p.FechaVencimiento > ahora) // ⏰ PRIMERO: Solo NO vencidas
                     .Where(p => p.Estado == EstadoPreparacion.Disponible || p.Estado == EstadoPreparacion.Preparando) // ✅ SEGUNDO: Estados servibles
-                    .Where(p => p.FechaPreparacion.Date >= fechaLimiteInferior && p.FechaPreparacion.Date <= fechaObjetivo) // 📅 TERCERO: Rango de fechas
-                    .OrderByDescending(p => p.FechaPreparacion) // 🔄 Ordenar las VÁLIDAS
+                    .Where(p => p.FechaVencimiento.Date >= fechaLimiteInferior && p.FechaVencimiento.Date <= fechaLimiteSuperior) // 📅 TERCERO: Solo 5 días operativos
+                    .OrderBy(p => p.FechaVencimiento) // ⏰ Ordenar por proximidad de vencimiento (urgente primero)
                     .Take(limite) // 🔢 ÚLTIMO: Tomar las primeras N válidas
                     .Select(p => new PreparacionDiariaDto
                     {
@@ -88,8 +89,8 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Queries.ObtenerMe
                     })
                     .ToListAsync(cancellationToken);
 
-                _logger.LogInformation("✅ Menú del día obtenido exitosamente: {Cantidad} preparaciones disponibles para servir (Rango: {FechaDesde}-{FechaHasta}, Hora: {Hora})", 
-                    menuDelDia.Count, fechaLimiteInferior.ToString("dd/MM"), fechaObjetivo.ToString("dd/MM"), ahora.ToString("HH:mm:ss"));
+                _logger.LogInformation("✅ Menú del día obtenido exitosamente: {Cantidad} preparaciones operativas vigentes (Rango: {FechaDesde}-{FechaHasta}, Hora: {Hora})", 
+                    menuDelDia.Count, fechaLimiteInferior.ToString("dd/MM"), fechaLimiteSuperior.ToString("dd/MM"), ahora.ToString("HH:mm:ss"));
 
                 return Result.Success(menuDelDia);
             }

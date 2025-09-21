@@ -1,17 +1,165 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
+<div class="main-layout">
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-restaurant me-2"></i>
+                <strong>RestaurantePro</strong>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#caracteristicas">Características</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#demos">Demos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#testimonios">Testimonios</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#contacto">Contacto</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-light ms-2" href="#demos">
+                            <i class="bi bi-play-circle me-1"></i>Ver Demo
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </div>
+    </nav>
 
-        <article class="content px-4">
-            @Body
-        </article>
+    <!-- Main Content -->
+    <main class="main-content">
+        @Body
     </main>
+
+    <!-- Footer -->
+    <footer class="footer bg-dark text-light py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-4">
+                    <h5><i class="bi bi-restaurant me-2"></i>RestaurantePro</h5>
+                    <p class="text-muted">
+                        La solución completa para gestionar tu restaurante con tecnología de vanguardia.
+                    </p>
+                </div>
+                <div class="col-lg-2">
+                    <h6>Producto</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#caracteristicas" class="text-muted">Características</a></li>
+                        <li><a href="#demos" class="text-muted">Demos</a></li>
+                        <li><a href="#" class="text-muted">Precios</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2">
+                    <h6>Empresa</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-muted">Acerca de</a></li>
+                        <li><a href="#" class="text-muted">Blog</a></li>
+                        <li><a href="#" class="text-muted">Carreras</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2">
+                    <h6>Soporte</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-muted">Centro de Ayuda</a></li>
+                        <li><a href="#contacto" class="text-muted">Contacto</a></li>
+                        <li><a href="#" class="text-muted">Estado del Sistema</a></li>
+                    </ul>
+                </div>
+                <div class="col-lg-2">
+                    <h6>Legal</h6>
+                    <ul class="list-unstyled">
+                        <li><a href="#" class="text-muted">Privacidad</a></li>
+                        <li><a href="#" class="text-muted">Términos</a></li>
+                        <li><a href="#" class="text-muted">Cookies</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0 text-muted">&copy; 2024 RestaurantePro. Todos los derechos reservados.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="social-links">
+                        <a href="#" class="text-muted me-3"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="text-muted me-3"><i class="bi bi-twitter"></i></a>
+                        <a href="#" class="text-muted me-3"><i class="bi bi-instagram"></i></a>
+                        <a href="#" class="text-muted"><i class="bi bi-linkedin"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
 </div>
+
+<style>
+    .main-layout {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .navbar {
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .navbar-brand {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .main-content {
+        flex: 1;
+        padding-top: 80px; /* Espacio para navbar fijo */
+    }
+
+    .footer {
+        margin-top: auto;
+    }
+
+    .footer h5, .footer h6 {
+        color: #ffffff;
+        margin-bottom: 1rem;
+    }
+
+    .footer a {
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .footer a:hover {
+        color: #007bff !important;
+    }
+
+    .social-links a {
+        font-size: 1.2rem;
+        transition: all 0.3s ease;
+    }
+
+    .social-links a:hover {
+        color: #007bff !important;
+        transform: translateY(-2px);
+    }
+
+    /* Smooth scrolling */
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* Navbar scroll effect */
+    .navbar.scrolled {
+        background-color: rgba(0, 123, 255, 0.95) !important;
+    }
+</style>

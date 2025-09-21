@@ -14,6 +14,11 @@ namespace RestaurantePro.Mobile.Core.Services
         Task<Result<List<PreparacionDiariaDto>>> GetPreparacionesDiariasAsync();
 
         /// <summary>
+        /// Obtiene preparaciones diarias para la página móvil (rango operativo de 5 días)
+        /// </summary>
+        Task<Result<List<PreparacionDiariaDto>>> GetPreparacionesDiariasOperativasAsync(DateTime? fecha = null, int limite = 50);
+
+        /// <summary>
         /// Obtiene el menú del día (solo preparaciones disponibles, de hoy, no vencidas)
         /// </summary>
         Task<Result<List<PreparacionDiariaDto>>> GetMenuDelDiaAsync(DateTime? fecha = null, int limite = 10);

@@ -3,20 +3,21 @@ using CommunityToolkit.Mvvm.Input;
 using RestaurantePro.Mobile.Core.Models.DTOs;
 using RestaurantePro.Mobile.Core.Services.Inventory;
 using RestaurantePro.Mobile.Core.Services.Dialog;
+using RestaurantePro.Mobile.Core.Services;
 using System.Collections.ObjectModel;
 
 namespace RestaurantePro.Mobile.Core.Features.Inventory.Preparaciones.ViewModels;
 
 public partial class PreparacionesViewModel : ObservableObject
 {
-    private readonly IPreparacionesService _preparacionesService;
+    private readonly IDailyPreparationsService _dailyPreparationsService;
     private readonly IDialogService _dialogService;
 
     [ObservableProperty]
-    private ObservableCollection<PreparacionDto> _preparaciones = new();
+    private ObservableCollection<PreparacionDiariaDto> _preparaciones = new();
 
     [ObservableProperty]
-    private ObservableCollection<PreparacionDto> _preparacionesFiltradas = new();
+    private ObservableCollection<PreparacionDiariaDto> _preparacionesFiltradas = new();
 
     [ObservableProperty]
     private string _terminoBusqueda = string.Empty;
@@ -37,9 +38,9 @@ public partial class PreparacionesViewModel : ObservableObject
 
 
 
-    public PreparacionesViewModel(IPreparacionesService preparacionesService, IDialogService dialogService)
+    public PreparacionesViewModel(IDailyPreparationsService dailyPreparationsService, IDialogService dialogService)
     {
-        _preparacionesService = preparacionesService;
+        _dailyPreparationsService = dailyPreparationsService;
         _dialogService = dialogService;
     }
 
@@ -49,9 +50,9 @@ public partial class PreparacionesViewModel : ObservableObject
         try
         {
             IsLoading = true;
-            var response = await _preparacionesService.ObtenerPreparacionesAsync(SoloDisponibles);
+            var response = await _dailyPreparationsService.GetPreparacionesDiariasOperativasAsync(limite: 50);
             
-            if (response.Success)
+            if (response.Succeeded)
             {
                 Preparaciones.Clear();
                 foreach (var preparacion in response.Data)
@@ -62,7 +63,7 @@ public partial class PreparacionesViewModel : ObservableObject
             }
             else
             {
-                await _dialogService.ShowAlertAsync("Error", response.Message);
+                await _dialogService.ShowAlertAsync("Error", response.Error ?? "Error desconocido");
             }
         }
         catch (Exception ex)
@@ -80,11 +81,9 @@ public partial class PreparacionesViewModel : ObservableObject
     {
         try
         {
-            var response = await _preparacionesService.ObtenerEstadisticasAsync();
-            if (response.Success)
-            {
-                Estadisticas = response.Data;
-            }
+            // Para preparaciones diarias, no tenemos estadísticas específicas
+            // Podríamos implementar estadísticas básicas basadas en los datos cargados
+            await _dialogService.ShowAlertAsync("Información", "Las estadísticas de preparaciones diarias no están disponibles en esta versión.");
         }
         catch (Exception ex)
         {
@@ -101,49 +100,27 @@ public partial class PreparacionesViewModel : ObservableObject
             return;
         }
 
-        try
-        {
-            IsLoading = true;
-            var response = await _preparacionesService.BuscarPreparacionesAsync(TerminoBusqueda);
-            
-            if (response.Success)
-            {
-                PreparacionesFiltradas.Clear();
-                foreach (var preparacion in response.Data)
-                {
-                    PreparacionesFiltradas.Add(preparacion);
-                }
-            }
-            else
-            {
-                await _dialogService.ShowAlertAsync("Error", response.Message);
-            }
-        }
-        catch (Exception ex)
-        {
-            await _dialogService.ShowAlertAsync("Error", $"Error al buscar preparaciones: {ex.Message}");
-        }
-        finally
-        {
-            IsLoading = false;
-        }
+        // Para preparaciones diarias, aplicamos filtro local en lugar de búsqueda en API
+        AplicarFiltros();
     }
 
     [RelayCommand]
-    private async Task CambiarDisponibilidadAsync(PreparacionDto preparacion)
+    private async Task CambiarDisponibilidadAsync(PreparacionDiariaDto preparacion)
     {
         try
         {
-            var response = await _preparacionesService.CambiarDisponibilidadAsync(preparacion.Id, !preparacion.Disponible);
+            // Para preparaciones diarias, usamos el método de marcar como disponible
+            var response = await _dailyPreparationsService.MarcarComoDisponibleAsync(preparacion.Id);
             
-            if (response.Success)
+            if (response.Succeeded)
             {
-                preparacion.Disponible = !preparacion.Disponible;
-                await _dialogService.ShowAlertAsync("Éxito", "Disponibilidad actualizada correctamente");
+                await _dialogService.ShowAlertAsync("Éxito", "Preparación marcada como disponible correctamente");
+                // Recargar preparaciones para actualizar el estado
+                await CargarPreparacionesAsync();
             }
             else
             {
-                await _dialogService.ShowAlertAsync("Error", response.Message);
+                await _dialogService.ShowAlertAsync("Error", response.Error ?? "Error desconocido");
             }
         }
         catch (Exception ex)
@@ -173,18 +150,12 @@ public partial class PreparacionesViewModel : ObservableObject
         
         var preparacionesFiltradas = Preparaciones.AsEnumerable();
 
-        // Filtrar por categoría
-        if (CategoriaSeleccionada != "Todas")
-        {
-            preparacionesFiltradas = preparacionesFiltradas.Where(p => p.Categoria == CategoriaSeleccionada);
-        }
-
-        // Filtrar por término de búsqueda
+        // Filtrar por término de búsqueda (usando nombre del producto)
         if (!string.IsNullOrWhiteSpace(TerminoBusqueda))
         {
             preparacionesFiltradas = preparacionesFiltradas.Where(p => 
-                p.Nombre.Contains(TerminoBusqueda, StringComparison.OrdinalIgnoreCase) ||
-                p.Descripcion.Contains(TerminoBusqueda, StringComparison.OrdinalIgnoreCase));
+                p.NombreProducto.Contains(TerminoBusqueda, StringComparison.OrdinalIgnoreCase) ||
+                (p.Observaciones ?? "").Contains(TerminoBusqueda, StringComparison.OrdinalIgnoreCase));
         }
 
         foreach (var preparacion in preparacionesFiltradas)
