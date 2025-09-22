@@ -18,14 +18,21 @@ public partial class CreateDailyPreparationPage : ContentPage
                 // 🔐 IMPORTANTE: Inicializar autorización ANTES de cargar datos
                 await vm.InitializeWithAuthorizationAsync();
                 
-                // 🚀 OPTIMIZACIÓN: Cargar categorías y productos en paralelo
-                var categoriasTask = vm.Categorias.Count == 0 ? vm.CargarCategoriasCommand.ExecuteAsync(null) : Task.CompletedTask;
-                var productosTask = vm.Productos.Count == 0 ? vm.BuscarProductosCommand.ExecuteAsync(null) : Task.CompletedTask;
+                // 🎯 OPTIMIZACIÓN: Cargar categorías PRIMERO (son pocas y críticas para el filtro)
+                if (vm.Categorias.Count == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"🗂️ [CreateDailyPreparationPage] Cargando categorías PRIMERO...");
+                    await vm.CargarCategoriasCommand.ExecuteAsync(null);
+                }
                 
-                // Esperar ambas tareas en paralelo
-                await Task.WhenAll(categoriasTask, productosTask);
+                // 📦 DESPUÉS: Cargar productos (pueden ser muchos)
+                if (vm.Productos.Count == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine($"📦 [CreateDailyPreparationPage] Cargando productos DESPUÉS...");
+                    await vm.BuscarProductosCommand.ExecuteAsync(null);
+                }
                 
-                System.Diagnostics.Debug.WriteLine($"⚡ [CreateDailyPreparationPage] Carga paralela completada");
+                System.Diagnostics.Debug.WriteLine($"⚡ [CreateDailyPreparationPage] Carga secuencial completada - Categorías: {vm.Categorias.Count}, Productos: {vm.Productos.Count}");
             }
         }
 }

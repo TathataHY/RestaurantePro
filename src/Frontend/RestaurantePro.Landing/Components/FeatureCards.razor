@@ -150,42 +150,45 @@
 
     .feature-card {
         background: white;
-        border-radius: 15px;
-        padding: 2rem;
+        border-radius: 20px;
+        padding: 2.5rem;
         height: 100%;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-        transition: all 0.3s ease;
-        border: 1px solid #e9ecef;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid #f1f5f9;
         position: relative;
+        backdrop-filter: blur(10px);
     }
 
     .feature-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
     }
 
     .feature-card.featured {
-        border: 2px solid #007bff;
-        transform: scale(1.05);
+        border: 2px solid #2563eb;
+        transform: scale(1.02);
+        box-shadow: 0 15px 35px rgba(37, 99, 235, 0.15);
     }
 
     .feature-card.featured::before {
         content: 'MÁS POPULAR';
         position: absolute;
-        top: -10px;
+        top: -12px;
         right: 20px;
-        background: #007bff;
+        background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
         color: white;
-        padding: 5px 15px;
-        border-radius: 20px;
+        padding: 8px 18px;
+        border-radius: 25px;
         font-size: 0.8rem;
         font-weight: 600;
+        box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
     }
 
     .feature-icon {
         width: 80px;
         height: 80px;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -193,6 +196,7 @@
         margin: 0 auto 1.5rem;
         color: white;
         font-size: 2rem;
+        box-shadow: 0 8px 25px rgba(37, 99, 235, 0.3);
     }
 
     .feature-card h3 {
@@ -243,7 +247,7 @@
     .key-feature-icon {
         width: 60px;
         height: 60px;
-        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -251,6 +255,7 @@
         margin: 0 auto 1rem;
         color: white;
         font-size: 1.5rem;
+        box-shadow: 0 6px 20px rgba(5, 150, 105, 0.3);
     }
 
     .key-feature-item h5 {

@@ -10,135 +10,140 @@
              Title="Menú del Día"
              BackgroundColor="{StaticResource SurfacePrimary}">
 
-    <Grid RowDefinitions="Auto,*,Auto">
+    <Grid RowDefinitions="*">
 
-        <!-- Header con Estadísticas -->
-        <ScrollView Grid.Row="0" Orientation="Horizontal" HorizontalScrollBarVisibility="Never" Padding="16,8">
-            <HorizontalStackLayout Spacing="12">
-                <controls:ModernCard Padding="16" WidthRequest="140">
-                    <VerticalStackLayout Spacing="6">
-                        <Label Text="🍽️" FontSize="24" HorizontalOptions="Center" />
-                        <Label Text="Total" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
-                        <Label Text="{Binding Estadisticas.TotalPreparaciones}" Style="{StaticResource H2Style}" TextColor="{StaticResource TextPrimary}" HorizontalOptions="Center" />
-                    </VerticalStackLayout>
-                </controls:ModernCard>
+        <!-- Contenido Principal (Header + Lista) en un solo scroll -->
+        <RefreshView Grid.Row="0"
+                     x:Name="RefreshControl"
+                     IsRefreshing="{Binding IsRefreshing, Mode=TwoWay}"
+                     Command="{Binding RefreshCommand}"
+                     Refreshing="OnRefreshing">
 
-                <controls:ModernCard Padding="16" WidthRequest="140">
-                    <VerticalStackLayout Spacing="6">
-                        <Label Text="🟢" FontSize="24" HorizontalOptions="Center" />
-                        <Label Text="Disponibles" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
-                        <Label Text="{Binding Estadisticas.PreparacionesDisponibles}" Style="{StaticResource H2Style}" TextColor="{StaticResource SuccessColor}" HorizontalOptions="Center" />
-                    </VerticalStackLayout>
-                </controls:ModernCard>
+            <CollectionView ItemsSource="{Binding PreparacionesDiarias}" SelectionMode="None">
+                
+                <!-- Header con Estadísticas -->
+                <CollectionView.Header>
+                    <VerticalStackLayout Spacing="8">
+                        <!-- Estadísticas -->
+                        <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never" Padding="16,8">
+                            <HorizontalStackLayout Spacing="12">
+                                <controls:ModernCard Padding="16" WidthRequest="140">
+                                    <VerticalStackLayout Spacing="6">
+                                        <Label Text="🍽️" FontSize="24" HorizontalOptions="Center" />
+                                        <Label Text="Total" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                                        <Label Text="{Binding Estadisticas.TotalPreparaciones}" Style="{StaticResource H2Style}" TextColor="{StaticResource TextPrimary}" HorizontalOptions="Center" />
+                                    </VerticalStackLayout>
+                                </controls:ModernCard>
 
-                <controls:ModernCard Padding="16" WidthRequest="140">
-                    <VerticalStackLayout Spacing="6">
-                        <Label Text="⏰" FontSize="24" HorizontalOptions="Center" />
-                        <Label Text="Por vencer" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
-                        <Label Text="{Binding Estadisticas.PreparacionesPorVencer}" Style="{StaticResource H2Style}" TextColor="{StaticResource WarningColor}" HorizontalOptions="Center" />
-                    </VerticalStackLayout>
-                </controls:ModernCard>
+                                <controls:ModernCard Padding="16" WidthRequest="140">
+                                    <VerticalStackLayout Spacing="6">
+                                        <Label Text="🟢" FontSize="24" HorizontalOptions="Center" />
+                                        <Label Text="Disponibles" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                                        <Label Text="{Binding Estadisticas.PreparacionesDisponibles}" Style="{StaticResource H2Style}" TextColor="{StaticResource SuccessColor}" HorizontalOptions="Center" />
+                                    </VerticalStackLayout>
+                                </controls:ModernCard>
 
-                <controls:ModernCard Padding="16" WidthRequest="140">
-                    <VerticalStackLayout Spacing="6">
-                        <Label Text="📈" FontSize="24" HorizontalOptions="Center" />
-                        <Label Text="Eficiencia" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
-                        <Label Text="{Binding Estadisticas.EficienciaFormateada}" Style="{StaticResource H2Style}" TextColor="{StaticResource InfoColor}" HorizontalOptions="Center" />
-                    </VerticalStackLayout>
-                </controls:ModernCard>
-            </HorizontalStackLayout>
-        </ScrollView>
+                                <controls:ModernCard Padding="16" WidthRequest="140">
+                                    <VerticalStackLayout Spacing="6">
+                                        <Label Text="⏰" FontSize="24" HorizontalOptions="Center" />
+                                        <Label Text="Por vencer" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                                        <Label Text="{Binding Estadisticas.PreparacionesPorVencer}" Style="{StaticResource H2Style}" TextColor="{StaticResource WarningColor}" HorizontalOptions="Center" />
+                                    </VerticalStackLayout>
+                                </controls:ModernCard>
 
-        <!-- Contenido Principal -->
-        <Grid Grid.Row="1" RowDefinitions="Auto,*">
-            <controls:ModernCard Grid.Row="0" Margin="16,8">
-                <VerticalStackLayout Spacing="12">
-                    <controls:ModernEntry Placeholder="Buscar en el menú del día..." Text="{Binding TextoBusqueda}" Icon="🔍" />
-                    <controls:TabNavigation x:Name="FilterTabNavigation" />
-                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
-                        <Button Text="🔄 Refrescar" Command="{Binding RefreshCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-                        <Button Grid.Column="1" Text="📊 Estadísticas" Command="{Binding LoadEstadisticasCommand}" Style="{StaticResource SecondaryButtonStyle}" />
-                <Button Grid.Column="2" Text="➕ Agregar" Command="{Binding CrearNuevaPreparacionCommand}" Style="{StaticResource PrimaryButtonStyle}" IsVisible="{Binding CanCrearPreparacion}" />
-                    </Grid>
-                </VerticalStackLayout>
-            </controls:ModernCard>
+                                <controls:ModernCard Padding="16" WidthRequest="140">
+                                    <VerticalStackLayout Spacing="6">
+                                        <Label Text="📈" FontSize="24" HorizontalOptions="Center" />
+                                        <Label Text="Eficiencia" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
+                                        <Label Text="{Binding Estadisticas.EficienciaFormateada}" Style="{StaticResource H2Style}" TextColor="{StaticResource InfoColor}" HorizontalOptions="Center" />
+                                    </VerticalStackLayout>
+                                </controls:ModernCard>
+                            </HorizontalStackLayout>
+                        </ScrollView>
 
-            <RefreshView x:Name="RefreshControl"
-                         Grid.Row="1"
-                         IsRefreshing="{Binding IsRefreshing, Mode=TwoWay}"
-                         Command="{Binding RefreshCommand}"
-                         Refreshing="OnRefreshing">
-                <CollectionView ItemsSource="{Binding PreparacionesDiarias}" SelectionMode="None">
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="dto:PreparacionDiariaDto">
-                            <controls:ModernCard Margin="8">
-                                <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
-                                    <HorizontalStackLayout Grid.Row="0" Grid.ColumnSpan="2" Spacing="8">
-                                        <Label Text="{Binding NombreProducto}" Style="{StaticResource H3Style}" />
-                                        <Label Text="{Binding IconoEstado}" FontSize="16" />
-                                        <Border BackgroundColor="{Binding ColorEstado}" StrokeShape="RoundRectangle 10" Padding="{OnPlatform iOS='8,2', Android='8,2', WinUI='8,2'}">
-                                            <Label Text="{Binding TextoEstado}" Style="{StaticResource CaptionStyle}" TextColor="White" />
-                                        </Border>
-                                    </HorizontalStackLayout>
-
-                                    <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="*,*,*" Margin="0,8,0,0">
-                                        <VerticalStackLayout Grid.Column="0" Spacing="4" HorizontalOptions="Center">
-                                            <Label Text="{Binding CantidadPreparada}" Style="{StaticResource H3Style}" />
-                                            <Label Text="Preparada" Style="{StaticResource CaptionStyle}" />
-                                        </VerticalStackLayout>
-                                        <VerticalStackLayout Grid.Column="1" Spacing="4" HorizontalOptions="Center">
-                                            <Label Text="{Binding CantidadDisponible}" Style="{StaticResource H3Style}" TextColor="{Binding ColorEstado}" />
-                                            <Label Text="Disponible" Style="{StaticResource CaptionStyle}" />
-                                        </VerticalStackLayout>
-                                        <VerticalStackLayout Grid.Column="2" Spacing="4" HorizontalOptions="Center">
-                                            <Label Text="{Binding CantidadConsumida}" Style="{StaticResource H3Style}" />
-                                            <Label Text="Consumida" Style="{StaticResource CaptionStyle}" />
-                                        </VerticalStackLayout>
-                                    </Grid>
-
-                                    <Grid Grid.Row="2" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto" Margin="0,8,0,0">
-                                        <VerticalStackLayout Grid.Column="0" Spacing="2">
-                                            <Label Text="{Binding NombreChef, StringFormat='Chef: {0}'}" Style="{StaticResource CaptionStyle}" />
-                                            <Label Text="{Binding FechaVencimiento, StringFormat='Vence: {0:dd/MM HH:mm}'}" Style="{StaticResource CaptionStyle}" TextColor="{Binding EstaPorVencer, Converter={StaticResource BoolToColorConverter}}" />
-                                            <Label Text="{Binding Observaciones}" Style="{StaticResource CaptionStyle}" />
-                                        </VerticalStackLayout>
-                                        <HorizontalStackLayout Grid.Column="1" Spacing="6">
-                <Button Text="✏️"
-                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditarPreparacionCommand}"
-                        CommandParameter="{Binding .}"
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        Clicked="OnEditarClicked"
-                        IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CanEditarPreparacion}" />
-                <Button Text="🗑️" 
-                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EliminarPreparacionCommand}"
-                        CommandParameter="{Binding .}"
-                        Style="{StaticResource DangerButtonStyle}"
-                        Clicked="OnEliminarClicked"
-                        IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CanEliminarPreparacion}" />
-                                        </HorizontalStackLayout>
-                                    </Grid>
+                        <!-- Filtros y Búsqueda -->
+                        <controls:ModernCard Margin="16,8">
+                            <VerticalStackLayout Spacing="12">
+                                <controls:ModernEntry Placeholder="Buscar en el menú del día..." Text="{Binding TextoBusqueda}" Icon="🔍" />
+                                <controls:TabNavigation x:Name="FilterTabNavigation" />
+                                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+                                    <Button Text="🔄 Refrescar" Command="{Binding RefreshCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+                                    <Button Grid.Column="1" Text="📊 Estadísticas" Command="{Binding LoadEstadisticasCommand}" Style="{StaticResource SecondaryButtonStyle}" />
+                                    <Button Grid.Column="2" Text="➕ Agregar" Command="{Binding CrearNuevaPreparacionCommand}" Style="{StaticResource PrimaryButtonStyle}" IsVisible="{Binding CanCrearPreparacion}" />
                                 </Grid>
-                            </controls:ModernCard>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
+                            </VerticalStackLayout>
+                        </controls:ModernCard>
+                    </VerticalStackLayout>
+                </CollectionView.Header>
 
-                    <CollectionView.EmptyView>
-                        <VerticalStackLayout Spacing="16" VerticalOptions="Center" HorizontalOptions="Center" Padding="32">
-                            <Label Text="🍽️" FontSize="64" HorizontalOptions="Center" />
-                            <Label Text="No hay elementos en el menú del día" Style="{StaticResource H2Style}" HorizontalOptions="Center" />
-                            <Label Text="Agrega el primer elemento al menú para comenzar" Style="{StaticResource BodyStyle}" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
-                <Button Text="Agregar al menú" Command="{Binding CrearNuevaPreparacionCommand}" Style="{StaticResource PrimaryButtonStyle}" IsVisible="{Binding CanCrearPreparacion}" />
-                        </VerticalStackLayout>
-                    </CollectionView.EmptyView>
-                </CollectionView>
-            </RefreshView>
-        </Grid>
+                <!-- Items de Preparaciones -->
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="dto:PreparacionDiariaDto">
+                        <controls:ModernCard Margin="8">
+                            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                                <HorizontalStackLayout Grid.Row="0" Grid.ColumnSpan="2" Spacing="8">
+                                    <Label Text="{Binding NombreProducto}" Style="{StaticResource H3Style}" />
+                                    <Label Text="{Binding IconoEstado}" FontSize="16" />
+                                    <Border BackgroundColor="{Binding ColorEstado}" StrokeShape="RoundRectangle 10" Padding="{OnPlatform iOS='8,2', Android='8,2', WinUI='8,2'}">
+                                        <Label Text="{Binding TextoEstado}" Style="{StaticResource CaptionStyle}" TextColor="White" />
+                                    </Border>
+                                </HorizontalStackLayout>
 
-        <!-- Bottom Navigation - COMENTADO PARA USAR TABS NATIVOS -->
-        <!-- <controls:ModernTabBar Grid.Row="2" x:Name="BottomTabBar" /> -->
-        
-        <!-- Floating Action Button -->
-        <controls:FloatingActionButton Grid.Row="2"
+                                <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="*,*,*" Margin="0,8,0,0">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="4" HorizontalOptions="Center">
+                                        <Label Text="{Binding CantidadPreparada}" Style="{StaticResource H3Style}" />
+                                        <Label Text="Preparada" Style="{StaticResource CaptionStyle}" />
+                                    </VerticalStackLayout>
+                                    <VerticalStackLayout Grid.Column="1" Spacing="4" HorizontalOptions="Center">
+                                        <Label Text="{Binding CantidadDisponible}" Style="{StaticResource H3Style}" TextColor="{Binding ColorEstado}" />
+                                        <Label Text="Disponible" Style="{StaticResource CaptionStyle}" />
+                                    </VerticalStackLayout>
+                                    <VerticalStackLayout Grid.Column="2" Spacing="4" HorizontalOptions="Center">
+                                        <Label Text="{Binding CantidadConsumida}" Style="{StaticResource H3Style}" />
+                                        <Label Text="Consumida" Style="{StaticResource CaptionStyle}" />
+                                    </VerticalStackLayout>
+                                </Grid>
+
+                                <Grid Grid.Row="2" Grid.ColumnSpan="2" ColumnDefinitions="*,Auto" Margin="0,8,0,0">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                        <Label Text="{Binding NombreChef, StringFormat='Chef: {0}'}" Style="{StaticResource CaptionStyle}" />
+                                        <Label Text="{Binding FechaVencimiento, StringFormat='Vence: {0:dd/MM HH:mm}'}" Style="{StaticResource CaptionStyle}" TextColor="{Binding EstaPorVencer, Converter={StaticResource BoolToColorConverter}}" />
+                                        <Label Text="{Binding Observaciones}" Style="{StaticResource CaptionStyle}" />
+                                    </VerticalStackLayout>
+                                    <HorizontalStackLayout Grid.Column="1" Spacing="6">
+                                        <Button Text="✏️"
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EditarPreparacionCommand}"
+                                                CommandParameter="{Binding .}"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                Clicked="OnEditarClicked"
+                                                IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CanEditarPreparacion}" />
+                                        <Button Text="🗑️" 
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.EliminarPreparacionCommand}"
+                                                CommandParameter="{Binding .}"
+                                                Style="{StaticResource DangerButtonStyle}"
+                                                Clicked="OnEliminarClicked"
+                                                IsVisible="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CanEliminarPreparacion}" />
+                                    </HorizontalStackLayout>
+                                </Grid>
+                            </Grid>
+                        </controls:ModernCard>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+
+                <!-- Vista Vacía -->
+                <CollectionView.EmptyView>
+                    <VerticalStackLayout Spacing="16" VerticalOptions="Center" HorizontalOptions="Center" Padding="32">
+                        <Label Text="🍽️" FontSize="64" HorizontalOptions="Center" />
+                        <Label Text="No hay elementos en el menú del día" Style="{StaticResource H2Style}" HorizontalOptions="Center" />
+                        <Label Text="Agrega el primer elemento al menú para comenzar" Style="{StaticResource BodyStyle}" TextColor="{StaticResource TextSecondary}" HorizontalOptions="Center" />
+                        <Button Text="Agregar al menú" Command="{Binding CrearNuevaPreparacionCommand}" Style="{StaticResource PrimaryButtonStyle}" IsVisible="{Binding CanCrearPreparacion}" />
+                    </VerticalStackLayout>
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </RefreshView>
+
+        <!-- Floating Action Button SUPERPUESTO al contenido -->
+        <controls:FloatingActionButton Grid.Row="0"
                                        x:Name="MainFab"
                                        Text="➕"
                                        Command="{Binding CrearNuevaPreparacionCommand}"
@@ -149,5 +154,4 @@
     </Grid>
 
 </ContentPage>
-
 

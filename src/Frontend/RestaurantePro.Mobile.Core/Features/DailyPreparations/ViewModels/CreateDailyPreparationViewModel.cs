@@ -167,8 +167,27 @@ public partial class CreateDailyPreparationViewModel : AuthorizedBaseViewModel
             var size = 10; // ⚡ Solo 10 productos para carga ultra-rápida
             var term = string.IsNullOrWhiteSpace(ProductoBusqueda) ? null : ProductoBusqueda;
             
-            // 🚀 OPTIMIZACIÓN: Usar SOLO paginación para evitar carga masiva
-            var result = await _productosService.ObtenerProductosPaginadosAsync(page, size, term, true);
+            RestaurantePro.Mobile.Core.Models.DTOs.ApiResponse<List<ProductoDto>> result;
+            
+            // 🎯 FILTRO POR CATEGORÍA: Priorizar filtro por categoría seleccionada
+            if (CategoriaSeleccionada != null)
+            {
+                // Si hay categoría seleccionada, filtrar por categoría
+                result = await _productosService.ObtenerProductosPorCategoriaAsync(CategoriaSeleccionada.Id, true);
+                System.Diagnostics.Debug.WriteLine($"🗂️ [CreateDailyPreparation] Filtrando por categoría: '{CategoriaSeleccionada.Nombre}' (ID: {CategoriaSeleccionada.Id})");
+            }
+            else if (!string.IsNullOrWhiteSpace(term))
+            {
+                // Si no hay categoría pero hay término de búsqueda, buscar por texto
+                result = await _productosService.BuscarProductosAsync(term, true);
+                System.Diagnostics.Debug.WriteLine($"🔍 [CreateDailyPreparation] Buscando por texto: '{term}'");
+            }
+            else
+            {
+                // Si no hay filtros, usar paginación básica
+                result = await _productosService.ObtenerProductosPaginadosAsync(page, size, term, true);
+                System.Diagnostics.Debug.WriteLine($"⚡ [CreateDailyPreparation] Carga paginada básica - Página: {page}, Tamaño: {size}");
+            }
             
             Productos.Clear();
             if (result.Success && result.Data != null)
@@ -176,11 +195,16 @@ public partial class CreateDailyPreparationViewModel : AuthorizedBaseViewModel
                 foreach (var p in result.Data)
                     Productos.Add(p);
                 
-                System.Diagnostics.Debug.WriteLine($"⚡ [CreateDailyPreparation] Productos cargados: {result.Data.Count}/10 - Término: '{term}'");
+                System.Diagnostics.Debug.WriteLine($"✅ [CreateDailyPreparation] Productos cargados: {result.Data.Count} - Categoría: '{CategoriaSeleccionada?.Nombre ?? "Todas"}', Término: '{term ?? "N/A"}'");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ [CreateDailyPreparation] Error al cargar productos: {result.Message}");
             }
         }
         catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"❌ [CreateDailyPreparation] Excepción al buscar productos: {ex.Message}");
             await _dialogService.ShowErrorAsync($"Error al buscar productos: {ex.Message}");
         }
         finally
@@ -194,16 +218,28 @@ public partial class CreateDailyPreparationViewModel : AuthorizedBaseViewModel
     {
         try
         {
+            System.Diagnostics.Debug.WriteLine($"🗂️ [CreateDailyPreparation] Iniciando carga de categorías...");
+            
             var resp = await _productosService.ObtenerCategoriasAsync();
             Categorias.Clear();
+            
             if (resp.Success && resp.Data != null)
             {
                 foreach (var c in resp.Data)
                     Categorias.Add(c);
+                
+                System.Diagnostics.Debug.WriteLine($"✅ [CreateDailyPreparation] Categorías cargadas exitosamente: {Categorias.Count}");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ [CreateDailyPreparation] Error al cargar categorías: {resp.Message}");
+                // No mostrar error al usuario, solo log para debug
             }
         }
         catch (Exception ex)
         {
+            System.Diagnostics.Debug.WriteLine($"❌ [CreateDailyPreparation] Excepción al cargar categorías: {ex.Message}");
+            // Solo mostrar error crítico al usuario
             await _dialogService.ShowErrorAsync($"Error al cargar categorías: {ex.Message}");
         }
     }

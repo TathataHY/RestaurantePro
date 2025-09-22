@@ -5,7 +5,9 @@
              HorizontalOptions="End"
              VerticalOptions="End"
              IsClippedToBounds="False"
-             BackgroundColor="Transparent">
+             BackgroundColor="Transparent"
+             Padding="0"
+             Margin="0">
     
     <Button x:Name="FabButton"
             BackgroundColor="{StaticResource PrimaryColor}"

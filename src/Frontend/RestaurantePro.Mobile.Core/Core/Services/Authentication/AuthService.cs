@@ -371,15 +371,27 @@ public class AuthService : IAuthService
             var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
             var jsonToken = handler.ReadJwtToken(token);
             
-            // Considerar un margen (skew) para renovar antes de que expire definitivamente
-            var safetySkew = TimeSpan.FromSeconds(60);
-            return jsonToken.ValidTo <= DateTime.UtcNow.Add(safetySkew);
+            // 🔄 MEJORA: Margen más amplio para renovar antes de que expire (5 minutos)
+            var safetySkew = TimeSpan.FromMinutes(5);
+            var expiresAt = jsonToken.ValidTo;
+            var now = DateTime.UtcNow;
+            var renewAt = now.Add(safetySkew);
+            var isExpired = expiresAt <= renewAt;
+            
+            // 📝 LOGGING MEJORADO para debug
+            System.Diagnostics.Debug.WriteLine($"🕐 [TokenExpiry] Token expira: {expiresAt:yyyy-MM-dd HH:mm:ss} UTC");
+            System.Diagnostics.Debug.WriteLine($"🕐 [TokenExpiry] Hora actual: {now:yyyy-MM-dd HH:mm:ss} UTC");
+            System.Diagnostics.Debug.WriteLine($"🕐 [TokenExpiry] Renovar en: {renewAt:yyyy-MM-dd HH:mm:ss} UTC");
+            System.Diagnostics.Debug.WriteLine($"🕐 [TokenExpiry] ¿Necesita renovación?: {isExpired}");
+            
+            return isExpired;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al verificar expiración del token");
-            // Si no es un JWT válido, asumir no expirado y delegar al backend (mejora DX de pruebas)
-            return false;
+            System.Diagnostics.Debug.WriteLine($"❌ [TokenExpiry] Error verificando token: {ex.Message}");
+            // Si no es un JWT válido, asumir expirado para forzar re-login
+            return true;
         }
     }
 
@@ -390,29 +402,40 @@ public class AuthService : IAuthService
     {
         try
         {
+            System.Diagnostics.Debug.WriteLine($"🔄 [RefreshToken] Iniciando proceso de renovación...");
+            
             // Verificar si el usuario tenía "Recordarme" activado
             var recordarmeStr = await _secureStorage.GetAsync(RecordarmeKey);
             var recordarme = bool.TryParse(recordarmeStr, out var result) && result;
 
+            System.Diagnostics.Debug.WriteLine($"🔄 [RefreshToken] Recordarme: {recordarme}");
+
             if (!recordarme)
             {
                 _logger.LogInformation("Usuario no tiene 'Recordarme' activado - no se puede renovar token");
+                System.Diagnostics.Debug.WriteLine($"❌ [RefreshToken] Sin 'Recordarme' - renovación cancelada");
                 return false;
             }
 
             // Obtener el refresh token
             var refreshToken = await _secureStorage.GetAsync(RefreshTokenKey);
+            System.Diagnostics.Debug.WriteLine($"🔄 [RefreshToken] RefreshToken disponible: {!string.IsNullOrEmpty(refreshToken)}");
+            
             if (string.IsNullOrEmpty(refreshToken))
             {
                 _logger.LogWarning("No hay refresh token disponible");
+                System.Diagnostics.Debug.WriteLine($"❌ [RefreshToken] Sin RefreshToken - renovación imposible");
                 return false;
             }
 
             // Obtener el token actual
             var currentToken = _currentToken ?? await _secureStorage.GetAsync(TokenKey);
+            System.Diagnostics.Debug.WriteLine($"🔄 [RefreshToken] Token actual disponible: {!string.IsNullOrEmpty(currentToken)}");
+            
             if (string.IsNullOrEmpty(currentToken))
             {
                 _logger.LogWarning("No hay token actual disponible");
+                System.Diagnostics.Debug.WriteLine($"❌ [RefreshToken] Sin token actual - renovación imposible");
                 return false;
             }
 
@@ -423,11 +446,15 @@ public class AuthService : IAuthService
                 RefreshToken = refreshToken
             };
 
+            System.Diagnostics.Debug.WriteLine($"🔄 [RefreshToken] Llamando a api/auth/refresh...");
             var response = await _apiService.PostAsync<AuthResponse>("api/auth/refresh", refreshRequest);
             
-            if (response.Success && response.Data != null)
+            System.Diagnostics.Debug.WriteLine($"🔄 [RefreshToken] Respuesta recibida: Success={response?.Success}");
+            
+            if (response != null && response.Success && response.Data != null)
             {
                 _logger.LogInformation("Token renovado exitosamente");
+                System.Diagnostics.Debug.WriteLine($"✅ [RefreshToken] Renovación exitosa!");
                 
                 // Actualizar el token y refresh token
                 _currentToken = response.Data.Token;
@@ -436,19 +463,23 @@ public class AuthService : IAuthService
                 if (!string.IsNullOrEmpty(response.Data.RefreshToken))
                 {
                     await SaveRefreshTokenAsync(response.Data.RefreshToken);
+                    System.Diagnostics.Debug.WriteLine($"✅ [RefreshToken] Nuevo RefreshToken guardado");
                 }
                 
                 return true;
             }
             else
             {
-                _logger.LogWarning("Error renovando token: {Error}", response.Error);
+                var error = response?.Error ?? "Respuesta nula";
+                _logger.LogWarning("Error renovando token: {Error}", error);
+                System.Diagnostics.Debug.WriteLine($"❌ [RefreshToken] Error: {error}");
                 return false;
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al intentar renovar token");
+            System.Diagnostics.Debug.WriteLine($"❌ [RefreshToken] Excepción: {ex.Message}");
             return false;
         }
     }
@@ -460,22 +491,48 @@ public class AuthService : IAuthService
     {
         try
         {
+            System.Diagnostics.Debug.WriteLine($"🚪 [TokenExpired] Token expirado - iniciando limpieza...");
+            
             _logger.LogInformation("Token expirado - limpiando sesión");
-            // Limpiar la sesión actual
-            await LogoutAsync();
+            
+            // 🔒 MEJORA: Solo limpiar tokens, preservar "Recordarme" y email para UX
+            var recordarme = await GetRecordarmeAsync();
+            var user = await GetCurrentUserAsync();
+            var email = user?.Email;
+            
+            System.Diagnostics.Debug.WriteLine($"🚪 [TokenExpired] Preservando: Recordarme={recordarme}, Email={email}");
+            
+            // Limpiar solo tokens, no las preferencias de usuario
+            _currentToken = null;
+            _currentUser = null;
+            await _secureStorage.RemoveAsync(TokenKey);
+            await _secureStorage.RemoveAsync(UserKey);
+            await _secureStorage.RemoveAsync(RefreshTokenKey);
+            
+            // 💾 MEJORA: Preservar "Recordarme" para mejor UX
+            if (recordarme && !string.IsNullOrEmpty(email))
+            {
+                System.Diagnostics.Debug.WriteLine($"🚪 [TokenExpired] Preservando configuración de 'Recordarme' para {email}");
+                // El "Recordarme" ya está guardado, no necesitamos borrarlo
+            }
+            
             // Navegación suave al login
             try
             {
+                System.Diagnostics.Debug.WriteLine($"🚪 [TokenExpired] Navegando al login...");
                 await _navigationService.NavigateToAsync("//login");
             }
             catch (Exception navEx)
             {
                 _logger.LogWarning(navEx, "No se pudo navegar automáticamente al login tras expiración de token");
+                System.Diagnostics.Debug.WriteLine($"❌ [TokenExpired] Error navegando: {navEx.Message}");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error al manejar token expirado");
+            System.Diagnostics.Debug.WriteLine($"❌ [TokenExpired] Error crítico: {ex.Message}");
+            // Fallback: logout completo
             await LogoutAsync();
         }
     }
@@ -574,6 +631,34 @@ public class AuthService : IAuthService
         {
             _logger.LogError(ex, "Error al obtener credenciales guardadas");
             return (null, null, false);
+        }
+    }
+
+    /// <summary>
+    /// 🆕 MEJORA: Verifica proactivamente el estado del token y lo renueva si es necesario
+    /// </summary>
+    public async Task<bool> EnsureValidTokenAsync()
+    {
+        try
+        {
+            System.Diagnostics.Debug.WriteLine($"🔍 [EnsureValidToken] Verificando estado del token...");
+            
+            var token = await GetTokenAsync();
+            if (string.IsNullOrEmpty(token))
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ [EnsureValidToken] Sin token - usuario no autenticado");
+                return false;
+            }
+            
+            // Si GetTokenAsync() devolvió un token, significa que está válido o fue renovado exitosamente
+            System.Diagnostics.Debug.WriteLine($"✅ [EnsureValidToken] Token válido o renovado exitosamente");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al verificar validez del token");
+            System.Diagnostics.Debug.WriteLine($"❌ [EnsureValidToken] Error: {ex.Message}");
+            return false;
         }
     }
 } 

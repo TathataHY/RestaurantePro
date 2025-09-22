@@ -27,4 +27,9 @@ public interface IAuthService
     /// Obtiene las credenciales guardadas si "Recordarme" está activado
     /// </summary>
     Task<(string? email, string? password, bool recordarme)> GetSavedCredentialsAsync();
+    
+    /// <summary>
+    /// Verifica proactivamente el estado del token y lo renueva si es necesario
+    /// </summary>
+    Task<bool> EnsureValidTokenAsync();
 } 
