@@ -64,7 +64,7 @@ public partial class CreateDailyPreparationViewModel : AuthorizedBaseViewModel
     private int _cantidad = 1;
 
     [ObservableProperty]
-    private DateTime _fechaVencimiento = DateTime.Today.AddDays(1).AddHours(20); // Mañana a las 8:00 PM por defecto
+    private DateTime _fechaVencimiento = DateTime.Today.AddDays(1).AddHours(23).AddMinutes(59).AddSeconds(59); // Mañana a las 23:59:59 por defecto
 
     [ObservableProperty]
     private string _observaciones = string.Empty;

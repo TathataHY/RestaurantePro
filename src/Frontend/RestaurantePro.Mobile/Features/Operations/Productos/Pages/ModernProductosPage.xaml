@@ -17,28 +17,24 @@
                         <HorizontalStackLayout Spacing="12">
                             <controls:ModernCard Padding="16" WidthRequest="160">
                                 <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
-                                    <Label Text="📦" FontSize="24" HorizontalOptions="Center" />
                                     <Label Text="Total Productos" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                                     <Label Text="{Binding Estadisticas.TotalProductos}" Style="{StaticResource H2Style}" TextColor="{StaticResource TextPrimary}" HorizontalOptions="Center" />
                                 </VerticalStackLayout>
                             </controls:ModernCard>
                             <controls:ModernCard Padding="16" WidthRequest="160">
                                 <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
-                                    <Label Text="✅" FontSize="24" HorizontalOptions="Center" />
                                     <Label Text="Disponibles" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                                     <Label Text="{Binding Estadisticas.ProductosDisponibles}" Style="{StaticResource H2Style}" TextColor="{StaticResource SuccessColor}" HorizontalOptions="Center" />
                                 </VerticalStackLayout>
                             </controls:ModernCard>
                             <controls:ModernCard Padding="16" WidthRequest="160">
                                 <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
-                                    <Label Text="❌" FontSize="24" HorizontalOptions="Center" />
                                     <Label Text="Agotados" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                                     <Label Text="{Binding Estadisticas.ProductosAgotados}" Style="{StaticResource H2Style}" TextColor="{StaticResource ErrorColor}" HorizontalOptions="Center" />
                                 </VerticalStackLayout>
                             </controls:ModernCard>
                             <controls:ModernCard Padding="16" WidthRequest="160">
                                 <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
-                                    <Label Text="🏷️" FontSize="24" HorizontalOptions="Center" />
                                     <Label Text="Categorías" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                                     <Label Text="{Binding Estadisticas.TotalCategorias}" Style="{StaticResource H2Style}" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
                                 </VerticalStackLayout>

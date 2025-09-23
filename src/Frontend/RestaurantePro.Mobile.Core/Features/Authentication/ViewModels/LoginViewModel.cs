@@ -101,11 +101,28 @@ public partial class LoginViewModel : BaseViewModel
     [RelayCommand]
     private async Task CheckAuthStatusAsync()
     {
-        // Verificar si ya está autenticado al cargar la página
-        var isAuthenticated = await _authService.IsAuthenticatedAsync();
-        if (isAuthenticated)
+        try
         {
-            await _navigationService.NavigateToAsync("//main/dashboard");
+            System.Diagnostics.Debug.WriteLine("🔍 [CheckAuthStatus] Iniciando verificación de autenticación...");
+            
+            // Verificar si ya está autenticado al cargar la página
+            var isAuthenticated = await _authService.IsAuthenticatedAsync();
+            
+            System.Diagnostics.Debug.WriteLine($"🔍 [CheckAuthStatus] Usuario autenticado: {isAuthenticated}");
+            
+            if (isAuthenticated)
+            {
+                System.Diagnostics.Debug.WriteLine("✅ [CheckAuthStatus] Navegando al dashboard...");
+                await _navigationService.NavigateToAsync("//main/dashboard");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("❌ [CheckAuthStatus] Usuario no autenticado, permaneciendo en login");
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"❌ [CheckAuthStatus] Error: {ex.Message}");
         }
     }
 

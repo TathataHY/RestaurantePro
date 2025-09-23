@@ -20,9 +20,6 @@
                 <!-- Card Total Preparaciones -->
                 <controls:ModernCard Padding="16" WidthRequest="120">
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="🍳" 
-                               FontSize="24" 
-                               HorizontalOptions="Center" />
                         <Label Text="Total" 
                                Style="{StaticResource CaptionStyle}" 
                                HorizontalOptions="Center" />
@@ -36,9 +33,6 @@
                 <!-- Card En Preparación -->
                 <controls:ModernCard Padding="16" WidthRequest="120">
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="🔥" 
-                               FontSize="24" 
-                               HorizontalOptions="Center" />
                         <Label Text="En Preparación" 
                                Style="{StaticResource CaptionStyle}" 
                                HorizontalOptions="Center" />
@@ -52,9 +46,6 @@
                 <!-- Card Listas -->
                 <controls:ModernCard Padding="16" WidthRequest="120">
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="✅" 
-                               FontSize="24" 
-                               HorizontalOptions="Center" />
                         <Label Text="Listas" 
                                Style="{StaticResource CaptionStyle}" 
                                HorizontalOptions="Center" />
@@ -68,9 +59,6 @@
                 <!-- Card Tiempo Promedio -->
                 <controls:ModernCard Padding="16" WidthRequest="120">
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="⏱️" 
-                               FontSize="24" 
-                               HorizontalOptions="Center" />
                         <Label Text="Tiempo Promedio" 
                                Style="{StaticResource CaptionStyle}" 
                                HorizontalOptions="Center" />

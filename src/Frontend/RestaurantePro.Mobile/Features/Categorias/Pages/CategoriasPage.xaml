@@ -27,21 +27,18 @@
                                 <HorizontalStackLayout Spacing="12">
                                     <controls:ModernCard Padding="16" WidthRequest="120">
                                         <VerticalStackLayout Spacing="8">
-                                            <Label Text="🏷️" FontSize="24" HorizontalOptions="Center" />
                                             <Label Text="Total" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                                             <Label Text="{Binding TotalCategorias}" Style="{StaticResource H2Style}" TextColor="{StaticResource TextPrimary}" HorizontalOptions="Center" />
                                         </VerticalStackLayout>
                                     </controls:ModernCard>
                                     <controls:ModernCard Padding="16" WidthRequest="120">
                                         <VerticalStackLayout Spacing="8">
-                                            <Label Text="✅" FontSize="24" HorizontalOptions="Center" />
                                             <Label Text="Activas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                                             <Label Text="{Binding CategoriasActivas}" Style="{StaticResource H2Style}" TextColor="{StaticResource SuccessColor}" HorizontalOptions="Center" />
                                         </VerticalStackLayout>
                                     </controls:ModernCard>
                                     <controls:ModernCard Padding="16" WidthRequest="120">
                                         <VerticalStackLayout Spacing="8">
-                                            <Label Text="❌" FontSize="24" HorizontalOptions="Center" />
                                             <Label Text="Inactivas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                                             <Label Text="{Binding CategoriasInactivas}" Style="{StaticResource H2Style}" TextColor="{StaticResource ErrorColor}" HorizontalOptions="Center" />
                                         </VerticalStackLayout>

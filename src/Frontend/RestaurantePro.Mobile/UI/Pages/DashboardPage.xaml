@@ -48,7 +48,6 @@
                        Padding="16"
                        HasShadow="True">
                     <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                        <Label Text="🏠" FontSize="40" HorizontalOptions="Center" />
                         <Label Text="Mesas" Style="{StaticResource H2Style}" HorizontalOptions="Center" />
                         <Label Text="8 disponibles" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                         <Label Text="2 ocupadas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" TextColor="#28a745" />
@@ -62,7 +61,6 @@
                        Padding="16"
                        HasShadow="True">
                     <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
-                        <Label Text="📝" FontSize="40" HorizontalOptions="Center" />
                         <Label Text="Comandas" Style="{StaticResource H2Style}" HorizontalOptions="Center" />
                         <Label Text="12 activas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                         <Label Text="3 pendientes" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" TextColor="#ffc107" />

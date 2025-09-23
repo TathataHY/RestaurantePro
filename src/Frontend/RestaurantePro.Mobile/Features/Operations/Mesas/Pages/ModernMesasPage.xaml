@@ -12,28 +12,24 @@
             <HorizontalStackLayout Spacing="12">
                 <controls:ModernCard Padding="16" WidthRequest="160">
                     <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
-                        <Label Text="🏠" FontSize="24" HorizontalOptions="Center" />
                         <Label Text="Total Mesas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                         <Label Text="{Binding EstadoMesas.TotalMesas}" Style="{StaticResource H2Style}" TextColor="{StaticResource TextPrimary}" HorizontalOptions="Center" />
                     </VerticalStackLayout>
                 </controls:ModernCard>
                 <controls:ModernCard Padding="16" WidthRequest="160">
                     <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
-                        <Label Text="✅" FontSize="24" HorizontalOptions="Center" />
                         <Label Text="Disponibles" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                         <Label Text="{Binding EstadoMesas.MesasDisponibles.Count}" Style="{StaticResource H2Style}" TextColor="{StaticResource SuccessColor}" HorizontalOptions="Center" />
                     </VerticalStackLayout>
                 </controls:ModernCard>
                 <controls:ModernCard Padding="16" WidthRequest="160">
                     <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
-                        <Label Text="👥" FontSize="24" HorizontalOptions="Center" />
                         <Label Text="Ocupadas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                         <Label Text="{Binding EstadoMesas.MesasOcupadas.Count}" Style="{StaticResource H2Style}" TextColor="{StaticResource WarningColor}" HorizontalOptions="Center" />
                     </VerticalStackLayout>
                 </controls:ModernCard>
                 <controls:ModernCard Padding="16" WidthRequest="160">
                     <VerticalStackLayout Spacing="8" HorizontalOptions="Fill">
-                        <Label Text="📅" FontSize="24" HorizontalOptions="Center" />
                         <Label Text="Reservadas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                         <Label Text="{Binding EstadoMesas.MesasReservadas.Count}" Style="{StaticResource H2Style}" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
                     </VerticalStackLayout>

@@ -26,7 +26,6 @@
                                 <!-- Card Total Comandas -->
                                 <controls:ModernCard Padding="16" WidthRequest="120">
                                     <VerticalStackLayout Spacing="8">
-                                        <Label Text="🍽️" FontSize="24" HorizontalOptions="Center" />
                                         <Label Text="Total" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                                         <Label Text="{Binding Estadisticas.TotalComandasActivas}" Style="{StaticResource H2Style}" TextColor="{StaticResource TextPrimary}" HorizontalOptions="Center" />
                                     </VerticalStackLayout>
@@ -34,7 +33,6 @@
                                 <!-- Card Pendientes -->
                                 <controls:ModernCard Padding="16" WidthRequest="120">
                                     <VerticalStackLayout Spacing="8">
-                                        <Label Text="⏳" FontSize="24" HorizontalOptions="Center" />
                                         <Label Text="Pendientes" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                                         <Label Text="{Binding Estadisticas.ComandasPendientes}" Style="{StaticResource H2Style}" TextColor="{StaticResource WarningColor}" HorizontalOptions="Center" />
                                     </VerticalStackLayout>
@@ -42,7 +40,6 @@
                                 <!-- Card En Progreso -->
                                 <controls:ModernCard Padding="16" WidthRequest="120">
                                     <VerticalStackLayout Spacing="8">
-                                        <Label Text="🔥" FontSize="24" HorizontalOptions="Center" />
                                         <Label Text="En Progreso" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                                         <Label Text="{Binding Estadisticas.ComandasEnPreparacion}" Style="{StaticResource H2Style}" TextColor="{StaticResource PrimaryColor}" HorizontalOptions="Center" />
                                     </VerticalStackLayout>
@@ -50,7 +47,6 @@
                                 <!-- Card Completadas -->
                                 <controls:ModernCard Padding="16" WidthRequest="120">
                                     <VerticalStackLayout Spacing="8">
-                                        <Label Text="✅" FontSize="24" HorizontalOptions="Center" />
                                         <Label Text="Completadas" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                                         <Label Text="{Binding Estadisticas.ComandasCompletadasHoy}" Style="{StaticResource H2Style}" TextColor="{StaticResource SuccessColor}" HorizontalOptions="Center" />
                                     </VerticalStackLayout>

@@ -56,12 +56,21 @@ namespace RestaurantePro.Application.Operaciones.Preparaciones.Commands.CrearPre
                     return Result.Failure<PreparacionDiariaDto>($"Producto no encontrado: {request.ProductoId}");
                 }
 
+                // 🔧 CORRECCIÓN: Ajustar fecha de vencimiento si es 00:00:00 a 23:59:59
+                var fechaVencimiento = request.FechaVencimiento;
+                if (fechaVencimiento.TimeOfDay == TimeSpan.Zero)
+                {
+                    fechaVencimiento = fechaVencimiento.Date.AddHours(23).AddMinutes(59).AddSeconds(59);
+                    _logger.LogInformation("🕐 Ajustando fecha de vencimiento de 00:00:00 a 23:59:59 - Fecha original: {FechaOriginal}, Fecha ajustada: {FechaAjustada}", 
+                        request.FechaVencimiento, fechaVencimiento);
+                }
+
                 // Crear la preparación diaria usando el factory method del dominio
                 var preparacion = PreparacionDiaria.Crear(
                     request.ProductoId,
                     request.Cantidad,
                     request.ChefId,
-                    request.FechaVencimiento,
+                    fechaVencimiento, // Usar la fecha ajustada
                     request.Observaciones,
                     _dateTimeService.Now);
 

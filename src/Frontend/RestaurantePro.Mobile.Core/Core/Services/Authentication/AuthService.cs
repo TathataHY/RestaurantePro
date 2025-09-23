@@ -140,17 +140,19 @@ public class AuthService : IAuthService
     }
 
     /// <summary>
-    /// Verifica si el usuario está autenticado
+    /// Verifica si el usuario está autenticado (incluyendo validación de token)
     /// </summary>
     public async Task<bool> IsAuthenticatedAsync()
     {
         try
         {
-            var token = await GetTokenAsync();
-            return !string.IsNullOrEmpty(token);
+            // 🔐 MEJORA: Usar EnsureValidTokenAsync para verificar token válido
+            return await EnsureValidTokenAsync();
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error verificando autenticación");
+            System.Diagnostics.Debug.WriteLine($"❌ [IsAuthenticated] Error: {ex.Message}");
             return false;
         }
     }
@@ -371,7 +373,7 @@ public class AuthService : IAuthService
             var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
             var jsonToken = handler.ReadJwtToken(token);
             
-            // 🔄 MEJORA: Margen más amplio para renovar antes de que expire (5 minutos)
+            // 🔄 PRODUCCIÓN: Margen de 5 minutos para renovación automática (token dura 60 min)
             var safetySkew = TimeSpan.FromMinutes(5);
             var expiresAt = jsonToken.ValidTo;
             var now = DateTime.UtcNow;

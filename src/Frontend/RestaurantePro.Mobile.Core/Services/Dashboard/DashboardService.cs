@@ -219,13 +219,27 @@ public class DashboardService : IDashboardService
             System.Diagnostics.Debug.WriteLine($"🔍 [DashboardService] Token obtenido: {!string.IsNullOrEmpty(token)}");
             
             var response = await _apiService.GetAsync<PaginatedList<ComandaDto>>(
-                "api/operaciones/comandas?PageSize=10&OrdenarPor=fechaCreacion&DireccionOrdenamiento=desc", token);
+                "api/operaciones/comandas?PageSize=10&OrdenarPor=fechaCreacion&DireccionOrdenamiento=desc&IncluirItems=true", token);
             
             System.Diagnostics.Debug.WriteLine($"🔍 [DashboardService] Response - Success: {response.Success}, Data: {response.Data != null}");
             
             if (response.Success && response.Data != null)
             {
                 System.Diagnostics.Debug.WriteLine($"🔍 [DashboardService] Items recibidos: {response.Data.Items?.Count ?? 0}");
+                
+                // Debug de productos en cada comanda
+                foreach (var comanda in response.Data.Items)
+                {
+                    System.Diagnostics.Debug.WriteLine($"🔍 [DashboardService] Comanda {comanda.Numero}: Items={comanda.Items?.Count ?? 0}, Productos={comanda.Productos?.Count ?? 0}");
+                    if (comanda.Items?.Any() == true)
+                    {
+                        foreach (var item in comanda.Items)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"   - Item: {item.Nombre} (Cantidad: {item.Cantidad})");
+                        }
+                    }
+                }
+                
                 var recentOrders = response.Data.Items.Select(comanda => new OrderItem
                 {
                     Id = comanda.Id.GetHashCode(),
@@ -235,13 +249,15 @@ public class DashboardService : IDashboardService
                     Total = comanda.Total,
                     Status = !string.IsNullOrWhiteSpace(comanda.EstadoTexto) ? comanda.EstadoTexto : GetStatusDisplayName(comanda.Estado),
                     OrderTime = comanda.FechaCreacion,
-                    Items = (comanda.Productos?.Select(item => item.Nombre ?? "Producto").ToList() ?? new List<string>())
+                    Items = (comanda.Items?.Select(item => item.Nombre ?? "Producto").ToList() ?? 
+                             comanda.Productos?.Select(item => item.Nombre ?? "Producto").ToList() ?? 
+                             new List<string>())
                 }).ToList();
                 
                 // Logging detallado de cada comanda para debug
                 foreach (var order in recentOrders)
                 {
-                    System.Diagnostics.Debug.WriteLine($"🔍 [DashboardService] Comanda: {order.OrderNumber}, Estado: '{order.Status}', Cliente: {order.CustomerName}");
+                    System.Diagnostics.Debug.WriteLine($"🔍 [DashboardService] Comanda: {order.OrderNumber}, Estado: '{order.Status}', Cliente: {order.CustomerName}, Items: {order.Items.Count}");
                 }
                 
                 _logger.LogInformation("Comandas recientes obtenidas: {Count}", recentOrders.Count);

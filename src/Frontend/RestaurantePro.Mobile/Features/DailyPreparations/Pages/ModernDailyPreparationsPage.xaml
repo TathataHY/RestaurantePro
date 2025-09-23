@@ -29,7 +29,6 @@
                             <HorizontalStackLayout Spacing="12">
                                 <controls:ModernCard Padding="16" WidthRequest="140">
                                     <VerticalStackLayout Spacing="6">
-                                        <Label Text="🍽️" FontSize="24" HorizontalOptions="Center" />
                                         <Label Text="Total" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                                         <Label Text="{Binding Estadisticas.TotalPreparaciones}" Style="{StaticResource H2Style}" TextColor="{StaticResource TextPrimary}" HorizontalOptions="Center" />
                                     </VerticalStackLayout>
@@ -37,7 +36,6 @@
 
                                 <controls:ModernCard Padding="16" WidthRequest="140">
                                     <VerticalStackLayout Spacing="6">
-                                        <Label Text="🟢" FontSize="24" HorizontalOptions="Center" />
                                         <Label Text="Disponibles" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                                         <Label Text="{Binding Estadisticas.PreparacionesDisponibles}" Style="{StaticResource H2Style}" TextColor="{StaticResource SuccessColor}" HorizontalOptions="Center" />
                                     </VerticalStackLayout>
@@ -45,7 +43,6 @@
 
                                 <controls:ModernCard Padding="16" WidthRequest="140">
                                     <VerticalStackLayout Spacing="6">
-                                        <Label Text="⏰" FontSize="24" HorizontalOptions="Center" />
                                         <Label Text="Por vencer" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                                         <Label Text="{Binding Estadisticas.PreparacionesPorVencer}" Style="{StaticResource H2Style}" TextColor="{StaticResource WarningColor}" HorizontalOptions="Center" />
                                     </VerticalStackLayout>
@@ -53,7 +50,6 @@
 
                                 <controls:ModernCard Padding="16" WidthRequest="140">
                                     <VerticalStackLayout Spacing="6">
-                                        <Label Text="📈" FontSize="24" HorizontalOptions="Center" />
                                         <Label Text="Eficiencia" Style="{StaticResource CaptionStyle}" HorizontalOptions="Center" />
                                         <Label Text="{Binding Estadisticas.EficienciaFormateada}" Style="{StaticResource H2Style}" TextColor="{StaticResource InfoColor}" HorizontalOptions="Center" />
                                     </VerticalStackLayout>
