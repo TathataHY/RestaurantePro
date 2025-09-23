@@ -369,11 +369,3 @@ public class ModernDashboardViewModel : INotifyPropertyChanged
     #endregion
 }
 
-public class OrderItem
-{
-    public string OrderNumber { get; set; }
-    public string CustomerName { get; set; }
-    public string Status { get; set; }
-    public decimal Total { get; set; }
-    public Color StatusColor { get; set; }
-} 

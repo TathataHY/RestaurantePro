@@ -32,9 +32,6 @@
                 <!-- Card de Ventas Hoy -->
                 <controls:ModernCard Padding="16" WidthRequest="160">
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="💰" 
-                               FontSize="24" 
-                               HorizontalOptions="Center" />
                         <Label Text="Ventas Hoy" 
                                Style="{StaticResource CaptionStyle}" 
                                HorizontalOptions="Center" />
@@ -52,9 +49,6 @@
                 <!-- Card de Comandas Activas -->
                 <controls:ModernCard Padding="16" WidthRequest="160">
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="🍽️" 
-                               FontSize="24" 
-                               HorizontalOptions="Center" />
                         <Label Text="Comandas Activas" 
                                Style="{StaticResource CaptionStyle}" 
                                HorizontalOptions="Center" />
@@ -72,9 +66,6 @@
                 <!-- Card de Mesas Ocupadas -->
                 <controls:ModernCard Padding="16" WidthRequest="160">
                     <VerticalStackLayout Spacing="8">
-                        <Label Text="🪑" 
-                               FontSize="24" 
-                               HorizontalOptions="Center" />
                         <Label Text="Mesas Ocupadas" 
                                Style="{StaticResource CaptionStyle}" 
                                HorizontalOptions="Center" />
