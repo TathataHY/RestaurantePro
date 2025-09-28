@@ -49,7 +49,7 @@ namespace RestaurantePro.Infrastructure.Identity.EventHandlers
                     Nombre = evento.NombreUsuario, // Usar el nombre de usuario como nombre temporal
                     Apellidos = "Usuario", // Apellido temporal por defecto
                     FotoPerfil = "", // Foto de perfil vacía por defecto
-                    RefreshToken = "", // Refresh token vacío por defecto
+                    // RefreshToken removido - ahora se maneja en tabla separada
                     Activo = evento.Estado == Domain.Core.Usuarios.Enums.EstadoUsuario.Activo,
                     FechaCreacion = DateTime.UtcNow,
                     UltimaModificacion = DateTime.UtcNow

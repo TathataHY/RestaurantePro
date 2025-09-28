@@ -100,6 +100,7 @@ namespace RestaurantePro.Infrastructure.DependencyInjection
 
             // Registrar servicios de Identity
             services.AddScoped<IJwtTokenService, JwtTokenService>();
+            services.AddScoped<RefreshTokenService>();
             services.AddScoped<IIdentityService, IdentityService>();
             services.AddScoped<IUserPermissionService, PermissionService>();
             services.AddScoped<IIdentityUserService, IdentityUserService>();

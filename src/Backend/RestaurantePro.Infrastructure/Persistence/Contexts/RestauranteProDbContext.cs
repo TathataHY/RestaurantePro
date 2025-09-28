@@ -67,6 +67,9 @@ namespace RestaurantePro.Infrastructure.Persistence.Contexts
         public DbSet<Domain.Proveedores.Entities.Proveedor> Proveedores { get; set; }
         public DbSet<Domain.Proveedores.Entities.ContactoProveedor> ContactosProveedor { get; set; }
         public DbSet<RestaurantePro.Domain.Core.Productos.Entities.Receta> Recetas { get; set; }
+        
+        // 🆕 Refresh Tokens para múltiples dispositivos
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

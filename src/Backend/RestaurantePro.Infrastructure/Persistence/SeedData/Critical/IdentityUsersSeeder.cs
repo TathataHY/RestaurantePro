@@ -230,7 +230,7 @@ public class IdentityUsersSeeder : ISeedData
                 FechaCreacion = usuarioDominio.FechaCreacion,
                 Activo = usuarioDominio.Estado == EstadoUsuario.Activo,
                 FotoPerfil = "",
-                RefreshToken = "",
+                // RefreshToken removido - ahora se maneja en tabla separada
                 EmailConfirmed = usuarioDominio.Estado == EstadoUsuario.Activo
             };
 

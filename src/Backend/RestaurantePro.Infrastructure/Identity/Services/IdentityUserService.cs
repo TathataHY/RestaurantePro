@@ -48,7 +48,7 @@ public class IdentityUserService : IIdentityUserService
                 Activo = activo,
                 EmailConfirmed = emailConfirmed,
                 FotoPerfil = "",
-                RefreshToken = ""
+                // RefreshToken removido - ahora se maneja en tabla separada
             };
 
             var result = await _userManager.CreateAsync(identityUser, password);

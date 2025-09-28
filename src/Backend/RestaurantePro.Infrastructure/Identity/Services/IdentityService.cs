@@ -22,6 +22,7 @@ namespace RestaurantePro.Infrastructure.Identity.Services
         private readonly IJwtTokenService _jwtTokenService;
         private readonly ILogger<IdentityService> _logger;
         private readonly CoreDbContext _coreDbContext;
+        private readonly RefreshTokenService _refreshTokenService;
 
         public IdentityService(
             UserManager<IdentityApplicationUser> userManager,
@@ -29,7 +30,8 @@ namespace RestaurantePro.Infrastructure.Identity.Services
             RoleManager<ApplicationRole> roleManager,
             IJwtTokenService jwtTokenService,
             ILogger<IdentityService> logger,
-            CoreDbContext coreDbContext)
+            CoreDbContext coreDbContext,
+            RefreshTokenService refreshTokenService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -37,6 +39,7 @@ namespace RestaurantePro.Infrastructure.Identity.Services
             _jwtTokenService = jwtTokenService;
             _logger = logger;
             _coreDbContext = coreDbContext;
+            _refreshTokenService = refreshTokenService;
         }
 
         public async Task<Result<string>> RegisterAsync(string nombre, string apellidos, string email, string username, string password, string rol)
@@ -70,7 +73,7 @@ namespace RestaurantePro.Infrastructure.Identity.Services
                 FechaCreacion = DateTime.UtcNow,
                 Activo = true,
                 FotoPerfil = "",
-                RefreshToken = ""
+                // RefreshToken removido - ahora se maneja en tabla separada
             };
 
             var result = await _userManager.CreateAsync(user, password);
@@ -161,7 +164,7 @@ namespace RestaurantePro.Infrastructure.Identity.Services
                 UserName = userName,
                 Email = email,
                 FotoPerfil = "",
-                RefreshToken = ""
+                // RefreshToken removido - ahora se maneja en tabla separada
             };
             var result = await _userManager.CreateAsync(user, password);
             return (result.ToResult(), user.Id.ToString());
@@ -205,12 +208,11 @@ namespace RestaurantePro.Infrastructure.Identity.Services
             _logger.LogInformation("🔍 DomainUserId obtenido para {Email}: {DomainUserId}", user.Email, domainUserId);
             
             // Si el usuario quiere que se recuerde, generar un refresh token
+            string? refreshToken = null;
             if (recordarme)
             {
-                var refreshToken = Guid.NewGuid().ToString();
-                user.RefreshToken = refreshToken;
-                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7); // 7 días para el refresh token
-                await _userManager.UpdateAsync(user);
+                refreshToken = await _refreshTokenService.CreateRefreshTokenAsync(user.Id);
+                _logger.LogInformation("🔄 Refresh token creado para usuario {Email}", user.Email);
             }
             
             // 🌍 Calcular la hora de Chile para la expiración del token
@@ -243,7 +245,7 @@ namespace RestaurantePro.Infrastructure.Identity.Services
             {
                 Success = true,
                 Token = tokenResponse.AccessToken,
-                RefreshToken = recordarme ? user.RefreshToken : null,
+                RefreshToken = recordarme ? refreshToken : null,
                 Expiration = tokenExpiration,
                 Message = "Autenticación exitosa",
                 
@@ -272,24 +274,30 @@ namespace RestaurantePro.Infrastructure.Identity.Services
         {
             try
             {
-                // Buscar usuario por refresh token
-                var user = await _userManager.Users
-                    .FirstOrDefaultAsync(u => u.RefreshToken == refreshToken && u.RefreshTokenExpiryTime > DateTime.UtcNow);
+                _logger.LogInformation("🔄 Iniciando renovación de token con refresh token: {RefreshToken}", refreshToken);
+
+                // Validar refresh token usando el nuevo servicio
+                var user = await _refreshTokenService.ValidateRefreshTokenAsync(refreshToken);
 
                 if (user == null || !user.Activo)
                 {
+                    _logger.LogWarning("❌ Refresh token inválido o usuario inactivo: {RefreshToken}", refreshToken);
                     return Result.Failure<AuthResponse>("Refresh token inválido o expirado");
                 }
+
+                _logger.LogInformation("✅ Refresh token válido para usuario {UserId}", user.Id);
 
                 // Generar nuevo token
                 var roles = await _userManager.GetRolesAsync(user);
                 var tokenResponse = _jwtTokenService.GenerateToken(user.Id.ToString(), user.UserName, user.Email, roles);
 
-                // Generar nuevo refresh token
-                var newRefreshToken = Guid.NewGuid().ToString();
-                user.RefreshToken = newRefreshToken;
-                user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-                await _userManager.UpdateAsync(user);
+                // Generar nuevo refresh token (mantener el dispositivo actual)
+                var newRefreshToken = await _refreshTokenService.CreateRefreshTokenAsync(user.Id);
+                
+                // Revocar el refresh token anterior
+                await _refreshTokenService.RevokeRefreshTokenAsync(refreshToken);
+
+                _logger.LogInformation("🔄 Nuevo refresh token generado para usuario {UserId}", user.Id);
 
                 return Result.Success(new AuthResponse
                 {
