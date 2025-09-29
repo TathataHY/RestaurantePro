@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using RestaurantePro.Infrastructure.Identity.Models;
+using RestaurantePro.Infrastructure.Persistence.Contexts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,11 +18,13 @@ public class RefreshTokenService
 {
     private readonly UserManager<IdentityApplicationUser> _userManager;
     private readonly ILogger<RefreshTokenService> _logger;
+    private readonly RestauranteProDbContext _context;
 
-    public RefreshTokenService(UserManager<IdentityApplicationUser> userManager, ILogger<RefreshTokenService> logger)
+    public RefreshTokenService(UserManager<IdentityApplicationUser> userManager, ILogger<RefreshTokenService> logger, RestauranteProDbContext context)
     {
         _userManager = userManager;
         _logger = logger;
+        _context = context;
     }
 
     /// <summary>
@@ -51,14 +54,14 @@ public class RefreshTokenService
                 IsActive = true
             };
 
-            // Agregar a la colección
-            user.RefreshTokens.Add(refreshToken);
+            // Agregar directamente al contexto
+            _context.RefreshTokens.Add(refreshToken);
 
             // Limpiar tokens expirados del usuario
             await CleanupExpiredTokensAsync(user);
 
-            // Guardar cambios
-            await _userManager.UpdateAsync(user);
+            // Guardar cambios directamente en el contexto
+            await _context.SaveChangesAsync();
 
             _logger.LogInformation("🔄 Refresh token creado para usuario {UserId}, Device: {DeviceId}", userId, deviceId);
             
@@ -78,10 +81,8 @@ public class RefreshTokenService
     {
         try
         {
-            var refreshToken = await _userManager.Users
-                .Include(u => u.RefreshTokens)
-                .Where(u => u.RefreshTokens.Any(rt => rt.Token == token && rt.IsActive))
-                .SelectMany(u => u.RefreshTokens)
+            var refreshToken = await _context.RefreshTokens
+                .Include(rt => rt.User)
                 .FirstOrDefaultAsync(rt => rt.Token == token && rt.IsActive);
 
             if (refreshToken == null)
@@ -95,7 +96,7 @@ public class RefreshTokenService
                 _logger.LogWarning("❌ Refresh token expirado: {Token}, Expiry: {ExpiryTime}", token, refreshToken.ExpiryTime);
                 // Marcar como inactivo
                 refreshToken.IsActive = false;
-                await _userManager.UpdateAsync(refreshToken.User);
+                await _context.SaveChangesAsync();
                 return null;
             }
 
@@ -116,10 +117,7 @@ public class RefreshTokenService
     {
         try
         {
-            var refreshToken = await _userManager.Users
-                .Include(u => u.RefreshTokens)
-                .Where(u => u.RefreshTokens.Any(rt => rt.Token == token))
-                .SelectMany(u => u.RefreshTokens)
+            var refreshToken = await _context.RefreshTokens
                 .FirstOrDefaultAsync(rt => rt.Token == token);
 
             if (refreshToken == null)
@@ -128,7 +126,7 @@ public class RefreshTokenService
             }
 
             refreshToken.IsActive = false;
-            await _userManager.UpdateAsync(refreshToken.User);
+            await _context.SaveChangesAsync();
 
             _logger.LogInformation("🔄 Refresh token revocado: {Token}", token);
             return true;
@@ -178,9 +176,9 @@ public class RefreshTokenService
     /// </summary>
     private async Task CleanupExpiredTokensAsync(IdentityApplicationUser user)
     {
-        var expiredTokens = user.RefreshTokens
-            .Where(rt => rt.ExpiryTime <= DateTime.UtcNow)
-            .ToList();
+        var expiredTokens = await _context.RefreshTokens
+            .Where(rt => rt.UserId == user.Id && rt.ExpiryTime <= DateTime.UtcNow)
+            .ToListAsync();
 
         foreach (var token in expiredTokens)
         {
