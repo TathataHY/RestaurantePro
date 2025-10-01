@@ -48,13 +48,11 @@ public class ObtenerProductosPaginadosHandler : IRequestHandler<ObtenerProductos
                 productos = await _repository.ObtenerTodosAsync(request.SoloActivos, cancellationToken);
             }
 
-            // Aplicar filtro de texto si se proporciona
+            // Aplicar filtro de texto si se proporciona (búsqueda mejorada por palabras)
             if (!string.IsNullOrEmpty(request.Filtro))
             {
-                var filtroLower = request.Filtro.ToLowerInvariant();
-                productos = productos.Where(p => 
-                    (p.Nombre?.ToLowerInvariant().Contains(filtroLower) ?? false) ||
-                    (p.Descripcion?.ToLowerInvariant().Contains(filtroLower) ?? false));
+                _logger.LogInformation("🔍 Búsqueda inteligente activada con texto: '{Filtro}'", request.Filtro);
+                productos = AplicarBusquedaInteligente(productos, request.Filtro);
             }
 
             // Aplicar filtros avanzados
@@ -170,5 +168,66 @@ public class ObtenerProductosPaginadosHandler : IRequestHandler<ObtenerProductos
             
             _ => productos.OrderBy(p => p.Nombre) // Default por nombre
         };
+    }
+
+    /// <summary>
+    /// Aplica búsqueda inteligente que divide el texto en palabras individuales
+    /// y busca productos que contengan TODAS las palabras en nombre o descripción.
+    /// Soporta búsquedas parciales: "lomo sal" encuentra "Lomo Saltado"
+    /// </summary>
+    private static IEnumerable<Producto> AplicarBusquedaInteligente(IEnumerable<Producto> productos, string textoBusqueda)
+    {
+        // Normalizar y dividir el texto de búsqueda en palabras
+        var palabras = NormalizarTexto(textoBusqueda)
+            .Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
+            .Where(p => p.Length >= 2) // Ignorar palabras de 1 letra
+            .ToList();
+
+        if (!palabras.Any())
+        {
+            return productos; // Si no hay palabras válidas, retornar todo
+        }
+
+        // Filtrar productos que contengan TODAS las palabras en nombre o descripción
+        return productos.Where(p =>
+        {
+            var nombreNormalizado = NormalizarTexto(p.Nombre ?? "");
+            var descripcionNormalizada = NormalizarTexto(p.Descripcion ?? "");
+            var textoCompleto = $"{nombreNormalizado} {descripcionNormalizada}";
+
+            // El producto debe contener TODAS las palabras buscadas
+            return palabras.All(palabra => textoCompleto.Contains(palabra));
+        });
+    }
+
+    /// <summary>
+    /// Normaliza texto para búsqueda: convierte a minúsculas, remueve acentos y espacios extras
+    /// </summary>
+    private static string NormalizarTexto(string texto)
+    {
+        if (string.IsNullOrWhiteSpace(texto))
+            return string.Empty;
+
+        // Convertir a minúsculas
+        texto = texto.ToLowerInvariant();
+
+        // Remover acentos
+        var textoNormalizado = new System.Text.StringBuilder();
+        foreach (var c in texto.Normalize(System.Text.NormalizationForm.FormD))
+        {
+            var categoriaUnicode = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c);
+            if (categoriaUnicode != System.Globalization.UnicodeCategory.NonSpacingMark)
+            {
+                textoNormalizado.Append(c);
+            }
+        }
+
+        // Normalizar espacios múltiples a uno solo y quitar espacios al inicio/final
+        var resultado = System.Text.RegularExpressions.Regex.Replace(
+            textoNormalizado.ToString(), 
+            @"\s+", 
+            " ").Trim();
+
+        return resultado;
     }
 } 
